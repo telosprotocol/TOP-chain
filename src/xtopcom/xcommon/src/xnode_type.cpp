@@ -11,61 +11,66 @@ NS_BEG2(top, common)
 std::string
 to_string(xnode_type_t const type) {
     std::string string;
+    string.reserve(30);
 
     if (type == xnode_type_t::invalid) {
-        string += u8"(null)";
-    }
-
-    if (has<xnode_type_t::frozen>(type)) {
-        string += u8"frozen.";
+        string += "(null)";
     }
 
     if (has<xnode_type_t::committee>(type)) {
-        string += u8"committee.";
-    }
-
-    if (has<xnode_type_t::consensus>(type)) {
-        string += u8"consensus.";
-    }
-
-    if (has<xnode_type_t::edge>(type)) {
-        string += u8"edge.";
-    }
-
-    if (has<xnode_type_t::archive>(type)) {
-        string += u8"archive.";
-    }
-
-    if (has<xnode_type_t::auditor>(type)) {
-        string += u8"auditor.";
-    }
-
-    if (has<xnode_type_t::validator>(type)) {
-        string += u8"validator.";
+        string += "rec.";
     }
 
     if (has<xnode_type_t::zec>(type)) {
-        string += u8"zec.";
+        string += "zec.";
+    }
+
+    if (has<xnode_type_t::edge>(type)) {
+        string += "edge.";
+    }
+
+    if (has<xnode_type_t::storage>(type)) {
+        string += "storage.";
+    }
+
+    if (has<xnode_type_t::frozen>(type)) {
+        string += "frozen.";
+    }
+
+    if (has<xnode_type_t::consensus>(type)) {
+        string += "consensus.";
+    }
+
+    if (has<xnode_type_t::auditor>(type)) {
+        string += "auditor.";
+    }
+
+    if (has<xnode_type_t::validator>(type)) {
+        string += "validator.";
+    }
+
+    if (has<xnode_type_t::archive>(type)) {
+        string += "archive.";
+    }
+
+    if (has<xnode_type_t::full_node>(type)) {
+        string += "full_node.";
     }
 
     if (has<xnode_type_t::group>(type)) {
-        string += u8"group";
+        string += "group";
     }
 
     if (has<xnode_type_t::cluster>(type)) {
-        string += u8"cluster";
+        string += "cluster";
     }
 
     if (has<xnode_type_t::zone>(type)) {
-        string += u8"zone";
+        string += "zone";
     }
 
     if (has<xnode_type_t::network>(type)) {
-        string += u8"network";
-    }
-
-    if (has<xnode_type_t::platform>(type)) {
-        string += u8"platform";
+        string += "network";
     }
 
     assert(!string.empty());

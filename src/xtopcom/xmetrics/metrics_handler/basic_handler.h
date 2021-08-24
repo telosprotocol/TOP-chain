@@ -37,7 +37,7 @@ public:
     XDECLARE_DEFAULTED_VIRTULA_DESTRUCTOR(xtop_basic_handler);
 
     virtual int calc_dump_width(std::size_t sz) {
-        return (sz / 10 + 1) * 10;
+        return (int)(sz / 10 + 1) * 10;
     }
 
     virtual void dump(std::string const & str, bool is_updated) {

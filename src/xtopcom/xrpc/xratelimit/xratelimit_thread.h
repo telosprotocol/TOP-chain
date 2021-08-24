@@ -30,37 +30,16 @@ public:
         : ThreadBase(func)
         , thread_(func_)
     {}
-    virtual ~RatelimitThread() {
-        thread_.join();
+    void join() {
+        if (thread_.joinable()) {
+            thread_.join();
+        }
     }
 
 private:
     std::thread thread_;
 };
 
-class XIOThread : public ThreadBase {
-public:
-    explicit XIOThread(ThreadFunc func)
-        : ThreadBase(func)
-        , call_func_([this](top::base::xcall_t& call, const int32_t thread_id,
-            const uint64_t time_now_ms)->bool {
-                this->func_();
-                return true;
-            }) {
-        thread_ = top::base::xiothread_t::create_thread(
-            top::base::xcontext_t::instance(), 0, -1);
-        thread_->send_call(call_func_);
-    }
-
-    virtual ~XIOThread() {
-        thread_->close();
-        thread_->release_ref();
-    }
-
-private:
-    top::base::xcall_t call_func_;
-    top::base::xiothread_t* thread_;
-};
 NS_END2
 
 #endif  // !RATELIMIT_SERVER_STAT_H_

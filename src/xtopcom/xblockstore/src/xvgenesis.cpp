@@ -56,6 +56,7 @@ namespace top
             switch (addr_type)
             {
                 case base::enum_vaccount_addr_type_secp256k1_user_account:
+                case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
                 case base::enum_vaccount_addr_type_secp256k1_user_sub_account:
                 case base::enum_vaccount_addr_type_native_contract:
                 case base::enum_vaccount_addr_type_custom_contract:
@@ -99,7 +100,6 @@ namespace top
             set_block_flag(base::enum_xvblock_flag_locked);
             set_block_flag(base::enum_xvblock_flag_committed);
             set_block_flag(base::enum_xvblock_flag_confirmed);
-            set_block_flag(base::enum_xvblock_flag_connected);
         }
         xgenesis_block::~xgenesis_block()
         {

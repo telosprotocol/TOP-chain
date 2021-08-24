@@ -31,12 +31,12 @@ struct xtag_cluster_id {};
 struct xtag_group_id {};
 struct xtag_slot_id {};
 
-using xnetwork_version_t = xnullable_id_t<xtag_network_version, std::uint8_t>;
-using xnetwork_id_t = xnullable_id_t<xtag_network_id, std::uint32_t>;
-using xzone_id_t = xnullable_id_t<xtag_zone_id, std::uint8_t>;
-using xcluster_id_t = xnullable_id_t<xtag_cluster_id, std::uint8_t>;
-using xgroup_id_t = xnullable_id_t<xtag_group_id, std::uint8_t>;
-using xslot_id_t = xnullable_id_t<xtag_slot_id, std::uint16_t>;
+using xnetwork_version_t = xsimple_id_t<xtag_network_version, std::uint8_t, 0, 0x07>;
+using xnetwork_id_t = xsimple_id_t<xtag_network_id, std::uint32_t, 0, 0x001FFFFF>;
+using xzone_id_t = xsimple_id_t<xtag_zone_id, std::uint8_t, 0, 0x7F>;
+using xcluster_id_t = xsimple_id_t<xtag_cluster_id, std::uint8_t, 0, 0x7F>;
+using xgroup_id_t = xsimple_id_t<xtag_group_id, std::uint8_t, 0, 0xFF>;
+using xslot_id_t = xsimple_id_t<xtag_slot_id, std::uint16_t, 0, 0x3FF>;
 
 XINLINE_CONSTEXPR xnetwork_id_t::value_type xbroadcast_network_id_value{0x001FFFFF};
 XINLINE_CONSTEXPR xzone_id_t::value_type xbroadcast_zone_id_value{0x7F};
@@ -51,7 +51,7 @@ XINLINE_CONSTEXPR xcluster_id_t::value_type xmax_cluster_id_value{xbroadcast_clu
 XINLINE_CONSTEXPR xgroup_id_t::value_type xmax_group_id_value{xbroadcast_group_id_value - 1};
 XINLINE_CONSTEXPR xslot_id_t::value_type xmax_slot_id_value{xbroadcast_slot_id_value - 1};
 
-XINLINE_CONSTEXPR xnetwork_version_t::value_type xdefault_network_version_value{0x07};
+XINLINE_CONSTEXPR xnetwork_version_t::value_type xdefault_network_version_value{0x00};
 
 XINLINE_CONSTEXPR std::uint16_t xdefault_group_size_value{0x03FF};
 XINLINE_CONSTEXPR std::uint64_t xdefault_associated_blk_height_value{0x3FFFFFFFFFFFFF};
@@ -92,14 +92,12 @@ using xbroadcast_id_t = xtop_broadcast_id;
 /**
  * @brief Structured XIP
  */
-class xtop_ip final
-  : public xhashable_t<xtop_ip, std::size_t>
-  , public xenable_to_string_t<xtop_ip> {
+class xtop_ip final {
 public:
     using value_type = xvip_t;
 
 private:
-    value_type m_xip{std::numeric_limits<value_type>::max()};
+    value_type m_xip{ 0xFF1FFFFFFFFFFFFF };// network version defaults to ZERO. Don't use network version field for now.
 
 public:
     xtop_ip() = default;
@@ -133,22 +131,7 @@ public:
             xzone_id_t const & zone_id,
             xcluster_id_t const & cluster_id,
             xgroup_id_t const & group_id,
-            xnetwork_version_t const & version,
-            xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
-
-    xtop_ip(xnetwork_id_t const & network_id,
-            xzone_id_t const & zone_id,
-            xcluster_id_t const & cluster_id,
-            xgroup_id_t const & group_id,
             xslot_id_t const & slot_id,
-            xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
-
-    xtop_ip(xnetwork_id_t const & network_id,
-            xzone_id_t const & zone_id,
-            xcluster_id_t const & cluster_id,
-            xgroup_id_t const & group_id,
-            xslot_id_t const & slot_id,
-            xnetwork_version_t const & version,
             xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
     void swap(xtop_ip & other) noexcept;
@@ -182,13 +165,13 @@ public:
 
     operator value_type() const noexcept;
 
-    std::size_t hash() const override;
+    std::size_t hash() const;
 
-    std::string to_string() const override;
+    std::string to_string() const;
 
     value_type value() const noexcept;
 
-    xtop_ip sharding() const noexcept;
+    xtop_ip group_xip() const noexcept;
 };
 using xip_t = xtop_ip;
 
@@ -204,26 +187,12 @@ std::string to_string(xgroup_id_t const & group_id);
 
 std::string to_string(xslot_id_t const & slot_id);
 
-struct xtag_interface_id {};
-struct xtag_process_id {};
-struct xtag_router_id {};
-struct xtag_switch_id {};
-struct xtag_local_id {};
-
-using xinterface_id_t = xnullable_id_t<xtag_interface_id, std::uint32_t>;
-using xprocess_id_t = xnullable_id_t<xtag_process_id, std::uint8_t>;
-using xrouter_id_t = xnullable_id_t<xtag_router_id, std::uint8_t>;
-using xswitch_id_t = xnullable_id_t<xtag_switch_id, std::uint8_t>;
-using xlocal_id_t = xnullable_id_t<xtag_local_id, std::uint8_t>;
-
 NS_END2
 
 NS_BEG1(top)
 
 template <>
-class xtop_extended<common::xip_t> final
-  : public xhashable_t<xtop_extended<common::xip_t>, std::size_t>
-  , public xenable_to_string_t<xtop_extended<common::xip_t>> {
+class xtop_extended<common::xip_t> final {
     common::xip_t m_xip{};
     std::uint64_t m_extent{std::numeric_limits<std::uint64_t>::max()};
 
@@ -262,14 +231,6 @@ public:
                   common::xzone_id_t const & zone_id,
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
-                  common::xnetwork_version_t const & network_version,
-                  common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
-
-    xtop_extended(common::xnetwork_id_t const & network_id,
-                  common::xzone_id_t const & zone_id,
-                  common::xcluster_id_t const & cluster_id,
-                  common::xgroup_id_t const & group_id,
-                  common::xnetwork_version_t const & network_version,
                   uint16_t const size,
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
@@ -279,7 +240,6 @@ public:
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
                   common::xslot_id_t const & slot_id,
-                  common::xnetwork_version_t const & network_version,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
     xtop_extended(common::xnetwork_id_t const & network_id,
@@ -287,7 +247,6 @@ public:
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
                   common::xslot_id_t const & slot_id,
-                  common::xnetwork_version_t const & network_version,
                   uint16_t const size,
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
@@ -308,7 +267,7 @@ public:
 
     common::xnetwork_type_t network_type() const noexcept;
 
-    common::xnetwork_version_t network_version() const noexcept;
+    // common::xnetwork_version_t network_version() const noexcept;
 
     common::xnetwork_id_t network_id() const noexcept;
 
@@ -330,14 +289,14 @@ public:
 
     std::uint64_t raw_low_part() const noexcept;
 
-    std::size_t hash() const override;
+    std::size_t hash() const;
 
-    std::string to_string() const override;
+    std::string to_string() const;
 
     xvip2_t value() const noexcept;
 
-    xtop_extended sharding() const noexcept {
-        return xtop_extended{xip().sharding()};
+    xtop_extended group_xip2() const noexcept {
+        return xtop_extended{xip().group_xip()};
     }
 
     operator xvip2_t() const noexcept;
@@ -347,7 +306,7 @@ NS_END1
 
 NS_BEG2(top, common)
 
-using xip2_t = ::top::xextended_t<::top::common::xip_t>;
+using xip2_t = top::xextended_t<top::common::xip_t>;
 
 xnode_type_t node_type_from(xzone_id_t const & zone_id);
 
@@ -355,8 +314,6 @@ xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cl
 
 xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cluster_id, xgroup_id_t const & group_id);
 
-bool operator==(xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept;
-bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept;
 
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xnetwork_version_t
@@ -575,6 +532,39 @@ xgroup_id_t const
 #endif
     xvalidator_group_id_end{xvalidator_group_id_value_end};
 
+XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_begin{ 1 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value{ 1 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xfull_node_group_id_value{ 2 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_end{ 3 };
+
+#if defined(XCXX14_OR_ABOVE)
+XINLINE_CONSTEXPR xgroup_id_t
+#else
+xgroup_id_t const
+#endif
+xarchive_group_id_begin{ xarchive_group_id_value_begin };
+
+#if defined(XCXX14_OR_ABOVE)
+XINLINE_CONSTEXPR xgroup_id_t
+#else
+xgroup_id_t const
+#endif
+xarchive_group_id{ xarchive_group_id_value_begin };
+
+#if defined(XCXX14_OR_ABOVE)
+XINLINE_CONSTEXPR xgroup_id_t
+#else
+xgroup_id_t const
+#endif
+xfull_node_group_id{ xfull_node_group_id_value };
+
+#if defined(XCXX14_OR_ABOVE)
+XINLINE_CONSTEXPR xgroup_id_t
+#else
+xgroup_id_t const
+#endif
+xarchive_group_id_end{ xarchive_group_id_value_end };
+
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xgroup_id_t
 #else
@@ -679,6 +669,13 @@ template <>
 struct hash<top::common::xip2_t> final {
     std::size_t operator()(top::common::xip2_t const & xip2) const noexcept {
         return xip2.hash();
+    }
+};
+
+template <>
+struct hash<top::common::xip_t> final {
+    std::size_t operator()(top::common::xip_t const & xip) const noexcept {
+        return xip.hash();
     }
 };
 

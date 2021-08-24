@@ -33,7 +33,7 @@ protected:
     //std::array<common::xrole_type_t, 4> const predefined_roles{
     //        common::xrole_type_t::edge,
     //        common::xrole_type_t::advance,
-    //        common::xrole_type_t::consensus,
+    //        common::xrole_type_t::validator,
     //        common::xrole_type_t::archive
     //};
 
@@ -52,7 +52,7 @@ public:
         }
 
         for (auto i = 5 * N / 8; i < N; ++i) {
-            m_roles[i] = common::xrole_type_t::consensus;
+            m_roles[i] = common::xrole_type_t::validator;
         }
 
         m_vhost_manager = top::make_unique<xvhost_manager_t<N>>(std::addressof(this->m_io_manager),

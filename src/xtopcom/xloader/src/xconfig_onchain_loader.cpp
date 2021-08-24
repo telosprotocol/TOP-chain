@@ -3,14 +3,17 @@
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
 #include "xbasic/xmap_utl.hpp"
+#include "xblockstore/xblockstore_face.h"
+#include "xvledger/xvledger.h"
 #include "xconfig/xconfig_update_parameter_action.h"
+#include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xelect_transaction.hpp"
 #include "xmbus/xevent.h"
 #include "xmbus/xevent_store.h"
-#include "xstore/xstore.h"
-#include "xstore/xstore_error.h"
+#include "xmetrics/xmetrics.h"
 
 #include <inttypes.h>
 
@@ -26,108 +29,20 @@ xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_fa
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_delete)] = std::make_shared<config::xconfig_incremental_delete_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_add_parameter)] = std::make_shared<config::xconfig_add_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter)] = std::make_shared<config::xconfig_delete_parameter_action_t>();
+
+    // set initial onchain param
+    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    m_last_param_map = tcc_genesis->m_initial_values;
 }
 
 void xconfig_onchain_loader_t::start() {
     assert(m_bus);
-    // register block event listener
-    m_db_id = m_bus->add_listener(top::mbus::xevent_major_type_store, std::bind(&xconfig_onchain_loader_t::update, shared_from_this(), std::placeholders::_1));
-
-    m_logic_timer->watch("xconfig_onchain_parameter_loader", 1, std::bind(&xconfig_onchain_loader_t::chain_timer, shared_from_this(), std::placeholders::_1));
+    m_logic_timer->watch("xconfig_onchain_parameter_loader", 1, std::bind(&xconfig_onchain_loader_t::update_onchain_param, shared_from_this(), std::placeholders::_1));
 }
 
 void xconfig_onchain_loader_t::stop() {
     // unregister block event listener
     assert(m_bus != nullptr);
-    m_bus->remove_listener(top::mbus::xevent_major_type_store, m_db_id);
-}
-
-void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
-    if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
-        return;
-    }
-
-    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-
-    if (block_event == nullptr) {
-        xassert(0);
-        return;
-    }
-    auto block = mbus::extract_block_from(block_event);
-    xassert(block != nullptr);
-
-    if (block->is_unitblock()) {
-        std::string & owner = block_event->owner;
-
-        if (owner != sys_contract_rec_tcc_addr) {
-            return;
-        }
-
-        auto proposal_detail = block->get_native_property().string_get(CURRENT_VOTED_PROPOSAL);
-        if (proposal_detail == nullptr) {
-            return;
-        }
-        std::string voted_proposal = proposal_detail->get();
-
-        tcc::proposal_info proposal{};
-
-        top::base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)voted_proposal.data(), voted_proposal.size());
-        if (stream.size() <= 0) {
-            xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block->get_height());
-            return;
-        }
-        proposal.deserialize(stream);
-        xdbg("[CONFIG] in update, receiving voting done proposal: %s, effective height: %" PRIu64, proposal.proposal_id.c_str(), proposal.effective_timer_height);
-
-        uint64_t chain_timer = m_logic_timer->logic_time();
-        if (proposal.effective_timer_height > chain_timer) {
-            // store for later invoke
-            std::lock_guard<std::mutex> lock(m_action_param_mutex);
-            m_pending_proposed_parameters.insert({proposal.effective_timer_height, proposal});
-            xkinfo("[CONFIG] proposal id: %s, current chain timer: %" PRIu64 ", effective height: %" PRIu64 ", future parameter size(): %zu",
-                 proposal.proposal_id.c_str(),
-                 chain_timer,
-                 proposal.effective_timer_height,
-                 m_pending_proposed_parameters.size());
-            return;
-        }
-
-        std::string action_type;
-        switch (proposal.type) {
-            case tcc::proposal_type::proposal_update_parameter:
-                action_type = UPDATE_ACTION_PARAMETER;
-                break;
-            case tcc::proposal_type::proposal_add_parameter:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_add_parameter);
-                break;
-            case tcc::proposal_type::proposal_delete_parameter:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter);
-                break;
-            case tcc::proposal_type::proposal_update_parameter_incremental_add:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_add);
-                break;
-            case tcc::proposal_type::proposal_update_parameter_incremental_delete:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_delete);
-                break;
-
-            default:
-                break;
-        }
-
-        if (!action_type.empty()) {
-            config::xconfig_update_action_ptr_t action_ptr = find(action_type);
-            if (action_ptr != nullptr) {
-                std::map<std::string, std::string> m;
-                m.insert({proposal.parameter, proposal.new_value});
-                m_action_map[action_type]->do_update(m);
-                xkinfo("[CONFIG] current chain timer: %" PRIu64 ", proposal: %s, parameter: %s value: %s applied successfully",
-                     chain_timer,
-                     proposal.proposal_id.c_str(),
-                     proposal.parameter.c_str(),
-                     proposal.new_value.c_str());
-            }
-        }
-    }
 }
 
 void xconfig_onchain_loader_t::chain_timer(common::xlogic_time_t time) {
@@ -188,6 +103,82 @@ void xconfig_onchain_loader_t::chain_timer(common::xlogic_time_t time) {
     }
 }
 
+void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) {
+    xdbg("xconfig_onchain_loader_t::update_onchain_param,  logic time is %" PRIu64, time);
+    std::lock_guard<std::mutex> lock(m_action_param_mutex);
+
+    auto block =  data::xblocktool_t::get_latest_connectted_light_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
+    if (block == nullptr) {
+        xdbg("xconfig_onchain_loader_t::update_onchain_param latest connected light block null");
+        return;
+    }
+
+    if (block->get_height() < m_last_update_height) {
+        xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, block->get_height(), m_last_update_height);
+        return;
+    }
+
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", block->get_height());
+
+    m_last_update_height = block->get_height();
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xconfig_update);
+    if (nullptr == _bstate) {
+        xwarn("xconfig_onchain_loader_t::update_onchain_param get target state fail.block=%s", block->dump().c_str());
+        return;
+    }
+    data::xunit_bstate_t state(_bstate.get());
+
+    std::map<std::string, std::string> params;
+    state.map_get(ONCHAIN_PARAMS, params);
+
+    if (params.empty()) {
+        xwarn("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
+        return;
+    }
+
+    if (!m_last_param_map.empty() && !onchain_param_changed(params)) {
+        xinfo("xconfig_onchain_loader_t::update_onchain_param, param map no changed.");
+        return;
+    }
+
+    std::map<std::string, std::string> changed_param;
+    filter_changes(params, changed_param);
+    config::xconfig_register_t::get_instance().update_cache_and_persist(changed_param);
+    m_last_param_map = params;
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, update param sucessfully");
+}
+
+void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) {
+    for (auto& entry : map) {
+        if (!entry.first.empty() && !entry.second.empty()) {
+            if (is_param_changed(entry.first, entry.second)) {
+                filterd_map[entry.first] = entry.second;
+            }
+        }
+    }
+}
+
+bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) {
+    auto it = m_last_param_map.find(key);
+    if (it == m_last_param_map.end()) {
+        return true;
+    }
+
+    return it->second != value;
+}
+
+bool xconfig_onchain_loader_t::onchain_param_changed(std::map<std::string, std::string> const& params) {
+    using value_pair = std::pair<std::string, std::string>;
+    auto is_same = params.size() == m_last_param_map.size() &&
+            std::equal(m_last_param_map.begin(), m_last_param_map.end(), params.begin(), [](value_pair const& lhs, value_pair const& rhs){
+            #ifdef DEBUG
+                xdbg("xconfig_onchain_loader_t::update_onchain_param, 1: %s,%s; 2: %s,%s\n", lhs.first.c_str(), lhs.second.c_str(), rhs.first.c_str(), rhs.second.c_str());
+            #endif
+                return lhs.first == rhs.first && lhs.second == rhs.second;
+            });
+    return !is_same;
+}
+
 config::xconfig_update_action_ptr_t xconfig_onchain_loader_t::find(const std::string & type) {
     auto it = m_action_map.find(type);
     if (it != m_action_map.end()) {
@@ -205,13 +196,18 @@ bool xconfig_onchain_loader_t::fetch_all(std::map<std::string, std::string> & pa
         std::map<std::string, std::string> initial_values;
         auto                               status = m_store_ptr->map_copy_get(sys_contract_rec_tcc_addr, ONCHAIN_PARAMS, initial_values);
         if (status == 0) {
-            xinfo("[tcc] second time get onchain parameters");
+            xinfo("xconfig_onchain_loader_t::fetch_all[tcc] second time get onchain parameters");
             params_map.insert(initial_values.begin(), initial_values.end());
         } else {
-            xinfo("[tcc] first time get onchain parameters");
+            xinfo("xconfig_onchain_loader_t::fetch_all[tcc] first time get onchain parameters");
             auto tx = std::make_shared<data::xtcc_transaction_t>();
             params_map.insert(tx->m_initial_values.begin(), tx->m_initial_values.end());
         }
+#ifdef DEBUG
+        for (auto & v : params_map) {
+            xdbg("xconfig_onchain_loader_t::fetch_all k=%s,v=%s", v.first.c_str(), v.second.c_str());
+        }
+#endif
     }
     return true;
 }

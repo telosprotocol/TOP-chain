@@ -5,6 +5,7 @@
 #include "xtimercertview.h"
 
 #include "xbase/xutl.h"
+#include "xmetrics/xmetrics.h"
 #include "xvledger/xvblock.h"
 
 #include <inttypes.h>
@@ -160,6 +161,19 @@ bool xconspacemaker_t::on_pdu_event_down(const base::xvevent_t & event, xcsobjec
         _evt_obj->set_clock(m_latest_cert->get_clock());   // carry clock height
         _evt_obj->set_cookie(m_latest_cert->get_clock());  // carry latest viewid
     }
+    
+    const std::string & latest_xclock_cert_bin = _evt_obj->_packet.get_xclock_cert();
+    if(latest_xclock_cert_bin.empty() == false) //try to update clock cert
+    {
+        base::xauto_ptr<base::xvqcert_t> _clock_cert_obj(base::xvblock_t::create_qcert_object(latest_xclock_cert_bin));
+        if(_clock_cert_obj)
+        {
+            //note:#1 safe rule, always cleans up flags carried by peer
+            _clock_cert_obj->reset_block_flags(); //force remove
+            if(_clock_cert_obj->is_deliver())
+                _evt_obj->set_xclock_cert(_clock_cert_obj.get());
+        }
+    }
 
     switch (packet.get_msg_type()) {
     // timeout / sync / resp belong to pacemaker
@@ -195,11 +209,14 @@ bool xconspacemaker_t::on_receive_timeout(xvip2_t const & from_addr, base::xcspd
 
     base::xauto_ptr<xtimeout_msg_t> msg = new xtimeout_msg_t{};
     msg->serialize_from_string(packet.get_msg_body());
-
-    if (msg->block==nullptr || msg->block->get_cert()==nullptr ||
-        msg->block->get_clock()!=clock || msg->block->get_viewid()!=clock || msg->block->get_height()!=clock) {
-        xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} content error clock %" PRIu64" block:%s",
-            from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str());
+    if (msg->block != nullptr) {
+        if (msg->block->get_cert()==nullptr ||
+            msg->block->get_clock()!=clock || msg->block->get_viewid()!=clock || msg->block->get_height()!=clock) {
+            xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} content error clock %" PRIu64" block:%s",
+                from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str());
+            return true;
+        }
+    } else {
         return true;
     }
 
@@ -252,6 +269,11 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
     }
 
     if (m_latest_cert != nullptr) {
+        // for debug purpose
+        if ((m_latest_cert->get_clock() + 1) != model_block->get_clock()) {
+            XMETRICS_GAUGE(metrics::cons_pacemaker_tc_discontinuity, 1);
+            xwarn("[xconspacemaker_t::add_vote] tc discontinuity latest=%llu,cur=%llu", m_latest_cert->get_clock(), model_block->get_clock());
+        }
         m_latest_cert->release_ref();
     }
 
@@ -471,8 +493,13 @@ bool xconspacemaker_t::on_create_block_event(const base::xvevent_t & event,xcsob
 }
 
 bool xconspacemaker_t::on_proposal_start(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
-#if 0
+    
     xproposal_start * _evt_obj = (xproposal_start *)&event;
+    if( (_evt_obj->get_clock_cert() == NULL) && (m_latest_cert != NULL) )
+    {
+        _evt_obj->set_clock_cert(m_latest_cert->get_cert());
+    }
+#if 0
     if (_evt_obj->get_proposal() != NULL)  // proposal from leader
     {
         assert(_evt_obj->get_proposal()->get_height() > 0);

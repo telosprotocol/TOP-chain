@@ -113,7 +113,7 @@ std::pair<std::uint16_t, std::uint16_t>
 book_ids_belonging_to_zone(common::xzone_id_t const & zid,
                            std::size_t const zone_count,
                            std::pair<std::uint16_t, std::uint16_t> const & book_range) {
-    if (zid.empty() || zid == common::xedge_zone_id) {
+    if (zid == common::xedge_zone_id) {
         xwarn("[beacon] book id mapping for zone %s is empty", zid.to_string().c_str());
         return { 0, 0 };
     }
@@ -143,7 +143,7 @@ std::pair<std::uint16_t, std::uint16_t>
 book_ids_belonging_to_cluster(common::xcluster_id_t const & cid,
                               std::size_t const cluster_count,
                               std::pair<std::uint16_t, std::uint16_t> const & book_range) {
-    if (cid.empty()) {
+    if (broadcast(cid)) {
         xwarn("[zec contract] book id belongs to cluster (null) is empty");
         return { 0, 0 };
     }
@@ -172,7 +172,7 @@ std::pair<std::uint16_t, std::uint16_t>
 book_ids_belonging_to_auditor_group(common::xgroup_id_t const & auditor_gid,
                                     std::size_t const auditor_group_count,
                                     std::pair<std::uint16_t, std::uint16_t> const & book_range) {
-    if (auditor_gid.empty()                                        ||
+    if (broadcast(auditor_gid)                                      ||
         auditor_gid.value() < common::xauditor_group_id_value_begin ||
         auditor_gid.value() >= common::xauditor_group_id_value_end) {
         xwarn("[zec contract] book id belongs to auditor group %s is empty", auditor_gid.to_string().c_str());
@@ -200,8 +200,8 @@ book_ids_belonging_to_validator_group(common::xgroup_id_t const & parent_advance
                                       std::size_t const auditor_group_count,
                                       std::size_t const validator_group_count,
                                       std::pair<std::uint16_t, std::uint16_t> const & book_range) {
-    if (parent_advance_group_id.empty()                                ||
-        consensus_group_id.empty()                                     ||
+    if (broadcast(parent_advance_group_id)                                ||
+        broadcast(consensus_group_id)                                     ||
         consensus_group_id.value() < common::xvalidator_group_id_value_begin ||
         consensus_group_id.value() >= common::xvalidator_group_id_value_end) {
         xwarn("[zec contract] book id belongs to auditor group %s validator group %s is empty",

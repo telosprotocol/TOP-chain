@@ -46,6 +46,7 @@ static std::atomic<bool> child_reap{false};
 static std::atomic<uint32_t> child_exit_code {0};
 static pid_t child_pid = -1;
 static std::string pid_file;
+static std::string safebox_pid;
 static std::vector<std::string> support_cmd_vec = {
     "help", "version", "node", "mining", "staking",
     "chain","transfer", "govern", "resource", "wallet", "db", "debug"};
@@ -329,7 +330,7 @@ bool scan_keystore_dir(
         };
 
         for (const auto& el : reader.items()) {
-            if (el.key() == "account address") {
+            if (el.key() == "account address" || el.key() == "account_address") {
                 key_info_map["account"] = el.value().get<std::string>();
             }
             if (el.key() == "public_key") {
@@ -555,7 +556,20 @@ void signal_handler(int signo) {
                     remove(pid_file.c_str());
                 }
             }
+        } else if (!safebox_pid.empty()){
+            std::ifstream in_pid(safebox_pid);
+            if (in_pid.is_open()) {
+                char buff[16];
+                bzero(buff, sizeof(buff));
+                in_pid.getline(buff, 16);
+                uint32_t pid = std::stoi(std::string(buff));
+                auto runing_safebox_pid = static_cast<uint32_t>(getpid());
+                if (pid == runing_safebox_pid) {
+                    remove(safebox_pid.c_str());
+                }
+            }
         }
+
 
         ::_Exit(0);
     }
@@ -983,7 +997,7 @@ bool load_keystore(config_t& config) {
     int libret = load_lib(config);
     if (libret != 0) {
         if (default_key_flag) {
-            std::cout << "Please set a miner key by command 'topio miner setMinerKey'" << std::endl;
+            std::cout << "Please set a miner key by command 'topio mining setMinerKey'" << std::endl;
         } else {
             std::cout << "decrypt keystore:" << config.keystore_path << " failed" << std::endl;
         }
@@ -1040,6 +1054,7 @@ bool datadir_check_init(config_t& config) {
     std::string log_path = config.datadir + "/log";
     config.com_log_path = log_path;
     config.pid_file = config.datadir + "/topio.pid";
+    config.safebox_pid = config.datadir + "/safebox.pid";
 
     if (!isDirExist(config.datadir)) {
         int mk_status = mkdir(config.datadir.c_str(), 0755);
@@ -1077,11 +1092,31 @@ std::string get_working_path()
 }
 
 // start http server for password cache.
-int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port) {
+int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std::string const& pid_file) {
+    // register signal
+    if (register_signals(false) != 0) {
+        std::cerr << "StartNodeSafeBox register signals failed" << std::endl;
+        return -1;
+    }
+
     if (!daemon()) {
         std::cout << "create daemon process failed" << std::endl;
         return -1;
     }
+
+    // set pid
+    auto pid = getpid();
+    std::ofstream out_pid(pid_file);
+
+    if (!out_pid.is_open()) {
+        std::cout << "dump xnode pid:" << pid << " to file:" << pid_file << " failed\n";
+        return -1;
+    }
+
+    out_pid << std::to_string(pid);
+    out_pid.flush();
+    out_pid.close();
+    safebox_pid = pid_file;
 
     // set process title
     std::string new_title = "node safebox process";
@@ -1351,7 +1386,7 @@ int filter_node_commandline(config_t &config, int argc, char *argv[]) {
     safeboxnode->add_option("--http_addr", safebox_addr, "safebox http server addr(default: 127.0.0.1)");
     safeboxnode->add_option("--http_port", safebox_port, "safebox http server port(default: 7000)");
     safeboxnode->callback([&]() -> int {
-            return StartNodeSafeBox(safebox_addr, safebox_port);
+            return StartNodeSafeBox(safebox_addr, safebox_port, config.safebox_pid);
             });
 
     try {
@@ -1384,7 +1419,10 @@ int main(int argc, char * argv[]) {
     // handle other(topcl/xnode/db) commands
     auto estatus  = ExecuteCommands(argc, argv, config);
 
-    // every command will try to load safebox http server
-    StartNodeSafeBox(safebox::safebox_default_addr, safebox::safebox_default_port);
+    if (!check_process_running(config.safebox_pid)) {
+        // every command will try to load safebox http server
+        StartNodeSafeBox(safebox::safebox_default_addr, safebox::safebox_default_port, config.safebox_pid);
+    }
+
     return estatus;
 } // end main

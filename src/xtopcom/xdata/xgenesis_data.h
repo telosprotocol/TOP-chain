@@ -12,7 +12,6 @@
 #include "xcommon/xsharding_info.h"
 #include <unordered_map>
 #include "xdata/xdata_common.h"
-#include "xdata/xtable_id.h"
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xnative_contract_address.h"
@@ -37,9 +36,8 @@ bool is_zec_contract_address(common::xaccount_address_t const & addr);
 bool is_sys_sharding_contract_address(common::xaccount_address_t const & addr);
 bool is_block_contract_address(common::xaccount_address_t const & addr);
 bool has_contract_suffix(const std::string& addr);
-xtable_id_t account_map_to_table_id(common::xaccount_address_t const & addr);
+base::xtable_index_t account_map_to_table_id(common::xaccount_address_t const & addr);
 std::string account_address_to_block_address(common::xaccount_address_t const & addr);
-common::xnode_type_t get_node_role_from_account(common::xaccount_address_t const & account, uint32_t& table_id);
 bool is_table_address(common::xaccount_address_t const & addr);
 bool is_unit_address(common::xaccount_address_t const & addr);
 

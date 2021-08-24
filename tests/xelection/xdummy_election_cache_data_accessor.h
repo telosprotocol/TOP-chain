@@ -29,53 +29,84 @@ public:
 
     std::map<common::xslot_id_t, data::xnode_info_t>
     sharding_nodes(common::xsharding_address_t const &,
-                   common::xversion_t const &,
+                   common::xelection_round_t const &,
                    std::error_code &) const override {
         return {};
     }
 
     common::xnode_address_t
     parent_address(common::xsharding_address_t const &,
-                   common::xversion_t const &,
+                   common::xelection_round_t const &,
                    std::error_code &) const noexcept override {
         return {};
     }
 
     std::shared_ptr<top::election::cache::xnode_element_t>
-    node_element(common::xnode_address_t const &,
+    node_element(common::xgroup_address_t const &,
+                 common::xlogic_epoch_t const &,
+                 common::xslot_id_t const &,
                  std::error_code &) const override {
         return {};
     }
 
     std::shared_ptr<top::election::cache::xgroup_element_t>
     group_element(common::xsharding_address_t const &,
-                  common::xversion_t const &,
+                  common::xelection_round_t const &,
                   std::error_code &) const override {
         return {};
     }
 
+    std::shared_ptr<top::election::cache::xgroup_element_t> group_element(common::xgroup_address_t const &, common::xlogic_epoch_t const &, std::error_code &) const override {
+        return nullptr;
+    }
+
     std::shared_ptr<top::election::cache::xgroup_element_t>
-    group_element(common::xsharding_address_t const &,
+    group_element_by_logic_time(common::xsharding_address_t const &,
                   common::xlogic_time_t const,
                   std::error_code &) const override {
         return {};
     }
 
+    std::shared_ptr<top::election::cache::xgroup_element_t> group_element_by_height(common::xgroup_address_t const &,
+                                                                                    uint64_t const,
+                                                                                    std::error_code &) const override {
+        return {};
+    }
+
     std::shared_ptr<top::election::cache::xgroup_element_t>
     parent_group_element(common::xsharding_address_t const &,
-                         common::xversion_t const &,
+                         common::xelection_round_t const &,
                          std::error_code &) const override {
         return {};
     }
 
-    common::xversion_t
-    version_from(common::xip2_t const & xip2, std::error_code & ec) const {
-        return common::xversion_t{};
+    std::shared_ptr<top::election::cache::xgroup_element_t> parent_group_element(common::xgroup_address_t const &, common::xlogic_epoch_t const &, std::error_code &) const override {
+        return {};
+    }
+
+    common::xelection_round_t election_epoch_from(common::xip2_t const & xip2, std::error_code & ec) const override {
+        return common::xelection_round_t{};
     }
 
     common::xnode_id_t
-    node_id_from(common::xip2_t const & xip2, std::error_code & ec) const {
+    account_address_from(common::xip2_t const & xip2, std::error_code & ec) const override {
         return common::xnode_id_t {};
+    }
+
+    common::xnode_address_t parent_address(common::xgroup_address_t const & child_address, common::xlogic_epoch_t const & child_logic_epoch, std::error_code & ec) const noexcept override {
+        return {};
+    }
+
+    std::map<common::xslot_id_t, data::xnode_info_t> group_nodes(common::xgroup_address_t const &,
+                                                                 common::xlogic_epoch_t const &,
+                                                                 std::error_code &) const override {
+        return {};
+    }
+
+    std::vector<common::xnode_address_t> child_addresses(common::xgroup_address_t const &,
+                                                         common::xlogic_epoch_t const &,
+                                                         std::error_code & ec) const noexcept {
+        return {};
     }
 };
 using xdummy_election_cache_data_accessor_t = xtop_dummy_election_cache_data_accessor;

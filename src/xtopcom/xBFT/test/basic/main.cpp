@@ -42,7 +42,8 @@ namespace top
 
 }
 
-//#define __network_simulator_test__
+#define __network_simulator_test__
+//#define __network_outoforder_test__
 int main(int argc, const char * argv[])
 {
 #ifdef __WIN_PLATFORM__
@@ -78,14 +79,38 @@ int main(int argc, const char * argv[])
     std::multimap<uint32_t,std::string> nodes_list;
  
 #ifdef __network_simulator_test__
-    nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
-    nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_small | enum_net_outoforder_type_small,std::string()));
     
-    nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
-    nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_high | enum_net_outoforder_type_high,std::string()));
+    #ifdef __network_outoforder_test__
+            
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest  | enum_net_outoforder_type_extreamhigh,std::string()));
     
-    nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
-    nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_extreamhigh |enum_net_outoforder_type_extreamhigh,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest  | enum_net_outoforder_type_small,std::string()));
+        
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest  | enum_net_outoforder_type_high,std::string()));
+        
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+
+    
+    #elif defined(__network_lossrate_test__)
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_small | enum_net_outoforder_type_small,std::string()));
+        
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_high | enum_net_outoforder_type_high,std::string()));
+        
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_extreamhigh |enum_net_outoforder_type_extreamhigh,std::string()));
+    #else
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_small | enum_net_outoforder_type_small,std::string()));
+        
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_high | enum_net_outoforder_type_high,std::string()));
+        
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
+        nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest | enum_net_lossrate_type_extreamhigh |enum_net_outoforder_type_extreamhigh,std::string()));
+    #endif
+   
 #else
     nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
     nodes_list.insert(std::multimap<uint32_t,std::string>::value_type(enum_xtestnode_role_honest,std::string()));
@@ -94,7 +119,7 @@ int main(int argc, const char * argv[])
 #endif
     
     //global shared runtime
-    base::xworkerpool_t_impl<4> *global_worker_pool = new base::xworkerpool_t_impl<4>(top::base::xcontext_t::instance());
+    base::xworkerpool_t_impl<1> *global_worker_pool = new base::xworkerpool_t_impl<1>(top::base::xcontext_t::instance());
     xtestshard * test_shard = new xtestshard(*global_worker_pool,nodes_list);
  
     sleep(2); //let xtestshard finish initialization

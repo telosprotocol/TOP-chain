@@ -15,6 +15,7 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xmbus/xmessage_bus.h"
@@ -23,8 +24,6 @@
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_v2/xtxpool_face.h"
-#include "xdatastat/xdatastat.h"
-#include "xindexstore/xindexstore_face.h"
 
 #include <cstdint>
 #include <memory>
@@ -82,7 +81,6 @@ private:
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
-    xobject_ptr_t<store::xindexstorehub_t> m_indexstore;
     xobject_ptr_t<time::xchain_time_face_t> m_logic_timer;
     xobject_ptr_t<base::xiothread_t> m_grpc_thread{};
     xobject_ptr_t<base::xiothread_t> m_sync_thread{};
@@ -94,9 +92,6 @@ private:
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
-#ifdef ENABLE_METRICS
-    std::unique_ptr<datastat::xdatastat_t> m_datastat;
-#endif
     std::vector<std::unique_ptr<xchain_application_t>> m_chain_applications{};
 
 public:
@@ -128,7 +123,7 @@ public:
 
     observer_ptr<store::xstore_face_t> store() const noexcept;
 
-    xobject_ptr_t<base::xvblockstore_t> blockstore() const noexcept;
+    observer_ptr<base::xvblockstore_t> blockstore() const noexcept;
 
     observer_ptr<router::xrouter_face_t> router() const noexcept;
 
@@ -147,7 +142,6 @@ public:
     xobject_ptr_t<base::xvcertauth_t> cert_serivce() const noexcept;
 
     xobject_ptr_t<store::xsyncvstore_t> syncstore() const noexcept;
-    observer_ptr<store::xindexstorehub_t> indexstore() const noexcept;
 
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;
@@ -156,6 +150,10 @@ private:
     bool create_genesis_accounts();
 
     bool create_genesis_account(std::string const & address, uint64_t const init_balance);
+
+    bool create_genesis_account(std::string const & address, chain_data::data_processor_t const & data);
+
+    bool preprocess_accounts_data();
 
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 

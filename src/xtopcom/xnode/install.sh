@@ -179,6 +179,8 @@ Wants=network-online.target
 
 [Service]
 Type=forking
+Environment=TOPIO_HOME=$topio_home
+PIDFile=$topio_home/safebox.pid
 ExecStart=/usr/bin/topio node safebox
 PrivateTmp=true
 

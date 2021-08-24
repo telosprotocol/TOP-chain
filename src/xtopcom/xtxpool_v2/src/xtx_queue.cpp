@@ -18,24 +18,23 @@ namespace xtxpool_v2 {
 using namespace top::data;
 
 #define account_send_tx_queue_size_max (16)
-#define account_delay_count_default (1)
 
 #define account_send_tx_move_num_max (3)
 
 void xsend_tx_queue_internal_t::insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
+    tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_ready_tx_queue.insert(tx_ent);
-    m_ready_tx_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = it;
+    m_ready_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->send_tx_inc(1);
     xtxpool_info("xsend_tx_queue_internal_t::insert_ready_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
 void xsend_tx_queue_internal_t::insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
+    tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_non_ready_tx_queue.insert(tx_ent);
-    m_non_ready_tx_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = it;
+    m_non_ready_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->send_tx_inc(1);
     xtxpool_info("xsend_tx_queue_internal_t::insert_non_ready_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
@@ -45,7 +44,7 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
     auto it_ready = m_ready_tx_map.find(hash_str);
     if (it_ready != m_ready_tx_map.end()) {
         auto & tx_ent = *it_ready->second;
-        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_transaction()->get_push_pool_timestamp();
+        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
@@ -62,7 +61,7 @@ void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash) {
     auto it_non_ready = m_non_ready_tx_map.find(hash_str);
     if (it_non_ready != m_non_ready_tx_map.end()) {
         auto & tx_ent = *it_non_ready->second;
-        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_transaction()->get_push_pool_timestamp();
+        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         xtxpool_info("xsend_tx_queue_internal_t::erase_non_ready_tx from non-ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      (*it_non_ready->second)->get_tx()->dump(true).c_str(),
@@ -124,45 +123,27 @@ uint64_t xcontinuous_txs_t::get_back_nonce() const {
     return m_txs.back()->get_tx()->get_transaction()->get_tx_nonce();
 }
 
-uint256_t xcontinuous_txs_t::get_back_hash() const {
-    if (m_txs.empty()) {
-        return m_latest_hash;
-    }
-    return m_txs.back()->get_tx()->get_transaction()->digest();
-}
-
-void xcontinuous_txs_t::update_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xcontinuous_txs_t::update_latest_nonce(uint64_t latest_nonce) {
     if (latest_nonce <= m_latest_nonce) {
-        // latest nonce and hash update by latest committed block, should not fork, so that same nonce means same hash.
-        xassert((latest_nonce == m_latest_nonce) == (latest_hash == m_latest_hash));
         return;
     }
 
     if (!m_txs.empty()) {
         uint64_t nonce_diff = latest_nonce - m_latest_nonce;
         uint32_t max_del_num = m_txs.size();
-        if (nonce_diff < m_txs.size()) {
-            if (!m_txs[nonce_diff]->get_tx()->get_transaction()->check_last_trans_hash(latest_hash)) {
-                xtxpool_warn("xcontinuous_txs_t::update_latest_nonce,update hash not match,clear all.latest nonce:%llu,hash:%s,tx:%s",
-                             latest_nonce,
-                             to_hex_str(m_latest_hash).c_str(),
-                             m_txs[nonce_diff]->get_tx()->dump(true).c_str());
-            } else {
-                max_del_num = nonce_diff;
-            }
+        if (nonce_diff < max_del_num) {
+            max_del_num = nonce_diff;
         }
-
         batch_erase(0, max_del_num);
     }
 
     m_latest_nonce = latest_nonce;
-    m_latest_hash = latest_hash;
 }
 
 void xcontinuous_txs_t::batch_erase(uint32_t from_idx, uint32_t to_idx) {
     for (uint32_t i = from_idx; i < to_idx; i++) {
-        xtxpool_info("xcontinuous_txs_t::update_latest_nonce delete tx:%s", m_txs[i]->get_tx()->dump().c_str());
-        m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_transaction()->digest());
+        xtxpool_info("xcontinuous_txs_t::batch_erase delete tx:%s", m_txs[i]->get_tx()->dump().c_str());
+        m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_tx_hash_256());
     }
     m_txs.erase(m_txs.begin() + from_idx, m_txs.begin() + to_idx);
 }
@@ -180,12 +161,8 @@ int32_t xcontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
     if (new_tx_last_nonce > back_nonce) {
         return xtxpool_error_tx_nonce_uncontinuous;
     } else if (new_tx_last_nonce == back_nonce) {
-        if (tx_ent->get_tx()->get_transaction()->check_last_trans_hash(get_back_hash())) {
-            m_txs.push_back(tx_ent);
-            m_send_tx_queue_internal->insert_ready_tx(tx_ent);
-        } else {
-            return xtxpool_error_tx_last_hash_not_match;
-        }
+        m_txs.push_back(tx_ent);
+        m_send_tx_queue_internal->insert_ready_tx(tx_ent);
     } else {
         // simple solution: nonce duplicate, drop the old tx.
         // todo: account tx replace strategy!
@@ -193,14 +170,9 @@ int32_t xcontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         if (tx_ent->get_tx()->get_transaction()->get_fire_timestamp() <= m_txs[try_replace_idx]->get_tx()->get_transaction()->get_fire_timestamp()) {
             return xtxpool_error_tx_nonce_duplicate;
         }
-        uint256_t last_hash_tmp = try_replace_idx == 0 ? m_latest_hash : m_txs[try_replace_idx - 1]->get_tx()->get_transaction()->digest();
-        if (tx_ent->get_tx()->get_transaction()->check_last_trans_hash(last_hash_tmp)) {
-            batch_erase(try_replace_idx, m_txs.size());
-            m_txs.push_back(tx_ent);
-            m_send_tx_queue_internal->insert_ready_tx(tx_ent);
-        } else {
-            return xtxpool_error_tx_last_hash_not_match;
-        }
+        m_send_tx_queue_internal->erase_ready_tx(m_txs[try_replace_idx]->get_tx()->get_tx_hash_256());
+        m_txs.at(try_replace_idx) = tx_ent;
+        m_send_tx_queue_internal->insert_ready_tx(tx_ent);
     }
     return xsuccess;
 }
@@ -239,7 +211,7 @@ const std::vector<std::shared_ptr<xtx_entry>> xcontinuous_txs_t::pop_uncontinuou
         return {};
     }
     for (auto & tx : m_txs) {
-        m_send_tx_queue_internal->erase_ready_tx(tx->get_tx()->get_transaction()->digest());
+        m_send_tx_queue_internal->erase_ready_tx(tx->get_tx()->get_tx_hash_256());
     }
     return std::move(m_txs);
 }
@@ -253,7 +225,7 @@ int32_t xuncontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         if (tx_ent->get_tx()->get_transaction()->get_fire_timestamp() <= tx_ent_tmp->get_tx()->get_transaction()->get_fire_timestamp()) {
             return xtxpool_error_tx_nonce_duplicate;
         } else {
-            m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_transaction()->digest());
+            m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256());
             m_txs.erase(it);
         }
     }
@@ -286,7 +258,7 @@ void xuncontinuous_txs_t::erase(uint64_t nonce) {
     auto it = m_txs.find(nonce);
     if (it != m_txs.end()) {
         auto & tx_ent_tmp = it->second;
-        m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_transaction()->digest());
+        m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256());
         m_txs.erase(it);
     }
 }
@@ -314,8 +286,8 @@ void xsend_tx_account_t::try_continue() {
     }
 }
 
-void xsend_tx_account_t::update_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash) {
-    m_continuous_txs.update_latest_nonce(latest_nonce, latest_hash);
+void xsend_tx_account_t::update_latest_nonce(uint64_t latest_nonce) {
+    m_continuous_txs.update_latest_nonce(latest_nonce);
     try_continue();
 }
 
@@ -336,11 +308,11 @@ void xsend_tx_account_t::erase(uint64_t nonce, bool clear_follower) {
     m_uncontinuous_txs.erase(nonce);
 }
 
-int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce, const uint256_t & latest_hash) {
+int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce) {
     clear_expired_txs();
     std::shared_ptr<xtx_entry> to_be_droped_tx = nullptr;
     if (m_send_tx_queue_internal.full()) {
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_pool_full", 1);
+        XMETRICS_GAUGE(metrics::txpool_push_tx_send_fail_pool_full, 1);
         to_be_droped_tx = m_send_tx_queue_internal.pick_to_be_droped_tx();
         if (to_be_droped_tx == nullptr) {
             return xtxpool_error_queue_reached_upper_limit;
@@ -351,11 +323,11 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
     auto & account_addr = tx_ent->get_tx()->get_source_addr();
     auto it = m_send_tx_accounts.find(account_addr);
     if (it == m_send_tx_accounts.end()) {
-        send_tx_account = std::make_shared<xsend_tx_account_t>(&m_send_tx_queue_internal, latest_nonce, latest_hash);
+        send_tx_account = std::make_shared<xsend_tx_account_t>(&m_send_tx_queue_internal, latest_nonce);
         m_send_tx_accounts[account_addr] = send_tx_account;
     } else {
         send_tx_account = it->second;
-        send_tx_account->update_latest_nonce(latest_nonce, latest_hash);
+        send_tx_account->update_latest_nonce(latest_nonce);
     }
     int32_t ret = send_tx_account->push_tx(tx_ent);
     if ((ret == xsuccess) && (to_be_droped_tx != nullptr)) {
@@ -367,9 +339,13 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
         }
         tx_info_t txinfo(to_be_droped_tx->get_tx());
         pop_tx(txinfo, true);
-        if (to_be_droped_tx->get_tx()->get_transaction()->digest() == tx_ent->get_tx()->get_transaction()->digest()) {
+        if (to_be_droped_tx->get_tx()->get_tx_hash_256() == tx_ent->get_tx()->get_tx_hash_256()) {
             return xtxpool_error_queue_reached_upper_limit;
         }
+    }
+    if (send_tx_account->empty()) {
+        m_account_nonce_lru.put(account_addr, send_tx_account->get_latest_nonce());
+        m_send_tx_accounts.erase(account_addr);
     }
     return ret;
 }
@@ -412,8 +388,13 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_t::pop_tx(const tx_info_t & txin
 
     auto send_tx_account = m_send_tx_accounts.find(txinfo.get_addr());
     xassert(send_tx_account != m_send_tx_accounts.end());
-    send_tx_account->second.get()->erase(tx_ent->get_tx()->get_transaction()->get_tx_nonce(), clear_follower);
-    send_tx_account->second.get()->refresh();
+    send_tx_account->second->erase(tx_ent->get_tx()->get_transaction()->get_tx_nonce(), clear_follower);
+    send_tx_account->second->refresh();
+
+    if (send_tx_account->second->empty()) {
+        m_account_nonce_lru.put(txinfo.get_addr(), send_tx_account->second->get_latest_nonce());
+        m_send_tx_accounts.erase(txinfo.get_addr());
+    }
     return tx_ent;
 }
 
@@ -421,10 +402,16 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_t::find(const std::string & acco
     return m_send_tx_queue_internal.find(hash);
 }
 
-void xsend_tx_queue_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xsend_tx_queue_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
     auto send_tx_account = m_send_tx_accounts.find(account_addr);
     if (send_tx_account != m_send_tx_accounts.end()) {
-        send_tx_account->second->update_latest_nonce(latest_nonce, latest_hash);
+        send_tx_account->second->update_latest_nonce(latest_nonce);
+        if (send_tx_account->second->empty()) {
+            m_account_nonce_lru.put(account_addr, latest_nonce);
+            m_send_tx_accounts.erase(account_addr);
+        }
+    } else {
+        m_account_nonce_lru.put(account_addr, latest_nonce);
     }
 }
 
@@ -444,63 +431,18 @@ void xsend_tx_queue_t::clear_expired_txs() {
     }
 }
 
-int32_t xreceipt_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
-    if ((tx_ent->get_tx()->is_recv_tx() && m_xtable_info_ptr->is_recv_tx_reached_upper_limit()) ||
-        (tx_ent->get_tx()->is_confirm_tx() && m_xtable_info_ptr->is_confirm_tx_reached_upper_limit())) {
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail_pool_full", 1);
-        return xtxpool_error_queue_reached_upper_limit;
+bool xsend_tx_queue_t::get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const {
+    auto send_tx_account = m_send_tx_accounts.find(account_addr);
+    if (send_tx_account != m_send_tx_accounts.end()) {
+        latest_nonce = send_tx_account->second->get_latest_nonce();
+        return true;
     }
-
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
-    auto it_queue = m_ready_receipt_queue.insert(tx_ent);
-    m_ready_receipt_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = it_queue;
-    if (tx_ent->get_tx()->is_confirm_tx()) {
-        m_xtable_info_ptr->conf_tx_inc(1);
-    } else {
-        m_xtable_info_ptr->recv_tx_inc(1);
+    uint64_t nonce;
+    bool ret = m_account_nonce_lru.get(account_addr, nonce);
+    if (ret) {
+        latest_nonce = nonce;
     }
-    return xsuccess;
-}
-
-const std::vector<std::shared_ptr<xtx_entry>> xreceipt_queue_t::get_txs(uint32_t max_num) const {
-    std::vector<std::shared_ptr<xtx_entry>> ret_txs;
-
-    for (auto it_ready_tx = m_ready_receipt_queue.begin(); ret_txs.size() < max_num && it_ready_tx != m_ready_receipt_queue.end(); it_ready_tx++) {
-        ret_txs.push_back(*it_ready_tx);
-    }
-    return ret_txs;
-}
-
-const std::shared_ptr<xtx_entry> xreceipt_queue_t::pop_tx(const tx_info_t & txinfo) {
-    std::string hash_str = txinfo.get_hash_str();
-    auto it_map = m_ready_receipt_map.find(hash_str);
-    if (it_map == m_ready_receipt_map.end()) {
-        return nullptr;
-    }
-    auto tx_ent = *(it_map->second);
-    if (txinfo.get_subtype() != tx_ent->get_tx()->get_tx_subtype()) {
-        xtxpool_info("xreceipt_queue_t::pop_tx tx subtype not match tx:%s", tx_ent->get_tx()->dump().c_str());
-        return nullptr;
-    }
-    m_ready_receipt_queue.erase(it_map->second);
-    m_ready_receipt_map.erase(it_map);
-    if (tx_ent->get_tx()->is_confirm_tx()) {
-        m_xtable_info_ptr->conf_tx_dec(1);
-    } else {
-        m_xtable_info_ptr->recv_tx_dec(1);
-    }
-    xtxpool_info("xreceipt_queue_t::pop_tx ,table:%s,tx:%s", m_xtable_info_ptr->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
-    return tx_ent;
-}
-
-const std::shared_ptr<xtx_entry> xreceipt_queue_t::find(const std::string & account_addr, const uint256_t & hash) const {
-    std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    auto it_map = m_ready_receipt_map.find(hash_str);
-    if (it_map == m_ready_receipt_map.end()) {
-        return nullptr;
-    }
-    return *(it_map->second);
+    return ret;
 }
 
 }  // namespace xtxpool_v2

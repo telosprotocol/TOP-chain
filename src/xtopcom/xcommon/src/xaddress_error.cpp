@@ -14,124 +14,124 @@ xaddress_errc_map(int const errc) noexcept {
     auto const ec = static_cast<xaddress_errc_t>(errc);
     switch (ec) {
         case xaddress_errc_t::invalid_argument:
-            return u8"invalid argument";
+            return "invalid argument";
 
         case xaddress_errc_t::invalid_vhost_role:
-            return u8"invalid vhost role";
+            return "invalid vhost role";
 
         case xaddress_errc_t::vnode_not_found:
-            return u8"virtual node not found";
+            return "virtual node not found";
 
         case xaddress_errc_t::vnode_address_empty:
-            return u8"virtual address empty";
+            return "virtual address empty";
 
         case xaddress_errc_t::account_address_empty:
-            return u8"account address empty";
+            return "account address empty";
 
         case xaddress_errc_t::vnode_type_invalid:
-            return u8"vnode type invalid";
+            return "vnode type invalid";
 
         case xaddress_errc_t::version_not_exist:
-            return u8"version not exist";
+            return "version not exist";
 
         case xaddress_errc_t::version_mismatch:
-            return u8"version mismatch";
+            return "version mismatch";
 
         case xaddress_errc_t::version_empty:
-            return u8"version is empty";
+            return "version is empty";
 
         case xaddress_errc_t::version_not_empty:
-            return u8"version not empty";
+            return "version not empty";
 
         case xaddress_errc_t::virtual_network_not_exist:
-            return u8"virtual network not exist";
+            return "virtual network not exist";
 
         case xaddress_errc_t::associated_parent_group_not_exist:
-            return u8"associated parent group not exist";
+            return "associated parent group not exist";
 
         case xaddress_errc_t::associated_child_group_not_exist:
-            return u8"associated child groups not exist";
+            return "associated child groups not exist";
 
         case xaddress_errc_t::cluster_has_no_child:
-            return u8"cluster has no child";
+            return "cluster has no child";
 
         case xaddress_errc_t::cluster_id_empty:
-            return u8"cluster id empty";
+            return "cluster id empty";
 
         case xaddress_errc_t::cluster_not_exist:
-            return u8"cluster not exist";
+            return "cluster not exist";
 
         case xaddress_errc_t::cluster_address_empty:
-            return u8"cluster address empty";
+            return "cluster address empty";
 
         case xaddress_errc_t::cluster_address_not_empty:
-            return u8"cluster address not empty";
+            return "cluster address not empty";
 
         case xaddress_errc_t::cluster_address_not_exist:
-            return u8"cluster address not exist";
+            return "cluster address not exist";
 
         case xaddress_errc_t::cluster_address_format_error:
-            return u8"cluster address format error";
+            return "cluster address format error";
 
         case xaddress_errc_t::cluster_address_not_match:
-            return u8"cluster address of src and dst not match";
+            return "cluster address of src and dst not match";
 
         case xaddress_errc_t::zone_has_no_child:
-            return u8"zone has no child";
+            return "zone has no child";
 
         case xaddress_errc_t::zone_id_empty:
-            return u8"zone id empty";
+            return "zone id empty";
 
         case xaddress_errc_t::zone_not_exist:
-            return u8"zone not exist";
+            return "zone not exist";
 
         case xaddress_errc_t::empty_result:
-            return u8"empty result";
+            return "empty result";
 
         case xaddress_errc_t::sharding_info_not_exist:
-            return u8"sharding info not exist";
+            return "sharding info not exist";
 
         case xaddress_errc_t::sharding_info_empty:
-            return u8"sharding info empty";
+            return "sharding info empty";
 
         case xaddress_errc_t::node_id_empty:
-            return u8"node id empty";
+            return "node id empty";
 
         case xaddress_errc_t::network_id_mismatch:
-            return u8"network id mismatch";
+            return "network id mismatch";
 
         case xaddress_errc_t::rumor_manager_not_exist:
-            return u8"rumor manager not exist";
+            return "rumor manager not exist";
 
         case xaddress_errc_t::bad_address_cast:
-            return u8"bad address_cast";
+            return "bad address_cast";
 
         case xaddress_errc_t::vhost_empty:
-            return u8"vhost empty";
+            return "vhost empty";
 
         case xaddress_errc_t::vnetwork_driver_not_found:
-            return u8"vnetwork driver not found";
+            return "vnetwork driver not found";
 
         case xaddress_errc_t::missing_crypto_keys:
-            return u8"missing crypto keys";
+            return "missing crypto keys";
 
         case xaddress_errc_t::group_id_empty:
-            return u8"group id empty";
+            return "group id empty";
 
         case xaddress_errc_t::group_not_exist:
-            return u8"group not exist";
+            return "group not exist";
 
         case xaddress_errc_t::group_address_format_error:
-            return u8"group address format error";
+            return "group address format error";
 
         case xaddress_errc_t::group_address_not_match:
-            return u8"group address not match";
+            return "group address not match";
 
         case xaddress_errc_t::protocol_error:
-            return u8"protocol error";
+            return "protocol error";
 
         default:
-            return u8"virtual network unknown error";
+            return "virtual network unknown error";
     }
 }
 
@@ -149,7 +149,7 @@ class xtop_address_category final : public std::error_category
 {
     char const *
     name() const noexcept override {
-        return u8"[address] ";
+        return "[address] ";
     }
 
     std::string
@@ -165,26 +165,26 @@ address_category() {
     return category;
 }
 
-xtop_address_error::xtop_address_error(xaddress_errc_t const errc,
-                                       std::size_t const line,
-                                       char const * file)
-    : xtop_address_error{std::string{}, make_error_code(errc), line, file }
-{
-}
-
-xtop_address_error::xtop_address_error(std::string msg,
-                                       xaddress_errc_t const errc,
-                                       std::size_t const line,
-                                       char const * file)
-    : xtop_address_error{ std::move(msg), make_error_code(errc), line, file }
-{
-}
-
-xtop_address_error::xtop_address_error(std::string msg,
-                                       std::error_code ec,
-                                       std::size_t const line,
-                                       std::string file)
-    : base_t{ ec, file + u8":" + std::to_string(line) + (msg.empty() ? msg : (": extra info: " + msg)) } {
-}
+//xtop_address_error::xtop_address_error(xaddress_errc_t const errc,
+//                                       std::size_t const line,
+//                                       char const * file)
+//    : xtop_address_error{std::string{}, make_error_code(errc), line, file }
+//{
+//}
+//
+//xtop_address_error::xtop_address_error(std::string msg,
+//                                       xaddress_errc_t const errc,
+//                                       std::size_t const line,
+//                                       char const * file)
+//    : xtop_address_error{ std::move(msg), make_error_code(errc), line, file }
+//{
+//}
+//
+//xtop_address_error::xtop_address_error(std::string msg,
+//                                       std::error_code ec,
+//                                       std::size_t const line,
+//                                       std::string file)
+//    : base_t{ ec, file + ":" + std::to_string(line) + (msg.empty() ? msg : (": extra info: " + msg)) } {
+//}
 
 NS_END2

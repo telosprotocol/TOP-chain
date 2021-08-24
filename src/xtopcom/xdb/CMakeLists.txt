@@ -17,7 +17,7 @@ if (XDB_TYPE STREQUAL "ROCKSDB")
 
     target_link_libraries(xdb PRIVATE
         xxbase
-        rocksdb zstd snappy bz2 z lz4
+        rocksdb zstd snappy bz2 z
     )
 
 elseif (XDB_TYPE STREQUAL "LEVELDB")

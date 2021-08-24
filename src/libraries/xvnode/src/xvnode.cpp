@@ -8,13 +8,14 @@
 #include "xmbus/xevent_role.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvnetwork_driver.h"
+#include "xvnode/xerror/xerror.h"
 
 NS_BEG2(top, vnode)
 
 xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        common::xsharding_address_t const & sharding_address,
                        common::xslot_id_t const & slot_id,
-                       common::xversion_t const & version,
+                       common::xelection_round_t const & version,
                        std::uint16_t const group_size,
                        std::uint64_t const associated_blk_height,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -29,23 +30,28 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-  : m_elect_main{elect_main}
+  : xbasic_vnode_t{common::xnode_address_t{sharding_address,
+                                           common::xaccount_election_address_t{vhost->host_node_id(), slot_id},
+                                           version,
+                                           group_size,
+                                           associated_blk_height},
+                   vhost,
+                   election_cache_data_accessor}
+  , m_elect_main{elect_main}
   , m_router{router}
   , m_store{store}
   , m_block_store{block_store}
   , m_bus{bus}
   , m_logic_timer{logic_timer}
-  , m_vhost{vhost}
   , m_sync_obj{sync_obj}
   , m_grpc_mgr{grpc_mgr}
   , m_txpool{txpool}
-  , m_election_cache_data_accessor{election_cache_data_accessor}
   , m_dev_params{make_observer(std::addressof(data::xdev_params::get_instance()))}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, version, group_size, associated_blk_height})} {
-    bool is_edge_archive = common::has<common::xnode_type_t::archive>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
+    bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen) {
         m_cons_face = cons_mgr->create(m_the_binding_driver);
@@ -78,8 +84,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   : xtop_vnode{elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
                group_info->node_element(vhost->host_node_id())->slot_id(),
-               group_info->version(),
-               group_info->sharding_size(),
+               group_info->election_round(),
+               group_info->group_size(),
                group_info->associated_blk_height(),
                vhost,
                router,
@@ -120,7 +126,7 @@ void xtop_vnode::start() {
     assert(m_vhost != nullptr);
 
     new_driver_added();
-    m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::archive>(vnetwork_driver()->type()));
+    m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     if (m_cons_face != nullptr) {
         m_cons_face->start(this->start_time());
     }
@@ -151,28 +157,13 @@ void xtop_vnode::fade() {
 void xtop_vnode::stop() {
     // any component can stop should
     // control multi-times stop
-    m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::archive>(vnetwork_driver()->type()));
+    m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
     m_the_binding_driver->stop();
     driver_removed();
     update_contract_manager(true);
 
     xkinfo("[virtual node] vnode (%p) stop running at address %s", this, m_the_binding_driver->address().to_string().c_str());
-}
-
-common::xnode_type_t xtop_vnode::type() const {
-    assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->type();
-}
-
-common::xversion_t xtop_vnode::version() const {
-    assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->address().version();
-}
-
-common::xnode_address_t xtop_vnode::address() const {
-    assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->address();
 }
 
 void xtop_vnode::new_driver_added() {
@@ -193,22 +184,10 @@ void xtop_vnode::driver_removed() {
     sync_remove_vnet();
 }
 
-bool xtop_vnode::is_real_vnode(common::xnode_type_t const type, common::xnode_type_t const except_types) {
-    if (common::has<common::xnode_type_t::consensus_auditor>(type) || common::has<common::xnode_type_t::archive>(type) ||
-        common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::committee>(type) || common::has<common::xnode_type_t::zec>(type) ||
-        common::has<common::xnode_type_t::edge>(type)) {
-        return (type & except_types) == common::xnode_type_t::invalid;
-    }
-
-    return false;
-}
-
-bool xtop_vnode::is_real_vnode_except_edge(common::xnode_type_t const type) {
-    return is_real_vnode(type, common::xnode_type_t::edge);
-}
-
 void xtop_vnode::update_rpc_service() {
-    if (is_real_vnode(m_the_binding_driver->type(), common::xnode_type_t::archive | common::xnode_type_t::frozen)) {
+    xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
+    if (!common::has<common::xnode_type_t::storage_archive>(m_the_binding_driver->type()) &&
+        !common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
         auto const http_port = XGET_CONFIG(http_port);
         auto const ws_port = XGET_CONFIG(ws_port);
         // TODO(justin): remove unit_services temp
@@ -241,5 +220,13 @@ void xtop_vnode::sync_remove_vnet() {
 
     //}
 }
+
+//std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {
+//    assert(!ec);
+//
+//    if (address().xip2().xip().group_xip() == group_xip) {
+//        return neighbors_xip2(ec);
+//    }
+//}
 
 NS_END2

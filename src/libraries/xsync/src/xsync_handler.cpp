@@ -24,6 +24,7 @@
 #include "xsyncbase/xmessage_ids.h"
 #include "xdata/xblock.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xtable_bstate.h"
 
 NS_BEG2(top, sync)
 
@@ -67,7 +68,6 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_get_blocks, std::bind(&xsync_handler_t::get_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_blocks, std::bind(&xsync_handler_t::blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_push_newblock, std::bind(&xsync_handler_t::push_newblock, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    register_handler(xmessage_id_sync_v1_newblockhash, std::bind(&xsync_handler_t::v1_newblockhash, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_push_newblockhash, std::bind(&xsync_handler_t::push_newblockhash, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_broadcast_newblockhash, std::bind(&xsync_handler_t::broadcast_newblockhash, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_gossip, std::bind(&xsync_handler_t::gossip, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
@@ -85,6 +85,9 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_chain_snapshot_response, std::bind(&xsync_handler_t::handle_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_ondemand_chain_snapshot_request, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_request, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_ondemand_chain_snapshot_response, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_get_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::get_on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -128,7 +131,6 @@ void xsync_handler_t::on_event(const mbus::xevent_ptr_t& e) {
         m_behind_checker->on_timer();
         m_peer_keeper->on_timer();
         m_cross_cluster_chain_state->on_timer();
-        m_block_fetcher->on_timer_check_v1_newblockhash();
     }
 
     if (e->major_type == mbus::xevent_major_type_chain_timer) {
@@ -141,6 +143,8 @@ void xsync_handler_t::on_event(const mbus::xevent_ptr_t& e) {
             m_behind_checker->on_behind_check_event(e);
         else if (e->minor_type == mbus::xevent_behind_t::type_on_demand)
             m_sync_on_demand->on_behind_event(e);
+        else if (e->minor_type == mbus::xevent_behind_t::type_on_demand_by_hash)
+            m_sync_on_demand->on_behind_by_hash_event(e);
     }
 
     if (e->major_type == mbus::xevent_major_type_role) {
@@ -176,44 +180,13 @@ void xsync_handler_t::get_blocks(uint32_t msg_size, const vnetwork::xvnode_addre
         msg_hash, get_time()-recv_time, owner.c_str(), start_height, start_height+count-1, from_address.to_string().c_str());
 
     std::vector<xblock_ptr_t> vector_blocks;
-#if 0
-    // TODO remove it just now for fastsync update
-    // check service counts
-    auto const max_total_counts = XGET_CONFIG(executor_max_total_sessions_service_counts);
-    auto const total_counts = XGET_CONFIG(executor_max_session_service_counts);
-    auto const time_interval = XGET_CONFIG(executor_session_time_interval);
-
-    if (!m_session_mgr->plus(from_address, max_total_counts, total_counts, time_interval)) {
-        xsync_warn("xsync_handler getblocks out of quota %s %s", owner.c_str(), from_address.to_string().c_str());
-        m_sync_sender->send_blocks(xsync_msg_err_code_t::limit, owner, vector_blocks, from_address, network_self);
-        return;
-    }
-#endif
-    for (uint32_t i=0; i<count && i<max_request_block_count; i++) {
-        uint64_t height = start_height + (uint64_t)i;
-
-        xblock_ptr_t block = nullptr;
-        xauto_ptr<xvblock_t> blk_ptr = m_sync_store->load_block_object(owner, height);
-        if (blk_ptr != nullptr) {
-            block = autoptr_to_blockptr(blk_ptr);
-        } else {
-            base::xauto_ptr<base::xvblock_t> blk_ptr = m_sync_store->get_latest_cert_block(owner);
-            if (blk_ptr!=nullptr && blk_ptr->get_height()==height) {
-
-                assert(blk_ptr->is_input_ready(true));
-                assert(blk_ptr->is_output_ready(true));
-
-                block = autoptr_to_blockptr(blk_ptr);
-            }
+    for (uint32_t height = start_height, i = 0; height < start_height + count && i < max_request_block_count; height++) {
+        auto blocks = m_sync_store->load_block_objects(owner, height);
+        if (blocks.empty()) {
+            break;
         }
-
-        if (block != nullptr) {
-#ifdef DEBUG
-            xsync_dbg("xsync_handler get_blocks %s %lu %s",
-                ptr->owner.c_str(), block->get_height(), block->dump().c_str());
-#endif
-
-            vector_blocks.push_back(block);
+        for (uint32_t j = 0; j < blocks.size(); j++,i++){
+            vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
         }
     }
 
@@ -228,8 +201,8 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_push_newblock_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_push_newblock_recv", msg_size);
+    XMETRICS_GAUGE(metrics::xsync_recv_new_block, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_push_newblock_t>();
     ptr->serialize_from(stream);
@@ -239,9 +212,10 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
 
     xblock_ptr_t &block = ptr->block;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
         xsync_warn("xsync_handler receive push_newblock(target must be archive) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
 
@@ -249,17 +223,27 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         !common::has<common::xnode_type_t::consensus>(from_address.type())) {
         xsync_warn("xsync_handler receive push_newblock(source must be consensus) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
 
     const std::string &address = block->get_account();
     if (!m_role_chains_mgr->exists(address)) {
         xsync_warn("xsync_handler receive push_newblock(no role) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
+        return;
+    }
+
+    // check block existed already
+    auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
+    if (exist_block) {
+        XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
         return;
     }
 
     if (!check_auth(m_certauth, block)) {
         xsync_warn("xsync_handler receive push_newblock(auth failed) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
 
@@ -267,46 +251,6 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
 
     mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_block_t>(block, network_self, from_address);
     m_block_fetcher->push_event(ev);
-}
-
-void xsync_handler_t::v1_newblockhash(
-        uint32_t msg_size,
-        const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_message_header_ptr_t &header,
-        base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
-        int64_t recv_time) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_v1_newblockhash_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_v1_newblockhash_recv", msg_size);
-
-    auto ptr = make_object_ptr<xsync_message_v1_newblockhash_t>();
-    ptr->serialize_from(stream);
-
-    const std::string &address = ptr->address;
-    uint64_t height = ptr->height;
-    uint64_t view_id = ptr->view_id;
-
-    if (address == "" || height == 0 || view_id == 0)
-        return;
-
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
-        xsync_warn("xsync_handler receive receive v1_newblockhash(target must be archive) %" PRIx64 " %s %s %s",
-            msg_hash, address.c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
-        return;
-    }
-
-    if (!common::has<common::xnode_type_t::archive>(from_address.type())) {
-        xsync_warn("xsync_handler receive receive v1_newblockhash(sender must be archive) %" PRIx64 " %s %s %s",
-            msg_hash, address.c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
-        return;
-    }
-
-    xsync_info("xsync_handler receive v1_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id:%lu %s",
-        msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
-
-    m_block_fetcher->handle_v1_newblockhash(address, height, view_id, from_address, network_self);
 }
 
 void xsync_handler_t::push_newblockhash(uint32_t msg_size,
@@ -317,37 +261,36 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_push_newblockhash_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_push_newblockhash_recv", msg_size);
+    XMETRICS_GAUGE(metrics::xsync_recv_new_hash, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
     ptr->serialize_from(stream);
 
     const std::string &address = ptr->address;
     uint64_t height = ptr->height;
-    uint64_t view_id = ptr->view_id;
     const std::string &hash = ptr->hash;
 
-    if (address == "" || height == 0 || view_id == 0 || hash == "")
+    if (address == "" || height == 0 || hash == "")
         return;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
-        xsync_warn("xsync_handler receive push_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
+        xsync_warn("xsync_handler receive push_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
     if (!common::has<common::xnode_type_t::rec>(from_address.type()) && !common::has<common::xnode_type_t::zec>(from_address.type()) &&
         !common::has<common::xnode_type_t::consensus>(from_address.type())) {
-        xsync_warn("xsync_handler receive push_newblockhash(target must be consensus) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+        xsync_warn("xsync_handler receive push_newblockhash(target must be consensus) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
-    xsync_info("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,viewid=%lu %s,",
-        msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
+    xsync_dbg("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu %s,",
+        msg_hash, get_time()-recv_time, address.c_str(), height, from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, hash, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 
@@ -360,35 +303,34 @@ void xsync_handler_t::broadcast_newblockhash(uint32_t msg_size,
         int64_t recv_time) {
 
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_broadcast_newblockhash_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_broadcast_newblockhash_recv", msg_size);
+    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
     ptr->serialize_from(stream);
 
     const std::string &address = ptr->address;
     uint64_t height = ptr->height;
-    uint64_t view_id = ptr->view_id;
     const std::string &hash = ptr->hash;
 
-    if (address == "" || height == 0 || view_id == 0 || hash == "")
+    if (address == "" || height == 0 || hash == "")
         return;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
-        xsync_warn("xsync_handler receive broadcast_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
-        return;
-    }
-
-    if (!common::has<common::xnode_type_t::archive>(from_address.type())) {
-        xsync_warn("xsync_handler receive broadcast_newblockhash(source must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+    if (!common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
+        xsync_warn("xsync_handler receive broadcast_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
-    xsync_info("xsync_handler receive broadcast_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id=%lu %s,",
-        msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
+    if (!common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
+        xsync_warn("xsync_handler receive broadcast_newblockhash(source must be archive) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
+        return;
+    }
 
-    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
+    xsync_info("xsync_handler receive broadcast_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu %s,",
+        msg_hash, get_time()-recv_time, address.c_str(), height, from_address.to_string().c_str());
+
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, hash, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 
@@ -434,12 +376,6 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
                     block->get_account().c_str(), successor->get_account().c_str());
                 return;
             }
-
-            if (block->get_block_hash() != successor->get_last_block_hash()) {
-                xsync_warn("xsync_handler receive blocks(sequence error) (%s, %s)",
-                    block->dump().c_str(), successor->dump().c_str());
-                return;
-            }
         }
 
         successor = block.get();
@@ -447,11 +383,6 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
 
     if (data::is_unit_address(common::xaccount_address_t{successor->get_account()}))
         return;
-
-    if (blocks.size() == 1) {
-        if (m_block_fetcher->filter_block(blocks[0]))
-            return;
-    }
 
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
     m_downloader->push_event(e);
@@ -483,7 +414,7 @@ void xsync_handler_t::gossip(uint32_t msg_size, const vnetwork::xvnode_address_t
         if (info.local_height == info.peer_height)
             continue;
 
-        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_pocliy_full, network_self, from_address, reason);
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_policy_full, network_self, from_address, reason);
         m_downloader->push_event(ev);
     }
 }
@@ -573,11 +504,16 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
         const xchain_info_t &chain_info = it2->second;
 
         base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-        base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, chain_info.sync_policy);
         xchain_state_info_t info;
+        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         info.address = address;
-        info.start_height = latest_start_block->get_height();
-        info.end_height = latest_end_block->get_height();
+        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
+            info.start_height = 0;
+            info.end_height = 0;
+        } else {
+            info.start_height = latest_start_block->get_height();
+            info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+        }
         rsp_info_list.push_back(info);
     }
 
@@ -625,8 +561,8 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     ptr->serialize_from(stream);
     std::vector<xchain_state_info_t> &info_list = ptr->info_list;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
-        xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive) %" PRIx64 " count(%u), %s %s",
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
+        xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive or full node) %" PRIx64 " count(%u), %s %s",
             msg_hash, info_list.size(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
@@ -678,6 +614,11 @@ void xsync_handler_t::get_blocks_by_hashes(uint32_t msg_size,
         if (vblock != nullptr) {
             xblock_ptr_t block_ptr = autoptr_to_blockptr(vblock);
             vector_blocks.push_back(block_ptr);
+            xsync_info("xsync_handler receive get_blocks_by_hashes and success to query store, block hash is %s wait(%ldms), from address:%s",
+                data::to_hex_str(info.hash).c_str(), get_time()-recv_time, from_address.to_string().c_str());
+        } else {
+            xsync_info("xsync_handler receive get_blocks_by_hashes and fail to query store, block hash is %s wait(%ldms), from address:%s",
+                data::to_hex_str(info.hash).c_str(), get_time()-recv_time, from_address.to_string().c_str());
         }
     }
 
@@ -753,8 +694,9 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         for (auto &id: table_ids)
             set_table_ids.insert(id);
 
-        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, vnetwork_driver->archive_addresses(), set_table_ids);
-
+        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses,
+            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive),
+            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), set_table_ids);
 
         XMETRICS_COUNTER_INCREMENT("sync_cost_role_add_event", 1);
 
@@ -856,22 +798,24 @@ void xsync_handler_t::handle_chain_snapshot_request(
     ptr->serialize_from(stream);
 
     XMETRICS_COUNTER_INCREMENT("sync_handle_chain_snapshot_request", 1);
-    xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
-    base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock);
+    xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
+    base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock, false);
     if (blk != nullptr) {
-        xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
-        if ((full_block_ptr != nullptr) && (full_block_ptr->is_full_state_block())) {
-            base::xvboffdata_t* _offdata = full_block_ptr->get_offdata();
-            xobject_ptr_t<base::xvboffdata_t> offdata_ptr;
-            offdata_ptr.attach(_offdata);
-            _offdata->add_ref();
-            xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
-                offdata_ptr, ptr->m_height_of_fullblock);
-            m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
+        if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
+            // it must be full-table block now
+            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_chain_snapshot)) {
+                std::string property_snapshot = blk->get_full_state();
+                xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
+                    property_snapshot, ptr->m_height_of_fullblock);
+                m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
+            } else {
+                xsync_warn("xsync_handler receive chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
+                    ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
+            }
         } else {
-            xsync_info("xsync_handler receive chain_snapshot_request, account:%s, height:%llu, block_type:%d",
-                ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
+            xsync_error("xsync_handler receive chain_snapshot_request, and it is not full table,account:%s, height:%llu",
+                    ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
         }
     } else {
         xsync_info("xsync_handler receive chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
@@ -885,17 +829,17 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-        
+
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
-    
-    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s", 
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
-    
+
+    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
+
     XMETRICS_COUNTER_INCREMENT("sync_handler_chain_snapshot_reponse", 1);
 
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
-    m_downloader->push_event(e); 
+    m_downloader->push_event(e);
 }
 
 void xsync_handler_t::handle_ondemand_chain_snapshot_request(
@@ -909,9 +853,9 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_request(
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
     ptr->serialize_from(stream);
 
-	XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
-    xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
+    xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
     m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
 }
 
@@ -921,16 +865,52 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size,
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-        
+
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
-    
-    xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s", 
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
-    
+
+    xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
+
     XMETRICS_COUNTER_INCREMENT("sync_handler_ondemand_chain_snapshot_reponse", 1);
 
     m_sync_on_demand->handle_chain_snapshot(*(ptr.get()), from_address, network_self);
+}
+
+void xsync_handler_t::get_on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+    const vnetwork::xvnode_address_t &network_self,
+    const xsync_message_header_ptr_t &header,
+    base::xstream_t &stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time) {
+
+    XMETRICS_COUNTER_INCREMENT("sync_pkgs_get_on_demand_by_hash_blocks_recv", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_on_demand_by_hash_blocks_recv", msg_size);
+
+    auto ptr = make_object_ptr<xsync_message_get_on_demand_by_hash_blocks_t>();
+    ptr->serialize_from(stream);
+
+   m_sync_on_demand->handle_blocks_by_hash_request(*(ptr.get()), from_address, network_self);
+}
+
+void xsync_handler_t::on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+    const vnetwork::xvnode_address_t &network_self,
+    const xsync_message_header_ptr_t &header,
+    base::xstream_t &stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time) {
+
+    XMETRICS_COUNTER_INCREMENT("sync_pkgs_on_demand_by_hash_blocks_recv", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_on_demand_by_hash_blocks_recv", msg_size);
+
+    auto ptr = make_object_ptr<xsync_message_general_blocks_t>();
+    ptr->serialize_from(stream);
+
+    std::vector<xblock_ptr_t> &blocks = ptr->blocks;
+    if (blocks.size() == 0)
+        return;
+
+    m_sync_on_demand->handle_blocks_by_hash_response(blocks, from_address, network_self);
 }
 
 int64_t xsync_handler_t::get_time() {

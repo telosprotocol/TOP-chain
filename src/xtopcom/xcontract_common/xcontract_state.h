@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
 #if defined(__clang__)
@@ -22,7 +26,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
@@ -65,11 +69,14 @@ public:
     void deploy_src_code(std::string code, std::error_code & ec);
     void deploy_src_code(std::string code);
 
+    void deploy_bin_code(xbyte_buffer_t bin_code, std::error_code & ec);
+    void deploy_bin_code(xbyte_buffer_t bin_code);
+
     template <typename KeyT, typename ValueT>
     ValueT map_at(std::string const & property_full_name, KeyT const & key) const {
         std::error_code ec;
         auto ret = m_ac->map_at<KeyT, ValueT>(m_action_account_address, property_full_name, key, ec);
-        throw_error(ec);
+        top::error::throw_error(ec);
         return ret;
     }
 

@@ -5,6 +5,7 @@
 #include "xvnetwork/xbasic_vhost.h"
 
 #include "xbasic/xcrypto_key.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -47,18 +48,18 @@ common::xnetwork_id_t const & xtop_basic_vhost::network_id() const noexcept {
     return m_network_id;
 }
 
-std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_of_group2(xcluster_address_t const & group_addr, common::xversion_t const & version) const {
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_of_group2(xcluster_address_t const & group_addr, common::xelection_round_t const & election_round) const {
     assert(m_election_cache_data_accessor != nullptr);
 
     std::error_code ec{election::xdata_accessor_errc_t::success};
 
-    return m_election_cache_data_accessor->sharding_nodes(group_addr, version, ec);
+    return m_election_cache_data_accessor->sharding_nodes(group_addr, election_round, ec);
 }
 
 common::xnode_address_t xtop_basic_vhost::parent_group_address(xvnode_address_t const & child_addr) const {
     std::error_code ec{election::xdata_accessor_errc_t::success};
 
-    return m_election_cache_data_accessor->parent_address(child_addr.sharding_address(), child_addr.version(), ec);
+    return m_election_cache_data_accessor->parent_address(child_addr.sharding_address(), child_addr.election_round(), ec);
 }
 
 std::map<xvnode_address_t, xcrypto_key_t<pub>> xtop_basic_vhost::crypto_keys(std::vector<xvnode_address_t> const & nodes) const {
@@ -80,20 +81,11 @@ std::map<xvnode_address_t, xcrypto_key_t<pub>> xtop_basic_vhost::crypto_keys(std
         for (auto const & node : nodes) {
             s += node.to_string() + "|";
         }
-        XTHROW(xvnetwork_error_t, xvnetwork_errc_t::missing_crypto_keys, u8"size:" + std::to_string(nodes.size()) + s);
+        top::error::throw_error({ xvnetwork_errc_t::missing_crypto_keys }, "size:" + std::to_string(nodes.size()) + s);
     }
 
     return result;
 }
-
-// std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> xtop_basic_vhost::build_vnetwork(xvnetwork_construction_data_t const & vnetwork_construction_data) {
-//     return {};
-// }
-
-// std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> xtop_basic_vhost::build_vnetwork(data::election::xelection_result_store_t const & election_result_store,
-//                                                                                                         common::xzone_id_t const & zid) {
-//     return {};
-// }
 
 common::xlogic_time_t xtop_basic_vhost::last_logic_time() const noexcept {
     return m_chain_timer->logic_time();

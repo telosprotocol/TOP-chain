@@ -38,7 +38,7 @@ TEST_F(xtest_elect_nonconsensus_group_contract_fixture_t, test_edge) {
 }
 
 TEST_F(xtest_elect_nonconsensus_group_contract_fixture_t, test_archive) {
-    common::xnode_type_t node_type{common::xnode_type_t::archive};
+    common::xnode_type_t node_type{common::xnode_type_t::storage_archive};
     common::xzone_id_t zid{common::xarchive_zone_id};
     common::xcluster_id_t cid{common::xdefault_cluster_id};
     common::xgroup_id_t gid{common::xdefault_group_id};

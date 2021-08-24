@@ -9,7 +9,6 @@
 #include "xBFT/xconsaccount.h"
 #include "xbase/xobject_ptr.h"
 #include "xunit_service/xcons_face.h"
-#include "xunit_service/xcons_unorder_cache.h"
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xbase/xtimer.h"
@@ -20,7 +19,7 @@ using xconsensus::xcsaccount_t;
 class xbatch_packer : public xcsaccount_t, public base::xtimersink_t {
 public:
     explicit xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                           uint16_t                                        tableid,
+                           base::xtable_index_t &                          tableid,
                            const std::string &                             account_id,
                            std::shared_ptr<xcons_service_para_face> const &para,
                            std::shared_ptr<xblock_maker_face> const &      block_maker,
@@ -37,7 +36,7 @@ public:
 
     virtual bool on_timer_stop(const int32_t errorcode, const int32_t thread_id, const int64_t timer_id, const int64_t cur_time_ms, const int32_t timeout_ms, const int32_t timer_repeat_ms) override;
 
-    virtual uint16_t get_tableid();
+    virtual base::xtable_index_t get_tableid();
 
     // recv_in packet from this object to child layers
     virtual bool recv_in(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms);
@@ -68,15 +67,17 @@ protected:
 
 private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
+    bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
+    void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
 
+private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
-    uint16_t                                 m_tableid;
+    base::xtable_index_t                     m_tableid;
     volatile uint64_t                        m_last_view_id;
     std::shared_ptr<xcons_service_para_face> m_para;
     std::shared_ptr<xblock_maker_face>       m_block_maker;
     std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
-    xcons_unorder_cache                      m_unorder_cache;
     static constexpr uint32_t                m_empty_block_max_num{2};
     static constexpr uint32_t                m_timer_repeat_time_ms{3000};  // check account by every 3 seconds
     std::string                              m_account_id;
@@ -95,6 +96,6 @@ private:
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;
 using xbatch_packers = std::vector<xbatch_packer_ptr_t>;
 // batch_packer map for <tableid, packer>
-using xbatch_paker_map = std::map<uint16_t, xbatch_packer_ptr_t>;
+using xbatch_paker_map = std::map<base::xtable_index_t, xbatch_packer_ptr_t, table_index_compare>;
 
 NS_END2

@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xcontract_common/xbasic_contract.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xtransaction.h"
@@ -6,8 +10,6 @@
 
 NS_BEG2(top, contract_common)
 
-
-xtop_contract_metadata::xtop_contract_metadata(): m_type(xtop_contract_type::sys_kernel), m_account(""){}
 xtop_contract_metadata::xtop_contract_metadata(xtop_contract_metadata const& meta): m_type(meta.m_type), m_account(meta.m_account) {}
 
 common::xaccount_address_t xtop_basic_contract::address() const {

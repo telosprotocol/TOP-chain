@@ -41,12 +41,12 @@ private:
     std::mutex m_nodes_mutex{};
     std::unordered_map<common::xnode_address_t, std::shared_ptr<xvnode_face_t>> m_all_nodes{};
 
-#if defined DEBUG
+#if defined(DEBUG)
     std::thread::id m_election_notify_thread_id{};
     std::mutex m_temp_mutex;
 #endif
 
-    static constexpr char const * chain_timer_watch_name = u8"virtual_node_mgr_on_timer";
+    static constexpr char const * chain_timer_watch_name = "virtual_node_mgr_on_timer";
 
 public:
     xtop_vnode_manager(xtop_vnode_manager const &) = delete;
@@ -69,15 +69,24 @@ public:
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
-    xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> logic_timer,
-                       observer_ptr<vnetwork::xvhost_face_t> vhost,
+    xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
+                       observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                        std::unique_ptr<xvnode_factory_face_t> vnode_factory);
 
     void start() override;
 
     void stop() override;
 
-    std::vector<common::xip2_t> handle_election_data(std::unordered_map<common::xsharding_address_t, election::cache::xgroup_update_result_t> const & election_data) override;
+    /**
+     * @return std::pair<vector<common::xip2_t>, vector<common::xip2_t>> 
+     * 
+     * Pair.first is purely outdated xip2, which contains nodes which should be outdated at this exact version.
+     * Pair.second is logical outdated xip2,which containes nodes which were not in group for two continuous versions.
+     * 
+     * Certainly pair.second is the subset of pair.first 
+     */
+    std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> handle_election_data(
+        std::unordered_map<common::xsharding_address_t, election::cache::xgroup_update_result_t> const & election_data) override;
 
 private:
     void on_timer(common::xlogic_time_t time);

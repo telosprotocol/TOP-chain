@@ -73,8 +73,12 @@ public:
      * @param parents parents' xips
      * @param archives archives' xips for this turn
      */
-    void add_role(const vnetwork::xvnode_address_t& self_xip, const std::vector<vnetwork::xvnode_address_t>& neighbours,
-                  const std::vector<vnetwork::xvnode_address_t>& parents, const std::vector<vnetwork::xvnode_address_t>& archives, const std::set<uint16_t> &table_ids);
+    void add_role(const vnetwork::xvnode_address_t& self_xip, 
+                  const std::vector<vnetwork::xvnode_address_t>& neighbours,
+                  const std::vector<vnetwork::xvnode_address_t>& parents, 
+                  const std::vector<vnetwork::xvnode_address_t>& archives, 
+                  const std::vector<vnetwork::xvnode_address_t>& edge_archives,
+                  const std::set<uint16_t> &table_ids);
 
     /**
      * remove role by self xip
@@ -110,6 +114,7 @@ public:
     std::vector<vnetwork::xvnode_address_t> get_rand_archives(uint32_t max_peers);
 
     std::vector<vnetwork::xvnode_address_t> get_archive_list();
+    std::vector<vnetwork::xvnode_address_t> get_edge_archive_list();
 
     bool get_self_addr(vnetwork::xvnode_address_t& self_addr) const;
 
@@ -130,6 +135,7 @@ protected:
     std::string m_vnode_id;
     mutable std::mutex m_lock;
     xip_vector_ptr m_archive_xips{};
+    xip_vector_ptr m_edge_archive_xips{};
     std::unordered_map<vnetwork::xvnode_address_t, xrole_xips_t> m_map;
 };
 

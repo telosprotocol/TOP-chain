@@ -94,11 +94,11 @@ private:
     IpHashMap ip_hashmap_;
     AccountHashMap account_hashmap_;
     bool break_out_{ false };
-    RatelimitThread thread_;
     std::mutex mutex_;
     std::condition_variable cv_;
     int64_t second_interval_{ 1 };
     uint64_t clean_overtime_s_{ 600 };
+    RatelimitThread thread_;
 };
 
 NS_END2

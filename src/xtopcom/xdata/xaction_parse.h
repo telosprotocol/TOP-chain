@@ -6,7 +6,6 @@
 
 #include "xdata/xaction.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xpropertylog.h"
 #include "xdata/xtransaction.h"
 
 #include <map>

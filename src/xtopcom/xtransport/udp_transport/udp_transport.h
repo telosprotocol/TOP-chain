@@ -22,7 +22,7 @@
 #include "xbase/xutl.h"
 
 #include "xtransport/transport.h"
-#include "xpbase/base/xbyte_buffer.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xpbase/base/top_utils.h"
 #include "socket_intf.h"
 
@@ -33,7 +33,6 @@ namespace top {
 namespace transport {
 
 class MultiThreadHandler;
-using Xip2Header = _xip2_header;
 
 class UdpTransport : public Transport, public std::enable_shared_from_this<UdpTransport>  {
 public:
@@ -44,16 +43,7 @@ public:
             uint16_t local_port,
             MultiThreadHandler* message_handler) override;
     virtual void Stop() override;
-    virtual int SendData(
-            const xbyte_buffer_t& data,
-            const std::string& peer_ip,
-            uint16_t peer_port) override;
-    virtual int SendData(base::xpacket_t& packet) override;
-    virtual int SendDataWithProp(
-            base::xpacket_t& packet,
-            UdpPropertyPtr& udp_property) override;
-    virtual int SendToLocal(base::xpacket_t& packet) override;
-    virtual int SendToLocal(const xbyte_buffer_t& data) override;
+    virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) override;
 
     virtual int ReStartServer() override;
     virtual int32_t get_handle() override{ return static_cast<int32_t>(udp_handle_); }

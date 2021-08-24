@@ -10,14 +10,18 @@
 
 #include <string>
 
-#if defined XBUILD_GALILEO
-#    define SEED_URL "http://galileo.edge.topnetwork.org"
-#    define SERVER_HOST_PORT_HTTP "206.189.201.14:19081"
-#    define SERVER_HOST_PORT_WS "206.189.201.14:19085"
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+#   define SEED_URL "http://unreachable.org/"
+#   define SERVER_HOST_PORT_HTTP "127.0.0.1:19081"
+#   define SERVER_HOST_PORT_WS "127.0.0.1:19085"
+#elif defined(XBUILD_GALILEO)
+#   define SEED_URL "http://galileo.edge.topnetwork.org"
+#   define SERVER_HOST_PORT_HTTP "206.189.201.14:19081"
+#   define SERVER_HOST_PORT_WS "206.189.201.14:19085"
 #else
-#    define SEED_URL "http://mainnet.edge.topnetwork.org/"
-#    define SERVER_HOST_PORT_HTTP "206.189.227.204:19081"
-#    define SERVER_HOST_PORT_WS "206.189.227.204:19085"
+#   define SEED_URL "http://mainnet.edge.topnetwork.org/"
+#   define SERVER_HOST_PORT_HTTP "206.189.227.204:19081"
+#   define SERVER_HOST_PORT_WS "206.189.227.204:19085"
 #endif
 
 #define SDK_VERSION "1.0"
@@ -27,7 +31,6 @@ constexpr uint64_t MinDeposit = 1;
 constexpr uint64_t MinTxDeposit = 100000;
 //constexpr uint64_t TOP_UNIT = 1e6;  // 1TOP = 1e6 uTOP
 //#define ASSET_TOP(num) ((uint64_t)((num)*TOP_UNIT))
-const std::string TOP_ACCOUNT_PREFIX = "T00000";
 
 extern xChainSDK::user_info g_userinfo;
 extern xChainSDK::user_info copy_g_userinfo;

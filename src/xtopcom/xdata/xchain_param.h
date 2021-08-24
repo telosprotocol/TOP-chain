@@ -83,7 +83,6 @@ public:
     uint32_t                              zone_id {static_cast<uint32_t>(-1)};
     std::string                           db_path {};
     std::string                           country { "US" };
-    bool                                  client_mode {false};
 };
 
 struct xstaticec_params {

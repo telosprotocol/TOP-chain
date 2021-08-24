@@ -8,6 +8,8 @@
 #include "xbase/xobject.h"
 #include "xbase/xthread.h"
 #include "xbase/xutl.h"
+#include "xbasic/xutility.h"
+#include "xmetrics/xmetrics.h"
 #include "xvledger/xvblock.h"
 
 #include "xbasic/xtimer_driver.h"
@@ -21,65 +23,61 @@ xchain_timer_t::xchain_timer_t(std::shared_ptr<xbase_timer_driver_t> const & tim
     assert(m_timer_driver != nullptr);
 }
 
-void xchain_timer_t::process(common::xlogic_time_t time) {
-    // time::xchain_time_st current_time(timer_block, recv_ms);
+void xchain_timer_t::process(common::xlogic_time_t const old_time, common::xlogic_time_t const new_time, xlogic_timer_update_strategy_t update_strategy) {
+    assert(update_strategy == xlogic_timer_update_strategy_t::force ||
+           (update_strategy == xlogic_timer_update_strategy_t::discard_old_value && old_time < new_time));
+    // copy all callbacks into a temp local variable.
+    // there is an issue when the callback (a std::function object) wrappers the xobject_t object.
+    // the issue is when callbacks are copied into the local variable and right before a callback is called,
+    // the corresponding xobject_t is calling unwatch, then the callback may be invalid (the xobject_t's
+    // reference count may reach zero and the object is free by itself).
+    // std::function object is easy to make sure the object, inside it, is still alive via std::shared_ptr,
+    // but is hard to achieve the same result if the internal object is of type xobject_t.
+    // when the std::function object is constructed from lambda which captures an xobject_t instance,
+    // it may be easy to achieve the same result by wrapping the xobject_t pointer into an xobject_ptr_t instance.
+    // if the construction is from std::bind, it's hard.
+    std::map<std::string, time_watcher_item> callbacks;
     {
-        xdbg("m_one_timer_mutex notify_all begin");
-        std::lock_guard<std::mutex> lock(m_one_timer_mutex);
-        for (auto iter = m_watch_one_map.begin(); iter != m_watch_one_map.end();) {
-            xdbg("m_one_timer_mutex notify_all, %d", m_watch_one_map.size());
-            auto const & item = iter->second;
-            if (time >= item.interval) {  // use >= for exception
-                auto start = base::xtime_utl::gmttime_ms();
-                item.watcher(time);
-                auto end = base::xtime_utl::gmttime_ms();
-                if (end - start > 1000) {
-                    xwarn("[xchain_timer] watcher one: %ld cost long time:%d", iter->first, end - start);
-                }
-                iter = m_watch_one_map.erase(iter);
-            } else {
-                ++iter;
-            }
-        }
-        xdbg("m_one_timer_mutex notify_all end, %d", m_watch_one_map.size());
+        xdbg("xchain_timer_t m_mutex notify_all begin");
+        std::lock_guard<std::mutex> lock(m_mutex);
+        callbacks = m_watch_map;
+
+        xdbg("xchain_timer_t m_mutex notify_all end, %d", m_watch_map.size());
     }
 
-    {
-        // copy all callbacks into a temp local variable.
-        // there is an issue when the callback (a std::function object) wrappers the xobject_t object.
-        // the issue is when callbacks are copied into the local variable and right before a callback is called,
-        // the corresponding xobject_t is calling unwatch, then the callback may be invalid (the xobject_t's
-        // reference count may reach zero and the object is free by itself).
-        // std::function object is easy to make sure the object, inside it, is still alive via std::shared_ptr,
-        // but is hard to achieve the same result if the internal object is of type xobject_t.
-        // when the std::function object is constructed from lambda which captures an xobject_t instance,
-        // it may be easy to achieve the same result by wrapping the xobject_t pointer into an xobject_ptr_t instance.
-        // if the construction is from std::bind, it's hard.
-        std::map<std::string, time_watcher_item> callbacks;
-        {
-            xdbg("xchain_timer_t m_mutex notify_all begin");
-            std::lock_guard<std::mutex> lock(m_mutex);
-            callbacks = m_watch_map;
-
-            xdbg("xchain_timer_t m_mutex notify_all end, %d", m_watch_map.size());
+    auto const do_missing = update_strategy != xlogic_timer_update_strategy_t::force && (old_time + 10 >= new_time); // compensate up to 10 logic time.
+    if (do_missing) {
+        for (auto & callback_datum : callbacks) {
+            auto const & item = top::get<time_watcher_item>(callback_datum);
+            for (auto time = old_time + 1; time <= new_time; ++time) {
+                xinfo("notify_all:%s,%" PRIu64, top::get<std::string const>(callback_datum).c_str(), time);
+                if (time % item.interval == 0) {
+                    auto const start = base::xtime_utl::gmttime_ms();
+                    item.watcher(time);
+                    auto const end = base::xtime_utl::gmttime_ms();
+                    if (end - start > 1000) {
+                        xwarn("[xchain_timer] watcher: %s cost long time:%d", top::get<std::string const>(callback_datum).c_str(), end - start);
+                    }
+                }
+            }
         }
-
-        for (auto & iter : callbacks) {
-            time_watcher_item const & item = iter.second;
-            xinfo("notify_all:%s,%lld", iter.first.c_str(), time);
-            if (time % item.interval == 0) {
-                auto start = base::xtime_utl::gmttime_ms();
-                item.watcher(time);
-                auto end = base::xtime_utl::gmttime_ms();
+    } else {
+        for (auto & callback_datum : callbacks) {
+            auto const & item = top::get<time_watcher_item>(callback_datum);
+            xinfo("notify_all:%s,%" PRIu64, top::get<std::string const>(callback_datum).c_str(), new_time);
+            if (new_time % item.interval == 0) {
+                auto const start = base::xtime_utl::gmttime_ms();
+                item.watcher(new_time);
+                auto const end = base::xtime_utl::gmttime_ms();
                 if (end - start > 1000) {
-                    xwarn("[xchain_timer] watcher: %s cost long time:%d", iter.first.c_str(), end - start);
+                    xwarn("[xchain_timer] watcher: %s cost long time:%d", top::get<std::string const>(callback_datum).c_str(), end - start);
                 }
             }
         }
     }
 }
 
-void xchain_timer_t::update_time(common::xlogic_time_t time, xlogic_timer_update_strategy_t update_strategy) {
+void xchain_timer_t::update_time(common::xlogic_time_t new_time, xlogic_timer_update_strategy_t update_strategy) {
     if (update_strategy != xlogic_timer_update_strategy_t::discard_old_value && update_strategy != xlogic_timer_update_strategy_t::force) {
         assert(false);
         return;
@@ -87,43 +85,48 @@ void xchain_timer_t::update_time(common::xlogic_time_t time, xlogic_timer_update
 
     auto const current_time = m_curr_time.load(std::memory_order_relaxed);
 
+    // for debug purpose
+    bool const not_continuous = current_time + 1 < new_time;
+    if (not_continuous) {
+        XMETRICS_COUNTER_INCREMENT("chaintimer_clock_discontinuity", 1);
+    }
+
     std::chrono::steady_clock::time_point curr_time_update_time_point;
     {
-        std::lock_guard<std::mutex> lock{m_update_mutex};
+        std::lock_guard<std::mutex> lock{ m_update_mutex };
         curr_time_update_time_point = m_curr_time_update_time_point;
     }
-    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
-          time,
+    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p; discontinuity=%d",
+          new_time,
           current_time,
           static_cast<int64_t>(curr_time_update_time_point.time_since_epoch().count()),
           static_cast<int64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
-          static_cast<void *>(this));
+          static_cast<void *>(this),
+          not_continuous);
 
-    if (update_strategy == xlogic_timer_update_strategy_t::discard_old_value && current_time >= time) {
+    if (update_strategy == xlogic_timer_update_strategy_t::discard_old_value && current_time >= new_time) {
         return;
     }
 
     xinfo("logic_timer: updating timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
-          time,
+          new_time,
           current_time,
           static_cast<int64_t>(curr_time_update_time_point.time_since_epoch().count()),
           static_cast<int64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
           static_cast<void *>(this));
-    m_curr_time.store(time, std::memory_order_relaxed);
+    m_curr_time.store(new_time, std::memory_order_relaxed);
     {
         std::lock_guard<std::mutex> lock{m_update_mutex};
         m_curr_time_update_time_point = std::chrono::steady_clock::now();
     }
 
-    auto func = [](base::xcall_t & call, const int32_t thread_id, const uint64_t timenow_ms) -> bool {
-        auto _this = (xchain_timer_t *)call.get_param1().get_object();
-        auto time = call.get_param2().get_uint64();
-        auto recv_ms = call.get_param3().get_int64();
-        _this->process(time);
+    // this object is a global singleton object. Thus, directly pass 'this' to lambda object without add_ref() operation.
+    auto func = [this, current_time, new_time, update_strategy](base::xcall_t &, const int32_t, const uint64_t) -> bool {
+        process(current_time, new_time, update_strategy);
         return true;
     };
 
-    base::xcall_t c((base::xcallback_t)func, this, time, base::xtime_utl::gettimeofday_ms());
+    base::xcall_t c(func);
     m_timer_thread->send_call(c);
 }
 
@@ -173,14 +176,6 @@ bool xchain_timer_t::watch(const std::string & key, std::uint64_t interval, xcha
     xdbg("xchain_timer_t m_mutex watch : %s", key.c_str());
     std::lock_guard<std::mutex> lock(m_mutex);
     m_watch_map.insert({key, {interval, cb}});
-    return true;
-}
-
-bool xchain_timer_t::watch_one(uint64_t interval, xchain_time_watcher cb) {
-    xdbg("m_one_timer_mutex watch_one");
-    std::lock_guard<std::mutex> lock(m_one_timer_mutex);
-    static uint64_t             uuid{0};
-    m_watch_one_map.insert({++uuid, {interval, cb}});
     return true;
 }
 

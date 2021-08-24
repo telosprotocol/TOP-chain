@@ -26,18 +26,18 @@ xtop_election_group_result::associated_group_id(common::xgroup_id_t gid) noexcep
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::group_version() const noexcept {
     return m_group_version;
 }
 
-common::xversion_t &
+common::xelection_round_t &
 xtop_election_group_result::group_version() noexcept {
     return m_group_version;
 }
 
 void
-xtop_election_group_result::group_version(common::xversion_t ver) noexcept {
+xtop_election_group_result::group_version(common::xelection_round_t ver) noexcept {
     if (m_group_version.empty() && ver.has_value()) {
         m_group_version = std::move(ver);
     } else if (m_group_version < ver) {
@@ -45,42 +45,42 @@ xtop_election_group_result::group_version(common::xversion_t ver) noexcept {
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::associated_group_version() const noexcept {
     return m_associated_group_version;
 }
 
 void
-xtop_election_group_result::associated_group_version(common::xversion_t associated_gp_ver) noexcept {
+xtop_election_group_result::associated_group_version(common::xelection_round_t associated_gp_ver) noexcept {
     if (m_associated_group_version != associated_gp_ver) {
         m_associated_group_version = std::move(associated_gp_ver);
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::cluster_version() const noexcept {
     return m_cluster_version;
 }
 
 void
-xtop_election_group_result::cluster_version(common::xversion_t ver) noexcept {
+xtop_election_group_result::cluster_version(common::xelection_round_t ver) noexcept {
     if (m_cluster_version != ver) {
         m_cluster_version = std::move(ver);
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::election_committee_version() const noexcept {
     return m_election_committee_version;
 }
 
-common::xversion_t &
+common::xelection_round_t &
 xtop_election_group_result::election_committee_version() noexcept {
     return m_election_committee_version;
 }
 
 void
-xtop_election_group_result::election_committee_version(common::xversion_t committee_ver) noexcept {
+xtop_election_group_result::election_committee_version(common::xelection_round_t committee_ver) noexcept {
     if (m_election_committee_version != committee_ver) {
         m_election_committee_version = std::move(committee_ver);
     }
@@ -245,7 +245,7 @@ xtop_election_group_result::reset(iterator pos) {
 
 void
 xtop_election_group_result::clear(common::xslot_id_t const & slot_id) {
-    assert(!slot_id.empty());
+    assert(!broadcast(slot_id));
     auto const it = m_nodes.find(slot_id);
     if (it != std::end(m_nodes)) {
         do_clear(slot_id);
@@ -259,7 +259,7 @@ xtop_election_group_result::find(common::xnode_id_t const & nid) const noexcept 
         auto const & election_info_bundle = m_nodes.at(slot_id);
 
         if (election_info_bundle.empty()) {
-            if (reclaimed_slot_id.empty()) {
+            if (broadcast(reclaimed_slot_id)) {
                 reclaimed_slot_id = slot_id;
             }
         } else if (election_info_bundle.node_id() == nid) {
@@ -267,7 +267,7 @@ xtop_election_group_result::find(common::xnode_id_t const & nid) const noexcept 
         }
     }
 
-    if (reclaimed_slot_id.empty()) {
+    if (broadcast(reclaimed_slot_id)) {
         reclaimed_slot_id = common::xslot_id_t{ static_cast<common::xslot_id_t::value_type>(m_nodes.size()) };
     }
 
@@ -278,7 +278,7 @@ void xtop_election_group_result::normalize() noexcept {
     auto iter_begin = begin();
     auto iter_end = std::prev(end());
     while (iter_begin != iter_end) {
-        while (top::get<common::xslot_id_t const>(*iter_end).empty() || (top::get<xelection_info_bundle_t>(*iter_end).empty() && iter_begin != iter_end)) {
+        while (broadcast(top::get<common::xslot_id_t const>(*iter_end)) || (top::get<xelection_info_bundle_t>(*iter_end).empty() && iter_begin != iter_end)) {
             --iter_end;
         }
         while (!top::get<xelection_info_bundle_t>(*iter_begin).empty() && iter_begin != iter_end) {
@@ -299,7 +299,7 @@ void xtop_election_group_result::normalize() noexcept {
 
 void
 xtop_election_group_result::do_clear(common::xslot_id_t const & slot_id) {
-    assert(!slot_id.empty());
+    assert(!broadcast(slot_id));
     assert(m_nodes.find(slot_id) != std::end(m_nodes));
     m_nodes[slot_id].clear();
 }

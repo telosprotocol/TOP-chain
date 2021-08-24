@@ -16,7 +16,6 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xsync/xchain_block_fetcher.h"
 #include "xsync/xrole_chains_mgr.h"
-#include "xsync/xsync_v1_block_fetcher.h"
 
 NS_BEG2(top, sync)
 
@@ -61,7 +60,6 @@ public:
 
 public:
     void push_event(const mbus::xevent_ptr_t &e);
-    bool get_highest_info(const std::string &address, uint64_t &height, uint64_t &view_id) const;
 
 private:
     void process_event(const mbus::xevent_ptr_t &e);
@@ -78,11 +76,6 @@ private:
     xchain_block_fetcher_ptr_t create_chain(const std::string &address);
     void remove_chain(const std::string &address);
 
-public:
-    void handle_v1_newblockhash(const std::string &address, uint64_t height, uint64_t view_id, const vnetwork::xvnode_address_t &from_address, const vnetwork::xvnode_address_t &network_self);
-    bool filter_block(data::xblock_ptr_t &block);
-    void on_timer_check_v1_newblockhash();
-
 private:
     std::string m_vnode_id;
     observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
@@ -91,7 +84,6 @@ private:
     xsync_store_face_t *m_sync_store;
     xsync_broadcast_t *m_sync_broadcast;
     xsync_sender_t *m_sync_sender;
-    xsync_v1_block_fetcher_t m_v1_fetcher;
 
     std::unique_ptr<mbus::xmessage_bus_face_t> m_self_mbus{};
     std::unique_ptr<xblock_fetcher_event_monitor_t> m_monitor{};

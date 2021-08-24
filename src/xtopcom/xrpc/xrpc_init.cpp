@@ -48,10 +48,25 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         ws_server_ptr->start(ws_port);
         break;
     }
-    case common::xnode_type_t::archive: {
-        xassert(false);
+    case common::xnode_type_t::storage_archive:
+    {
+        assert(false);
+        break;
+    }
+    case common::xnode_type_t::storage_full_node:
+    {
+        init_rpc_cb_thread();
+        m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));
+        auto ip = vhost->address().xip2();
+        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, true, store, block_store, elect_main, election_cache_data_accessor);
+        http_server_ptr->start(http_port);
+        shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, store, block_store, elect_main, election_cache_data_accessor);
+        ws_server_ptr->start(ws_port);
+        xdbg("start arc rpc service.");
+        break;
     }
     default:
+        assert(false);
         break;
     }
 }

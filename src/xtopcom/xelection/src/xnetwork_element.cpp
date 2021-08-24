@@ -4,7 +4,7 @@
 
 #include "xbase/xlog.h"
 #include "xbasic/xthreading/xutility.h"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xelection/xcache/xnetwork_element.h"
@@ -29,7 +29,7 @@ std::shared_ptr<xzone_element_t>
 xtop_network_element::zone_element(common::xzone_id_t const & zone_id,
                                    std::error_code & ec) const {
     assert(!ec);
-    if (zone_id.empty() || common::broadcast(zone_id)) {
+    if (common::broadcast(zone_id)) {
         ec = xdata_accessor_errc_t::zone_id_empty;
 
         xwarn("%s network %" PRIu32 " looking for an empty zone id %" PRIu32,
@@ -60,7 +60,7 @@ std::shared_ptr<xzone_element_t>
 xtop_network_element::zone_element(common::xzone_id_t const & zone_id) const {
     std::error_code ec;
     auto ret = zone_element(zone_id, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -68,7 +68,7 @@ std::map<common::xzone_id_t, std::shared_ptr<xzone_element_t>>
 xtop_network_element::children() const {
     std::error_code ec{xdata_accessor_errc_t::success};
     auto ret = children(ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -110,7 +110,7 @@ std::shared_ptr<xzone_element_t>
 xtop_network_element::add_zone_element(common::xzone_id_t const & zone_id) {
     std::error_code ec;
     auto ret = add_zone_element(zone_id, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 

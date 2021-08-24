@@ -2,9 +2,9 @@
 #include "CLI11.hpp"
 #include "api_method_imp.h"
 #include "base/config_file.h"
-#include "client_http.hpp"
+#include "xtopcl/include/web/client_http.hpp"
 #include "task/task_info.h"
-#include "topchain_type.h"
+#include "xtopcl/include/xtop/topchain_type.h"
 #include "user_info.h"
 
 #include <functional>
@@ -19,7 +19,6 @@ std::vector<std::string> const COMMAND_LEVEL_FILTER = {"get", "system", "sendtx"
 std::vector<std::string> const COMMAND_HELP_STRING = {"-h", "--help"};
 constexpr int INDENT_WIDTH = 4;
 constexpr int HELP_WIDTH = 36;
-constexpr int BASE64_PRI_KEY_LEN = 44;
 static const uint32_t kExpirePeriod = 2 * 60 * 60 * 1000;  // expire  after 2 * 60 * 60 s92h)
 
 enum class Command_type : uint8_t { toplevel, get, system, sendtransaction, wallet, subcommands, debug };
@@ -58,7 +57,8 @@ public:
     void import_keystore(const std::string & keystore, std::ostringstream & out_str);
     void reset_keystore_password(std::string & path, std::ostringstream & out_str);
     int set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str);
-
+    void import_account(const int32_t & pf, std::ostringstream & out_str);
+    void export_account(const std::string & account, std::ostringstream & out_str);
     /*
      * debug
      */
@@ -68,7 +68,7 @@ public:
     /*
      * transfer
      */
-    void transfer1(std::string & to, double & amount, std::string & note, double & tx_deposit, std::ostringstream & out_str);
+    void transfer1(std::string & to, std::string & amount, std::string & note, std::string & tx_deposit, std::ostringstream & out_str);
 
     /*
      * query transaction
@@ -79,7 +79,7 @@ public:
      * mining
      */
     void query_miner_info(std::string & target, std::ostringstream & out_str);
-    void register_node(const double & mortgage,
+    void register_node(const std::string & mortgage_d,
                        const std::string & role,
                        const std::string & nickname,
                        const uint32_t & dividend_rate,
@@ -87,19 +87,19 @@ public:
                        std::ostringstream & out_str);
     void query_miner_reward(std::string & target, std::ostringstream & out_str);
     void claim_miner_reward(std::ostringstream & out_str);
-    void set_dividend_ratio(const uint32_t & dividend_rate, const double & tx_deposit, std::ostringstream & out_str);
+    void set_dividend_ratio(const uint32_t & dividend_rate, const std::string & tx_deposit, std::ostringstream & out_str);
     void set_miner_name(std::string & name, std::ostringstream & out_str);
     void change_miner_type(std::string & role, std::ostringstream & out_str);
     void unregister_node(std::ostringstream & out_str);
     void update_miner_info(const std::string & role,
                            const std::string & name,
                            const uint32_t & type,
-                           double & mortgage,
+                           const std::string & mortgage,
                            const uint32_t & rate,
                            const std::string & node_sign_key,
                            std::ostringstream & out_str);
-    void add_deposit(const double & deposit, std::ostringstream & out_str);
-    void reduce_deposit(const double & deposit, std::ostringstream & out_str);
+    void add_deposit(const std::string & deposit, std::ostringstream & out_str);
+    void reduce_deposit(const std::string & deposit, std::ostringstream & out_str);
     void withdraw_deposit(std::ostringstream & out_str);
 
     /*
@@ -108,29 +108,29 @@ public:
     void query_account(std::string & target, std::ostringstream & out_str);
     void query_block(std::string & target, std::string & height, std::ostringstream & out_str);
     void chain_info(std::ostringstream & out_str);
-    void deploy_contract(const uint64_t & gas_limit, const double & amount, const std::string & path, const double & deposit, std::ostringstream & out_str);
-    void call_contract(const double & amount, const string & addr, const std::string & func, const string & params, const double & tx_deposit, std::ostringstream & out_str);
+    void deploy_contract(const uint64_t & gas_limit, const std::string & amount, const std::string & path, const std::string & deposit, std::ostringstream & out_str);
+    void call_contract(const std::string & amount, const string & addr, const std::string & func, const string & params, const std::string & tx_deposit, std::ostringstream & out_str);
 
     /*
      * govern
      */
     void get_proposal(std::string & target, std::ostringstream & out_str);
     void cgp(std::ostringstream & out_str);
-    void submit_proposal(uint8_t & type, const std::string & target, const std::string & value, double & deposit, uint64_t & effective_timer_height, std::ostringstream & out_str);
+    void submit_proposal(uint8_t & type, const std::string & target, const std::string & value, std::string & deposit, uint64_t & effective_timer_height, std::ostringstream & out_str);
     void withdraw_proposal(const std::string & proposal_id, std::ostringstream & out_str);
     void tcc_vote(const std::string & proposal_id, const std::string & opinion, std::ostringstream & out_str);
 
     /*
      * resource
      */
-    void stake_for_gas(double & amount, std::ostringstream & out_str);
-    void withdraw_fund(double & amount, std::ostringstream & out_str);
+    void stake_for_gas(std::string & amount, std::ostringstream & out_str);
+    void withdraw_fund(std::string & amount, std::ostringstream & out_str);
 
     /*
      * staking
      */
     void stake_fund(uint64_t & amount, uint16_t & lock_duration, std::ostringstream & out_str);
-    void stake_withdraw_fund(uint64_t & amount, const double & tx_deposit, std::ostringstream & out_str);
+    void stake_withdraw_fund(uint64_t & amount, const std::string & tx_deposit, std::ostringstream & out_str);
     void vote_miner(std::vector<std::pair<std::string, int64_t>> & vote_infos, std::ostringstream & out_str);
     void withdraw_votes(std::vector<std::pair<std::string, int64_t>> & vote_infos, std::ostringstream & out_str);
     void query_votes(std::string & target, std::ostringstream & out_str);
@@ -158,7 +158,7 @@ public:
     int Config(const ParamList & param_list);
     int Key(const ParamList & param_list);
     int CreateAccount(const ParamList & param_list);
-    int CreateAccountKeystore(const ParamList & param_list);
+    //int CreateAccountKeystore(const ParamList & param_list);
     int attachCreateAccount(const ParamList & param_list, std::ostringstream & out_str);
     int CreateKey(const ParamList & param_list);
     int CreateKeypairKeystore(const ParamList & param_list);
@@ -240,7 +240,9 @@ private:
     void dump_userinfo(const user_info & info);
     std::string input_hiding();
     std::string input_no_hiding();
-
+    static int parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out);
+    int input_pri_key(std::string& pri_str);
+    int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
     MethodFuncMap methods_;
@@ -250,7 +252,7 @@ private:
     MethodFuncMap sendtransaction_methods_;
     MethodFuncMap wallet_methods_;
     MethodFuncMap debug_methods_;
-    std::string cache_pw{""};
+    std::string cache_pw{" "};
     std::map<std::string, std::string> cmd_name;
     const std::string empty_pw{" "};
     bool is_account{false};

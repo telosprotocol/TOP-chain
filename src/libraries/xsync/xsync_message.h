@@ -238,54 +238,6 @@ public:
     data::xblock_ptr_t block{};
 };
 
-struct xsync_message_v1_newblockhash_t : public top::basic::xserialize_face_t {
-protected:
-    virtual ~xsync_message_v1_newblockhash_t() {}
-public:
-    xsync_message_v1_newblockhash_t() {
-    }
-
-    xsync_message_v1_newblockhash_t(
-            const std::string &_address,
-            uint64_t _height,
-            uint64_t _view_id) :
-    address(_address),
-    height(_height),
-    view_id(_view_id) {
-    }
-
-protected:
-    int32_t do_write(base::xstream_t & stream) override {
-        KEEP_SIZE();
-        SERIALIZE_FIELD_BT(address);
-        SERIALIZE_FIELD_BT(height);
-        SERIALIZE_FIELD_BT(view_id);
-        return CALC_LEN();
-    }
-
-    int32_t do_read(base::xstream_t & stream) override {
-        try {
-            KEEP_SIZE();
-            DESERIALIZE_FIELD_BT(address);
-            DESERIALIZE_FIELD_BT(height);
-            DESERIALIZE_FIELD_BT(view_id);
-            return CALC_LEN();
-
-        } catch (...) {
-            address = "";
-            height = 0;
-            view_id = 0;
-        }
-
-        return 0;
-    }
-
-public:
-    std::string address;
-    uint64_t height;
-    uint64_t view_id;
-};
-
 struct xsync_message_general_newblockhash_t : public top::basic::xserialize_face_t {
 protected:
     virtual ~xsync_message_general_newblockhash_t() {}
@@ -296,11 +248,9 @@ public:
     xsync_message_general_newblockhash_t(
             const std::string &_address,
             uint64_t _height,
-            uint64_t _view_id,
             const std::string &_hash) :
     address(_address),
     height(_height),
-    view_id(_view_id),
     hash(_hash) {
     }
 
@@ -309,7 +259,6 @@ protected:
         KEEP_SIZE();
         SERIALIZE_FIELD_BT(address);
         SERIALIZE_FIELD_BT(height);
-        SERIALIZE_FIELD_BT(view_id);
         SERIALIZE_FIELD_BT(hash);
         return CALC_LEN();
     }
@@ -319,14 +268,12 @@ protected:
             KEEP_SIZE();
             DESERIALIZE_FIELD_BT(address);
             DESERIALIZE_FIELD_BT(height);
-            DESERIALIZE_FIELD_BT(view_id);
             DESERIALIZE_FIELD_BT(hash);
             return CALC_LEN();
 
         } catch (...) {
             address = "";
             height = 0;
-            view_id = 0;
             hash = "";
         }
 
@@ -336,7 +283,6 @@ protected:
 public:
     std::string address;
     uint64_t height;
-    uint64_t view_id;
     std::string hash;
 };
 
@@ -715,7 +661,7 @@ public:
     xsync_message_chain_snapshot_t() {
     }
     xsync_message_chain_snapshot_t(const std::string &tbl_account_addr,
-        const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height_of_fullblock):
+        const std::string & chain_snapshot, uint64_t height_of_fullblock):
     m_tbl_account_addr(tbl_account_addr), m_chain_snapshot(chain_snapshot), m_height_of_fullblock(height_of_fullblock) {
     }
 protected:
@@ -723,21 +669,65 @@ protected:
         KEEP_SIZE();
         SERIALIZE_FIELD_BT(m_tbl_account_addr);
         SERIALIZE_FIELD_BT(m_height_of_fullblock);
-        m_chain_snapshot->serialize_to(stream);
+        SERIALIZE_FIELD_BT(m_chain_snapshot);
         return CALC_LEN();
     }
     int32_t do_read(base::xstream_t & stream) override {
         KEEP_SIZE();
         DESERIALIZE_FIELD_BT(m_tbl_account_addr);
         DESERIALIZE_FIELD_BT(m_height_of_fullblock);
-        m_chain_snapshot = make_object_ptr<base::xvboffdata_t>();
-        m_chain_snapshot->serialize_from(stream);
+        DESERIALIZE_FIELD_BT(m_chain_snapshot);
         return CALC_LEN();
     }
 public:
     std::string m_tbl_account_addr;
-    xobject_ptr_t<base::xvboffdata_t> m_chain_snapshot;
+    std::string m_chain_snapshot;
     uint64_t m_height_of_fullblock;
+};
+
+struct xsync_message_get_on_demand_by_hash_blocks_t : public top::basic::xserialize_face_t {
+protected:
+    virtual ~xsync_message_get_on_demand_by_hash_blocks_t() {}
+public:
+    xsync_message_get_on_demand_by_hash_blocks_t() {
+    }
+
+    xsync_message_get_on_demand_by_hash_blocks_t(
+            const std::string& _address,
+            const std::string& _hash) :
+    address(_address),
+    hash(_hash) {
+    }
+
+protected:
+    int32_t do_write(base::xstream_t & stream) override {
+        KEEP_SIZE();
+        SERIALIZE_FIELD_BT(address);
+        SERIALIZE_FIELD_BT(hash);
+
+        return CALC_LEN();
+    }
+
+    int32_t do_read(base::xstream_t & stream) override {
+
+        try {
+
+            KEEP_SIZE();
+            DESERIALIZE_FIELD_BT(address);
+            DESERIALIZE_FIELD_BT(hash);
+
+            return CALC_LEN();
+        } catch (...) {
+            address = "";
+            hash = "";
+        }
+
+        return 0;
+    }
+
+public:
+    std::string address;
+    std::string hash;
 };
 
 NS_END2

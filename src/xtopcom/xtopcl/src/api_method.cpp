@@ -10,6 +10,7 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
+#include "xpbase/base/top_utils.h"
 
 #include <dirent.h>
 
@@ -19,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <cmath>
 
 namespace xChainSDK {
 using namespace xcrypto;
@@ -29,8 +31,13 @@ using std::ifstream;
 using std::ostringstream;
 static const std::string SAFEBOX_ENDPOINT_ENV = "SAFEBOX_ENDPOINT";
 
-bool check_pri_key(const std::string & base64_pri) {
-    return BASE64_PRI_KEY_LEN == base64_pri.size();
+bool check_pri_key(const std::string & str_pri) {
+    return BASE64_PRI_KEY_LEN == str_pri.size() || HEX_PRI_KEY_LEN == str_pri.size();
+}
+bool check_account_address(const std::string& account)
+{
+    return top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account ||
+        top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account;
 }
 
 xJson::Value ApiMethod::get_response_from_daemon() {
@@ -74,7 +81,22 @@ string ApiMethod::get_account_from_daemon() {
         return "";
     }
 }
-
+int ApiMethod::get_eth_file(std::string& account) {
+    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
+    std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);    
+    for (int i = 0; i < (int)files.size(); i++)
+    {
+        std::string file = files[i];
+        std::transform(file.begin() + 1, file.end(), file.begin() + 1, ::tolower);
+        if (file == account)
+        {
+            account = files[i];
+            break;
+        }
+    }
+    return 0;
+}
 string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
     auto token_response_json = get_response_from_daemon();
     try {
@@ -82,7 +104,9 @@ string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
         auto account = token_response_json["account"].asString();
         string base64_pri;
         if (!hex_ed_key.empty()) {
-            auto path = g_keystore_dir + '/' + account;
+            if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                get_eth_file(account);
+            std::string path = g_keystore_dir + '/' + account;
             base64_pri = decrypt_keystore_by_key(hex_ed_key, path);
         }
         return base64_pri;
@@ -97,10 +121,14 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
     if (safebox_endpoint != NULL) {
         daemon_host = safebox_endpoint;
     }
+    std::string account_temp(account);
+    if (top::base::xvaccount_t::get_addrtype_from_account(account_temp) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(account_temp.begin() + 1, account_temp.end(), account_temp.begin() + 1, ::tolower);
+
     HttpClient client(daemon_host);
     xJson::Value j;
     j["method"] = "set";
-    j["account"] = account;
+    j["account"] = account_temp;
     j["private_key"] = pri_key;
     j["expired_time"] = expired_time;
     std::string token_request = j.toStyledString();
@@ -128,16 +156,15 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
 
 bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
     if (g_userinfo.account.size() == 0) {
-        auto base64_pri = get_prikey_from_daemon(out_str);
-        if (!base64_pri.empty()) {
-            set_g_userinfo(base64_pri);
+        std::string str_pri = get_prikey_from_daemon(out_str);
+        if (!str_pri.empty()) {
+            set_g_userinfo(str_pri);
         } else {
             std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
             std::vector<std::string> accounts;
             for (auto file : files) {
-                if (file.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX) {
+                if (check_account_address(file))
                     accounts.push_back(file);
-                }
             }
             if (accounts.size() < 1) {
                 cout << "You do not have a TOP account, please create an account." << std::endl;
@@ -147,17 +174,18 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
                 cout << "There are multiple accounts in your wallet, please set a default account first." << std::endl;
                 return false;
             }
-            std::string base64_pri = xChainSDK::xcrypto::import_existing_keystore(empty_pw, g_keystore_dir + "/" + accounts[0]);
-            if (base64_pri.empty()) {
-                cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
+            // cout << "set_default_prikey:" <<accounts[0] <<endl;
+            std::string str_pri = xChainSDK::xcrypto::import_existing_keystore(cache_pw, g_keystore_dir + "/" + accounts[0]);
+            if (str_pri.empty()) {
+                //cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
                 return false;
             }
-            if (xChainSDK::xcrypto::set_g_userinfo(base64_pri)) {
+            if (xChainSDK::xcrypto::set_g_userinfo(str_pri)) {
 #ifdef DEBUG
                 cout << "[debug]" << g_userinfo.account << " has been set as the default account." << std::endl;
 #endif
             } else {
-                cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
+               // cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
                 return false;
             }
         }
@@ -254,10 +282,9 @@ void ApiMethod::create_account(const int32_t & pf, const string & pw_path, std::
 
     out_str << "Account Address: " << g_userinfo.account << std::endl;
     out_str << "Owner public-Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
-
     out_str << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
-    out_str << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
-    out_str << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
+    out_str << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
+    out_str << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
 
     return;
@@ -290,7 +317,7 @@ void ApiMethod::create_key(std::string & owner_account, const int32_t & pf, cons
     out_str << "Account Address: " << owner_account << std::endl;
     out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
     out_str << "You can share your public key with anyone.Others need it to interact with you!" << std::endl;
-    out_str << "You must nerver share the private key and keystore file with anyone!They can use them to make the node malicious." << std::endl;
+    out_str << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
     return;
@@ -344,9 +371,14 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
     for (size_t i = 0; i < keys.size(); ++i) {
         auto path = g_keystore_dir + "/" + keys[i];
         auto key_info = attach_parse_keystore(path, out_str);
-        auto account = key_info["account address"].asString();
+        std::string account = key_info["account_address"].asString();
+        if (account.empty())
+            account = key_info["account address"].asString();
+        if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
 
-        if (std::find(av.begin(), av.end(), account) == av.end()) {
+        if (std::find(av.begin(), av.end(), account) == av.end())
+        {
             av.push_back(account);
         }
 
@@ -397,7 +429,10 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
 }
 
 void ApiMethod::set_default_account(const std::string & account, const string & pw_path, std::ostringstream & out_str) {
-    const std::string store_path = g_keystore_dir + "/" + account;
+    std::string account_file(account);
+    if (top::base::xvaccount_t::get_addrtype_from_account(account_file) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        get_eth_file(account_file);
+    const std::string store_path = g_keystore_dir + "/" + account_file;
     std::fstream store_file;
     store_file.open(store_path, std::ios::in);
     if (!store_file) {
@@ -405,58 +440,26 @@ void ApiMethod::set_default_account(const std::string & account, const string & 
         return;
     }
 
-    std::string base64_pri;
     std::string ed_key;
     std::string pw = empty_pw;
     if (set_pw_by_file(pw_path, pw) != 0) {
         return;
     }
     ed_key = get_symmetric_ed_key(pw, store_path);
-    base64_pri = import_existing_keystore(pw, store_path, true);
-    if (base64_pri.empty()) {
+    std::string str_pri = import_existing_keystore(pw, store_path, true);
+    if (str_pri.empty()) {
         std::cout << "Please Input Password." << std::endl;
         pw = input_hiding();
         ed_key = get_symmetric_ed_key(pw, store_path);
-        base64_pri = import_existing_keystore(pw, store_path);
+        str_pri = import_existing_keystore(pw, store_path);
     }
 
-    if (!base64_pri.empty() && set_prikey_to_daemon(account, ed_key, out_str) == 0) {
+    if (!str_pri.empty() && set_prikey_to_daemon(account, ed_key, out_str) == 0) {
         out_str << "Set default account successfully." << std::endl;
     } else {
         out_str << "Set default account failed." << std::endl;
     }
     return;
-}
-
-void ApiMethod::import_keystore(const std::string & keystore, std::ostringstream & out_str) {
-    xJson::Value key_info_js;
-    xJson::Reader reader;
-    if (!reader.parse(keystore, key_info_js)) {
-        cout << "Private key error! " << endl;
-        return;
-    }
-    auto public_key = key_info_js["public_key"].asString();
-    auto account = key_info_js["account address"].asString();
-    auto key_type = key_info_js["key_type"].asString();
-    auto file_name = account;
-    if (key_type == "worker") {
-        auto public_key_b = utility::base64_decode(public_key);
-        top::utl::xecpubkey_t pub_key_obj((uint8_t *)(public_key_b.data()));
-        file_name = pub_key_obj.to_address('0', 0);
-        file_name = file_name.substr(4);
-    }
-    auto path = get_keystore_filepath(g_keystore_dir, file_name);
-    std::ifstream ifs(path);
-    if (ifs.good()) {
-        cout << "The keypair has exsited." << endl;
-        return;
-    }
-    std::ofstream key_file(path, std::ios::out | std::ios::trunc);
-    if (!key_file) {
-        std::cout << "Open Key File: " << path << " Error" << std::endl;
-    }
-
-    key_file << key_info_js.toStyledString();
 }
 
 void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringstream & out_str) {
@@ -498,6 +501,92 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
     }
 }
 
+void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str) {
+    is_account = true;
+    cache_pw = empty_pw;
+    if (pf == 1) {
+        if (!check_password()) {
+            return;
+        }
+    }
+    std::string pri_str;
+    if (input_pri_key(pri_str) != 0)
+        return;
+
+    std::string dir;
+    std::string path = create_new_keystore(cache_pw, dir, pri_str);
+    if (path.empty())
+        return;
+    
+    out_str << "Import successfully.\n" << std::endl;
+    out_str << "Account Address: " << g_userinfo.account << std::endl;
+    out_str << "Public-Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
+    return;
+}
+
+void ApiMethod::export_account(const std::string & account, std::ostringstream & out_str) {
+    if (account.empty()) {
+    /*    std::string account_temp = get_account_from_daemon();
+        if (!account_temp.empty())
+            g_userinfo.account = account_temp;
+        else { */
+            cache_pw = empty_pw;
+            if (!set_default_prikey(out_str))
+            {
+                std::cout << "Please Input Password." << std::endl;
+                cache_pw = input_hiding();
+                if (!set_default_prikey(out_str))
+                    return;
+            }
+     //   }
+    } else {
+        g_userinfo.account = account;
+    }
+
+    if (g_userinfo.account.empty())
+    {
+        out_str << "Please input account address." << std::endl;
+        return;
+    }
+    std::vector<std::string> keys = scan_key_dir(g_keystore_dir);
+    if (keys.size() == 0) {
+        out_str << "There is no account in wallet." << std::endl;
+        return;
+    }
+    for (size_t i = 0; i < keys.size(); ++i) {
+        if (keys[i] != g_userinfo.account)
+            continue;
+        std::string pw = cache_pw;
+        std::string keystore_file = g_keystore_dir + "/" + keys[i];
+        std::string str_pri = import_existing_keystore(pw, keystore_file, true);
+        if (str_pri.empty())
+        {
+            std::cout << "Please Input Password." << std::endl;
+            pw = input_hiding();
+
+            str_pri = import_existing_keystore(pw, keystore_file);
+            if (str_pri.empty()) {
+                out_str << "Password error！" << std::endl;
+                return;
+            }
+        }
+        out_str << "Export successfully.\n" << std::endl;
+        out_str << "Keystore file: " << keystore_file << std::endl;
+        out_str << "Account Address: " << g_userinfo.account << std::endl;
+        out_str << "Private-Key: " << str_pri << "\n\n";
+
+        std::ifstream keyfile(keystore_file, std::ios::in);
+        if (!keyfile)
+        {
+             return;
+        }
+        out_str << keyfile.rdbuf() << std::endl;
+        return;
+    }
+    out_str << "Account address error! The account does not exist." << std::endl;
+    return;
+}
+
 int ApiMethod::set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str) {
     if (g_keystore_dir.empty() || g_data_dir.empty()) {
         out_str << "invalid keystore path" << std::endl;
@@ -531,8 +620,10 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
                     target_kf = kf_path;
                 }
             }
-            if (name == "account address") {
+            if (name == "account address" || name == "account_address") {
                 target_node_id = key_info_js[name].asString();
+                if (top::base::xvaccount_t::get_addrtype_from_account(target_node_id) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                    std::transform(target_node_id.begin() + 1, target_node_id.end(), target_node_id.begin() + 1, ::tolower);
             }
         }  // end for (const auto & name...
         if (!target_kf.empty()) {
@@ -611,6 +702,9 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
 }
 
 void ApiMethod::create_chain_account(std::ostringstream & out_str) {
+    cout<<"Please input password:"<<endl;
+    cache_pw = input_hiding();
+
     if (!set_default_prikey(out_str)) {
         return;
     }
@@ -633,21 +727,32 @@ void ApiMethod::import_key(std::string & base64_pri, std::ostringstream & out_st
     }
 }
 
-void ApiMethod::transfer1(std::string & to, double & amount_d, std::string & note, double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string & note, std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-
+    if (!check_account_address(to))
+    {
+        cout << "Invalid transfer account address." <<endl;
+        return;
+    }
     std::string from = g_userinfo.account;
+    if (top::base::xvaccount_t::get_addrtype_from_account(to) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(to.begin() + 1, to.end(), to.begin() + 1, ::tolower);
 
     if (note.size() > 128) {
         std::cout << "note size: " << note.size() << " > maximum size 128" << endl;
         return;
     }
 
-    uint64_t amount = ASSET_TOP(amount_d);
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
+
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -677,6 +782,8 @@ void ApiMethod::query_miner_info(std::string & account, std::ostringstream & out
     } else {
         g_userinfo.account = account;
     }
+    if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
     auto rtn = api_method_imp_.getStandbys(g_userinfo, g_userinfo.account);
     if (rtn) {
         api_method_imp_.getElectInfo(g_userinfo, g_userinfo.account);
@@ -685,8 +792,59 @@ void ApiMethod::query_miner_info(std::string & account, std::ostringstream & out
     string null_out = g_userinfo.account + " account has not registered miner.";
     tackle_null_query(out_str, null_out);
 }
+int ApiMethod::parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out)
+{
+    if (!std::all_of(amount.begin(), amount.end(), [](char c) { return (c <= '9' && c >= '0') || c == '.'; }))
+    {
+        cout << "Data format is invalid." << endl;
+        return 1;
+    }
+    int dot_count = count_if(amount.begin(), amount.end(), [](char c) { return c == '.'; });
+    if (dot_count > 1)
+    {
+        cout << "Data format is invalid." << endl;
+        return 1;
+    }
+    std::string input = amount;
+    bool dot_found{false};
+    size_t i{0};
+    out = 0;
+    for (; i < (size_t)std::min(TOP_MAX_LENGTH + 1, (int)input.size()); ++i)
+    {
+        if (input[i] == '.')
+        {
+            dot_found = true;
+            break;
+        }
+        out *= 10;
+        out += input[i] - '0';
+    }
+    if (i == input.size())
+    {
+        out *= (uint32_t)std::pow(10, unit);
+        return 0; // parse finished
+    }
+    if (!dot_found)
+    {
+        cout << "Data format is invalid." << endl;
+        return 1;
+    }
 
-void ApiMethod::register_node(const double & mortgage_d,
+    ++i;
+    for (auto j = 0; j < (int)unit; ++j, ++i)
+    {
+        if (i >= input.size())
+        {
+            out = out * (uint32_t)std::pow(10, unit - j);
+            return 0;
+        }
+        out *= 10;
+        out += input[i] - '0';
+    }
+
+    return 0;
+}
+void ApiMethod::register_node(const std::string & mortgage_d,
                               const std::string & role,
                               const std::string & nickname,
                               const uint32_t & dividend_rate,
@@ -697,13 +855,6 @@ void ApiMethod::register_node(const double & mortgage_d,
     if (update_account(res, root) != 0) {
         return;
     }
-    /*
-        uint64_t account_balance = root["data"]["balance"].asUInt64();
-        if (ASSET_TOP(mortgage_d + MinTxDeposit) > account_balance) {
-            cout << g_userinfo.account << " account balance is not enough." << endl;
-            return;
-        }
-    */
     if (signing_key.empty()) {
         signing_key = top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key);
     } else {
@@ -715,7 +866,11 @@ void ApiMethod::register_node(const double & mortgage_d,
             auto public_key = key_info["public_key"].asString();
             if (public_key == signing_key) {
                 found = true;
-                auto account = key_info["account address"].asString();
+                std::string account = key_info["account_address"].asString();
+                if (account.empty())
+                    account = key_info["account address"].asString();
+                if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                    std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
                 if (account == g_userinfo.account) {
                     break;
                 } else {
@@ -737,7 +892,9 @@ void ApiMethod::register_node(const double & mortgage_d,
         return;
     }
 
-    uint64_t mortgage = ASSET_TOP(mortgage_d);
+    uint64_t mortgage;
+    if (parse_top_double(mortgage_d, TOP_UNIT_LENGTH, mortgage) != 0)
+        return;
     api_method_imp_.registerNode(g_userinfo, mortgage, role, nickname, signing_key, dividend_rate, out_str);
     auto result = out_str.str();
     xJson::Reader reader;
@@ -798,12 +955,14 @@ void ApiMethod::claim_miner_reward(std::ostringstream & out_str) {
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::set_dividend_ratio(const uint32_t & dividend_rate, const double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::set_dividend_ratio(const uint32_t & dividend_rate, const std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t tx_deposit; // = ASSET_TOP(tx_deposit_d);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -847,7 +1006,7 @@ void ApiMethod::unregister_node(std::ostringstream & out_str) {
 void ApiMethod::update_miner_info(const std::string & role,
                                   const std::string & name,
                                   const uint32_t & updated_deposit_type,
-                                  double & node_deposit_d,
+                                  const std::string & node_deposit_d,
                                   const uint32_t & dividend_rate,
                                   const std::string & node_sign_key,
                                   std::ostringstream & out_str) {
@@ -863,7 +1022,11 @@ void ApiMethod::update_miner_info(const std::string & role,
         auto key_info = parse_keystore(path);
         if (key_info["public_key"] == node_sign_key) {
             found = true;
-            if (key_info["account address"].asString() == g_userinfo.account) {
+            std::string account = key_info["account_address"].asString();
+            if (account.empty())
+                account = key_info["account address"].asString();
+
+            if (account == g_userinfo.account) {
                 break;
             } else {
                 cout << "The miner key does not match default account in wallet." << endl;
@@ -876,29 +1039,28 @@ void ApiMethod::update_miner_info(const std::string & role,
         return;
     }
 
-    uint64_t node_deposit = ASSET_TOP(node_deposit_d);
+    uint64_t node_deposit;  // = ASSET_TOP(node_deposit_d);
+    if (parse_top_double(node_deposit_d, TOP_UNIT_LENGTH, node_deposit) != 0)
+        return;
     api_method_imp_.updateNodeInfo(g_userinfo, role, name, updated_deposit_type, node_deposit, dividend_rate, node_sign_key, out_str);
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::add_deposit(const double & deposit_d, std::ostringstream & out_str) {
+void ApiMethod::add_deposit(const std::string & deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     xJson::Value root;
     if (update_account(res, root) != 0) {
         return;
     }
 
-    // uint64_t account_balance = root["data"]["balance"].asUInt64();
-    // if ((ASSET_TOP(deposit_d) + MinTxDeposit) > account_balance) {
-    //     cout << g_userinfo.account << " account balance is not enough." << endl;
-    //     return;
-    // }
-    uint64_t deposit = ASSET_TOP(deposit_d);
+    uint64_t deposit;  // = ASSET_TOP(deposit_d);
+    if (parse_top_double(deposit_d, TOP_UNIT_LENGTH, deposit) != 0)
+        return;
     api_method_imp_.stake_node_deposit(g_userinfo, deposit, out_str);
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::reduce_deposit(const double & deposit_d, std::ostringstream & out_str) {
+void ApiMethod::reduce_deposit(const std::string & deposit_d, std::ostringstream & out_str) {
     cout << "Do you confirm your remaining miner deposit after reducing is still enough for the miner." << endl;
     cout << "Comfirmed: Y or y" << endl;
     cout << "Unconfirmed：Any character other than Y/y" << endl;
@@ -911,7 +1073,9 @@ void ApiMethod::reduce_deposit(const double & deposit_d, std::ostringstream & ou
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t deposit = ASSET_TOP(deposit_d);
+    uint64_t deposit;  // = ASSET_TOP(deposit_d);
+    if (parse_top_double(deposit_d, TOP_UNIT_LENGTH, deposit) != 0)
+        return;
     api_method_imp_.unstake_node_deposit(g_userinfo, deposit, out_str);
     tackle_send_tx_request(out_str);
 }
@@ -940,6 +1104,8 @@ void ApiMethod::query_account(std::string & target, std::ostringstream & out_str
         }
     } else {
         g_userinfo.account = target;
+        if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            std::transform(g_userinfo.account.begin()+1, g_userinfo.account.end(), g_userinfo.account.begin()+1, ::tolower);
     }
     api_method_imp_.getAccount(g_userinfo, g_userinfo.account, out_str);
     tackle_null_query(out_str);
@@ -971,7 +1137,7 @@ void ApiMethod::chain_info(std::ostringstream & out_str) {
     api_method_imp_.getChainInfo(g_userinfo, out_str);
 }
 
-void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const double & amount_d, const std::string & code_path, const double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const std::string & amount_d, const std::string & code_path, const std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
@@ -981,8 +1147,12 @@ void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const double & amou
     tmp << code_file.rdbuf();
     string code = tmp.str();
 
-    uint64_t amount = ASSET_TOP(amount_d);
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -991,18 +1161,22 @@ void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const double & amou
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::call_contract(const double & amount_d,
+void ApiMethod::call_contract(const std::string & amount_d,
                               const string & addr,
                               const std::string & func,
                               const string & params,
-                              const double & tx_deposit_d,
+                              const std::string & tx_deposit_d,
                               std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t amount = ASSET_TOP(amount_d);
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -1028,14 +1202,16 @@ void ApiMethod::cgp(std::ostringstream & out_str) {
 void ApiMethod::submit_proposal(uint8_t & type,
                                 const std::string & target,
                                 const std::string & value,
-                                double & deposit_d,
+                                std::string & deposit_d,
                                 uint64_t & effective_timer_height,
                                 std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t deposit = ASSET_TOP(deposit_d);
+    uint64_t deposit; // = ASSET_TOP(deposit_d);
+    if (parse_top_double(deposit_d, TOP_UNIT_LENGTH, deposit) != 0)
+        return;
     api_method_imp_.submitProposal(g_userinfo, type, target, value, deposit, effective_timer_height, out_str);
     tackle_send_tx_request(out_str);
 }
@@ -1065,22 +1241,26 @@ void ApiMethod::tcc_vote(const std::string & proposal_id, const std::string & op
 /*
 resource
 */
-void ApiMethod::stake_for_gas(double & amount_d, std::ostringstream & out_str) {
+void ApiMethod::stake_for_gas(std::string & amount_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t amount = ASSET_TOP(amount_d);
+    uint64_t amount; // = ASSET_TOP(amount_d);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
     api_method_imp_.stakeGas(g_userinfo, g_userinfo.account, g_userinfo.account, amount, out_str);
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::withdraw_fund(double & amount_d, std::ostringstream & out_str) {
+void ApiMethod::withdraw_fund(std::string & amount_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t amount = ASSET_TOP(amount_d);
+    uint64_t amount; // = ASSET_TOP(amount_d);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
     api_method_imp_.unStakeGas(g_userinfo, g_userinfo.account, g_userinfo.account, amount, out_str);
     tackle_send_tx_request(out_str);
 }
@@ -1097,12 +1277,14 @@ void ApiMethod::stake_fund(uint64_t & amount, uint16_t & lock_duration, std::ost
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::stake_withdraw_fund(uint64_t & amount, const double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::stake_withdraw_fund(uint64_t & amount, const std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -1117,8 +1299,11 @@ void ApiMethod::vote_miner(std::vector<std::pair<std::string, int64_t>> & vote_i
     }
     std::map<std::string, int64_t> votes;
     for (auto p : vote_infos) {
-        votes[p.first] = p.second;
-        cout << p.first << " " << p.second << endl;
+        std::string account = p.first;
+        if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
+        votes[account] = p.second;
+        cout << account << " " << p.second << endl;
     }
     api_method_imp_.voteNode(g_userinfo, votes, out_str);
     tackle_send_tx_request(out_str);
@@ -1277,8 +1462,8 @@ ApiMethod::ApiMethod() {
 
     // wallet
     regist_method("createAccount", std::bind(&ApiMethod::CreateAccount, this, std::placeholders::_1), "Create accounts locally.", Command_type::wallet);
-    regist_method(
-        "createAccountKeystore", std::bind(&ApiMethod::CreateAccountKeystore, this, std::placeholders::_1), "Create account keystore file by private key.", Command_type::wallet);
+//    regist_method(
+//        "createAccountKeystore", std::bind(&ApiMethod::CreateAccountKeystore, this, std::placeholders::_1), "Create account keystore file by private key.", Command_type::wallet);
     regist_method("createKey", std::bind(&ApiMethod::CreateKey, this, std::placeholders::_1), "Create the public-private key pair.", Command_type::wallet);
     regist_method("createKeypairKeystore",
                   std::bind(&ApiMethod::CreateKeypairKeystore, this, std::placeholders::_1),
@@ -1931,6 +2116,16 @@ bool ApiMethod::check_password() {
         return true;
     }
 }
+int ApiMethod::input_pri_key(std::string& pri_str) {
+    cout<<"Please input private key."<<endl;
+    std::string pri_key = input_hiding();
+    if (check_pri_key(pri_key) == false) {
+        std::cout << "Private key length error!" << std::endl;
+        return 1;
+    }
+    pri_str = pri_key;
+    return 0;
+}
 
 int ApiMethod::CreateAccount(const ParamList & param_list) {
     if (param_list.size() > 1 && (COMMAND_HELP_STRING[0] == param_list[1] || COMMAND_HELP_STRING[1] == param_list[1])) {
@@ -1962,8 +2157,8 @@ int ApiMethod::CreateAccount(const ParamList & param_list) {
     auto path = create_new_keystore(cache_pw, dir);
     std::cout << "Successfully create an account locally!\n" << std::endl;
     std::cout << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
-    std::cout << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
-    std::cout << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
+    std::cout << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
+    std::cout << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
     std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Account Address: " << g_userinfo.account << std::endl;
@@ -1975,7 +2170,7 @@ int ApiMethod::CreateAccount(const ParamList & param_list) {
     is_account = false;
     return 0;
 }
-
+/*
 int ApiMethod::CreateAccountKeystore(const ParamList & param_list) {
     if (param_list.size() > 1 && (COMMAND_HELP_STRING[0] == param_list[1] || COMMAND_HELP_STRING[1] == param_list[1])) {
         std::cout << "Create account keystore file by private key.\n";
@@ -1992,10 +2187,10 @@ int ApiMethod::CreateAccountKeystore(const ParamList & param_list) {
         return -1;
     }
 
-    std::string base64_pri;
+    std::string str_pri;
     if (param_list.size() > 1) {
-        base64_pri = param_list[1];
-        if (!check_pri_key(base64_pri)) {
+        str_pri = param_list[1];
+        if (!check_pri_key(str_pri)) {
             cout << "private key error" << endl;
             return -1;
         }
@@ -2016,13 +2211,16 @@ int ApiMethod::CreateAccountKeystore(const ParamList & param_list) {
         }
     }
 
-    auto path = create_new_keystore(cache_pw, dir, base64_pri);
+    auto path = create_new_keystore(cache_pw, dir, str_pri);
     std::cout << "Successfully create an account keystore file!\n" << std::endl;
     std::cout << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
-    std::cout << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
-    std::cout << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
+    std::cout << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
+    std::cout << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    if (str_pri.size() == BASE64_PRI_KEY_LEN)
+        std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    else
+        std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Account Address: " << g_userinfo.account << std::endl;
     std::cout << "Account Keystore File Path: " << path << std::endl;
     if (copy_g_userinfo.account.size() != 0) {
@@ -2031,7 +2229,7 @@ int ApiMethod::CreateAccountKeystore(const ParamList & param_list) {
     }
     is_account = false;
     return 0;
-}
+}*/
 
 int ApiMethod::CreateKey(const ParamList & param_list) {
     if (param_list.size() > 1 && (COMMAND_HELP_STRING[0] == param_list[1] || COMMAND_HELP_STRING[1] == param_list[1])) {
@@ -2061,7 +2259,7 @@ int ApiMethod::CreateKey(const ParamList & param_list) {
     auto path = create_new_keystore(cache_pw, dir, true);
     std::cout << "Successfully create an key locally!\n" << std::endl;
     std::cout << "You can share your public key with anyone.Others need it to interact with you!" << std::endl;
-    std::cout << "You must nerver share the private key and keystore file with anyone!They can use them to make the node malicious." << std::endl;
+    std::cout << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     std::cout << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
     std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
@@ -2087,10 +2285,10 @@ int ApiMethod::CreateKeypairKeystore(const ParamList & param_list) {
         return -1;
     }
 
-    std::string base64_pri;
+    std::string str_pri;
     if (param_list.size() > 1) {
-        base64_pri = param_list[1];
-        if (!check_pri_key(base64_pri)) {
+        str_pri = param_list[1];
+        if (!check_pri_key(str_pri)) {
             cout << "private key error" << endl;
             return -1;
         }
@@ -2109,11 +2307,11 @@ int ApiMethod::CreateKeypairKeystore(const ParamList & param_list) {
         }
     }
 
-    auto path = create_new_keystore(cache_pw, dir, base64_pri, true);
+    auto path = create_new_keystore(cache_pw, dir, str_pri, true);
     std::cout << "Successfully create a publice-private key pair keystore file!\n" << std::endl;
     std::cout << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
-    std::cout << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
-    std::cout << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
+    std::cout << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
+    std::cout << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
     std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
@@ -2159,7 +2357,7 @@ int ApiMethod::attachCreateKey(const ParamList & param_list, std::ostringstream 
     auto path = create_new_keystore(cache_pw, dir, true);
     out_str << "Successfully create an key locally!\n" << std::endl;
     out_str << "You can share your public key with anyone.Others need it to interact with you!" << std::endl;
-    out_str << "You must nerver share the private key and keystore file with anyone!They can use them to make the node malicious." << std::endl;
+    out_str << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
     out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
@@ -2207,8 +2405,8 @@ int ApiMethod::attachCreateAccount(const ParamList & param_list, std::ostringstr
     auto path = create_new_keystore(cache_pw, dir);
     out_str << "Successfully create an account locally!\n" << std::endl;
     out_str << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
-    out_str << "You must nerver share the private key and keystore file with anyone!They control access to your funds!" << std::endl;
-    out_str << "You must backup your keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
+    out_str << "You must nerver share the private key or keystore file with anyone!They control access to your funds!" << std::endl;
+    out_str << "You must backup your keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
     out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     out_str << "Account Address: " << g_userinfo.account << std::endl;
@@ -2305,7 +2503,10 @@ void ApiMethod::outAccountBalance(const std::string & account, std::ostringstrea
     std::ostringstream as;
     auto tmp = g_userinfo.account;
     g_userinfo.account = account;
-    api_method_imp_.getAccount(g_userinfo, account, as);
+    std::string q_account(account);
+    if (top::base::xvaccount_t::get_addrtype_from_account(q_account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(q_account.begin()+1, q_account.end(), q_account.begin()+1, ::tolower);
+    api_method_imp_.getAccount(g_userinfo, q_account, as);
     g_userinfo.account = tmp;
     xJson::Reader reader;
     xJson::Value root;
@@ -3794,6 +3995,13 @@ void ApiMethod::change_trans_mode(bool use_http) {
         // std::cout << "Using trans mode - WS: " << g_server_host_port  << std::endl;
     }
 #ifdef DEBUG
+    // std::cout << "[debug]edge_domain_name old: " << g_edge_domain << std::endl;
+    char* topio_home = getenv("TOPIO_HOME");
+//    std::cout <<"data_dir:" << topio_home << std::endl;
+    if (topio_home) {
+        g_data_dir = topio_home;
+//        std::cout <<"data_dir:" << g_data_dir << std::endl;
+    }
     auto edge_config_path = g_data_dir + "/.edge_config.json";
     std::ifstream edge_config_file(edge_config_path, std::ios::in);
     if (!edge_config_file) {

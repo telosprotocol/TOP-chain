@@ -49,7 +49,6 @@ xbyte_buffer_t xgossip_message_t::create_payload(
 
         blockchain_info_t info;
         info.height = ptr->max_height;
-        info.viewid = ptr->view_id;
         info.index = (uint16_t) index;
         info.suffix = (uint16_t) table_id;
         second_list.push_back(info);
@@ -127,7 +126,6 @@ void xgossip_message_t::parse_payload(const xbyte_buffer_t& msg,
                 xgossip_chain_info_ptr_t ptr = std::make_shared<xgossip_chain_info_t>();
                 ptr->owner = address;
                 ptr->max_height = info.height;
-                ptr->view_id = info.viewid;
                 info_list.push_back(ptr);
 
                 //xdbg("xgossip_message_t recv %s %lu %u %u", address.c_str(), info.height, info.index, info.suffix);

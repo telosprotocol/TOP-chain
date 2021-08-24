@@ -16,8 +16,6 @@
 #include "xtransport/udp_transport/xudp_socket.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xtransport/message_manager/multi_message_handler.h"
-#include "xtransport/udp_config.h"
-#include "xtransport/udp_transport/raw_udp_socket.h"
 #include "xtransport/udp_transport/transport_filter.h"
 
 using namespace top;
@@ -89,31 +87,20 @@ int UdpTransport::Start(
         TOP_ERROR("udp listen failed!");
         return kTransportFailed;
     }
-
-    SetOptBuffer();
-
 #if defined(LINUX) || defined(linux) || defined(__linux) || defined(__linux__)
+    SetOptBuffer();
     base::xsocket_utl::set_recv_buffer(udp_handle_, 8 * 1024 * 1024);
 #else
-    base::xsocket_utl::set_recv_buffer(udp_handle_, 4 * 1024 * 1024);  // 4 M for mac
+    auto send_buf_size = 4 * 1024 * 1024;
+    base::xsocket_utl::set_send_buffer(udp_handle_, send_buf_size);
+    base::xsocket_utl::set_recv_buffer(udp_handle_, send_buf_size);  // 4 M for mac
 #endif
 
 
     message_handler_ = message_handler;
 
-    if (transport::UdpConfig::Instance()->UseXudp()) {
-        udp_socket_ = new XudpSocket(
-            base::xcontext_t::instance(),
-            io_thread_->get_thread_id(),
-            udp_handle_,
-            message_handler_);
-    } else {
-        udp_socket_ = new RawUdpSocket(
-            base::xcontext_t::instance(),
-            io_thread_->get_thread_id(),
-            udp_handle_,
-            message_handler_);
-    }
+    udp_socket_ = new XudpSocket(base::xcontext_t::instance(), io_thread_->get_thread_id(), udp_handle_, message_handler_);
+
     udp_socket_->StartRead();
     local_ip_ = local_ip;
     local_port_ = udp_socket_->GetLocalPort();
@@ -133,10 +120,7 @@ void UdpTransport::Stop() {
     socket_connected_ = false;
 }
 
-int UdpTransport::SendData(
-        const xbyte_buffer_t& data,
-        const std::string& peer_ip,
-        uint16_t peer_port) {
+int UdpTransport::SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag) {
     if (!socket_connected_) {
         TOP_ERROR("udp socket not alive, SendData failed");
         return kTransportFailed;
@@ -146,57 +130,7 @@ int UdpTransport::SendData(
         return kTransportFailed;
     }
 
-    return udp_socket_->SendData(data, peer_ip, peer_port);
-}
-
-int UdpTransport::SendData(base::xpacket_t& packet) {
-    if (!socket_connected_) {
-        TOP_ERROR("udp socket not alive, SendData failed");
-        return kTransportFailed;
-    }
-    if (udp_socket_ == NULL) {
-        TOP_ERROR("udp socket is NULL");
-        return kTransportFailed;
-    }
-
-    return udp_socket_->SendData(packet);
-}
-
-int UdpTransport::SendDataWithProp(
-        base::xpacket_t& packet,
-        UdpPropertyPtr& udp_property) {
-    if (!socket_connected_) {
-        TOP_ERROR("udp socket not alive, SendData failed");
-        return kTransportFailed;
-    }
-    if (udp_socket_ == NULL) {
-        TOP_ERROR("udp socket is NULL");
-        return kTransportFailed;
-    }
-
-    return udp_socket_->SendDataWithProp(packet, udp_property);
-}
-
-int UdpTransport::SendToLocal(base::xpacket_t& packet) {
-    if (!socket_connected_) {
-        TOP_ERROR("udp socket not alive, SendData failed");
-        return kTransportFailed;
-    }
-    if (udp_socket_ == NULL) {
-        TOP_ERROR("udp socket is NULL");
-        return kTransportFailed;
-    }
-
-    // usually not add header here
-    udp_socket_->AddXip2Header(packet);
-    return udp_socket_->SendToLocal(packet);
-}
-
-int UdpTransport::SendToLocal(const xbyte_buffer_t& data) {
-    uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, false);
-    packet.get_body().push_back((uint8_t*)data.data(), data.size());  // NOLINT
-    return SendToLocal(packet);
+    return udp_socket_->SendDataWithProp(data, peer_ip, peer_port, udp_property, priority_flag);
 }
 
 int UdpTransport::ReStartServer() {
@@ -227,21 +161,14 @@ int UdpTransport::ReStartServer() {
 
     // SetOptBuffer();
 
-    if (transport::UdpConfig::Instance()->UseXudp()) {
+ 
         udp_socket_ = new XudpSocket(
             base::xcontext_t::instance(),
             io_thread_->get_thread_id(),
             udp_handle_,
             message_handler_);
         TOP_FATAL("new socket(%p)", udp_socket_);
-    } else {
-        udp_socket_ = new RawUdpSocket(
-            base::xcontext_t::instance(),
-            io_thread_->get_thread_id(),
-            udp_handle_,
-            message_handler_);
-        TOP_FATAL("new socket(%p)", udp_socket_);
-    }
+
     udp_socket_->StartRead();
     socket_connected_ = true;
     TOP_INFO("UdpTransport::ReStartServer() success");

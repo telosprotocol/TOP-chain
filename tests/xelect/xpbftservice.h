@@ -135,7 +135,7 @@ namespace top
 
             virtual std::vector<xvnode_address_t>   neighbor_addresses() const;
 //
-//            virtual std::vector<xvnode_address_t>   child_addresses(common::xrole_type_t const child_type = common::xrole_type_t::consensus) const
+//            virtual std::vector<xvnode_address_t>   child_addresses(common::xrole_type_t const child_type = common::xrole_type_t::validator) const
 //            {
 //                printf("xvnetwork_driver_face::child_addresses \n");
 //                return std::vector<xvnode_address_t>();

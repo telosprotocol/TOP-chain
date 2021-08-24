@@ -8,6 +8,7 @@
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
 #include "xbase/xbase.h"
+#include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, mbus)
 
@@ -120,19 +121,40 @@ xevent_queue_ptr_t xmessage_bus_t::get_queue(int major_type) {
 }
 
 //XTODO,add implmentation for below
-xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_t * target_block) {
-  xassert(false); // TODO xevent_ptr_t should use object ptr
-  return nullptr;
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_t * target_index) {
+    if (target_index->get_address() != sys_contract_beacon_timer_addr) {
+        return  make_object_ptr<mbus::xevent_store_block_to_db_t>(target_index->get_address(), target_index, true);
+    } else {
+        return nullptr;
+    }
+}
+
+xevent_ptr_t  xmessage_bus_t::create_event_for_revoke_index_to_db(base::xvbindex_t * target_index)
+{
+    return nullptr;
 }
 
 xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * this_block_ptr) {
-    data::xblock_t* block = dynamic_cast<data::xblock_t*>(this_block_ptr);
-    xassert(block != nullptr);
-    block->add_ref();
-    data::xblock_ptr_t obj;
-    obj.attach(block);
+    if (this_block_ptr->get_account() != sys_contract_beacon_timer_addr) {
+        data::xblock_t* block = dynamic_cast<data::xblock_t*>(this_block_ptr);
+        xassert(block != nullptr);
+        block->add_ref();
+        data::xblock_ptr_t obj;
+        obj.attach(block);
 
-    return  make_object_ptr<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
+        return  make_object_ptr<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
+    } else {
+         return nullptr;
+     }
+}
+
+
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_committed_block(base::xvbindex_t * target_index) {
+    if (target_index->get_address() != sys_contract_beacon_timer_addr) {
+        return  make_object_ptr<mbus::xevent_store_block_committed_t>(target_index->get_address(), target_index, true);
+    } else {
+        return nullptr;
+    }
 }
 
 

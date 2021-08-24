@@ -2,6 +2,14 @@
 for option in $options
 do
     case $option in
+    build_ci)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CI=ON"
+        echo "Build CI testnet"
+    ;;
+    build_dev)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV=ON"
+        echo "Build Dev testnet"
+    ;;
     build_galileo)
         CMAKE_EXTRA_OPTIONS+=" -DXBUILD_GALILEO=ON"
         echo "Build Galileo testnet"
@@ -25,13 +33,13 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_GPERF=ON"
         echo "BUILD GPERF mode"
     ;;
+    ghperf)
+        CMAKE_EXTRA_OPTIONS+=" -DBUILD_GHPERF=ON"
+        echo "BUILD GHPERF mode"
+    ;;
     tcmalloc)
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"
-    ;;
-    rec_elect)
-        CMAKE_EXTRA_OPTIONS+=" -DBUILD_REC_ELECT=ON"
-        echo "DBUILD_REC_ELECT ON"
     ;;
     xmutisign_close)
         CMAKE_EXTRA_OPTIONS+=" -DMUTI_SIGN_CLOSE=ON"
@@ -105,14 +113,46 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DSTATIC_CONSENSUS=ON"
         echo "BUILD WITH STATIC CONSENSUS"
     ;;
+    elect_whereafter)
+        CMAKE_EXTRA_OPTIONS+=" -DELECT_WHEREAFTER=ON"
+        echo "BUILD WITH ELECT WHEREAFTER"
+    ;;
     no_tx_batch)
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"
+    ;;
+    create_user)
+        CMAKE_EXTRA_OPTIONS+=" -DENABLE_CREATE_USER=ON"
+        echo "BUILD WITH ENABLE_CREATE_USER"
+    ;;
+    long_confirm_check)
+        CMAKE_EXTRA_OPTIONS+=" -DLONG_CONFIRM_CHECK=ON"
+        echo "BUILD WITH LONG_CONFIRM_CHECK"
+    ;;
+    db_kv_statistic)
+        CMAKE_EXTRA_OPTIONS+=" -DDB_KV_STATISTIC=ON"
+        echo "BUILD WITH DB_KV_STATISTIC"
     ;;
     db_cache)
         CMAKE_EXTRA_OPTIONS+=" -DDB_CACHE=ON"
         echo "BUILD WITH DB_CACHE"
     ;;
+    db_tool)
+        CMAKE_EXTRA_OPTIONS+=" -DDB_TOOL=ON"
+        echo "BUILD WITH DB_TOOL"
+    ;;
+    rustvm)
+        CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"
+        echo "BUILD RUSTVM(need cargo toolchain)"
+    ;;
+    leak_trace)
+        CMAKE_EXTRA_OPTIONS+=" -DLEAK_TRACER=ON"
+        echo "BUILD WITH LEAK_TRACER tool"
+    ;;
+    store_unit_block)
+        CMAKE_EXTRA_OPTIONS+=" -DSTORE_UNIT_BLOCK=ON"
+        echo "BUILD WITH store unit block tool"
+    ;;    
     *)
         CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
     ;;

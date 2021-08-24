@@ -34,9 +34,9 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result() 
         auto const & node_id = get<common::xnode_id_t const>(p);
         auto const & standby_node_info = get<election::xstandby_node_info_t>(p);
         if (m_mainnet_activated || standby_node_info.is_genesis_node) {
-            for (auto & _stake : standby_node_info.stake_container) {
-                auto const & node_type = get<common::xnode_type_t const>(_stake);
-                standby_network_result.result_of(node_type).insert(std::make_pair(p.first, standby_node_info));
+            for (auto const & stake : standby_node_info.stake_container) {
+                auto const & node_type = get<common::xnode_type_t const>(stake);
+                standby_network_result.result_of(node_type).insert(std::make_pair(node_id, standby_node_info));
             }
         }
     }

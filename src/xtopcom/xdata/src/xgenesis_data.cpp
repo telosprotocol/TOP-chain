@@ -34,7 +34,7 @@ bool check_address_type_and_zone(common::xaccount_address_t const & addr, base::
 }
 
 bool is_account_address(common::xaccount_address_t const & addr) {
-    return check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_user_account);
+    return check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_user_account) || check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_eth_user_account);
 }
 
 bool is_sub_account_address(common::xaccount_address_t const & addr) {
@@ -82,31 +82,15 @@ common::xaccount_address_t make_address_by_prefix_and_subaddr(const std::string 
     return common::xaccount_address_t{prefix};
 }
 
-xtable_id_t account_map_to_table_id(common::xaccount_address_t const & addr) {
+base::xtable_index_t account_map_to_table_id(common::xaccount_address_t const & addr) {
     const std::string & account = addr.value();
-    auto xid = base::xvaccount_t::get_xid_from_account(account);
-    xtable_id_t tableid((base::enum_xchain_zone_index)get_vledger_zone_index(xid), get_vledger_subaddr(xid));
-    return tableid;
+    base::xvaccount_t _vaddr(account);
+    return _vaddr.get_tableid();
 }
 
 std::string account_address_to_block_address(common::xaccount_address_t const & addr) {
-    xtable_id_t tableid = account_map_to_table_id(addr);
+    base::xtable_index_t tableid = account_map_to_table_id(addr);
     return xblocktool_t::make_address_table_account(tableid.get_zone_index(), tableid.get_subaddr());
-}
-
-common::xnode_type_t get_node_role_from_account(common::xaccount_address_t const & account, uint32_t& table_id) {
-    xtable_id_t tableid = account_map_to_table_id(account);
-    table_id = tableid.get_subaddr();
-    if (tableid.get_zone_index() == base::enum_chain_zone_beacon_index) {
-        return common::xnode_type_t::committee;
-    } else if (tableid.get_zone_index() == base::enum_chain_zone_zec_index) {
-        return common::xnode_type_t::zec;
-    } else if (tableid.get_zone_index() == base::enum_chain_zone_consensus_index) {
-        return common::xnode_type_t::consensus_validator;
-    } else {
-        xassert(0);
-        return common::xnode_type_t::consensus_validator;
-    }
 }
 
 bool is_table_address(common::xaccount_address_t const & addr) {

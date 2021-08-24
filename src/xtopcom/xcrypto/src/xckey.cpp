@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -192,6 +192,8 @@ namespace top
             uint16_t ledger_id;
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
             if (ret) {
+                if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                    return is_eth_valid();                
                 std::string public_address;
                 ret =  base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
                 if (ret) {
@@ -206,7 +208,19 @@ namespace top
             }
             return ret;
         }
-
+        bool  xkeyaddress_t::is_eth_valid()
+        {
+            std::string public_address;
+            bool ret = base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
+            if (ret)
+            {
+                if (public_address.size() == 40)
+                    return true;
+                else
+                    return false;
+            }
+            return ret;
+        }
         bool   xkeyaddress_t::get_type(uint8_t& addr_type) {
             uint16_t net_id;
             return get_type_and_netid(addr_type, net_id);
@@ -290,6 +304,55 @@ namespace top
             }
             return false;
         }
+    
+        xecpubkey_t::xecpubkey_t(const std::string pub_key_data)//it support compressed/uncompressed key
+        {
+            init((const uint8_t *)pub_key_data.data(),(int32_t)pub_key_data.size());
+        }
+    
+        xecpubkey_t::xecpubkey_t(const uint8_t * pubkey_ptr,const int32_t pubkey_len)//it support compressed/uncompressed key
+        {
+            init(pubkey_ptr,pubkey_len);
+        }
+    
+        void xecpubkey_t::init(const uint8_t * pubkey_ptr,const int32_t pubkey_len)//it support convert compressed key to uncompressed
+        {
+            memset(m_publickey_data, 0, sizeof(m_publickey_data));//reset first
+            xassert(pubkey_ptr != NULL);
+            if(NULL != pubkey_ptr)
+            {
+                if(pubkey_len == 65) //un-compressed public key with type
+                {
+                    memcpy(m_publickey_data, pubkey_ptr, pubkey_len);
+                    xassert(0x04 == m_publickey_data[0]);
+                }
+                else if(pubkey_len == 64) //raw public key is 64byte(512bits) without type(0x04)
+                {
+                    m_publickey_data[0] = 0x04; //0x04 means uncompressed public key
+                    memcpy(m_publickey_data + 1, pubkey_ptr,pubkey_len);
+                }
+                else if(pubkey_len == 33) //compressed public key
+                {
+                    size_t  serialize_pubkey_size = 65;
+                    uint8_t serialize_pubkey_data[65] = {0};
+                    
+                    secp256k1_pubkey  secppubkey;
+                    int ret = secp256k1_ec_pubkey_parse((secp256k1_context*)static_secp256k1_context_sign, &secppubkey, pubkey_ptr,pubkey_len);//parse compressed public key
+                    xassert(1 == ret);
+                    if(1 == ret)
+                    {
+                        ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)static_secp256k1_context_sign, serialize_pubkey_data, &serialize_pubkey_size, &secppubkey,SECP256K1_EC_UNCOMPRESSED);
+                        xassert(1 == ret);//convert to uncompressed public key
+                        xassert(serialize_pubkey_size == 65);
+                        memcpy(m_publickey_data,serialize_pubkey_data,serialize_pubkey_size);
+                    }
+                }
+                else
+                {
+                    xassert(0);
+                }
+            }
+        }
 
         uint256_t         xecpubkey_t::to_hash()       //convert public key to hash by sha256+ripemd160
         {
@@ -322,12 +385,26 @@ namespace top
 
         std::string       xecpubkey_t::to_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
+            if(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                return to_eth_address(publickey,addr_type,ledger_id);
+                
             char address[128] = {0};
             const uint32_t version_uint32 = (((uint32_t)ledger_id) << 8) | ((uint32_t)addr_type);
             ecdsa_get_address(publickey, version_uint32, HASHER_SHA2_RIPEMD, HASHER_SHA2D, address, sizeof(address));
             const std::string pubkey_sub_addr(address);
 
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, pubkey_sub_addr,-1);
+        }
+
+        std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
+        {
+            xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
+            
+            const uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);//remove frist byte of type from public key
+            const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);//drop first 12 bytes of total 32,as Ethereum just use the last 20 bytes of hash(keccak256)
+            const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);//convert to Hex codec
+            
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, hex_eth_address,-1);
         }
 
         bool     xecpubkey_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest, bool compress)

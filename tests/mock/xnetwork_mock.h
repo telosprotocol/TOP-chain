@@ -164,7 +164,7 @@ public:
     }
 
     virtual std::vector<top::common::xnode_address_t>
-    child_group_address(common::xversion_t const &ver) const {
+    child_group_address(common::xelection_round_t const &ver) const {
         std::vector<top::common::xnode_address_t> groups;
         return groups;
     }
@@ -188,7 +188,7 @@ public:
     }
 
     virtual std::map<top::common::xnode_address_t, common::xnode_info_t>
-    children_info(common::xgroup_id_t const &gid, common::xversion_t const &version) const {
+    children_info(common::xgroup_id_t const &gid, common::xelection_round_t const &version) const {
         std::map<top::common::xnode_address_t, common::xnode_info_t> child;
         return child;
     }
@@ -206,7 +206,7 @@ public:
     }
 
     virtual std::map<common::xslot_id_t, data::xnode_info_t>
-    children_info2(common::xgroup_id_t const &gid, common::xversion_t const &version) const {
+    children_info2(common::xgroup_id_t const &gid, common::xelection_round_t const &version) const {
         std::map<common::xslot_id_t, data::xnode_info_t> child;
         return child;
     }
@@ -231,7 +231,7 @@ public:
     }
 
     virtual std::vector<top::common::xnode_address_t>
-    archive_addresses() const {
+    archive_addresses(top::common::xnode_type_t) const {
         std::vector<top::common::xnode_address_t> archive_addresses;
         return archive_addresses;
     }

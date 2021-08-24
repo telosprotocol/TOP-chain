@@ -93,7 +93,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(log_path);
     XADD_OFFCHAIN_PARAMETER(db_path);
     XADD_OFFCHAIN_PARAMETER(ip);
-    //XADD_OFFCHAIN_PARAMETER(rec_nodes);
+    XADD_OFFCHAIN_PARAMETER(root_hash);
 
     XADD_OFFCHAIN_PARAMETER(platform_first_node);
     XADD_OFFCHAIN_PARAMETER(platform_business_port);
@@ -108,6 +108,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(config_property_alias_name_max_len);
     XADD_OFFCHAIN_PARAMETER(edge_max_msg_packet_size);
     XADD_OFFCHAIN_PARAMETER(chain_name);
+    XADD_OFFCHAIN_PARAMETER(root_hash);
     XADD_OFFCHAIN_PARAMETER(leader_election_round);
     XADD_OFFCHAIN_PARAMETER(unitblock_confirm_tx_batch_num);
     XADD_OFFCHAIN_PARAMETER(unitblock_recv_transfer_tx_batch_num);
@@ -117,6 +118,9 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(fulltable_interval_block_num);
     XADD_OFFCHAIN_PARAMETER(local_blacklist);
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
+
+    XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
+    XADD_OFFCHAIN_PARAMETER(slash_table_split_num);
 
     m_param_lock.release_write();
 }
@@ -159,20 +163,6 @@ void xconfig_register_t::update_params(const std::map<std::string, std::string>&
 
     filter_changes(map, filterd_map);
     update_cache_and_persist(filterd_map);
-
-    std::list<xconfig_register_listener_ptr_t> removed_list;
-    if (!filterd_map.empty()) {
-        for (auto& l : m_listeners) {
-            l->config_updated(filterd_map);
-        }
-    }
-
-    // remove listeners
-    if (!removed_list.empty()) {
-        for (auto& l : removed_list) {
-            m_listeners.remove(l);
-        }
-    }
 }
 
 void xconfig_register_t::add_delete_params(const std::map<std::string, std::string>& content_map, bool add) {
@@ -473,16 +463,6 @@ bool xconfig_register_t::is_param_changed(const std::string& key, const std::str
 xconfig_register_t& xconfig_register_t::get_instance() {
     static xconfig_register_t inst;
     return inst;
-}
-
-// 1 top token equals factor number votes
-double get_top_vote_rate(uint16_t duration){
-    double factor = max_top_vote_rate;
-    if(duration < max_vote_lock_days){
-        factor = static_cast<double>(static_cast<int64_t>((pow(exp_base, duration / min_vote_lock_days - 1))*1000000))/1000000;
-    }
-    xdbg("pledge_redeem_vote factor: %f", factor);
-    return factor;
 }
 
 // uint32_t get_receive_tx_cache_time() {

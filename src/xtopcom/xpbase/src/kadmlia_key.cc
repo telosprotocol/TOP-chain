@@ -1,163 +1,147 @@
-//
-//  consensus_base.cc
-//
-//  Created by Charlie Xie on 04/01/2019.
-//  Copyright (c) 2017-2019 Telos Foundation & contributors
-//
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xpbase/base/kad_key/kadmlia_key.h"
 
+
+#include "xbase/xutl.h"
+#include "xutility/xhash.h"
+
 #include <assert.h>
-#include <iostream>
-
-#include "xpbase/base/check_cast.h"
-#include "xpbase/base/top_string_util.h"
-
+#include <ostream>
+#include <sstream>
 namespace top {
 
 namespace base {
+/**
+ * [network_id:21]-[zone_id:7]-[cluster_id:7]-[group_id:8]-[height:21]
+ */
+#define kRootNetworkId 0xFFFFFULL
+#define set_kad_network_id(service_id, network_id)                             \
+    ((service_id |= ((uint64_t)(network_id)&0x1FFFFFULL) << 43))
+#define set_kad_zone_id(service_id, zone_id)                                   \
+    ((service_id |= ((uint64_t)(zone_id)&0x7F) << 36))
+#define set_kad_cluster_id(service_id, cluster_id)                             \
+    ((service_id |= ((uint64_t)(cluster_id)&0x7F) << 29))
+#define set_kad_group_id(service_id, group_id)                                 \
+    ((service_id |= ((uint64_t)(group_id)&0xFF) << 21))
+#define set_kad_height(service_id, height)                                     \
+    ((service_id |= ((uint64_t)(height)&0x1FFFFFULL)))
+// #define set_kad_root(service_id) ((service_id |= (0xFFFFFFULL)))
 
-uint64_t CreateServiceType(uint32_t network_id) {
-    if (network_id == kRoot) {
-        return static_cast<uint64_t>(kRoot);
+ServiceType::ServiceType(uint64_t type) : m_type{type} {
+    std::string info{""};
+    info += " [network " + std::to_string((type >> 43)) + "]-";
+    info += "[zone " + std::to_string((type << 21) >> (21 + 36)) + "]-";
+    info += "[cluster " + std::to_string((type << 28) >> (28 + 29)) + "]-";
+    info += "[group " + std::to_string((type << 35) >> (35 + 21)) + "]-";
+    info += "[height " + std::to_string((type << 43) >> 43) + "]";
+    m_info = info;
+}
+
+#define IS_BROADCAST_HEIGHT(service_type_value)                                \
+    ((service_type_value & 0x1FFFFFULL) == 0x1FFFFFULL)
+#define BROADCAST_HEIGHT(service_type_value) ((service_type_value | 0x1FFFFFULL))
+
+bool ServiceType::operator==(ServiceType const &other) const {
+    if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type)) {
+        return BROADCAST_HEIGHT(other.value()) == BROADCAST_HEIGHT(m_type);
+    } else {
+        return other.value() == m_type;
     }
-    base::UnionServiceTypeXipType tmp_type{
-        {network_id, 0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x1F } };
-    return tmp_type.service_type;
+}
+bool ServiceType::operator!=(ServiceType const &other) const {
+    return !(*this == other);
+}
+bool ServiceType::operator<(ServiceType const &other) const {
+    return m_type < other.value();
 }
 
-uint64_t CreateServiceType(uint32_t network_id, uint8_t zone_id) {
-    if (network_id == kRoot) {
-        return static_cast<uint64_t>(kRoot);
+bool ServiceType::IsNewer(ServiceType const &other, int _value) const {
+    if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type))
+        return false;
+    if (BROADCAST_HEIGHT(other.value()) == BROADCAST_HEIGHT(m_type)) {
+        if ((m_type & 0x1FFFFFULL) >= ((other.value() & 0x1FFFFFULL) + _value))
+            return true;
     }
-    base::UnionServiceTypeXipType tmp_type{
-        { network_id, zone_id, 0xFF, 0xFF, 0xFF, 0x03, 0x1F } };
-    return tmp_type.service_type;
+    return false;
 }
 
-uint64_t CreateServiceType(uint32_t network_id, uint8_t zone_id, uint8_t xip_type) {
-    if (network_id == kRoot) {
-        return static_cast<uint64_t>(kRoot);
-    }
-    base::UnionServiceTypeXipType tmp_type{
-        { network_id, zone_id,
-        0xFF, 0xFF, 0xFF, xip_type, 0x1F } };
-    return tmp_type.service_type;
+bool ServiceType::IsBroadcastService() const {
+    return IS_BROADCAST_HEIGHT(m_type);
 }
 
-uint64_t CreateServiceType(
-        uint32_t network_id,
-        uint8_t zone_id,
-        uint8_t xip_type,
-        uint8_t reserve) {
-    if (network_id == kRoot) {
-        return static_cast<uint64_t>(kRoot);
-    }
-    base::UnionServiceTypeXipType tmp_type{
-        { network_id, zone_id,
-        0xFF, 0xFF, 0xFF, xip_type, reserve } };
-    return tmp_type.service_type;
+uint64_t ServiceType::value() const { return m_type; }
+
+std::string ServiceType::info() const { return m_info; }
+
+ServiceType CreateServiceType(common::xip2_t const &xip) {
+    uint64_t res{0};
+    set_kad_network_id(res, xip.network_id().value());
+    set_kad_zone_id(res, xip.zone_id().value());
+    set_kad_cluster_id(res, xip.cluster_id().value());
+    set_kad_group_id(res, xip.group_id().value());
+    set_kad_height(res, xip.height());
+    return ServiceType(res);
 }
 
-uint64_t CreateServiceType(
-        uint32_t network_id,
-        uint8_t zone_id,
-        uint8_t cluster_id,
-        uint8_t group_id,
-        uint8_t node_id,
-        uint8_t xip_type,
-        uint8_t reserve) {
-    if (network_id == kRoot) {
-        return static_cast<uint64_t>(kRoot);
-    }
-    base::UnionServiceTypeXipType tmp_type{
-        { network_id, zone_id, cluster_id,
-        group_id, node_id, xip_type, reserve
-    } };
-    return tmp_type.service_type;
+base::KadmliaKeyPtr GetKadmliaKey(common::xip2_t const &xip) {
+    auto kad_key_ptr = std::make_shared<base::KadmliaKey>(xip);
+    return kad_key_ptr;
+}
+base::KadmliaKeyPtr GetKadmliaKey(std::string const &node_id) {
+    auto kad_key_ptr = std::make_shared<base::KadmliaKey>(node_id);
+    return kad_key_ptr;
 }
 
-uint64_t CreateServiceType(const base::XipParser& xip) {
-    return CreateServiceType(
-            xip.xnetwork_id(),
-            xip.zone_id(),
-            xip.cluster_id(),
-            xip.group_id(),
-            xip.node_id(),
-            xip.xip_type(),
-            0x1F);
+base::KadmliaKeyPtr GetRootKadmliaKey(std::string const &node_id) {
+    top::utl::xsha2_256_t h;
+    top::uint256_t v;
+    h.reset();
+    h.update(node_id);
+    h.get_hash(v);
+    std::string node_id_hash_32((char *)v.data(), v.size());
+    uint64_t high, low;
+    std::string _h = node_id_hash_32.substr(0, 8);
+    std::string _l = node_id_hash_32.substr(8, 8);
+    memcpy(&high, _h.c_str(), _h.size());
+    memcpy(&low, _l.c_str(), _l.size());
+
+    auto _xvip = xvip2_t();
+    _xvip.low_addr = low;
+    _xvip.high_addr = high;
+    reset_network_id_to_xip2(_xvip);
+    set_network_id_to_xip2(_xvip, kRootNetworkId);
+    common::xip2_t xip(_xvip);
+    assert(xip.network_id().value() == kRootNetworkId);
+    // xdbg("[GetRootKadmliaKey] get root kad key: xip:%s node_id: %s",
+    //      xip.to_string().c_str(), node_id.c_str());
+    return GetKadmliaKey(xip);
 }
 
-uint64_t CreateServiceType(const base::XipParser& xip, uint8_t reserve) {
-    return CreateServiceType(
-            xip.xnetwork_id(),
-            xip.zone_id(),
-            xip.cluster_id(),
-            xip.group_id(),
-            xip.node_id(),
-            xip.xip_type(),
-            reserve);
+KadmliaKey::KadmliaKey(common::xip2_t const &xip) : xip_(xip) {}
+
+KadmliaKey::KadmliaKey(std::string const &from_str) {
+    // xdbg("KadmliaKey from_str %s", from_str.c_str());
+    assert(from_str.size() == 33 && from_str[16] == '.');
+    auto low_str = from_str.substr(0, 16);
+    auto high_str = from_str.substr(17, 32);
+    std::istringstream low_sstr(low_str);
+    std::istringstream high_sstr(high_str);
+    uint64_t low_part, high_part;
+    low_sstr >> std::hex >> low_part;
+    high_sstr >> std::hex >> high_part;
+    // xdbg("KadmliaKey from_str %s,%s", low_str.c_str(), high_str.c_str());
+    xip_ = common::xip2_t{low_part, high_part};
 }
 
-UnionServiceTypeXipType GetServiceStruct(uint64_t service_type) {
-    base::UnionServiceTypeXipType tmp_type;
-    tmp_type.service_type = service_type;
-    return tmp_type;
+std::string KadmliaKey::Get() {
+    return xip_.to_string();
 }
 
-base::XipParser GetXipFromServiceType(uint64_t service_type) {
-    base::UnionServiceTypeXipType tmp_type;
-    tmp_type.service_type = service_type;
-    return base::GetXipFromServiceType(tmp_type);
-}
+ServiceType KadmliaKey::GetServiceType() { return CreateServiceType(xip_); }
 
-base::XipParser GetXipFromServiceType(UnionServiceTypeXipType service_type) {
-    base::XipParser xip;
-    xip.set_xnetwork_id(service_type.type_detail.network_id);
-    xip.set_zone_id(service_type.type_detail.zone_id);
-    xip.set_cluster_id(service_type.type_detail.cluster_id);
-    xip.set_group_id(service_type.type_detail.group_id);
-    xip.set_node_id(service_type.type_detail.node_id);
-    xip.set_xip_type(service_type.type_detail.xip_type);
-    return xip;
-}
+} // namespace base
 
-void PrintXip(uint64_t service_type) {
-    base::XipParser xip = base::GetXipFromServiceType(service_type);
-    base::PrintXip(xip);
-}
-
-void PrintXip(const base::XipParser& xip) {
-    std::cout << base::StringUtil::str_fmt(
-        "[network_id: %d][zone_id: %d]"
-        "[cluster_id: %d][group_id: %d][node_id: %d][xip_type: %d]",
-        (uint32_t)xip.xnetwork_id(),
-        (uint32_t)xip.zone_id(),
-        (uint32_t)xip.cluster_id(),
-        (uint32_t)xip.group_id(),
-        (uint32_t)xip.node_id(),
-        (uint32_t)xip.xip_type()) << std::endl;
-}
-
-void PrintXip(const std::string& str_xip) {
-    base::XipParser xip(str_xip);
-    base::PrintXip(xip);
-}
-
-common::xnode_type_t GetNetworkType(uint32_t network_id) {
-    switch (network_id) {
-    case kChainRecNet:
-        return common::xnode_type_t::consensus_auditor;
-    case kChainZecNet:
-        return common::xnode_type_t::consensus_validator;
-    case kChainEdgeNet:
-        return common::xnode_type_t::edge;
-    default:
-        assert(false);
-    }
-    return common::xnode_type_t::consensus_validator;
-}
-
-}  // namespase base
-
-}  // namespace top
+} // namespace top

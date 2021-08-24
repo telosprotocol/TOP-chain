@@ -1,3 +1,2 @@
 /target
-/.vscode
-/test_rust_in_c/build
+Cargo.lock

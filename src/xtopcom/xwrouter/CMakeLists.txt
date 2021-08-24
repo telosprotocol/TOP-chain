@@ -5,10 +5,6 @@ add_library(xwrouter STATIC ${xwrouter_src})
 
 #add_dependencies(xwrouter xkad)
 
-target_link_libraries(xwrouter PRIVATE xkad xgossip cpp_redis tacopie)
+target_link_libraries(xwrouter PRIVATE xkad xgossip)
 
-add_subdirectory(demo)
 
-if(XENABLE_TESTS)
-    add_subdirectory(tests)
-endif()

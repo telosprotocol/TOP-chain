@@ -6,13 +6,6 @@
 
 #include <cstdint>
 
-/*
-#ifdef enum_xip2_header_len
-# undef enum_xip2_header_len
-#endif
-#define enum_xip2_header_len 0
-*/
-
 namespace top {
 
 namespace transport {

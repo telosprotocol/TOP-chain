@@ -35,6 +35,7 @@ class xdb : public xdb_face_t {
     static void destroy(const std::string& m_db_name);
     bool read_range(const std::string& prefix, std::vector<std::string>& values) const;
     xdb_transaction_t* begin_transaction() override;
+    xdb_meta_t  get_meta() override {return xdb_meta_t();}  // XTODO no need implement
 
  private:
     class xdb_impl;

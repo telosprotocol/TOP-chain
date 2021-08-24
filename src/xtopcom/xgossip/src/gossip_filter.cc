@@ -99,25 +99,19 @@ void GossipFilter::PrintRepeatMap() {
 
 bool GossipFilter::FilterMessage(transport::protobuf::RoutingMessage& message) {
     assert(inited_);
-    auto gossip = message.gossip();
-    if (!gossip.has_msg_hash()) {
+    if (!message.has_msg_hash()) {
         TOP_WARN("filter failed, gossip msg(%d) should set msg_hash", message.type());
         return true;;
     }
 #ifndef NDEBUG
-    AddRepeatMsg(gossip.msg_hash());
+    AddRepeatMsg(message.msg_hash());
 #endif
-    /*
-    if (message.xid() == global_xid->Get()) {
-        TOP_WARN("message come back this original node,msg.type(%d)", message.type());
-        return true;
-    }
-    */
-    if (FindData(gossip.msg_hash())) {
+
+    if (FindData(message.msg_hash())) {
         //TOP_DEBUG("GossipFilter FindData, filter msg");
         return true;
     }
-    if (!AddData(gossip.msg_hash())) {
+    if (!AddData(message.msg_hash())) {
         TOP_WARN("GossipFilter already exist, filter msg");
         return true;
     }

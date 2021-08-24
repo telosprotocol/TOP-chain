@@ -21,7 +21,9 @@ public:
                                                           uint8_t addr_type,
                                                           uint16_t ledger_id = 0);
     static std::string make_address_by_random_key(uint8_t addr_type = 0, uint16_t ledger_id = 0);
+
     static std::string get_base64_public_key(const std::array<uint8_t, PRI_KEY_LEN> & private_key);
+    static std::string get_hex_public_key(const std::array<uint8_t, PRI_KEY_LEN> & private_key);    
     static std::string digest_sign(const top::uint256_t & hash, const std::array<uint8_t, PRI_KEY_LEN> & private_key);
     static bool verify_sign(const top::uint256_t & hash, const std::string & signature);
     static bool verify_sign(const top::uint256_t & hash, const std::string & signature, const std::string & address);

@@ -67,7 +67,7 @@ public:
     xtop_base_timer_driver & operator=(xtop_base_timer_driver &&) = default;
     ~xtop_base_timer_driver() = default;
 
-    explicit xtop_base_timer_driver(std::shared_ptr<xbase_io_context_wrapper_t> const & io_object, std::chrono::milliseconds reap_interval_ms = std::chrono::milliseconds{500});
+    explicit xtop_base_timer_driver(std::shared_ptr<xbase_io_context_wrapper_t> const & io_object, std::chrono::milliseconds reap_interval_ms = std::chrono::minutes{2});
 
     void start() override;
 

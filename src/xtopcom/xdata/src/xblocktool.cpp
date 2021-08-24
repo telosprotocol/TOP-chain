@@ -7,19 +7,17 @@
 #include "xdata/xlightunit.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xblockbuild.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
 base::xvblock_t* xblocktool_t::create_genesis_empty_block(const std::string & account) {
-    base::enum_vaccount_addr_type addrtype = base::xvaccount_t::get_addrtype_from_account(account);
-    if (addrtype == base::enum_vaccount_addr_type_block_contract) {
-        return xemptyblock_t::create_genesis_emptytable(account);
-    } else if (account == sys_contract_beacon_timer_addr || account == sys_drand_addr) {
-        return xemptyblock_t::create_genesis_emptyroot(account);
-    } else {
-        return xemptyblock_t::create_genesis_emptyunit(account);
-    }
+    xemptyblock_build_t bbuild(account);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 base::xvblock_t*  xblocktool_t::create_genesis_empty_unit(const std::string & account) {
@@ -40,75 +38,200 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     tx->set_deposit(0);
     tx->set_digest();
     tx->set_len();
+
     xtransaction_result_t result;
-    result.m_balance_change = top_balance;
-    return xlightunit_block_t::create_genesis_lightunit(account, tx, result);
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+    {
+        auto propobj = bstate->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+        propobj->set(base::TOP_BEGIN_GMTIME, canvas.get());
+    }
+    if (top_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(top_balance), canvas.get());
+        xassert(balance == top_balance);
+    }
+
+    std::string property_binlog;
+    canvas->encode(property_binlog);
+    std::string fullstate_bin;
+    bstate->take_snapshot(fullstate_bin);
+    // TODO(jimmy) block builder class
+    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+        account.c_str(), property_binlog.size());
+
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(property_binlog);
+    bodypara.set_fullstate_bin(fullstate_bin);
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
+base::xvblock_t * xblocktool_t::create_genesis_lightunit(std::string const & account, chain_data::data_processor_t const & data) {
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+    data::xproperty_asset asset(data.top_balance);
+    tx->make_tx_transfer(asset);
+    // genesis transfer tx is a special transaction
+    tx->set_same_source_target_address(account);
+    tx->set_fire_timestamp(0);
+    tx->set_expire_duration(0);
+    tx->set_deposit(0);
+    tx->set_digest();
+    tx->set_len();
+
+    xtransaction_result_t result;
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+    auto propobj = bstate->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+    if (data.create_time > 0) {
+        propobj->set(data.create_time, canvas.get());
+    } else {
+        propobj->set(base::TOP_BEGIN_GMTIME, canvas.get());
+    }
+    if (data.top_balance + data.lock_token + data.lock_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(data.top_balance + data.lock_token + data.lock_balance), canvas.get());
+        xassert(balance == data.top_balance + data.lock_token + data.lock_balance);
+    }
+    if (data.burn_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(data.burn_balance), canvas.get());
+        xassert(balance == data.burn_balance);
+    }
+    if (data.tgas_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_PLEDGE_TGAS, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(data.tgas_balance), canvas.get());
+        xassert(balance == data.tgas_balance);
+    }
+    if (data.vote_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_PLEDGE_VOTE, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(data.vote_balance), canvas.get());
+        xassert(balance == data.vote_balance);
+    }
+    if (data.lock_tgas > 0) {
+        auto propobj = bstate->new_uint64_var(XPROPERTY_LOCK_TGAS, canvas.get());
+        auto res = propobj->set(base::vtoken_t(data.lock_tgas), canvas.get());
+        xassert(res == true);
+    }
+    if (data.unvote_num > 0) {
+        auto propobj = bstate->new_uint64_var(XPROPERTY_UNVOTE_NUM, canvas.get());
+        auto res = propobj->set(base::vtoken_t(data.unvote_num), canvas.get());
+        xassert(res == true);
+    }
+    if (data.expire_vote > 0) {
+        auto propobj = bstate->new_string_var(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, canvas.get());
+        auto res = propobj->reset(base::xstring_utl::tostring(data.expire_vote), canvas.get());
+        xassert(res == true);
+    }
+    if (data.pledge_vote.size() > 0) {
+        auto propobj = bstate->new_string_map_var(XPROPERTY_PLEDGE_VOTE_KEY, canvas.get());
+        for (auto const & item : data.pledge_vote) {
+            uint64_t vote_num = 0;
+            uint16_t duration = 0;
+            uint64_t lock_time = 0;
+            base::xstream_t out{base::xcontext_t::instance(), (uint8_t *)item.data(), static_cast<uint32_t>(item.size())};
+            out >> vote_num;
+            out >> duration;
+            out >> lock_time;
+            base::xstream_t in{base::xcontext_t::instance()};
+            in << duration;
+            in << lock_time;
+            auto vote_key_str = std::string((char*)in.data(), in.size());
+            in.reset();
+            in << vote_num;
+            auto vote_val_str =  std::string((char*)in.data(), in.size());
+            auto res = propobj->insert(vote_key_str, vote_val_str, canvas.get());
+            xassert(res == true);
+        }
+    }
+    std::string property_binlog;
+    canvas->encode(property_binlog);
+    std::string fullstate_bin;
+    bstate->take_snapshot(fullstate_bin);
+    // TODO(jimmy) block builder class
+    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+        account.c_str(), property_binlog.size());
+
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(property_binlog);
+    bodypara.set_fullstate_bin(fullstate_bin);
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 base::xvblock_t * xblocktool_t::create_genesis_lightunit(const std::string & account,
                                                          const xtransaction_ptr_t & genesis_tx,
                                                          const xtransaction_result_t & result) {
-    return xlightunit_block_t::create_genesis_lightunit(account, genesis_tx, result);
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(genesis_tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(result.get_property_binlog());
+    bodypara.set_fullstate_bin(result.m_full_state);
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
+base::xvblock_t* xblocktool_t::create_genesis_root_block(base::enum_xchain_id chainid, const std::string & account, const xrootblock_para_t & bodypara) {
+    xrootblock_build_t bbuild(chainid, account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
+base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xemptyblock_build_t bbuild(prev_block, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block) {
-    return xemptyblock_t::create_next_emptyblock(prev_block);
+    xemptyblock_build_t bbuild(prev_block);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*   xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block, base::enum_xvblock_type blocktype) {
-    return xemptyblock_t::create_next_emptyblock(prev_block, blocktype);
+base::xvblock_t* xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xlightunit_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & para, base::xvblock_t* prev_block) {
-    return xlightunit_block_t::create_next_lightunit(para, prev_block);
+base::xvblock_t*  xblocktool_t::create_next_fullunit(const xfullunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xfullunit_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_fullunit(const xfullunit_block_para_t & para, base::xvblock_t* prev_block) {
-    return xfullunit_block_t::create_next_fullunit(para, prev_block);
+base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xlighttable_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & para, base::xvblock_t* prev_block) {
-    return xtable_block_t::create_next_tableblock(para, prev_block);
-}
-
-base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & para, const xblock_consensus_para_t & cs_para, base::xvblock_t* prev_block) {
-    // unit should set the same consensus pare with parent tableblock
-    for (auto & unit : para.get_account_units()) {
-        unit->set_consensus_para(cs_para);
-    }
-
-    base::xvblock_t* proposal_block = xtable_block_t::create_next_tableblock(para, prev_block);
-    data::xblock_t* block = (data::xblock_t*)proposal_block;
-    block->set_consensus_para(cs_para);
-    return proposal_block;
-}
-
-base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & para, base::xvblock_t* prev_block) {
-    return xfull_tableblock_t::create_next_block(para, prev_block);
-}
-
-base::xvblock_t*   xblocktool_t::create_next_emptyblock(xblockchain2_t* chain) {
-    return xemptyblock_t::create_next_emptyblock(chain);
-}
-base::xvblock_t*   xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & para, xblockchain2_t* chain) {
-    return xlightunit_block_t::create_next_lightunit(para, chain);
-}
-base::xvblock_t*   xblocktool_t::create_next_fullunit(xblockchain2_t* chain) {
-    return xfullunit_block_t::create_next_fullunit(chain);
+base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xfulltable_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 std::string xblocktool_t::make_address_table_account(base::enum_xchain_zone_index zone, uint16_t subaddr) {
-    xassert(zone <= base::enum_chain_zone_zec_index);
-    xassert(subaddr < enum_vbucket_has_tables_count);
-
-    static std::string tableblock_prefix[] = {
-        sys_contract_sharding_table_block_addr,
-        sys_contract_beacon_table_block_addr,
-        sys_contract_zec_table_block_addr
-    };
-
-    std::string tableblock_addr = make_address_by_prefix_and_subaddr(tableblock_prefix[zone], subaddr).value();
-    return tableblock_addr;
+    return base::xvaccount_t::make_table_account_address(zone, subaddr);
 }
 std::string xblocktool_t::make_address_shard_table_account(uint16_t subaddr) {
     return make_address_table_account(base::enum_chain_zone_consensus_index, subaddr);
@@ -135,18 +258,6 @@ std::string xblocktool_t::make_address_user_contract(const std::string & public_
     return base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_custom_contract, ledger_id, public_key_address);
 }
 
-bool xblocktool_t::is_connect_and_executed_block(base::xvblock_t* block) {
-    if (block->is_genesis_block()) {
-        return true;
-    }
-    const int block_flags = block->get_block_flags();
-    if (((block_flags & base::enum_xvblock_flag_connected) != 0)
-        && ((block_flags & base::enum_xvblock_flag_executed) != 0)) {
-        return true;
-    }
-    return false;
-}
-
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
     base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
@@ -157,7 +268,55 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(ba
 
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, true);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
+        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
+            return prev_vblock;
+        }
+        current_height = prev_vblock->get_height();
+    }
+    return nullptr;
+}
+
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
+    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+        return vblock;
+    }
+    if (vblock->get_block_class() == base::enum_xvblock_class_full) {
+        return nullptr;
+    }
+    uint64_t current_height = vblock->get_height();
+    while (current_height > 0) {
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
+        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
+            return prev_vblock;
+        }
+        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full) {
+            return nullptr;
+        }
+        current_height = prev_vblock->get_height();
+    }
+    return nullptr;
+}
+
+
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_genesis_connectted_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
+    base::xvaccount_t _vaccount(account);
+    // there is mostly two empty units
+    XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_genesis_connected_block(_vaccount);
+    if (vblock == nullptr) {
+        return nullptr;
+    }
+    xinfo("xblocktool_t::get_latest_genesis_connectted_lightunit addr:%s,height=%llu", account.c_str(), vblock->get_height());
+    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+        return vblock;
+    }
+
+    uint64_t current_height = vblock->get_height();
+    while (current_height > 0) {
+        XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;
         }
@@ -169,7 +328,8 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(ba
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height) {
     base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(_vaccount, max_height, base::enum_xvblock_flag_committed, true);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(_vaccount, max_height, base::enum_xvblock_flag_committed, false);
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {
         return vblock;
@@ -177,7 +337,8 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_lightunit(base::xvb
 
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, true);
+        XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;
         }
@@ -191,12 +352,8 @@ bool xblocktool_t::verify_latest_blocks(const base::xblock_mptrs & latest_blocks
 }
 
 bool xblocktool_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block) {
-    // check committed flag first
-    if (!data::xblocktool_t::is_connect_and_executed_block(commited_block)) {
-        xwarn("xblock_maker_t::verify_latest_blocks, fail-committed not executed. commit_block=%s",
-            commited_block->dump().c_str());
-        return false;
-    }
+    // check committed anc connectted flag first
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_verify_latest_blocks");
     // cert height, lock height, commit height is 0
     if (latest_cert_block->get_height() == 0) {
         if (latest_cert_block->check_block_flag(base::enum_xvblock_flag_committed)
@@ -283,6 +440,30 @@ bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, 
         return true;
     }
     return false;
+}
+
+void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    if (tx->is_self_tx()) {
+        return;  // self tx has none receiptid
+    }
+
+    base::xtable_shortid_t self_tableid = tx->get_self_tableid();
+    base::xtable_shortid_t peer_tableid = tx->get_peer_tableid();
+    base::xreceiptid_pair_t receiptid_pair;
+    receiptid_state->find_pair_modified(peer_tableid, receiptid_pair);
+    uint64_t current_receipt_id = 0;
+    if (tx->is_send_tx()) {
+        // alloc new receipt id for send tx
+        current_receipt_id = receiptid_pair.get_sendid_max() + 1;
+        receiptid_pair.inc_sendid_max();
+    } else {
+        // copy last actiion receipt id for recv tx and confirm tx
+        current_receipt_id = tx->get_last_action_receipt_id();
+    }
+    // update receipt id info to tx action result
+    tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
+    receiptid_state->add_pair_modified(peer_tableid, receiptid_pair);  // save to modified pairs
+    xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld", tx->dump().c_str(), current_receipt_id);
 }
 
 NS_END2

@@ -28,6 +28,10 @@
 
 NS_BEG2(top, vnetwork)
 
+#ifndef VHOST_METRICS
+#define VHOST_METRICS 0
+#endif
+
 // using callback_registration_token = xid_t<xmessage_ready_callback_t, std::size_t>;
 /**
  * @brief xtop_vhost_face (or xvhost_face_t) is a virtual host delegate.
@@ -120,6 +124,9 @@ public:
     virtual void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
     virtual void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
 
+    virtual void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
+    virtual void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
+
     /**
      * @brief Get the network info object associated with this virtual host object.
      * @return The network info object.
@@ -136,10 +143,10 @@ public:
      * @brief Get the node infos of specified group
      * 
      * @param group_addr The cluster address of target group
-     * @param version The version of target group
+     * @param election_round The election round of target group
      * @return std::map<common::xslot_id_t, data::xnode_info_t> 
      */
-    virtual std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const & group_addr, common::xversion_t const & version) const = 0;
+    virtual std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const & group_addr, common::xelection_round_t const & election_round) const = 0;
 
     /**
      * @brief Get the parent node info of specified child node

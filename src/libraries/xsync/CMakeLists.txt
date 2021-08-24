@@ -20,7 +20,7 @@ ELSE()
 ENDIF()
 
 if (BUILD_METRICS)
-    add_dependencies(xsync xmetrics)
+    # add_dependencies(xsync xmetrics)
     target_link_libraries(xsync PRIVATE xmetrics)
 endif()
 

@@ -59,7 +59,7 @@ public:
 
     common::xnode_type_t type() const noexcept override { return common::xnode_type_t::invalid; }
 
-    std::vector<xvnode_address_t> archive_addresses() const override { return {}; }
+    std::vector<xvnode_address_t> archive_addresses(common::xnode_type_t) const override { return {}; }
 
     std::vector<std::uint16_t> table_ids() const override { return {}; }
 
@@ -69,7 +69,7 @@ public:
 
     std::map<common::xslot_id_t, data::xnode_info_t> parents_info2() const override { return {}; }
 
-    std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const override { return {}; }
+    std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & version) const override { return {}; }
 };
 using xdummy_vnetwork_driver_t = xtop_dummy_vnetwork_driver;
 

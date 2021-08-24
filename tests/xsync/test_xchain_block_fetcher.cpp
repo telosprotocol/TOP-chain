@@ -8,6 +8,7 @@
 #include "../mock/xmock_auth.hpp"
 #include "common.h"
 #include "xsyncbase/xmessage_ids.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::sync;
@@ -25,9 +26,12 @@ TEST(xchain_block_fetcher, block) {
     xsync_broadcast_t sync_broadcast("", &peerset, &sync_sender);
 
     std::unique_ptr<mbus::xmessage_bus_face_t> mbus = top::make_unique<mbus::xmessage_bus_t>();
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xchain_block_fetcher_t chain_block_fetcher("", address, make_observer(&auth), &sync_store, &sync_broadcast, &sync_sender);
@@ -56,7 +60,7 @@ TEST(xchain_block_fetcher, block) {
     vnetwork::xvnode_address_t from_address;
     chain_block_fetcher.on_newblock(block4, network_self, from_address);
 
-    base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+    base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
     ASSERT_EQ(current_block->get_height(), 4);
 }
 
@@ -71,9 +75,13 @@ TEST(xchain_block_fetcher, block_hash) {
     xsync_broadcast_t sync_broadcast("", &peerset, &sync_sender);
 
     std::unique_ptr<mbus::xmessage_bus_face_t> mbus = top::make_unique<mbus::xmessage_bus_t>();
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
+    
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xchain_block_fetcher_t chain_block_fetcher("", address, make_observer(&auth), &sync_store, &sync_broadcast, &sync_sender);
@@ -180,19 +188,19 @@ TEST(xchain_block_fetcher, block_hash) {
     // on response
     chain_block_fetcher.on_response_blocks(block4, network_self, target_address);
     {
-        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
         ASSERT_EQ(current_block->get_height(), 4);
     }
 
     chain_block_fetcher.on_response_blocks(block5, network_self, target_address);
     {
-        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
         ASSERT_EQ(current_block->get_height(), 5);
     }
 
     chain_block_fetcher.on_response_blocks(block6, network_self, target_address);
     {
-        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
         ASSERT_EQ(current_block->get_height(), 5);
     }
 }
@@ -208,9 +216,13 @@ TEST(xchain_block_fetcher, timeout) {
     xsync_broadcast_t sync_broadcast("", &peerset, &sync_sender);
 
     std::unique_ptr<mbus::xmessage_bus_face_t> mbus = top::make_unique<mbus::xmessage_bus_t>();
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xchain_block_fetcher_t chain_block_fetcher("", address, make_observer(&auth), &sync_store, &sync_broadcast, &sync_sender);

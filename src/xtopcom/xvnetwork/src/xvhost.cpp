@@ -5,6 +5,7 @@
 #include "xvnetwork/xvhost.h"
 
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xscope_executer.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
@@ -15,6 +16,7 @@
 #include "xelection/xcache/xgroup_element.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xmetrics/xmetrics.h"
+#include "xtxpool_v2/xtxpool_face.h"
 #include "xutility/xhash.h"
 #include "xvnetwork/xcodec/xmsgpack/xmessage_codec.hpp"
 #include "xvnetwork/xcodec/xmsgpack/xvnetwork_message_codec.hpp"
@@ -97,22 +99,22 @@ void xtop_vhost::send(xmessage_t const & message,
     assert(!src.account_address().empty());
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xfull_node_group_id);
     }
 
-    if (dst.account_address().has_value() && common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (dst.account_address().has_value() && common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xfull_node_group_id);
     }
 #endif
 
     try {
-        if (dst.version() != src.version()) {
-            xinfo("[vnetwork] dst version %s, src version %s", dst.version().to_string().c_str(), src.version().to_string().c_str());
+        if (dst.election_round() != src.election_round()) {
+            xinfo("[vnetwork] dst version %s, src version %s", dst.election_round().to_string().c_str(), src.election_round().to_string().c_str());
         }
 
         // auto const target_vnetwork = vnetwork(xvnetwork_id_t{ m_network_info });
@@ -132,13 +134,17 @@ void xtop_vhost::send(xmessage_t const & message,
                  static_cast<std::uint32_t>(message.id()));
             auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
             xdbg("[vnetwork] send msg %" PRIx32 " [hash: %" PRIx64 "] [to_hash:%u]", static_cast<std::uint32_t>(message.id()), message.hash(), new_hash_val);
+            #if VHOST_METRICS
             XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_send" +
                                            std::to_string(static_cast<std::uint32_t>(message.id())),
                                        1);
+            #endif
 
+            #if VHOST_METRICS
             XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_send_size" +
                                            std::to_string(static_cast<std::uint32_t>(message.id())),
                                        bytes_message.size());
+            #endif
 
             m_network_driver->send_to(dst.account_address(), bytes_message, transmission_property);
         } else if (dst.empty()) {
@@ -146,13 +152,13 @@ void xtop_vhost::send(xmessage_t const & message,
         } else {
             // crose broadcast is not correct by using send_to
             if (dst.cluster_address() != src.cluster_address()) {
-                XTHROW(xvnetwork_error_t, xvnetwork_errc_t::cluster_address_not_match, u8"src " + src.to_string() + u8" dst " + dst.to_string());
+                top::error::throw_error({ xvnetwork_errc_t::cluster_address_not_match }, "src " + src.to_string() + " dst " + dst.to_string());
             }
 
             broadcast(message, src);
         }
-    } catch (xvnetwork_error_t const & eh) {
-        xwarn("%s", eh.what());
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("xtop_error_t caught. cateogry: %s; exception:%s; error code: %d; error msg: %s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
         throw;
     }
 }
@@ -160,7 +166,7 @@ void xtop_vhost::send(xmessage_t const & message,
 void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::xnode_address_t const & src, common::xnode_address_t const & dst) {
     assert(common::has<common::xnode_type_t::group>(dst.cluster_address().type()));
     assert(src.cluster_address() != dst.cluster_address());
-    assert(!dst.group_id().empty());
+    // assert(!dst.group_id().empty());
 
     assert(!src.empty());
     assert(!src.account_address().empty());
@@ -170,16 +176,16 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
     assert(message.id() != common::xmessage_id_t::invalid);
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xfull_node_group_id);
     }
 
-    if (common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xfull_node_group_id);
     }
 #endif
 
@@ -207,19 +213,27 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
               src.to_string().c_str(),
               dst.to_string().c_str());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
+        #endif
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
+        #endif
 
         on_network_data_ready(host_node_id(), bytes_message);
-
-        m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
-    } catch (vnetwork::xvnetwork_error_t const & eh) {
-        xwarn("[vnetwork] forward_broadcast_message xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
+        if (dst.election_round().empty()) {
+            m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
+        } else {
+            m_network_driver->spread_rumor(bytes_message);
+        }
+        // m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("[vnetwork] forward_broadcast_message xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] forward_broadcast_message std::exception caught: %s", eh.what());
     }
@@ -235,16 +249,16 @@ void xtop_vhost::broadcast_to_all(xmessage_t const & message, common::xnode_addr
     assert(!src.account_address().empty());
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xfull_node_group_id);
     }
 
-    if (common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xfull_node_group_id);
     }
 #endif
 
@@ -257,18 +271,20 @@ void xtop_vhost::broadcast_to_all(xmessage_t const & message, common::xnode_addr
 
         xdbg("[vnetwork] broadcast msg %x from:%s to:%s hash %" PRIx64, message.id(), src.to_string().c_str(), dst.to_string().c_str(), message.hash());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
-
+        #endif
         assert(m_network_driver);
         m_network_driver->spread_rumor(bytes_message);
-    } catch (xvnetwork_error_t const & eh) {
-        xerror("[vnetwork] xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
         throw;
     }
 }
@@ -283,19 +299,19 @@ void xtop_vhost::broadcast(xmessage_t const & message, common::xnode_address_t c
     assert(!src.account_address().empty());
 
     auto const dst = address_cast<common::xnode_type_t::group>(src);
-    assert(src.version() == dst.version());
+    assert(src.election_round() == dst.election_round());
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xfull_node_group_id);
     }
 
-    if (common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xfull_node_group_id);
     }
 #endif
 
@@ -309,15 +325,19 @@ void xtop_vhost::broadcast(xmessage_t const & message, common::xnode_address_t c
     auto new_hash_val = base::xhash32_t::digest(std::string((char *)packet_msg.data(), packet_msg.size()));
     xinfo("[vnetwork]xtop_vhost::broadcast [vnet hash: %" PRIx64 "] [hash: %u] [to_hash:%u]", vmsg.hash(), message.hash(), new_hash_val);
 
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
-
+    #endif
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_size" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                packet_msg.size());
+    #endif
 
-    m_network_driver->spread_rumor(src.cluster_address().sharding_info(), packet_msg);
+    // m_network_driver->spread_rumor(src.cluster_address().sharding_info(), packet_msg);
+    m_network_driver->spread_rumor(packet_msg);
 }
 
 void xtop_vhost::send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) {
@@ -334,13 +354,13 @@ void xtop_vhost::send(common::xnode_address_t const & src, common::xip2_t const 
         return;
     }
 
-    auto dst_node_id = m_election_cache_data_accessor->node_id_from(dst, ec);
+    auto dst_node_id = m_election_cache_data_accessor->account_address_from(dst, ec);
     if (ec) {
         xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
         return;
     }
 
-    auto dst_version = m_election_cache_data_accessor->version_from(dst, ec);
+    auto dst_election_epoch = m_election_cache_data_accessor->election_epoch_from(dst, ec);
     if (ec) {
         xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
         return;
@@ -348,7 +368,7 @@ void xtop_vhost::send(common::xnode_address_t const & src, common::xip2_t const 
 
     common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()},
                                common::xaccount_election_address_t{dst_node_id, dst.slot_id()},
-                               dst_version,
+                               dst_election_epoch,
                                dst.size(),
                                dst.height()};
 
@@ -374,19 +394,23 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
     if (src.network_id() == dst.network_id() && src.zone_id() == dst.zone_id() && src.cluster_id() == dst.cluster_id() && src.group_id() == dst.group_id()) {
         // broadcast message in the same sharding
 
-        auto version = m_election_cache_data_accessor->version_from(dst, ec);
+        auto dst_election_epoch = m_election_cache_data_accessor->election_epoch_from(dst, ec);
         if (ec) {
             xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
-            version = src.version();
+            dst_election_epoch = src.election_round();
         }
 
-        if (src.version() != version) {
+        if (src.election_round() != dst_election_epoch) {
             ec = xvnetwork_errc2_t::version_mismatch;
-            xwarn("%s %s. src version %s dst version %s", ec.category().name(), ec.message().c_str(), src.version().to_string().c_str(), version.to_string().c_str());
+            xwarn("%s %s. src version %s dst version %s",
+                  ec.category().name(),
+                  ec.message().c_str(),
+                  src.election_round().to_string().c_str(),
+                  dst_election_epoch.to_string().c_str());
             return;
         }
 
-        common::xnode_address_t to{src.sharding_address(), version, dst.size(), dst.height()};
+        common::xnode_address_t to{src.sharding_address(), dst_election_epoch, dst.size(), dst.height()};
 
         xvnetwork_message_t const vmsg{src, to, message, m_chain_timer->logic_time()};
         auto bytes = codec::msgpack_encode(vmsg);
@@ -394,22 +418,24 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
         auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes.data(), bytes.size()));
         xinfo("[vnetwork]xtop_vhost::broadcast [vnet hash: %" PRIx64 "] [msg hash: %u] [xxh32 to_hash:%" PRIu32 "]", vmsg.hash(), message.hash(), new_hash_val);
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes.size());
-
-        m_network_driver->spread_rumor(src.sharding_address().sharding_info(), bytes);
+        #endif
+        m_network_driver->spread_rumor(/*src.sharding_address().sharding_info(),*/ bytes);
         // } else if (common::broadcast(dst.network_id())) {
         //     ec = xvnetwork_errc2_t::not_supported;
         //     xwarn("%s %s", ec.category().name(), ec.message().c_str());
     } else if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id())) {
         // broadcast in the specified network
 
-        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xversion_t{}, dst.size(), dst.height()};
+        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xelection_round_t{}, dst.size(), dst.height()};
 
         xvnetwork_message_t const vnetwork_message{src, to, message, m_chain_timer->logic_time()};
         auto const bytes_message = top::codec::msgpack_encode(vnetwork_message);
@@ -418,20 +444,22 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
 
         xdbg("%s broadcast msg %x from:%s to:%s hash %" PRIx64, vnetwork_category2().name(), message.id(), src.to_string().c_str(), dst.to_string().c_str(), message.hash());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
-
+        #endif
         assert(m_network_driver);
         m_network_driver->spread_rumor(bytes_message);
     } else if (common::broadcast(dst.slot_id())) {
-        // broadcast between different shradings
+        // broadcast between different shardings
 
-        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xversion_t{}, dst.size(), dst.height()};
+        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xelection_round_t{}, dst.size(), dst.height()};
 
         xvnetwork_message_t const vmsg{src, to, message, m_chain_timer->logic_time()};
         auto const bytes_message = top::codec::msgpack_encode(vmsg);
@@ -447,33 +475,154 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
               src.to_string().c_str(),
               to.to_string().c_str());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
-
+        #endif
         on_network_data_ready(host_node_id(), bytes_message);
 
-        m_network_driver->forward_broadcast(to.cluster_address().sharding_info(), to.type(), bytes_message);
+        // m_network_driver->forward_broadcast(to.cluster_address().sharding_info(), to.type(), bytes_message);
+        m_network_driver->spread_rumor(bytes_message);
+    } else {
+        ec = xvnetwork_errc2_t::not_supported, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+    }
+}
+
+void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
+    if (!running()) {
+        ec = xvnetwork_errc2_t::vhost_not_run;
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+
+    if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id()) || common::broadcast(dst.cluster_id()) || common::broadcast(dst.group_id()) ||
+        common::broadcast(dst.slot_id())) {
+        ec = xvnetwork_errc2_t::invalid_dst_address;
+        xwarn("%s %s. dst address is a broadcast address %s", vnetwork_category2().name(), ec.message().c_str(), dst.to_string().c_str());
+        return;
+    }
+
+    xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
+    auto bytes = codec::msgpack_encode(vmsg);
+    m_network_driver->send_to(dst.account_address(), bytes, {});
+}
+
+void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
+    if (!running()) {
+        ec = xvnetwork_errc2_t::vhost_not_run;
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+
+    if (!common::broadcast(dst.network_id()) && !common::broadcast(dst.zone_id()) && !common::broadcast(dst.cluster_id()) && !common::broadcast(dst.group_id()) &&
+        !common::broadcast(dst.slot_id())) {
+        ec = xvnetwork_errc2_t::invalid_dst_address;
+        xwarn("%s %s. dst address is not a broadcast address %s", ec.category().name(), ec.message().c_str(), dst.to_string().c_str());
+        return;
+    }
+
+    if (src.network_id() == dst.network_id() && src.zone_id() == dst.zone_id() && src.cluster_id() == dst.cluster_id() && src.group_id() == dst.group_id()) {
+        // broadcast message in the same group
+
+        if (src.logic_epoch() != dst.logic_epoch() && !dst.logic_epoch().empty()) {
+            ec = xvnetwork_errc2_t::epoch_mismatch;
+            xwarn("%s %s. src %s dst %s", ec.category().name(), ec.message().c_str(), src.to_string().c_str(), dst.to_string().c_str());
+            return;
+        }
+
+        xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
+        auto bytes = codec::msgpack_encode(vmsg);
+
+        auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes.data(), bytes.size()));
+        xinfo("[vnetwork]xtop_vhost::broadcast [vnet hash: %" PRIx64 "] [msg hash: %u] [xxh32 to_hash:%" PRIu32 "]", vmsg.hash(), message.hash(), new_hash_val);
+
+#if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast" +
+                                       std::to_string(static_cast<std::uint32_t>(message.id())),
+                                   1);
+#endif
+#if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_size" +
+                                       std::to_string(static_cast<std::uint32_t>(message.id())),
+                                   bytes.size());
+#endif
+        m_network_driver->spread_rumor(bytes);
+    } else if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id())) {
+        // broadcast in the specified network
+
+        xvnetwork_message_t const vnetwork_message{src, dst, message, m_chain_timer->logic_time()};
+        auto const bytes_message = top::codec::msgpack_encode(vnetwork_message);
+
+        on_network_data_ready(host_node_id(), bytes_message);  // broadcast to local vnet  // TODO remove codec part
+
+        xdbg("%s broadcast msg %x from:%s to:%s hash %" PRIx64, vnetwork_category2().name(), message.id(), src.to_string().c_str(), dst.to_string().c_str(), message.hash());
+
+#if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all" +
+                                       std::to_string(static_cast<std::uint32_t>(message.id())),
+                                   1);
+#endif
+#if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all_size" +
+                                       std::to_string(static_cast<std::uint32_t>(message.id())),
+                                   bytes_message.size());
+#endif
+        assert(m_network_driver);
+        m_network_driver->spread_rumor(bytes_message);
+    } else if (common::broadcast(dst.slot_id())) {
+        // broadcast to another group
+
+        xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
+        auto const bytes_message = top::codec::msgpack_encode(vmsg);
+
+        auto const hash_val = base::xhash64_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
+        xinfo("%s %s forward_broadcast_message [type: %" PRIx32 "] [msg hash: %" PRIx64 "][bytes hash:%" PRIx64 "][msgid:%" PRIx32 "][%s][%s]",
+              vnetwork_category2().name(),
+              host_node_id().to_string().c_str(),
+              static_cast<std::uint32_t>(message.type()),
+              message.hash(),
+              hash_val,
+              static_cast<std::uint32_t>(message.id()),
+              src.to_string().c_str(),
+              dst.to_string().c_str());
+
+#if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message" +
+                                       std::to_string(static_cast<std::uint32_t>(message.id())),
+                                   1);
+#endif
+#if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message_size" +
+                                       std::to_string(static_cast<std::uint32_t>(message.id())),
+                                   bytes_message.size());
+#endif
+        on_network_data_ready(host_node_id(), bytes_message);
+
+        m_network_driver->spread_rumor(bytes_message);
     } else {
         ec = xvnetwork_errc2_t::not_supported, xwarn("%s %s", ec.category().name(), ec.message().c_str());
     }
 }
 
 void xtop_vhost::on_network_data_ready(common::xnode_id_t const &, xbyte_buffer_t const & bytes) {
+#if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vhost_on_data_ready_called", 1);
-
+#endif
     try {
         if (!running()) {
             xwarn("[vnetwork] vhost not run");
             return;
         }
 
+#if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_total_size_of_all_messages", bytes.size());
-
+#endif
         m_message_queue.push(bytes);
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] std::exception exception caught: %s", eh.what());
@@ -518,7 +667,7 @@ void xtop_vhost::do_handle_network_data() {
                     }
 
                     auto vnetwork_message = top::codec::msgpack_decode<xvnetwork_message_t>(bytes);
-
+                    XMETRICS_GAUGE(metrics::vhost_recv_msg, 1);
                     auto const & message = vnetwork_message.message();
                     auto const & receiver = vnetwork_message.receiver();
                     auto const & sender = vnetwork_message.sender();
@@ -529,19 +678,82 @@ void xtop_vhost::do_handle_network_data() {
                          sender.to_string().c_str(),
                          receiver.to_string().c_str());
 
+                    auto const message_category = common::get_message_category(vnetwork_message.message_id());
+                    switch (message_category) {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wswitch"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wswitch"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+                    case xmessage_category_consensus:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_consensus_contains_duplicate, 1);
+                        break;
+                    }
+                    case xmessage_category_timer:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_timer_contains_duplicate, 1);
+                        break;
+                    }
+                    case xmessage_category_txpool:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_txpool_contains_duplicate, 1);
+                        break;
+                    }
+
+                    case xmessage_category_rpc:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_rpc_contains_duplicate, 1);
+                        break;
+                    }
+
+                    case xmessage_category_sync:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_sync_contains_duplicate, 1);
+                        break;
+                    }
+
+                    case xmessage_block_broadcast:
+                    {
+                        XMETRICS_GAUGE(metrics::message_block_broadcast_contains_duplicate, 1);
+                        break;
+                    }
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+                    default:
+                    {
+                        assert(false);
+                        XMETRICS_GAUGE(metrics::message_category_unknown_contains_duplicate, 1);
+                        break;
+                    }
+                    }
+                    #if VHOST_METRICS
                     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(vnetwork_message.message().id()))) +
                                                    "_in_vhost_size" + std::to_string(static_cast<std::uint32_t>(vnetwork_message.message().id())),
                                                bytes.size());
-
-                    m_filter_manager->filt_message(vnetwork_message);
-                    if (vnetwork_message.empty()) {
+                    #endif
+                    std::error_code ec;
+                    m_filter_manager->filter_message(vnetwork_message, ec);
+                    if (ec) {
+                        xinfo("[vnetwork] message filter: message id %" PRIx32 " hash %" PRIx64 " filted out",
+                              static_cast<uint32_t>(message.id()),
+                              static_cast<uint64_t>(message.hash()));
                         continue;
                     }
 
-                    xdbg("[vnetwork] message hash: %" PRIx64 " , after  filter:s&r sender is %s , receiver is %s",
-                         vnetwork_message.hash(),
-                         sender.to_string().c_str(),
-                         receiver.to_string().c_str());
+                    xinfo("[vnetwork] message hash: %" PRIx64 " , after  filter:s&r sender is %s , receiver is %s",
+                          vnetwork_message.hash(),
+                          sender.to_string().c_str(),
+                          receiver.to_string().c_str());
 
                     std::vector<std::pair<common::xnode_address_t const, xmessage_ready_callback_t>> callbacks;
                     XLOCK_GUARD(m_callbacks_mutex) {
@@ -555,7 +767,9 @@ void xtop_vhost::do_handle_network_data() {
                             }
 
                             if (!contains) {
+                                #if VHOST_METRICS
                                 XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
+                                #endif
                                 xdbg("[vnetwork] callback at address %s not matched", callback_addr.to_string().c_str());
                                 continue;
                             }
@@ -582,10 +796,11 @@ void xtop_vhost::do_handle_network_data() {
                                      &callback,
                                      top::get<common::xnode_address_t const>(callback_info).to_string().c_str());
 #ifdef ENABLE_METRICS
-                                char hex_msg_id[9] = {0};
-                                snprintf(hex_msg_id, 8, "%x", vnetwork_message.message().id());
-                                XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", hex_msg_id, uint32_t(100000));
+                                char msg_info[30] = {0};
+                                snprintf(msg_info, 29, "%x|%" PRIx64, vnetwork_message.message().id(), message.hash());
+                                XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", msg_info, uint32_t(100000));
 #endif
+                                XMETRICS_GAUGE(metrics::vhost_recv_callback, 1);
                                 callback(sender, message, msg_time);
                             } catch (std::exception const & eh) {
                                 xerror("[vnetwork] exception caught from callback: %s", eh.what());
@@ -594,9 +809,8 @@ void xtop_vhost::do_handle_network_data() {
                             xerror("[vnetwork] callback not registered");
                         }
                     }
-
-                } catch (xvnetwork_error_t const & eh) {
-                    xwarn("[vnetwork] catches vnetwork exception: %s", eh.what());
+                } catch (top::error::xtop_error_t const & eh) {
+                    xwarn("[vnetwork] catches top error. category %s; error code %d; eh msg: %s; ec msg: %s", eh.code().category().name(), eh.code().value(), eh.what(), eh.code().message().c_str());
                 } catch (std::exception const & eh) {
                     xwarn("[vnetwork] catches std::exception: %s", eh.what());
                 } catch (...) {
@@ -619,562 +833,4 @@ void xtop_vhost::do_handle_network_data() {
     }
 }
 
-/*
- * this is the callback function, which is called by the lower module,
- * thus do not throw vnetwork exceptions
- */
-/* Commented out on 2020.05.08 when refactoring the vnetwork message filter.
-void
-xtop_vhost::do_handle_network_data() {
-    assert(m_vhost_thread_id == std::this_thread::get_id());
-
-#if defined DEBUG
-    xscope_executer_t do_handle_network_data_exit_verifier{ [this, self=shared_from_this()] {
-        assert(!running());
-    }};
-#endif
-
-    while (running()) {
-        try {
-            auto all_byte_messages = m_message_queue.wait_and_pop_all();
-
-            XMETRICS_COUNTER_INCREMENT("vhost_handle_data_ready_called", all_byte_messages.size());
-
-            XMETRICS_TIME_RECORD("vhost_handle_data_ready_called_time");
-
-            for (auto & bytes : all_byte_messages) {
-                try {
-                    if (bytes.empty()) {
-                        // this may be a stop notification message.
-                        // anyway, for an empty message, just ignore it.
-                        continue;
-                    }
-
-                    auto vnetwork_message = top::codec::msgpack_decode<xvnetwork_message_t>(bytes);
-                    if (vnetwork_message.empty()) {
-                        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
-                        xwarn("[vnetwork] vnetwork message empty");
-                        continue;
-                    }
-
-                    auto message = vnetwork_message.message();
-                    auto receiver = vnetwork_message.receiver();
-                    auto const & sender = vnetwork_message.sender();
-
-                    XMETRICS_COUNTER_INCREMENT(std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_in_vhost"+
-                                                        std::to_string(static_cast<std::uint32_t>(message.id())),
-                                                        1);
-
-                    XMETRICS_COUNTER_INCREMENT(std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_in_vhost_size"+
-                                                        std::to_string(static_cast<std::uint32_t>(message.id())),
-                                                        bytes.size());
-
-                    xdbg("[vnetwork] recv message :%" PRIx32 " (hash %" PRIx64 " logic time %" PRIu64 ") from:%s to:%s",
-                         static_cast<std::uint32_t>(message.id()),
-                         message.hash(),
-                         vnetwork_message.logic_time(),
-                         sender.to_string().c_str(),
-                         receiver.to_string().c_str());
-
-                    // if (receiver.empty()) {
-                    //     XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
-                    //     assert(false);
-                    //     xwarn("[vnetwork] vnetwork message receiver address is empty");
-                    //     continue;
-                    // }
-
-                    xdbg("[vnetwork] %s receives message %" PRIx64 " from %s msg id %" PRIx32 " logic time %" PRIu64,
-                         host_node_id().to_string().c_str(),
-                         vnetwork_message.hash(),
-                         sender.to_string().c_str(),
-                         static_cast<std::uint32_t>(vnetwork_message.message().id()),
-                         vnetwork_message.logic_time());
-
-                    if (vnetwork_message.empty()) {
-                        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
-                        assert(false);
-                        xwarn("[vnetwork] receiving an empty message. msg id %" PRIx32, static_cast<std::uint32_t>(message.id()));
-                        continue;
-                    }
-
-
-                    if (!common::broadcast(receiver.network_id()) && receiver.network_id() != network_id()) {
-                        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
-                        xdbg("[vnetwork] vnetwork message network id not matched: this network id %" PRIu32 "; sent to %" PRIu32,
-                             static_cast<std::uint32_t>(network_id().value()),
-                             static_cast<std::uint32_t>(receiver.network_id().value()));
-                        continue;
-                    }
-
-                    auto const msg_time = vnetwork_message.logic_time();
-                    xdbg("[vnetwork] message logic time %" PRIu64, msg_time);
-                    auto const local_time = m_chain_timer->logic_time();
-
-                    // the logic time is used to calc the version.  thus, if version not specified,
-                    // logic time will be used to find the version, which means that the time
-                    // should be verified!
-                    if (receiver.version().empty()) {
-                        constexpr std::uint64_t future_threshold{ 2 };
-                        constexpr std::uint64_t past_threshold{ 6 };
-
-                        if ((local_time != 0)                          &&
-                            (local_time + future_threshold < msg_time) &&
-                            message.id() != contract::xmessage_block_broadcast_id) {
-                            // receive a message from future, ignore
-                            xwarn("[vnetwork] receive a message whose logic time is %" PRIu64 " which is much more newer than current node %" PRIu64,
-                                  msg_time,
-                                  local_time);
-                            XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                            // assert(false);
-                            continue;
-                        }
-
-                        if ((msg_time != 0)                          &&
-                            (msg_time + past_threshold < local_time) &&
-                            message.id() != contract::xmessage_block_broadcast_id) {
-                            // receive a message from past, ignore
-                            xwarn("[vnetwork] receive a message whose logic time is %" PRIu64 " which is much more older than current node %" PRIu64,
-                                  msg_time,
-                                  local_time);
-                            XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                            // assert(false);
-                            continue;
-                        }
-                    }
-
-                    auto const dst_type = receiver.type();
-                    auto const src_type = sender.type();
-
-                    if (common::has<common::xnode_type_t::consensus_validator>(dst_type)) {
-                        // for a cross network / cluster / group communication, the special case is that the receiver is a consensus group or node.
-                        // for a consensus node, the incoming message should be from its associated auditor, neighbors or from archive
-                        if (sender.cluster_address() == receiver.cluster_address()) {
-                            // message from neighbors.
-
-                            if (sender.version().has_value() && receiver.version().has_value() && sender.version() != receiver.version()) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                                xwarn("[vnetwork] %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s but version not match",
-                                      host_node_id().to_string().c_str(),
-                                      static_cast<std::uint32_t>(message.id()),
-                                      message.hash(),
-                                      sender.to_string().c_str(),
-                                      receiver.to_string().c_str());
-                                continue;
-                            }
-
-                            assert(sender.version().has_value() || receiver.version().has_value());
-
-                            if (sender.version().empty()) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                                xwarn("[vnetwork] %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s, but sender doesn't provide round version",
-                                      host_node_id().to_string().c_str(),
-                                      static_cast<std::uint32_t>(message.id()),
-                                      message.hash(),
-                                      sender.to_string().c_str(),
-                                      receiver.to_string().c_str());
-                                continue;
-                            }
-
-                            if (receiver.version().empty()) {
-                                if (receiver.account_election_address().empty()) {
-                                    receiver = common::xnode_address_t{ receiver.sharding_address(), sender.version(), receiver.sharding_size(), receiver.associated_blk_height() };
-                                } else {
-                                    receiver = common::xnode_address_t{ receiver.sharding_address(), receiver.account_election_address(), sender.version(),
-receiver.sharding_size(), receiver.associated_blk_height() };
-                                }
-                            }
-
-                            assert(sender.version().has_value() && receiver.version().has_value());
-                        } else {
-                            // the message is not from its neighbors, then it must be from its parent or form archive
-
-                            if (!common::has<common::xnode_type_t::consensus_auditor>(src_type) &&
-                                !common::has<common::xnode_type_t::archive>(src_type)) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                                xwarn("[vnetwork] %s received a message id %" PRIx32 " hash %" PRIx64 " from %s to %s which is not an auditor or archive node",
-                                      host_node_id().to_string().c_str(),
-                                      static_cast<std::uint32_t>(message.id()),
-                                      message.hash(),
-                                      sender.to_string().c_str(),
-                                      receiver.to_string().c_str());
-                                continue;
-                            }
-
-                            if (common::has<common::xnode_type_t::consensus_auditor>(src_type)) {
-                                // if receiver has version, the associated auditor must be matched with the sender.
-                                std::shared_ptr<election::cache::xgroup_element_t> associated_parent{ nullptr };
-
-                                if (receiver.version().has_value()) {
-                                    assert(m_election_cache_data_accessor != nullptr);
-                                    std::error_code ec{ election::xdata_accessor_errc_t::success };
-                                    associated_parent = m_election_cache_data_accessor->parent_group_element(receiver.sharding_address(),
-                                                                                                             receiver.version(),
-                                                                                                             ec);
-                                    if (ec) {
-                                        xdbg("[vnetwork] network %" PRIu32 " node %s receives msg sent to %s. ignored. error: %s",
-                                             static_cast<std::uint32_t>(network_id().value()),
-                                             host_node_id().value().c_str(),
-                                             receiver.to_string().c_str(),
-                                             ec.message().c_str());
-                                        continue;
-                                    }
-
-                                    if (!(sender.cluster_address() == associated_parent->address().cluster_address() &&
-                                          sender.version() == associated_parent->version())) {
-                                        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                                        xwarn("[vnetwork] %s received a message id %" PRIx32 " hash %" PRIx64 " sent to %s from %s which is not its associated parent (%s)",
-                                              host_node_id().to_string().c_str(),
-                                              static_cast<std::uint32_t>(message.id()),
-                                              message.hash(),
-                                              receiver.to_string().c_str(),
-                                              sender.to_string().c_str(),
-                                              associated_parent->address().to_string().c_str());
-                                        continue;
-                                    }
-                                } else {
-                                    assert(receiver.version().empty());
-                                    // associated_parent = vnetwork(sender.network_id())->zone_vnode(sender.zone_id())
-                                    //                                                  ->cluster_vnode(sender.cluster_id())
-                                    //                                                  ->group_vnode(sender.group_id(), sender.version());
-                                    std::error_code ec{ election::xdata_accessor_errc_t::success };
-                                    associated_parent = m_election_cache_data_accessor->group_element(sender.sharding_address(),
-                                                                                                      sender.version(),
-                                                                                                      ec);
-                                    if (ec) {
-                                        xdbg("[vnetwork] network %" PRIu32 " node %s receives msg sent to %s. ignored. error: %s",
-                                             static_cast<std::uint32_t>(network_id().value()),
-                                             host_node_id().value().c_str(),
-                                             receiver.to_string().c_str(),
-                                             ec.message().c_str());
-                                        continue;
-                                    }
-                                }
-
-                                assert(associated_parent != nullptr);
-                                if (receiver.version().empty()) {
-                                    auto const validator_children = associated_parent->associated_child_groups(msg_time);
-                                    common::xversion_t max_validator_version;
-                                    for (auto const & validator : validator_children) {
-                                        if ((validator->address().cluster_address() == receiver.cluster_address()) &&
-                                            (max_validator_version < validator->version())) {
-                                            max_validator_version = validator->version();
-                                        }
-                                    }
-
-                                    if (!max_validator_version.empty()) {
-                                        if (receiver.account_address().empty()) {
-                                            receiver = common::xnode_address_t{
-                                                receiver.cluster_address(),
-                                                max_validator_version,
-                                                receiver.sharding_size(),
-                                                receiver.associated_blk_height()
-                                            };
-                                        } else {
-                                            receiver = common::xnode_address_t{
-                                                receiver.cluster_address(),
-                                                receiver.account_election_address(),
-                                                max_validator_version,
-                                                receiver.sharding_size(),
-                                                receiver.associated_blk_height()
-                                            };
-                                        }
-                                    } else {
-                                        xwarn("[vnetwork] no validator (%s) found associated with auditor %s for msg %" PRIx32 " hash %" PRIx64 " (msg logic time %" PRIu64 ") at
-logic time %" PRIu64, receiver.to_string().c_str(), sender.to_string().c_str(), static_cast<std::uint32_t>(message.id()), message.hash(), msg_time, last_logic_time()); continue;
-                                    }
-                                }
-                            } else {
-                                assert(common::has<common::xnode_type_t::archive>(src_type));
-                                if (receiver.version().empty()) {
-                                    std::error_code ec{ election::xdata_accessor_errc_t::success };
-                                    auto const group = m_election_cache_data_accessor->group_element(receiver.sharding_address(),
-                                                                                                             msg_time,
-                                                                                                             ec);
-                                    if (ec) {
-                                        xdbg("[vnetwork] network %" PRIu32 " node %s receives msg sent to %s. ignored. error: %s",
-                                             static_cast<std::uint32_t>(network_id().value()),
-                                             host_node_id().value().c_str(),
-                                             receiver.to_string().c_str(),
-                                             ec.message().c_str());
-                                        continue;
-                                    }
-                                    auto version = group->version();
-
-                                    if (receiver.account_address().empty()) {
-                                        receiver = common::xnode_address_t{
-                                            receiver.cluster_address(),
-                                            version,
-                                            receiver.sharding_size(),
-                                            receiver.associated_blk_height()
-                                        };
-                                    } else {
-                                        receiver = common::xnode_address_t{
-                                            receiver.cluster_address(),
-                                            receiver.account_election_address(),
-                                            version,
-                                            receiver.sharding_size(),
-                                            receiver.associated_blk_height()
-                                        };
-                                    }
-                                }
-                            }
-                        }
-                    } else if (common::has<common::xnode_type_t::consensus_auditor>(dst_type)) {
-                        if (common::has<common::xnode_type_t::consensus_validator>(src_type)) {
-                            // for a auditor node, if the incomming message is from validator, then this validator must be from its
-                            // associated validator.
-
-                            std::shared_ptr<election::cache::xgroup_element_t> auditor{ nullptr };
-                            if (receiver.version().empty()) {
-                                if (sender.version().empty()) {
-                                    // if auditor version and validator version are both empty. it's not acceptable.
-                                    xwarn("[vnetwork] invalid message sent from validator to auditor. message id %" PRIx32 " hash %" PRIx64,
-                                          message.id(),
-                                          message.hash());
-                                    continue;
-                                }
-
-                                xdbg("[vnetwork] auditor received message %" PRIx64 " from validator but not specify the auditor round version.  calculating...");
-                                //auditor = vnetwork(sender.network_id())->zone_vnode(sender.zone_id())
-                                //                                       ->cluster_vnode(sender.cluster_id())
-                                //                                       ->group_vnode(sender.group_id(), sender.version())
-                                //                                       ->associated_parent_group();
-                                std::error_code ec{ election::xdata_accessor_errc_t::success };
-                                auditor = m_election_cache_data_accessor->parent_group_element(sender.sharding_address(),
-                                                                                               sender.version(),
-                                                                                               ec);
-                                if (ec) {
-                                    xdbg("[vnetwork] network %" PRIu32 " node %s receives msg sent to %s. ignored. error: %s",
-                                         static_cast<std::uint32_t>(network_id().value()),
-                                         host_node_id().value().c_str(),
-                                         receiver.to_string().c_str(),
-                                         ec.message().c_str());
-                                    continue;
-                                }
-                            } else {
-                                //auditor = vnetwork(receiver.network_id())->zone_vnode(receiver.zone_id())
-                                //                                         ->cluster_vnode(receiver.cluster_id())
-                                //                                         ->group_vnode(receiver.group_id(), receiver.version());
-                                std::error_code ec{ election::xdata_accessor_errc_t::success };
-                                auditor = m_election_cache_data_accessor->group_element(receiver.sharding_address(),
-                                                                                        receiver.version(),
-                                                                                        ec);
-                                if (ec) {
-                                    xdbg("[vnetwork] network %" PRIu32 " node %s receives msg sent to %s. ignored. error: %s",
-                                         static_cast<std::uint32_t>(network_id().value()),
-                                         host_node_id().value().c_str(),
-                                         receiver.to_string().c_str(),
-                                         ec.message().c_str());
-                                    continue;
-                                }
-                            }
-                            // should call xbasic_group_vnode_t::associated_child_groups() not
-                            // xbasic_group_vnode_t::associated_child_groups(common::xlogic_time_t const);
-                            // since the sender must have a version.
-                            auto const validator_children = auditor->associated_child_groups(common::xjudgement_day);
-
-                            bool valid_child{ false };
-                            for (auto const & validator_child : validator_children) {
-                                if (validator_child->version() != sender.version()) {
-                                    continue;
-                                }
-
-                                if (validator_child->group_id() != sender.group_id()) {
-                                    continue;
-                                }
-
-                                if (validator_child->cluster_id() != sender.cluster_id()) {
-                                    xwarn("[vnetwork] recving msg from different area: src area %s dst area %s",
-                                          validator_child->cluster_id().to_string().c_str(),
-                                          sender.cluster_id().to_string().c_str());
-
-                                    assert(false);
-                                    continue;
-                                }
-
-                                if (validator_child->zone_id() != sender.zone_id()) {
-                                    xwarn("[vnetwork] recving msg from different zone: src zone %s dst zone %s",
-                                          validator_child->zone_id().to_string().c_str(),
-                                          sender.zone_id().to_string().c_str());
-
-                                    assert(false);
-                                    continue;
-                                }
-
-                                if (validator_child->network_id() != sender.network_id()) {
-                                    xwarn("[vnetwork] recving msg from different network: src network %s dst network %s",
-                                          validator_child->network_id().to_string().c_str(),
-                                          sender.network_id().to_string().c_str());
-
-                                    assert(false);
-                                    continue;
-                                }
-
-                                valid_child = true;
-                                break;
-                            }
-
-                            if (!valid_child) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
-                                xwarn("[vnetwork] %s received a message id %" PRIx32 " hash %" PRIx64 " sent to %s from %s which is not its associated child",
-                                      host_node_id().to_string().c_str(),
-                                      static_cast<std::uint32_t>(message.id()),
-                                      message.hash(),
-                                      receiver.to_string().c_str(),
-                                      sender.to_string().c_str());
-                                // assert(false);   // TODO: revert after VNode destory enabled
-                                continue;
-                            }
-                        }
-                    }
-
-                    XMETRICS_COUNTER_INCREMENT("vhost_received_valid", 1);
-
-                    // for a _cross cluster_, _cross zone_ or _cross network_ communication, the send
-                    // side don't need to know the election round the receive side is.  the rule here
-                    // is the sender always send the message to the the receiver with latest election
-                    // round.  but the sender knows nothing about the election round info on the
-                    // receiver side, thus it sends to the receiver without version (election round)
-                    // attached.  if the receiver sees an empty version it should make the version as
-                    // the latest one.
-
-                    if (receiver.version().empty()) {
-                        // if receiver's round version is empty, it shouldn't be a consensus node.
-                        // if it's a consensus node, the version should be resolved in the before-mentioned
-                        // validation process.
-                        if (common::has<common::xnode_type_t::consensus_validator>(dst_type)) {
-                            xwarn("[xnetwork] receive empty version to validator!!!!");
-                            continue;
-                        }
-
-                        std::error_code ec{ election::xdata_accessor_errc_t::success };
-                        auto const group_element = m_election_cache_data_accessor->group_element(receiver.sharding_address(),
-                                                                                                 msg_time,
-                                                                                                 ec);
-                        if (!ec) {
-                            if (receiver.account_election_address().empty()) {
-                                receiver = common::xnode_address_t{ receiver.sharding_address(), group_element->version(), group_element->sharding_size(),
-group_element->associated_blk_height() }; } else { receiver = common::xnode_address_t{ receiver.sharding_address(), receiver.account_election_address(), group_element->version(),
-group_element->sharding_size(), group_element->associated_blk_height() };
-                            }
-                        }
-
-                        //try {
-                        //    if (exists(receiver.network_id())) {
-                        //        auto vnet = vnetwork(receiver.network_id());
-                        //        assert(vnet);
-
-                        //        if (vnet->exists(receiver.zone_id())) {
-                        //            auto vzone = vnet->zone_vnode(receiver.zone_id());
-                        //            assert(vzone);
-
-                        //            if (vzone->exists(receiver.cluster_id())) {
-                        //                auto cvnode = vzone->cluster_vnode(receiver.cluster_id());
-                        //                assert(cvnode);
-
-                        //                auto result = cvnode->exists(receiver.group_id(), msg_time);
-                        //                if (top::get<bool>(result)) {
-                        //                    auto version = top::get<common::xversion_t>(result);
-                        //                    if (receiver.account_address().empty()) {
-                        //                        receiver = common::xnode_address_t{ receiver.cluster_address(), version };
-                        //                    } else {
-                        //                        receiver = common::xnode_address_t{ receiver.cluster_address(), receiver.account_address(), version };
-                        //                    }
-                        //                }
-                        //            }
-                        //        }
-                        //    }
-                        //} catch (xvnetwork_error_t const & eh) {
-                        //    xwarn("[vnetwork] xventwork_error_t exception caught when calculating the latest version for receiving address. eh: %s recv addr: %s",
-                        //          eh.what(), receiver.to_string().c_str());
-                        //}
-                    }
-
-                    xdbg("[vnetwork] receiver is %s", receiver.to_string().c_str());
-
-                    std::vector<std::pair<common::xnode_address_t const, xmessage_ready_callback_t>> callbacks;
-                    XLOCK_GUARD(m_callbacks_mutex) {
-                        for (auto const & callback_info : m_callbacks) {
-                            auto const & callback_addr = top::get<common::xnode_address_t const>(callback_info);
-                            xdbg("[vnetwork] see callback address: %s", callback_addr.to_string().c_str());
-                            // auto const & callback = top::get<xmessage_ready_callback_t>(callback_info);
-
-                            // exact match
-                            if (callback_addr == receiver) {
-                                callbacks.push_back(callback_info);
-                                continue;
-                            }
-
-                            auto contains = callback_addr.cluster_address().contains(receiver.cluster_address());
-                            if (!contains) {
-                                contains = receiver.cluster_address().contains(callback_addr.cluster_address());
-                            }
-
-                            if (!contains) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
-                                continue;
-                            }
-
-                            assert(contains);
-
-                            bool const version_matched = callback_addr.version().empty()                  ||
-                                                         receiver.version().empty()                       ||
-                                                         (callback_addr.version() == receiver.version());
-
-                            bool const account_matched = callback_addr.account_address().empty() ||
-                                                         receiver.account_address().empty()      ||
-                                                         (callback_addr.account_address() == receiver.account_address());
-
-                            if (version_matched && account_matched) {
-                                callbacks.push_back(callback_info);
-                            } else {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
-                                xdbg("[vnetwork] callback at address %s not matched", callback_addr.to_string().c_str());
-                            }
-                        }
-                    }
-
-                    if (callbacks.empty()) {
-                        xwarn("[vnetwork] no callback found");
-                        continue;
-                    }
-
-                    for (auto & callback_info : callbacks) {
-                        auto const & callback = top::get<xmessage_ready_callback_t>(callback_info);
-                        if (callback) {
-                            try {
-                                // callback(sender, receiver, message);
-                                xdbg("[vnetwork] send msg %" PRIx32 " (hash %" PRIx64 ") to callback %p at address %s",
-                                     static_cast<std::uint32_t>(message.id()),
-                                     message.hash(),
-                                     &callback,
-                                     top::get<common::xnode_address_t const>(callback_info).to_string().c_str());
-
-                                callback(sender, message, msg_time);
-                            } catch (std::exception const & eh) {
-                                xerror("[vnetwork] exception caught from callback: %s", eh.what());
-                            }
-                        } else {
-                            xerror("[vnetwork] callback not registered");
-                        }
-                    }
-
-                } catch (xvnetwork_error_t const & eh) {
-                    xwarn("[vnetwork] catches vnetwork exception: %s", eh.what());
-                } catch (std::exception const & eh) {
-                    xwarn("[vnetwork] catches std::exception: %s", eh.what());
-                } catch (...) {
-                    xwarn("[vnetwork] catches an unknown exception");
-                }
-            }
-
-
-        } catch (std::exception const & eh) {
-            xwarn("[vnetwork] catches std::exception: %s", eh.what());
-        } catch (...) {
-            xwarn("[vnetwork] catches an unknown exception");
-        }
-    }
-}
-*/
 NS_END2

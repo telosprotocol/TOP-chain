@@ -22,8 +22,3 @@ if (BUILD_METRICS)
     # add_dependencies(xtxexecutor xmetrics)
     target_link_libraries(xtxexecutor PRIVATE xmetrics)
 endif()
-
-if (XENABLE_TESTS)
-    enable_testing()
-    add_subdirectory(test/unittest)
-endif()

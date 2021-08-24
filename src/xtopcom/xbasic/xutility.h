@@ -263,23 +263,6 @@ NS_END1
 #   define XSTD_PRINT(...)
 #endif
 
-#if defined XTHROW
-#   error "XTHROW redefined"
-#endif
-#if (defined XTHROW_ERROR && defined DEBUG)
-#   define XTHROW(EXCEPTION, ERRC, EXTRA_MSG)                               \
-        auto exception = EXCEPTION{ EXTRA_MSG, ERRC, __LINE__, __FILE__ };  \
-        XSTD_PRINT(u8"throws exception %s\n", exception.what());            \
-        xerror(u8"throws exception %s", exception.what());                  \
-        throw exception
-#else
-#   define XTHROW(EXCEPTION, ERRC, EXTRA_MSG)                               \
-        auto exception = EXCEPTION{ EXTRA_MSG, ERRC, __LINE__, __FILE__ };  \
-        XSTD_PRINT(u8"throws exception %s\n", exception.what());            \
-        xwarn(u8"throws exception %s", exception.what());                   \
-        throw exception
-#endif
-
 #if !defined NDEBUG
 #   if defined XENABLE_VERBOSE_DBG
 #       define XVERBOSE_ASSERT(CONDITION)   assert(CONDITION)

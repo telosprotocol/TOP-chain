@@ -22,7 +22,6 @@ class xelect_client_imp {
     ~xelect_client_imp() = default;
 
     void bootstrap_node_join();
-    void tx_to_json(xJson::Value& tx_json, const data::xtransaction_ptr_t& tx);
 };
 
 NS_END2

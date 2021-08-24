@@ -75,20 +75,31 @@ namespace top
                 xkinfo("xBFTcontext_t::update_lock_block at node=0x%llx,nil-lock -> new_lock=%s,this=%llx",get_xip2_addr().low_addr,_new_lock->dump().c_str(),(int64_t)this);
                 return true;
             }
-            else if( (m_latest_lock_block->get_viewid() < _new_lock->get_viewid()) && (m_latest_lock_block->get_height() < _new_lock->get_height()) )
+            else
             {
-                if(   (_new_lock->get_chainid() == m_latest_lock_block->get_chainid())
-                   && (_new_lock->get_account() == m_latest_lock_block->get_account()))
+                bool allow_update = false;
+                if(   (m_latest_lock_block->get_viewid() < _new_lock->get_viewid())
+                   && (m_latest_lock_block->get_height() < _new_lock->get_height()) )
                 {
-                    xdbg("xBFTcontext_t::update_lock_block at node=0x%llx,old_lock=%s --> new_lock=%s,this=%llx",get_xip2_addr().low_addr,m_latest_lock_block->dump().c_str(),_new_lock->dump().c_str(),(int64_t)this);
-                    
-                    _new_lock->add_ref();
-                    base::xvblock_t* old_ptr = base::xatomic_t::xexchange(m_latest_lock_block, _new_lock);
-                    old_ptr->release_ref();
-                    
-                    return true;
+                    allow_update = true;
                 }
-                xerror("xBFTcontext_t::update_lock_block,fail-unmatched account of block=%s vs this=%s, at node=0x%llx",_new_lock->dump().c_str(),m_latest_lock_block->get_account().c_str(),get_xip2_low_addr());
+ 
+                if(allow_update)
+                {
+                    if(   (_new_lock->get_chainid() == m_latest_lock_block->get_chainid())
+                       && (_new_lock->get_account() == m_latest_lock_block->get_account()))
+                    {
+                        xdbg("xBFTcontext_t::update_lock_block at node=0x%llx,old_lock=%s --> new_lock=%s,this=%llx",get_xip2_addr().low_addr,m_latest_lock_block->dump().c_str(),_new_lock->dump().c_str(),(int64_t)this);
+                        
+                        _new_lock->add_ref();
+                        base::xvblock_t* old_ptr = base::xatomic_t::xexchange(m_latest_lock_block, _new_lock);
+                        old_ptr->release_ref();
+                        
+                        return true;
+                    }
+                    xerror("xBFTcontext_t::update_lock_block,fail-unmatched account of block=%s vs this=%s, at node=0x%llx",_new_lock->dump().c_str(),m_latest_lock_block->get_account().c_str(),get_xip2_low_addr());
+                }
+
             }
             return false;
         }
@@ -343,17 +354,6 @@ namespace top
                 {
                     xkinfo("xBFTcontext_t::do_submit at node=0x%llx,submit for block=%s",get_xip2_addr().low_addr,it->dump().c_str());
                     
-                    if( (it->get_child() != NULL) && (it->get_child()->get_child() != NULL) ) //operated by xbft-self
-                    {
-                        base::xvblock_t* lock_block = it->get_child()->get_block();
-                        base::xvblock_t* hqc_block  = it->get_child()->get_child()->get_block();
-                        
-                        fire_consensus_commit_event(it->get_block(), it->get_block(), lock_block, hqc_block);
-                    }
-                    else //sync module operated and transfer it to commited status
-                    {
-                        fire_consensus_commit_event(it->get_block(), it->get_block(), get_latest_lock_block(), highest_cert_block);
-                    }
                 }
                 for(auto it : to_commit_blocks)
                 {
@@ -413,8 +413,6 @@ namespace top
             {
                 xinfo("xBFTcontext_t::do_clean,cancel the block:%s at node=0x%llx",it->dump().c_str(),get_xip2_addr().low_addr);
                 
-                std::string errdetail;//("{\"reason\" = \"outofdate\"}");
-                fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,it, NULL, NULL, NULL, NULL);
                 it->release_ref(); //releasae reference holding by queue
             }
             return true;
@@ -455,8 +453,10 @@ namespace top
             if(any_lock_commit_change)
                 do_clean(_evt_obj->get_latest_cert(),_evt_obj->get_latest_proposal());
             
-            _evt_obj->set_latest_commit(get_latest_commit_block());//update with latest commit block
-            _evt_obj->set_latest_lock(get_latest_lock_block()); //update with latest lock block
+            if(_evt_obj->get_latest_commit() == NULL) //follow blockstore
+                _evt_obj->set_latest_commit(get_latest_commit_block());//update with latest commit block
+            if(_evt_obj->get_latest_lock() == NULL) //follow blockstore
+                _evt_obj->set_latest_lock(get_latest_lock_block()); //update with latest lock block
             return false; //let driver continue handle it
         }
         
@@ -487,13 +487,11 @@ namespace top
                     else //new_cert_block might be duplicated or behind commit block as well
                     {
                         xwarn("xBFTcontext_t::on_proposal_finish,drop proposal as false as do_update for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return true; //stop handle this proposal
                     }
                 }
                 else
                 {
-                    xerror("xBFTcontext_t::on_proposal_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                    return true; //stop handle this error proposal
+                    xwarn("xBFTcontext_t::on_proposal_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
                 }
             }
     
@@ -574,13 +572,11 @@ namespace top
                     else //new_cert_block might be duplicated or behind commit block as well
                     {
                         xwarn("xBFTcontext_t::on_replicate_finish,drop cert as false as do_update for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return true; //stop handle this proposal
                     }
                 }
                 else
                 {
-                    xerror("xBFTcontext_t::on_replicate_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                    return true; //stop handle this error proposal
+                    xwarn("xBFTcontext_t::on_replicate_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
                 }
                 
                 //go default handle ,bring latest information of commit and lock

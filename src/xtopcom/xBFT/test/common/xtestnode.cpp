@@ -39,7 +39,7 @@ namespace top
             const std::string  default_path = szBuff;
             xstoredb_t* _persist_db = new xstoredb_t(default_path);
             base::xvchain_t::instance().set_xdbstore(_persist_db);
-            base::xvblockstore_t * blockstore_ptr = store::get_vblockstore();
+            base::xvblockstore_t * blockstore_ptr = store::create_vblockstore();
             set_vblockstore(blockstore_ptr);
             register_plugin(blockstore_ptr);
 
@@ -131,14 +131,14 @@ namespace top
             return true;
         }
         
-        base::xvblock_t*   xtestnode_t::create_proposal_block(const std::string & account,const std::string & block_input,const std::string & block_output)
+        base::xvblock_t*   xtestnode_t::create_proposal_block(const std::string & account,const std::string & block_input,const std::string & block_output,const uint64_t new_viewid)
         {
             base::xauto_ptr<base::xvblock_t> last_block = get_vblockstore()->get_latest_cert_block(account); //return ptr that has been added reference
             if(last_block == nullptr)//blockstore has been closed
                 return NULL;
         
-            base::xauto_ptr<base::xvblock_t> last_full_block = get_vblockstore()->get_latest_full_block(account);
-            base::xvblock_t* new_proposal_block = xunitblock_t::create_unitblock(account,last_block->get_height() + 1,0,last_block->get_viewid() + 1,last_block->get_block_hash(),last_full_block->get_block_hash(),last_full_block->get_height(),block_input,block_output);
+            base::xauto_ptr<base::xvblock_t> last_full_block = get_vblockstore()->get_latest_committed_block(account);
+            base::xvblock_t* new_proposal_block = xunitblock_t::create_unitblock(account,last_block->get_height() + 1,0,new_viewid,last_block->get_block_hash(),last_full_block->get_block_hash(),last_full_block->get_height(),block_input,block_output);
             new_proposal_block->reset_prev_block(last_block.get()); //point previous block
             return new_proposal_block;
         }
@@ -189,33 +189,44 @@ namespace top
             }
             return xcsobject_t::recv_in(from_addr,to_addr,packet,cur_thread_id,timenow_ms);
         }
+    
+        bool    xtestnode_t::fire_proposal()
+        {
+            xdbg("xtestnode_t::fire_proposal,elect to leader by viewid=%lld and total nodes=%d at node=%llx",m_latest_viewid,m_total_nodes,get_xip2_low_addr());
+            
+            std::string txs;
+            if(m_txs_pool[m_test_account->get_account()].empty() == false)
+            {
+                txs = m_txs_pool[m_test_account->get_account()].front();
+                m_txs_pool[m_test_account->get_account()].pop_front();
+            }
+            
+            base::xvblock_t*  proposal_block = create_proposal_block(m_test_account->get_account(),txs,txs,m_latest_viewid);
+            if(proposal_block != NULL)
+            {
+                xvip2_t leader_xip =  get_xip2_addr();
+                proposal_block->get_cert()->set_validator(leader_xip);
+                
+                start_consensus(proposal_block);
+                
+                proposal_block->release_ref();//safe to release it
+                return true;
+            }
+            return false;
+        }
         
         //on_view_change event
         bool    xtestnode_t::on_view_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
             xconsensus::xcsview_fire* _ev_obj = (xconsensus::xcsview_fire*)&event;
             m_latest_viewid = _ev_obj->get_viewid();
-            if( (get_xip2_low_addr() & 0x3FF) == ((m_latest_viewid % m_total_nodes)) )//it is leader
+            
+            const uint64_t elect_leader_viewid = m_latest_viewid;
+            if( (get_xip2_low_addr() & 0x3FF) == ((elect_leader_viewid % m_total_nodes)) )//it is leader
             {
-                xdbg("xtestnode_t::on_view_fire,elect to leader by viewid=%lld and total nodes=%d at node=%llx",m_latest_viewid,m_total_nodes,get_xip2_low_addr());
+                xdbg("xtestnode_t::on_view_fire,elect to leader by viewid=%lld and total nodes=%d at node=%llx",m_latest_viewid,m_total_nodes,get_xip2_low_addr() & 0x3FF);
                 
-                std::string txs;
-                if(m_txs_pool[m_test_account->get_account()].empty() == false)
-                {
-                    txs = m_txs_pool[m_test_account->get_account()].front();
-                    m_txs_pool[m_test_account->get_account()].pop_front();
-                }
- 
-                base::xvblock_t*  proposal_block = create_proposal_block(m_test_account->get_account(),txs,txs);
-                if(proposal_block != NULL)
-                {
-                    xvip2_t leader_xip =  get_xip2_addr();
-                    proposal_block->get_cert()->set_validator(leader_xip);
-                    
-                    start_consensus(proposal_block);
-                    
-                    proposal_block->release_ref();//safe to release it
-                }
+                fire_proposal();
             }
             return true;
         }

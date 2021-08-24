@@ -9,6 +9,8 @@
 #include "xvdbstore.h"
 #include "xvblockstore.h"
 #include "xvstatestore.h"
+#include "xvcontractstore.h"
+#include "xvtxstore.h"
 #include "xveventbus.h"
 
 namespace top
@@ -214,9 +216,10 @@ namespace top
                 enum_xvchain_plugin_kdb_store     = 0x00, //manage key-value db
                 enum_xvchain_plugin_block_store   = 0x01, //manage all blocks,assocated with xvblockstore_t interface
                 enum_xvchain_plugin_state_store   = 0x02, //manage all states
-                enum_xvchain_plugin_txs_store     = 0x03, //manage all transactions
-                enum_xvchain_plugin_event_mbus    = 0x04, //manage mbus 
-                enum_xvchain_plugin_type_end      = 0x04,
+                enum_xvchain_plugin_contract_store= 0x03, //manage vcontract
+                enum_xvchain_plugin_txs_store     = 0x04, //manage all transactions
+                enum_xvchain_plugin_event_mbus    = 0x05, //manage mbus
+                enum_xvchain_plugin_type_end      = 0x05,
             };
         public:
             static xvchain_t &  instance(const uint16_t chain_id = 0);
@@ -246,15 +249,19 @@ namespace top
             
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
+            xvtxstore_t*                get_xtxstore();   //global shared xvtxstore_t instance
             xvblockstore_t*             get_xblockstore();//global shared blockstore instance
             xvstatestore_t*             get_xstatestore();//global shared statestore instance
+            xvcontractstore_t*          get_xcontractstore();//global shared statestore instance
             xveventbus_t*               get_xevmbus(); //global mbus object
         public:
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
+            bool                        set_xtxstore(xvtxstore_t * new_store);
             bool                        set_xblockstore(xvblockstore_t * new_store);//set global shared instance
             bool                        set_xstatestore(xvstatestore_t* new_sotre);
+            bool                        set_xcontractstore(xvcontractstore_t * new_store);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
-
+        
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
         protected:
@@ -264,6 +271,8 @@ namespace top
             uint64_t                m_chain_id;//aka network_id
         protected:
             xvledger_t*   m_ledgers[enum_vchain_has_buckets_count];
+        private:
+            static xvchain_t *      __global_vchain_instance;
         };
         ///////////////////////provide general structure for xledger and related //////////////////
     

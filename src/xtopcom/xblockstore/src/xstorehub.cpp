@@ -22,6 +22,7 @@ namespace top
             xblockstorehub_impl(const xblockstorehub_impl &);
             xblockstorehub_impl & operator = (const xblockstorehub_impl &);
         public:
+            base::xvblockstore_t*  create_block_store(base::xvdbstore_t* xvdb_ptr);
             base::xvblockstore_t*  get_block_store();
         private:
             base::xiothread_t*     m_monitor_thread;
@@ -48,17 +49,33 @@ namespace top
             if(_static_blockstore)
                 return _static_blockstore;
 
-            _static_blockstore = new xvblockstore_impl(std::string("/"),*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id());
-            
+            base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
+            _static_blockstore = new xvblockstore_impl(xvdb_ptr->get_store_path(),*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id(),xvdb_ptr);
+
             //set into global management
             base::xvchain_t::instance().set_xblockstore(_static_blockstore);
             return _static_blockstore;
         }
- 
+
+        base::xvblockstore_t*  xblockstorehub_impl::create_block_store(base::xvdbstore_t* xvdb_ptr)
+        {
+            if(NULL == xvdb_ptr)
+                xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
+
+            xvblockstore_impl * _blockstore = new xvblockstore_impl(xvdb_ptr->get_store_path(),*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id(),xvdb_ptr);
+            return _blockstore;
+        }
+
         base::xvblockstore_t*  get_vblockstore()
         {
             static xblockstorehub_impl _static_blockstore_hub;
             return _static_blockstore_hub.get_block_store();
+        }
+
+        base::xvblockstore_t*  create_vblockstore(base::xvdbstore_t* xvdb_ptr)
+        {
+            static xblockstorehub_impl _static_blockstore_hub;
+            return _static_blockstore_hub.create_block_store(xvdb_ptr);
         }
 
     };//end of namespace of vstore

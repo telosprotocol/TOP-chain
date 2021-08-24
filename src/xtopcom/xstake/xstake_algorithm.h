@@ -31,45 +31,46 @@
 
 NS_BEG2(top, xstake)
 
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_REG_KEY = "#101";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TIME_KEY = "#102";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_WORKLOAD_KEY = "#103";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_SHARD_KEY = "#104";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TICKETS_KEY = "#105";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_POLLABLE_KEY = "#107";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TASK_KEY = "#111";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY_BASE = "#112";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY1 = "#112-1";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY2 = "#112-2";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY3 = "#112-3";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY4 = "#112-4";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_MAX_TIME_KEY = "#115";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_AWARD_KEY = "#118";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VALIDATOR_KEY = "#120";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE = "#121";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1 = "#121-1";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2 = "#121-2";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3 = "#121-3";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4 = "#121-4";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_NODE_REWARD_KEY = "#124";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY = "#125";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY = "#126";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_START_HEIGHT_KEY = "#127";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_REFUND_KEY = "#128";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_GENESIS_STAGE_KEY = "#129";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_REG_KEY = "@101";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TIME_KEY = "@102";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_WORKLOAD_KEY = "@103";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_SHARD_KEY = "@104";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TICKETS_KEY = "@105";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_POLLABLE_KEY = "@107";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TASK_KEY = "@111";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY_BASE = "@112";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY1 = "@112-1";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY2 = "@112-2";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY3 = "@112-3";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY4 = "@112-4";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_MAX_TIME_KEY = "@115";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_AWARD_KEY = "@118";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VALIDATOR_KEY = "@120";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE = "@121";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1 = "@121-1";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2 = "@121-2";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3 = "@121-3";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4 = "@121-4";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_NODE_REWARD_KEY = "@124";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY = "@125";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY = "@126";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_START_HEIGHT_KEY = "@127";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_REFUND_KEY = "@128";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_GENESIS_STAGE_KEY = "@129";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TGAS_KEY = "@130";
 
 // slash related
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY = "#131";
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_SLASH_INFO_KEY = "#132";
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY = "#133";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY = "@131";
+XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_SLASH_INFO_KEY = "@132";
+XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY = "@133";
+XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY = "@134";
 
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE = "#141";
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY = "#142";
-XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT = "#143";
-XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME = "#144";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY = "#145";
-XINLINE_CONSTEXPR const char * XPROPERTY_REWARD_DETAIL = "#146";
+XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE = "@141";
+XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY = "@142";
+XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT = "@143";
+XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME = "@144";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY = "@145";
+XINLINE_CONSTEXPR const char * XPROPERTY_REWARD_DETAIL = "@146";
 
 constexpr char const * XTRANSFER_ACTION{"transfer"};
 constexpr char const * XZEC_WORKLOAD_CLEAR_WORKLOAD_ACTION{"clear_workload"};
@@ -318,7 +319,7 @@ public:
      * @return false
      */
     bool is_validator_node() const noexcept {
-        return common::has<common::xrole_type_t::consensus>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+        return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
     }
 
     /**
@@ -415,6 +416,9 @@ public:
      */
     bool archive() const noexcept;
 
+    /// @brief Check if self is a full node. Full node is another kind of archive.
+    bool full_node() const noexcept;
+
     /**
      * @brief get rec stake
      *
@@ -451,6 +455,8 @@ public:
      * @return uint64_t
      */
     uint64_t archive_stake() const noexcept;
+
+    uint64_t full_node_stake() const noexcept;
 
     /**
      * @brief Get role type
@@ -549,7 +555,7 @@ public:
     common::xlogic_time_t m_last_update_time{0};
     bool m_genesis_node{false};
     // uint32_t    m_network_id {0};
-    std::set<uint32_t> m_network_ids;
+    std::set<common::xnetwork_id_t> m_network_ids;
     std::string nickname;
     xpublic_key_t consensus_public_key;
 
@@ -676,6 +682,7 @@ private:
      */
     std::int32_t do_read(base::xstream_t & stream) override;
 };
+using xgroup_workload_t = cluster_workload_t;
 
 struct xactivation_record final : public xserializable_based_on<void> {
     int activated{0};
@@ -743,6 +750,7 @@ struct reward_detail final : public xserializable_based_on<void> {
     top::xstake::uint128_t m_validator_reward{0};
     top::xstake::uint128_t m_auditor_reward{0};
     top::xstake::uint128_t m_vote_reward{0};
+    top::xstake::uint128_t m_self_reward{0};
 private:
     int32_t do_write(base::xstream_t & stream) const override {
         const int32_t begin_pos = stream.size();
@@ -751,6 +759,7 @@ private:
         stream << m_validator_reward;
         stream << m_auditor_reward;
         stream << m_vote_reward;
+        stream << m_self_reward;
         const int32_t end_pos = stream.size();
         return (end_pos - begin_pos);
     }
@@ -768,6 +777,9 @@ private:
         stream >> m_validator_reward;
         stream >> m_auditor_reward;
         stream >> m_vote_reward;
+        if (stream.size() > 0) {
+            stream >> m_self_reward;
+        }
         const int32_t end_pos = stream.size();
         return (begin_pos - end_pos);
     }

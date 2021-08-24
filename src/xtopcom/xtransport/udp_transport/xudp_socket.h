@@ -26,7 +26,7 @@
 #include "xbase/xutl.h"
 
 #include "xtransport/transport.h"
-#include "xpbase/base/xbyte_buffer.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xpbase/base/top_utils.h"
 #include "xkad/routing_table/node_info.h"
 
@@ -52,11 +52,6 @@ enum class enum_xudp_status {
     enum_xudp_closed,  // closed, not released
     enum_xudp_closed_released,  // closed, released
 };
-enum class enum_xudp_msg_encode_type {
-    enum_xudp_protobuf,
-    enum_xudp_msgpack,
-};
-using Xip2Header = _xip2_header;
 
 class xp2pudp_t;
 class XudpSocket;
@@ -81,10 +76,7 @@ public:
     xp2pudp_t(xcontext_t & _context,xendpoint_t * parent,const int32_t target_thread_id,int64_t virtual_handle,xsocket_property & property, XudpSocket* listen_server)
      : xudp_t(_context,parent,target_thread_id,virtual_handle,property)
     {
-        
         m_link_refcount = 0;
-//      TOP_DBG_INFO("xp2pudp_t new,handle(%d),local address[%s : %d]-[%d : %d] vs  peer address[%s : %d]-[%d : %d]; cur_thread_id=%d,object_id(%lld) for this(%lld)\n",get_handle(), get_local_ip_address().c_str(),get_local_real_port(),get_local_logic_port(),get_local_logic_port_token(),get_peer_ip_address().c_str(),get_peer_real_port(),get_peer_logic_port(),get_peer_logic_port_token(),get_thread_id(),get_obj_id(),(uint64_t)this);
-        m_msg_encode_type = enum_xudp_msg_encode_type::enum_xudp_protobuf;
         m_status = top::transport::enum_xudp_status::enum_xudp_init;
         listen_server_ = listen_server;
     }
@@ -114,7 +106,7 @@ public:
     int32_t connect_xudp(const std::string& target_ip,const uint16_t target_port, XudpSocket* udp_server);
     enum_xudp_status GetStatus() {return m_status;}
     void SetStatus(enum_xudp_status s) { m_status = s;}
-    int encode_msg_type();
+
     int    add_linkrefcount();
     int    release_linkrefcount();
 protected:
@@ -122,7 +114,6 @@ protected:
 private:
     enum_xudp_status m_status;  // 0 init, 1 connecting, 2 connected, 3 closed
     XudpSocket* listen_server_;
-    enum_xudp_msg_encode_type m_msg_encode_type;
 };
 
 class XudpSocket : protected base::xudplisten_t, public SocketIntf {
@@ -134,17 +125,11 @@ public:
             MultiThreadHandler* message_handler);
     virtual ~XudpSocket() override;
     void Stop() override;
-    int SendData(
-            const xbyte_buffer_t& data,
-            const std::string& peer_ip,
-            uint16_t peer_port) override;
     int SendData(base::xpacket_t& packet) override;
-    int SendDataWithProp(
-            base::xpacket_t& packet,
-            UdpPropertyPtr& udp_property);
+    int SendDataWithProp(std::string const & data,const std::string & peer_ip,uint16_t peer_port,UdpPropertyPtr& udp_property,uint16_t priority_flag = 0);
+    int SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_property);
     int SendToLocal(base::xpacket_t& packet) override;
-    int SendToLocal(const xbyte_buffer_t& data) override;
-    void AddXip2Header(base::xpacket_t& packet) override;
+    void AddXip2Header(base::xpacket_t& packet,uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;
 
     void register_on_receive_callback(on_receive_callback_t callback) override;
@@ -198,7 +183,7 @@ public:
 
 protected:
     virtual xslsocket_t* create_xslsocket(xendpoint_t * parent,xfd_handle_t handle,xsocket_property & property, int32_t cur_thread_id,uint64_t timenow_ms) override;
-    Xip2Header* ParserXip2Header(base::xpacket_t& packet);
+
     int send_ping_packet(
             std::string target_ip_addr,
             uint16_t target_ip_port,

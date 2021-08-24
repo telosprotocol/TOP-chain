@@ -40,23 +40,28 @@ public:
     get_block_handle(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync)
       : m_store(store), m_block_store(block_store), m_sync(sync), m_edge_start_height(1), m_arc_start_height(1) {
         REGISTER_QUERY_METHOD(getBlock);
+        REGISTER_QUERY_METHOD(getProperty);
         REGISTER_QUERY_METHOD(getAccount);
         REGISTER_QUERY_METHOD(getTransaction);
         REGISTER_QUERY_METHOD(getGeneralInfos);
         REGISTER_QUERY_METHOD(getRootblockInfo);
         REGISTER_QUERY_METHOD(getTimerInfo);
+        REGISTER_QUERY_METHOD(getCGP);
         REGISTER_QUERY_METHOD(getIssuanceDetail);
+        REGISTER_QUERY_METHOD(getWorkloadDetail);
 
         REGISTER_QUERY_METHOD(getRecs);
         REGISTER_QUERY_METHOD(getZecs);
         REGISTER_QUERY_METHOD(getEdges);
         REGISTER_QUERY_METHOD(getArcs);
+        REGISTER_QUERY_METHOD(getFullNodes);
         REGISTER_QUERY_METHOD(getConsensus);
         REGISTER_QUERY_METHOD(getStandbys);
         REGISTER_QUERY_METHOD(queryNodeInfo);
         REGISTER_QUERY_METHOD(queryNodeReward);
 
         REGISTER_QUERY_METHOD(getLatestBlock);
+        REGISTER_QUERY_METHOD(getLatestFullBlock);
         REGISTER_QUERY_METHOD(getBlockByHeight);
 
         REGISTER_QUERY_METHOD(getSyncNeighbors);
@@ -78,25 +83,30 @@ public:
         return rsp;
     }
     xJson::Value get_block_json(data::xblock_t * bp);
-    void set_single_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
-    void set_single_native_property(xJson::Value & jph, std::string & owner, std::string & prop_name);
+    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height);
     void getLatestBlock();
+    void getLatestFullBlock();
     void getBlockByHeight();
     void getAccount();
     uint64_t get_timer_height() const;
     void getTimerInfo();
+    void getCGP();
     void getIssuanceDetail();
+    void getWorkloadDetail();
     uint64_t get_timer_clock() const;
     xJson::Value parse_account(const std::string & account);
     void update_tx_state(xJson::Value & result, const xJson::Value & cons);
     xJson::Value parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr = nullptr);
     xJson::Value parse_tx(xtransaction_t * tx_ptr);
     xJson::Value parse_action(const xaction_t & action);
-    xJson::Value get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr);
+    xJson::Value get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo);
     void getRecs();
     void getZecs();
     void getEdges();
     void getArcs();
+    void getFullNodes();
     void getConsensus();
     void getStandbys();
     void queryNodeInfo();
@@ -105,11 +115,11 @@ public:
 
 private:
     void getBlock();
+    void getProperty();
     void set_shared_info(xJson::Value & root, data::xblock_t * bp);
     void set_header_info(xJson::Value & header, data::xblock_t * bp);
 
     void set_property_info(xJson::Value & jph, const std::map<std::string, std::string> & ph);
-    void set_native_property_info(xJson::Value & jp, const data::xnative_property_t & property);
     void set_table_info(xJson::Value & jv, data::xblock_t * bp);
     void set_lightunit_info(xJson::Value & j_txs, data::xblock_t * bp);
     void set_fullunit_info(xJson::Value & j_txs, data::xblock_t * bp);
@@ -148,8 +158,6 @@ private:
     void set_unlock_token_info(xJson::Value & j, const data::xaction_t & action);
     void set_create_sub_account_info(xJson::Value & j, const data::xaction_t & action);
     void set_alias_name_info(xJson::Value & j, const data::xaction_t & action);
-
-    void set_account_keys(xJson::Value & jph, std::string & owner, std::string & prop_name);
 
     void getSyncNeighbors();
     void get_sync_overview();

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xlru_cache.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xgenesis_data.h"
@@ -82,6 +83,9 @@ public:
     uint32_t size() const {
         return m_ready_tx_queue.size() + m_non_ready_tx_queue.size();
     }
+    uint32_t non_ready_size() const {
+        return m_non_ready_tx_queue.size();
+    }
     bool full() const {
         return m_xtable_info->is_send_tx_reached_upper_limit();
     }
@@ -97,11 +101,11 @@ private:
 class xcontinuous_txs_t {
 public:
     // continuous txs must always keep nonce and hash continuity!
-    xcontinuous_txs_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce, const uint256_t & latest_hash)
-      : m_send_tx_queue_internal(send_tx_queue_internal), m_latest_nonce(latest_nonce), m_latest_hash(latest_hash) {
+    xcontinuous_txs_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce)
+      : m_send_tx_queue_internal(send_tx_queue_internal), m_latest_nonce(latest_nonce) {
     }
     uint64_t get_back_nonce() const;
-    void update_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash);
+    void update_latest_nonce(uint64_t latest_nonce);
     int32_t insert(std::shared_ptr<xtx_entry> tx_ent);
     const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint64_t upper_nonce, uint32_t max_num) const;
     // must call pop_uncontinuous_txs after call erase to keep m_txs continue with m_latest_nonce
@@ -110,15 +114,16 @@ public:
     bool empty() const {
         return m_txs.empty();
     }
+    uint64_t get_latest_nonce() const {
+        return m_latest_nonce;
+    }
 
 private:
     int32_t nonce_check(uint64_t last_nonce);
-    uint256_t get_back_hash() const;
     void batch_erase(uint32_t from_idx, uint32_t to_idx);  // erase scope: [from_idx, to_idx), not include to_idx
     std::vector<std::shared_ptr<xtx_entry>> m_txs;
     xsend_tx_queue_internal_t * m_send_tx_queue_internal;
     uint64_t m_latest_nonce;
-    uint256_t m_latest_hash;
 };
 
 class xuncontinuous_txs_t {
@@ -139,11 +144,11 @@ private:
 
 class xsend_tx_account_t {
 public:
-    xsend_tx_account_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce, const uint256_t & latest_hash)
-      : m_continuous_txs(send_tx_queue_internal, latest_nonce, latest_hash), m_uncontinuous_txs(send_tx_queue_internal) {
+    xsend_tx_account_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce)
+      : m_continuous_txs(send_tx_queue_internal, latest_nonce), m_uncontinuous_txs(send_tx_queue_internal) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    void update_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash);
+    void update_latest_nonce(uint64_t latest_nonce);
     void refresh();
     const std::vector<std::shared_ptr<xtx_entry>> get_continuous_txs(uint64_t upper_nonce, uint32_t max_num) const;
     void erase(uint64_t nonce, bool clear_follower);
@@ -153,6 +158,9 @@ public:
     bool need_update() const {
         return m_continuous_txs.empty() && (!m_uncontinuous_txs.empty());
     }
+    uint64_t get_latest_nonce() const {
+        return m_continuous_txs.get_latest_nonce();
+    }
 
 private:
     void try_continue();
@@ -160,37 +168,31 @@ private:
     xuncontinuous_txs_t m_uncontinuous_txs;
 };
 
+#define xtxpool_account_nonce_cache_lru_size (512)
+
 class xsend_tx_queue_t {
 public:
-    xsend_tx_queue_t(xtxpool_table_info_t * xtable_info) : m_send_tx_queue_internal(xtable_info) {
+    xsend_tx_queue_t(xtxpool_table_info_t * xtable_info) : m_send_tx_queue_internal(xtable_info), m_account_nonce_lru(xtxpool_account_nonce_cache_lru_size) {
     }
-    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce, const uint256_t & latest_hash);
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce);
     const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
-    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
+    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     bool is_account_need_update(const std::string & account_addr) const;
+    void clear_expired_txs();
+    bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
+    uint32_t size() const {
+        return m_send_tx_queue_internal.size();
+    }
+    uint32_t non_ready_size() const {
+        return m_send_tx_queue_internal.non_ready_size();
+    }
 
 private:
-    void clear_expired_txs();
     xsend_tx_queue_internal_t m_send_tx_queue_internal;
     std::map<std::string, std::shared_ptr<xsend_tx_account_t>> m_send_tx_accounts;
-    std::unordered_set<std::string> m_refresh_accounts;
-};
-
-class xreceipt_queue_t {
-public:
-    xreceipt_queue_t(xtxpool_table_info_t * xtable_info) : m_xtable_info_ptr(xtable_info) {
-    }
-    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
-    const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
-    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
-
-private:
-    xready_receipt_queue_t m_ready_receipt_queue;
-    xready_receipt_map_t m_ready_receipt_map;  // be easy to find receipt by hash
-    xtxpool_table_info_t * m_xtable_info_ptr;
+    mutable basic::xlru_cache<std::string, uint64_t> m_account_nonce_lru;
 };
 
 }  // namespace xtxpool_v2

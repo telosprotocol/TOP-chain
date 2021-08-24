@@ -21,16 +21,16 @@ static bool operator==(const xvip2_t & lhs, const xvip2_t & rhs) {
 NS_BEG2(top, xunit_service)
 
 // load manager tables
-int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<uint16_t> * tables) {
+int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables) {
     auto zone_id = get_zone_id_from_xip2(xip);
     if (zone_id == base::enum_chain_zone_beacon_index) {
-        for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
-            tables->push_back(i);
+        for (uint8_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
+            tables->push_back({base::enum_chain_zone_beacon_index, i});
         }
         return tables->size();
     } else if (zone_id == base::enum_chain_zone_zec_index) {
-        for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
-            tables->push_back(i);
+        for (uint8_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
+            tables->push_back({base::enum_chain_zone_zec_index, i});
         }
     } else {
         {
@@ -38,7 +38,10 @@ int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<uint16_
             std::lock_guard<std::mutex> lock(m_mutex);
             auto iter = m_elect_data.find(tmp);
             if (iter != m_elect_data.end()) {
-                tables->insert(tables->begin(), iter->second.tables.begin(), iter->second.tables.end());
+                auto tables_v = iter->second.tables;
+                for(auto iter = tables_v.begin(); iter != tables_v.end(); iter++) {
+                    tables->push_back({base::enum_chain_zone_consensus_index, (uint8_t)*iter});
+                } 
                 return tables->size();
             }
         }
@@ -103,7 +106,7 @@ bool xelection_cache_imp::add(const xvip2_t & xip,
         std::lock_guard<std::mutex> lock(m_mutex);
         xelect_item item{tables, elect_data, parent, children};
         m_elect_data[tmp] = item;
-        xdbg_info("xelection_cache_imp::add xip=%s,group=%s,parent_size=%d,children_size=%d",
+        xunit_dbg_info("xelection_cache_imp::add xip=%s,group=%s,parent_size=%d,children_size=%d",
             xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(tmp).c_str(), parent.size(), children.size());
 #ifdef DEBUG
         for (auto & v : children) {
@@ -126,7 +129,7 @@ bool xelection_cache_imp::erase(const xvip2_t & xip) {
         if (iter != m_elect_data.end()) {
             m_elect_data.erase(iter);
         }
-        xdbg_info("xelection_cache_imp::erase xip=%s,group=%s", xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(tmp).c_str());
+        xunit_dbg_info("xelection_cache_imp::erase xip=%s,group=%s", xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(tmp).c_str());
     }
     return true;
 }
@@ -141,17 +144,17 @@ xvip2_t xelection_cache_imp::get_group_xip2(xvip2_t const & xip) {
 xrandom_leader_election::xrandom_leader_election(const xobject_ptr_t<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
   : m_blockstore(block_store), m_elector(face) {}
 
-xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xversion_t& version, uint64_t factor) {
+xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xelection_round_t& version, uint64_t factor) {
     assert(version.has_value());
     if (nodes.empty()) {
-        xwarn("[xunitservice] leader_election candidates empty");
+        xunit_warn("[xunitservice] leader_election candidates empty");
         return xvip2_t{(uint64_t)-1, (uint64_t)-1};
     }
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> reliable_candidates;
     uint32_t default_leader_election_round = XGET_CONFIG(leader_election_round);
     for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
-        // xdbg_info("[xunitservice] leader_election xip=%s, version=% " PRIu64 ", joined_version=% " PRIu64, xcons_utl::xip_to_hex(iter->xip).c_str(), version.value(), iter->joined_version.value());
+        // xunit_dbg_info("[xunitservice] leader_election xip=%s, version=% " PRIu64 ", joined_version=% " PRIu64, xcons_utl::xip_to_hex(iter->xip).c_str(), version.value(), iter->joined_version.value());
         if (version.value() >= (iter->joined_version.value() + default_leader_election_round)) {
             reliable_candidates.push_back({static_cast<common::xstake_t>(iter->staking + 1), iter->xip});
         } else {
@@ -174,10 +177,10 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
     return leaders[0].second;
 }
 
-const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode) {
+const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
     // TODO(justin): leader maybe cross group for auditor & validator
     // if (!is_xip2_group_equal(local, candidate)) {
-    //     xwarn("[xunitservice] recv invalid candidiate %s at %s not equal group", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
+    //     xunit_warn("[xunitservice] recv invalid candidiate %s at %s not equal group", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
     //     return false;
     // }
 
@@ -186,7 +189,7 @@ const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std
     if (m_elector != nullptr) {
         auto len = m_elector->get_election(local, &elect_set);
         if (len <= 0) {
-            xwarn("[xunitservice] recv invalid candidiate %s at %s", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
+            xunit_warn("[xunitservice] recv invalid candidiate %s at %s", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
             return {};
         }
     }
@@ -205,7 +208,7 @@ const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std
     }
 
     xvip2_t leader_xip = get_leader(elect_set, version, random);
-    xdbg_info("[xunitservice] xrandom_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s",
+    xunit_dbg_info("[xunitservice] xrandom_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s",
         account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(), xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str());
     return leader_xip;
 }
@@ -227,7 +230,8 @@ int to_elect_set(const std::map<common::xslot_id_t, data::xnode_info_t> & node_m
     std::sort(tmp.begin(), tmp.end(), [](const data::xnode_info_t & a, const data::xnode_info_t & b) -> bool { return a.address.slot_id().value() < b.address.slot_id().value(); });
     for (size_t index = 0; index < tmp.size(); index++) {
         auto data = tmp[index];
-        elect_set.push_back({xcons_utl::to_xip2(data.address), data.election_info.joined_version, data.election_info.stake});
+        elect_set.push_back({xcons_utl::to_xip2(data.address), data.election_info.joined_version, data.election_info.comprehensive_stake});
+        xdbg("[xunitservice] account %s comprehensive stake %" PRIu64, data.address.account_address().c_str(), data.election_info.comprehensive_stake);
     }
     return elect_set.size();
 }
@@ -247,7 +251,7 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
 
     // neighbours
     std::error_code ec{election::xdata_accessor_errc_t::success};
-    auto elect_data = elect_cache_ptr->sharding_nodes(shard_address, address.version(), ec);
+    auto elect_data = elect_cache_ptr->sharding_nodes(shard_address, address.election_round(), ec);
     if (ec) {
         return false;
     }
@@ -255,17 +259,17 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
     to_elect_set(elect_data, elect_set_);
 
     ec.clear();
-    auto parent_cluster_address = elect_cache_ptr->parent_address(shard_address, address.version(), ec);
+    auto parent_cluster_address = elect_cache_ptr->parent_address(shard_address, address.election_round(), ec);
     auto parent_address = parent_cluster_address.sharding_address();
     ec.clear();
-    auto parent_elect_data = elect_cache_ptr->sharding_nodes(parent_address, address.version(), ec);
+    auto parent_elect_data = elect_cache_ptr->sharding_nodes(parent_address, address.election_round(), ec);
     xelection_cache_imp::elect_set parent_set_;
     to_elect_set(parent_elect_data, parent_set_);
 
     // children data
     std::map<int32_t, xelection_cache_imp::elect_set> child_map;
     ec.clear();
-    auto group_ele = elect_cache_ptr->group_element(shard_address, address.version(), ec);
+    auto group_ele = elect_cache_ptr->group_element(shard_address, address.election_round(), ec);
     if (!ec && group_ele != nullptr) {
         // common::xlogic_time_t       logic_time_now{chain_time};
         ec.clear();
@@ -276,10 +280,10 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
             auto child_address = (*iter)->address();
             auto child_shard_address = child_address.sharding_address();
             ec.clear();
-            auto child_elect_data = elect_cache_ptr->sharding_nodes(child_shard_address, child_address.version(), ec);
+            auto child_elect_data = elect_cache_ptr->sharding_nodes(child_shard_address, child_address.election_round(), ec);
             xelection_cache_imp::elect_set children_set_;
             to_elect_set(child_elect_data, children_set_);
-            auto version = child_address.version().value();
+            auto version = child_address.election_round().value();
             auto group_iter = child_map.find(group_id);
             if (group_iter != child_map.end()) {
                 if (group_versions[group_id] < version) {
@@ -293,7 +297,7 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
         }
     }
     // auditor will exchange to as validator election
-    xinfo("[xunit_service] add election cache %s address:%s, node size:%d, parent:%d, child:%d",
+    xunit_info("[xunit_service] add election cache %s address:%s, node size:%d, parent:%d, child:%d",
           xcons_utl::xip_to_hex(xip).c_str(),
           address.to_string().c_str(),
           elect_set_.size(),
@@ -306,7 +310,7 @@ bool xelection_wrapper::on_network_destory(xelection_cache_face * p_election, co
     return p_election->erase(xip);
 }
 
-xrotate_leader_election::xrotate_leader_election(const xobject_ptr_t<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
+xrotate_leader_election::xrotate_leader_election(const observer_ptr<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
   : m_blockstore(block_store), m_elector(face) {}
 
 bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
@@ -318,13 +322,10 @@ bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
     return rotate;
 }
 
-const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode) {
+const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
     bool leader = false;
-#if defined(DEBUG)  // TODO: jimmy fix release compiling error
-    uint64_t last_block_height = 0;
-#endif
     bool prev_is_validator = true;
 
     if (rotate_mode == enum_rotate_mode_no_rotate) {
@@ -333,15 +334,15 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
         bool rotate = is_rotate_xip(local);
         if (rotate) {
             // get prev block leader
-#if defined(DEBUG)
-            last_block_height = prev_block->get_height();
-#endif
+            #if 0
             if (rotate_mode == enum_rotate_mode_rotate_by_last_block) {
                 auto validator = prev_block->get_cert()->get_validator();
                 if (get_node_id_from_xip2(validator) == 0x3FF) {  // 0x3FF is a group node xip
                     prev_is_validator = false;
                 }
-            } else {
+            } 
+            #endif
+            if (rotate_mode == enum_rotate_mode_rotate_by_view_id) {
                 // viewid determine where leader is from
                 prev_is_validator = viewId & 0x1;
             }
@@ -374,9 +375,9 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
     }
 
     xvip2_t leader_xip = get_leader(elect_set, version, random);
-    xdbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,height=%ld,prev_validator=%d,electsize:%d",
+    xunit_dbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,prev_validator=%d,electsize:%d",
         account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(),
-        xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str(), last_block_height, prev_is_validator, elect_set.size());
+        xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str(), prev_is_validator, elect_set.size());
     return leader_xip;
 }
 

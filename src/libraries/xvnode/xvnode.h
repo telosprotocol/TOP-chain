@@ -20,15 +20,14 @@
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
-#include "xvnetwork/xvhost_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
-#include "xvnode/xvnode_face.h"
+#include "xvnode/xbasic_vnode.h"
 
-#include <unordered_map>
+#include <memory>
 
 NS_BEG2(top, vnode)
 
-class xtop_vnode final : public xvnode_face_t
+class xtop_vnode final : public xbasic_vnode_t
                        , public std::enable_shared_from_this<xtop_vnode> {
 private:
     observer_ptr<elect::ElectMain> m_elect_main;
@@ -37,11 +36,10 @@ private:
     observer_ptr<base::xvblockstore_t> m_block_store;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
-    observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
-    observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
+    
     observer_ptr<data::xdev_params> m_dev_params;
     observer_ptr<data::xuser_params> m_user_params;
 
@@ -78,7 +76,7 @@ public:
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
                common::xslot_id_t const & slot_id,
-               common::xversion_t const & version,
+               common::xelection_round_t const & election_round,
                std::uint16_t const group_size,
                std::uint64_t const associated_blk_height,
                observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -99,24 +97,12 @@ public:
     void synchronize() override;
 
     void start() override;
-
     void fade() override;
-
     void stop() override;
-
-    common::xnode_type_t type() const override;
-
-    common::xversion_t version() const override;
-
-    common::xnode_address_t address() const override;
-
-    // std::vector<common::xnode_address_t> neighbors() const noexcept;
 
 private:
     void new_driver_added();
     void driver_removed();
-    bool is_real_vnode(common::xnode_type_t const type, common::xnode_type_t const except_types);
-    bool is_real_vnode_except_edge(common::xnode_type_t const type);
     void update_rpc_service();
     void update_contract_manager(bool destory);
     void sync_add_vnet();
@@ -124,5 +110,7 @@ private:
 };
 
 using xvnode_t = xtop_vnode;
+
+std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec);
 
 NS_END2

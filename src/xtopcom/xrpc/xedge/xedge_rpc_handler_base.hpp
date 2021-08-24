@@ -107,7 +107,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                 auto count = 0;
                 auto msghash = msg.hash();
                 std::error_code ec;
-                auto cluster_addresses = m_election_cache_data_accessor->sharding_nodes(group_addr, common::xversion_t{}, ec);
+                auto cluster_addresses = m_election_cache_data_accessor->sharding_nodes(group_addr, common::xelection_round_t{}, ec);
                 if (ec) {
                     xdbg("%s %s", ec.category().name(), ec.message().c_str());
                     assert(cluster_addresses.empty());
@@ -131,8 +131,8 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
             XMETRICS_COUNTER_INCREMENT("rpc_edge_request", 1);
         } catch (const xrpc_error &e) {
             throw e;
-        } catch (vnetwork::xvnetwork_error_t const & eh) {
-            xwarn("[xrpc_edge_vhost] xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
+        } catch (top::error::xtop_error_t const & eh) {
+            xwarn("[xrpc_edge_vhost] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
             throw xrpc_error{ enum_xrpc_error_code::rpc_param_unkown_error, eh.what() };
         } catch (std::exception const & eh) {
             xwarn("[xrpc_edge_vhost] std::exception caught: %s", eh.what());

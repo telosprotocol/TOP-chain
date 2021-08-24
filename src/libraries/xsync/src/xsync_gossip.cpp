@@ -39,6 +39,10 @@ xsync_gossip_t::~xsync_gossip_t() {
 void xsync_gossip_t::on_timer() {
 
     XMETRICS_TIME_RECORD("sync_cost_gossip_timer_event");
+    if (m_time_rejecter.reject()){
+        return;
+    }
+    
     if (m_frozen_count % FROZEN_TIME_INTERVAl == 0) {
         process_timer(true);
         m_frozen_count = 1;
@@ -75,36 +79,13 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
         const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
 
         common::xnode_type_t role_type = real_part_type(self_addr.type());
-        if (role_type==common::xnode_type_t::archive || role_type==common::xnode_type_t::frozen)
+        if (common::has<common::xnode_type_t::storage>(role_type) || role_type==common::xnode_type_t::frozen)
             continue;
 
         if (!m_role_xips_mgr->vrf_gossip_with_archive(time_block, role_type))
             continue;
-
-        std::vector<xgossip_chain_info_ptr_t> info_list;
-
-        const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
-        for (const auto &it: chains) {
-
-            if (!m_role_chains_mgr->exists(it.second.address))
-                continue;
-
-            base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
-            uint64_t height = current_block->get_height();
-            uint64_t view_id = current_block->get_viewid();
-
-            xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
-            info->owner = it.second.address;
-            info->max_height = height;
-            info->view_id = view_id;
-            info_list.push_back(info);
-        }
-
-        xsync_info("xsync_gossip on_chain_timer send gossip timer_height=%lu %s count(%d)", time_block->get_height(), self_addr.to_string().c_str(), info_list.size());
-
-        if (!info_list.empty()) {
-            send_gossip(self_addr, info_list, 1, enum_gossip_target_type_archive);
-        }
+        
+        walk_role(self_addr, role_chains, enum_walk_type_timer);
     }
 }
 
@@ -142,14 +123,13 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
         if (!m_role_chains_mgr->exists(it.second.address))
             continue;
 
-        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
-        uint64_t height = current_block->get_height();
-        uint64_t view_id = current_block->get_viewid();
+        if (it.second.sync_policy == enum_chain_sync_policy_fast) {
+            continue;
+        }
 
         xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
         info->owner = it.second.address;
-        info->max_height = height;
-        info->view_id = view_id;
+        info->max_height = m_sync_store->get_latest_end_block_height(it.second.address, enum_chain_sync_policy_full);;
         info_list.push_back(info);
     }
 
@@ -224,40 +204,35 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
         const xgossip_chain_info_ptr_t &info = info_list[idx];
 
         if (!m_role_chains_mgr->exists(info->owner)) {
-            xsync_warn("xsync_gossip local not exist %s peer(%lu, %lu)",
-                            info->owner.c_str(), info->max_height, info->view_id);
+            xsync_warn("xsync_gossip local not exist %s peer(%lu)",
+                            info->owner.c_str(), info->max_height);
             continue;
         }
 
-        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(info->owner, enum_chain_sync_pocliy_full);
-        uint64_t local_height = current_block->get_height();
-        uint64_t local_view_id = current_block->get_viewid();
+        uint64_t local_height = m_sync_store->get_latest_end_block_height(info->owner, enum_chain_sync_policy_full);
+        update_behind(info->owner, local_height, info->max_height);
 
-        update_behind(info->owner, local_height, local_view_id, info->max_height, info->view_id);
-
-        if (info->view_id > local_view_id) {
+        if (info->max_height > local_height) {
 
             if (behind_block_count <= max_peer_behind_count) {
-                xsync_info("xsync_gossip local is lower %s local(%lu, %lu) peer(%lu, %lu) %s %s",
-                    info->owner.c_str(), local_height, local_view_id, info->max_height, info->view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+                xsync_info("xsync_gossip local is lower %s local(%lu) peer(%lu) %s %s",
+                    info->owner.c_str(), local_height, info->max_height, network_self.to_string().c_str(), from_address.to_string().c_str());
                 
-                xgossip_behind_info_t behind_info(local_height, local_view_id, info->max_height, info->view_id);
+                xgossip_behind_info_t behind_info(local_height, info->max_height);
 
                 behind_chain_set.insert(std::make_pair(info->owner, behind_info));
-                // add view
                 behind_block_count += (info->max_height - local_height);
             } else {
-                xsync_dbg("xsync_gossip local is lower(ignore) %s local(%lu, %lu) peer(%lu, %lu) %s", 
-                    info->owner.c_str(), local_height, local_view_id, info->max_height, info->view_id, from_address.to_string().c_str());
+                xsync_dbg("xsync_gossip local is lower(ignore) %s local(%lu) peer(%lu) %s", 
+                    info->owner.c_str(), local_height, info->max_height, from_address.to_string().c_str());
             }
 
-        } else if (info->view_id < local_view_id) {
-            xsync_info("xsync_gossip local is higher %s local(%lu, %lu) peer(%lu, %lu) %s -> %s",
-                info->owner.c_str(), local_height, local_view_id, info->max_height, info->view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+        } else if (info->max_height < local_height) {
+            xsync_info("xsync_gossip local is higher %s local(%lu) peer(%lu) %s -> %s",
+                info->owner.c_str(), local_height, info->max_height, network_self.to_string().c_str(), from_address.to_string().c_str());
             xgossip_chain_info_ptr_t info_rsp = std::make_shared<xgossip_chain_info_t>();
             info_rsp->owner = info->owner;
             info_rsp->max_height = local_height;
-            info_rsp->view_id = local_view_id;
             info_list_rsp.push_back(info_rsp);
         } else {
         }
@@ -312,30 +287,21 @@ void xsync_gossip_t::send_frozen_gossip_to_target(const xvnode_address_t &self_a
     XMETRICS_COUNTER_INCREMENT("sync_gossip_send", 1);
 }
 
-void xsync_gossip_t::update_behind(const std::string &address, uint64_t local_height, uint64_t local_view_id, uint64_t peer_height, uint64_t peer_view_id) {
+void xsync_gossip_t::update_behind(const std::string &address, uint64_t local_height, uint64_t peer_height) {
     std::unique_lock<std::mutex> lock(m_lock);
     auto it = m_chain_behind_info.find(address);
     if (it == m_chain_behind_info.end()) {
-        xgossip_behind_info_t info(local_height, local_view_id, peer_height, peer_view_id);
+        xgossip_behind_info_t info(local_height, peer_height);
         m_chain_behind_info.insert(std::make_pair(address, info));
     } else {
         if (peer_height > it->second.peer_height)
             it->second.peer_height = peer_height;
 
-        if (peer_view_id > it->second.peer_view_id)
-            it->second.peer_view_id = peer_view_id;
-
         if (local_height > it->second.local_height)
             it->second.local_height = local_height;
 
-        if (local_view_id > it->second.local_view_id)
-            it->second.local_view_id = local_view_id;
-
         if (it->second.local_height > it->second.peer_height)
             it->second.peer_height = it->second.local_height;
-
-        if (it->second.local_view_id > it->second.peer_view_id)
-            it->second.peer_view_id = it->second.local_view_id;
     }
 }
 
@@ -347,19 +313,12 @@ void xsync_gossip_t::dump_behind() {
     std::unique_lock<std::mutex> lock(m_lock);
 
     for (auto &it: m_chain_behind_info) {
-        if (it.second.local_view_id < it.second.peer_view_id) {
-            uint64_t behind_height = 0;
+        if (it.second.local_height < it.second.peer_height) {
             count++;
-
-            if (it.second.peer_height == it.second.local_height)
-                behind_height = 1;
-            else if (it.second.peer_height > it.second.local_height)
-                behind_height = it.second.peer_height - it.second.local_height;
-
+            uint64_t behind_height = it.second.peer_height - it.second.local_height;
             total_behind_height += behind_height;
-
-            xsync_info("chain_behind_info %s local(%lu,%lu) peer(%lu,%lu) behind=%lu", it.first.c_str(), 
-                it.second.local_height, it.second.local_view_id, it.second.peer_height, it.second.peer_view_id, behind_height);
+            xsync_info("chain_behind_info %s local(%lu) peer(%lu) behind=%lu", it.first.c_str(), 
+                it.second.local_height, it.second.peer_height, behind_height);
         }
     }
 

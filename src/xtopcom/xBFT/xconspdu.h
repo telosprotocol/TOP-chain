@@ -149,6 +149,7 @@ namespace top
             inline const uint64_t       get_latest_cert_height() const {return m_latest_cert_height;}
             inline const uint64_t       get_latest_cert_viewid() const {return m_latest_cert_viewid;}
             inline const std::string&   get_latest_cert_hash()   const {return m_latest_cert_hash;}
+            inline const std::string&   get_latest_cert_data()   const {return m_latest_cert_data;}
             
             inline const uint64_t       get_latest_lock_height() const {return m_latest_lock_height;}
             inline const std::string&   get_latest_lock_hash()   const {return m_latest_lock_hash;}
@@ -157,8 +158,9 @@ namespace top
             inline const std::string&   get_latest_commit_hash()   const {return m_latest_commit_hash;}
             
             void            set_latest_cert_block(const uint64_t height,const uint64_t viewid,const std::string & block_hash);
+            void            set_latest_cert_block(const uint64_t height,base::xvqcert_t * latest_cert);
             
-            void            set_latest_cert_block(base::xvblock_t * latest_cert_block);
+            void            set_latest_cert_block(base::xvblock_t * latest_cert_block,bool report_cert_data);
             void            set_latest_lock_block(base::xvblock_t * latest_lock_block);
             void            set_latest_commit_block(base::xvblock_t * latest_commit_block);
         protected:
@@ -173,6 +175,7 @@ namespace top
             uint64_t        m_latest_cert_height;   //latest cert block'height of node
             uint64_t        m_latest_cert_viewid;   //latest cert block'view#  of node
             std::string     m_latest_cert_hash;     //latest cert header hash  of node
+            std::string     m_latest_cert_data;     //raw latest cert 'data
             
             uint64_t        m_latest_lock_height;   //latest lock block'height of node
             std::string     m_latest_lock_hash;     //latest lock heder hash of node, may use it to sync block

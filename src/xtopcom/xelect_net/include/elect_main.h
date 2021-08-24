@@ -1,11 +1,11 @@
 #pragma once
-#include "xelect_net/include/multilayer_network_chain.h"
+#include "xelect_net/include/multilayer_network.h"
 
 namespace top {
 
 namespace elect {
 
-    using ElectMain = MultilayerNetworkChain;
+    using ElectMain = MultilayerNetwork;
 
 }  // namespace elect
 

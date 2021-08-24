@@ -7,10 +7,13 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "xvledger/xvstate.h"
+#include "xvledger/xvstatestore.h"
+#include "xvledger/xvledger.h"
 #include "xdata/xblock.h"
+#include "xdata/xtable_bstate.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xindexstore/xindexstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
 
@@ -21,10 +24,10 @@ using data::xaccount_ptr_t;
 
 class xblockmaker_resources_t {
  public:
-    virtual store::xstore_face_t*       get_store() const = 0;
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
-    virtual store::xindexstorehub_t*    get_indexstorehub() const = 0;
+    virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
+    virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
 };
 using xblockmaker_resources_ptr_t = std::shared_ptr<xblockmaker_resources_t>;
 
@@ -33,106 +36,177 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                 const observer_ptr<store::xindexstorehub_t> & indexstorehub)
-    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_indexstorehub(indexstorehub) {}
+                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus)
+    : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}
 
-    virtual store::xstore_face_t*       get_store() const {return m_store.get();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
-    virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstorehub.get();}
+    virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
+    virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
 
  private:
-    observer_ptr<store::xstore_face_t>          m_store{nullptr};
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
-    observer_ptr<store::xindexstorehub_t>       m_indexstorehub{nullptr};
+    observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
 };
 
 struct xunitmaker_result_t {
+ public:
+    void        add_pack_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
+        for (auto & tx : txs) {
+            if (tx->is_self_tx()) {
+                m_self_tx_num++;
+            } else if (tx->is_send_tx()) {
+                m_send_tx_num++;
+            } else if (tx->is_recv_tx()) {
+                m_recv_tx_num++;
+            } else if (tx->is_confirm_tx()) {
+                m_confirm_tx_num++;
+            }
+        }
+        m_pack_txs = txs;
+    }
+
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
-    std::vector<xcons_transaction_ptr_t>    m_success_txs;
+    std::vector<xcons_transaction_ptr_t>    m_pack_txs;
+    std::vector<xcons_transaction_ptr_t>    m_fail_txs;
+    int64_t                                 m_tgas_balance_change{0};
+    uint32_t                                m_self_tx_num{0};
+    uint32_t                                m_send_tx_num{0};
+    uint32_t                                m_recv_tx_num{0};
+    uint32_t                                m_confirm_tx_num{0};
 };
 
 struct xunitmaker_para_t {
-    std::vector<xcons_transaction_ptr_t>    m_account_txs;
+    xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, bool is_leader)
+    : m_tablestate(tablestate), m_is_leader(is_leader) {}
+    xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, const xunit_proposal_input_t & unit_input)
+    : m_tablestate(tablestate), m_unit_input(unit_input) {}
+
+    data::xtablestate_ptr_t                 m_tablestate{nullptr};
+    xunit_proposal_input_t                  m_unit_input;
+    bool                                    m_is_leader{false};
 };
 
-struct xtablemaker_result_t {
+class xtablemaker_result_t {
+ public:
+    void    add_unit_result(const xunitmaker_result_t & unit_result) {
+        m_total_unit_num++;
+        if(unit_result.m_block == nullptr) {
+            m_fail_unit_num++;
+        } else {
+            m_succ_unit_num++;
+            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_full) m_full_unit_num++;
+            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_light) m_light_unit_num++;
+            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_nil) m_empty_unit_num++;
+        }
+
+        m_total_tx_num += (unit_result.m_self_tx_num + unit_result.m_send_tx_num + unit_result.m_recv_tx_num + unit_result.m_confirm_tx_num);
+        m_self_tx_num += unit_result.m_self_tx_num;
+        m_send_tx_num += unit_result.m_send_tx_num;
+        m_recv_tx_num += unit_result.m_recv_tx_num;
+        m_confirm_tx_num += unit_result.m_confirm_tx_num;
+    }
+ public:
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
     std::vector<xunitmaker_result_t>        m_unit_results;
+
+    uint32_t                                m_total_tx_num{0};
+    uint32_t                                m_self_tx_num{0};
+    uint32_t                                m_send_tx_num{0};
+    uint32_t                                m_recv_tx_num{0};
+    uint32_t                                m_confirm_tx_num{0};
+
+    uint32_t                                m_total_unit_num{0};
+    uint32_t                                m_fail_unit_num{0};
+    uint32_t                                m_succ_unit_num{0};
+    uint32_t                                m_empty_unit_num{0};
+    uint32_t                                m_light_unit_num{0};
+    uint32_t                                m_full_unit_num{0};
 };
 
-struct xtablemaker_para_t {
-    xtablemaker_para_t() = default;
+class xtablemaker_para_t {
+ public:
+    xtablemaker_para_t() {
+        m_proposal = make_object_ptr<xtable_proposal_input_t>();
+    }
+    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate)
+    : m_tablestate(tablestate) {
+        m_proposal = make_object_ptr<xtable_proposal_input_t>();
+    }
+    xtablemaker_para_t(const std::vector<xcons_transaction_ptr_t> & origin_txs)
+    : m_origin_txs(origin_txs) {
+        m_proposal = make_object_ptr<xtable_proposal_input_t>();
+    }
 
-    void set_unitmaker_info(const std::string & account, uint64_t last_block_height, const std::string & last_block_hash, const std::vector<xcons_transaction_ptr_t> & input_txs) {
-        xunit_proposal_input_t unit_input(account, last_block_height, last_block_hash, input_txs);
-        m_proposal_input.add_unit_input(unit_input);
+ public:
+    void    set_origin_txs(const std::vector<xcons_transaction_ptr_t> & origin_txs) {
+        m_origin_txs = origin_txs;
     }
-    void set_unitmaker_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & input_txs) {
-        xunit_proposal_input_t unit_input(account, 0, {}, input_txs);
-        m_proposal_input.add_unit_input(unit_input);
+    void    set_other_accounts(const std::vector<std::string> & accounts) {
+        m_other_accounts = accounts;
     }
-    void set_batch_txs(const std::map<std::string, std::vector<xcons_transaction_ptr_t>> & batch_txs) {
-        for (auto & v : batch_txs) {
-            set_unitmaker_txs(v.first, v.second);
+    void    set_table_state(const data::xtablestate_ptr_t & tablestate) const {
+        m_tablestate = tablestate;
+    }
+    void    push_tx_to_proposal(const xcons_transaction_ptr_t & input_tx) const {
+        m_proposal->set_input_tx(input_tx);
+    }
+    bool    delete_fail_tx_from_proposal(const std::vector<xcons_transaction_ptr_t> & fail_txs) const {
+        for (auto & tx : fail_txs) {
+            if (false == m_proposal->delete_fail_tx(tx)) {
+                return false;
+            }
         }
+        return true;
     }
-    xtableblock_proposal_input_t            m_proposal_input;
+
+    const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
+    const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
+    const data::xtablestate_ptr_t &                 get_tablestate() const {return m_tablestate;}
+    const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
+
+ private:
+    std::vector<xcons_transaction_ptr_t>    m_origin_txs;
+    std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
+
+    mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
+    mutable data::xtablestate_ptr_t         m_tablestate{nullptr};
 };
 
 class xblock_maker_t : public base::xvaccount_t {
  public:
-    explicit xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max)
-    : base::xvaccount_t(account), m_resources(resources), m_keep_latest_blocks_max(latest_blocks_max) {}
-    virtual ~xblock_maker_t() {}
+    explicit xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max);
+    virtual ~xblock_maker_t();
 
  public:
-    xblock_ptr_t                set_latest_block(const xblock_ptr_t & block);  // return deleted
-    void                        clear_block(const xblock_ptr_t & block);
-    bool                        load_latest_blocks(const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & latest_blocks);  // load latest blocks from db for updating cache
-    bool                        load_and_cache_enough_blocks();
-    bool                        check_latest_blocks() const;
+    void                        set_latest_block(const xblock_ptr_t & block);
+    void                        reset_latest_cert_block(const xblock_ptr_t & block);
+    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height);
+    bool                        check_latest_blocks(const xblock_ptr_t & latest_block) const;
 
  public:
-    store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
+    mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
 
-    bool                        has_uncommitted_blocks() const;
-    uint32_t                    get_latest_consecutive_empty_block_num() const;
-    uint64_t                    get_keep_latest_blocks_max() const {return m_keep_latest_blocks_max;}
-    const xblock_ptr_t &        get_latest_committed_block() const {return m_latest_commit_block;}
-    const xaccount_ptr_t &      get_latest_committed_state() const {return m_commit_account;}
-    std::string                 get_lock_block_sign_hash() const;
-    std::string                 get_lock_output_root_hash() const;
+    const xaccount_ptr_t &      get_latest_bstate() const {return m_latest_bstate;}
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
-    xblock_ptr_t                get_latest_block(uint64_t height) const;
     const xblock_ptr_t &        get_highest_height_block() const;
-    const xblock_ptr_t &        get_lowest_height_block() const;
-    xblock_ptr_t                get_highest_non_empty_block() const;
-    std::vector<xblock_ptr_t>   get_uncommit_blocks() const;
-    xblock_ptr_t                get_highest_lock_block() const;
-    xblock_ptr_t                get_highest_commit_block() const;
-    xblock_ptr_t                get_prev_block(const xblock_ptr_t & current) const;
-    xaccount_ptr_t              clone_latest_committed_state() const;
-    bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
+    xblock_ptr_t                get_prev_block_from_cache(const xblock_ptr_t & current) const;
 
  protected:
-    void                        set_latest_committed_block(const xblock_ptr_t & latest_committed_block);
-    bool                        update_account_state(const xblock_ptr_t & latest_committed_block);
-    void                        set_latest_blocks(const base::xblock_mptrs & latest_blocks);
-    bool                        is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks);
+    bool                        update_account_state(const xblock_ptr_t & latest_committed_block, uint64_t & lacked_block_height);
+    void                        clear_old_blocks();
 
  private:
     xblockmaker_resources_ptr_t             m_resources{nullptr};
-    xblock_ptr_t                            m_latest_commit_block{nullptr};
     std::map<uint64_t, xblock_ptr_t>        m_latest_blocks;
     uint32_t                                m_keep_latest_blocks_max{0};
-    xaccount_ptr_t                          m_commit_account{nullptr};
+    xaccount_ptr_t                          m_latest_bstate{nullptr};
 };
 
 class xblock_rules_face_t {
@@ -152,30 +226,26 @@ class xblock_builder_para_face_t {
     : m_resources(resources) {}
 
  public:
-    virtual store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_resources->get_txpool();}
     virtual int32_t                     get_error_code() const {return m_error_code;}
     virtual void                        set_error_code(int32_t error_code) {m_error_code = error_code;}
+    int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
+    void set_tgas_balance_change(const int64_t amount) { m_tgas_balance_change = amount; }
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
     int32_t                     m_error_code{0};
+    int64_t                     m_tgas_balance_change{0};
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 
 class xblock_builder_face_t {
  public:
     virtual data::xblock_ptr_t          build_block(const data::xblock_ptr_t & prev_block,
-                                                  const data::xaccount_ptr_t & prev_state,
+                                                  const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                   const data::xblock_consensus_para_t & cs_para,
                                                   xblock_builder_para_ptr_t & build_para) = 0;
-    virtual xblock_ptr_t                build_empty_block(const xblock_ptr_t & prev_block,
-                                                        const data::xblock_consensus_para_t & cs_para);
-
-    xblock_ptr_t                        build_genesis_block(const std::string & account, int64_t top_balance = 0);
- protected:
-    base::xvblock_t*                    build_genesis_unit(const std::string & account, int64_t top_balance);
 };
 
 using xblock_builder_face_ptr_t = std::shared_ptr<xblock_builder_face_t>;

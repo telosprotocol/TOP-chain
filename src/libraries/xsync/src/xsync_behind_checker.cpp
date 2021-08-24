@@ -1,5 +1,7 @@
 #include "xsync/xsync_behind_checker.h"
 #include "xsync/xsync_log.h"
+#include "xsync/xsync_util.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, sync)
 
@@ -14,6 +16,10 @@ m_downloader(downloader) {
 
 void xsync_behind_checker_t::on_timer() {
 
+    if (m_time_rejecter.reject()){
+        return;
+    }
+    
     m_counter++;
     if (m_counter %10 != 0)
         return;
@@ -71,10 +77,8 @@ void xsync_behind_checker_t::on_behind_check_event(const mbus::xevent_ptr_t &e) 
 }
 
 void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const std::string &reason) {
-
     base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
-    base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, sync_policy);
-    uint64_t local_end_height = latest_end_block->get_height();
+    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
 
     uint64_t peer_start_height = 0;
     uint64_t peer_end_height = 0;
@@ -82,15 +86,53 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     vnetwork::xvnode_address_t peer_addr;
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
+        if ((m_counter % 120) == 0) {
+            std::string sync_mode;
+            std::string gap_metric_tag_name;
+            if (sync_policy == enum_chain_sync_policy_fast) {
+                sync_mode = "fast";
+                gap_metric_tag_name = "xsync_fast_mode_gap_" + address;
+            } else if (sync_policy == enum_chain_sync_policy_full) {
+                sync_mode = "full";
+                gap_metric_tag_name = "xsync_full_mode_gap_" + address;
+            }
+#ifdef ENABLE_METRICS
+            uint64_t gap_between_interval = 0;
+            if (peer_end_height >= latest_end_block_height) {
+                gap_between_interval = peer_end_height - latest_end_block_height;
+            } else {
+                gap_between_interval = 0;
+            }
+
+            XMETRICS_COUNTER_SET(gap_metric_tag_name, gap_between_interval);
+#endif
+            XMETRICS_PACKET_INFO("xsync_interval",
+                                 "mode",
+                                 sync_mode,
+                                 "table_address",
+                                 address,
+                                 "self_min",
+                                 latest_start_block->get_height(),
+                                 "self_max",
+                                 latest_end_block_height,
+                                 "peer_min",
+                                 peer_start_height,
+                                 "peer_max",
+                                 peer_end_height);
+        }
 
         if (peer_end_height == 0)
             return;
 
-        if (local_end_height >= peer_end_height)
-            return;
-
-        xsync_dbg("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
-            address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
+        if (latest_end_block_height >= peer_end_height) {
+            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+            if (!((sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block())) {
+                return;
+            }
+        }
+        
+        xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
+            address.c_str(), latest_start_block->get_height(), latest_end_block_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
 
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, peer_start_height, peer_end_height, sync_policy, self_addr, peer_addr, reason);
         m_downloader->push_event(ev);

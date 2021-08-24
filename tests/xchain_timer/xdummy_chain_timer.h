@@ -29,10 +29,10 @@ public:
         return false;
     }
 
-    bool
-    watch_one(uint64_t, time::xchain_time_watcher) override {
-        return false;
-    }
+    //bool
+    //watch_one(uint64_t, time::xchain_time_watcher) override {
+    //    return false;
+    //}
 
     bool
     unwatch(const std::string &) override {

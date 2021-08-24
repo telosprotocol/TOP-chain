@@ -24,22 +24,22 @@ constexpr std::size_t version_count{ 2 };
 XDEFINE_MSG_CATEGORY(xmessage_category_benchmark, 0x0001);
 XDEFINE_MSG_ID(xmessage_category_benchmark, xmessage_id_benchmark, 0x00000001);
 
-std::string const receiver_node_id_value{ "consensus_node"};
-std::string const sender_node_id_value{ "advance_node" };
+std::string const receiver_node_id_value{ "T00000LaeGMEceZRTZ7YAtz8NeCLRix2Bnxp9RYz"};
+std::string const sender_node_id_value{ "T00000LSJ3zFwacQCviaEcx82cLxDPscZxz3EeX8" };
 
 common::xnode_id_t receiver_node_id{ receiver_node_id_value };
 common::xnode_id_t sender_node_id{ sender_node_id_value };
 
 common::xsharding_address_t const auditor_sharding_address{
     common::xtestnet_id,
-    common::xdefault_zone_id,
+    common::xconsensus_zone_id,
     common::xdefault_cluster_id,
     common::xauditor_group_id_begin
 };
 
 common::xsharding_address_t const validator_sharding_address{
     common::xtestnet_id,
-    common::xdefault_zone_id,
+    common::xconsensus_zone_id,
     common::xdefault_cluster_id,
     common::xvalidator_group_id_begin
 };
@@ -63,8 +63,7 @@ public:
         m_cb = nullptr;
     }
 
-    void
-    send_data(std::size_t const limit) {
+    std::chrono::high_resolution_clock::time_point send_data(std::size_t const limit) {
         assert(m_cb);
         std::vector<xbyte_buffer_t> messages;
         messages.reserve(limit);
@@ -81,16 +80,16 @@ public:
             top::common::xnode_address_t sender{
                 auditor_sharding_address,
                 top::common::xaccount_election_address_t{ sender_node_id, top::common::xslot_id_t{0} },
-                common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
-                std::uint16_t{1000},
+                common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i % version_count) },
+                std::uint16_t{1},
                 std::uint64_t{i % version_count}
             };
 
             top::common::xnode_address_t receiver{
                 validator_sharding_address,
                 top::common::xaccount_election_address_t{ receiver_node_id, top::common::xslot_id_t{0} },
-                common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
-                std::uint16_t{1000},
+                common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i % version_count) },
+                std::uint16_t{1},
                 std::uint64_t{i % version_count}
             };
 
@@ -103,6 +102,7 @@ public:
             messages.push_back(codec::msgpack_encode(msg));
         }
 
+        std::printf("start to send data...\n");
         auto begin = std::chrono::high_resolution_clock::now();
         assert(messages.size() == limit);
         for (auto i = 0u; i < limit; ++i) {
@@ -113,6 +113,8 @@ public:
         auto const ms = static_cast<std::int64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
         std::printf("vhost accepts %zu packs using %" PRIi64 "ms.  tps = %f\n",
                     limit, ms, (limit / static_cast<double>(ms) * 1000));
+
+        return begin;
     }
 };
 using xbenchmark_network_driver_helper_t = xtop_benchmark_network_driver_helper;
@@ -134,15 +136,11 @@ public:
         return;
     }
 
-    uint64_t logic_time() const noexcept override {
-        return 1;
+    common::xlogic_time_t logic_time() const noexcept override {
+        return common::xjudgement_day;
     }
 
     bool watch(const std::string &, uint64_t, time::xchain_time_watcher) override {
-        return true;
-    }
-
-    bool watch_one(uint64_t, time::xchain_time_watcher) override {
         return true;
     }
 
@@ -176,8 +174,8 @@ std::vector<std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t>> build_vnetw
         top::common::xnode_address_t address{
             validator_sharding_address,
             top::common::xaccount_election_address_t{ receiver_node_id, top::common::xslot_id_t{0} },
-            common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
-            std::uint16_t{1000},
+            common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i % version_count) },
+            std::uint16_t{1},
             std::uint64_t{i % version_count}
         };
         r.push_back(std::make_shared<top::vnetwork::xvnetwork_driver_t>(vhost, address));
@@ -197,22 +195,22 @@ static void build_election_cache_data_accessor() {
 
         auto & auditor_election_result = result_store.result_of(common::xnode_type_t::consensus_auditor).result_of(common::xdefault_cluster_id).result_of(common::xauditor_group_id_begin);
         auditor_election_result.start_time(i);
-        auditor_election_result.group_version(common::xversion_t{ static_cast<common::xversion_t::value_type>(i) });
+        auditor_election_result.group_version(common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i) });
 
         top::data::election::xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(sender_node_id);
-        election_info_bundle.election_info().joined_version = common::xversion_t{ static_cast<common::xversion_t::value_type>(0) };
+        election_info_bundle.election_info().joined_version = common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) };
 
         auditor_election_result.insert(std::move(election_info_bundle));
 
         auto & validator_election_result = result_store.result_of(common::xnode_type_t::consensus_validator).result_of(common::xdefault_cluster_id).result_of(common::xvalidator_group_id_begin);
         validator_election_result.start_time(i);
-        validator_election_result.group_version(common::xversion_t{ static_cast<common::xversion_t::value_type>(i) });
-        validator_election_result.associated_group_version(common::xversion_t{ static_cast<common::xversion_t::value_type>(i) });
+        validator_election_result.group_version(common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i) });
+        validator_election_result.associated_group_version(common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i) });
         validator_election_result.associated_group_id(common::xauditor_group_id_begin);
 
         election_info_bundle.node_id(receiver_node_id);
-        election_info_bundle.election_info().joined_version = common::xversion_t{ static_cast<common::xversion_t::value_type>(0) };
+        election_info_bundle.election_info().joined_version = common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) };
 
         validator_election_result.insert(std::move(election_info_bundle));
 
@@ -245,43 +243,47 @@ static void build_vhost() {
 
 NS_END3
 
-TEST(vnet, benchmark) {
 #if 0
-    constexpr std::size_t data_pack_count{ 1000000 };
+TEST(vnet, benchmark) {
+    constexpr std::size_t data_pack_count{ 100000 };
     top::vnetwork::tests::build_vhost();
-    auto begin = std::chrono::high_resolution_clock::now();
-    top::vnetwork::tests::network_driver->send_data(data_pack_count);
+    for (auto i = 0; i < 10; ++i) {
+        std::printf("begin test...\n");
+        auto begin = top::vnetwork::tests::network_driver->send_data(data_pack_count);
+        // std::this_thread::sleep_for(std::chrono::seconds{ 5 });
+        while (data_pack_count != top::vnetwork::tests::c.load(std::memory_order_relaxed)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds{ 50 });
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //break;
+        }
 
-    while (data_pack_count != top::vnetwork::tests::c.load(std::memory_order_relaxed)) {
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //break;
+        auto end = std::chrono::high_resolution_clock::now();
+        auto ms = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+        std::printf("vhost processed in %zu milliseconds against %zu packs tps = %lf \n",
+            ms,
+            data_pack_count,
+            static_cast<double>(data_pack_count) / ms * 1000);
+
+        top::vnetwork::tests::c.store(0);
     }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto ms = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-
-    std::printf("vhost processed in %zu milliseconds against %zu packs tps = %lf \n",
-                ms,
-                data_pack_count,
-                static_cast<double>(data_pack_count) / ms * 1000);
-#endif
 }
+#endif

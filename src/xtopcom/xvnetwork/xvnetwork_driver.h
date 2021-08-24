@@ -73,13 +73,13 @@ public:
 
     std::map<common::xslot_id_t, data::xnode_info_t> parents_info2() const override final;
 
-    std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const override final;
+    std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & election_round) const override final;
 
     observer_ptr<xvhost_face_t> virtual_host() const noexcept override;
 
     common::xnode_type_t type() const noexcept override;
 
-    std::vector<common::xnode_address_t> archive_addresses() const override;
+    std::vector<common::xnode_address_t> archive_addresses(common::xenum_node_type node_type) const override;
 
     std::vector<std::uint16_t> table_ids() const override final;
 

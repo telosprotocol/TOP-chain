@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xcontract_common/xproperties/xproperty_category.h"
 
 #include <cassert>
@@ -9,11 +13,8 @@ NS_BEG3(top, contract_common, properties)
 
 char category_character(xproperty_category_t const c) noexcept {
     switch (c) {
-    case xproperty_category_t::sys_kernel:
+    case xproperty_category_t::system:
         return '$';
-
-    case xproperty_category_t::sys_business:
-        return '@';
 
     case xproperty_category_t::user:
         return '#';

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xstore/xaccount_context.h"
@@ -16,7 +17,8 @@ NS_BEG2(top, contract_runtime)
 #define XCONTRACT_ENSURE(condition, msg)                                                     \
     do {                                                                                     \
         if (!(condition)) {                                                                  \
-            throw xvm::xvm_error { xvm::enum_xvm_error_code::enum_vm_exception, msg };       \
+            std::error_code ec{ xvm::enum_xvm_error_code::enum_vm_exception };               \
+            top::error::throw_error(ec, msg);                                                \
         }                                                                                    \
     } while (false)
 
@@ -39,8 +41,8 @@ public:
     uint64_t get_balance() const;
     common::xlogic_time_t get_timer_height() const;
     const data::xaction_asset_out& get_pay_fee() const;
-    void set_contract_code(const std::string& code);
-    void get_contract_code(std::string &code) const;
+    // void set_contract_code(const std::string& code);
+    // void get_contract_code(std::string &code) const;
     void create_transfer_tx(const std::string& grant_account, const uint64_t amount);
 
     void string_create(const std::string& key);

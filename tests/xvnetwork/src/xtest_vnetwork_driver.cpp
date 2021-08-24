@@ -12,14 +12,12 @@
 
 using top::common::xip2_t;
 using top::vnetwork::xvnetwork_errc2_t;
-using top::vnetwork::xvnetwork_error_t;
 using top::vnetwork::xvnode_address_t;
 NS_BEG3(top, tests, vnetwork)
 
 TEST_F(xvnetwork_driver_fixture_t, test_vhost_not_run_ec) {
-    common::xnetwork_version_t test_network_version1{1};
     xvnode_address_t           dst = get_address(test_version1, test_network_id);
-    xip2_t                     dst_xip2 = get_xip2_address(test_network_version1, test_network_id);
+    xip2_t                     dst_xip2 = get_xip2_address(test_network_id);
     xvnode_address_t           dst_group_address = get_dst_group_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id);
 
     int & m_cnt = tests::network::xdummy_network_driver.m_counter;
@@ -41,7 +39,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_vhost_not_run_ec) {
 
 TEST_F(xvnetwork_driver_fixture_t, test_send_to_ec) {
     std::uint32_t max_net_id = 0x00000FFF;
-    xip2_t        dst_xip2 = get_xip2_address(test_network_version1, test_network_id);
+    xip2_t        dst_xip2 = get_xip2_address(test_network_id);
     // test: send_to->send->cnt_send_to
     int & m_cnt1 = tests::network::xdummy_network_driver.m_counter_send_to;
     m_cnt1 = 0;
@@ -70,11 +68,11 @@ TEST_F(xvnetwork_driver_fixture_t, test_broadcast_ec) {
     std::uint8_t    max_broadcast_count = 0xFF;
     std::error_code ec = xvnetwork_errc2_t::success;
 
-    common::xnode_address_t src = get_address(common::xversion_t{1}, common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1});
+    common::xnode_address_t src = get_address(common::xelection_round_t{1}, common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1});
 
     // broadcast in the specified network
     xip2_t broadcast_dst_xip2_v1_net_broadcast{
-        common::xnetwork_id_t{1}, common::xzone_id_t{127}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}, test_network_version1};
+        common::xnetwork_id_t{1}, common::xzone_id_t{127}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
 
     int & m_cnt = tests::network::xdummy_network_driver.m_counter_spread_rumor;
     m_cnt = 0;
@@ -87,9 +85,9 @@ TEST_F(xvnetwork_driver_fixture_t, test_broadcast_ec) {
 
     // broadcast message in the same sharding
     xip2_t broadcast_dst_xip2_v1{
-        common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}, test_network_version1};
+        common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
 
-    int & m_cnt2 = tests::network::xdummy_network_driver.m_counter_forward_broadcast;
+    int & m_cnt2 = tests::network::xdummy_network_driver.m_counter_spread_rumor;
     m_cnt2 = 0;
     for (auto i = 0u; i < max_broadcast_count; ++i) {
         vnetwork_driver_test_ptr->broadcast(broadcast_dst_xip2_v1, test_msg, ec);
@@ -103,16 +101,16 @@ TEST(test_vnetwork_driver, init_null_vhost) {
     top::vnetwork::xvhost_face_t *  nullptr_vhost = nullptr;
     common::xlogic_time_t const     start_time = 1;
     EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr1 = std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr),
-                 xvnetwork_error_t);
+                 top::error::xtop_error_t);
     EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr2 =
                      std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr),
-                 xvnetwork_error_t);
+                 top::error::xtop_error_t);
 }
 
 TEST(test_vnetwork_driver, test_m_value) {
     top::vnetwork::xvnode_address_t                    adr{common::xsharding_address_t{common::xnetwork_id_t{1}},
                                         common::xaccount_election_address_t{common::xnode_id_t{std::string{"test1"}}, common::xslot_id_t{}},
-                                        common::xversion_t{1},
+                                        common::xelection_round_t{1},
                                         std::uint16_t{0},
                                         std::uint64_t{0}};
     std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr =
@@ -132,13 +130,13 @@ TEST(test_vnetwork_driver, test_m_value) {
     EXPECT_EQ(m_cnt, 2);
     vnetwork_driver_test_ptr->parents_info2();
     EXPECT_EQ(m_cnt, 4);
-    vnetwork_driver_test_ptr->children_info2(common::xgroup_id_t{65}, common::xversion_t{1});
+    vnetwork_driver_test_ptr->children_info2(common::xgroup_id_t{65}, common::xelection_round_t{1});
     EXPECT_EQ(m_cnt, 5);
     EXPECT_TRUE(vnetwork_driver_test_ptr->virtual_host() == make_observer(&tests::vnetwork::xdummy_vhost));
     EXPECT_TRUE(vnetwork_driver_test_ptr->type() == common::real_part_type(adr.type()));
     std::vector<xvnode_address_t> res(2, adr);
     EXPECT_EQ(res.size(), 2);
-    res = vnetwork_driver_test_ptr->archive_addresses();
+    res = vnetwork_driver_test_ptr->archive_addresses(common::xnode_type_t::storage_archive);
     EXPECT_EQ(res.size(), 1);
     vnetwork_driver_test_ptr->stop();
 }

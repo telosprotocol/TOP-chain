@@ -172,9 +172,122 @@ R"T(
 }
 )T";
 
+static std::string const g_dev_genesis_config =
+R"T(
+{
+    "genesis": {
+        "accounts": {
+            "tcc": {
+                "T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB": {
+                    "balance": "1000000000"
+                },
+                "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy": {
+                    "balance": "1000000000"
+                },
+                "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo": {
+                    "balance": "1000000000"
+                }
+            },
+            "genesis_funds_account": {
+                "T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73": {
+                    "balance": "2999997000000000"
+                },
+                "T00000LTHfpc9otZwKmNcXA24qiA9A6SMHKkxwkg": {
+                    "balance": "6000000000000000"
+                },
+                "T00000Ldf7KcME5YaNvtFsr6jCFwNU9i7NeZ1b5a": {
+                    "balance": "3400000000000000"
+                }
+            }
+        },
+        "seedNodes": {
+            "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp": "BNRHeRGw4YZnTHeNGxYtuAsvSslTV7THMs3A9RJM+1Vg63gyQ4XmK2i8HW+f3IaM7KavcH7JMhTPFzKtWp7IXW4=",
+            "T00000LeXNqW7mCCoj23LEsxEmNcWKs8m6kJH446": "BN9IQux1NQ0ByBCYAAVds5Si538gazH3gNIS5sODadNRA2zvvKDTSKhfwX5GNWtvb0nmoGHjQp9J9ElMyOUwBkk=",
+            "T00000LVpL9XRtVdU5RwfnmrCtJhvQFxJ8TB46gB": "BP+s96ilurhraFU7RD2Ua60rD8CpgDxCjWcp67yq7D500gf0ej5vBGiwqZ2GwoEWAcXFHqUlTQW8IqIWHCk5eKk=",
+            "T00000LLJ8AsN4hREDtCpuKAxJFwqka9LwiAon3M": "BDulJhE2hcVccX6ipiQQ7lerTjiiLOPHFRVIhFqFpFGEcgQlEH1lxMc2TxkVOmycwPkdaDJDyeMAoEWxFRkhB7o=",
+            "T00000LefzYnVUayJSgeX3XdKCgB4vk7BVUoqsum": "BPIMyevRyVoKNoghbcdMZurSNjHES5ltO0BhYMCToDOT4aBlLBu4SlVSgUGZdLor80KuZbu5CxTl9cefeFNSEfU=",
+            "T00000LXqp1NkfooMAw7Bty2iXTxgTCfsygMnxrT": "BFyhA6BP2mTbgOsmsQFjQ09r9iXn+f3fmceOb+O1aYmr6qDo7KwDv25iOMRV8nBOgunv6EUAtjDKidvME9YkuBQ=",
+            "T00000LaFmRAybSKTKjE8UXyf7at2Wcw8iodkoZ8": "BMpn9t4PDeHodoUeiamiipsS3bnNGT4Mbk/ynGJY1pnIuqv4nlEhVOv1CUZ5JbeNcWV/VNTin3xuvl/sOKNx1LU=",
+            "T00000LhCXUC5iQCREefnRPRFhxwDJTEbufi41EL": "BFyUBEG/eO5SomaDQZidofp7n0s0eq/9scRAxWp8w+fbb3CnOSffdN3CeNHzJKYgBBmK5anXtvXkkBYCmW7+tiU=",
+            "T00000LTSip8Xbjutrtm8RkQzsHKqt28g97xdUxg": "BETTgEv6HFFtxTVCQZBioXc5M2oXb5iPQgoO6qlXlPEzTPK4D2yuz4pAfQqfxwABRvi0nf1EY0CVy9Z3HJf2+CQ=",
+            "T00000LcNfcqFPH9vy3EYApkrcXLcQN2hb1ygZWE": "BC81J2PldKUM2+JjkgzmLWcHrAbQy7W9OZFYHdc3myToIMlrXYHuraEp+ncSfGEOkxw3BXYZQtAzp6gD7UKShDU=",
+            "T00000LUv7e8RZLNtnE1K9sEfE9SYe74rwYkzEub": "BF7e2Et86zY3PIJ2Bh/wgxcKTTdgxffuvaHJ3AbR99bQr9jAgUNKCyG9qbYDbgU74eUTDZFcoKycGWe7UF4ScFo=",
+            "T00000LKfBYfwTcNniDSQqj8fj5atiDqP8ZEJJv6": "BFFVnheBS2yJLwlb+q6xH/DL+RotbvRdd9YeJKug1tP+WppTdB36KzMOHxmHTsh5u9BKgPDgXppFvyBeqYUxoTU=",
+            "T00000LXRSDkzrUsseZmfJFnSSBsgm754XwV9SLw": "BDL1+u+QBTf15/susP8JHAr0cbrHrz8iXRnLfZ47izaFtc1ZGhD2OTuCEMUNO0cQC0LhnvZ6QhkaiiPuPb6tC58=",
+            "T00000Lgv7jLC3DQ3i3guTVLEVhGaStR4RaUJVwA": "BMmlycOO/y8Z/MDrCUw598nIU0GZlxAgYX+/3MEi6UvguDfnivjdULHO7L2yRkM9hWy3Ch3mKKyqMvIMG2W+Pyk="
+        },
+        "timestamp": 1599555555
+    },
+    "zone_election_trigger_interval": 5,
+    "min_election_committee_size": "6",
+    "max_election_committee_size": "8",
+    "cluster_election_interval": 17,
+    "auditor_group_count": 1,
+    "validator_group_count": 2,
+    "min_auditor_group_size": "4",
+    "max_auditor_group_size": "4",
+    "min_validator_group_size": "4",
+    "max_validator_group_size": "4",
+    "rec_election_interval": "191",
+    "zec_election_interval": "111",
+    "archive_election_interval": "13",
+    "http_port": 19081,
+    "grpc_port": 19082,
+    "dht_port": 19083,
+    "msg_port": 19084,
+    "ws_port": 19085,
+    "chain_name": "galileo"
+}
+)T";
+
+static std::string const g_ci_genesis_config =
+R"T(
+{
+    "accounts": {
+        "genesis_funds_account": {
+            "T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73": {
+                "balance": "2999997000000000"
+            },
+            "T00000LTHfpc9otZwKmNcXA24qiA9A6SMHKkxwkg": {
+                "balance": "6000000000000000"
+            },
+            "T00000Ldf7KcME5YaNvtFsr6jCFwNU9i7NeZ1b5a": {
+                "balance": "3400000000000000"
+            }
+        },
+        "tcc": {
+            "T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB": {
+                "balance": "1000000000"
+            },
+            "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy": {
+                "balance": "1000000000"
+            },
+            "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo": {
+                "balance": "1000000000"
+            }
+        }
+    },
+    "seedNodes": {
+        "T00000LeEMLtDCHkwrBrK8Gdqfik66Kjokewp23q":"BPZmAPKWLhhVDkJvWbSPAp3uoBqfTZG0j2QLyOaT5s3JqOxjIvTQFnmBXNUiMV3xwJ/bp9Sq7vD47fvAiGnC4DA=",
+        "T00000LVeEo7QGURbT7Kxc5SxMmMxvbhXXc1r2aq":"BCXnLl94yQR8L1pLdz5SqEhHIkjifycTNYms44y80OrzSAa1zJ7d8umPcccTxiFaRbqPQvfWmdsr560809aX1bI=",
+        "T00000LMhJMWwmFMwTfpfrCzqtQQ9DBveVUirkSC":"BMz9dh7/AozzPXzP8vq5jaMKtK7YYTM0YO/C7P4jFWi33kfZo9poTjAceSRJJ5lO8ch+nM71nUuLpqYxgZ+zRpE=",
+        "T00000LScQir9BbHc2YW5iE1kVYp6ncYds337aCo":"BD1vW7NQad07ppFtPEuepXjklHzbSJNoTXYBFfM5hD8uRxiwcQJLp053MdVhoI77iB3/NfEK6q//VvP/MNN+yFk=",
+        "T00000LV1ooVsoMHfL6MnCDx64Hdg4vchnbfaGSW":"BPDmX32DPqJRb+QzskUw2SpSoRxn8ObCIE3JYl0ZI6rOKDRsVXTrjDDOtWICHl0CVjV0N2Ez3pWiWFiNsgg8Nfw=",
+        "T00000LSvT8hqFL39GvmuotQBvksALLcubR3ivRb":"BECRZwpagglNLIjzXvNWqyaTo3pCZS8wT9siQj+ZURPCHqOVd2e6O/G5aRHcm6y6wrNpjzpmDs/23zDYiaUu/KA=",
+        "T00000LcFkZzzADMS6tJnzC6XH5N79ZCrq6UHrje":"BLKB1F4P0a9JDzVxhuoZfIjsPa1LgecC1QkoIdepjtBH5mfXVebncbOPoPte69q/yhmL5fBipnY9xg0o1cnemnI=",
+        "T00000LTLK35EK52a4mzTCSKxW9BmHUqqNKGoDmX":"BFJiEebMdm8tjC2dB60G0OvnpbKkBhe6zBQ+F9i4dIRtyn6Wv5NVN4NpsDxN+04duNuSfZQ0JxUhPz8e3I3aZAI="
+    },
+    "timestamp": 1599555555
+}
+)T";
+
 const std::string & get_genesis_info() {
-#if defined(XBUILD_GALILEO)
+#if defined(XBUILD_CI)
+    return g_ci_genesis_config;
+#elif defined(XBUILD_GALILEO)
     return g_testnet_genesis_config;
+#elif defined(XBUILD_DEV)
+    return g_dev_genesis_config;
 #else
     return g_mainnet_genesis_config;
 #endif

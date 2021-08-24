@@ -6,6 +6,12 @@
 #include <cinttypes>
 #include "../xvcnode.h"
 
+#ifdef DEBUG
+#include "xcrypto/xckey.h"
+#endif
+#include "xpbase/base/top_utils.h"
+#include "xmetrics/xmetrics.h"
+
 namespace top
 {
     namespace base
@@ -16,14 +22,39 @@ namespace top
             m_sign_pubkey             = sign_pub_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
+            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, 1);
+            #ifdef DEBUG  //double check whether public key matched the account addresss
+            utl::xecpubkey_t pub_key((uint8_t*)sign_pub_key.data(),(int)sign_pub_key.size());
+            xassert(account == pub_key.to_address(get_addr_type(), get_ledger_id()));
+            #endif
         }
         xvnode_t::xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key,const std::string & sign_pri_key)
             :xvaccount_t(account)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, 1);
             m_sign_pubkey             = sign_pub_key;
             m_sign_prikey             = sign_pri_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
+            
+            if (!sign_pri_key.empty()) { 
+                //election result contains public key, private key for self node only
+                xassert(sign_pri_key.size() == 32);//force the private key of 32bytes
+
+/*                #ifdef DEBUG  //double check whether public/private key matched the account addresss
+                utl::xecprikey_t raw_pri_key_obj((uint8_t*)sign_pri_key.data());
+                utl::xecpubkey_t raw_pub_kye_obj = raw_pri_key_obj.get_public_key();
+                xinfo("pub:%s,%s,pri:%s", top::HexEncode(sign_pub_key).c_str(), top::HexEncode(std::string((char*)raw_pub_kye_obj.data(), 65)).c_str(), top::HexEncode(sign_pri_key).c_str() );
+                xinfo("account:%s,%s", account.c_str(), raw_pub_kye_obj.to_address(get_addr_type(), get_ledger_id()).c_str());
+                xinfo("get_addr_type:%d, get_ledger_id:%d", get_addr_type(), get_ledger_id());
+                xassert(account == raw_pub_kye_obj.to_address(get_addr_type(), get_ledger_id())); //check address again
+                
+                utl::xecpubkey_t passed_pub_key_obj((uint8_t*)sign_pub_key.data(),(int)sign_pub_key.size());
+                xassert(account == passed_pub_key_obj.to_address(get_addr_type(), get_ledger_id())); //check address again
+                //bits check by memcmp for tow public key
+                xassert(0 == memcmp(raw_pub_kye_obj.data(), passed_pub_key_obj.data(), raw_pub_kye_obj.size()));
+                #endif  */
+            }
         }
         
         xvnode_t::xvnode_t(const xvnode_t & obj)
@@ -34,13 +65,15 @@ namespace top
             
             m_node_address.high_addr  = obj.m_node_address.high_addr;
             m_node_address.low_addr   = obj.m_node_address.low_addr;
+            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, 1);
         }
         
         xvnode_t::~xvnode_t()
-        {            
+        {
+            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, -1);            
         }
         
-        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> & nodes)
+        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> const & nodes)
         {
             m_group_address.high_addr = group_address.high_addr;
             m_group_address.low_addr  = group_address.low_addr;
@@ -71,9 +104,10 @@ namespace top
                     }
                 }
             }
+            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, 1);
         }
         
-        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> & nodes)
+        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> const & nodes)
         {
             m_group_address.high_addr = group_address.high_addr;
             m_group_address.low_addr  = group_address.low_addr;
@@ -104,6 +138,7 @@ namespace top
                     }
                 }
             }
+            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, 1);
         }
         
         xvnodegroup_t::~xvnodegroup_t()
@@ -115,6 +150,7 @@ namespace top
                     it->release_ref();
                 }
             }
+            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, -1);
         }
         
         xvnode_t* xvnodegroup_t::get_node(const xvip2_t & target_node_xip2) const
@@ -193,7 +229,7 @@ namespace top
             m_lock.unlock();
         }
  
-        xauto_ptr<xvnode_t>        xvnodehouse_t::get_node(const xvip2_t & target_node)
+        xauto_ptr<xvnode_t>        xvnodehouse_t::get_node(const xvip2_t & target_node) const
         {
             //GroupKey = [elect-height:21bit][xnetwork-id: 7-7-7 bit][zone-id:7bit|cluster-id:7bit|group-id:8bit]
             const uint64_t group_key = ((target_node.low_addr << 11) >> 21) | ((target_node.high_addr & 0x1FFFFF) << 43);
@@ -233,7 +269,7 @@ namespace top
                 -[XIP: 64bit]
         }
         */
-        xauto_ptr<xvnodegroup_t>   xvnodehouse_t::get_group(const xvip2_t & target_group)
+        xauto_ptr<xvnodegroup_t>   xvnodehouse_t::get_group(const xvip2_t & target_group) const
         {
             //GroupKey = [elect-height:21bit][xnetwork-id: 7-7-7 bit][zone-id:7bit|cluster-id:7bit|group-id:8bit]
             const uint64_t group_key = ((target_group.low_addr << 11) >> 21) | ((target_group.high_addr & 0x1FFFFF) << 43);

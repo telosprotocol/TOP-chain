@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include "json/json.h"
 #include "src/xrpc.grpc.pb.h"
+#include <atomic>
 
 using grpc::Status;
 using grpc::ServerContext;
@@ -13,6 +14,7 @@ using grpc::ServerWriter;
 
 namespace top { namespace rpc {
 
+extern std::atomic_int rpc_client_num;
 extern std::deque<xJson::Value> tableblock_data;
 extern std::mutex tableblock_mtx;
 extern std::condition_variable tableblock_cv;
@@ -61,9 +63,7 @@ private:
                 ServerWriter<xrpc_reply> *replys) override;
 
     std::shared_ptr<xrpc_handle_face_t> m_handle;
-    // uint32_t m_call_num;
-    // uint64_t m_last_timestamp;
-    // bool debug;
+    mutable std::mutex m_call_mtx;
 };
 
 }}

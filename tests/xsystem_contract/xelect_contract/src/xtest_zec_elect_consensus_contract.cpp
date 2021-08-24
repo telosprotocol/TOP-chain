@@ -15,13 +15,13 @@ using top::xvm::system_contracts::zec::xzec_elect_consensus_group_contract_t;
 using top::xvm::xcontract_helper;
 
 void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
     auto const validator_group_count_per_auditor_group = validator_group_count / auditor_group_count;
 
     auto & election_association_result = m_election_association_result_store.result_of(common::xdefault_cluster_id);
-    election_association_result.cluster_version(common::xversion_t{0});
+    election_association_result.cluster_version(common::xelection_round_t{0});
     for (std::uint16_t i = 0u; i < validator_group_count; ++i) {
         common::xgroup_id_t consensus_gid{static_cast<common::xgroup_id_t::value_type>(common::xvalidator_group_id_value_begin + i)};
         auto const advance_group_id_offset = static_cast<std::uint16_t>(i / validator_group_count_per_auditor_group);
@@ -31,7 +31,7 @@ void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
 
     all_election_result_store.clear();
     xelection_result_store_t empty_result_store;
-    for (auto gidv = common::xauditor_group_id_value_begin; gidv <= common::xauditor_group_id_value_begin + XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count); gidv++) {
+    for (auto gidv = common::xauditor_group_id_value_begin; gidv <= common::xauditor_group_id_value_begin + XGET_CONFIG(auditor_group_count); gidv++) {
         auto gid = common::xgroup_id_t{gidv};
         all_election_result_store.insert({gid, empty_result_store});
     }
@@ -125,7 +125,7 @@ bool xtest_zec_elect_consensus_contract_t::check_election_result_XOR() {
 void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus_cluster_size, std::size_t per_validator_group_cnt) {
     std::size_t validator_group_index = common::xvalidator_group_id_value_begin;
     std::size_t auditor_group_index = common::xauditor_group_id_value_begin;
-    
+
     for (std::size_t index = 0; index < consensus_cluster_size; index++) {
         auto auditor_group_id = common::xgroup_id_t{auditor_group_index};
         auto const & auditor_election_group_result = all_election_result_store.at(auditor_group_id)
@@ -139,7 +139,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
         }
         auditor_stake /= auditor_election_group_result.size();
         group_stake_sum[auditor_group_id] += auditor_stake;
-        printf("group:%d %10lu      ", auditor_group_id.value(), auditor_stake);
+        printf("group:%d %10" PRIu64 "      ", auditor_group_id.value(), auditor_stake);
         for (std::size_t index2 = 0; index2 < per_validator_group_cnt; index2++) {
             auto validator_group_id = common::xgroup_id_t{validator_group_index};
             auto const & validaotr_election_group_result = all_election_result_store.at(auditor_group_id)
@@ -153,7 +153,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
             }
             validator_stake /= validaotr_election_group_result.size();
             group_stake_sum[validator_group_id] += validator_stake;
-            printf("group:%d %10lu      ", validator_group_id.value(), validator_stake);
+            printf("group:%d %10" PRIu64 "      ", validator_group_id.value(), validator_stake);
             validator_group_index++;
         }
         auditor_group_index++;
@@ -300,8 +300,8 @@ bool xtest_zec_elect_consensus_contract_t::test_elect_non_genesis(common::xzone_
                                                                   std::uint64_t const random_seed,
                                                                   common::xlogic_time_t const election_timestamp) {
     bool result{false};
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
     auto cluster_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
     XATTRIBUTE_MAYBE_UNUSED auto zone_election_trigger_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
@@ -313,7 +313,7 @@ bool xtest_zec_elect_consensus_contract_t::test_elect_non_genesis(common::xzone_
     auto const total_group_count = auditor_group_count + validator_group_count;
 
     uint16_t auditor_rotation_num{0};
-    
+
     for (uint16_t index = 0u; (index < auditor_group_count) && (auditor_rotation_num < max_advance_rotation_num); ++index) {
         common::xgroup_id_t auditor_group_id{static_cast<common::xgroup_id_t::value_type>(common::xauditor_group_id_value_begin + index % auditor_group_count)};
         assert(auditor_group_id >= common::xauditor_group_id_begin && auditor_group_id < common::xauditor_group_id_end);
@@ -398,7 +398,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -409,7 +409,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -423,7 +423,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
     common::xgroup_id_t gid1{common::xauditor_group_id_value_begin};
     common::xgroup_id_t gid2{common::xauditor_group_id_value_begin + 1};
     for (std::size_t index = 1; index <= elect_count; ++index) {
-        
+
         std::mt19937_64 rng2(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         auto random_seed2 = static_cast<uint64_t>(rng2());
         common::xlogic_time_t time2{index};
@@ -468,7 +468,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
     }
 }
 
-#endif 
+#endif
 
 #if 0
 // this test is to build advance&&validator node in&&out count
@@ -493,8 +493,8 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
 
     auto const min_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size);
     auto const max_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size);
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
     xrange_t<config::xgroup_size_t> group_size_range{min_auditor_group_size, max_auditor_group_size};
     std::mt19937_64 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     auto random_seed = static_cast<uint64_t>(rng());
@@ -517,7 +517,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_validator] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -527,7 +527,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_validator] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }

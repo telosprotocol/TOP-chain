@@ -4,6 +4,7 @@
 
 #include "xsync/xsync_peer_keeper.h"
 #include "xsync/xsync_log.h"
+#include "xsync/xsync_util.h"
 
 NS_BEG2(top, sync)
 
@@ -18,13 +19,15 @@ m_role_chains_mgr(role_chains_mgr),
 m_role_xips_mgr(role_xips_mgr),
 m_sync_sender(sync_sender),
 m_peerset(peerset) {
-
 }
 
 void xsync_peer_keeper_t::on_timer() {
     XMETRICS_TIME_RECORD("sync_cost_peerkeeper_timer_event");
 
     std::unique_lock<std::mutex> lock(m_lock);
+    if (m_time_rejecter.reject()){
+        return;
+    }
 
     if (m_count % COMMON_TIME_INTERVAl == 0) {
         process_timer();
@@ -38,7 +41,7 @@ std::vector<vnetwork::xvnode_address_t> xsync_peer_keeper_t::get_random_neighbor
     std::vector<vnetwork::xvnode_address_t> all_neighbors;
     // rec,zec,consensus,archive
     if (common::has<common::xnode_type_t::rec>(addr.type()) || common::has<common::xnode_type_t::zec>(addr.type()) ||
-        common::has<common::xnode_type_t::consensus>(addr.type()) || common::has<common::xnode_type_t::archive>(addr.type())) {
+        common::has<common::xnode_type_t::consensus>(addr.type()) || common::has<common::xnode_type_t::storage>(addr.type())) {
         all_neighbors = m_role_xips_mgr->get_all_neighbors(addr);
     }
 
@@ -66,8 +69,8 @@ void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr) {
         for (auto &it: m_maps) {
             // remove old
             if (it.first.cluster_address() == addr.cluster_address()) {
-                m_maps.erase(it.first);
                 m_peerset->remove_group(it.first);
+                m_maps.erase(it.first);
                 break;
             }
         }
@@ -137,11 +140,16 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         const xchain_info_t &chain_info = it.second;
 
         base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-        base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, chain_info.sync_policy);
+        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         xchain_state_info_t info;
         info.address = address;
-        info.start_height = latest_start_block->get_height();
-        info.end_height = latest_end_block->get_height();
+        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
+            info.start_height = 0;
+            info.end_height = 0;
+        } else {
+            info.start_height = latest_start_block->get_height();
+            info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+        }
         info_list.push_back(info);
     }
 

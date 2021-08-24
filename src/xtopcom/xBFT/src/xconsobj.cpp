@@ -7,7 +7,7 @@
 #include "xconsobj.h"
 #include "xbase/xhash.h"
 #include "xdata/xnative_contract_address.h"
-
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -336,6 +336,7 @@ namespace top
             :xcsobject_t(_context,target_thread_id,type),
              base::xvaccount_t(account_addr)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xcscoreobj_t, 1);
         }
 
         xcscoreobj_t::xcscoreobj_t(xcscoreobj_t & parentobj,base::enum_xobject_type type)
@@ -343,10 +344,12 @@ namespace top
              base::xvaccount_t(parentobj.get_account())
         {
             base::xionode_t::reset_xip_addr(parentobj.get_xip2_addr());//force update xip2 address by following parent
+            XMETRICS_GAUGE(metrics::dataobject_xcscoreobj_t, 1);
         }
 
         xcscoreobj_t::~xcscoreobj_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xcscoreobj_t, -1);
         };
 
         void* xcscoreobj_t::query_interface(const int32_t _enum_xobject_type_)
@@ -579,7 +582,7 @@ namespace top
             return false;
         }
         
-        bool   xcscoreobj_t::fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block,const std::string & vblock_cert_bin)
+        bool   xcscoreobj_t::fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block,const std::string & vblock_cert_bin,const std::string & vlatest_clock_cert)
         {
             if(get_parent_node() != NULL)
             {
@@ -592,7 +595,8 @@ namespace top
                 _event_obj->_packet.set_block_height(for_block->get_height());
                 _event_obj->_packet.set_block_clock(for_block->get_clock());
                 _event_obj->_packet.set_vblock_cert(vblock_cert_bin);
-
+                _event_obj->_packet.set_xclock_cert(vlatest_clock_cert);
+                
                 _event_obj->_packet.set_block_viewid(for_block->get_viewid());
                 _event_obj->_packet.set_block_viewtoken(for_block->get_viewtoken());
                 

@@ -12,8 +12,6 @@
 #if defined(__clang__)
 
 #    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wall"
-#    pragma clang diagnostic ignored "-Wextra"
 #    pragma clang diagnostic ignored "-Wpedantic"
 
 #elif defined(__GNUC__)
@@ -29,8 +27,9 @@
 
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvboffdata.h"
 #include "xvledger/xaccountindex.h"
+#include "xvledger/xreceiptid.h"
+#include "xvledger/xmerkle.hpp"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -41,13 +40,9 @@
 #endif
 
 #include "xbase/xobject_ptr.h"
-#include "xdata/xaccount_mstate.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xheader_cert.h"
 #include "xdata/xlightunit_info.h"
-#include "xdata/xnative_property.h"
-#include "xdata/xpropertylog.h"
 
 NS_BEG2(top, data)
 
@@ -77,15 +72,14 @@ class xblockheader_extra_data_t : public xserializable_based_on<void> {
 
 class xblock_t : public base::xvblock_t {
  public:
-    static bool check_merkle_path(const std::string &leaf, const xmerkle_path_256_t &hash_path, const std::string & root);
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
+    static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
+    static std::string dump_header(base::xvheader_t* header);
 public:
     xblock_t(enum_xdata_type type);
-    xblock_t(base::xvheader_t & header, xblockcert_t & cert, enum_xdata_type type);
-    // xblock_t(base::xvheader_t & header, xblockcert_t & cert, const std::string & input, const std::string & output, enum_xdata_type type);
-    xblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output, enum_xdata_type type);
-
+    xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type);
+    xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type);
 
 #ifdef XENABLE_PSTACK  // tracking memory
     virtual int32_t add_ref() override;
@@ -98,21 +92,9 @@ public:
     xblock_t(const xblock_t &);
     xblock_t & operator = (const xblock_t &);
 
- protected:
-    xblockcert_t*       get_blockcert() const {return (xblockcert_t*)get_cert();}
-
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
-    void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const xmerkle_path_256_t & path);
-    bool        calc_input_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    bool        calc_output_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    bool        check_block_hash();
-
- public:
-    void            set_consensus_para(const xblock_consensus_para_t & para);
-    virtual bool    is_full_state_block() const;
-    bool            is_execute_ready() const override {return is_full_state_block();}  //check whether ready to execute bin-log
 
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}
@@ -122,6 +104,7 @@ public:
     inline bool     is_fullblock() const {return get_block_class() == base::enum_xvblock_class_full;}
     inline bool     is_lightunit() const {return get_block_level() == base::enum_xvblock_level_unit && get_block_class() == base::enum_xvblock_class_light;}
     inline bool     is_fullunit() const {return get_block_level() == base::enum_xvblock_level_unit && get_block_class() == base::enum_xvblock_class_full;}
+    inline bool     is_emptyunit() const {return get_block_level() == base::enum_xvblock_level_unit && get_block_class() == base::enum_xvblock_class_nil;}
     inline bool     is_emptyblock() const {return get_block_class() == base::enum_xvblock_class_nil;}
     inline bool     is_fulltable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_full;}
     inline bool     is_lighttable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_light;}
@@ -133,32 +116,23 @@ public:
     std::string     dump_cert(base::xvqcert_t* qcert) const;
 
  public:
-    virtual const std::map<std::string, std::string> & get_property_hash_map() const {return m_empty_map;}
-    virtual std::string                 get_property_hash(const std::string & prop_name) const {return m_empty_string;}
-    virtual const xnative_property_t &  get_native_property() const {return m_empty_native;}
+    virtual std::vector<xlightunit_action_ptr_t>    get_lighttable_tx_actions() const;
     virtual const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const { return m_empty_txs;}
     virtual xlightunit_tx_info_ptr_t    get_tx_info(const std::string & txhash) const;
-    virtual xaccount_binlog_t*          get_property_log() const {return nullptr;}
     virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}
     virtual uint32_t                    get_txs_count() const {return 0;}
-    virtual int64_t                     get_balance_change() const {return 0;}
-    virtual int64_t                     get_burn_balance_change() const {return 0;}
-    virtual const xaccount_mstate2*     get_fullunit_mstate() const {return nullptr;}
-    virtual const std::map<std::string, std::string> * get_fullunit_propertys() const {return nullptr;}
     virtual const std::vector<xobject_ptr_t<xblock_t>> & get_tableblock_units(bool need_parent_cert) const {return m_empty_blocks;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
-    virtual uint16_t                    get_unconfirm_sendtx_num() const {return 0;}
-    virtual bool                        is_prev_sendtx_confirmed() const {return false;}
-    virtual std::map<std::string, xaccount_index_t> get_units_index() const {return {};}
+    virtual uint32_t                    get_unconfirm_sendtx_num() const {return 0;}
+    xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;
 
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}
     std::string get_block_owner()const {return get_account();}
-    uint64_t    get_timestamp() {return get_cert()->get_gmtime();}
+    uint64_t    get_timestamp() const {return get_cert()->get_gmtime();}
 
  private:
     static std::map<std::string, std::string>      m_empty_map;
-    static xnative_property_t                      m_empty_native;
     static std::vector<xlightunit_tx_info_ptr_t>   m_empty_txs;
     static uint256_t                               m_empty_uint256;
     static std::string                             m_empty_string;
@@ -181,6 +155,9 @@ class xblock_consensus_para_t {
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
+    void    update_latest_lock_block(const xblock_ptr_t & lock_block) {m_latest_locked_block = lock_block;}
+    void    update_latest_commit_block(const xblock_ptr_t & commit_block) {m_latest_committed_block = commit_block;}
+    void    set_validator(const xvip2_t & validator) {m_validator = validator;}
     void    set_common_consensus_para(uint64_t clock,
                                    const xvip2_t & validator,
                                    const xvip2_t & auditor,
@@ -211,6 +188,8 @@ class xblock_consensus_para_t {
     uint64_t                get_total_lock_tgas_token() const {return m_total_lock_tgas_token;}
     const std::string &     get_justify_cert_hash() const {return m_justify_cert_hash;}
     uint64_t                get_proposal_height() const {return m_proposal_height;}
+    const std::string &     get_table_account() const {return m_account;}
+    uint64_t                get_table_proposal_height() const {return m_proposal_height;}
     uint64_t                get_parent_height() const {return m_parent_height;}
     const std::string &     dump() const {return m_dump_str;}
 

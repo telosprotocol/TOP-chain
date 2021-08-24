@@ -13,7 +13,6 @@
 #include "xcommon/xfadable.h"
 #include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"
-#include "xdata/xtable_id.h"
 #include "xdata/xtransaction.h"
 #include "xrouter/xrouter.h"
 #include "xstore/xstore_face.h"
@@ -32,18 +31,34 @@ public:
     virtual bool is_mailbox_over_limit() = 0;
 };
 
+class xcovered_tables_t {
+public:
+    void add_covered_table(uint8_t zoneid, uint16_t tableid) {
+        uint32_t id = (zoneid << 16) + tableid;
+        m_table_set.insert(id);
+    }
+    bool is_covered(uint8_t zoneid, uint16_t tableid) const {
+        uint32_t id = (zoneid << 16) + tableid;
+        auto iter = m_table_set.find(id);
+        return (iter != m_table_set.end());
+    }
+private:
+    std::set<uint32_t> m_table_set;
+};
+
 // xtxpool_service_face interface of txpool net service, process network event
 class xtxpool_service_face : public xrequest_tx_receiver_face {
 public:
     virtual bool start(const xvip2_t & xip) = 0;
     virtual bool fade(const xvip2_t & xip) = 0;
     virtual void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) = 0;
-    virtual bool is_running() = 0;
-    virtual bool is_receipt_sender(const xtable_id_t & tableid, const uint256_t & hash) = 0;
-    virtual void send_receipt(xcons_transaction_ptr_t & receipt, uint32_t resend_time) = 0;
-    virtual bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) = 0;
-    virtual void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) = 0;
-    virtual void on_timer(uint64_t now) = 0;
+    virtual bool is_running() const = 0;
+    virtual bool is_receipt_sender(const base::xtable_index_t & tableid) const = 0;
+    virtual bool is_send_receipt_role() const = 0;
+    virtual bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const = 0;
+    virtual void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const = 0;
+    virtual void resend_receipts(uint64_t now) = 0;
+    virtual void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) = 0;
 };
 
 class xtxpool_proxy_face : public xrequest_tx_receiver_face {
@@ -73,7 +88,7 @@ public:
     static std::shared_ptr<xtxpool_service_mgr_face> create_xtxpool_service_mgr_inst(const observer_ptr<store::xstore_face_t> & store,
                                                                                      const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                      const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                     const observer_ptr<base::xiothread_t> & iothread,
+                                                                                     const std::vector<xobject_ptr_t<base::xiothread_t>> & iothreads,
                                                                                      const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                                                                      const observer_ptr<time::xchain_time_face_t> & clock);
 };

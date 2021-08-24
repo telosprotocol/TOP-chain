@@ -52,6 +52,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::enum_lua_abi_input_name_or_type_error:
         return "LUA ABI input name or type error";
 
+    case xerrc_t::enum_wasm_code_invalid:
+        return "WASM code invlid";
+
     default:
         return "unknown contract runtime error";
     }
@@ -63,25 +66,6 @@ std::error_code make_error_code(xerrc_t const errc) noexcept {
 
 std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition(static_cast<int>(errc), contract_runtime_category());
-}
-
-xtop_contract_runtime_error::xtop_contract_runtime_error() : std::runtime_error{make_error_code(xerrc_t::ok).message()} {
-}
-
-xtop_contract_runtime_error::xtop_contract_runtime_error(xerrc_t const error_code) : xtop_contract_runtime_error{make_error_code(error_code)} {
-}
-
-xtop_contract_runtime_error::xtop_contract_runtime_error(xerrc_t const error_code, std::string const & message) : xtop_contract_runtime_error{make_error_code(error_code), message} {
-}
-
-xtop_contract_runtime_error::xtop_contract_runtime_error(std::error_code const & ec) : std::runtime_error{ec.message()}, ec_{ec} {
-}
-
-xtop_contract_runtime_error::xtop_contract_runtime_error(std::error_code const & ec, const std::string& message) : std::runtime_error{message}, ec_{ec} {
-}
-
-const std::error_code & xtop_contract_runtime_error::code() const noexcept {
-    return ec_;
 }
 
 class xtop_contract_runtime_category final : public std::error_category {

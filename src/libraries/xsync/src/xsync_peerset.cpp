@@ -153,7 +153,7 @@ bool xsync_peerset_t::get_archive_group(vnetwork::xvnode_address_t &self_addr, s
     std::unique_lock<std::mutex> lock(m_lock);
     for (auto &it: m_multi_role_peers) {
         const vnetwork::xvnode_address_t &addr = it.first;
-        if (common::has<common::xnode_type_t::archive>(addr.type())) {
+        if (common::has<common::xnode_type_t::storage>(addr.type())) {
 
             self_addr = addr;
             for (auto &it2: it.second)

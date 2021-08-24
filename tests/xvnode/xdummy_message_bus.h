@@ -27,11 +27,16 @@ class xtop_dummy_message_bus : public top::mbus::xmessage_bus_face_t {
     int listeners_size() override { return 0; };
     xevent_queue_ptr_t get_queue(int major_type) override { return {}; };
 
-    xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t *) override {
+    xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_index) override {
         return nullptr;
     }
-
+    xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t *) override {
+        return nullptr;
+    }
     xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t *) override {
+        return nullptr;
+    }
+    xevent_ptr_t  create_event_for_store_committed_block(base::xvbindex_t * target_index) override {
         return nullptr;
     }
 };

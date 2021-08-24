@@ -19,6 +19,7 @@ NS_BEG2(top, config)
         constexpr xtop_##NAME##_onchain_goverance_parameter::type xtop_##NAME##_onchain_goverance_parameter::value
 
 XDEFINE_CONFIGURATION(chain_name);
+XDEFINE_CONFIGURATION(root_hash);
 XDEFINE_CONFIGURATION(global_timer_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval);
@@ -26,8 +27,6 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size);
@@ -53,11 +52,11 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_tcc_proposal_deposit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_proposal_expire_time);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_member_number);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_member);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(free_gas);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio);
@@ -90,8 +89,8 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(task_num_per_round);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_reward_ratio);
@@ -114,17 +113,15 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_report_min_table_block_num);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tableworkload_report_schedule_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(shard_zero_workload);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_zero_workload);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_height_step_limitation);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeout_limitation);
 
 // slash related
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tableslash_report_schedule_interval);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(punish_collection_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(backward_node_lock_duration_increment);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration);
@@ -133,7 +130,6 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(backward_auditor_slash_credit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_table_block_report);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_reward_threshold_value);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_reward_threshold_value);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit);
@@ -141,6 +137,10 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 
 /* begin of offchain parameters */
+XDEFINE_CONFIGURATION(auditor_group_count);
+XDEFINE_CONFIGURATION(validator_group_count);
+XDEFINE_CONFIGURATION(archive_group_count);
+XDEFINE_CONFIGURATION(min_edge_archive_deposit);
 XDEFINE_CONFIGURATION(min_account_deposit);
 XDEFINE_CONFIGURATION(zone_count);
 XDEFINE_CONFIGURATION(cluster_count);
@@ -162,6 +162,9 @@ XDEFINE_CONFIGURATION(fulltable_interval_block_num);
 
 XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
+
+XDEFINE_CONFIGURATION(slash_fulltable_interval);
+XDEFINE_CONFIGURATION(slash_table_split_num);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

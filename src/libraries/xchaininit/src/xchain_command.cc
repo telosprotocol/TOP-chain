@@ -24,6 +24,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xtopcl/include/topcl.h"
 #include "xtopcl/include/xcrypto.h"
+#include "xconfig/xpredefined_configurations.h"
 
 #include <dirent.h>
 #include <nlohmann/json.hpp>
@@ -123,28 +124,7 @@ void ChainCommands::AddNetModuleCommands() try {
         // std::cout << result << std::endl;
     });
 
-    AddCommand(module_name, "xnetworkid", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        auto ret = net_module_->ChainId();
-        result = std::to_string(ret);
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "maxpeer", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        auto ret = net_module_->MaxPeers();
-        result = std::to_string(ret);
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "peercount", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        auto ret = net_module_->PeerCount();
-        result = std::to_string(ret);
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "netid", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        result = net_module_->NetInfo();
-        // std::cout << result << std::endl;
-    });
+#ifdef DEBUG
 
     AddCommand(module_name, "broadcast", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         uint32_t msg_size = 300;
@@ -155,38 +135,15 @@ void ChainCommands::AddNetModuleCommands() try {
         if (args.size() >= 2) {
             count = check_cast<uint32_t, const char *>(args[1].c_str());
         }
-        auto sus = net_module_->Broadcast(msg_size, count);
-        result = std::to_string(sus);
+        //auto sus = net_module_->Broadcast(msg_size, count);
+        //result = std::to_string(sus);
+        result = net_module_->Broadcast(msg_size, count);
         // std::cout << result << std::endl;
     });
+#endif
 
     AddCommand(module_name, "peers", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         result = net_module_->Peers();
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "allpeers", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        result = net_module_->AllPeers();
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "allnodes", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        result = net_module_->AllNodes();
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "osinfo", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        result = net_module_->OsInfo();
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "gid", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        result = net_module_->Gid();
-        // std::cout << result << std::endl;
-    });
-
-    AddCommand(module_name, "accountaddr", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
-        result = net_module_->Account();
         // std::cout << result << std::endl;
     });
 
@@ -247,8 +204,8 @@ std::string get_working_path() {
 int db_backup(const std::string & from, const std::string & to) {
     std::string errormsg{""};
     // backup db directory
-    std::string from_db_dir = from + "/db";
-    std::string output_file_db = to + "/" + "db";
+    std::string from_db_dir = from + DB_PATH;
+    std::string output_file_db = to + DB_PATH;
 
     if (!isDirExist(from_db_dir)) {
         printf("Backup failed\nError: the %s  does not exist.\n", from_db_dir.c_str());
@@ -278,7 +235,7 @@ int db_restore(const std::string & from, const std::string & to, const int backu
         return -1;
     }
 
-    std::string from_db_dir = from + "/db";
+    std::string from_db_dir = from + DB_PATH;
 
     // user specify the data recover target directory
     std::string target = to;
@@ -302,7 +259,7 @@ int db_restore(const std::string & from, const std::string & to, const int backu
     }
     // create two restore user directory, one for db, the other for pdb
     multiplatform_mkdir(target.c_str());
-    auto db_target = target + "/db";
+    auto db_target = target + DB_PATH;
     multiplatform_mkdir(db_target.c_str());
 
     // printf("resetore from:%s to %s\n", from_db_dir.c_str(),db_target.c_str());
@@ -429,8 +386,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     createKey->add_option(
         "account_addr", owner_account, "The account address new key belong to.If you do not add this parameter, a worker key will be created for your default account.");
     auto createKey_pw_option = createKey->add_flag("-p,--password", create_key_pf, "A worker key with password will be created if you add this option.");
-    createKey
-        ->add_option("-f,--pwd_file_path", createKey_pw_path, "The path of file that contains password string. A worker key with password will be created if you add this option.")
+    createKey->add_option("-f,--pwd_file_path", createKey_pw_path, "The path of file that contains password string. A worker key with password will be created if you add this option.")
         ->excludes(createKey_pw_option);
 
     // list all accounts
@@ -453,10 +409,21 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     resetPw_app->add_option("public_key", resetPw_public_key, "The public key.")->required();
 
     // import keystore
+    /*
     auto importKey_app = wallet_app->add_subcommand("importKey", "Import private key into wallet.");
     std::string importKey_keystore;
     importKey_app->callback(std::bind(&ApiMethod::import_keystore, &topcl.api, std::ref(importKey_keystore), std::ref(out_str)));
     importKey_app->add_option("keystore", importKey_keystore, "The keystore file content to import.")->required();
+    */
+    // import account
+    auto importAccount_app = wallet_app->add_subcommand("importAccount", "Import private key into wallet.");
+    importAccount_app->callback(std::bind(&ApiMethod::import_account, &topcl.api, std::ref(create_key_pf), std::ref(out_str)));
+    importAccount_app->add_flag("-p,--password", create_key_pf, "Import an account with a password; If you do not add this option, your account will be used without password.");
+
+    // export account
+    auto exportAccount_app = wallet_app->add_subcommand("exportAccount", "Export private key and keystore json file.");
+    exportAccount_app->callback(std::bind(&ApiMethod::export_account, &topcl.api, std::ref(owner_account), std::ref(out_str)));
+    exportAccount_app->add_option("account_addr", owner_account, "The account address. If you do not add this parameter, the private key will be printed for your default account.");
 
     /*
      * mining
@@ -466,11 +433,11 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // register miner
     auto registerMiner_app = mining_app->add_subcommand("registerMiner", "Register to the mining pool. ");
-    double registerMiner_amount = 0;
+    std::string registerMiner_amount("0");
     std::string miner_type;
     std::string miner_name;
-    registerMiner_app->add_option("top_num", registerMiner_amount, "miner register deposit,unit is TOP.")->required();
-    registerMiner_app->add_option("miner_type", miner_type, "miner type: edge,validator,advance.")->required();
+    registerMiner_app->add_option("top_num", registerMiner_amount, "Miner register deposit,unit is TOP.")->required();
+    registerMiner_app->add_option("miner_type", miner_type, "Miner type: edge, validator, advance, full_node.")->required();
     registerMiner_app->add_option("miner_name", miner_name, "Miner nickname. 4-16 characters, supporting letters, numbers or underscores.")->required();
     uint32_t dividend_ratio = 0;
     std::string node_sign_key;
@@ -516,10 +483,10 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string updateMinerInfo_type;
     std::string updateMinerInfo_name;
     uint32_t updateMinerInfo_deposit_type = 0;
-    double updateMinerInfo_deposit = 0;
+    std::string updateMinerInfo_deposit("0");
     uint32_t updateMinerInfo_rate = 0;
     std::string updateMinerInfo_sign_key;
-    updateMinerInfo_app->add_option("miner_type", updateMinerInfo_type, "New miner type: edge, validator and advance.")->required();
+    updateMinerInfo_app->add_option("miner_type", updateMinerInfo_type, "New miner type: edge, validator, advance, full_node.")->required();
     updateMinerInfo_app->add_option("miner_name", updateMinerInfo_name, "New miner name. 4-16 characters, supporting letters, numbers or underscores.")->required();
     updateMinerInfo_app->add_option("increase_or_decrease", updateMinerInfo_deposit_type, "1--Increase miner deposit. 2--Decrease miner deposit.")->required();
     updateMinerInfo_app->add_option("top_num", updateMinerInfo_deposit, "Amounts of miner deposit will be increased or decreased，unit is TOP")->required();
@@ -538,7 +505,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // set dividend ratio
     auto setDividendRatio_app = mining_app->add_subcommand("setDividendRatio", "Set devidend ratio for voters who support you.");
     uint32_t setDividendRatio_ratio = 0;
-    double setDividendRatio_deposit = 0;
+    std::string setDividendRatio_deposit("0");
     setDividendRatio_app->add_option("percent", setDividendRatio_ratio, "Dividend ratio(≥0，≤100).")->required()->check(CLI::Range((uint16_t)0, (uint16_t)100));
     setDividendRatio_app->add_option("-t,--tx_deposit", setDividendRatio_deposit, "Transaction deposit, a minimum of 0.1 TOP.");
     setDividendRatio_app->callback(std::bind(&ApiMethod::set_dividend_ratio, &topcl.api, std::ref(setDividendRatio_ratio), std::ref(setDividendRatio_deposit), std::ref(out_str)));
@@ -551,20 +518,20 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // add deposit
     auto addDeposit_app = mining_app->add_subcommand("addDeposit", "Pledge more deposit for the miner. ");
-    double addDeposit_deposit = 0;
+    std::string addDeposit_deposit("0");
     addDeposit_app->add_option("top_num", addDeposit_deposit, "Amounts of miner deposit will be increased, unit is TOP.")->required();
     addDeposit_app->callback(std::bind(&ApiMethod::add_deposit, &topcl.api, std::ref(addDeposit_deposit), std::ref(out_str)));
 
     // reduce deposit
     auto reduceDeposit_app = mining_app->add_subcommand("reduceDeposit", "Reduce the deposit of the miner. ");
-    double reduceDeposit_deposit = 0;
+    std::string reduceDeposit_deposit("0");
     reduceDeposit_app->add_option("top_num", reduceDeposit_deposit, "Amounts of miner deposit will be decreased, unit is TOP.")->required();
     reduceDeposit_app->callback(std::bind(&ApiMethod::reduce_deposit, &topcl.api, std::ref(reduceDeposit_deposit), std::ref(out_str)));
 
     // change miner type
     auto changeMinerType_app = mining_app->add_subcommand("changeMinerType", "Update miner type.");
     std::string changeMinerType_type;
-    changeMinerType_app->add_option("miner_type", changeMinerType_type, "The new miner type.")->required();
+    changeMinerType_app->add_option("miner_type", changeMinerType_type, "New miner type: edge, validator, advance, full_node.")->required();
     changeMinerType_app->callback(std::bind(&ApiMethod::change_miner_type, &topcl.api, std::ref(changeMinerType_type), std::ref(out_str)));
 
     // terminate
@@ -685,7 +652,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // stake withdraw fund
     auto stake_withdrawFund_app = staking_app->add_subcommand("withdrawFund", "Withdraw pledged TOP tokens and tickets.");
     uint64_t stake_withdrawFund_amount = 0;
-    double stake_withdrawFund_deposit = 0;
+    std::string stake_withdrawFund_deposit("0");
     stake_withdrawFund_app->add_option("votes_num", stake_withdrawFund_amount, "Votes amount, unlock the corresponding TOP token.")->required();
     stake_withdrawFund_app->add_option("-t,--tx_deposit", stake_withdrawFund_deposit, "Transaction deposit, a minimum of 0.1 TOP.");
     stake_withdrawFund_app->callback(
@@ -711,7 +678,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
                      "Miner account address(es) and votes. For example, if you want to withdraw votes on 2 miners, you can execute command as: topio staking withdrawVotes "
                      "miner_addr1 80000 miner_addr2 10000")
         ->required();
-    withdrawVotes_app->callback(std::bind(&ApiMethod::withdraw_votes, &topcl.api, std::ref(vote_infos), std::ref(out_str)));
+    withdrawVotes_app->callback(std::bind(&ApiMethod::withdraw_votes, &topcl.api, std::ref(withdrawVotes_vote_infos), std::ref(out_str)));
 
     // query votes
     auto queryVotes_app = staking_app->add_subcommand("queryVotes", "Query allocation information of vote tickets.");
@@ -733,9 +700,9 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
      * transfer
      */
     std::string to;
-    double amount = 0;
+    std::string amount("0");
     std::string note;
-    double tx_deposit = 0;
+    std::string tx_deposit("0");
     auto transfer = app.add_subcommand("transfer", "Send TOP token to an account.");
     transfer->callback(std::bind(&ApiMethod::transfer1, &topcl.api, std::ref(to), std::ref(amount), std::ref(note), std::ref(tx_deposit), std::ref(out_str)));
     transfer->add_option("account_addr", to, "The receipt account address.")->required();
@@ -778,12 +745,13 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     auto chainInfo_app = chain_app->add_subcommand("chainInfo", "Get chain informaion.");
     chainInfo_app->callback(std::bind(&ApiMethod::chain_info, &topcl.api, std::ref(out_str)));
 
+/* disable deploy & run contract temporarily for 6.15 version
     // deploy contract
     auto deployContract_app = chain_app->add_subcommand("deployContract", "Create a contract account and deploy a code to the contract.");
     uint64_t deployContract_gas_limit = 0;
-    double deployContract_amount = 0;
+    std::string deployContract_amount("0");
     std::string deployContract_path;
-    double deployContract_tx_deposit = 0;
+    std::string deployContract_tx_deposit("0");
     deployContract_app->add_option("gas_limit", deployContract_gas_limit, "Upper limit of gas fees that the contract is willing to pay for the sender of the transaction.")
         ->required();
     deployContract_app->add_option("top_num", deployContract_amount, "The TOP token amounts transferred to the contract account.The unit is TOP.")->required();
@@ -799,11 +767,11 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // call contract
     auto callContract_app = chain_app->add_subcommand("callContract", "Send a transaction to a contract.");
-    double callContract_amount = 0;
+    std::string callContract_amount("0");
     std::string callContract_addr;
     std::string callContract_func;
     std::string callContract_params;
-    double callContract_tx_deposit = 0;
+    std::string callContract_tx_deposit("0");
     callContract_app->add_option("contract_addr", callContract_addr, "Contract account address, beginning with the symbol \"T30000\".")->required();
     callContract_app->add_option("contract_func", callContract_func, "The name of the contract function.")->required();
     callContract_app->add_option("top_num", callContract_amount, "The TOP token amounts transferred to the application contract account.The unit is TOP.");
@@ -820,7 +788,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
                                          std::ref(callContract_params),
                                          std::ref(callContract_tx_deposit),
                                          std::ref(out_str)));
-
+*/
     // syncStatus
     auto syncstatus_app = chain_app->add_subcommand("syncStatus", "Get block sync status of the node.");
     syncstatus_app->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
@@ -832,13 +800,13 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // stake for gas
     auto stakeForGas_app = resource_app->add_subcommand("stakeForGas", "Stake TOP tokens to receive free gas.");
-    double stakeForGas_amount = 0;
+    std::string stakeForGas_amount("0");
     stakeForGas_app->add_option("top_num", stakeForGas_amount, "Amounts of deposit for gas will be withdrawed, unit is TOP.")->required();
     stakeForGas_app->callback(std::bind(&ApiMethod::stake_for_gas, &topcl.api, std::ref(stakeForGas_amount), std::ref(out_str)));
 
     // withdraw staked token for gas
     auto withdrawFund_app = resource_app->add_subcommand("withdrawFund", "Withdraw TOP tokens staked for resources (free gas).");
-    double withdrawFund_amount = 0;
+    std::string withdrawFund_amount("0");
     withdrawFund_app->add_option("top_num", withdrawFund_amount, "Amounts of deposit for gas will be withdrawed, unit is TOP.")->required();
     withdrawFund_app->callback(std::bind(&ApiMethod::withdraw_fund, &topcl.api, std::ref(withdrawFund_amount), std::ref(out_str)));
 
@@ -862,7 +830,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     uint8_t submitProposal_type = 0;
     std::string submitProposal_target;
     std::string submitProposal_value;
-    double submitProposal_deposit = 0;
+    std::string submitProposal_deposit("0");
     uint64_t submitProposal_effective_timer_height = 0;
     submitProposal_app
         ->add_option("proposal_type", submitProposal_type, "Proposal Type：1--on-chain governance parameter modification proposal；2--community fund management proposal.")
@@ -911,7 +879,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     backup->callback([&]() {
         // backup directory can not fill in and that means current directory
-        auto dbdir = backupToDir + "/db";
+        auto dbdir = backupToDir + DB_PATH;
         if (backupFromDir.empty()) {
             // get currrent directory
             backupFromDir = get_working_path();
@@ -931,7 +899,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     auto listversion = db->add_subcommand("listBackups", "List all verions of backup database.");
     listversion->add_option("backupdir", listbackupToDir, "Target database backup directory.")->mandatory();
     listversion->callback([&]() {
-        auto dbdir = listbackupToDir + "/db";
+        auto dbdir = listbackupToDir + DB_PATH;
         auto listvec = db_backup_list_info(dbdir);
         if (listvec.empty()) {
             out_str << "No data." << std::endl;
@@ -963,7 +931,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         }
 
         if (backupid == 0) {
-            auto dbdir = restoreFromDir + "/db";
+            auto dbdir = restoreFromDir + DB_PATH;
             auto listvec = db_backup_list_info(dbdir);
             if (listvec.size() == 0) {
                 out_str << "Restore failed\nError: cannot find the dbversion." << std::endl;

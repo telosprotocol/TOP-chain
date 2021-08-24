@@ -21,7 +21,7 @@
 #include "xbase/xsocket.h"
 #include "xbase/xutl.h"
 
-#include "xpbase/base/xbyte_buffer.h"
+#include "xbasic/xbyte_buffer.h"
 #include "transport_fwd.h"
 
 namespace top {
@@ -47,16 +47,7 @@ public:
             uint16_t local_port,
             MultiThreadHandler* message_handler) = 0;
     virtual void Stop() = 0;
-    virtual int SendData(
-            const xbyte_buffer_t& data,
-            const std::string& peer_ip,
-            uint16_t peer_port) = 0;
-    virtual int SendData(base::xpacket_t& packet) = 0;
-    virtual int SendDataWithProp(
-            base::xpacket_t& packet,
-            UdpPropertyPtr& udp_property) = 0;
-    virtual int SendToLocal(base::xpacket_t& packet) = 0;
-    virtual int SendToLocal(const xbyte_buffer_t& data) = 0;
+    virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) = 0;
 
     virtual int ReStartServer() = 0;
     virtual int32_t get_handle() = 0;

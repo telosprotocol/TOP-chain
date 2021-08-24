@@ -71,6 +71,9 @@ namespace top
             enum_xconsensus_error_undeliver_header  = -15, //header(QC) has missed content
             enum_xconsensus_error_undeliver_block   = -16, //block has missed content
     
+            enum_xconsensus_error_fail_precheck     = -17,
+            enum_xconsensus_error_fail_postcheck    = -18,
+            enum_xconsensus_error_fail_addproposal  = -19,
             
             enum_xconsensus_error_bad_param         = -20,
             enum_xconsensus_error_bad_packet        = -21,
@@ -259,7 +262,7 @@ namespace top
             
             //pdu event related help function
             bool    fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block);
-            bool    fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block,const std::string & vblock_cert_bin);
+            bool    fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block,const std::string & vblock_cert_bin,const std::string & vlatest_clock_cert);
             bool    fire_pdu_event_down(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block);
             
         protected:

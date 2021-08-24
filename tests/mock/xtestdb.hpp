@@ -60,22 +60,24 @@ namespace top
             xveventbus_impl & operator = (const xveventbus_impl &);
 
         public: //api for event
-            virtual void   push_event(const mbus::xevent_ptr_t& e) override //push event into mbus system
+            void   push_event(const mbus::xevent_ptr_t& e) override //push event into mbus system
             {
 
             }
 
         public://declares clasic events
-            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override
-            {
-                mbus::xevent_ptr_t event = make_object_ptr<mbus::xevent_t>(0);
-                return event;
+            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_index) {
+                return nullptr;
             }
-            virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override
-            {
-                mbus::xevent_ptr_t event = make_object_ptr<mbus::xevent_t>(0);
-                return event;
+            virtual mbus::xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t * target_index) {
+                return nullptr;
             }
+            virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) {
+                return nullptr;
+            }
+            virtual mbus::xevent_ptr_t  create_event_for_store_committed_block(base::xvbindex_t * target_index) {
+                return nullptr;
+            }          
         };
     };
 };

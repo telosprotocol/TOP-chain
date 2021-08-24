@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
 #include "xbasic/xmemory.hpp"
@@ -10,17 +14,17 @@ NS_BEG2(top, contract_common)
 
 enum class xtop_contract_type: std::uint8_t {
     invalid,
-    sys_kernel,
-    sys_business,
+    system,
     user,
 };
+using xcontract_type_t = xtop_contract_type;
 
 struct xtop_contract_metadata {
-    xtop_contract_metadata();
+    xtop_contract_metadata() = default;
     xtop_contract_metadata(xtop_contract_metadata const& meta);
 
-    xcontract_type_t m_type;
-    common::xaccount_address_t m_account;
+    xcontract_type_t m_type{ xcontract_type_t::invalid };
+    common::xaccount_address_t m_account{};
 };
 
 class xtop_basic_contract : public xcontract_face_t {

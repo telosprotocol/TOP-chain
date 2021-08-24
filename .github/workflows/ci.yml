@@ -10,13 +10,44 @@ on:
 
 jobs:
   build:
+    if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
+    # if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
     runs-on: [self-hosted, Linux, X64]
-
+    
+    # for ci telos only
     steps:
+      - name: Print event
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.XVM }}
+      
+      - name: Sync submodule
+        run: git submodule sync --recursive
+        
+      - name: Update submodule
+        run: git submodule update --init --force --recursive
 
       - name: Build XTOP DEBUG
         run: |
-          bash .github/scripts/fix_submodule.sh dev/fast_sync_develop
-          bash .github/scripts/build_xtop.sh
+          bash .github/scripts/build_xtop.sh "test build_ci"
+
+      - name: UnitTest
+        run: |
+          bash .github/scripts/test_ut.sh
+
+      - name: TEST XTOP AllInOne
+        env:
+          RUN_NUM: ${{ github.run_number }}
+        run: |
+          bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
+
+      - name: Notify
+        if: always()
+        run: |
+          bash .github/scripts/notify.sh ${{ github.event.number }} ${{ job.status }} "#${{ github.event.number }} from ${{ github.event.pull_request.head.repo.html_url }} to ${{ github.event.repository.html_url }} has ${{ job.status }}, please check ${{ github.event.pull_request.html_url }}"

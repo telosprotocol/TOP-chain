@@ -13,11 +13,11 @@ xcons_service_t::xcons_service_t(std::shared_ptr<xcons_service_para_face> const 
                                  std::shared_ptr<xcons_dispatcher> const &        dispatcher,
                                  common::xmessage_category_t                      category)
   : m_para(p_para), m_dispatcher(dispatcher), m_category(category) {
-    xdbg("xcons_service_t::xcons_service_t,create,this=%p", this);
+    xunit_dbg("xcons_service_t::xcons_service_t,create,this=%p", this);
 }
 
 xcons_service_t::~xcons_service_t() {
-    xdbg("xcons_service_t::~xcons_service_t,destroy,this=%p", this);
+    xunit_dbg("xcons_service_t::~xcons_service_t,destroy,this=%p", this);
 }
 
 common::xmessage_category_t xcons_service_t::get_msg_category() {
@@ -42,7 +42,7 @@ bool xcons_service_t::fade(const xvip2_t & xip) {
     // TODO(justin): add fade implement
     // 1. get elect data from election data
     // 2. unregister network proxy
-    xinfo("xcons_service_t::fade %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xcons_service_t::fade %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_dispatcher->fade(xip);
     auto network_proxy = m_para->get_resources()->get_network();
     network_proxy->unlisten(xip, get_msg_category());
@@ -51,24 +51,24 @@ bool xcons_service_t::fade(const xvip2_t & xip) {
 }
 
 bool xcons_service_t::destroy(const xvip2_t & xip) {
-    xinfo("xcons_service_t::destroy %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xcons_service_t::destroy %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_dispatcher->destroy(xip);
     m_running = false;
     return !m_running;
 }
 
 void xcons_service_t::on_pdu(const xvip2_t & xip_from, const xvip2_t & xip_to, const base::xcspdu_t & packet) {
-    xdbg("xcons_service_t::on_pdu consrv_status:%d,pdu=%s,at_node:%s", m_running, packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
+    xunit_dbg("xcons_service_t::on_pdu consrv_status:%d,pdu=%s,at_node:%s", m_running, packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
 
     if (m_running) {
         auto pdu = (base::xcspdu_t *)(&packet);
         auto ret = m_dispatcher->dispatch(m_para->get_resources()->get_workpool(), pdu, xip_from, xip_to);
         if (!ret) {
-            xwarn("xcons_service_t::on_pdu fail-dispatch msg. consrv=%p,pdu=%s,at_node:%s",
+            xunit_warn("xcons_service_t::on_pdu fail-dispatch msg. consrv=%p,pdu=%s,at_node:%s",
                   this, packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
         }
     } else {
-        xwarn("xcons_service_t::on_pdu fail-discard msg for uninited. consrv=%p,pdu=%s,at_node:%s",
+        xunit_warn("xcons_service_t::on_pdu fail-discard msg for uninited. consrv=%p,pdu=%s,at_node:%s",
                 this, packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
     }
 }

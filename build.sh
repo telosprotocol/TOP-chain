@@ -35,11 +35,16 @@ fi
 command_line_option_include_item "$options" "install"
 if [ $? -eq 1 ]; then
     echo "no install found, compile mode"
-    CMAKE_EXTRA_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DXENABLE_TESTS=OFF -DBUILD_REC_ELECT=ON"
+    CMAKE_EXTRA_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DXENABLE_TESTS=OFF"
     CBUILD_DIR="cbuild"
     
     source ./build_options.sh
     
+    command_line_option_include_item "$options" "leak_trace"
+    if [ $? -eq 0 ]; then
+        CBUILD_DIR="${CBUILD_DIR}_leak"
+    fi
+
     echo "CMAKE_EXTRA_OPTIONS: ${CMAKE_EXTRA_OPTIONS}"
     echo "CBUILD_DIR: ${CBUILD_DIR}"
     
@@ -48,12 +53,14 @@ if [ $? -eq 1 ]; then
     
     if [ $osname == "Linux" ]; then
         cmake3 .. ${CMAKE_EXTRA_OPTIONS}
+        CPU_CORE=$( lscpu -pCPU | grep -v "#" | wc -l )
     elif [ $osname == "Darwin" ]; then
         cmake .. ${CMAKE_EXTRA_OPTIONS}
+        CPU_CORE=$( sysctl hw|grep ncpu|awk -F ':' '{print $2}' )
     fi
     
     # # MEM_MEG=$( free -m | sed -n 2p | tr -s ' ' | cut -d\  -f2 )
-    CPU_CORE=$( lscpu -pCPU | grep -v "#" | wc -l )
+    
     # # MEM_GIG=$(( ((MEM_MEG / 1000) / 2) ))
     # # JOBS=$(( MEM_GIG > CPU_CORE ? CPU_CORE : MEM_GIG ))
     # # make -j${JOBS}
@@ -62,13 +69,13 @@ if [ $? -eq 1 ]; then
     else
         make -j${CPU_CORE}
     fi
-    
 else
     cbuild_path="cbuild"
     command_line_option_include_item "$options" "release"
     if [ $? -eq 0 ]; then
         cbuild_path="cbuild_release"
     fi
+
     echo "install found, install mode from path:$cbuild_path"
     cd $cbuild_path
     make install

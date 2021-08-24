@@ -15,7 +15,7 @@ NS_BEG3(top, tests, vnode)
 
 std::pair<common::xsharding_address_t, election::cache::xgroup_update_result_t> generate_election_data(std::shared_ptr<election::cache::xnetwork_element_t> & network_element,
                                                                                                        common::xsharding_address_t const & sharding_address,
-                                                                                                       common::xversion_t const & group_version,
+                                                                                                       common::xelection_round_t const & group_version,
                                                                                                        common::xlogic_time_t const election_timestamp,
                                                                                                        common::xlogic_time_t const start_time,
                                                                                                        std::uint16_t const group_size,
@@ -53,7 +53,7 @@ std::pair<common::xsharding_address_t, election::cache::xgroup_update_result_t> 
 
 std::pair<common::xsharding_address_t, election::cache::xgroup_update_result_t> generate_election_data(std::shared_ptr<election::cache::xnetwork_element_t> & network_element,
                                                                                                        common::xsharding_address_t const & sharding_address,
-                                                                                                       common::xversion_t const & group_version,
+                                                                                                       common::xelection_round_t const & group_version,
                                                                                                        common::xlogic_time_t const election_timestamp,
                                                                                                        common::xlogic_time_t const start_time,
                                                                                                        std::uint16_t const group_size,
@@ -97,103 +97,103 @@ std::pair<common::xsharding_address_t, election::cache::xgroup_update_result_t> 
 
 TEST_F(xvnode_manager_fixture, not_elected_in) {
     auto datum =
-        generate_election_data(network_, top::common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1);
+        generate_election_data(network_, top::common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1);
 
     auto outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.empty());
 }
 
 TEST_F(xvnode_manager_fixture, elected_in) {
-    auto datum = generate_election_data(network_, top::common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
+    auto datum = generate_election_data(network_, top::common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
 
     auto outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
 
     ASSERT_TRUE(m_all_nodes.size() == 1);
 }
 
 TEST_F(xvnode_manager_fixture, elected_in_two_times) {
     auto datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
 
     auto outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
 
     ASSERT_TRUE(m_all_nodes.size() == 1);
 
     datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2, vhost_->host_node_id());
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 2);
 }
 
 TEST_F(xvnode_manager_fixture, elected_in_thress_times) {
     auto datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
 
     auto outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
 
     ASSERT_TRUE(m_all_nodes.size() == 1);
 
     datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2, vhost_->host_node_id());
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 2);
 
     datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{3}, common::xlogic_time_t{3}, common::xlogic_time_t{3}, 10, 3, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{3}, common::xlogic_time_t{3}, common::xlogic_time_t{3}, 10, 3, vhost_->host_node_id());
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 3);
 }
 
 TEST_F(xvnode_manager_fixture, elected_in_rotation_status_faded) {
     auto datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
 
     auto outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
 
     ASSERT_TRUE(m_all_nodes.size() == 1);
 
     datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2);
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2);
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 1);
     ASSERT_TRUE(std::begin(m_all_nodes)->second->rotation_status(common::xlogic_time_t{2}) == common::xrotation_status_t::faded);
 }
 
 TEST_F(xvnode_manager_fixture, elected_in_rotation_status_outdated) {
     auto datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{1}, common::xlogic_time_t{1}, common::xlogic_time_t{1}, 10, 1, vhost_->host_node_id());
 
     auto outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
 
     ASSERT_TRUE(m_all_nodes.size() == 1);
 
     datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2);
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{2}, common::xlogic_time_t{2}, common::xlogic_time_t{2}, 10, 2);
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_TRUE(outdated_xip.empty());
+    ASSERT_TRUE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 1);
     ASSERT_TRUE(std::begin(m_all_nodes)->second->rotation_status(common::xlogic_time_t{2}) == common::xrotation_status_t::faded);
 
     datum = generate_election_data(
-        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{3}, common::xlogic_time_t{3}, common::xlogic_time_t{3}, 10, 3);
+        network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xelection_round_t{3}, common::xlogic_time_t{3}, common::xlogic_time_t{3}, 10, 3);
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_FALSE(outdated_xip.empty());
+    ASSERT_FALSE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 1);
     ASSERT_TRUE(std::begin(m_all_nodes)->second->rotation_status(common::xlogic_time_t{3}) == common::xrotation_status_t::outdated);
 }

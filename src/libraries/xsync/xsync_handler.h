@@ -80,15 +80,6 @@ private:
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time);
 
-    void v1_newblockhash(
-        uint32_t msg_size,
-        const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_message_header_ptr_t &header,
-        base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
-        int64_t recv_time);
-
     void push_newblockhash(
         uint32_t msg_size,
         const vnetwork::xvnode_address_t &from_address,
@@ -210,6 +201,24 @@ private:
         int64_t recv_time);
 
     void handle_ondemand_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
+
+    void get_on_demand_by_hash_blocks(
+        uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
+
+    void on_demand_by_hash_blocks(
+        uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,

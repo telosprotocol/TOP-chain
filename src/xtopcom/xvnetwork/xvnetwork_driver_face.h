@@ -19,6 +19,7 @@
 #include "xcommon/xnode_info.h"
 #include "xcommon/xrole_type.h"
 #include "xdata/xnode_info.h"
+#include "xcommon/xnode_type.h"
 #include "xnetwork/xmessage_transmission_property.h"
 #include "xvnetwork/xmessage_ready_callback.h"
 #include "xvnetwork/xvhost_face_fwd.h"
@@ -149,10 +150,10 @@ public:
      * @brief Get the children' node info (validator group)
      * 
      * @param gid The validator group id 
-     * @param version The version of validator group
+     * @param election_round The election round of validator group
      * @return std::map<common::xslot_id_t, data::xnode_info_t> 
      */
-    virtual std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const = 0;
+    virtual std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & election_round) const = 0;
 
     /**
      * @brief Get the underlying vhost ptr
@@ -173,7 +174,7 @@ public:
      * 
      * @return std::vector<xvnode_address_t> 
      */
-    virtual std::vector<xvnode_address_t> archive_addresses() const = 0;
+    virtual std::vector<xvnode_address_t> archive_addresses(common::xnode_type_t node_type) const = 0;
 
     /**
      * @brief Get table ids belonging to this zone

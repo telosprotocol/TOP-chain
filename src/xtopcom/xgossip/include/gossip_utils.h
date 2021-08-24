@@ -13,34 +13,15 @@ namespace top {
 
 namespace gossip {
 
-enum ReliableLevel {
-    kGossipReliableInvalid = 0,
-    kGossipReliableHigh = 1,
-    kGossipReliableMiddle = 2,
-    kGossipReliableLow = 3,
-};
-
 enum GossipType {
     kGossipInvalid = 0,
+    // root broadcast type:
     kGossipBloomfilter = 1,
-    kGossipLayeredBroadcast = 2,
-    kGossipBloomfilterAndLayered = 3,
-    kGossipSetFilterAndLayered = 4,
-    kGossipBloomfilterMerge = 5,
-    kGossipBloomfilterZone = 6,
-    kGossipBloomfilterSuperNode = 7,
+    kGossipRRS = 2,
+    // group broadcast type
+    kGossipDispatcher = 3,
+    // kGossipBloomfilterAndLayered = 4,
 };
-
-/*
-enum GossipBlockSyncType {
-    kGossipBlockSyncInvalid = kadmlia::kKadMessageTypeMax + 1,
-    kGossipBlockSyncAsk,
-    kGossipBlockSyncAck,
-    kGossipBlockSyncRequest,
-    kGossipBlockSyncResponse,
-    kGossipMaxMessageType,
-};
-*/
 
 static const uint32_t kGossipSendoutMaxTimes = 3u;
 static const uint32_t kGossipSendoutMaxNeighbors = 3u;
@@ -51,7 +32,17 @@ static const uint32_t kGossipBloomfilterIgnoreLevel = 1u;
 static const uint32_t kGossipDefaultMaxHopNum = 10u;
 static const uint32_t kGossipSwitchLayerHopNum = 0u;
 
-uint32_t GetRandomNeighbersCount(uint32_t reliable_level);
+// layer_gossip
+static const uint32_t kGossipLayerSwitchLayerHopNum = 0u;
+static const uint32_t kGossipLayerNeighborNum = 3u;
+static const uint32_t kGossipLayerBloomfilterIgnoreLevel = 1u;
+static const uint32_t kGossipLayerStopTimes = 3u;
+
+// rrs_gossip
+static const uint32_t kGossipRRSSwitchLayerHopNum = 2u;
+static const uint32_t kGossipRRSNeighborNum = 3u;
+static const uint32_t kGossipRRSStopTimes = 3u;
+static const uint32_t kGossipRRSBloomfilterIgnoreLevel = 1u;
 
 }  // namespace gossip
 

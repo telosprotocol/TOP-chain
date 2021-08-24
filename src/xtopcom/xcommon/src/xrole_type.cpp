@@ -27,10 +27,10 @@ std::string to_string(xrole_type_t const role) {
     case xrole_type_t::advance:
         return XNODE_TYPE_ADVANCE;
 
-        // case xrole_type_t::archive:
-        //     return XNODE_TYPE_AECHIVE;
+    case xrole_type_t::full_node:
+        return XNODE_TYPE_FULL_NODE;
 
-    case xrole_type_t::consensus:
+    case xrole_type_t::validator:
         return XNODE_TYPE_VALIDATOR;
 
     case xrole_type_t::edge:
@@ -56,15 +56,17 @@ bool has(xrole_type_t const target, xrole_type_t const input) noexcept {
     return target == (target & input);
 }
 
-common::xrole_type_t to_role_type(std::string const & node_types) {
+common::xrole_type_t to_role_type(std::string const & node_type) {
     common::xrole_type_t role_type = common::xrole_type_t::invalid;
 
-    if (node_types == XNODE_TYPE_EDGE) {
+    if (node_type == XNODE_TYPE_EDGE) {
         role_type = common::xrole_type_t::edge;
-    } else if (node_types == XNODE_TYPE_ADVANCE) {
+    } else if (node_type == XNODE_TYPE_ADVANCE) {
         role_type = common::xrole_type_t::advance;
-    } else if (node_types == XNODE_TYPE_VALIDATOR) {
-        role_type = common::xrole_type_t::consensus;
+    } else if (node_type == XNODE_TYPE_VALIDATOR) {
+        role_type = common::xrole_type_t::validator;
+    } else if (node_type == XNODE_TYPE_FULL_NODE) {
+        role_type = common::xrole_type_t::full_node;
     }
 
     return role_type;

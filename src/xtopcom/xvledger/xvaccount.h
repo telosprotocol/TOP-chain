@@ -51,7 +51,7 @@ namespace top
             enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
             enum_vaccount_addr_type_native_contract             = '2',  //secp256k1 generated key->account
             enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
-            
+            enum_vaccount_addr_type_secp256k1_eth_user_account  = '8',
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
         };
         
@@ -80,11 +80,43 @@ namespace top
         using xtable_shortid_t = uint16_t;//note: short table_id = [zone_index][book_index][table_index]
         using xtable_longid_t = uint32_t;//note: long table_id = [chain_id][zone_index][book_index][table_index]
         
+        class xtable_index_t
+        {
+        public:       
+            xtable_index_t(xvid_t xid) {
+                m_zone_index = (enum_xchain_zone_index)get_vledger_zone_index(xid);
+                m_subaddr = (uint8_t)get_vledger_subaddr(xid);
+            }
+            xtable_index_t(const xtable_index_t & rhs) {
+                m_zone_index = rhs.m_zone_index;
+                m_subaddr = rhs.m_subaddr;
+            }
+            xtable_index_t(xtable_shortid_t tableid) {
+                m_zone_index = (enum_xchain_zone_index)(tableid >> 10);
+                m_subaddr = (uint8_t)tableid & 0xff;
+            }
+            xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
+                m_zone_index = zone_index;
+                m_subaddr = subaddr;
+                xassert(m_zone_index <= enum_chain_zone_zec_index);
+                xassert(m_subaddr < enum_vbucket_has_tables_count);
+            }
+        public:
+            xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
+            enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
+            uint8_t                 get_subaddr() const {return m_subaddr;}
+            
+        private:
+            enum_xchain_zone_index m_zone_index;
+            uint8_t                m_subaddr;
+        };
+        
         class xvaccount_t : virtual public xrefcount_t
         {
         public:
             enum enum_vaccount_address_size
             {
+                enum_vaccount_address_prefix_size = 6,
                 enum_vaccount_address_min_size  = 18, //(>20,<256)
                 enum_vaccount_address_max_size  = 256,//(>20,<256)
             };
@@ -131,7 +163,11 @@ namespace top
                     final_account_address = (std::string("T") + prefix_string + public_key_address + "@" + xstring_utl::tostring(subaddr_of_ledger));//@ indicate that not have verfication function
                 }
                 const int account_address_size = (int)final_account_address.size();
-                xassert(account_address_size > enum_vaccount_address_min_size);
+                if (!public_key_address.empty()) {
+                    xassert(account_address_size > enum_vaccount_address_min_size);
+                } else {
+                    xassert(account_address_size > enum_vaccount_address_prefix_size);
+                }                
                 xassert(account_address_size < enum_vaccount_address_max_size);
                 return final_account_address;
             }
@@ -143,6 +179,17 @@ namespace top
                 xassert(get_addrtype_from_account(final_account_address) == enum_vaccount_addr_type_native_contract || get_addrtype_from_account(final_account_address) == enum_vaccount_addr_type_block_contract);
                 return final_account_address;
             }
+            static const std::string  make_table_account_address(enum_xchain_zone_index zone_index, uint16_t subaddr)
+            {
+                xassert(subaddr < enum_vbucket_has_tables_count);
+                const uint16_t ledger_id = make_ledger_id(enum_main_chain_id, zone_index);
+                std::string public_key_address;  // table account address has empty public key address
+                return make_account_address(enum_vaccount_addr_type_block_contract, ledger_id, public_key_address, subaddr);
+            }
+            static const std::string  make_table_account_address(const xvaccount_t & unit_account)
+            {
+                return make_table_account_address((enum_xchain_zone_index)unit_account.get_zone_index(), (uint16_t)unit_account.get_ledger_subaddr());
+            }                        
             //just for make native address and block address with '@'
             static bool get_prefix_subaddr_from_account(const std::string & account_addr, std::string & prefix, uint16_t & subaddr)
             {
@@ -176,7 +223,7 @@ namespace top
             static enum_vaccount_addr_type get_addrtype_from_account(const std::string & account_addr)
             {
                 char _addr_type = 0; //0 is invalid
-                if(account_addr.size() > enum_vaccount_address_min_size) //at least 24 cahrs
+                if(account_addr.size() > enum_vaccount_address_prefix_size) //at least 24 cahrs
                     _addr_type = account_addr.at(1);
 
                 xassert(_addr_type != 0);
@@ -187,7 +234,7 @@ namespace top
             {
                 uint16_t  ledger_id = 0;//0 is valid and default value
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size > enum_vaccount_address_min_size) && (account_address_size < enum_vaccount_address_max_size) )
+                if( (account_address_size > enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
                 {
                     const std::string string_ledger_id = account_addr.substr(2,4);//always 4 hex chars
                     ledger_id = (uint16_t)xstring_utl::hex2uint64(string_ledger_id);
@@ -203,7 +250,7 @@ namespace top
                 ledger_id   = 0; //0 is valid and default value
                 
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size > enum_vaccount_address_min_size) && (account_address_size < enum_vaccount_address_max_size) )
+                if( (account_address_size > enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
                 {
                     addr_type = get_addrtype_from_account(account_addr);
                     ledger_id = get_ledgerid_from_account(account_addr);
@@ -264,7 +311,7 @@ namespace top
                 ledger_sub_addr = 0;//0 is valid and default value
                 account_index   = get_index_from_account(account_addr);  //hash whole account address
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size < enum_vaccount_address_max_size) && (account_address_size > enum_vaccount_address_min_size) )
+                if( (account_address_size < enum_vaccount_address_max_size) && (account_address_size > enum_vaccount_address_prefix_size) )
                 {
                     ledger_id = get_ledgerid_from_account(account_addr);
                     
@@ -325,10 +372,10 @@ namespace top
             xvaccount_t(const std::string & account_address);
             virtual ~xvaccount_t();
         protected:
-            xvaccount_t(const xvaccount_t & obj);
-        private:
             xvaccount_t();
-            xvaccount_t & operator = (const xvaccount_t &);
+            xvaccount_t(const xvaccount_t & obj);
+            xvaccount_t & operator = (const xvaccount_t & obj);
+            xvaccount_t & operator = (const std::string & new_account_addr);
         public:
             inline const int            get_ledger_id()   const {return get_vledger_ledger_id(m_account_xid);}
             inline const int            get_chainid()     const {return get_vledger_chain_id(m_account_xid);}
@@ -348,8 +395,10 @@ namespace top
             {
                 return xtable_longid_t((get_ledger_id() << 10) | get_ledger_subaddr());
             }
-            
+            xtable_index_t              get_tableid() const {return xtable_index_t(m_account_xid);}
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
+            inline const xvid_t         get_account_id()    const {return m_account_xid;}
+            inline const std::string&   get_xvid_str()const {return m_account_xid_str;}
             inline const std::string&   get_address() const {return m_account_addr;}
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
@@ -357,6 +406,7 @@ namespace top
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;
+            std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
             std::string                 m_account_addr;
         };
     }//end of namespace of base

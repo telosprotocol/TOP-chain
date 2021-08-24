@@ -29,22 +29,22 @@ protected:
      */
     xtop_basic_element(common::xnetwork_id_t const & network_id, common::xzone_id_t const & zone_id, common::xcluster_id_t const & cluster_id);
 
-    xtop_basic_element(common::xversion_t const & version,
+    xtop_basic_element(common::xelection_round_t const & election_round,
                        common::xnetwork_id_t const & network_id,
                        common::xzone_id_t const & zone_id,
                        common::xcluster_id_t const & cluster_id,
                        common::xgroup_id_t const & group_id,
-                       uint16_t const sharding_size,
+                       uint16_t const group_size,
                        uint64_t const associated_blk_height);
 
-    xtop_basic_element(common::xversion_t const & version,
+    xtop_basic_element(common::xelection_round_t const & election_round,
                        common::xnetwork_id_t const & network_id,
                        common::xzone_id_t const & zone_id,
                        common::xcluster_id_t const & cluster_id,
                        common::xgroup_id_t const & group_id,
                        common::xnode_id_t const & node_id,
                        common::xslot_id_t const & slot_id,
-                       uint16_t const sharding_size,
+                       uint16_t const group_size,
                        uint64_t const associated_blk_height);
 
 public:
@@ -56,7 +56,9 @@ public:
 
     common::xnode_type_t type() const noexcept;
 
-    common::xversion_t const & version() const noexcept;
+    common::xelection_round_t const & election_round() const noexcept;
+
+    common::xlogical_version_t const & logic_epoch() const noexcept;
 
     common::xnetwork_id_t network_id() const noexcept;
 
@@ -68,13 +70,17 @@ public:
 
     common::xslot_id_t slot_id() const noexcept;
 
-    uint16_t sharding_size() const noexcept;
+    uint16_t group_size() const noexcept;
 
     uint64_t associated_blk_height() const noexcept;
 
     common::xnode_id_t const & node_id() const noexcept;
 
+    common::xaccount_address_t const & account_address() const noexcept;
+
     common::xnode_address_t const & address() const noexcept;
+
+    common::xip2_t xip2() const;
 
 protected:
     void swap(xtop_basic_element & other) noexcept;

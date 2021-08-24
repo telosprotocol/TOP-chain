@@ -13,6 +13,9 @@
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xcommon/xlogic_time.h"
+#include "xunit_service/xunit_log.h"
+#include "xunit_service/xcons_utl.h"
+#include "xrouter/xrouter_face.h"
 
 #include <string>
 #include <vector>
@@ -43,14 +46,23 @@ public:
     virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;
     virtual bool erase(const xvip2_t & addr) = 0;
+    virtual void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) = 0;
 };
 
+//compare function for table index data map
+struct table_index_compare
+{
+    bool operator()(const base::xtable_index_t& ti_lhs, const base::xtable_index_t& ti_rhs) const
+    {
+        return ti_lhs.to_table_shortid() < ti_rhs.to_table_shortid();
+    };
+};
 // system election face
 class xelection_cache_face {
 public:
     struct xelect_data {
         xvip2_t xip;
-        common::xversion_t joined_version;
+        common::xelection_round_t joined_version;
         uint64_t staking;
 
         xelect_data& operator=(const xelect_data & data) {
@@ -68,7 +80,7 @@ public:
 
 public:
     // load manager tables
-    virtual int32_t get_tables(const xvip2_t & xip, std::vector<uint16_t> * tables) = 0;
+    virtual int32_t get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables) = 0;
     // load election data from db
     virtual int32_t get_election(const xvip2_t & xip, elect_set * elect_data, bool bself = true) = 0;
     // load group election data
@@ -85,7 +97,7 @@ public:
 class xleader_election_face {
 public:
     // judge node is leader according viewid account and existed data
-    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
+    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
 
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face() = 0;
@@ -98,6 +110,8 @@ public:
     virtual base::xvcertauth_t * get_certauth() = 0;
     // work pool
     virtual base::xworkerpool_t * get_workpool() = 0;
+    // work pool
+    virtual base::xworkerpool_t * get_xbft_workpool() = 0;
     // network face
     virtual xnetwork_proxy_face * get_network() = 0;
     // block store
@@ -111,6 +125,7 @@ public:
     // node account
     virtual const std::string & get_account() = 0;
     virtual mbus::xmessage_bus_face_t* get_bus() = 0;
+    virtual xtxpool_v2::xtxpool_face_t * get_txpool() = 0;
 };
 
 enum e_cons_type {
@@ -179,7 +194,7 @@ public:
 };
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
-
+const int32_t max_mailbox_num = 8192;
 // block dispatcher
 class xcons_dispatcher {
 public:
@@ -199,8 +214,20 @@ public:
     virtual bool destroy(const xvip2_t & xip) = 0;
 
 protected:
+
     template <typename T>
     int async_dispatch(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to, T * picker) {
+        // TODO(jimmy) for debug
+        int64_t in, out;
+        int32_t queue_size = picker->count_calls(in, out);
+        bool discard = queue_size >= max_mailbox_num;
+        if (discard) {
+            xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
+            return -1;
+        } else {
+            xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
+        }
+
         auto handler = [xip_from, xip_to](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             auto packer = dynamic_cast<T *>(call.get_param1().get_object());
             auto raw_pdu = dynamic_cast<base::xcspdu_t *>(call.get_param2().get_object());

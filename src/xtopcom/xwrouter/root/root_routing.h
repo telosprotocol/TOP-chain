@@ -4,102 +4,58 @@
 
 #pragma once
 
+#include "xkad/routing_table/root_routing_table.h"
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_utils.h"
-#include "xkad/routing_table/routing_table.h"
 #include "xtransport/transport.h"
-#include "xwrouter/root/root_message_handler.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
-#include "xwrouter/wrouter_utils/wrouter_base_routing.h"
 
 namespace top {
-
-namespace kadmlia {
-class RoutingTable;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
-};
 
 namespace wrouter {
 
 enum RootMessageType {
-    kGetNodesRequest = 1,
-    kGetNodesResponse = 2,
-    kGetElectNodesRequest = 3,
-    kGetElectNodesResponse = 4,
+    kCompleteNodeRequest = 1,
+    kCompleteNodeResponse = 2,
+    kCacheElectNodesRequest = 3,
+    kCacheElectNodesResponse = 4,
 };
 
-
-class RootRouting : public wrouter::WrouterBaseRouting {
+class RootRouting : public kadmlia::RootRoutingTable {
 public:
     RootRouting(std::shared_ptr<transport::Transport>, kadmlia::LocalNodeInfoPtr);
-    virtual ~RootRouting() override;
-    virtual bool Init() override;
-    virtual bool UnInit() override;
-    virtual void HandleMessage(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet) override;
-    virtual int AddNode(kadmlia::NodeInfoPtr node) override;
-    virtual int DropNode(kadmlia::NodeInfoPtr node) override;
-    virtual void SetFreqMessage(transport::protobuf::RoutingMessage& message) override;
-    int GetRootNodes(uint64_t sevice_type, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
-    int GetRootNodes(const std::string& des_id, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
-    void AddNetworkRootId(const std::string& root_id);
-    void RemoveNetworkRootId(const std::string& root_id);
-    bool ContainRootId(const std::string& id);
-    // add target service_type to be cached
-    bool SetCacheServiceType(uint64_t service_type);
-    // get cache nodes of service_type give
-    bool GetCacheServicePublicNodes(
-            uint64_t service_type,
-            std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
-    kadmlia::RoutingTablePtr FindRoutingTable(const std::string& msg_des_node_id);
-    bool GetRootNodesFromLocalRootRouting(
-            kadmlia::RoutingTablePtr root_routing,
-            const std::string& node_id,
-            std::vector<kadmlia::NodeInfoPtr>& nodes);
-    bool GetRootNodesFromLocal(const std::string& node_id, std::vector<kadmlia::NodeInfoPtr>& nodes);
-
-    // using elect data to search kroot-id
-    int GetRootNodesV2(
-            const std::string& des_kroot_id,
-            uint64_t des_service_type,
-            std::vector<kadmlia::NodeInfoPtr>& nodes);
-    using GetRootNodesV2AsyncCallback = std::function<void(const std::vector<kadmlia::NodeInfoPtr>&)>;
-    int GetRootNodesV2Async(
-            const std::string& des_kroot_id,
-            uint64_t des_service_type,
-            GetRootNodesV2AsyncCallback cb);
-    void RegisterBootstrapCacheCallback(
-            on_bootstrap_cache_get_callback_t get_cache_callback,
-            on_bootstrap_cache_set_callback_t set_cache_callback) override;
-    void UnRegisterBootstrapCacheCallback() override;
-
-protected:
-    virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove);
+    ~RootRouting() override;
+    bool Init();
+    void HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    using GetRootNodesV2AsyncCallback = std::function<void(base::ServiceType, const std::vector<kadmlia::NodeInfoPtr> &)>;
+    int CacheElectNodesAsync(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb);
 
 private:
-    virtual int Bootstrap(
-            const std::string& peer_ip,
-            uint16_t peer_port,
-            uint64_t des_service_type) override;
-    void HandleRootGetNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    void HandleRootGetNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    void HandleGetElectNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    void HandleGetElectNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    virtual bool StartBootstrapCacheSaver() override;
-    void OnGetRootNodesV2Async(
-            GetRootNodesV2AsyncCallback cb,
-            std::string des_kroot_id,
-            uint64_t des_service_type,
-            int status,
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-
-    static RootMessageHandler root_message_handler_;
-    std::set<std::string> root_id_set_;
-    std::mutex root_id_set_mutex_;
+    void OnCacheElectNodesAsync(GetRootNodesV2AsyncCallback cb,
+                               std::string des_kroot_id,
+                               base::ServiceType des_service_type,
+                               int status,
+                               transport::protobuf::RoutingMessage & message,
+                               base::xpacket_t & packet);
 
     DISALLOW_COPY_AND_ASSIGN(RootRouting);
+
+public:
+    using OnCompleteElectRoutingTableCallback = std::function<void(base::ServiceType const, std::string const, kadmlia::NodeInfoPtr const &)>;
+    // void FindNodesFromOthers(OnCompleteElectRoutingTableCallback cb, base::KadmliaKeyPtr const & root_kad_key);
+    bool FindNodesFromOthers(base::ServiceType const & service_type,
+                             std::string const & election_xip2,
+                             OnCompleteElectRoutingTableCallback cb,
+                             base::KadmliaKeyPtr const & root_kad_key);
+    void OnFindNodesFromOthers(base::ServiceType const & service_type,
+                               std::string const & election_xip2,
+                               OnCompleteElectRoutingTableCallback cb,
+                               int status,
+                               transport::protobuf::RoutingMessage & message,
+                               base::xpacket_t & packet);
+
+    void HandleFindNodesFromOthersRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    void HandleFindNodesFromOthersResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 };
 
 }  // namespace wrouter

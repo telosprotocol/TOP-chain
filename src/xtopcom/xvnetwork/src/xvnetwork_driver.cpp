@@ -5,6 +5,7 @@
 #include "xvnetwork/xvnetwork_driver.h"
 
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
@@ -27,7 +28,7 @@ static constexpr std::size_t book_id_count{enum_vbucket_has_books_count};
 
 xtop_vnetwork_driver::xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost, common::xnode_address_t const & address) : m_vhost{vhost}, m_address{address} {
     if (m_vhost == nullptr) {
-        XTHROW(xvnetwork_error_t, xvnetwork_errc_t::vhost_empty, u8"constructing xvnetwork_driver_t at address " + m_address.to_string());
+        top::error::throw_error({ xvnetwork_errc_t::vhost_empty }, "constructing xvnetwork_driver_t at address " + m_address.to_string());
     }
 }
 
@@ -63,26 +64,31 @@ common::xnode_address_t xtop_vnetwork_driver::parent_group_address() const {
 
 void xtop_vnetwork_driver::send_to(common::xnode_address_t const & to, xmessage_t const & message, network::xtransmission_property_t const & transmission_property) {
     assert(m_vhost);
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vnetwork_driver_send_to" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
-
+    #endif
     m_vhost->send(message, m_address, to, transmission_property);
 }
 
 void xtop_vnetwork_driver::broadcast(xmessage_t const & message) {
     assert(m_vhost);
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vnetwork_driver_broadcast" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
+    #endif
     m_vhost->broadcast(message, m_address);
 }
 
 void xtop_vnetwork_driver::forward_broadcast_message(xmessage_t const & message, common::xnode_address_t const & dst) {
     assert(m_vhost);
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) +
                                    "_out_vnetwork_driver_forward_broadcast_message" + std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
+    #endif
     m_vhost->forward_broadcast_message(message, m_address, dst);
 }
 
@@ -108,25 +114,25 @@ common::xnode_id_t const & xtop_vnetwork_driver::host_node_id() const noexcept {
 
 std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::neighbors_info2() const {
     assert(m_vhost);
-    return m_vhost->members_info_of_group2(address().cluster_address(), address().version());
+    return m_vhost->members_info_of_group2(address().cluster_address(), address().election_round());
 }
 
 std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::parents_info2() const {
     assert(m_vhost);
     auto const & parent_cluster_addr = m_vhost->parent_group_address(address());
-    return m_vhost->members_info_of_group2(parent_cluster_addr.cluster_address(), parent_cluster_addr.version());
+    return m_vhost->members_info_of_group2(parent_cluster_addr.cluster_address(), parent_cluster_addr.election_round());
 }
 
-std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const {
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & election_round) const {
     try {
         assert(m_vhost);
         assert(gid >= common::xvalidator_group_id_begin && gid < common::xvalidator_group_id_end);
 
         xcluster_address_t child_cluster_address{address().network_id(), address().zone_id(), address().cluster_id(), gid};
 
-        return m_vhost->members_info_of_group2(child_cluster_address, version);
-    } catch (xvnetwork_error_t const & eh) {
-        xwarn("[vnetwork] xvnetwork_error_t exception caught: %s", eh.what());
+        return m_vhost->members_info_of_group2(child_cluster_address, election_round);
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] std::exception exception caught: %s", eh.what());
     } catch (...) {
@@ -144,14 +150,37 @@ common::xnode_type_t xtop_vnetwork_driver::type() const noexcept {
     return real_part_type(m_address.cluster_address().type());
 }
 
-std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses() const {
+std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(common::xnode_type_t node_type) const {
     assert(m_vhost != nullptr);
-    auto const tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(network_id()), common::xversion_t::max());
     std::vector<common::xnode_address_t> result;
-    result.reserve(tmp.size());
+    switch (node_type) {
+    case common::xnode_type_t::storage_archive:
+    {
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xarchive_group_id, network_id()), common::xelection_round_t::max());
+        result.reserve(tmp.size());
 
-    for (auto const & n : tmp) {
-        result.push_back(top::get<data::xnode_info_t>(n).address);
+        for (auto const & n : tmp) {
+            result.push_back(top::get<data::xnode_info_t>(n).address);
+        }
+
+        break;
+    }
+
+    case common::xnode_type_t::storage_full_node:
+    {
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xfull_node_group_id, network_id()), common::xelection_round_t::max());
+        result.reserve(tmp.size());
+
+        for (auto const & n : tmp) {
+            result.push_back(top::get<data::xnode_info_t>(n).address);
+        }
+
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
     }
 
     return result;
@@ -163,9 +192,10 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     std::vector<std::uint16_t> book_ids;
     book_ids.reserve(enum_vbucket_has_books_count);
 
-    auto & config_register = top::config::xconfig_register_t::get_instance();
     switch (type()) {
-    case common::xnode_type_t::archive:
+    case common::xnode_type_t::storage_archive:
+        XATTRIBUTE_FALLTHROUGH;
+    case common::xnode_type_t::storage_full_node:
         XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::committee: {
         auto const zone_range = data::book_ids_belonging_to_zone(common::xcommittee_zone_id, 1, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
@@ -190,7 +220,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         uint32_t zone_count = XGET_CONFIG(zone_count);
         uint32_t cluster_count = XGET_CONFIG(cluster_count);
 
-        auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+        auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
         auto const zone_range = data::book_ids_belonging_to_zone(m_address.zone_id(), zone_count, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
         auto const cluster_range = data::book_ids_belonging_to_cluster(m_address.cluster_id(), cluster_count, zone_range);
@@ -207,9 +237,9 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
             std::uint16_t zone_count = XGET_CONFIG(zone_count);
             std::uint16_t cluster_count = XGET_CONFIG(cluster_count);
 
-            auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+            auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
-            auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+            auto const validator_group_count = XGET_CONFIG(validator_group_count);
 
             auto const zone_range = data::book_ids_belonging_to_zone(m_address.zone_id(), zone_count, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
             auto const cluster_range = data::book_ids_belonging_to_cluster(m_address.cluster_id(), cluster_count, zone_range);
@@ -218,8 +248,8 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
             for (auto i = consensus_range.first; i < consensus_range.second; ++i) {
                 book_ids.push_back(i);
             }
-        } catch (vnetwork::xvnetwork_error_t const & eh) {
-            xwarn("[vnetwork dirver] caught vnetwork exception %s", eh.what());
+        } catch (top::error::xtop_error_t const & eh) {
+            xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
         } catch (std::exception const & eh) {
             xwarn("[vnetwork driver] caught std::exception %s", eh.what());
         } catch (...) {
@@ -278,15 +308,15 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         return;
     }
 
-    XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver" +
-                                   std::to_string(static_cast<std::uint32_t>(msg.id())),
-                               1);
+    XMETRICS_GAUGE(metrics::vnode_recv_msg, 1);
 
     XLOCK_GUARD(m_message_cache_mutex) {
         int ret = 0;
+        #if VHOST_METRICS
         XMETRICS_TIME_RECORD("vnetwork_lru_cache");
+        #endif
         if (m_message_cache.contains(msg.hash())) {
-            xkinfo(u8"[vnetwork driver] received a dup msg %" PRIx64 " message id %" PRIx32, msg.hash(), static_cast<std::uint32_t>(msg.id()));
+            xkinfo("[vnetwork driver] received a dup msg %" PRIx64 " message id %" PRIx32, msg.hash(), static_cast<std::uint32_t>(msg.id()));
             ret = -1;
         }
 
@@ -295,11 +325,13 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         }
     }
 
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver_filtered" +
                                    std::to_string(static_cast<std::uint32_t>(msg.id())),
                                1);
 
     XMETRICS_COUNTER_INCREMENT("vnetwork_driver_received", 1);
+    #endif
 
     xvnetwork_message_ready_callback_t callback;
     auto const message_id = msg.id();
@@ -318,9 +350,11 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
     }
 
     if (callback) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver_callback" +
                                        std::to_string(static_cast<std::uint32_t>(msg.id())),
                                    1);
+        #endif
 
         xdbg("[vnetwork driver] host %s push msg %" PRIx64 " message id %" PRIx32 " at address %s to callback from %s",
              host_node_id().to_string().c_str(),
@@ -328,6 +362,67 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
              static_cast<std::uint32_t>(msg.id()),
              address().to_string().c_str(),
              src.to_string().c_str());
+        {
+            auto const message_category = common::get_message_category(msg.id());
+            switch (message_category) {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wswitch"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wswitch"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+            case xmessage_category_consensus:
+            {
+                XMETRICS_GAUGE(metrics::message_category_consensus, 1);
+                break;
+            }
+            case xmessage_category_timer:
+            {
+                XMETRICS_GAUGE(metrics::message_category_timer, 1);
+                break;
+            }
+            case xmessage_category_txpool:
+            {
+                XMETRICS_GAUGE(metrics::message_category_txpool, 1);
+                break;
+            }
+
+            case xmessage_category_rpc:
+            {
+                XMETRICS_GAUGE(metrics::message_category_rpc, 1);
+                break;
+            }
+
+            case xmessage_category_sync:
+            {
+                XMETRICS_GAUGE(metrics::message_category_sync, 1);
+                break;
+            }
+
+            case xmessage_block_broadcast:
+            {
+                XMETRICS_GAUGE(metrics::message_block_broadcast, 1);
+                break;
+            }
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+            default:
+            {
+                assert(false);
+                XMETRICS_GAUGE(metrics::message_category_unknown, 1);
+                break;
+            }
+            }
+        }
+        XMETRICS_GAUGE(metrics::vnode_recv_callback, 1);
         callback(src, msg, msg_time);
         XLOCK_GUARD(m_message_cache_mutex) { m_message_cache.insert({msg.hash(), std::time(nullptr)}); }
     } else {

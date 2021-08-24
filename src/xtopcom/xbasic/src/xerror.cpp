@@ -1,6 +1,38 @@
 #include "xbasic/xerror/xerror.h"
-
+#include <string>
 #include <type_traits>
+
+class xtop_base_category : public std::error_category {
+public:
+    const char * name() const noexcept override {
+        return "base";
+    }
+
+    std::string message(int errc) const override {
+        auto const ec = static_cast<enum_xerror_code>(errc);
+        switch (ec) {
+        case enum_xerror_code_bad_packet:
+            return "bad packet";
+
+        default:
+            return "unknown error";
+        }
+    }
+};
+using xbase_category_t = xtop_base_category;
+
+std::error_category const & base_category() {
+    static xbase_category_t base_cagegory;
+    return base_cagegory;
+}
+
+std::error_code make_error_code(enum_xerror_code ec) noexcept {
+    return std::error_code{ static_cast<int>(ec), base_category() };
+}
+
+std::error_condition make_error_condition(enum_xerror_code ec) noexcept {
+    return std::error_condition{ static_cast<int>(ec), base_category() };
+}
 
 NS_BEG2(top, error)
 
@@ -44,23 +76,6 @@ std::error_condition make_error_condition(xbasic_errc_t errc) noexcept {
 std::error_category const & basic_category() {
     static xbasic_category_t category;
     return category;
-}
-
-xtop_basic_error::xtop_basic_error(xbasic_errc_t errc) : xtop_basic_error{make_error_code(errc)} {
-}
-
-xtop_basic_error::xtop_basic_error(xbasic_errc_t errc, std::string extra_msg) : xtop_basic_error{make_error_code(errc), std::move(extra_msg)} {
-}
-
-xtop_basic_error::xtop_basic_error(std::error_code ec) : std::runtime_error{ec.message()}, m_ec{std::move(ec)} {
-}
-
-xtop_basic_error::xtop_basic_error(std::error_code ec, std::string extra_msg)
-  : std::runtime_error{extra_msg += ":" + ec.message()}, m_ec{std::move(ec)} {
-}
-
-std::error_code const & xtop_basic_error::code() const noexcept {
-    return m_ec;
 }
 
 NS_END2

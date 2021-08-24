@@ -52,7 +52,7 @@ TEST(test_table_id, table_id) {
     top::common::xnetwork_id_t test_net_id{1};
     // top::vnetwork::tests::xdummy_election_data_accessor_t dummy_election_cache_data_accessor{ top::common::xtestnet_id };
     // top::network::tests::xdummy_network_driver_t dummy_network_driver{};
-    auto auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+    auto auditor_group_count = XGET_CONFIG(auditor_group_count);
 
     auto const zone_count = XGET_CONFIG(zone_count);
     auto const cluster_count = XGET_CONFIG(cluster_count);

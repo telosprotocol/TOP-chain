@@ -10,7 +10,7 @@ void metrics_packet_impl(metrics_pack_unit & unit) {
     json res, cont;
     res["category"] = get_category(unit.name);
     res["tag"] = get_tag(unit.name);
-    res["type"] = "real_time";
+    res["type"] = unit.type;
     for (auto const & p : unit.pack_content) {
         if (p.second.GetType() == VAL_UNIT_TYPE_STR) {
             cont[p.first] = p.second.GetConstRef<std::string>();

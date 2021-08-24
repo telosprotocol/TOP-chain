@@ -22,7 +22,7 @@
 #include "xbase/xutl.h"
 
 #include "xtransport/transport.h"
-#include "xpbase/base/xbyte_buffer.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xpbase/base/top_utils.h"
 
 namespace top {
@@ -38,17 +38,12 @@ class SocketIntf {
 public:
     virtual ~SocketIntf() {}
     virtual void Stop() = 0;
-    virtual int SendData(
-            const xbyte_buffer_t& data,
-            const std::string& peer_ip,
-            uint16_t peer_port) = 0;
     virtual int SendData(base::xpacket_t& packet) = 0;
-    virtual int SendDataWithProp(
-            base::xpacket_t& packet,
-            UdpPropertyPtr& udp_property) = 0;
-    virtual int SendToLocal(base::xpacket_t& packet) = 0;
-    virtual int SendToLocal(const xbyte_buffer_t& data) = 0;
-    virtual void AddXip2Header(base::xpacket_t& packet) = 0;
+    virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) = 0;
+
+    virtual int SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_property) = 0;
+    virtual int SendToLocal(base::xpacket_t & packet) = 0;
+    virtual void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) = 0;
     virtual bool GetSocketStatus() = 0;
 
     virtual void register_on_receive_callback(on_receive_callback_t callback) = 0;

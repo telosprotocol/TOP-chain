@@ -26,7 +26,7 @@ XINLINE_CONSTEXPR char const * sys_contract_rec_elect_zec_addr{ "T2000138Kc9Wynd
 XINLINE_CONSTEXPR char const * sys_contract_rec_tcc_addr{ "T2000138Ao4jjYtrXoNwfzb6gdpD2XNBpqUv46p8B@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_standby_pool_addr{ "T2000138CQwyzFxbWZ59mNjkq3eZ3eH41t7b5midm@0" };
 
-XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr{ "T200024uAt8Na2U1GUtWSHXJSqaJJBXunUX9WU9kB@0" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr{ "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_vote_addr{ "T200024uPV1k6XjTm9No5yB2mxBPK9o2XqJKyhDUn@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_reward_addr{ "T200024uV5yB1ZCnXe7SbViA86ufhouFjpDKNRd3X@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_slash_info_addr{ "T200024uDhihoPJ24LQL4znxrugPM4eWk8rY42ceS@1" };
@@ -35,11 +35,10 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_standby_pool_addr{ "T200024uCQ5D
 XINLINE_CONSTEXPR char const * sys_contract_zec_group_assoc_addr{ "T200024uN3e6AujFyvDXY4h5t6or3DgKpu5rTKELD@2" };
 
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
-XINLINE_CONSTEXPR char const * sys_contract_sharding_workload_addr{ "T20000MFGB3gFWSsMfEo9LrC7JEaj1gJTXaYfXny" };
-XINLINE_CONSTEXPR char const * sys_contract_sharding_slash_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
 
-XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta00013T7BKn5pP8Zi3K5z2Z5BQuSXTf5u37Se79x" };
-XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta00025E3y1TBsbnvZHcq1eELBBQH4D5tFbg1jQqY" };
-XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000gRD2qVpp2S7UpjAsznRiRhbE1qNnhMbEDp" };
+XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
+XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
+
 }  // namespace top

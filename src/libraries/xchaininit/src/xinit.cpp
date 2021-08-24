@@ -10,6 +10,7 @@
 #include "xrpc/xrpc_init.h"
 #include "xchaininit/xinit.h"
 #include "xchaininit/xconfig.h"
+#include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
@@ -25,10 +26,13 @@
 #include "xchaininit/admin_http.h"
 #include "xtopcl/include/topcl.h"
 #include "xverifier/xverifier_utl.h"
+#include "xtopcl/include/api_method.h"
+#include "xconfig/xpredefined_configurations.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
 
 namespace top{
 
@@ -71,6 +75,9 @@ static bool create_rootblock(const std::string & config_file) {
     return true;
 }
 
+
+
+
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
     using namespace base;
@@ -78,6 +85,9 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     using namespace vnetwork;
     using namespace store;
     using namespace rpc;
+
+    // init up
+    setup_options();
 
     //using top::elect::xbeacon_xelect_imp;
     auto hash_plugin = new xtop_hash_t();
@@ -98,8 +108,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
-    global_node_signkey = base::xstring_utl::base64_decode(user_params.signkey);
-    global_platform_type = kChain;
+    global_node_signkey = DecodePrivateString(user_params.signkey);
+
 #ifdef CONFIG_CHECK
     // config check
     if (!user_params.is_valid()) return 1;
@@ -112,8 +122,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     std::cout << "account: " << global_node_id << std::endl;
     xinit_log(log_path.c_str(), true, true);
     xset_log_level((enum_xlog_level)log_level);
-    xinfo("=== xtopchain start here ===");
+    auto xbase_info = base::xcontext_t::get_xbase_info();
+    xwarn("=== xtopchain start here ===");
+    xwarn("=== xbase info: %s ===", xbase_info.c_str());
     std::cout << "=== xtopchain start here ===" << std::endl;
+    std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
 
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
@@ -242,16 +255,19 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
 
 bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
     g_userinfo.account = node_id;
+    if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);    
     top::xtopcl::xtopcl xtop_cl;
     std::string result;
     xtop_cl.api.change_trans_mode(true);
     std::vector<std::string> param_list;
-    std::string query_cmdline    = "system queryNodeInfo " + node_id;
+    std::string query_cmdline    = "system queryNodeInfo " + g_userinfo.account;
     xtop_cl.parser_command(query_cmdline, param_list);
     xtop_cl.do_command(param_list, result);
     auto query_find = result.find("account_addr");
     if (query_find == std::string::npos) {
-        std::cout << node_id << " account has not registered miner." << std::endl;
+        std::cout << g_userinfo.account << " account has not registered miner." << std::endl;
+        // std::cout << "result:"<<result<< std::endl;
         return false;
     }
     // registered
@@ -264,7 +280,7 @@ bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
             auto node_sign_key = data["node_sign_key"].get<std::string>();
             if (node_sign_key != pub_key) {
                 std::cout << "The minerkey does not match miner account." << std::endl
-                    << node_id << " account's miner key is "
+                    << g_userinfo.account << " account's miner key is "
                     << node_sign_key << std::endl;
                 return false;
             }
@@ -306,12 +322,12 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     std::string log_path;
     std::string bwlist_path;
 #ifdef _WIN32
-    chain_db_path = datadir + "\\db";
+    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "\\log";
     bwlist_path = datadir + "\\bwlist.json"
     // TODO(smaug) mkdir in windows
 #else
-    chain_db_path = datadir + "/db";
+    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "/log";
     bwlist_path = datadir + "/bwlist.json";
 
@@ -376,8 +392,9 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
-    global_node_signkey = base::xstring_utl::base64_decode(user_params.signkey);
-    global_platform_type = kChain;
+
+    global_node_signkey = DecodePrivateString(user_params.signkey);    
+
 #ifdef CONFIG_CHECK
     // config check
     if (!user_params.is_valid()) {
@@ -397,6 +414,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xset_log_level((enum_xlog_level)log_level);
     xinfo("=== xtopchain start here with noparams ===");
     std::cout << "xnode start begin..." << std::endl;
+
     // load bwlist
     std::map<std::string, std::string> bwlist;
     auto ret = load_bwlist_content(bwlist_path, bwlist);

@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xchain_error.h"
+#include "xbasic/xerror/xchain_error.h"
 #include "xelection/xdata_accessor_error.h"
 
 NS_BEG2(top, election)
@@ -15,91 +15,91 @@ xdata_accessor_errc_map(int const errc) noexcept {
         case xdata_accessor_errc_t::success:
             return "success";
         case xdata_accessor_errc_t::node_not_found:
-            return u8"node id not found";
+            return "account not found";
         case xdata_accessor_errc_t::node_already_exist:
-            return u8"node already exist";
+            return "node already exist";
         case xdata_accessor_errc_t::node_id_empty:
-            return u8"node id empty";
+            return "node id empty";
         case xdata_accessor_errc_t::node_id_mismatch:
-            return u8"node id mismatch";
+            return "node id mismatch";
         case xdata_accessor_errc_t::node_joined_version_empty:
-            return u8"node joined version empty";
+            return "node joined version empty";
         case xdata_accessor_errc_t::node_joined_version_mismatch:
-            return u8"node joined version mismatch";
+            return "node joined version mismatch";
         case xdata_accessor_errc_t::node_staking_mismatch:
-            return u8"node staking mismatch";
+            return "node staking mismatch";
         case xdata_accessor_errc_t::slot_id_empty:
-            return u8"slot id empty";
+            return "slot id empty";
         case xdata_accessor_errc_t::slot_not_exist:
-            return u8"slot not exist";
+            return "slot not exist";
         case xdata_accessor_errc_t::zone_id_mismatch:
-            return u8"zone id mismatch";
+            return "zone id mismatch";
         case xdata_accessor_errc_t::zone_id_empty:
-            return u8"zone id empty";
+            return "zone id empty";
         case xdata_accessor_errc_t::zone_already_exist:
-            return u8"zone already exist";
+            return "zone already exist";
         case xdata_accessor_errc_t::zone_not_exist:
-            return u8"zone not exist";
+            return "zone not exist";
         case xdata_accessor_errc_t::cluster_id_mismatch:
-            return u8"cluster id mismatch";
+            return "cluster id mismatch";
         case xdata_accessor_errc_t::cluster_id_empty:
-            return u8"cluster id empty";
+            return "cluster id empty";
         case xdata_accessor_errc_t::cluster_already_exist:
-            return u8"cluster already exist";
+            return "cluster already exist";
         case xdata_accessor_errc_t::cluster_not_exist:
-            return u8"cluster not exist";
+            return "cluster not exist";
         case xdata_accessor_errc_t::group_id_empty:
-            return u8"group id empty";
+            return "group id empty";
         case xdata_accessor_errc_t::group_not_exist:
-            return u8"group not exist";
+            return "group not exist";
         case xdata_accessor_errc_t::group_already_exist:
-            return u8"group already exist";
+            return "group already exist";
         case xdata_accessor_errc_t::group_type_mismatch:
-            return u8"group type mismatch";
+            return "group type mismatch";
         case xdata_accessor_errc_t::group_version_mismatch:
-            return u8"group version mismatch";
+            return "group version mismatch";
         case xdata_accessor_errc_t::group_version_empty:
-            return u8"group veresion empty";
+            return "group veresion empty";
         case xdata_accessor_errc_t::group_association_failed:
-            return u8"group association failed";
+            return "group association failed";
         case xdata_accessor_errc_t::network_id_mismatch:
-            return u8"network id mismatch";
+            return "network id mismatch";
         case xdata_accessor_errc_t::associate_parent_group_twice:
-            return u8"associate parent group twice";
+            return "associate parent group twice";
         case xdata_accessor_errc_t::associate_to_different_parent_group:
-            return u8"associate to different parent group";
+            return "associate to different parent group";
         case xdata_accessor_errc_t::associate_child_group_twice:
-            return u8"associate child group twice";
+            return "associate child group twice";
         case xdata_accessor_errc_t::associate_child_group_failed:
-            return u8"associate child group failed";
+            return "associate child group failed";
         case xdata_accessor_errc_t::associated_group_not_exist:
-            return u8"associated group not exist";
+            return "associated group not exist";
         case xdata_accessor_errc_t::invalid_node_type:
-            return u8"unknown node type";
+            return "unknown node type";
         case xdata_accessor_errc_t::election_data_empty:
-            return u8"election data empty";
+            return "election data empty";
         case xdata_accessor_errc_t::election_data_historical:
-            return u8"election data historical";
+            return "election data historical";
         case xdata_accessor_errc_t::election_data_partially_updated:
-            return u8"election data partially updated";
+            return "election data partially updated";
         case xdata_accessor_errc_t::address_empty:
-            return u8"address empty";
+            return "address empty";
         case xdata_accessor_errc_t::block_height_error:
-            return u8"block height error";
+            return "block height error";
         case xdata_accessor_errc_t::block_is_empty:
-            return u8"block is empty";
+            return "block is empty";
         case xdata_accessor_errc_t::lightunit_state_is_empty:
-            return u8"lightunit_state is empty";
+            return "lightunit_state is empty";
         case xdata_accessor_errc_t::election_result_is_empty:
-            return u8"election_result is empty";
+            return "election_result is empty";
         case xdata_accessor_errc_t::no_children:
-            return u8"no children";
+            return "no children";
         case xdata_accessor_errc_t::unknown_std_exception:
-            return u8"unknown std::exception error";
+            return "unknown std::exception error";
         case xdata_accessor_errc_t::unknown_error:
-            return u8"unknown error";
+            return "unknown error";
         default:
-            return u8"unknown error";
+            return "unknown error";
     }
 }
 
@@ -107,7 +107,7 @@ class xtop_data_accessor_category final : public std::error_category {
 public:
     const char *
     name() const noexcept override {
-        return u8"[election_data_accessor]";
+        return "[election_data_accessor]";
     }
 
     std::string

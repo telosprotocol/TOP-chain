@@ -16,7 +16,6 @@
 #include "xvnode/xvnode_manager.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xchain_info_query.h"
-#include "xelect_net/include/elect_command.h"
 #include "xelect_net/include/multilayer_network_chain_query.h"
 
 #include <cinttypes>
@@ -52,16 +51,16 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
   , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
                                         m_application->store(),
                                         m_application->blockstore(),
-                                        m_application->indexstore(),
                                         m_application->txpool(),
                                         m_application->logic_timer(),
                                         m_application->cert_serivce(),
                                         make_observer(m_election_cache_data_accessor),
-                                        m_application->message_bus())}
+                                        m_application->message_bus(),
+                                        m_application->router())}
   , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
                                                                                                         make_observer(m_application->blockstore().get()),
                                                                                                         m_application->txpool(),
-                                                                                                        make_observer(m_application->thread_pool(xthread_pool_type_t::txpool_service).front().get()),
+                                                                                                        m_application->thread_pool(xthread_pool_type_t::txpool_service),
                                                                                                         m_application->message_bus(),
                                                                                                         m_application->logic_timer())}
   , m_vnode_manager{std::make_shared<vnode::xvnode_manager_t>(m_application->elect_main(),
@@ -103,10 +102,10 @@ void xtop_chain_application::start() {
                                                     .result_of(frozen_sharding_address.cluster_id())
                                                     .result_of(frozen_sharding_address.group_id());
     static_sync_group.start_time(0);
-    static_sync_group.group_version(common::xversion_t::max());
+    static_sync_group.group_version(common::xelection_round_t::max());
 
     auto & static_sync_node = static_sync_group.result_of(node_id());
-    static_sync_node.joined_version = common::xversion_t::max();
+    static_sync_node.joined_version = common::xelection_round_t::max();
     static_sync_node.stake = 0;
 
     assert(static_sync_group.size() == 1);
@@ -136,9 +135,11 @@ void xtop_chain_application::on_election_data_updated(data::election::xelection_
     }
 
     if (!updated_election_data2.empty()) {
-        auto outdated_xips = m_vnode_manager->handle_election_data(updated_election_data2);
-        for (const auto & xip : outdated_xips) {
+        auto outdated_xips_pair = m_vnode_manager->handle_election_data(updated_election_data2);
+        for (const auto & xip : outdated_xips_pair.first) {
             m_application->elect_manager()->OnElectQuit(xip);
+        }
+        for (const auto & xip : outdated_xips_pair.second) {
             m_cons_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
             m_txpool_service_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
         }

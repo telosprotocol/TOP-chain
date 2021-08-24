@@ -35,17 +35,21 @@ xrole_chains_t::xrole_chains_t(const vnetwork::xvnode_address_t & role, const st
 
 void xrole_chains_t::init_chains() {
 
-    add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::rec, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::zec, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::rec, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::zec, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_pocliy_fast);
+    add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_fast);
 
-    add_tables(nt::archive, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::archive, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::archive, sys_contract_sharding_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::storage_archive, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_archive, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_archive, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
+
+    add_tables(nt::storage_full_node, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_full_node, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_full_node, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
 }
 
 void xrole_chains_t::add_chain(common::xnode_type_t allow_types,
@@ -62,7 +66,7 @@ void xrole_chains_t::add_tables(common::xnode_type_t allow_types,
         if (m_type == nt::frozen) {
             add_rec_or_zec(allow_types, address, sync_policy);
             return;
-        } else if (m_type == nt::archive) {
+        } else if (common::has<common::xnode_type_t::storage>(m_type)) {
             if (address == sys_contract_beacon_table_block_addr || address == sys_contract_zec_table_block_addr) {
                 add_rec_or_zec(allow_types, address, sync_policy);
                 return;

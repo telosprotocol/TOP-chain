@@ -5,6 +5,7 @@ NS_BEG2(top, sync)
 const float min_val = 5;
 const uint32_t sample_count = 10;
 const uint32_t cost_upper = 100;
+const uint32_t clean_time_ms = 100;
 
 xsync_ratelimit_t::xsync_ratelimit_t(observer_ptr<base::xiothread_t> const & iothread, uint32_t max_allowed_parallels):
 m_iothread(iothread) {
@@ -21,7 +22,7 @@ m_iothread(iothread) {
 
 void xsync_ratelimit_t::start() {
     m_timer = new xsync_ratelimit_timer_t(top::base::xcontext_t::instance(), m_iothread->get_thread_id(), this);
-    m_timer->start(0, 100);
+    m_timer->start(0, clean_time_ms);
     m_is_start = true;
 }
 
@@ -31,11 +32,7 @@ void xsync_ratelimit_t::stop() {
     m_timer->release_ref();
 }
 
-void xsync_ratelimit_t::on_timer() {
-    int64_t now = base::xtime_utl::gmttime_ms();
-
-    std::unique_lock<std::mutex> lock(m_lock);
-
+void xsync_ratelimit_t::resume() {
     xsync_ratelimit_ctx_t new_ctx;
 
     m_list_ctx.push_back(new_ctx);
@@ -45,29 +42,24 @@ void xsync_ratelimit_t::on_timer() {
 
     data_statistics();
     make_decision();
+}
 
-#if 0
-    xdbg("bucket=priority(%d) ave_cost=%u ave_count=%f failed=%u step=%f real=%f bucket=%f", 
-        i, average_cost, average_count, fail_count, step, new_ctx.real_upper, m_bucket[i]);
-
-    {
-        xsync_ratelimit_ctx_t &ctx = m_list_ctx.back();
-
-        static uint64_t s_count = 0;
-        s_count++;
-        printf("%lu\t last( succ=%u fail=%u rsp=%u %ums )  total( succ=%u fail=%u rsp=%u avg_rsp=%.1f %ums )  bucket=%.1f %0.1f\n", 
-        s_count, 
-                ctx.last_success_count, ctx.last_fail_count, ctx.last_response_count, ctx.last_response_average_cost,
-                ctx.total_success_count, ctx.total_fail_count, ctx.total_response_count, ctx.total_response_average_count, ctx.total_response_average_cost,
-                ctx.calc_bucket_size, ctx.real_bucket_size);
+void xsync_ratelimit_t::on_timer() {
+    std::unique_lock<std::mutex> lock(m_lock);
+    
+    if (m_time_rejecter.reject()){
+        return;
     }
-#endif
+
+    resume();
 }
 
 bool xsync_ratelimit_t::get_token(int64_t now) {
-
     std::unique_lock<std::mutex> lock(m_lock);
-
+    if (!m_time_rejecter.reject()){
+        resume();
+    }
+    
     if (m_bucket >= 1.0) {
         m_last_success_count++;
         m_bucket--;

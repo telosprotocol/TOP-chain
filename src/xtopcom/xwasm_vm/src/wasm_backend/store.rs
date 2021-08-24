@@ -22,6 +22,12 @@ fn cost(_operator: &Operator) -> u64 {
     // A flat fee in order to maintain roughly the same pricing as with Wasmer 0.17
     // (https://github.com/wasmerio/wasmer/blob/0.17.1/lib/middleware-common/src/metering.rs#L43-L113).
     // This should become more advanced soon: https://github.com/CosmWasm/cosmwasm/issues/670
+    // todo add operator metrics
+    // match operator {
+    //     Operator::LocalGet { .. } | Operator::I32Const { .. } => 1,
+    //     Operator::I32Add { .. } => 2,
+    //     _ => 0,
+    // }
     1
 }
 
@@ -41,6 +47,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
 
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
+#[allow(unused)]
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
     let engine = JIT::headless().engine();
     make_store_with_engine(&engine, memory_limit)

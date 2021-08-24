@@ -50,11 +50,21 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
         xdbg("grpc stream xevent_ptr_t nullptr or not arc");
         return;
     }
-    if (e->minor_type != mbus::xevent_store_t::type_block_to_db)
+    if (rpc_client_num <= 0) {
+        xdbg("grpc no client connected");
+        return;
+    }
+    if (e->minor_type != mbus::xevent_store_t::type_block_committed)
         return;
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    auto block = mbus::extract_block_from(block_event);
+    mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+    // only process light-table
+    if (block_event->blk_class != base::enum_xvblock_class_light
+        || block_event->blk_level != base::enum_xvblock_level_table) {
+        return;
+    }
+
+    auto block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_grpc_process_event);
     xdbg("grpc stream get_block_type %d, minor_type %d \n", block->get_block_type(), e->minor_type);
     if (!block->is_tableblock()) {
         return;
@@ -69,12 +79,9 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
 
 #ifdef DEBUG
     // adding push tx log info
-    const std::vector<xobject_ptr_t<xblock_t>> & units = bp->get_tableblock_units(false);
-    for (auto & unit : units) {
-        auto & txs = unit->get_txs();
-        for (auto & tx : txs) {
-            xdbg("grpc stream tx hash: 0x%s, type: %s", tx->get_tx_hex_hash().c_str(), tx->get_tx_subtype_str().c_str());
-        }
+    std::vector<xlightunit_action_ptr_t> txactions = bp->get_lighttable_tx_actions();
+    for (auto & action : txactions) {
+        xdbg("grpc stream tx hash: tx_key=%s", action->get_tx_dump_key().c_str());
     }
 #endif
 
@@ -105,8 +112,6 @@ void handler_mgr::add_handler(std::shared_ptr<xrpc_handle_face_t> handle) {
 }
 
 bool handler_mgr::handle(std::string request) {
-    // lock for parallel safety
-    std::lock_guard<std::recursive_mutex> lock(m_lock);
     for (auto v : m_handles) {
         auto ret = v->handle(request);
         if (ret) {

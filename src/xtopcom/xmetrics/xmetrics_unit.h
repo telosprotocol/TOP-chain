@@ -8,10 +8,11 @@
 #include "xmetrics/Variant.h"
 #include <assert.h>
 
-#include <string>
 #include <memory>
 #include <set>
 #include <chrono>
+#include <vector>
+#include <string>
 NS_BEG2(top, metrics)
 
 using time_point = std::chrono::system_clock::time_point;
@@ -26,9 +27,10 @@ using metrics_appendant_info = Variant<std::string, int64_t, time_point>;
 struct metrics_counter_unit {
     std::string name;
     int64_t inner_val;
+    uint64_t count;
     int64_t last_dump_val;
 
-    metrics_counter_unit(std::string _name, int64_t _val) : name{_name}, inner_val{_val}, last_dump_val{0} {};
+    metrics_counter_unit(std::string _name, int64_t _val) : name{_name}, inner_val{_val}, count{1}, last_dump_val{0} {};
 };
 using metrics_counter_unit_ptr = std::shared_ptr<metrics_counter_unit>;
 
@@ -77,9 +79,26 @@ struct metrics_flow_unit {
 };
 using metrics_flow_unit_ptr = std::shared_ptr<metrics_flow_unit>;
 
+/* array_unit
+ * recorder one metrics_name of its sub_array's each count(might add/minus/set each solely)
+ * record all_count && calc sum when dump.
+ */
+struct metrics_array_unit{
+    std::string name;
+    uint64_t all_count;
+    std::vector<uint64_t> array_count;
+    std::vector<int64_t> array_value;
+    uint64_t last_dump_count;
+
+    metrics_array_unit(std::string _name, std::size_t _arr_size, int64_t _val)
+      : name{_name}, all_count{0}, array_count(_arr_size, 0), array_value(_arr_size, 0), last_dump_count{0} {
+    }
+};
+using metrics_array_unit_ptr = std::shared_ptr<metrics_array_unit>;
+
 // ! the Variant order must be as same as e_metrics_major_id
 // ! that is : [0-invalid], 1-counter 2-timer 3-flow
 // ! or Variant.GetType() might be wrong.
-using metrics_variant_ptr = Variant<metrics_counter_unit_ptr, metrics_timer_unit_ptr, metrics_flow_unit_ptr>;
+using metrics_variant_ptr = Variant<metrics_counter_unit_ptr, metrics_timer_unit_ptr, metrics_flow_unit_ptr, metrics_array_unit_ptr>;
 
 NS_END2

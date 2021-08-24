@@ -38,7 +38,7 @@ namespace protobuf_elect_5fnet_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[4];
+  static const ::google::protobuf::internal::ParseTable schema[1];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -48,27 +48,15 @@ void AddDescriptors();
 namespace top {
 namespace elect {
 namespace protobuf {
-class BlockInfo;
-class BlockInfoDefaultTypeInternal;
-extern BlockInfoDefaultTypeInternal _BlockInfo_default_instance_;
-class ConsensusMessage;
-class ConsensusMessageDefaultTypeInternal;
-extern ConsensusMessageDefaultTypeInternal _ConsensusMessage_default_instance_;
-class PbftItem;
-class PbftItemDefaultTypeInternal;
-extern PbftItemDefaultTypeInternal _PbftItem_default_instance_;
-class PbftMessage;
-class PbftMessageDefaultTypeInternal;
-extern PbftMessageDefaultTypeInternal _PbftMessage_default_instance_;
+class VhostMessage;
+class VhostMessageDefaultTypeInternal;
+extern VhostMessageDefaultTypeInternal _VhostMessage_default_instance_;
 }  // namespace protobuf
 }  // namespace elect
 }  // namespace top
 namespace google {
 namespace protobuf {
-template<> ::top::elect::protobuf::BlockInfo* Arena::CreateMaybeMessage<::top::elect::protobuf::BlockInfo>(Arena*);
-template<> ::top::elect::protobuf::ConsensusMessage* Arena::CreateMaybeMessage<::top::elect::protobuf::ConsensusMessage>(Arena*);
-template<> ::top::elect::protobuf::PbftItem* Arena::CreateMaybeMessage<::top::elect::protobuf::PbftItem>(Arena*);
-template<> ::top::elect::protobuf::PbftMessage* Arena::CreateMaybeMessage<::top::elect::protobuf::PbftMessage>(Arena*);
+template<> ::top::elect::protobuf::VhostMessage* Arena::CreateMaybeMessage<::top::elect::protobuf::VhostMessage>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace top {
@@ -77,24 +65,24 @@ namespace protobuf {
 
 // ===================================================================
 
-class PbftMessage : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.elect.protobuf.PbftMessage) */ {
+class VhostMessage : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.elect.protobuf.VhostMessage) */ {
  public:
-  PbftMessage();
-  virtual ~PbftMessage();
+  VhostMessage();
+  virtual ~VhostMessage();
 
-  PbftMessage(const PbftMessage& from);
+  VhostMessage(const VhostMessage& from);
 
-  inline PbftMessage& operator=(const PbftMessage& from) {
+  inline VhostMessage& operator=(const VhostMessage& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  PbftMessage(PbftMessage&& from) noexcept
-    : PbftMessage() {
+  VhostMessage(VhostMessage&& from) noexcept
+    : VhostMessage() {
     *this = ::std::move(from);
   }
 
-  inline PbftMessage& operator=(PbftMessage&& from) noexcept {
+  inline VhostMessage& operator=(VhostMessage&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -111,34 +99,34 @@ class PbftMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const PbftMessage& default_instance();
+  static const VhostMessage& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const PbftMessage* internal_default_instance() {
-    return reinterpret_cast<const PbftMessage*>(
-               &_PbftMessage_default_instance_);
+  static inline const VhostMessage* internal_default_instance() {
+    return reinterpret_cast<const VhostMessage*>(
+               &_VhostMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     0;
 
-  void Swap(PbftMessage* other);
-  friend void swap(PbftMessage& a, PbftMessage& b) {
+  void Swap(VhostMessage* other);
+  friend void swap(VhostMessage& a, VhostMessage& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline PbftMessage* New() const final {
-    return CreateMaybeMessage<PbftMessage>(NULL);
+  inline VhostMessage* New() const final {
+    return CreateMaybeMessage<VhostMessage>(NULL);
   }
 
-  PbftMessage* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<PbftMessage>(arena);
+  VhostMessage* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<VhostMessage>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const PbftMessage& from);
-  void MergeFrom(const PbftMessage& from);
+  void CopyFrom(const VhostMessage& from);
+  void MergeFrom(const VhostMessage& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -155,7 +143,7 @@ class PbftMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(PbftMessage* other);
+  void InternalSwap(VhostMessage* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -215,7 +203,7 @@ class PbftMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::uint32 cb_type() const;
   void set_cb_type(::google::protobuf::uint32 value);
 
-  // @@protoc_insertion_point(class_scope:top.elect.protobuf.PbftMessage)
+  // @@protoc_insertion_point(class_scope:top.elect.protobuf.VhostMessage)
  private:
   void set_has_type();
   void clear_has_type();
@@ -235,468 +223,6 @@ class PbftMessage : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::uint32 cb_type_;
   friend struct ::protobuf_elect_5fnet_2eproto::TableStruct;
 };
-// -------------------------------------------------------------------
-
-class ConsensusMessage : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.elect.protobuf.ConsensusMessage) */ {
- public:
-  ConsensusMessage();
-  virtual ~ConsensusMessage();
-
-  ConsensusMessage(const ConsensusMessage& from);
-
-  inline ConsensusMessage& operator=(const ConsensusMessage& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  ConsensusMessage(ConsensusMessage&& from) noexcept
-    : ConsensusMessage() {
-    *this = ::std::move(from);
-  }
-
-  inline ConsensusMessage& operator=(ConsensusMessage&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _internal_metadata_.unknown_fields();
-  }
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return _internal_metadata_.mutable_unknown_fields();
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ConsensusMessage& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ConsensusMessage* internal_default_instance() {
-    return reinterpret_cast<const ConsensusMessage*>(
-               &_ConsensusMessage_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    1;
-
-  void Swap(ConsensusMessage* other);
-  friend void swap(ConsensusMessage& a, ConsensusMessage& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline ConsensusMessage* New() const final {
-    return CreateMaybeMessage<ConsensusMessage>(NULL);
-  }
-
-  ConsensusMessage* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ConsensusMessage>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const ConsensusMessage& from);
-  void MergeFrom(const ConsensusMessage& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(ConsensusMessage* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional bytes data = 2;
-  bool has_data() const;
-  void clear_data();
-  static const int kDataFieldNumber = 2;
-  const ::std::string& data() const;
-  void set_data(const ::std::string& value);
-  #if LANG_CXX11
-  void set_data(::std::string&& value);
-  #endif
-  void set_data(const char* value);
-  void set_data(const void* value, size_t size);
-  ::std::string* mutable_data();
-  ::std::string* release_data();
-  void set_allocated_data(::std::string* data);
-
-  // optional uint32 message_type = 1;
-  bool has_message_type() const;
-  void clear_message_type();
-  static const int kMessageTypeFieldNumber = 1;
-  ::google::protobuf::uint32 message_type() const;
-  void set_message_type(::google::protobuf::uint32 value);
-
-  // optional uint32 pbft_type = 3;
-  bool has_pbft_type() const;
-  void clear_pbft_type();
-  static const int kPbftTypeFieldNumber = 3;
-  ::google::protobuf::uint32 pbft_type() const;
-  void set_pbft_type(::google::protobuf::uint32 value);
-
-  // optional uint32 ec_version = 4;
-  bool has_ec_version() const;
-  void clear_ec_version();
-  static const int kEcVersionFieldNumber = 4;
-  ::google::protobuf::uint32 ec_version() const;
-  void set_ec_version(::google::protobuf::uint32 value);
-
-  // @@protoc_insertion_point(class_scope:top.elect.protobuf.ConsensusMessage)
- private:
-  void set_has_message_type();
-  void clear_has_message_type();
-  void set_has_data();
-  void clear_has_data();
-  void set_has_pbft_type();
-  void clear_has_pbft_type();
-  void set_has_ec_version();
-  void clear_has_ec_version();
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::HasBits<1> _has_bits_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  ::google::protobuf::internal::ArenaStringPtr data_;
-  ::google::protobuf::uint32 message_type_;
-  ::google::protobuf::uint32 pbft_type_;
-  ::google::protobuf::uint32 ec_version_;
-  friend struct ::protobuf_elect_5fnet_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class PbftItem : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.elect.protobuf.PbftItem) */ {
- public:
-  PbftItem();
-  virtual ~PbftItem();
-
-  PbftItem(const PbftItem& from);
-
-  inline PbftItem& operator=(const PbftItem& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  PbftItem(PbftItem&& from) noexcept
-    : PbftItem() {
-    *this = ::std::move(from);
-  }
-
-  inline PbftItem& operator=(PbftItem&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _internal_metadata_.unknown_fields();
-  }
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return _internal_metadata_.mutable_unknown_fields();
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const PbftItem& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const PbftItem* internal_default_instance() {
-    return reinterpret_cast<const PbftItem*>(
-               &_PbftItem_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    2;
-
-  void Swap(PbftItem* other);
-  friend void swap(PbftItem& a, PbftItem& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline PbftItem* New() const final {
-    return CreateMaybeMessage<PbftItem>(NULL);
-  }
-
-  PbftItem* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<PbftItem>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const PbftItem& from);
-  void MergeFrom(const PbftItem& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(PbftItem* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // repeated bytes datas = 2;
-  int datas_size() const;
-  void clear_datas();
-  static const int kDatasFieldNumber = 2;
-  const ::std::string& datas(int index) const;
-  ::std::string* mutable_datas(int index);
-  void set_datas(int index, const ::std::string& value);
-  #if LANG_CXX11
-  void set_datas(int index, ::std::string&& value);
-  #endif
-  void set_datas(int index, const char* value);
-  void set_datas(int index, const void* value, size_t size);
-  ::std::string* add_datas();
-  void add_datas(const ::std::string& value);
-  #if LANG_CXX11
-  void add_datas(::std::string&& value);
-  #endif
-  void add_datas(const char* value);
-  void add_datas(const void* value, size_t size);
-  const ::google::protobuf::RepeatedPtrField< ::std::string>& datas() const;
-  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_datas();
-
-  // optional uint32 type = 1;
-  bool has_type() const;
-  void clear_type();
-  static const int kTypeFieldNumber = 1;
-  ::google::protobuf::uint32 type() const;
-  void set_type(::google::protobuf::uint32 value);
-
-  // @@protoc_insertion_point(class_scope:top.elect.protobuf.PbftItem)
- private:
-  void set_has_type();
-  void clear_has_type();
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::HasBits<1> _has_bits_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> datas_;
-  ::google::protobuf::uint32 type_;
-  friend struct ::protobuf_elect_5fnet_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class BlockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.elect.protobuf.BlockInfo) */ {
- public:
-  BlockInfo();
-  virtual ~BlockInfo();
-
-  BlockInfo(const BlockInfo& from);
-
-  inline BlockInfo& operator=(const BlockInfo& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  BlockInfo(BlockInfo&& from) noexcept
-    : BlockInfo() {
-    *this = ::std::move(from);
-  }
-
-  inline BlockInfo& operator=(BlockInfo&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _internal_metadata_.unknown_fields();
-  }
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return _internal_metadata_.mutable_unknown_fields();
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const BlockInfo& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const BlockInfo* internal_default_instance() {
-    return reinterpret_cast<const BlockInfo*>(
-               &_BlockInfo_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    3;
-
-  void Swap(BlockInfo* other);
-  friend void swap(BlockInfo& a, BlockInfo& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline BlockInfo* New() const final {
-    return CreateMaybeMessage<BlockInfo>(NULL);
-  }
-
-  BlockInfo* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<BlockInfo>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const BlockInfo& from);
-  void MergeFrom(const BlockInfo& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(BlockInfo* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // repeated .top.elect.protobuf.PbftItem pbfts = 2;
-  int pbfts_size() const;
-  void clear_pbfts();
-  static const int kPbftsFieldNumber = 2;
-  ::top::elect::protobuf::PbftItem* mutable_pbfts(int index);
-  ::google::protobuf::RepeatedPtrField< ::top::elect::protobuf::PbftItem >*
-      mutable_pbfts();
-  const ::top::elect::protobuf::PbftItem& pbfts(int index) const;
-  ::top::elect::protobuf::PbftItem* add_pbfts();
-  const ::google::protobuf::RepeatedPtrField< ::top::elect::protobuf::PbftItem >&
-      pbfts() const;
-
-  // optional bytes prev_hash = 1;
-  bool has_prev_hash() const;
-  void clear_prev_hash();
-  static const int kPrevHashFieldNumber = 1;
-  const ::std::string& prev_hash() const;
-  void set_prev_hash(const ::std::string& value);
-  #if LANG_CXX11
-  void set_prev_hash(::std::string&& value);
-  #endif
-  void set_prev_hash(const char* value);
-  void set_prev_hash(const void* value, size_t size);
-  ::std::string* mutable_prev_hash();
-  ::std::string* release_prev_hash();
-  void set_allocated_prev_hash(::std::string* prev_hash);
-
-  // optional bytes block_hash = 5;
-  bool has_block_hash() const;
-  void clear_block_hash();
-  static const int kBlockHashFieldNumber = 5;
-  const ::std::string& block_hash() const;
-  void set_block_hash(const ::std::string& value);
-  #if LANG_CXX11
-  void set_block_hash(::std::string&& value);
-  #endif
-  void set_block_hash(const char* value);
-  void set_block_hash(const void* value, size_t size);
-  ::std::string* mutable_block_hash();
-  ::std::string* release_block_hash();
-  void set_allocated_block_hash(::std::string* block_hash);
-
-  // optional uint64 rand = 3;
-  bool has_rand() const;
-  void clear_rand();
-  static const int kRandFieldNumber = 3;
-  ::google::protobuf::uint64 rand() const;
-  void set_rand(::google::protobuf::uint64 value);
-
-  // optional uint64 timestamp = 4;
-  bool has_timestamp() const;
-  void clear_timestamp();
-  static const int kTimestampFieldNumber = 4;
-  ::google::protobuf::uint64 timestamp() const;
-  void set_timestamp(::google::protobuf::uint64 value);
-
-  // @@protoc_insertion_point(class_scope:top.elect.protobuf.BlockInfo)
- private:
-  void set_has_prev_hash();
-  void clear_has_prev_hash();
-  void set_has_rand();
-  void clear_has_rand();
-  void set_has_timestamp();
-  void clear_has_timestamp();
-  void set_has_block_hash();
-  void clear_has_block_hash();
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::HasBits<1> _has_bits_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  ::google::protobuf::RepeatedPtrField< ::top::elect::protobuf::PbftItem > pbfts_;
-  ::google::protobuf::internal::ArenaStringPtr prev_hash_;
-  ::google::protobuf::internal::ArenaStringPtr block_hash_;
-  ::google::protobuf::uint64 rand_;
-  ::google::protobuf::uint64 timestamp_;
-  friend struct ::protobuf_elect_5fnet_2eproto::TableStruct;
-};
 // ===================================================================
 
 
@@ -706,650 +232,191 @@ class BlockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// PbftMessage
+// VhostMessage
 
 // optional uint32 type = 1;
-inline bool PbftMessage::has_type() const {
+inline bool VhostMessage::has_type() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void PbftMessage::set_has_type() {
+inline void VhostMessage::set_has_type() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void PbftMessage::clear_has_type() {
+inline void VhostMessage::clear_has_type() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void PbftMessage::clear_type() {
+inline void VhostMessage::clear_type() {
   type_ = 0u;
   clear_has_type();
 }
-inline ::google::protobuf::uint32 PbftMessage::type() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.PbftMessage.type)
+inline ::google::protobuf::uint32 VhostMessage::type() const {
+  // @@protoc_insertion_point(field_get:top.elect.protobuf.VhostMessage.type)
   return type_;
 }
-inline void PbftMessage::set_type(::google::protobuf::uint32 value) {
+inline void VhostMessage::set_type(::google::protobuf::uint32 value) {
   set_has_type();
   type_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftMessage.type)
+  // @@protoc_insertion_point(field_set:top.elect.protobuf.VhostMessage.type)
 }
 
 // optional bytes data = 2;
-inline bool PbftMessage::has_data() const {
+inline bool VhostMessage::has_data() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void PbftMessage::set_has_data() {
+inline void VhostMessage::set_has_data() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void PbftMessage::clear_has_data() {
+inline void VhostMessage::clear_has_data() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void PbftMessage::clear_data() {
+inline void VhostMessage::clear_data() {
   data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   clear_has_data();
 }
-inline const ::std::string& PbftMessage::data() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.PbftMessage.data)
+inline const ::std::string& VhostMessage::data() const {
+  // @@protoc_insertion_point(field_get:top.elect.protobuf.VhostMessage.data)
   return data_.GetNoArena();
 }
-inline void PbftMessage::set_data(const ::std::string& value) {
+inline void VhostMessage::set_data(const ::std::string& value) {
   set_has_data();
   data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftMessage.data)
+  // @@protoc_insertion_point(field_set:top.elect.protobuf.VhostMessage.data)
 }
 #if LANG_CXX11
-inline void PbftMessage::set_data(::std::string&& value) {
+inline void VhostMessage::set_data(::std::string&& value) {
   set_has_data();
   data_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.PbftMessage.data)
+  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.VhostMessage.data)
 }
 #endif
-inline void PbftMessage::set_data(const char* value) {
+inline void VhostMessage::set_data(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   set_has_data();
   data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.PbftMessage.data)
+  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.VhostMessage.data)
 }
-inline void PbftMessage::set_data(const void* value, size_t size) {
+inline void VhostMessage::set_data(const void* value, size_t size) {
   set_has_data();
   data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.PbftMessage.data)
+  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.VhostMessage.data)
 }
-inline ::std::string* PbftMessage::mutable_data() {
+inline ::std::string* VhostMessage::mutable_data() {
   set_has_data();
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.PbftMessage.data)
+  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.VhostMessage.data)
   return data_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* PbftMessage::release_data() {
-  // @@protoc_insertion_point(field_release:top.elect.protobuf.PbftMessage.data)
+inline ::std::string* VhostMessage::release_data() {
+  // @@protoc_insertion_point(field_release:top.elect.protobuf.VhostMessage.data)
   if (!has_data()) {
     return NULL;
   }
   clear_has_data();
   return data_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void PbftMessage::set_allocated_data(::std::string* data) {
+inline void VhostMessage::set_allocated_data(::std::string* data) {
   if (data != NULL) {
     set_has_data();
   } else {
     clear_has_data();
   }
   data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
-  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.PbftMessage.data)
+  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.VhostMessage.data)
 }
 
 // optional uint32 cb_type = 3;
-inline bool PbftMessage::has_cb_type() const {
+inline bool VhostMessage::has_cb_type() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void PbftMessage::set_has_cb_type() {
+inline void VhostMessage::set_has_cb_type() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void PbftMessage::clear_has_cb_type() {
+inline void VhostMessage::clear_has_cb_type() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void PbftMessage::clear_cb_type() {
+inline void VhostMessage::clear_cb_type() {
   cb_type_ = 0u;
   clear_has_cb_type();
 }
-inline ::google::protobuf::uint32 PbftMessage::cb_type() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.PbftMessage.cb_type)
+inline ::google::protobuf::uint32 VhostMessage::cb_type() const {
+  // @@protoc_insertion_point(field_get:top.elect.protobuf.VhostMessage.cb_type)
   return cb_type_;
 }
-inline void PbftMessage::set_cb_type(::google::protobuf::uint32 value) {
+inline void VhostMessage::set_cb_type(::google::protobuf::uint32 value) {
   set_has_cb_type();
   cb_type_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftMessage.cb_type)
+  // @@protoc_insertion_point(field_set:top.elect.protobuf.VhostMessage.cb_type)
 }
 
 // optional bytes node_id = 4;
-inline bool PbftMessage::has_node_id() const {
+inline bool VhostMessage::has_node_id() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void PbftMessage::set_has_node_id() {
+inline void VhostMessage::set_has_node_id() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void PbftMessage::clear_has_node_id() {
+inline void VhostMessage::clear_has_node_id() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void PbftMessage::clear_node_id() {
+inline void VhostMessage::clear_node_id() {
   node_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   clear_has_node_id();
 }
-inline const ::std::string& PbftMessage::node_id() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.PbftMessage.node_id)
+inline const ::std::string& VhostMessage::node_id() const {
+  // @@protoc_insertion_point(field_get:top.elect.protobuf.VhostMessage.node_id)
   return node_id_.GetNoArena();
 }
-inline void PbftMessage::set_node_id(const ::std::string& value) {
+inline void VhostMessage::set_node_id(const ::std::string& value) {
   set_has_node_id();
   node_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftMessage.node_id)
+  // @@protoc_insertion_point(field_set:top.elect.protobuf.VhostMessage.node_id)
 }
 #if LANG_CXX11
-inline void PbftMessage::set_node_id(::std::string&& value) {
+inline void VhostMessage::set_node_id(::std::string&& value) {
   set_has_node_id();
   node_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.PbftMessage.node_id)
+  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.VhostMessage.node_id)
 }
 #endif
-inline void PbftMessage::set_node_id(const char* value) {
+inline void VhostMessage::set_node_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   set_has_node_id();
   node_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.PbftMessage.node_id)
+  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.VhostMessage.node_id)
 }
-inline void PbftMessage::set_node_id(const void* value, size_t size) {
+inline void VhostMessage::set_node_id(const void* value, size_t size) {
   set_has_node_id();
   node_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.PbftMessage.node_id)
+  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.VhostMessage.node_id)
 }
-inline ::std::string* PbftMessage::mutable_node_id() {
+inline ::std::string* VhostMessage::mutable_node_id() {
   set_has_node_id();
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.PbftMessage.node_id)
+  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.VhostMessage.node_id)
   return node_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* PbftMessage::release_node_id() {
-  // @@protoc_insertion_point(field_release:top.elect.protobuf.PbftMessage.node_id)
+inline ::std::string* VhostMessage::release_node_id() {
+  // @@protoc_insertion_point(field_release:top.elect.protobuf.VhostMessage.node_id)
   if (!has_node_id()) {
     return NULL;
   }
   clear_has_node_id();
   return node_id_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void PbftMessage::set_allocated_node_id(::std::string* node_id) {
+inline void VhostMessage::set_allocated_node_id(::std::string* node_id) {
   if (node_id != NULL) {
     set_has_node_id();
   } else {
     clear_has_node_id();
   }
   node_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), node_id);
-  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.PbftMessage.node_id)
-}
-
-// -------------------------------------------------------------------
-
-// ConsensusMessage
-
-// optional uint32 message_type = 1;
-inline bool ConsensusMessage::has_message_type() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void ConsensusMessage::set_has_message_type() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void ConsensusMessage::clear_has_message_type() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void ConsensusMessage::clear_message_type() {
-  message_type_ = 0u;
-  clear_has_message_type();
-}
-inline ::google::protobuf::uint32 ConsensusMessage::message_type() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.ConsensusMessage.message_type)
-  return message_type_;
-}
-inline void ConsensusMessage::set_message_type(::google::protobuf::uint32 value) {
-  set_has_message_type();
-  message_type_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.ConsensusMessage.message_type)
-}
-
-// optional bytes data = 2;
-inline bool ConsensusMessage::has_data() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void ConsensusMessage::set_has_data() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void ConsensusMessage::clear_has_data() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void ConsensusMessage::clear_data() {
-  data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_data();
-}
-inline const ::std::string& ConsensusMessage::data() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.ConsensusMessage.data)
-  return data_.GetNoArena();
-}
-inline void ConsensusMessage::set_data(const ::std::string& value) {
-  set_has_data();
-  data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.ConsensusMessage.data)
-}
-#if LANG_CXX11
-inline void ConsensusMessage::set_data(::std::string&& value) {
-  set_has_data();
-  data_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.ConsensusMessage.data)
-}
-#endif
-inline void ConsensusMessage::set_data(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_data();
-  data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.ConsensusMessage.data)
-}
-inline void ConsensusMessage::set_data(const void* value, size_t size) {
-  set_has_data();
-  data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.ConsensusMessage.data)
-}
-inline ::std::string* ConsensusMessage::mutable_data() {
-  set_has_data();
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.ConsensusMessage.data)
-  return data_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* ConsensusMessage::release_data() {
-  // @@protoc_insertion_point(field_release:top.elect.protobuf.ConsensusMessage.data)
-  if (!has_data()) {
-    return NULL;
-  }
-  clear_has_data();
-  return data_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void ConsensusMessage::set_allocated_data(::std::string* data) {
-  if (data != NULL) {
-    set_has_data();
-  } else {
-    clear_has_data();
-  }
-  data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
-  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.ConsensusMessage.data)
-}
-
-// optional uint32 pbft_type = 3;
-inline bool ConsensusMessage::has_pbft_type() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void ConsensusMessage::set_has_pbft_type() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void ConsensusMessage::clear_has_pbft_type() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void ConsensusMessage::clear_pbft_type() {
-  pbft_type_ = 0u;
-  clear_has_pbft_type();
-}
-inline ::google::protobuf::uint32 ConsensusMessage::pbft_type() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.ConsensusMessage.pbft_type)
-  return pbft_type_;
-}
-inline void ConsensusMessage::set_pbft_type(::google::protobuf::uint32 value) {
-  set_has_pbft_type();
-  pbft_type_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.ConsensusMessage.pbft_type)
-}
-
-// optional uint32 ec_version = 4;
-inline bool ConsensusMessage::has_ec_version() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void ConsensusMessage::set_has_ec_version() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void ConsensusMessage::clear_has_ec_version() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void ConsensusMessage::clear_ec_version() {
-  ec_version_ = 0u;
-  clear_has_ec_version();
-}
-inline ::google::protobuf::uint32 ConsensusMessage::ec_version() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.ConsensusMessage.ec_version)
-  return ec_version_;
-}
-inline void ConsensusMessage::set_ec_version(::google::protobuf::uint32 value) {
-  set_has_ec_version();
-  ec_version_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.ConsensusMessage.ec_version)
-}
-
-// -------------------------------------------------------------------
-
-// PbftItem
-
-// optional uint32 type = 1;
-inline bool PbftItem::has_type() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void PbftItem::set_has_type() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void PbftItem::clear_has_type() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void PbftItem::clear_type() {
-  type_ = 0u;
-  clear_has_type();
-}
-inline ::google::protobuf::uint32 PbftItem::type() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.PbftItem.type)
-  return type_;
-}
-inline void PbftItem::set_type(::google::protobuf::uint32 value) {
-  set_has_type();
-  type_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftItem.type)
-}
-
-// repeated bytes datas = 2;
-inline int PbftItem::datas_size() const {
-  return datas_.size();
-}
-inline void PbftItem::clear_datas() {
-  datas_.Clear();
-}
-inline const ::std::string& PbftItem::datas(int index) const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.PbftItem.datas)
-  return datas_.Get(index);
-}
-inline ::std::string* PbftItem::mutable_datas(int index) {
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.PbftItem.datas)
-  return datas_.Mutable(index);
-}
-inline void PbftItem::set_datas(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftItem.datas)
-  datas_.Mutable(index)->assign(value);
-}
-#if LANG_CXX11
-inline void PbftItem::set_datas(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.PbftItem.datas)
-  datas_.Mutable(index)->assign(std::move(value));
-}
-#endif
-inline void PbftItem::set_datas(int index, const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  datas_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.PbftItem.datas)
-}
-inline void PbftItem::set_datas(int index, const void* value, size_t size) {
-  datas_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.PbftItem.datas)
-}
-inline ::std::string* PbftItem::add_datas() {
-  // @@protoc_insertion_point(field_add_mutable:top.elect.protobuf.PbftItem.datas)
-  return datas_.Add();
-}
-inline void PbftItem::add_datas(const ::std::string& value) {
-  datas_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:top.elect.protobuf.PbftItem.datas)
-}
-#if LANG_CXX11
-inline void PbftItem::add_datas(::std::string&& value) {
-  datas_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:top.elect.protobuf.PbftItem.datas)
-}
-#endif
-inline void PbftItem::add_datas(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  datas_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:top.elect.protobuf.PbftItem.datas)
-}
-inline void PbftItem::add_datas(const void* value, size_t size) {
-  datas_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:top.elect.protobuf.PbftItem.datas)
-}
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-PbftItem::datas() const {
-  // @@protoc_insertion_point(field_list:top.elect.protobuf.PbftItem.datas)
-  return datas_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-PbftItem::mutable_datas() {
-  // @@protoc_insertion_point(field_mutable_list:top.elect.protobuf.PbftItem.datas)
-  return &datas_;
-}
-
-// -------------------------------------------------------------------
-
-// BlockInfo
-
-// optional bytes prev_hash = 1;
-inline bool BlockInfo::has_prev_hash() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void BlockInfo::set_has_prev_hash() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void BlockInfo::clear_has_prev_hash() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void BlockInfo::clear_prev_hash() {
-  prev_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_prev_hash();
-}
-inline const ::std::string& BlockInfo::prev_hash() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.BlockInfo.prev_hash)
-  return prev_hash_.GetNoArena();
-}
-inline void BlockInfo::set_prev_hash(const ::std::string& value) {
-  set_has_prev_hash();
-  prev_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.BlockInfo.prev_hash)
-}
-#if LANG_CXX11
-inline void BlockInfo::set_prev_hash(::std::string&& value) {
-  set_has_prev_hash();
-  prev_hash_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.BlockInfo.prev_hash)
-}
-#endif
-inline void BlockInfo::set_prev_hash(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_prev_hash();
-  prev_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.BlockInfo.prev_hash)
-}
-inline void BlockInfo::set_prev_hash(const void* value, size_t size) {
-  set_has_prev_hash();
-  prev_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.BlockInfo.prev_hash)
-}
-inline ::std::string* BlockInfo::mutable_prev_hash() {
-  set_has_prev_hash();
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.BlockInfo.prev_hash)
-  return prev_hash_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* BlockInfo::release_prev_hash() {
-  // @@protoc_insertion_point(field_release:top.elect.protobuf.BlockInfo.prev_hash)
-  if (!has_prev_hash()) {
-    return NULL;
-  }
-  clear_has_prev_hash();
-  return prev_hash_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void BlockInfo::set_allocated_prev_hash(::std::string* prev_hash) {
-  if (prev_hash != NULL) {
-    set_has_prev_hash();
-  } else {
-    clear_has_prev_hash();
-  }
-  prev_hash_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), prev_hash);
-  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.BlockInfo.prev_hash)
-}
-
-// repeated .top.elect.protobuf.PbftItem pbfts = 2;
-inline int BlockInfo::pbfts_size() const {
-  return pbfts_.size();
-}
-inline void BlockInfo::clear_pbfts() {
-  pbfts_.Clear();
-}
-inline ::top::elect::protobuf::PbftItem* BlockInfo::mutable_pbfts(int index) {
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.BlockInfo.pbfts)
-  return pbfts_.Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField< ::top::elect::protobuf::PbftItem >*
-BlockInfo::mutable_pbfts() {
-  // @@protoc_insertion_point(field_mutable_list:top.elect.protobuf.BlockInfo.pbfts)
-  return &pbfts_;
-}
-inline const ::top::elect::protobuf::PbftItem& BlockInfo::pbfts(int index) const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.BlockInfo.pbfts)
-  return pbfts_.Get(index);
-}
-inline ::top::elect::protobuf::PbftItem* BlockInfo::add_pbfts() {
-  // @@protoc_insertion_point(field_add:top.elect.protobuf.BlockInfo.pbfts)
-  return pbfts_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::top::elect::protobuf::PbftItem >&
-BlockInfo::pbfts() const {
-  // @@protoc_insertion_point(field_list:top.elect.protobuf.BlockInfo.pbfts)
-  return pbfts_;
-}
-
-// optional uint64 rand = 3;
-inline bool BlockInfo::has_rand() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void BlockInfo::set_has_rand() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void BlockInfo::clear_has_rand() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void BlockInfo::clear_rand() {
-  rand_ = GOOGLE_ULONGLONG(0);
-  clear_has_rand();
-}
-inline ::google::protobuf::uint64 BlockInfo::rand() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.BlockInfo.rand)
-  return rand_;
-}
-inline void BlockInfo::set_rand(::google::protobuf::uint64 value) {
-  set_has_rand();
-  rand_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.BlockInfo.rand)
-}
-
-// optional uint64 timestamp = 4;
-inline bool BlockInfo::has_timestamp() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void BlockInfo::set_has_timestamp() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void BlockInfo::clear_has_timestamp() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void BlockInfo::clear_timestamp() {
-  timestamp_ = GOOGLE_ULONGLONG(0);
-  clear_has_timestamp();
-}
-inline ::google::protobuf::uint64 BlockInfo::timestamp() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.BlockInfo.timestamp)
-  return timestamp_;
-}
-inline void BlockInfo::set_timestamp(::google::protobuf::uint64 value) {
-  set_has_timestamp();
-  timestamp_ = value;
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.BlockInfo.timestamp)
-}
-
-// optional bytes block_hash = 5;
-inline bool BlockInfo::has_block_hash() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void BlockInfo::set_has_block_hash() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void BlockInfo::clear_has_block_hash() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void BlockInfo::clear_block_hash() {
-  block_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_block_hash();
-}
-inline const ::std::string& BlockInfo::block_hash() const {
-  // @@protoc_insertion_point(field_get:top.elect.protobuf.BlockInfo.block_hash)
-  return block_hash_.GetNoArena();
-}
-inline void BlockInfo::set_block_hash(const ::std::string& value) {
-  set_has_block_hash();
-  block_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.elect.protobuf.BlockInfo.block_hash)
-}
-#if LANG_CXX11
-inline void BlockInfo::set_block_hash(::std::string&& value) {
-  set_has_block_hash();
-  block_hash_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.elect.protobuf.BlockInfo.block_hash)
-}
-#endif
-inline void BlockInfo::set_block_hash(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_block_hash();
-  block_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.elect.protobuf.BlockInfo.block_hash)
-}
-inline void BlockInfo::set_block_hash(const void* value, size_t size) {
-  set_has_block_hash();
-  block_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.elect.protobuf.BlockInfo.block_hash)
-}
-inline ::std::string* BlockInfo::mutable_block_hash() {
-  set_has_block_hash();
-  // @@protoc_insertion_point(field_mutable:top.elect.protobuf.BlockInfo.block_hash)
-  return block_hash_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* BlockInfo::release_block_hash() {
-  // @@protoc_insertion_point(field_release:top.elect.protobuf.BlockInfo.block_hash)
-  if (!has_block_hash()) {
-    return NULL;
-  }
-  clear_has_block_hash();
-  return block_hash_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void BlockInfo::set_allocated_block_hash(::std::string* block_hash) {
-  if (block_hash != NULL) {
-    set_has_block_hash();
-  } else {
-    clear_has_block_hash();
-  }
-  block_hash_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), block_hash);
-  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.BlockInfo.block_hash)
+  // @@protoc_insertion_point(field_set_allocated:top.elect.protobuf.VhostMessage.node_id)
 }
 
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
-// -------------------------------------------------------------------
-
-// -------------------------------------------------------------------
-
 
 // @@protoc_insertion_point(namespace_scope)
 

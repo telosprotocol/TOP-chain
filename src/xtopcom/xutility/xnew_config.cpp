@@ -121,7 +121,7 @@ void xconfig::load_free_node_config() {
     m_elect_cycle = 30;
     m_log_path = "/tmp/xtop.log";
     m_log_level = 0;
-    m_db_path = "/usr/local/topchain/db";
+    m_db_path = "/usr/local/topchain/" + DB_PATH;
     ::printf("load free node config\n");
 
     load_shard_info_from_config();

@@ -24,13 +24,15 @@ class xresources : public xresources_face {
 public:
     xresources(const std::string & account,
                const xobject_ptr_t<base::xworkerpool_t> & pwork,
+               const xobject_ptr_t<base::xworkerpool_t> & xbft_pwork,
                const xobject_ptr_t<base::xvcertauth_t> & auth,
-               const xobject_ptr_t<base::xvblockstore_t> & blockstore,
+               const observer_ptr<base::xvblockstore_t> & blockstore,
                const std::shared_ptr<xnetwork_proxy_face> & network,
                const std::shared_ptr<xleader_election_face> & elect_face,
                observer_ptr<time::xchain_time_face_t> const & tx_timer,
                observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
-               observer_ptr<mbus::xmessage_bus_face_t> const & mb);
+               observer_ptr<mbus::xmessage_bus_face_t> const & mb,
+               const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool);
     virtual ~xresources();
 
 public:
@@ -38,6 +40,8 @@ public:
     virtual base::xvcertauth_t * get_certauth();
     // work pool
     virtual base::xworkerpool_t * get_workpool();
+    // work pool
+    virtual base::xworkerpool_t * get_xbft_workpool();
     // network face
     virtual xnetwork_proxy_face * get_network();
     // block store
@@ -51,17 +55,20 @@ public:
     // node account
     virtual const std::string & get_account();
     virtual mbus::xmessage_bus_face_t * get_bus();
+    virtual xtxpool_v2::xtxpool_face_t * get_txpool();
 
 private:
     xobject_ptr_t<base::xworkerpool_t> m_worker_pool;
+    xobject_ptr_t<base::xworkerpool_t> m_xbft_worker_pool;
     std::shared_ptr<xnetwork_proxy_face> m_network;
     xobject_ptr_t<base::xvcertauth_t> m_certauth;
-    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    observer_ptr<base::xvblockstore_t> m_blockstore;
     std::shared_ptr<xleader_election_face> m_election;
     std::string m_account;
     observer_ptr<time::xchain_time_face_t> m_timer;
     observer_ptr<election::cache::xdata_accessor_face_t> m_accessor;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{};
+    observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool{};
 };
 
 // consensuss parameter

@@ -7,7 +7,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #include "xcommon/xnode_id.h"
-#include "xelect_common/proto/elect_mock.pb.h"
 #include "xnetwork/xnetwork_driver_face.h"
 #include "xvnetwork/xbasic_vhost.h"
 #include "xvnetwork/xmessage.h"
@@ -34,6 +33,7 @@ private:
 
     constexpr static std::size_t max_message_queue_size{100000};
     threading::xthreadsafe_queue<xbyte_buffer_t, std::vector<xbyte_buffer_t>> m_message_queue{max_message_queue_size};
+    
     std::unique_ptr<xmessage_filter_manager_face_t> m_filter_manager;
 
 #if defined DEBUG
@@ -88,13 +88,13 @@ public:
     void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override;
     void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override;
 
+    void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override;
+    void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override;
+
 private:
-    void on_network_data_ready(common::xnode_id_t const & node_id, xbyte_buffer_t const & bytes);
+    void on_network_data_ready(common::xaccount_address_t const & account_address, xbyte_buffer_t const & bytes);
 
     void do_handle_network_data();
-
-    // xvnetwork_message_t
-    // on_rumor_ready(xvnode_address_t const & src, xvnode_address_t const & dst, xmessage_t const & rumor_msg);
 };
 using xvhost_t = xtop_vhost;
 

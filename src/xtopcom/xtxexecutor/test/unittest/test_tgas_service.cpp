@@ -270,7 +270,7 @@ TEST_F(test_tgas_service, transfer_no_tgas) {
 }
 // TODO(jimmy)
 TEST_F(test_tgas_service, DISABLED_TOP_1535) {
-    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance) - 1);
+    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset) - 1);
     int32_t mock_used_tgas{800};
     m_source_context->string_set(XPROPERTY_USED_TGAS_KEY, std::to_string(mock_used_tgas), true);
 
@@ -513,11 +513,11 @@ TEST_F(test_tgas_service, transfer_use_deposit) {
 }
 
 TEST_F(test_tgas_service, gift_tgas) {
-    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance) - 1);
+    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset) - 1);
     auto tgas = m_source_context->get_blockchain()->get_free_tgas();
     EXPECT_EQ(tgas, 0);
 
-    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance));
+    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset));
     tgas = m_source_context->get_blockchain()->get_free_tgas();
     EXPECT_EQ(tgas, XGET_ONCHAIN_GOVERNANCE_PARAMETER(free_gas));
 }
@@ -533,7 +533,7 @@ TEST_F(test_tgas_service, DISABLED_deploysc_no_pledge_tgas) {
     target_context->set_context_para(1, "111", 1, 1);  // set demo para
 
     // set account with no free tgas
-    source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance) - 1);
+    source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset) - 1);
 
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
     data::xproperty_asset asset_out{100};
@@ -604,7 +604,7 @@ TEST_F(test_tgas_service, DISABLED_deploysc_pledge_tgas) {
     target_context->set_context_para(1, "111", 1, 1);  // set demo para
 
     // set account with no free tgas
-    source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance) - ASSET_TOP(2));
+    source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset) - ASSET_TOP(2));
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
     data::xproperty_asset asset_out{100};
     data::xaction_asset_out action_asset_out;
@@ -681,7 +681,7 @@ TEST_F(test_tgas_service, DISABLED_deploysc_use_tgas_deposit) {
     target_context->set_context_para(1, "111", 1, 1);  // set demo para
 
     // set account with no free tgas
-    source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance) - ASSET_TOP(2));
+    source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset) - ASSET_TOP(2));
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
     data::xproperty_asset asset_out{100};
     data::xaction_asset_out action_asset_out;

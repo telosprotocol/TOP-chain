@@ -18,6 +18,7 @@
 #include "xsync/xsync_message.h"
 #include "xsync/xgossip_message.h"
 #include "xsync/xsync_store.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -28,17 +29,13 @@ enum enum_walk_type {
 
 class xgossip_behind_info_t {
 public:
-    xgossip_behind_info_t(uint64_t _local_height, uint64_t _local_view_id, uint64_t _peer_height, uint64_t _peer_view_id):
+    xgossip_behind_info_t(uint64_t _local_height, uint64_t _peer_height):
     local_height(_local_height),
-    local_view_id(_local_view_id),
-    peer_height(_peer_height),
-    peer_view_id(_peer_view_id) {
+    peer_height(_peer_height) {
     }
 
     uint64_t local_height{0};
-    uint64_t local_view_id{0};
     uint64_t peer_height{0};
-    uint64_t peer_view_id{0};
 };
 
 class xsync_gossip_t {
@@ -64,7 +61,7 @@ protected:
     void send_gossip_to_target(const vnetwork::xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const vnetwork::xvnode_address_t &target_addr);
     void send_frozen_gossip(const vnetwork::xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers);
     void send_frozen_gossip_to_target(const vnetwork::xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const vnetwork::xvnode_address_t &target_addr);
-    void update_behind(const std::string &address, uint64_t local_height, uint64_t local_view_id, uint64_t peer_height, uint64_t peer_view_id);
+    void update_behind(const std::string &address, uint64_t local_height, uint64_t peer_height);
     void dump_behind();
     void update_behind_role();
 
@@ -82,6 +79,7 @@ private:
     uint32_t m_behind_dump_count{0};
     std::mutex m_lock;
     std::map<std::string, xgossip_behind_info_t> m_chain_behind_info;
+    xsync_time_rejecter_t m_time_rejecter{900};
 };
 
 using xsync_gossip_ptr_t = std::shared_ptr<xsync_gossip_t>;

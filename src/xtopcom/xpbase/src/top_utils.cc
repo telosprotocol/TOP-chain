@@ -1,9 +1,6 @@
-//
-//  top_utils.cc
-//
-//  Created by @author on 01/15/2019.
-//  Copyright (c) 2017-2019 Telos Foundation & contributors
-//
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xpbase/base/top_utils.h"
 
@@ -36,9 +33,7 @@
 namespace top {
 
 std::shared_ptr<base::KadmliaKey> global_xid;
-uint32_t global_platform_type;
 std::string global_node_id("");
-std::string global_node_id_hash("");
 std::string global_node_signkey("");
 
 using byte = unsigned char;
@@ -68,21 +63,6 @@ uint32_t& rng_seed() {
 }
 
 std::string RandomString(size_t size) { return GetRandomString<std::string>(size); }
-
-std::string RandomAscString(size_t size) {
-    std::lock_guard<std::mutex> lock(random_number_generator_mutex());
-    static const char alphanum[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
-
-    std::string random_string(size, 0);
-    for (size_t i = 0; i < size; ++i) {
-        char s = alphanum[rand() % (sizeof(alphanum) - 1)];
-        random_string[i] = s;
-    }
-    return random_string;
-}
 
 std::mt19937& random_number_generator() {
     static std::mt19937 random_number_generator(rng_seed());
@@ -311,15 +291,6 @@ void TrimString(std::string& in_str) {
     in_str.erase(in_str.find_last_not_of(" ") + 1);
 }
 
-bool IsNum(const std::string& s) {
-    try {
-        check_cast<long double>(s.c_str());
-    } catch (CheckCastException& ex) {
-        return false;
-    }
-    return true;
-}
-
 void SleepUs(uint64_t time_us) {
     std::this_thread::sleep_for(std::chrono::microseconds(time_us));
 }
@@ -327,87 +298,13 @@ void SleepUs(uint64_t time_us) {
 void SleepMs(uint64_t time_ms) {
     std::this_thread::sleep_for(std::chrono::milliseconds(time_ms));
 }
-
-bool IsBigEnd() {
-    union {
-        char c[4];
-        unsigned long mylong;
-    } endian_test = { { 'l', '?', '?', 'b' } };
-    #define ENDIANNESS ((char)endian_test.mylong)
-
-    return (ENDIANNESS == 'b'); /* big endian */
+std::string DecodePrivateString(const std::string & pri_key)
+{
+    constexpr int HEX_PRI_KEY_LEN = 64;
+    if (pri_key.size() != HEX_PRI_KEY_LEN)
+        return Base64Decode(pri_key);
+    else
+        return top::HexDecode(pri_key);
 }
-
-bool IsSmallEnd() {
-    union {
-        char c[4];
-        unsigned long mylong;
-    } endian_test = { { 'l', '?', '?', 'b' } };
-    #define ENDIANNESS ((char)endian_test.mylong)
-
-    return (ENDIANNESS == 'l'); /* little endian */
-}
-
-uint32_t StringHash(const std::string& str) {
-    static const uint32_t kSeed = 3294947218;
-    uint32_t hash = 0;
-    for (uint32_t i = 0; i < str.size(); ++i) {
-        hash = hash * kSeed + (uint32_t)(str[i]);
-    }
-
-    return hash;
-}
-
-std::string GetGlobalXidWithNodeId(const std::string& node_id) {
-    // fix compile error in xcode
-    return "";
-}
-
-union Sha128Data {
-    Sha128Data() {
-        memset(c_str, 0, sizeof(c_str));
-    }
-
-    struct {
-        uint64_t h;
-        uint64_t l;
-    } data128;
-
-    char c_str[16];
-};
-
-union Sha256Data {
-    Sha256Data() {
-        memset(c_str, 0, sizeof(c_str));
-    }
-
-    struct {
-        uint64_t place_hold1;
-        uint64_t place_hold2;
-        uint64_t place_hold3;
-        uint64_t place_hold4;
-    } data256;
-
-    char c_str[32];
-};
-
-
-std::string GetStringSha128(const std::string& str) {
-    Sha128Data sha128;
-    sha128.data128.h = XXH64(str.c_str(), str.size(), 1234567890u);
-    sha128.data128.l = XXH64(str.c_str(), str.size(), 9876543210u);
-    return std::string((char*)(sha128.c_str), sizeof(sha128.c_str));  // NOLINT
-}
-
-std::string GetStringSha256(const std::string& str) {
-    Sha256Data sha256;
-    sha256.data256.place_hold1 = XXH64(str.c_str(), str.size(), 1234567890u);
-    sha256.data256.place_hold2 = XXH64(str.c_str(), str.size(), 3456789012u);
-    sha256.data256.place_hold3 = XXH64(str.c_str(), str.size(), 5678901234u);
-    sha256.data256.place_hold4 = XXH64(str.c_str(), str.size(), 7890123456u);
-    return std::string((char*)(sha256.c_str), sizeof(sha256.c_str));  // NOLINT
-}
-
-
 
 }  // namespace top

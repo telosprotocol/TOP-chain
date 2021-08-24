@@ -36,8 +36,6 @@ namespace top {
             switch (trx_ptr->get_tx_type())
             {
             case data::xtransaction_type_transfer:
-            case data::xtransaction_type_create_sub_account:
-            case data::xtransaction_type_create_contract_account:
                 is_limit_tx = true;
                 break;
 
@@ -61,7 +59,7 @@ namespace top {
             }
 
             if (is_limit_tx && !include_in_whitelist(trx_ptr->get_source_addr())) {
-                xdbg("[global_trace][check_whitelist_limit][fail]whitelist limit, tx:source:%s target:%s hash:%s",
+                xwarn("[global_trace][check_whitelist_limit][fail]whitelist limit, tx:source:%s target:%s hash:%s",
                     trx_ptr->get_source_addr().c_str(),
                     trx_ptr->get_target_addr().c_str(),
                     trx_ptr->get_digest_hex_str().c_str());

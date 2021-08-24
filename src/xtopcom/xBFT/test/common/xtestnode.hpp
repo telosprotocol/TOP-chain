@@ -47,7 +47,7 @@ public:
 
     bool                  start_consensus(base::xvblock_t *proposal_block);
             
-    base::xvblock_t *     create_proposal_block(const std::string &account,const std::string &block_input, const std::string &block_output);
+    base::xvblock_t *     create_proposal_block(const std::string &account,const std::string &block_input, const std::string &block_output,const uint64_t new_viewid);
 public:
     virtual int verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child) override;
 
@@ -63,6 +63,8 @@ public:
 protected: //guanrentee be called  at object'thread,triggered by push_event_up or push_event_down
     //note: to return false may call parent'push_event_up,or stop further routing when return true
     virtual bool    on_event_up(const base::xvevent_t & event,xionode_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;
+    
+    bool    fire_proposal();
     
 private:
     uint32_t                                       m_node_types;

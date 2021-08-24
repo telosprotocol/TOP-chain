@@ -60,22 +60,22 @@ struct convert<top::data::election::xelection_group_result_t> final
             }
 
             case xelection_group_result_election_committee_version_index: {
-                result.election_committee_version(array[xelection_group_result_election_committee_version_index].as<top::common::xversion_t>());
+                result.election_committee_version(array[xelection_group_result_election_committee_version_index].as<top::common::xelection_round_t>());
                 XATTRIBUTE_FALLTHROUGH;
             }
 
             case xelection_group_result_cluster_version_index: {
-                result.cluster_version(array[xelection_group_result_cluster_version_index].as<top::common::xversion_t>());
+                result.cluster_version(array[xelection_group_result_cluster_version_index].as<top::common::xelection_round_t>());
                 XATTRIBUTE_FALLTHROUGH;
             }
 
             case xelection_group_result_associated_group_version_index: {
-                result.associated_group_version(array[xelection_group_result_associated_group_version_index].as<top::common::xversion_t>());
+                result.associated_group_version(array[xelection_group_result_associated_group_version_index].as<top::common::xelection_round_t>());
                 XATTRIBUTE_FALLTHROUGH;
             }
 
             case xelection_group_result_group_version_index: {
-                result.group_version(array[xelection_group_result_group_version_index].as<top::common::xversion_t>());
+                result.group_version(array[xelection_group_result_group_version_index].as<top::common::xelection_round_t>());
                 XATTRIBUTE_FALLTHROUGH;
             }
 

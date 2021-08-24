@@ -85,9 +85,6 @@ public:
             return value;
         }
         xwarn("[config register] %s read fail, use default value", key.c_str());
-#if defined XENABLE_ASSERTION_FAILURE
-        assert(false);
-#endif
         return default_value;
     }
 
@@ -98,9 +95,6 @@ public:
             return value;
         }
         xwarn("[config register] %s read fail, use default value", key.c_str());
-#if defined XENABLE_ASSERTION_FAILURE
-        assert(false);
-#endif
         return default_value;
     }
 
@@ -130,13 +124,13 @@ public:
 
     void update_params(const std::map<std::string, std::string>& map);
     void add_delete_params(const std::map<std::string, std::string>& content_map, bool add = true); // default add param
+    void update_cache_and_persist(const std::map<std::string, std::string>& filterd_map);
 
     static xconfig_register_t& get_instance();
 
 private:
     void filter_changes(const std::map<std::string, std::string>& map,
             std::map<std::string, std::string>& filterd_map);
-    void update_cache_and_persist(const std::map<std::string, std::string>& filterd_map);
     bool is_param_changed(const std::string& key, const std::string& value);
 private:
     std::mutex m_listener_lock {};
@@ -150,12 +144,6 @@ private:
 };
 
 static xconfig_register_t& config_register = config::xconfig_register_t::get_instance();
-
-const uint16_t min_vote_lock_days = 30;
-const uint16_t max_vote_lock_days = 570;
-const uint8_t  max_top_vote_rate = 2;
-const float    exp_base = 1.04; // 1.039999962
-double   get_top_vote_rate(uint16_t);
 
 NS_END2
 
