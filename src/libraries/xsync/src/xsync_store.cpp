@@ -31,17 +31,17 @@ void xsync_store_t::remove_listener(int major_type, uint32_t id) {
     mbus->remove_listener(major_type, id);
 }
 
-base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_connected_block(const std::string & account) {
-    base::xvaccount_t _vaddress(account);
+// base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_connected_block(const std::string & account) {
+//     base::xvaccount_t _vaddress(account);
     
-    auto _block = m_blockstore->get_latest_connected_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_connected_block);
-    if (false == m_blockstore->load_block_output(_vaddress, _block.get())
-        || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
-        xerror("xsync_store_t::get_latest_connected_block fail-load block input or output. block=%s", _block->dump().c_str());
-        return nullptr;
-    }
-    return _block;
-}
+//     auto _block = m_blockstore->get_latest_connected_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_connected_block);
+//     if (false == m_blockstore->load_block_output(_vaddress, _block.get())
+//         || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
+//         xerror("xsync_store_t::get_latest_connected_block fail-load block input or output. block=%s", _block->dump().c_str());
+//         return nullptr;
+//     }
+//     return _block;
+// }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_committed_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
@@ -55,17 +55,17 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_committed_block(const
     return _block;
 }
 
-base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_locked_block(const std::string & account) {
-    base::xvaccount_t _vaddress(account);
+// base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_locked_block(const std::string & account) {
+//     base::xvaccount_t _vaddress(account);
     
-    auto _block = m_blockstore->get_latest_locked_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_locked_block);
-    if (false == m_blockstore->load_block_output(_vaddress, _block.get())
-        || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
-        xerror("xsync_store_t::get_latest_locked_block fail-load block input or output. block=%s", _block->dump().c_str());
-        return nullptr;
-    }
-    return _block;
-}
+//     auto _block = m_blockstore->get_latest_locked_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_locked_block);
+//     if (false == m_blockstore->load_block_output(_vaddress, _block.get())
+//         || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
+//         xerror("xsync_store_t::get_latest_locked_block fail-load block input or output. block=%s", _block->dump().c_str());
+//         return nullptr;
+//     }
+//     return _block;
+// }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_cert_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
@@ -98,10 +98,10 @@ uint64_t xsync_store_t::get_latest_genesis_connected_block_height(const std::str
     return m_blockstore->get_latest_genesis_connected_block_height(_vaddress);    
 }
 
-uint64_t xsync_store_t::get_latest_executed_block_height(const std::string & account) {
-    base::xvaccount_t _vaddress(account);
-    return m_blockstore->get_latest_executed_block_height(_vaddress);    
-}
+// uint64_t xsync_store_t::get_latest_executed_block_height(const std::string & account) {
+//     base::xvaccount_t _vaddress(account);
+//     return m_blockstore->get_latest_executed_block_height(_vaddress);    
+// }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid) {
     XMETRICS_TIME_RECORD("xsync_store_load_block_object");
