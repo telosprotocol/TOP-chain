@@ -25,6 +25,7 @@ enum enum_xtopcom_object_type {
     xdata_type_table_block                  = 9,
     xdata_type_fulltable_block              = 10,
     xdata_type_table_proposal_input         = 11,
+    xdata_type_property_prove               = 12,
 
     xtopcom_object_type_max
 };

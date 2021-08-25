@@ -56,10 +56,10 @@ namespace top
         }
 
         bool xtx_receipt_t::is_valid() const {
-            if (get_tx_subtype() != base::enum_transaction_subtype_send && get_tx_subtype() != base::enum_transaction_subtype_recv) {
-                xerror("xtx_receipt_t::is_valid not send or recv tx");
-                return false;
-            }
+            // if (get_tx_subtype() != base::enum_transaction_subtype_send && get_tx_subtype() != base::enum_transaction_subtype_recv) {
+            //     xerror("xtx_receipt_t::is_valid not send or recv tx");
+            //     return false;
+            // }
 
             if (m_tx_action_prove == nullptr) {
                 xerror("xtx_receipt_t::is_valid prove cert null");
@@ -120,7 +120,6 @@ namespace top
         std::string xtx_receipt_t::get_contract_address() const {
             return xvcontract_t::get_contract_address(m_tx_action.get_contract_uri());
         }
-
 
         //----------------------------------------xtxreceipt_build_t-------------------------------------//
         std::vector<xfull_txreceipt_t> xtxreceipt_build_t::create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block, const std::vector<xvaction_t> & actions) {
@@ -230,6 +229,47 @@ namespace top
             }
             xfull_txreceipt_ptr_t txreceipt_ptr = std::make_shared<xfull_txreceipt_t>(full_txreceipts[0].get_txreceipt() ,full_txreceipts[0].get_tx_org_bin());
             return txreceipt_ptr;
+        }
+
+        xtx_receipt_ptr_t xtxreceipt_build_t::create_table_input_primary_action_receipt(xvblock_t* commit_block, xvblock_t* cert_block) {
+            if (commit_block == nullptr || cert_block == nullptr) {
+                xassert(false);
+                return nullptr;
+            }
+            if ( (cert_block->get_justify_cert_hash() != commit_block->get_input_root_hash())
+                || (commit_block->get_height() + 2 != cert_block->get_height())
+                || (commit_block->get_account() != cert_block->get_account())
+                || (commit_block->get_block_level() != enum_xvblock_level_table && commit_block->get_block_level() != enum_xvblock_level_unit) ) {
+                xassert(false);
+                return nullptr;
+            }
+            // get all leafs firstly for performance
+            std::vector<std::string> all_leafs = xvblockmaker_t::get_input_merkle_leafs(commit_block->get_input());
+
+            auto primary_entity = commit_block->get_input()->get_primary_entity();
+            if (primary_entity == nullptr) {
+                xassert(false);
+                return nullptr;
+            }
+
+            auto & actions = primary_entity->get_actions();
+            if (actions.size() == 0) {
+                xassert(false);
+                return nullptr;
+            }
+
+            auto & action = actions[0];
+            xmerkle_path_256_t hash_path;
+            if (false == xvblockmaker_t::calc_merkle_path(all_leafs, action, hash_path)) {
+                xassert(false);
+                return nullptr;
+            }
+            std::string path_bin = xtx_receipt_t::merkle_path_to_string(hash_path);
+            enum_xprove_cert_type prove_type = commit_block->get_block_level() == enum_xvblock_level_table ? enum_xprove_cert_type_table_justify : enum_xprove_cert_type_unit_justify;
+            xtx_receipt_t* _receipt = new xtx_receipt_t(action, cert_block->get_cert(), path_bin, prove_type);
+            xtx_receipt_ptr_t _receipt_ptr;
+            _receipt_ptr.attach(_receipt);            
+            return _receipt_ptr;
         }
 
     }  // namespace base
