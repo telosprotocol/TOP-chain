@@ -201,14 +201,13 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
 
-    XMETRICS_GAUGE(metrics::xsync_recv_new_block, 1);
-    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
-
     auto ptr = make_object_ptr<xsync_message_push_newblock_t>();
     ptr->serialize_from(stream);
 
     if (ptr->block == nullptr)
         return;
+    
+    XMETRICS_GAUGE(metrics::xsync_recv_new_block, 1);
 
     xblock_ptr_t &block = ptr->block;
 
@@ -302,8 +301,7 @@ void xsync_handler_t::broadcast_newblockhash(uint32_t msg_size,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_broadcast_newblockhash_recv", 1);
-    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
+    XMETRICS_GAUGE(metrics::xsync_broadcast_newblockhash, 1);
 
     auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
     ptr->serialize_from(stream);
@@ -341,9 +339,6 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_blocks_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_blocks_recv", msg_size);
-
     auto ptr = make_object_ptr<xsync_message_blocks_t>();
     ptr->serialize_from(stream);
 
@@ -358,7 +353,7 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
         return;
     }
 
-    XMETRICS_COUNTER_INCREMENT("sync_handler_blocks", count);
+    XMETRICS_GAUGE(metrics::xsync_handler_blocks, count);
 
     xsync_info("xsync_handler receive blocks %" PRIx64 " wait(%ldms) %s count(%u) code(%u) %s",
         msg_hash, get_time()-recv_time, blocks[0]->get_account().c_str(), count, header->code, from_address.to_string().c_str());
@@ -394,10 +389,9 @@ void xsync_handler_t::gossip(uint32_t msg_size, const vnetwork::xvnode_address_t
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_gossip_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_gossip_recv", msg_size);
-
+    
+    XMETRICS_GAUGE(metrics::xsync_recv_gossip, 1);
+    
     auto ptr = make_object_ptr<xsync_message_gossip_t>();
     ptr->serialize_from(stream);
 
@@ -426,9 +420,6 @@ void xsync_handler_t::get_on_demand_blocks(uint32_t msg_size, const vnetwork::xv
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_get_on_demand_blocks_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_on_demand_blocks_recv", msg_size);
-
     auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_t>();
     ptr->serialize_from(stream);
 
@@ -442,16 +433,13 @@ void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_on_demand_blocks_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_on_demand_blocks_recv", msg_size);
-
     auto ptr = make_object_ptr<xsync_message_general_blocks_t>();
     ptr->serialize_from(stream);
 
     std::vector<xblock_ptr_t> &blocks = ptr->blocks;
     if (blocks.size() == 0)
         return;
-
+    XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks, blocks.size());
     m_sync_on_demand->handle_blocks_response(blocks, from_address, network_self);
 }
 
@@ -461,9 +449,8 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_broadcast_chain_state_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_broadcast_chain_state_recv", msg_size);
+    
+    XMETRICS_GAUGE(metrics::xsync_recv_broadcast_chain_state, 1);
 
     auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
@@ -533,9 +520,7 @@ void xsync_handler_t::response_chain_state(uint32_t msg_size, const vnetwork::xv
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_response_chain_state_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_response_chain_state_recv", msg_size);
-
+    XMETRICS_GAUGE(metrics::xsync_response_chain_state_recv, 1);
     auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
 
@@ -553,9 +538,6 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_cross_cluster_chain_state_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_cross_cluster_chain_state_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
@@ -580,7 +562,7 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     if (info_list.size() > 500) {
         return;
     }
-
+    XMETRICS_GAUGE(metrics::xsync_cross_cluster_chain_state, 1);
     m_cross_cluster_chain_state->handle_message(network_self, from_address, info_list);
 }
 
@@ -591,9 +573,6 @@ void xsync_handler_t::get_blocks_by_hashes(uint32_t msg_size,
         base::xstream_t &stream,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_get_blocks_by_hashes_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_blocks_by_hashes_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_get_blocks_by_hashes_t>();
     ptr->serialize_from(stream);
@@ -623,6 +602,7 @@ void xsync_handler_t::get_blocks_by_hashes(uint32_t msg_size,
     }
 
     if (!vector_blocks.empty()) {
+        XMETRICS_GAUGE(metrics::xsync_get_blocks_by_hashes, vector_blocks.size());
         m_sync_sender->send_blocks_by_hashes(vector_blocks, network_self, from_address);
     }
 }
@@ -634,9 +614,6 @@ void xsync_handler_t::blocks_by_hashes(uint32_t msg_size,
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_blocks_by_hashes_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_blocks_by_hashes_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_blocks_t>();
     ptr->serialize_from(stream);
@@ -652,7 +629,7 @@ void xsync_handler_t::blocks_by_hashes(uint32_t msg_size,
         return;
     }
 
-    XMETRICS_COUNTER_INCREMENT("sync_handler_blocks_by_hashes", count);
+    XMETRICS_GAUGE(metrics::xsync_handler_blocks_by_hashes, count);
 
     xsync_info("xsync_handler receive blocks_by_hashes %" PRIx64 " wait(%ldms) count(%u) code(%u) %s",
         msg_hash, get_time()-recv_time, count, header->code, from_address.to_string().c_str());
@@ -797,7 +774,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
     ptr->serialize_from(stream);
 
-    XMETRICS_COUNTER_INCREMENT("sync_handle_chain_snapshot_request", 1);
+    XMETRICS_GAUGE(metrics::xsync_handle_chain_snapshot_request, 1);
     xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock, false);
@@ -836,7 +813,7 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
 
-    XMETRICS_COUNTER_INCREMENT("sync_handler_chain_snapshot_reponse", 1);
+    XMETRICS_GAUGE(metrics::xsync_handle_chain_snapshot_response, 1);
 
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
     m_downloader->push_event(e);
@@ -853,7 +830,7 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_request(
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
     ptr->serialize_from(stream);
 
-    XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
+    XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_request, 1);
     xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
     m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
@@ -872,8 +849,7 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size,
     xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
 
-    XMETRICS_COUNTER_INCREMENT("sync_handler_ondemand_chain_snapshot_reponse", 1);
-
+    XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_response, 1);
     m_sync_on_demand->handle_chain_snapshot(*(ptr.get()), from_address, network_self);
 }
 
@@ -884,8 +860,8 @@ void xsync_handler_t::get_on_demand_by_hash_blocks(uint32_t msg_size, const vnet
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_get_on_demand_by_hash_blocks_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_on_demand_by_hash_blocks_recv", msg_size);
+    // XMETRICS_COUNTER_INCREMENT("xsync_pkgs_get_on_demand_by_hash_blocks_recv", 1);
+    // XMETRICS_COUNTER_INCREMENT("sync_bytes_get_on_demand_by_hash_blocks_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_get_on_demand_by_hash_blocks_t>();
     ptr->serialize_from(stream);
@@ -900,8 +876,8 @@ void xsync_handler_t::on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_on_demand_by_hash_blocks_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_on_demand_by_hash_blocks_recv", msg_size);
+    // XMETRICS_COUNTER_INCREMENT("sync_pkgs_on_demand_by_hash_blocks_recv", 1);
+    // XMETRICS_COUNTER_INCREMENT("sync_bytes_on_demand_by_hash_blocks_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_blocks_t>();
     ptr->serialize_from(stream);
@@ -909,7 +885,7 @@ void xsync_handler_t::on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork
     std::vector<xblock_ptr_t> &blocks = ptr->blocks;
     if (blocks.size() == 0)
         return;
-
+    XMETRICS_GAUGE(metrics::xsync_handle_ondemand_txs_response, blocks.size());
     m_sync_on_demand->handle_blocks_by_hash_response(blocks, from_address, network_self);
 }
 

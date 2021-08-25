@@ -167,7 +167,25 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
     xsync_recv_duplicate_block,
-    xsync_recv_block_size,
+    xsync_on_block_committed_event,
+    xsync_on_behind,
+    xsync_on_chain_snapshot_response,
+    xsync_broadcast_newblockhash,
+    xsync_handler_blocks,
+    xsync_recv_gossip,
+    xsync_recv_on_demand_blocks,
+    xsync_recv_broadcast_chain_state,
+    xsync_recv_response_chain_state,
+    xsync_cross_cluster_chain_state,
+    xsync_get_blocks_by_hashes,
+    xsync_handler_blocks_by_hashes,
+    xsync_handle_chain_snapshot_request,
+    xsync_handle_chain_snapshot_response,
+    xsync_handle_ondemand_chain_snapshot_request,
+    xsync_handle_ondemand_chain_snapshot_response,
+    xsync_handle_ondemand_txs,
+    xsync_handle_ondemand_txs_response,
+    xsync_recv_blocks_response,
 
     // txpool
     txpool_received_self_send_receipt_num,
@@ -188,6 +206,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // blockstore
     blockstore_index_load,
     blockstore_blk_load,
+    blockstore_store_blk,
+    blockstore_store_blk_suc,
 
     // blockstore accessing
     blockstore_access_from_account_context,

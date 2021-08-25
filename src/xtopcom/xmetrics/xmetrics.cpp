@@ -151,7 +151,25 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_recv_new_hash);
         RETURN_METRICS_NAME(xsync_recv_invalid_block);
         RETURN_METRICS_NAME(xsync_recv_duplicate_block);
-        RETURN_METRICS_NAME(xsync_recv_block_size);
+        RETURN_METRICS_NAME(xsync_on_block_committed_event);
+        RETURN_METRICS_NAME(xsync_on_behind);
+        RETURN_METRICS_NAME(xsync_on_chain_snapshot_response);
+        RETURN_METRICS_NAME(xsync_broadcast_newblockhash);
+        RETURN_METRICS_NAME(xsync_handler_blocks);
+        RETURN_METRICS_NAME(xsync_recv_gossip);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_blocks);
+        RETURN_METRICS_NAME(xsync_recv_broadcast_chain_state);
+        RETURN_METRICS_NAME(xsync_recv_response_chain_state);
+        RETURN_METRICS_NAME(xsync_cross_cluster_chain_state);
+        RETURN_METRICS_NAME(xsync_get_blocks_by_hashes);
+        RETURN_METRICS_NAME(xsync_handler_blocks_by_hashes);
+        RETURN_METRICS_NAME(xsync_handle_chain_snapshot_request);
+        RETURN_METRICS_NAME(xsync_handle_chain_snapshot_response);
+        RETURN_METRICS_NAME(xsync_handle_ondemand_chain_snapshot_request);
+        RETURN_METRICS_NAME(xsync_handle_ondemand_chain_snapshot_response);
+        RETURN_METRICS_NAME(xsync_handle_ondemand_txs);
+        RETURN_METRICS_NAME(xsync_handle_ondemand_txs_response);
+        RETURN_METRICS_NAME(xsync_recv_blocks_response);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
@@ -172,6 +190,9 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
         RETURN_METRICS_NAME(blockstore_blk_load);
+        RETURN_METRICS_NAME(blockstore_store_blk);
+        RETURN_METRICS_NAME(blockstore_store_blk_suc);
+
 
         // blockstore accessing
         RETURN_METRICS_NAME(blockstore_access_from_account_context);

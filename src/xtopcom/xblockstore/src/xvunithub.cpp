@@ -7,9 +7,8 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xvunithub.h"
-
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
+#if defined(ENABLE_METRICS)
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 #else
 #define METRICS_TAG(tag, val)
@@ -677,8 +676,10 @@ namespace top
 
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             METRICS_TAG(atag, 1);
+            XMETRICS_GAUGE(metrics::blockstore_store_blk, 1);
             if(store_block(account_obj,block))
             {
+                XMETRICS_GAUGE(metrics::blockstore_store_blk_suc, 1);
                 return true;
             }
             return false;
@@ -716,8 +717,11 @@ namespace top
             {
                 if((it != nullptr) && (it->get_account() == account_obj->get_address()) )
                 {
-                    if(store_block(account_obj,it,atag))
+                    XMETRICS_GAUGE(metrics::blockstore_store_blk, 1);
+                    if(store_block(account_obj,it,atag)) {
                         on_block_stored(it);
+                        XMETRICS_GAUGE(metrics::blockstore_store_blk_suc, 1);
+                    }
                 }
             }
             return  true;

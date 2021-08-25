@@ -174,7 +174,7 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
         xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(),
             blocks.front()->get_height(), blocks.back()->get_height());
     }
-
+    XMETRICS_GAUGE(metrics::xsync_send_on_demand_blocks, blocks.size());
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_blocks, "on_demand_blocks", network_self, to_address);
 }
 
@@ -356,7 +356,7 @@ void xsync_on_demand_t::handle_blocks_by_hash_response(const std::vector<data::x
         xsync_warn("xsync_on_demand_t::handle_blocks_by_hash_response check the source of message failed %s,ret=%d", account.c_str(), ret);
         return;
     }
-
+    XMETRICS_GAUGE(metrics::xsync_recv_blocks_response, blocks.size());
     if (store_blocks(blocks)) {
         on_response_event(account);
     }
@@ -379,6 +379,7 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
     for (uint32_t i = 0; i < xvblocks.size(); i++){
         blocks.push_back(xblock_t::raw_vblock_to_object_ptr(xvblocks[i].get()));
     }
+    XMETRICS_GAUGE(metrics::xsync_handle_ondemand_txs, blocks.size());
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);
 }
 
@@ -415,7 +416,6 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
         block->reset_block_flags();
         //XTODO,here need check hash to connect the prev authorized block,then set enum_xvblock_flag_authenticated
         block->set_block_flag(enum_xvblock_flag_authenticated);
-
         base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
         if (m_sync_store->store_block(vblock)) {
             xsync_info("xsync_on_demand_t::store_blocks succ %s,height=%lu,viewid=%lu,",
