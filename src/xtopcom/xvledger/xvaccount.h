@@ -8,6 +8,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xns_macro.h"
 #include "xbase/xobject.h"
+#include "xbase/xdata.h"
 #include "xbase/xutl.h"
 
 namespace top
@@ -409,5 +410,54 @@ namespace top
             std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
             std::string                 m_account_addr;
         };
+        
+        //meta data of account
+        class xvactmeta_t : public base::xdataobj_t
+        {
+        public:
+            static std::string  get_meta_path(base::xvaccount_t & _account);
+        public:
+            enum {enum_obj_type = base::xdataunit_t::enum_xdata_type_vaccountmeta};
+            xvactmeta_t();
+            xvactmeta_t(const xvactmeta_t & obj);
+            xvactmeta_t & operator = (const xvactmeta_t & obj);
+        protected:
+            virtual ~xvactmeta_t();
+
+        public:
+            virtual int32_t   serialize_to_string(std::string & bin_data) override;
+            virtual int32_t   serialize_from_string(const std::string & bin_data) override;
+            
+            virtual std::string  dump() const override;
+        private:
+            //not safe for multiple threads
+            virtual int32_t      do_write(base::xstream_t & stream) override; //serialize whole object to binary
+            virtual int32_t      do_read(base::xstream_t & stream) override; //serialize from binary and regeneate content
+            
+            //caller respond to cast (void*) to related  interface ptr
+            virtual void*        query_interface(const int32_t _enum_xobject_type_) override;
+        public:
+            static xvactmeta_t* load(const std::string & meta_serialized_data);
+        public:
+            uint64_t  _highest_cert_block_height;    //latest certificated block but not changed to lock/commit status
+            uint64_t  _highest_lock_block_height;    //latest locked block that not allow fork
+            uint64_t  _highest_commit_block_height;  //latest commited block to allow change state of account,like balance.
+            uint64_t  _highest_execute_block_height; //latest executed block that has executed and change state of account
+            uint64_t  _highest_full_block_height;    //latest full-block height for this account
+            uint64_t  _highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
+            std::string _highest_connect_block_hash;
+            std::string _highest_execute_block_hash;
+            //reserved _lowest_genesis_connect_height to trune block
+            uint64_t  _lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
+            uint64_t  _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
+            std::string _highest_genesis_connect_hash;
+            uint64_t _highest_sync_height;           // higest continous block started from highest full table block
+            
+            uint16_t  _reserved_u16;      //reserved for future
+            uint8_t   _block_level;       //set per block 'enum_xvblock_level,each account has unique level
+        private:
+            uint8_t   _meta_spec_version; //add version control for compatible case
+        };
+        
     }//end of namespace of base
 }//end of namespace top

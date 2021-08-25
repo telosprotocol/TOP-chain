@@ -12,6 +12,7 @@
 #include "xvcontractstore.h"
 #include "xvtxstore.h"
 #include "xveventbus.h"
+#include "xvtblconnect.h"
 
 namespace top
 {
@@ -73,6 +74,10 @@ namespace top
             //return to indicate setup successful or not
             bool                    set_plugin(xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type);
             
+            xvactmeta_t*            get_meta();
+            bool                    save_meta();
+            bool                    save_meta(xvactmeta_t & new_meta);
+            
         private: //overwrite to protected mode for following api
             virtual bool            close(bool force_async = true) override;
           
@@ -85,6 +90,9 @@ namespace top
             xvtable_t&          m_ref_table; //link to table
             //note: only support max 8 plugins for one object as considering size and reality
             xobject_t*          m_plugins[enum_xvaccount_plugin_max];
+        private:
+            xvactmeta_t*        m_meta_ptr; //meta data of account
+            std::string         m_last_save_vmeta_bin;
         };
     
         //note: zone_index = bucket_index:range of [0,15], book_index: range of [0,127], table_index: range of [0,7]
@@ -219,7 +227,8 @@ namespace top
                 enum_xvchain_plugin_contract_store= 0x03, //manage vcontract
                 enum_xvchain_plugin_txs_store     = 0x04, //manage all transactions
                 enum_xvchain_plugin_event_mbus    = 0x05, //manage mbus
-                enum_xvchain_plugin_type_end      = 0x05,
+                enum_xvchain_plugin_vtable_net    = 0x06, //manage vnetwork of tables
+                enum_xvchain_plugin_type_end      = 0x06,
             };
         public:
             static xvchain_t &  instance(const uint16_t chain_id = 0);
@@ -254,6 +263,7 @@ namespace top
             xvstatestore_t*             get_xstatestore();//global shared statestore instance
             xvcontractstore_t*          get_xcontractstore();//global shared statestore instance
             xveventbus_t*               get_xevmbus(); //global mbus object
+            xvtblnet_t*                 get_xvtblnet(); //global xvtblnet_t object
         public:
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
             bool                        set_xtxstore(xvtxstore_t * new_store);
@@ -261,6 +271,7 @@ namespace top
             bool                        set_xstatestore(xvstatestore_t* new_sotre);
             bool                        set_xcontractstore(xvcontractstore_t * new_store);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
+            bool                        set_xvtblnet(xvtblnet_t * new_tbl_net);
         
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table

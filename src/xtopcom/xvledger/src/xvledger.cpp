@@ -17,6 +17,7 @@ namespace top
               xvaccount_t(account_address),
               m_ref_table(parent_object)//note:table object never be release/deleted,so here just hold reference
         {
+            m_meta_ptr = NULL;
             memset(m_plugins,0,sizeof(m_plugins));
             xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
             XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, 1);
@@ -31,6 +32,12 @@ namespace top
                 if(old_ptr != NULL)//catch exception case if have
                     old_ptr->release_ref();
             }
+            if(m_meta_ptr != NULL)
+            {
+                m_meta_ptr->release_ref();
+                m_meta_ptr = NULL;
+            }
+            
             XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, -1);
         }
     
@@ -39,11 +46,77 @@ namespace top
             xinfo("xvaccountobj_t::close,acccount(%s)",get_address().c_str());
             if(is_close() == false)
             {
-                xobject_t::close(true); //force at async mode
+                //xobject_t::close(true); //force at async mode
+ 
+                if(is_close())
+                {
+                    xvactmeta_t * old_meta_ptr = xatomic_t::xexchange(m_meta_ptr, (xvactmeta_t*)NULL);
+                    if(old_meta_ptr != NULL)
+                    {
+                        std::string vmeta_bin;
+                        old_meta_ptr->serialize_to_string(vmeta_bin);
+                        
+                        const std::string full_meta_path = "/" + xvactmeta_t::get_meta_path(*this);
+                        xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin);
+                        XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                        
+                        old_meta_ptr->close();
+                        old_meta_ptr->release_ref();
+                    }
+                }
                 
                 //clean it fromt table first,since base::on_object_close may clean up parent node information
                 // TODO(jimmy) m_ref_table.close_account(get_address());
             }
+            return true;
+        }
+        
+        xvactmeta_t*  xvaccountobj_t::get_meta()
+        {
+            if(m_meta_ptr != NULL)
+                return m_meta_ptr;
+            
+            const std::string full_meta_path = "/" + xvactmeta_t::get_meta_path(*this);
+            const std::string meta_content = xvchain_t::instance().get_xdbstore()->get_value(full_meta_path);
+            xvactmeta_t * new_meta_ptr = base::xvactmeta_t::load(meta_content);
+            if(nullptr == new_meta_ptr)
+            {
+                new_meta_ptr = new base::xvactmeta_t();
+            }
+            
+            std::lock_guard<std::recursive_mutex> locker(get_lock());
+            if(NULL == m_meta_ptr)
+                m_meta_ptr = new_meta_ptr;
+            else
+                new_meta_ptr->release_ref();
+            
+            return m_meta_ptr;
+        }
+        
+        bool  xvaccountobj_t::save_meta()
+        {
+            std::string vmeta_bin;
+            if(m_meta_ptr != NULL)
+            {
+                std::lock_guard<std::recursive_mutex> locker(get_lock());
+                m_meta_ptr->serialize_to_string(vmeta_bin);
+            }
+
+            if(vmeta_bin.empty() == false)
+            {
+                const std::string full_meta_path = "/" + xvactmeta_t::get_meta_path(*this);
+                xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin);
+                
+                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                return true;
+            }
+            return false;
+        }
+    
+        bool xvaccountobj_t::save_meta(xvactmeta_t & new_meta)
+        {
+            std::lock_guard<std::recursive_mutex> locker(get_lock());
+            *m_meta_ptr = new_meta;
             return true;
         }
     
@@ -512,6 +585,9 @@ namespace top
             xauto_ptr<xvcontractstore_t> default_contract_store(new xvcontractstore_t());
             set_xcontractstore(default_contract_store());
             
+            xauto_ptr<xvtblnet_t> default_xvtblnet(new xvtblnet_t());
+            set_xvtblnet(default_xvtblnet());
+            
             xkinfo("xvchain_t::xvchain_t,chain_id(%d)",m_chain_id);
         }
     
@@ -641,6 +717,13 @@ namespace top
             return (xveventbus_t*)target;
         }
     
+        xvtblnet_t*  xvchain_t::get_xvtblnet() //global xvtblnet_t object
+        {
+            xobject_t* target = m_plugins[enum_xvchain_plugin_vtable_net];
+            xassert(target != NULL);
+            return (xvtblnet_t*)target;
+        }
+    
         bool    xvchain_t::set_xdbstore(xvdbstore_t * new_store)
         {
             xassert(new_store != NULL);
@@ -693,5 +776,15 @@ namespace top
             
             return register_plugin(new_mbus,enum_xvchain_plugin_event_mbus);
         }
+    
+        bool   xvchain_t::set_xvtblnet(xvtblnet_t * new_vtbl_net)
+        {
+            xassert(new_vtbl_net != NULL);
+            if(NULL == new_vtbl_net)
+                return false;
+            
+            return register_plugin(new_vtbl_net,enum_xvchain_plugin_vtable_net);
+        }
+    
     };//end of namespace of base
 };//end of namespace of top

@@ -16,9 +16,9 @@
 #endif
 
 // XTODO not cache more table now, but need cache more for unit load from table feature in future
-// #ifndef __ALLOW_TABLE_MORE_CACHE_SIZE__
-//     #define __ALLOW_TABLE_MORE_CACHE_SIZE__
-// #endif
+ #ifndef __ALLOW_TABLE_MORE_CACHE_SIZE__
+     #define __ALLOW_TABLE_MORE_CACHE_SIZE__
+ #endif
 
 namespace top
 {
@@ -103,134 +103,6 @@ namespace top
 #endif
         }
 
-        xacctmeta_t*  xacctmeta_t::load(const std::string & meta_serialized_data)
-        {
-            if(meta_serialized_data.empty()) //check first
-                return NULL;
-
-            xacctmeta_t* meta_ptr = new xacctmeta_t();
-            if(meta_ptr->serialize_from_string(meta_serialized_data) <= 0)
-            {
-                xerror("xacctmeta_t::load,bad meta_serialized_data that not follow spec");
-                meta_ptr->release_ref();
-                return NULL;
-            }
-            return meta_ptr;
-        }
-
-        xacctmeta_t::xacctmeta_t()
-            :base::xdataobj_t(base::xdataunit_t::enum_xdata_type_vaccountmeta)
-        {
-#if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, 1);
-#endif
-            _reserved_u16 = 0;
-            _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
-            _meta_spec_version = 1;     //version #1 now
-            _highest_cert_block_height     = 0;
-            _highest_lock_block_height     = 0;
-            _highest_commit_block_height   = 0;
-            _highest_execute_block_height  = 0;
-            _highest_connect_block_height  = 0;
-            _highest_full_block_height     = 0;
-            _highest_genesis_connect_height= 0;
-            _highest_sync_height           = 0;
-        }
-
-        xacctmeta_t::~xacctmeta_t()
-        {
-#if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, -1);
-#endif
-        }
-
-        std::string xacctmeta_t::dump() const
-        {
-            char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 ",execute=%" PRIu64 ",connected=%" PRIu64 ",full=%" PRIu64 ",g_connected=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_execute_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height,_highest_genesis_connect_height);
-
-            return std::string(local_param_buf);
-        }
-
-        //caller respond to cast (void*) to related  interface ptr
-        void*   xacctmeta_t::query_interface(const int32_t _enum_xobject_type_)
-        {
-            if(_enum_xobject_type_ == base::xdataunit_t::enum_xdata_type_vaccountmeta)
-                return this;
-
-            return base::xdataobj_t::query_interface(_enum_xobject_type_);
-        }
-
-        int32_t   xacctmeta_t::do_write(base::xstream_t & stream)//serialize whole object to binary
-        {
-            const int32_t begin_size = stream.size();
-
-            stream << _highest_cert_block_height;
-            stream << _highest_lock_block_height;
-            stream << _highest_commit_block_height;
-            stream << _highest_execute_block_height;
-            stream << _highest_full_block_height;
-            stream << _highest_connect_block_height;
-            stream.write_tiny_string(_highest_connect_block_hash);
-            stream.write_tiny_string(_highest_execute_block_hash);
-            stream << _highest_genesis_connect_height;
-            stream.write_tiny_string(_highest_genesis_connect_hash);
-            stream << _highest_sync_height;
-
-            //from here we introduce version control for meta
-            stream << _meta_spec_version;
-            stream << _block_level;
-            stream << _reserved_u16;
-            stream << _lowest_genesis_connect_height;
-
-            return (stream.size() - begin_size);
-        }
-
-        int32_t   xacctmeta_t::do_read(base::xstream_t & stream)//serialize from binary and regeneate content
-        {
-            const int32_t begin_size = stream.size();
-
-            stream >> _highest_cert_block_height;
-            stream >> _highest_lock_block_height;
-            stream >> _highest_commit_block_height;
-            stream >> _highest_execute_block_height;
-            stream >> _highest_full_block_height;
-            stream >> _highest_connect_block_height;
-            stream.read_tiny_string(_highest_connect_block_hash);
-            stream.read_tiny_string(_highest_execute_block_hash);
-            stream >> _highest_genesis_connect_height;
-            stream.read_tiny_string(_highest_genesis_connect_hash);
-            stream >> _highest_sync_height;
-
-            stream >> _meta_spec_version;
-            stream >> _block_level;
-            stream >> _reserved_u16;
-            stream >> _lowest_genesis_connect_height;
-
-            if(stream.size() > 0) //still have data to read
-            {
-            }
-
-            return (begin_size - stream.size());
-        }
-
-        //serialize vheader and certificaiton,return how many bytes is writed/read
-        int32_t   xacctmeta_t::serialize_to_string(std::string & bin_data)   //wrap function fo serialize_to(stream)
-        {
-            base::xautostream_t<1024> _stream(base::xcontext_t::instance());
-            const int result = xdataobj_t::serialize_to(_stream);
-            if(result > 0)
-                bin_data.assign((const char*)_stream.data(),_stream.size());
-            return result;
-        }
-
-        int32_t   xacctmeta_t::serialize_from_string(const std::string & bin_data) //wrap function fo serialize_from(stream)
-        {
-            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
-            const int result = xdataobj_t::serialize_from(_stream);
-            return result;
-        }
-
         std::string  xblockacct_t::get_meta_path(base::xvaccount_t & _account)
         {
             std::string meta_path;
@@ -248,7 +120,7 @@ namespace top
             return m_xvdb_ptr;
         }
 
-        xblockacct_t::xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
+        xblockacct_t::xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr,base::xvactmeta_t * init_meta)
             :base::xobject_t(base::enum_xobject_type_vaccount),
              base::xvaccount_t(account_addr)
         {
@@ -267,6 +139,10 @@ namespace top
 
             m_last_access_time_ms = 0;
             m_idle_timeout_ms     = timeout_ms;
+            
+            //m_meta = new base::xvactmeta_t(*init_meta);
+            m_meta = init_meta;
+            m_meta->add_ref();
         }
 
         xblockacct_t::~xblockacct_t()
@@ -296,63 +172,16 @@ namespace top
 
         bool  xblockacct_t::init()
         {
-            //first load meta data from xdb/xstore
-            m_last_save_vmeta_bin.clear();
-            const std::string full_meta_path = get_blockstore_path() + get_meta_path(*this);
-            const std::string meta_content = load_value_by_path(full_meta_path);
-            XMETRICS_GAUGE(metrics::store_block_meta_read, 1);
-            m_meta = xacctmeta_t::load(meta_content);
-            if(nullptr == m_meta)
-            {
-                m_meta = new xacctmeta_t();
-                xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",empty meta",
-                      dump().c_str(),m_blockstore_path.c_str(),get_obj_id());
-            }
-            else
-            {
-                //save old meta bin for check if need write to db
-                std::string vmeta_bin;
-                m_meta->serialize_to_string(vmeta_bin);
-                m_last_save_vmeta_bin = vmeta_bin;
-
-                //pre-load latest execution block
-                if(load_index(m_meta->_highest_execute_block_height) == 0)
-                {
-                    xwarn_err("xblockacct_t::init(),fail-load highest execution block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_execute_block_height,get_account().c_str(),get_blockstore_path().c_str());
-                }
-
-                //pre-load latest commit block
-                if(load_index(m_meta->_highest_commit_block_height) == 0)
-                {
-                    xwarn_err("xblockacct_t::init(),fail-load highest commited block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_commit_block_height,get_account().c_str(),get_blockstore_path().c_str());
-                }
-                //pre-load latest lock block
-                if(load_index(m_meta->_highest_lock_block_height) == 0)
-                {
-                    xwarn_err("xblockacct_t::init(),fail-load highest locked block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_lock_block_height,get_account().c_str(),get_blockstore_path().c_str());
-                }
-                if(load_index(m_meta->_highest_cert_block_height) == 0)
-                {
-                    xwarn_err("xblockacct_t::init(),fail-load highest cert block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_cert_block_height,get_account().c_str(),get_blockstore_path().c_str());
-                }
-                xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
-                      dump().c_str(),m_blockstore_path.c_str(),
-                      get_obj_id(),m_meta->base::xobject_t::dump().c_str());
-            }
+            xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
+                  dump().c_str(),m_blockstore_path.c_str(),
+                  get_obj_id(),m_meta->base::xobject_t::dump().c_str());
             return true;
         }
 
         bool  xblockacct_t::save_meta()
         {
-            std::string vmeta_bin;
-            m_meta->serialize_to_string(vmeta_bin);
-            if (m_last_save_vmeta_bin != vmeta_bin)
+            if(0)
             {
-                const std::string meta_path = get_blockstore_path() + get_meta_path(*this);
-                store_value_by_path(meta_path, vmeta_bin);
-                m_last_save_vmeta_bin = vmeta_bin;
-                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
-
                 base::enum_vaccount_addr_type addr_type = get_addrtype_from_account(get_address());
                 if (addr_type == base::enum_vaccount_addr_type_block_contract) {
                     uint16_t subaddr = get_ledgersubaddr_from_account(get_address());
@@ -498,8 +327,6 @@ namespace top
                         }
                     }
                 }
-                // try to save meta when clean blocks
-                save_meta();
             }
             else if(force_release_unused_block) //force release block that only hold by internal
             {
@@ -3062,8 +2889,8 @@ namespace top
             return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
 
-        xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
-            :xblockacct_t(account_addr,timeout_ms,blockstore_path,xvdb_ptr)
+        xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr,base::xvactmeta_t * init_meta)
+            :xblockacct_t(account_addr,timeout_ms,blockstore_path,xvdb_ptr,init_meta)
         {
             _lowest_commit_block_height = 0;
         }
@@ -3097,7 +2924,7 @@ namespace top
                     if(prev_block->is_close() == false)//prev_block is still valid to use
                     {
                         update_meta_metric(prev_block);//update meta since block has change status
-                        write_index_to_db(prev_block); //not send db event
+                        //write_index_to_db(prev_block); //not send db event
                     }
                 }
                 prev_block->release_ref();//safe release now

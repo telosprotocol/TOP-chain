@@ -158,14 +158,16 @@ namespace top
 
         bool  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj)
         {
-            const xobject_t* exist_block_plugin = target_table->get_account_plugin_unsafe(account_address, base::enum_xvaccount_plugin_blockmgr);//exist_block_plugin has done add_ref by get_account_plugin_unsafe
+            base::xauto_ptr<base::xvaccountobj_t> target_account_ptr = target_table->get_account(account_address);
+            
+            const xobject_t* exist_block_plugin = target_account_ptr->get_plugin( base::enum_xvaccount_plugin_blockmgr);//exist_block_plugin has done add_ref by get_account_plugin_unsafe
             if(exist_block_plugin != NULL)
             {
                 inout_account_obj.transfer_owner((xblockacct_t*)exist_block_plugin);
                 return true; //pass reference to xauto_ptr that release later
             }
 
-            xblockacct_t * new_plugin = new xchainacct_t(account_address,enum_account_idle_timeout_ms,m_store_path,m_xvdb_ptr);//replace by new account address;
+            xblockacct_t * new_plugin = new xchainacct_t(account_address,enum_account_idle_timeout_ms,m_store_path,m_xvdb_ptr,target_account_ptr->get_meta());//replace by new account address;
             new_plugin->init();
 
             const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
@@ -1000,6 +1002,7 @@ namespace top
                     else
                     {
                         _remonitor_list.push_back(_test_for_plugin);//transfer to list
+                        _test_for_plugin->save_meta(); //trigger save every 10s
                     }
                 }
                 auto old = expire_it; //just copy the old value
