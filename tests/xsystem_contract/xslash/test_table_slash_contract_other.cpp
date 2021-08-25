@@ -228,7 +228,7 @@ TEST_F(test_table_slash_contract_other, table_slash_on_collect_statistic_info) {
     xvm_service vs;
     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_table_slash_account_ctx_ptr.get());
     // std::cout << trace->m_errno << "\n";
-    EXPECT_EQ(enum_xvm_error_code::enum_vm_exception, trace->m_errno);
+    EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 
 }
 
@@ -263,7 +263,7 @@ TEST_F(test_table_slash_contract_other, table_slash_report_statistic_info) {
     xvm_service vs;
     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_table_slash_account_ctx_ptr.get());
     // std::cout << trace->m_errno << "\n";
-    EXPECT_EQ(enum_xvm_error_code::enum_vm_exception, trace->m_errno);
+    EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 
 }
 
