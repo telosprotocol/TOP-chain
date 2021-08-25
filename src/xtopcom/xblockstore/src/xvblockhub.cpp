@@ -1686,6 +1686,7 @@ namespace top
                     {
                         write_index_to_db(index_ptr);
                     }
+                    XMETRICS_GAUGE(metrics::blockstore_exec_block, 1);
                     return true;
                 }
                 else
@@ -1697,6 +1698,7 @@ namespace top
             {
                 xwarn("xblockacct_t::execute_block(index),fail-ready to execute for block=%s highest_execute_block_height=%lld",index_ptr->dump().c_str(), m_meta->_highest_execute_block_height);
             }
+            XMETRICS_GAUGE(metrics::blockstore_exec_block, 0);
             return false;
         }
 

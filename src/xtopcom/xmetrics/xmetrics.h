@@ -208,6 +208,13 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_blk_load,
     blockstore_store_blk,
     blockstore_store_blk_suc,
+    blockstore_exist_genesis_block,
+    blockstore_store_tx_db,
+    blockstore_reset_cache_timeout,
+    blockstore_expire_close,
+    blockstore_expire_clean_caches,
+    blockstore_exec_block,
+    
 
     // blockstore accessing
     blockstore_access_from_account_context,

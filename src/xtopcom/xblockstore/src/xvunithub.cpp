@@ -903,7 +903,7 @@ namespace top
                 return false;
             }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            METRICS_TAG(atag, 1);
+            XMETRICS_GAUGE(metrics::blockstore_expire_clean_caches, 1);
             return account_obj->clean_caches(true,true);
         }
 
@@ -916,7 +916,7 @@ namespace top
                 return false;
             }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            METRICS_TAG(atag, 1);
+            XMETRICS_GAUGE(metrics::blockstore_reset_cache_timeout, 1);
             return account_obj->reset_cache_timeout(max_idle_time_ms);
         }
 
@@ -954,6 +954,7 @@ namespace top
 
                     if(fore_close) //force to remove most less-active account while too much caches
                     {
+                        XMETRICS_GAUGE(metrics::blockstore_expire_close, 1);
                         base::xvtable_t * target_table = base::xvchain_t::instance().get_table(_test_for_plugin->get_xvid());
                         //always use same lock for same account
                         std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
@@ -1034,12 +1035,13 @@ namespace top
 
         bool  xvblockstore_impl::store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr)
         {
+            
             if(nullptr == index_ptr)
                 return false;
 
             if(false == index_ptr->check_block_flag(base::enum_xvblock_flag_committed))
                 return false;
-
+            XMETRICS_GAUGE(metrics::blockstore_store_tx_db, 1);
             if( (index_ptr->get_block_class() == base::enum_xvblock_class_light)
                && (index_ptr->get_block_level() == base::enum_xvblock_level_unit) )
             {
@@ -1066,10 +1068,12 @@ namespace top
             METRICS_TAG(atag, 1);
             base::xvbindex_t* target_block = account_obj->query_index(0, 0);
             if (target_block != NULL) {
+                XMETRICS_GAUGE(metrics::blockstore_exist_genesis_block, 1);
                 xdbg("xvblockstore_impl::exist_genesis_block target_block not null");
                 target_block->release_ref();
                 return true;
             }
+            XMETRICS_GAUGE(metrics::blockstore_exist_genesis_block, 0);
             if (account_obj->load_index_by_height(0) > 0) {
                 target_block = account_obj->query_index(0, 0); //found existing ones
             }

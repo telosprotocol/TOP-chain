@@ -192,7 +192,12 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_blk_load);
         RETURN_METRICS_NAME(blockstore_store_blk);
         RETURN_METRICS_NAME(blockstore_store_blk_suc);
-
+        RETURN_METRICS_NAME(blockstore_exist_genesis_block);
+        RETURN_METRICS_NAME(blockstore_store_tx_db);
+        RETURN_METRICS_NAME(blockstore_reset_cache_timeout);
+        RETURN_METRICS_NAME(blockstore_expire_close);
+        RETURN_METRICS_NAME(blockstore_expire_clean_caches);
+        RETURN_METRICS_NAME(blockstore_exec_block);
 
         // blockstore accessing
         RETURN_METRICS_NAME(blockstore_access_from_account_context);
