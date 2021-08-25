@@ -22,7 +22,7 @@ XINLINE_CONSTEXPR char const * BLD_URI_FULL_TABLE       = "b_ft//"; //xvcontract
 XINLINE_CONSTEXPR char const * BLD_URI_FULL_UNIT        = "b_fu//"; //xvcontract_t::create_contract_uri(b_fu, {}, 0)
 XINLINE_CONSTEXPR char const * BLD_URI_ROOT_BLOCK       = "b_rb//"; //xvcontract_t::create_contract_uri(b_rb, {}, 0)
 
-base::xvaction_t make_block_build_action(const std::string & target_uri) {
+base::xvaction_t make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result = {}) {
     std::string caller_addr;  // empty means version0, no caller addr
     // std::string contract_addr;
     // std::string contract_name; // empty means version0, default contract
@@ -32,9 +32,10 @@ base::xvaction_t make_block_build_action(const std::string & target_uri) {
     std::string tx_hash;
 
     base::xvaction_t _tx_action(tx_hash, caller_addr, target_uri, method_name);
-    // base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
-    // _tx_action.copy_result(_action_result);  // no action result
-    xassert(_tx_action.get_method_result() == nullptr);
+    if (!action_result.empty()) {
+        base::xvalue_t _action_result(action_result);
+        _tx_action.copy_result(_action_result);
+    }
     xassert(!_tx_action.get_method_uri().empty());
     return _tx_action;
 }
@@ -192,7 +193,7 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
 
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_LIGHT_TABLE);
+    base::xvaction_t _action = make_block_build_action(BLD_URI_LIGHT_TABLE, para.get_property_hashs());
     set_input_entity(_action);
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
@@ -412,7 +413,7 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
 
 bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_TABLE);
+    base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_TABLE, para.get_property_hashs());
     set_input_entity(_action);
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
