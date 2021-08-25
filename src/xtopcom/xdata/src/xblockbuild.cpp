@@ -11,6 +11,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xblockaction.h"
 #include "xvledger/xventity.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
@@ -187,13 +188,14 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     build_para.set_extra_data(bodypara.get_extra_data()); // only light-table need extra data
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+    base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    build_block_body(bodypara);
+    build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
 
-bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
+bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_LIGHT_TABLE, para.get_property_hashs());
+    xtableblock_action_t _action(BLD_URI_LIGHT_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
@@ -407,13 +409,14 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+    base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    build_block_body(bodypara);
+    build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
 
-bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) {
+bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_TABLE, para.get_property_hashs());
+    xtableblock_action_t _action(BLD_URI_FULL_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();

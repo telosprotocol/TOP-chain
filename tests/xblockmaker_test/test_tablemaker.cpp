@@ -438,11 +438,11 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
 
-
+    {
     // full-table 16 height
     auto tableblocks = mocktable.get_history_tables();
     auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[16].get());
-    xvproperty_prove_ptr_t propreceipt = xpropertyprove_build_t::create_property_prove(tableblocks[16].get(), tableblocks[18].get(), tablestate.get(), XPROPERTY_TABLE_RECEIPTID);
+    xvproperty_prove_ptr_t propreceipt = xblocktool_t::create_receiptid_property_prove(tableblocks[16].get(), tableblocks[18].get(), tablestate.get());
     xassert(propreceipt != nullptr);
     xassert(propreceipt->is_valid());
 
@@ -457,5 +457,13 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     xassert(_propreceipt != nullptr);
     xvproperty_prove_ptr_t propreceipt2;
     propreceipt2.attach(_propreceipt);
-    xassert(propreceipt2->is_valid());    
+    xassert(propreceipt2->is_valid());
+
+    base::xreceiptid_state_ptr_t receiptid_state = xblocktool_t::get_receiptid_from_property_prove(propreceipt2);
+    xassert(receiptid_state->get_self_tableid() == mocktable.get_short_table_id());
+    xassert(receiptid_state->get_block_height() == 16);
+    auto all_pairs = receiptid_state->get_all_receiptid_pairs();
+    std::cout << "all_pairs=" << all_pairs->dump() << std::endl;
+    }
+
 }

@@ -15,6 +15,15 @@
 
 NS_BEG2(top, blockmaker)
 
+void make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs) {
+    std::string property_receiptid_bin = data::xtable_bstate_t::get_receiptid_property_bin(bstate);
+    if (!property_receiptid_bin.empty()) {
+        uint256_t hash = utl::xsha2_256_t::digest(property_receiptid_bin);
+        std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
+        property_hashs[data::xtable_bstate_t::get_receiptid_property_name()] = prophash;
+    }
+}
+
 void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
                                                            const std::vector<xblock_ptr_t> & units,
                                                            std::string & property_binlog,
@@ -104,17 +113,10 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
     canvas->encode(property_binlog);
     xassert(!property_binlog.empty());
 
-    std::string property_receiptid_bin;
-    auto propobj = proposal_bstate->load_property(XPROPERTY_TABLE_RECEIPTID);
-    if (propobj != nullptr) {
-        propobj->serialize_to_string(property_receiptid_bin);
-        uint256_t hash = utl::xsha2_256_t::digest(property_receiptid_bin);
-        std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
-        property_hashs[XPROPERTY_TABLE_RECEIPTID] = prophash;
-    }
+    make_table_prove_property_hashs(proposal_bstate.get(), property_hashs);
 
-    xdbg("jimmy xlighttable_builder_t::make_light_table_binlog units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu,receiptid_size=%zu",
-        units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size(), property_receiptid_bin.size());
+    xdbg("jimmy xlighttable_builder_t::make_light_table_binlog units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu",
+        units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
 }
 
 xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev_block,
@@ -163,14 +165,7 @@ void xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
     canvas->encode(property_snapshot);
     property_binlog = property_snapshot;
     
-    std::string property_receiptid_bin;
-    auto propobj = proposal_bstate->load_property(XPROPERTY_TABLE_RECEIPTID);
-    if (propobj != nullptr) {
-        propobj->serialize_to_string(property_receiptid_bin);
-        uint256_t hash = utl::xsha2_256_t::digest(property_receiptid_bin);
-        std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
-        property_hashs[XPROPERTY_TABLE_RECEIPTID] = prophash;
-    }
+    make_table_prove_property_hashs(proposal_bstate.get(), property_hashs);
 }
 
 

@@ -99,5 +99,54 @@ std::string xlightunit_action_t::get_action_result_property(const std::string & 
     return {};
 }
 
+
+
+//----------------------------------------xtableblock_action_t-------------------------------------//
+xtableblock_action_t::xtableblock_action_t(const base::xvaction_t & _action)
+: base::xvaction_t(_action) {
+}
+
+xtableblock_action_t::xtableblock_action_t(const std::string & target_uri, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height)
+: base::xvaction_t(std::string(), std::string(), target_uri, std::string("b")) {
+    std::map<std::string, std::string> action_result = property_hashs;
+    action_result[XPROPERTY_SELF_TABLE_ID] = std::to_string(tableid);
+    action_result[XPROPERTY_SELF_TABLE_HEIGHT] = std::to_string(height);
+    base::xvalue_t _action_result(action_result);
+    base::xvaction_t::copy_result(_action_result);
+}
+
+base::xtable_shortid_t xtableblock_action_t::get_self_tableid() const {
+    std::string value = get_action_result_property(XPROPERTY_SELF_TABLE_ID);
+    if (!value.empty()) {
+        return static_cast<uint16_t>(base::xstring_utl::touint32(value));
+    }
+    return 0;
+}
+
+uint64_t xtableblock_action_t::get_self_table_height() const {
+    std::string value = get_action_result_property(XPROPERTY_SELF_TABLE_HEIGHT);
+    if (!value.empty()) {
+        return base::xstring_utl::touint64(value);
+    }
+    return 0;
+}
+
+std::string xtableblock_action_t::get_property_hash(const std::string & propname) const {
+    return get_action_result_property(propname);
+}
+
+std::string xtableblock_action_t::get_action_result_property(const std::string & key) const {
+    const std::map<std::string,std::string>* map_ptr = get_method_result()->get_map<std::string>();
+    if (map_ptr != nullptr) {
+        auto iter = map_ptr->find(key);
+        if (iter != map_ptr->end()) {
+            return iter->second;
+        }
+        return {};
+    }
+    xassert(false);
+    return {};
+}
+
 }  // namespace data
 }  // namespace top
