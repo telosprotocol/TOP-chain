@@ -198,6 +198,28 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_expire_close);
         RETURN_METRICS_NAME(blockstore_expire_clean_caches);
         RETURN_METRICS_NAME(blockstore_exec_block);
+        RETURN_METRICS_NAME(blockstore_get_genesis_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_cert_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_locked_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_committed_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_executed_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_connected_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_genesis_connected_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_genesis_connected_index);
+        RETURN_METRICS_NAME(blockstore_get_latest_committed_full_block);
+        RETURN_METRICS_NAME(blockstore_get_latest_committed_block_height);
+        RETURN_METRICS_NAME(blockstore_get_latest_connected_block_height);
+        RETURN_METRICS_NAME(blockstore_get_latest_genesis_connected_block_height);
+        RETURN_METRICS_NAME(blockstore_get_latest_executed_block_height);
+        RETURN_METRICS_NAME(blockstore_get_latest_blocks);
+        RETURN_METRICS_NAME(blockstore_load_block_object);
+        RETURN_METRICS_NAME(blockstore_load_block_input);
+        RETURN_METRICS_NAME(blockstore_load_block_output);
+        RETURN_METRICS_NAME(blockstore_delete_block);
+        RETURN_METRICS_NAME(blockstore_query_tx);
+        RETURN_METRICS_NAME(blockstore_query_block);
+        RETURN_METRICS_NAME(blockstore_load_block_index);
+        RETURN_METRICS_NAME(blockstore_load_block_flags);
 
         // blockstore accessing
         RETURN_METRICS_NAME(blockstore_access_from_account_context);
