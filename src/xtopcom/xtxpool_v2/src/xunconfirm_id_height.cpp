@@ -101,7 +101,7 @@ void xtable_unconfirm_id_height_t::add_id_height(base::xtable_shortid_t table_si
 }
 
 bool xtable_unconfirm_id_height_t::get_min_height(uint64_t & min_height) const {
-    uint64_t min_tmp = 0xFFFFFFFFFFFFFFFF;
+    uint64_t min_tmp = 0xFFFFFFFFFFFFFFFFUL;
     for (auto & iter : m_table_sid_unconfirm_list_map) {
         uint64_t height;
         auto ret = iter.second.get_min_height(height);
@@ -113,6 +113,11 @@ bool xtable_unconfirm_id_height_t::get_min_height(uint64_t & min_height) const {
             min_tmp = height;
         }
     }
+
+    if (min_tmp == 0xFFFFFFFFFFFFFFFFUL) {
+        return false;
+    }
+    min_height = min_tmp;
     return true;
 }
 

@@ -85,4 +85,31 @@ TEST_F(test_unconfirm_id_height, unconfirm_id_height_list) {
     ASSERT_EQ(height, 1001);
 }
 
-
+TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
+    xtable_unconfirm_id_height_t table_unconfirm;
+    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), true);
+    table_unconfirm.update_confirm_id(0, 99);
+    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), true);
+    table_unconfirm.add_id_height(0, 101, 1000, 100000);
+    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), false);
+    table_unconfirm.update_confirm_id(0, 100);
+    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), true);
+    uint64_t height;
+    bool ret = table_unconfirm.get_height_by_id(0, 101, height);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(height, 1000);
+    ret = table_unconfirm.get_height_by_id(0, 102, height);
+    ASSERT_EQ(ret, false);
+    table_unconfirm.add_id_height(0, 102, 1001, 100010);
+    ret = table_unconfirm.get_height_by_id(0, 102, height);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(height, 1001);
+    uint64_t receiptid;
+    auto id_height_list = table_unconfirm.get_resend_id_height_list(10030);
+    ASSERT_EQ(id_height_list.size(), 0);
+    id_height_list = table_unconfirm.get_resend_id_height_list(100070);
+    ASSERT_EQ(id_height_list.size(), 1);
+    ASSERT_EQ(id_height_list[0].table_sid, 0);
+    ASSERT_EQ(id_height_list[0].receipt_id, 102);
+    ASSERT_EQ(id_height_list[0].height, 1001);
+}

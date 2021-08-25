@@ -305,7 +305,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_access_from_txpool_get_accountstate);
         RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
-        RETURN_METRICS_NAME(statestore_access_from_batchpacker_make_receipt_msg);
         
         RETURN_METRICS_NAME(state_load_blk_state_suc);
         RETURN_METRICS_NAME(state_load_blk_state_cache_suc);

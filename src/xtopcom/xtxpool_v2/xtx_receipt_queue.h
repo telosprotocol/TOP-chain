@@ -73,6 +73,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_receipt_id(uint64_t latest_receipt_id);
+    void update_max_pull_id(uint64_t max_pull_id);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t upper_receipt_id, uint32_t max_num) const;
     void erase(uint64_t receipt_id);
     bool empty() const {
@@ -90,6 +91,7 @@ private:
     std::map<uint64_t, std::shared_ptr<xtx_entry>> m_txs;
     xreceipt_queue_internal_t * m_receipt_queue_internal;
     uint64_t m_latest_receipt_id{0};
+    uint64_t m_max_pull_id{0};
 };
 
 using xtx_peer_table_map_t = std::unordered_map<base::xtable_shortid_t, std::shared_ptr<xpeer_table_receipts_t>>;
@@ -113,8 +115,7 @@ public:
     uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     uint32_t get_recv_tx_count() const;
     uint32_t size() const;
-
-    // void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
+    void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
 
 private:
     xtx_peer_table_map_t & get_peer_table_map(bool is_recv_tx) {

@@ -628,8 +628,18 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
 }
 
 void xtxpool_table_t::update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id) {
-    xtxpool_info("xtxpool_table_t::update_peer_receipt_id_pair table:%s,peer table:%d,confirm id:%llu", m_xtable_info.get_account().c_str(), peer_table_sid, confirm_id);
+    xtxpool_info("xtxpool_table_t::update_peer_confirm_id table:%s,peer table:%d,confirm id:%llu", m_xtable_info.get_account().c_str(), peer_table_sid, confirm_id);
     m_unconfirm_id_height.update_peer_confirm_id(peer_table_sid, confirm_id);
+}
+
+void xtxpool_table_t::update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
+    xtxpool_info("xtxpool_table_t::update_peer_receiptid_pair table:%s,peer table:%d,id pair:%s", m_xtable_info.get_account().c_str(), peer_table_sid, pair.dump().c_str());
+    m_unconfirm_id_height.update_peer_confirm_id(peer_table_sid, pair.get_confirmid_max());
+
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        m_txmgr_table.update_peer_receiptid_pair(peer_table_sid, pair);
+    }
 }
 
 void xtxpool_table_t::update_sender_unconfirm_id_height(const base::xreceiptid_state_ptr_t & receipt_id_state) {

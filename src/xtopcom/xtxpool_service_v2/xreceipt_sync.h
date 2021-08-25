@@ -11,37 +11,7 @@
 NS_BEG2(top, xtxpool_service_v2)
 
 const uint32_t max_require_receipts = 15;
-class xreceipt_pull_recv_receipt_t : public top::basic::xserialize_face_t {
-protected:
-    int32_t do_write(base::xstream_t & stream) override {
-        KEEP_SIZE();
-
-        SERIALIZE_FIELD_BT(m_req_node);
-        SERIALIZE_FIELD_BT(m_tx_from_account);
-        SERIALIZE_FIELD_BT(m_tx_to_account);
-        SERIALIZE_FIELD_BT(m_receipt_ids);
-
-        return CALC_LEN();
-    }
-
-    int32_t do_read(base::xstream_t & stream) override {
-
-        KEEP_SIZE();
-        DESERIALIZE_FIELD_BT(m_req_node);
-        DESERIALIZE_FIELD_BT(m_tx_from_account);
-        DESERIALIZE_FIELD_BT(m_tx_to_account);
-        DESERIALIZE_FIELD_BT(m_receipt_ids);
-        // restore padding
-        return CALC_LEN();
-    }
-public:
-    common::xnode_address_t m_req_node;
-    std::string m_tx_from_account;
-    std::string m_tx_to_account;
-    std::vector<uint64_t> m_receipt_ids;
-};
-
-class xreceipt_pull_confirm_receipt_t : public top::basic::xserialize_face_t {
+class xreceipt_pull_receipt_t : public top::basic::xserialize_face_t {
 protected:
     int32_t do_write(base::xstream_t & stream) override {
         KEEP_SIZE();

@@ -107,6 +107,7 @@ public:
     bool is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const;
 
     void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
+    void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
     xcons_transaction_ptr_t build_recv_tx(const std::string & peer_table_addr, uint64_t receipt_id);
     xcons_transaction_ptr_t build_confirm_tx(const std::string & peer_table_addr, uint64_t receipt_id);

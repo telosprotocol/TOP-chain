@@ -340,8 +340,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_txpool_get_accountstate,
     statestore_access_from_txpool_refreshtable,
     statestore_access_from_blkmaker_get_target_tablestate,
-    statestore_access_from_batchpacker_make_receipt_msg,
-    statestore_access_end = statestore_access_from_batchpacker_make_receipt_msg,
+    statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
 
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,

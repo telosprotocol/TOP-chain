@@ -31,10 +31,11 @@ enum enum_xtx_type_socre_t {
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_send_receipt, 0x00000001);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_recv_receipt, 0x00000002);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x00000003);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000005);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_resend_receipt, 0x00000006);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_receipt_id_state, 0x00000007);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);  // keep it for compatibility
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt_v2, 0x00000005);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000006);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_resend_receipt, 0x00000007);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_receipt_id_state, 0x00000008);
 
 class xtx_para_t {
 public:
