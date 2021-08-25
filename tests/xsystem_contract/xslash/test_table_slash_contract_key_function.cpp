@@ -62,10 +62,16 @@ void test_table_slash_contract::create_account_addrs(uint32_t auditor_account_nu
 
     for (uint32_t i = 0; i < auditor_account_num; ++i) {
         auditor_account_addrs[i] = common::xaccount_address_t{std::string{"auditor_account__"} + std::to_string(i)};
+        // top::utl::xecprikey_t prikey;
+        // auditor_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
+
     }
 
     for (uint32_t i = 0; i < validator_account_num; ++i) {
         validator_account_addrs[i] = common::xaccount_address_t{std::string{"validator_account__"} + std::to_string(i)};
+        // top::utl::xecprikey_t prikey;
+        // validator_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
+
     }
 
 
