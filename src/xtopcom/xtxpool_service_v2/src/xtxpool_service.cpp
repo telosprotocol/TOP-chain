@@ -18,6 +18,7 @@
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvnetwork_error.h"
 #include "xvnetwork/xvnetwork_error2.h"
+#include "xvledger/xvpropertyprove.h"
 
 #include <cinttypes>
 
@@ -782,57 +783,57 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
 
 void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
     xinfo("xtxpool_service::on_message_receipt_id_state_received at_node:%s,msg id:%x,hash:%" PRIx64 "", m_vnetwork_str.c_str(), message.id(), message.hash());
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xreceipt_id_state_msg_t receipt_id_state_msg;
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
-    receipt_id_state_msg.serialize_from(stream);
+    base::xdataunit_t* _dataunit = base::xdataunit_t::read_from(stream);
+    xassert(_dataunit != nullptr);
+    base::xvproperty_prove_t* _property_prove_raw = dynamic_cast<base::xvproperty_prove_t*>(_dataunit);
+    xassert(_property_prove_raw != nullptr);
+    base::xvproperty_prove_ptr_t property_prove_ptr;
+    property_prove_ptr.attach(_property_prove_raw);
+    xassert(property_prove_ptr->is_valid());
 
-    m_para->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
+    auto receiptid_state = xblocktool_t::get_receiptid_from_property_prove(property_prove_ptr);
+    m_para->get_txpool()->update_peer_all_receipt_id_pairs(receiptid_state->get_self_tableid(), receiptid_state->get_all_receiptid_pairs());
 }
 
 void xtxpool_service::send_receipt_id_state(uint8_t zone, uint16_t table_id) {
-    // todo：带上证明的收据id信息，找出与自己不同group的所有group，一一广播
     std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, table_id);
     base::xvaccount_t vaccount(table_addr);
-    auto commit_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_sync_status);
+    auto commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_sync_status);
 
     if (commit_block->get_height() == 0) {
         xinfo("xtxpool_service::send_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
         return;
     }
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(
-        dynamic_cast<xblock_t *>(commit_block.get()), metrics::blockstore_access_from_txpool_sync_status);
-    if (bstate == nullptr) {
-        xwarn("xtxpool_service::send_receipt_id_state fail-get bstate.block=%s", commit_block->dump().c_str());
+    auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_sync_status);
+    if (cert_block == nullptr) {
+        xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), commit_block->get_height() + 2);
         return;
     }
 
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block.get());
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-    auto & all_pairs = tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs();
-    if (all_pairs.empty()) {
-        xinfo("xtxpool_service::send_receipt_id_state pairs empty,not send,latest commit block:%s", commit_block->dump().c_str());
+    if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
+        xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), commit_block->get_height());
         return;
     }
-    xinfo("xtxpool_service::send_receipt_id_state broadcast receipt id state latest commit block:%s,pairs:%s",
-          commit_block->dump().c_str(),
-          tablestate->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
+    base::xvproperty_prove_ptr_t property_prove = base::xpropertyprove_build_t::create_property_prove(commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
+    xassert(property_prove != nullptr);
+    xassert(property_prove->is_valid());
 
-    top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
-    xtxpool_service_v2::xreceipt_id_state_msg_t receipt_id_state_msg;
-    receipt_id_state_msg.m_table_sid = vaccount.get_short_table_id();
-    for (auto & pair : all_pairs) {
-        receipt_id_state_msg.m_receiptid_pairs.add_pair(pair.first, pair.second);
-    }
-    receipt_id_state_msg.serialize_to(stream);
-    vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
+    base::xstream_t stream(base::xcontext_t::instance());
+    vnetwork::xmessage_t msg;
+    property_prove->serialize_to(stream);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
+
     std::error_code ec = vnetwork::xvnetwork_errc2_t::success;
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
     common::xip2_t dst{to_addr.low_addr, to_addr.high_addr};
     m_vnet_driver->broadcast(dst, msg, ec);
 
-    m_para->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
+    m_para->get_txpool()->update_peer_all_receipt_id_pairs(vaccount.get_short_table_id(), tablestate->get_receiptid_state()->get_all_receiptid_pairs());
 }
 
 void xtxpool_service::send_receipt_id_state(uint64_t now) {

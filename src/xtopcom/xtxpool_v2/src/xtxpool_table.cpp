@@ -16,11 +16,13 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
+#include "xdata/xblocktool.h"
 
 namespace top {
 namespace xtxpool_v2 {
 
 #define state_update_too_long_time (600)
+#define load_table_block_num_max (50)
 
 bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const {
     // TODO(jimmy) try sync behind account unit, make a new function
@@ -369,8 +371,6 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
     return xsuccess;
 }
 
-#define load_table_block_num_max (50)
-
 void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     base::xvaccount_t _vaddr(m_xtable_info.get_table_addr());
     auto latest_committed_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr, metrics::blockstore_access_from_txpool_refresh_table);
@@ -682,40 +682,44 @@ xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t pe
 
     m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
 
-    std::vector<base::xfull_txreceipt_t> all_receipts =
-        base::xtxreceipt_build_t::create_all_txreceipts(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(cert_block.get()));
-    for (auto & receipt : all_receipts) {
-        data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-        xtxpool_dbg("xtxpool_table_t::build_receipt table:%s, peer table:%d, receipt_id::%llu, table_height:%llu,subtype:%d,tx:%s",
-                    m_xtable_info.get_account().c_str(),
-                    peer_table_sid,
-                    receipt_id,
-                    commit_height,
-                    subtype,
-                    constx->dump().c_str());
+    auto tx = xblocktool_t::create_one_txreceipt(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(cert_block.get()), peer_table_sid, receipt_id, subtype);
+    xassert(tx != nullptr);
+    return tx;
 
-        if (constx->get_tx_subtype() != subtype) {
-            continue;
-        }
+    // std::vector<base::xfull_txreceipt_t> all_receipts =
+    //     base::xtxreceipt_build_t::create_all_txreceipts(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(cert_block.get()));
+    // for (auto & receipt : all_receipts) {
+    //     data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
+    //     xtxpool_dbg("xtxpool_table_t::build_receipt table:%s, peer table:%d, receipt_id::%llu, table_height:%llu,subtype:%d,tx:%s",
+    //                 m_xtable_info.get_account().c_str(),
+    //                 peer_table_sid,
+    //                 receipt_id,
+    //                 commit_height,
+    //                 subtype,
+    //                 constx->dump().c_str());
 
-        if (constx->get_self_tableid() == peer_table_sid && constx->get_last_action_receipt_id() == receipt_id) {
-            xtxpool_info("xtxpool_table_t::build_receipt succ table:%s, peer table:%d, receipt_id::%llu, table_height:%llu,subtype:%d tx:%s",
-                         m_xtable_info.get_account().c_str(),
-                         peer_table_sid,
-                         receipt_id,
-                         commit_height,
-                         subtype,
-                         constx->dump().c_str());
-            return constx;
-        }
-    }
-    xerror("xtxpool_table_t::build_receipt fail-not find recv tx table=%s,peer table:%d,receipt id:%llu,table_height:%llu,subtype:%d",
-           m_xtable_info.get_account().c_str(),
-           peer_table_sid,
-           receipt_id,
-           commit_height,
-           subtype);
-    return nullptr;
+    //     if (constx->get_tx_subtype() != subtype) {
+    //         continue;
+    //     }
+
+    //     if (constx->get_self_tableid() == peer_table_sid && constx->get_last_action_receipt_id() == receipt_id) {
+    //         xtxpool_info("xtxpool_table_t::build_receipt succ table:%s, peer table:%d, receipt_id::%llu, table_height:%llu,subtype:%d tx:%s",
+    //                      m_xtable_info.get_account().c_str(),
+    //                      peer_table_sid,
+    //                      receipt_id,
+    //                      commit_height,
+    //                      subtype,
+    //                      constx->dump().c_str());
+    //         return constx;
+    //     }
+    // }
+    // xerror("xtxpool_table_t::build_receipt fail-not find recv tx table=%s,peer table:%d,receipt id:%llu,table_height:%llu,subtype:%d",
+    //        m_xtable_info.get_account().c_str(),
+    //        peer_table_sid,
+    //        receipt_id,
+    //        commit_height,
+    //        subtype);
+    // return nullptr;
 }
 
 xcons_transaction_ptr_t xtxpool_table_t::build_recv_tx(const std::string & peer_table_addr, uint64_t receipt_id) {

@@ -36,7 +36,7 @@ public:
     bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;};
     bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;}
     void update_peer_confirm_id(const std::string & self_addr, base::xtable_shortid_t peer_sid, uint64_t confirm_id) override {}
-    void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) override {}
+    void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_ptr_t & all_pairs) override {}
 };
 
 using xdummy_txpool_t = xtop_dummy_txpool;

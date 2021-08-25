@@ -374,14 +374,14 @@ void xtxpool_t::update_peer_confirm_id(const std::string & self_addr, base::xtab
     table->update_peer_confirm_id(peer_sid, confirm_id);
 }
 
-void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) {
-    xdbg("xtxpool_t::update_peer_all_receipt_id_pairs peer_sid:%d,all_pairs:%s", peer_sid, all_pairs.dump().c_str());
+void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_ptr_t & all_pairs) {
+    xdbg("xtxpool_t::update_peer_all_receipt_id_pairs peer_sid:%d,all_pairs:%s", peer_sid, all_pairs->dump().c_str());
     for (int32_t i = 0; i < enum_xtxpool_table_type_max; i++) {
         for (int32_t j = 0; j < enum_vbucket_has_tables_count; j++) {
             auto table = m_tables[i][j];
             if (table != nullptr) {
                 base::xreceiptid_pair_t pair;
-                all_pairs.find_pair(table->table_sid(), pair);
+                all_pairs->find_pair(table->table_sid(), pair);
                 table->update_peer_confirm_id(peer_sid, pair.get_confirmid_max());
             }
         }
