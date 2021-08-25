@@ -16,6 +16,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtableblock.h"
 #include "xvledger/xreceiptid.h"
+#include "xvledger/xvpropertyprove.h"
 
 NS_BEG2(top, data)
 
@@ -59,6 +60,16 @@ class xblocktool_t {
 
  public:
     static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);
+
+ public:  // txreceipt create
+    static xcons_transaction_ptr_t                  create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, enum_transaction_subtype subtype);
+    static xcons_transaction_ptr_t                  create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, const std::string & txhash);
+    static std::vector<xcons_transaction_ptr_t>     create_all_txreceipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block);
+
+ public:  // property prove    
+    static base::xvproperty_prove_ptr_t             create_receiptid_property_prove(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xvbstate_t* bstate);
+    static base::xreceiptid_state_ptr_t             get_receiptid_from_property_prove(const base::xvproperty_prove_ptr_t & prop_prove);
+
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl

@@ -18,6 +18,13 @@ namespace top
 {
     namespace base
     {
+        class xvproperty_holder_t : public xvbstate_t {
+        public:
+            xvproperty_holder_t(const std::string & address, uint64_t block_height);
+            
+            bool    add_property(xvproperty_t* property);
+        };
+
         class xvproperty_prove_t : public xbase_dataunit_t<xvproperty_prove_t, xdata_type_property_prove> {
         public:
             xvproperty_prove_t();
@@ -36,6 +43,8 @@ namespace top
         public:
             bool                            is_valid() const;
             xauto_ptr<xmapvar_t<std::string>>   load_string_map_var(const std::string & property_name);
+            const xtx_receipt_ptr_t &               get_action_prove() const {return m_receipt;}
+            const xobject_ptr_t<xvproperty_t> &     get_property() const {return m_property;}
         private:
             xobject_ptr_t<xvproperty_t>     m_property{nullptr};
             base::xtx_receipt_ptr_t         m_receipt{nullptr};

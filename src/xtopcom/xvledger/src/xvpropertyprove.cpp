@@ -17,6 +17,17 @@ namespace top
     {
         REG_CLS(xvproperty_prove_t);
 
+        xvproperty_holder_t::xvproperty_holder_t(const std::string & address, uint64_t block_height)
+        : base::xvbstate_t(address, block_height, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0) {
+
+        }
+
+        bool xvproperty_holder_t::add_property(xvproperty_t* property) {
+            return add_child_unit(property);
+        }
+
+
+
         xvproperty_prove_t::xvproperty_prove_t() {
 
         }
@@ -125,9 +136,9 @@ namespace top
                 xassert(false);
                 return nullptr;
             }
+            #ifdef DEBUG
             std::string property_bin;
             _property->serialize_to_string(property_bin);
-            #ifdef DEBUG
             uint256_t hash = utl::xsha2_256_t::digest(property_bin);
             std::string prophash2 = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
             if (prophash != prophash2) {
