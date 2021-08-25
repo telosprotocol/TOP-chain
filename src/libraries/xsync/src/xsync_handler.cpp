@@ -261,7 +261,6 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
         int64_t recv_time) {
 
     XMETRICS_GAUGE(metrics::xsync_recv_new_hash, 1);
-    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
     ptr->serialize_from(stream);

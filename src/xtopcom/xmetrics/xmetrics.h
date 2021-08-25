@@ -174,6 +174,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_handler_blocks,
     xsync_recv_gossip,
     xsync_recv_on_demand_blocks,
+    xsync_send_on_demand_blocks,
     xsync_recv_broadcast_chain_state,
     xsync_recv_response_chain_state,
     xsync_cross_cluster_chain_state,
@@ -186,6 +187,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_handle_ondemand_txs,
     xsync_handle_ondemand_txs_response,
     xsync_recv_blocks_response,
+    xsync_response_chain_state_recv,
 
     // txpool
     txpool_received_self_send_receipt_num,

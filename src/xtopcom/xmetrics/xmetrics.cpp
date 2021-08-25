@@ -158,6 +158,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_handler_blocks);
         RETURN_METRICS_NAME(xsync_recv_gossip);
         RETURN_METRICS_NAME(xsync_recv_on_demand_blocks);
+        RETURN_METRICS_NAME(xsync_send_on_demand_blocks);
         RETURN_METRICS_NAME(xsync_recv_broadcast_chain_state);
         RETURN_METRICS_NAME(xsync_recv_response_chain_state);
         RETURN_METRICS_NAME(xsync_cross_cluster_chain_state);
@@ -170,6 +171,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_handle_ondemand_txs);
         RETURN_METRICS_NAME(xsync_handle_ondemand_txs_response);
         RETURN_METRICS_NAME(xsync_recv_blocks_response);
+        RETURN_METRICS_NAME(xsync_response_chain_state_recv);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
