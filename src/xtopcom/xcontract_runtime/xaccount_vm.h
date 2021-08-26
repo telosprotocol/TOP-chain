@@ -44,7 +44,7 @@ static auto x = _();
 
 class xtop_account_vm : public xvm_executor_face_t {
 private:
-    std::unique_ptr<user::xaction_runtime_t> user_action_runtime_{ top::make_unique<user::xaction_runtime_t>() };
+    std::unique_ptr<user::xuser_action_runtime_t> user_action_runtime_{ top::make_unique<user::xuser_action_runtime_t>() };
 
 public:
     xtop_account_vm() = default;

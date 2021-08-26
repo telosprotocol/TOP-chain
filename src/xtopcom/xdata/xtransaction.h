@@ -21,6 +21,7 @@ namespace top { namespace data {
 
 enum enum_xtransaction_type {
     xtransaction_type_create_user_account        = 0,    // create user account
+    xtransaction_type_deploy_wasm_contract       = 1,    // user deploy wasm contract
 
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset

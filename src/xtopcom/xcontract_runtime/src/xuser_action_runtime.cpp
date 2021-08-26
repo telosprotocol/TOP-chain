@@ -15,7 +15,7 @@ NS_BEG2(top, contract_runtime)
 using xuser_consensus_action_t = data::xconsensus_action_t<data::xtop_action_type_t::user>;
 
 std::unique_ptr<xaction_session_t<xuser_consensus_action_t>> xtop_action_runtime<xuser_consensus_action_t>::new_session(observer_ptr<contract_common::xcontract_state_t> contract_state) {
-    return top::make_unique<xaction_session_t<data::xconsensus_action_t<data::xtop_action_type_t::user>>>(top::make_observer(this), contract_state);
+    return top::make_unique<xaction_session_t<xuser_consensus_action_t>>(top::make_observer(this), contract_state);
 }
 
 xtransaction_execution_result_t xtop_action_runtime<xuser_consensus_action_t>::execute(observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {

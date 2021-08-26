@@ -17,15 +17,14 @@ add_subdirectory(xelect_net)
 add_subdirectory(xchain_timer)
 add_subdirectory(xrouter)
 add_subdirectory(xstore)
-# add_subdirectory(xstate_accessor) # new contract only
-# add_subdirectory(xcontract_common) # new contract only
+add_subdirectory(xstate_accessor) # new contract only
+add_subdirectory(xcontract_common) # new contract only
 if (BUILD_RUSTVM)
     add_subdirectory(xwasm_vm)
 endif()
-# add_subdirectory(xcontract_runtime)
-# add_subdirectory(xcontract_api)
-#add_subdirectory(xsystem_contracts)
-# add_subdirectory(xconsensus)
+add_subdirectory(xcontract_runtime)
+add_subdirectory(xcontract_api)
+# add_subdirectory(xsystem_contracts)
 add_subdirectory(xutility)
 add_subdirectory(xcommon)
 add_subdirectory(xstake)
