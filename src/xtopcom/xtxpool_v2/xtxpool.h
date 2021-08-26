@@ -38,7 +38,7 @@ public:
     void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) override;
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;
     void update_table_state(const data::xtablestate_ptr_t & table_state) override;
-    xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
+    // xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
     xcons_transaction_ptr_t build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) override;
     xcons_transaction_ptr_t build_confirm_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) override;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
@@ -46,9 +46,8 @@ public:
     // const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
     void print_statistic_values() const override;
-    bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
-    bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
-    void update_peer_confirm_id(const std::string & self_addr, base::xtable_shortid_t peer_sid, uint64_t confirm_id) override;
+    // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
+    // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_ptr_t & all_pairs) override;
 
 private:

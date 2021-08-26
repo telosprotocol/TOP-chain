@@ -63,21 +63,21 @@ void xtxpool_t::print_statistic_values() const {
     m_statistic.print();
 }
 
-bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(to_addr);
-    if (table == nullptr) {
-        return false;
-    }
-    return table->is_consensused_recv_receiptid(from_addr, receipt_id);
-}
+// bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
+//     auto table = get_txpool_table_by_addr(to_addr);
+//     if (table == nullptr) {
+//         return false;
+//     }
+//     return table->is_consensused_recv_receiptid(from_addr, receipt_id);
+// }
 
-bool xtxpool_t::is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(from_addr);
-    if (table == nullptr) {
-        return false;
-    }
-    return table->is_consensused_confirm_receiptid(to_addr, receipt_id);
-}
+// bool xtxpool_t::is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
+//     auto table = get_txpool_table_by_addr(from_addr);
+//     if (table == nullptr) {
+//         return false;
+//     }
+//     return table->is_consensused_confirm_receiptid(to_addr, receipt_id);
+// }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
     auto table = get_txpool_table_by_addr(txinfo.get_addr());
@@ -237,15 +237,16 @@ void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) 
         return;
     }
     table->update_table_state(table_state);
+    update_peer_all_receipt_id_pairs(table_state->get_receiptid_state()->get_self_tableid(), table_state->get_receiptid_state()->get_all_receiptid_pairs());
 }
 
-xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(from_table_addr);
-    if (table == nullptr) {
-        return nullptr;
-    }
-    return table->get_unconfirmed_tx(to_table_addr, receipt_id);
-}
+// xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
+//     auto table = get_txpool_table_by_addr(from_table_addr);
+//     if (table == nullptr) {
+//         return nullptr;
+//     }
+//     return table->get_unconfirmed_tx(to_table_addr, receipt_id);
+// }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
     if (!is_table_subscribed(zone, subaddr)) {
@@ -365,15 +366,6 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     return true;
 }
 
-void xtxpool_t::update_peer_confirm_id(const std::string & self_addr, base::xtable_shortid_t peer_sid, uint64_t confirm_id) {
-    auto table = get_txpool_table_by_addr(self_addr);
-    if (table == nullptr) {
-        return;
-    }
-    xdbg("xtxpool_t::update_peer_receipt_id_pair table:%d,peer:%d,confirm id:%llu", table->table_sid(), peer_sid, confirm_id);
-    table->update_peer_confirm_id(peer_sid, confirm_id);
-}
-
 void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_ptr_t & all_pairs) {
     xdbg("xtxpool_t::update_peer_all_receipt_id_pairs peer_sid:%d,all_pairs:%s", peer_sid, all_pairs->dump().c_str());
     for (int32_t i = 0; i < enum_xtxpool_table_type_max; i++) {
@@ -382,7 +374,7 @@ void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid
             if (table != nullptr) {
                 base::xreceiptid_pair_t pair;
                 all_pairs->find_pair(table->table_sid(), pair);
-                table->update_peer_confirm_id(peer_sid, pair.get_confirmid_max());
+                table->update_peer_receiptid_pair(peer_sid, pair);
             }
         }
     }

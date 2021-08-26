@@ -37,7 +37,6 @@ std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(ba
     return all_cons_txs;
 }
 
-#if 0
 bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id) {
     // different table resend at different time by different advance node
     uint64_t random_num = now + (uint64_t)table_id;
@@ -53,7 +52,6 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
           self_node_id);
     return (is_time_for_resend && resend_node_pos == self_node_id);
 }
-#endif
 
 bool xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t node_id) {
     // different table send at different time by different advance node

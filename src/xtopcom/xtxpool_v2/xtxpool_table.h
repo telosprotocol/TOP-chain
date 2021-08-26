@@ -96,17 +96,16 @@ public:
     void refresh_table(bool refresh_unconfirm_txs);
     // void update_non_ready_accounts();
     void update_table_state(const data::xtablestate_ptr_t & table_state);
-    xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const;
+    // xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     // const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint32_t max_num) const;
     bool need_sync_lacking_receipts() const;
     void add_shard(xtxpool_shard_info_t * shard);
     void remove_shard(xtxpool_shard_info_t * shard);
     bool no_shard() const;
-    bool is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const;
-    bool is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const;
+    // bool is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const;
+    // bool is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const;
 
-    void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
     void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
     xcons_transaction_ptr_t build_recv_tx(const std::string & peer_table_addr, uint64_t receipt_id);
@@ -130,6 +129,7 @@ private:
     void update_sender_unconfirm_id_height(const base::xreceiptid_state_ptr_t & receipt_id_state);
     void deal_commit_table_block(xblock_t * table_block);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
+    void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
 
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
