@@ -159,7 +159,11 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
     height = m_chain_objects[sync_policy].height();
     picked_height = m_chain_objects[sync_policy].picked_height();
     m_chain_objects[sync_policy] = xchain_object_t{start_height, end_height, self_addr, target_addr};
-    m_chain_objects[sync_policy].set_height(height);
+    if (height < start_height){
+        m_chain_objects[sync_policy].set_height(start_height);
+    } else {
+        m_chain_objects[sync_policy].set_height(height);
+    }
     m_chain_objects[sync_policy].set_picked_height(picked_height);
 
     xsync_info("chain_downloader on_behind expect start_height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
