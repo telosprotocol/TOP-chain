@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include "xbase/xcxx_config.h"
 #include "xbase/xint.h"
 #include "xbase/xdata.h"
 
