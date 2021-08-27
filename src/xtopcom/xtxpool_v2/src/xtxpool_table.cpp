@@ -24,6 +24,7 @@ namespace xtxpool_v2 {
 #define state_update_too_long_time (600)
 #define load_table_block_num_max (50)
 #define table_fail_behind_height_diff_max (5)
+#define table_sync_on_demand_num_max (10)
 
 bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const {
     // TODO(jimmy) try sync behind account unit, make a new function
@@ -387,10 +388,10 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
 
     uint64_t left_end;
     uint64_t right_end;
-    bool ret = m_unconfirm_id_height.get_lacking_section(left_end, right_end);
+    bool ret = m_unconfirm_id_height.get_lacking_section(left_end, right_end, load_table_block_num_max);
     if (ret) {
         uint64_t load_height_max = right_end;
-        uint64_t load_height_min = (right_end >= left_end + load_table_block_num_max) ? (right_end + 1 - load_table_block_num_max) : left_end;
+        uint64_t load_height_min = left_end;
         if (left_end == 0 && right_end == 0) {
             if (latest_committed_block->get_height() <= 1) {
                 xtxpool_warn("xtxpool_table_t::refresh_table load commit block fail,table:%s", m_xtable_info.get_account().c_str());
@@ -410,7 +411,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                 m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
                 deal_commit_table_block(dynamic_cast<xblock_t *>(commit_block.get()), false);
             } else {
-                uint64_t sync_from_height = (height > 10) ? (height - 10) : 1;
+                uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
                 // try sync table block
                 mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                     m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block");

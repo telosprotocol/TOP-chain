@@ -61,7 +61,7 @@ public:
     void update_min_height(uint64_t height);
     void record_height(uint64_t height);
     bool is_record_height(uint64_t height) const;
-    bool get_latest_lacking_saction(uint64_t & left_end, uint64_t & right_end) const;
+    bool get_latest_lacking_saction(uint64_t & left_end, uint64_t & right_end, uint16_t max_lacking_num) const;
 
 private:
     void print() const;
@@ -84,7 +84,7 @@ struct xtx_id_height_info {
 
 class xunconfirm_id_height {
 public:
-    bool get_lacking_section(uint64_t & left_end, uint64_t & right_end) const;
+    bool get_lacking_section(uint64_t & left_end, uint64_t & right_end, uint16_t max_lacking_num) const;
     void update_unconfirm_id_height(uint64_t table_height, uint64_t time, const std::vector<xtx_id_height_info> & tx_id_height_infos);
     void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
     void update_this_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);

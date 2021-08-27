@@ -808,14 +808,18 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
             xinfo("xtxpool_service::send_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
             return;
         }
+        auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block.get());
+        if (bstate == nullptr) {
+            xwarn("xtxpool_service::send_receipt_id_state table:%s,height:%llu,get bstate fail", table_addr.c_str(), commit_block->get_height());
+            return;
+        }
 
         auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_sync_status);
         if (cert_block == nullptr) {
             xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), commit_block->get_height() + 2);
             return;
         }
-
-        auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block.get());
+        
         xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
         if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
             xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), commit_block->get_height());

@@ -34,20 +34,20 @@ TEST_F(test_unconfirm_id_height, processed_table_height) {
 
     uint64_t left_end;
     uint64_t right_end;
-    processed_table_height.get_latest_lacking_saction(left_end, right_end);
-    ASSERT_EQ(left_end, 13344);
+    processed_table_height.get_latest_lacking_saction(left_end, right_end, 50);
+    ASSERT_EQ(left_end, 199950);
     ASSERT_EQ(right_end, 199999);
 
     processed_table_height.record_height(199999);
     processed_table_height.record_height(199998);
     processed_table_height.record_height(199997);
     processed_table_height.record_height(199996);
-    processed_table_height.get_latest_lacking_saction(left_end, right_end);
-    ASSERT_EQ(left_end, 13344);
+    processed_table_height.get_latest_lacking_saction(left_end, right_end, 50);
+    ASSERT_EQ(left_end, 199946);
     ASSERT_EQ(right_end, 199995);
 
     processed_table_height.record_height(199994);
-    processed_table_height.get_latest_lacking_saction(left_end, right_end);
+    processed_table_height.get_latest_lacking_saction(left_end, right_end, 50);
     ASSERT_EQ(left_end, 199995);
     ASSERT_EQ(right_end, 199995);
 

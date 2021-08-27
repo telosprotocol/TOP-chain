@@ -225,7 +225,7 @@ bool xprocessed_height_record_t::is_record_height(uint64_t height) const {
     return m_bit_record[recordidx] & bit_num;
 }
 
-bool xprocessed_height_record_t::get_latest_lacking_saction(uint64_t & left_end, uint64_t & right_end) const {
+bool xprocessed_height_record_t::get_latest_lacking_saction(uint64_t & left_end, uint64_t & right_end, uint16_t max_lacking_num) const {
     if (m_max_record_height == 0 || m_max_record_height == m_min_record_height) {
         return false;
     }
@@ -242,7 +242,7 @@ bool xprocessed_height_record_t::get_latest_lacking_saction(uint64_t & left_end,
                 right_end_found = true;
             }
         } else {
-            if (m_bit_record[recordidx] & (1UL << (height - min_height))) {
+            if ((height + max_lacking_num <= right_end) || (m_bit_record[recordidx] & (1UL << (height - min_height)))) {
                 left_end = height + 1;
                 return true;
             }
@@ -265,7 +265,7 @@ void xprocessed_height_record_t::print() const {
          m_bit_record.size());
 }
 
-bool xunconfirm_id_height::get_lacking_section(uint64_t & left_end, uint64_t & right_end) const {
+bool xunconfirm_id_height::get_lacking_section(uint64_t & left_end, uint64_t & right_end, uint16_t max_lacking_num) const {
     bool ret;
     uint64_t sender_min_height;
     uint64_t receiver_min_height;
@@ -290,7 +290,7 @@ bool xunconfirm_id_height::get_lacking_section(uint64_t & left_end, uint64_t & r
     }
 
     if (!sender_all_unconfirm_id_recovered || !receiver_all_unconfirm_id_recovered) {
-        bool found_lacking_saction = m_processed_height_record.get_latest_lacking_saction(left_end, right_end);
+        bool found_lacking_saction = m_processed_height_record.get_latest_lacking_saction(left_end, right_end, max_lacking_num);
         if (!found_lacking_saction) {
             left_end = 0;
             right_end = 0;
