@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "xbase/xmem.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvproperty.h"
 #include "xvledger/xvstate.h"
@@ -29,5 +30,107 @@ TEST_F(test_property, object_memory_leak_1)
         xassert(canvas->get_refcount() == 1);
         xassert(bstate->get_refcount() == 1);
         xassert(token->get_refcount() == 2);
+    }
+}
+
+
+TEST_F(test_property, serialize_compare_1)
+{
+    {
+        uint64_t value = 1;
+        std::string vstr = std::to_string(value);
+        std::cout << "value = 1 std::to_string size=" << vstr.size() << std::endl;
+    }
+    {
+        uint64_t value = 1;
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_compact_var(value);
+        std::string vstr = std::string((char*)stream.data(), stream.size());
+        std::cout << "value = 1 write_compact_var size=" << vstr.size() << std::endl;
+    }
+
+    {
+        uint64_t value = 123;
+        std::string vstr = std::to_string(value);
+        std::cout << "value = 123 std::to_string size=" << vstr.size() << std::endl;
+    }
+    {
+        uint64_t value = 123;
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_compact_var(value);
+        std::string vstr = std::string((char*)stream.data(), stream.size());
+        std::cout << "value = 123 write_compact_var size=" << vstr.size() << std::endl;
+    }
+
+    {
+        uint64_t value = 123456789;
+        std::string vstr = std::to_string(value);
+        xassert(vstr == "123456789");
+        xassert(vstr.size() == 9);
+        std::cout << "value = 123456789 std::to_string size=" << vstr.size() << std::endl;
+    }
+    {
+        uint64_t value = 123456789;
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_compact_var(value);
+        std::string vstr = std::string((char*)stream.data(), stream.size());
+        std::cout << "value = 123456789 write_compact_var size=" << vstr.size() << std::endl;
+    }
+    {
+        uint64_t value = 123456789;
+        std::string vstr = base::xstring_utl::uint642hex(value);
+        std::cout << "value = 123456789 uint642hex size=" << vstr.size() << std::endl;
+    }
+
+    {
+        uint64_t value = UINT64_MAX;
+        std::string vstr = std::to_string(value);
+        std::cout << "value = UINT64_MAX std::to_string size=" << vstr.size() << std::endl;
+    }  
+    {
+        uint64_t value = UINT64_MAX;
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_compact_var(value);
+        std::string vstr = std::string((char*)stream.data(), stream.size());
+        std::cout << "value = UINT64_MAX write_compact_var size=" << vstr.size() << std::endl;
+    }    
+    
+    {
+        std::string vstr = "123456789abcd";
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream << vstr;
+        std::cout << "vstr = 123456789abcd  << stream size=" << stream.size() << std::endl;
+    }    
+    {
+        std::string vstr = "123456789abcd";
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_compact_var(vstr);
+        std::cout << "vstr = 123456789abcd  write_compact_var stream size=" << stream.size() << std::endl;
+    }
+    {
+        std::string vstr = "123456789abcd";
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_tiny_string(vstr);
+        std::cout << "vstr = 123456789abcd  write_tiny_string stream size=" << stream.size() << std::endl;
+    }          
+}
+
+TEST_F(test_property, serialize_compare_2)
+{
+    uint64_t count = 1000000;
+    uint64_t i = 0;
+    for (uint64_t value = UINT64_MAX; value > 0; value--) {
+        if (i++ > count) {
+            break;
+        }
+
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream.write_compact_var(value);
+        std::string vstr = std::string((char*)stream.data(), stream.size());
+        
+        base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t*)vstr.data(), vstr.size());
+        uint64_t value2;
+        stream.read_compact_var(value2);
+        xassert(value2 == value);
     }
 }
