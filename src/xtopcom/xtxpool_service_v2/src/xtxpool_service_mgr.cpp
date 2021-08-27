@@ -238,7 +238,7 @@ void xtxpool_service_mgr::on_timer() {
     }
 
     // because recover might be very time-consuming, recover should not in lock of "m_mutex", or else xtxpool_service_mgr::create may be blocked.
-    for (auto table_boundary : table_boundarys) {
+    for (auto & table_boundary : table_boundarys) {
         base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
         uint32_t fount_table_id = std::get<1>(table_boundary);
         uint32_t back_table_id = std::get<2>(table_boundary);
@@ -251,11 +251,11 @@ void xtxpool_service_mgr::on_timer() {
     }
 
     xcovered_tables_t covered_tables;
-    for (auto service : pull_lacking_receipts_service_vec) {
+    for (auto & service : pull_lacking_receipts_service_vec) {
         service->pull_lacking_receipts(now, covered_tables);
     }
 
-    for (auto service : receipts_recender_service_vec) {
+    for (auto & service : receipts_recender_service_vec) {
         // todo: not resend receipts after a specified clock!!!
         service->resend_receipts(now);
         service->send_receipt_id_state(now);

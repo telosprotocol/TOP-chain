@@ -130,6 +130,27 @@ bool xreceipt_strategy_t::is_selected_receipt_pull_msg_processor(uint64_t now, u
     return ret;
 }
 
+bool xreceipt_strategy_t::is_selected_receipt_pull_msg_sender(const std::string & table_addr, uint64_t now, uint16_t node_id, uint16_t shard_size) {
+    // select 2 auditor to send the receipt
+    uint32_t select_num = receipt_pull_msg_sender_select_num;
+    // calculate a random position that means which node is selected to send the receipt
+    // the random position change by resend_time for rotate the selected node, to avoid same node is selected continuously.
+
+    uint32_t time_pos = now / pull_missing_receipt_interval;
+    uint32_t rand_pos = (base::xhash32_t::digest(table_addr) + time_pos) % shard_size;
+    bool ret = is_selected_pos(node_id, rand_pos, select_num, shard_size);
+    xinfo("xreceipt_strategy_t::is_selected_receipt_pull_msg_sender ret:%d table:%s rand_pos:%u select_num:%u node_id:%u shard_size:%u now:%llu time_pos:%u",
+          ret,
+          table_addr.c_str(),
+          rand_pos,
+          select_num,
+          node_id,
+          shard_size,
+          now,
+          time_pos);
+    return ret;
+}
+
 #if 0
 uint32_t xreceipt_strategy_t::calc_resend_time(uint64_t tx_cert_time, uint64_t now) {
     return (now - tx_cert_time) / receipt_resend_interval;

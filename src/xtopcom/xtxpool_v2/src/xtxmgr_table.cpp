@@ -138,7 +138,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     send_tx_queue_to_pending();
     ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_locked_nonce_map());
 
-    for (auto send_txs_account : send_txs_accounts) {
+    for (auto & send_txs_account : send_txs_accounts) {
         auto & account_txs = send_txs_account->get_txs();
         ready_txs.insert(ready_txs.end(), account_txs.begin(), account_txs.end());
     }
@@ -252,12 +252,12 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
         }
     }
 
-    for (auto tx_ent : expired_send_txs) {
+    for (auto & tx_ent : expired_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, true);
     }
 
-    for (auto tx_ent : push_succ_send_txs) {
+    for (auto & tx_ent : push_succ_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, false);
     }

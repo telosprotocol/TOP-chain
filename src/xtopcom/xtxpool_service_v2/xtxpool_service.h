@@ -15,6 +15,7 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_service_v2/xtxpool_svc_para.h"
 #include "xtxpool_v2/xtxpool_face.h"
+#include "xvledger/xvpropertyprove.h"
 
 #include <map>
 #include <set>
@@ -68,7 +69,7 @@ private:
     void send_pull_receipts_of_recv(xreceipt_pull_receipt_t & pulled_receipt);
     void send_push_receipts(xreceipt_push_t & pushed_receipt, vnetwork::xvnode_address_t const & target);
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
-    void send_receipt_id_state(uint8_t zone, uint16_t table_id);
+    void send_table_receipt_id_state(uint16_t table_id);
 
 private:
     xvip2_t m_xip;
@@ -84,7 +85,7 @@ private:
     uint16_t m_shard_size;
     volatile bool m_running{false};
     std::string m_vnetwork_str;
-    std::unordered_map<uint16_t, uint64_t> m_table_db_event_height_map;
+    std::unordered_map<uint16_t, std::pair<uint64_t, base::xvproperty_prove_ptr_t>> m_table_property_prove_cache;
 };
 
 NS_END2
