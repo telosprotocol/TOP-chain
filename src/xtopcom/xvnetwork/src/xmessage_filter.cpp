@@ -714,9 +714,9 @@ xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vn
         XATTRIBUTE_FALLTHROUGH;
     case xtxpool_v2::xtxpool_msg_pull_confirm_receipt:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2:
-        XATTRIBUTE_FALLTHROUGH;
     case xtxpool_v2::xtxpool_msg_push_receipt:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2:
         XATTRIBUTE_FALLTHROUGH;
     case xtxpool_v2::xtxpool_msg_receipt_id_state:
 #if defined(__clang__)

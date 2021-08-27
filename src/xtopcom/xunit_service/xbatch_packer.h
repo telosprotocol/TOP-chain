@@ -57,7 +57,7 @@ protected:
     // note: to return false may call parent'push_event_up,or stop further routing when return true
     virtual bool    on_pdu_event_up(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     // backup receive proposal
-    // virtual bool on_proposal_start(const base::xvevent_t & event, xcsobject_t* from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms); b
+    // virtual bool on_proposal_start(const base::xvevent_t & event, xcsobject_t* from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms);
 
 protected:
     xvip2_t get_parent_xip(const xvip2_t & local_xip);
@@ -69,7 +69,6 @@ private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
-    // void    send_receipt_id_state(xblock_t * commit_block);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
@@ -91,7 +90,6 @@ private:
     // m_leader_packed is used to avoid more than one block produced in one viewid
     bool                                     m_leader_packed{false};
     uint64_t                                 m_last_view_clock{0};
-    // uint64_t                                 m_last_send_receipt_id_state_clock{0};
 
 };
 

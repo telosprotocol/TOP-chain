@@ -124,37 +124,4 @@ public:
     base::enum_transaction_subtype m_receipt_type;
 };
 
-class xreceipt_id_state_msg_t : public top::basic::xserialize_face_t {
-protected:
-    int32_t do_write(base::xstream_t & stream) override {
-        KEEP_SIZE();
-
-        SERIALIZE_FIELD_BT(m_table_sid);
-        SERIALIZE_CONTAINER(m_receiptid_pairs.get_all_pairs()) {
-            SERIALIZE_FIELD_BT(item.first);
-            item.second.do_write(stream);
-        }
-
-        return CALC_LEN();
-    }
-
-    int32_t do_read(base::xstream_t & stream) override {
-
-        KEEP_SIZE();
-        DESERIALIZE_FIELD_BT(m_table_sid);
-        DESERIALIZE_CONTAINER(m_receiptid_pairs) {
-            base::xtable_shortid_t table_sid;
-            base::xreceiptid_pair_t receiptid_pair;
-            DESERIALIZE_FIELD_BT(table_sid);
-            receiptid_pair.do_read(stream);
-            m_receiptid_pairs.add_pair(table_sid, receiptid_pair);
-        }
-        // restore padding
-        return CALC_LEN();
-    }
-public:
-    base::xtable_shortid_t m_table_sid;
-    base::xreceiptid_pairs_t m_receiptid_pairs;
-};
-
 NS_END2

@@ -180,6 +180,8 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         if (covered_tables.is_covered(m_zone_index, table_id)) {
             continue;
         }
+        covered_tables.add_covered_table(m_zone_index, table_id);
+
         if (!m_para->get_txpool()->need_sync_lacking_receipts(m_zone_index, table_id)) {
             continue;
         }
@@ -260,7 +262,6 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
             lacking_recv_tx_num += table_lacking_ids.get_receipt_ids().size();
         }
         XMETRICS_GAUGE(metrics::txpool_pull_recv_tx, lacking_recv_tx_num);
-        covered_tables.add_covered_table(m_zone_index, table_id);
     }
 }
 
@@ -780,7 +781,7 @@ void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_addr
     xassert(property_prove_ptr->is_valid());
 
     auto receiptid_state = xblocktool_t::get_receiptid_from_property_prove(property_prove_ptr);
-    m_para->get_txpool()->update_peer_all_receipt_id_pairs(receiptid_state->get_self_tableid(), receiptid_state->get_all_receiptid_pairs());
+    m_para->get_txpool()->update_peer_receipt_id_state(receiptid_state);
 }
 
 void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
@@ -788,11 +789,16 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     base::xvaccount_t vaccount(table_addr);
     base::xvproperty_prove_ptr_t property_prove = nullptr;
 
-    auto iter = m_table_property_prove_cache.find(table_id);
-    if (iter != m_table_property_prove_cache.end()) {
-        auto & height = iter->second.first;
-        if (height >= m_para->get_vblockstore()->get_latest_committed_block_height(vaccount, metrics::blockstore_access_from_txpool_sync_status)) {
-            property_prove = iter->second.second;
+    auto iter = m_table_info_cache.find(table_id);
+    if (iter != m_table_info_cache.end()) {
+        auto & table_info = iter->second;
+        uint64_t cur_height = m_para->get_vblockstore()->get_latest_committed_block_height(vaccount, metrics::blockstore_access_from_txpool_sync_status);
+        if (table_info.m_last_property_height >= cur_height) {
+            xinfo("xtxpool_service::send_table_receipt_id_state table:%s height(%llu:%llu) not change,reuse property_prove",
+                  table_addr.c_str(),
+                  table_info.m_last_property_height,
+                  cur_height);
+            property_prove = table_info.m_property_prove;
         }
     }
     if (property_prove == nullptr) {
@@ -819,8 +825,13 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
         xassert(property_prove != nullptr);
         xassert(property_prove->is_valid());
 
-        m_para->get_txpool()->update_peer_all_receipt_id_pairs(vaccount.get_short_table_id(), tablestate->get_receiptid_state()->get_all_receiptid_pairs());
-        m_table_property_prove_cache[table_id] = std::make_pair(commit_block->get_height(), property_prove);
+        m_para->get_txpool()->update_peer_receipt_id_state(tablestate->get_receiptid_state());
+        if (iter == m_table_info_cache.end()) {
+            m_table_info_cache.insert(std::make_pair(table_id, table_info(commit_block->get_height(), property_prove)));
+        } else {
+            iter->second.m_last_property_height = commit_block->get_height();
+            iter->second.m_property_prove = property_prove;
+        }
     }
 
     base::xstream_t stream(base::xcontext_t::instance());

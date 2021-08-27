@@ -34,7 +34,6 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
         base::xtable_index_t tableindex(base::enum_chain_zone_zec_index, i);
         m_all_table_sids.insert(tableindex.to_table_shortid());
     }
-
 }
 
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
@@ -237,7 +236,7 @@ void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) 
         return;
     }
     table->update_table_state(table_state);
-    update_peer_all_receipt_id_pairs(table_state->get_receiptid_state()->get_self_tableid(), table_state->get_receiptid_state()->get_all_receiptid_pairs());
+    update_peer_receipt_id_state(table_state->get_receiptid_state());
 }
 
 // xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
@@ -366,14 +365,18 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     return true;
 }
 
-void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_ptr_t & all_pairs) {
-    xdbg("xtxpool_t::update_peer_all_receipt_id_pairs peer_sid:%d,all_pairs:%s", peer_sid, all_pairs->dump().c_str());
+void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+    auto peer_sid = receiptid_state->get_self_tableid();
+    xdbg("xtxpool_t::update_peer_receipt_id_state peer_sid:%d,height:%llu,all_pairs:%s",
+         peer_sid,
+         receiptid_state->get_block_height(),
+         receiptid_state->get_all_receiptid_pairs()->dump().c_str());
     for (int32_t i = 0; i < enum_xtxpool_table_type_max; i++) {
         for (int32_t j = 0; j < enum_vbucket_has_tables_count; j++) {
             auto table = m_tables[i][j];
             if (table != nullptr) {
                 base::xreceiptid_pair_t pair;
-                all_pairs->find_pair(table->table_sid(), pair);
+                receiptid_state->find_pair(table->table_sid(), pair);
                 table->update_peer_receiptid_pair(peer_sid, pair);
             }
         }

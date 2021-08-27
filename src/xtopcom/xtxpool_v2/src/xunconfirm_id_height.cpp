@@ -304,11 +304,9 @@ void xunconfirm_id_height::update_unconfirm_id_height(uint64_t table_height, uin
     std::lock_guard<std::mutex> lck(m_mutex);
     for (auto & tx_info : tx_id_height_infos) {
         if (tx_info.m_subtype == base::enum_transaction_subtype_send) {
-            m_receiver_unconfirm_id_height.update_confirm_id(tx_info.m_peer_table_sid, tx_info.m_confirm_id);
             m_sender_unconfirm_id_height.add_id_height(tx_info.m_peer_table_sid, tx_info.m_receipt_id, table_height, time);
 
         } else if (tx_info.m_subtype == base::enum_transaction_subtype_recv) {
-            m_receiver_unconfirm_id_height.update_confirm_id(tx_info.m_peer_table_sid, tx_info.m_confirm_id);
             m_receiver_unconfirm_id_height.add_id_height(tx_info.m_peer_table_sid, tx_info.m_receipt_id, table_height, time);
         }
     }

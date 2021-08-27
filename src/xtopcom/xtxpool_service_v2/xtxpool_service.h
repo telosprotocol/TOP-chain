@@ -25,6 +25,14 @@
 NS_BEG2(top, xtxpool_service_v2)
 using xtxpool_service_v2::xcons_utl;
 
+struct table_info {
+    table_info(uint64_t last_property_height, const base::xvproperty_prove_ptr_t & property_prove)
+      : m_last_property_height(last_property_height), m_property_prove(property_prove) {
+    }
+    uint64_t m_last_property_height{0};
+    base::xvproperty_prove_ptr_t m_property_prove{nullptr};
+};
+
 class xtxpool_service final
   : public xtxpool_service_face
   , public std::enable_shared_from_this<xtxpool_service> {
@@ -85,7 +93,7 @@ private:
     uint16_t m_shard_size;
     volatile bool m_running{false};
     std::string m_vnetwork_str;
-    std::unordered_map<uint16_t, std::pair<uint64_t, base::xvproperty_prove_ptr_t>> m_table_property_prove_cache;
+    std::unordered_map<uint16_t, table_info> m_table_info_cache;
 };
 
 NS_END2

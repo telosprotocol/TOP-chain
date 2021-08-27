@@ -234,7 +234,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool_recover,
     blockstore_access_from_txpool_refresh_table,
     blockstore_access_from_txpool_create_recv_receipt,
-    blockstore_access_from_txpool_end = blockstore_access_from_txpool_create_recv_receipt,
+    blockstore_access_from_txpool_pull_lacking_receipts,
+    blockstore_access_from_txpool_end = blockstore_access_from_txpool_pull_lacking_receipts,
 
     // blockstore access statestore
     blockstore_access_from_statestore,

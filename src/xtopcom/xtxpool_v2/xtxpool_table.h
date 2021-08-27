@@ -70,6 +70,16 @@ private:
 
 #define table_unconfirm_txs_num_max (100)
 
+struct update_id_state_para {
+    update_id_state_para(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce)
+      : m_txinfo(txinfo), m_peer_table_sid(peer_table_sid), m_receiptid(receiptid), m_nonce(nonce) {
+    }
+    tx_info_t m_txinfo;
+    base::xtable_shortid_t m_peer_table_sid;
+    uint64_t m_receiptid;
+    uint64_t m_nonce;
+};
+
 class xtxpool_table_t {
 public:
     xtxpool_table_t(xtxpool_resources_face * para,
@@ -113,6 +123,7 @@ public:
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
+    void update_commit_height_from_broadcast(uint64_t height);
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
@@ -122,12 +133,12 @@ private:
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
     bool get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
-    void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce);
+    void update_id_state(const std::vector<update_id_state_para> & para_vec);
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt_real(const std::shared_ptr<xtx_entry> & tx);
     void update_sender_unconfirm_id_height(const base::xreceiptid_state_ptr_t & receipt_id_state);
-    void deal_commit_table_block(xblock_t * table_block);
+    void deal_commit_table_block(xblock_t * table_block, bool update_txmgr);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
     void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
 
@@ -140,8 +151,8 @@ private:
     xtable_state_cache_t m_table_state_cache;
     // uint64_t m_unconfirmed_tx_num{0};
 
-    uint64_t m_last_commit_block_height{0xFFFFFFFFFFFFFFFF};
     xunconfirm_id_height m_unconfirm_id_height;
+    uint64_t m_commit_height_from_broadcast{0};
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts

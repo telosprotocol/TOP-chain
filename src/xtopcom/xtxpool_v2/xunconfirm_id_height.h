@@ -74,13 +74,12 @@ private:
 };
 
 struct xtx_id_height_info {
-    xtx_id_height_info(base::enum_transaction_subtype subtype, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t confirm_id)
-      : m_subtype(subtype), m_peer_table_sid(peer_table_sid), m_receipt_id(receipt_id), m_confirm_id(confirm_id) {
+    xtx_id_height_info(base::enum_transaction_subtype subtype, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id)
+      : m_subtype(subtype), m_peer_table_sid(peer_table_sid), m_receipt_id(receipt_id) {
     }
     base::enum_transaction_subtype m_subtype;
     base::xtable_shortid_t m_peer_table_sid;
     uint64_t m_receipt_id;
-    uint64_t m_confirm_id;
 };
 
 class xunconfirm_id_height {

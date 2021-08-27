@@ -48,7 +48,7 @@ public:
     void print_statistic_values() const override;
     // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
-    void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_ptr_t & all_pairs) override;
+    void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;

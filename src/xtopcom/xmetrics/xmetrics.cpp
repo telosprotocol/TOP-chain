@@ -213,6 +213,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_txpool_recover);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_create_recv_receipt);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_pull_lacking_receipts);
 
         // blockstore access statestore
         RETURN_METRICS_NAME(blockstore_access_from_statestore);

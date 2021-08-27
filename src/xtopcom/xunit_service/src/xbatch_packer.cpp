@@ -239,13 +239,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     if (!is_leader_node) {
         return true;
     }
-    // else {
-    //     // timely broadcast receipt id state to all shards
-    //     if (view_ev->get_clock() - m_last_send_receipt_id_state_clock > 12) {
-    //         send_receipt_id_state(dynamic_cast<xblock_t *>(latest_blocks.get_latest_committed_block()));
-    //         m_last_send_receipt_id_state_clock = view_ev->get_clock();
-    //     }
-    // }
 
     m_is_leader = true;
     m_leader_packed = start_proposal(latest_blocks);
@@ -496,41 +489,6 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
 
-// void xbatch_packer::send_receipt_id_state(xblock_t * commit_block) {
-//     auto network_proxy = m_para->get_resources()->get_network();
-//     xassert(network_proxy != nullptr);
-//     if (network_proxy == nullptr) {
-//         xunit_warn("xbatch_packer::send_receipt_id_state get network fail, can not send receipts");
-//         return;
-//     }
-
-//     base::xauto_ptr<base::xvbstate_t> bstate =
-//     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block, metrics::statestore_access_from_batchpacker_make_receipt_msg);
-//     if (bstate == nullptr) {
-//         xwarn("xbatch_packer::send_receipt_id_state fail-get bstate.block=%s", commit_block->dump().c_str());
-//         return;
-//     }
-
-//     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-//     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
-//     auto local_xip = get_xip2_addr();
-//     top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
-//     xtxpool_service_v2::xreceipt_id_state_msg_t receipt_id_state_msg;
-
-//     base::xvaccount_t vaccount(commit_block->get_account());
-//     receipt_id_state_msg.m_table_sid = vaccount.get_short_table_id();
-//     auto & all_pairs = tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs();
-//     xinfo("xbatch_packer::send_receipt_id_state broadcast receipt id state fullblock:%s,pairs:%s",
-//             commit_block->dump().c_str(), tablestate->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
-//     for (auto & pair : all_pairs) {
-//         receipt_id_state_msg.m_receiptid_pairs.add_pair(pair.first, pair.second);
-//     }
-//     receipt_id_state_msg.serialize_to(stream);
-//     network_proxy->send_out(xtxpool_v2::xtxpool_msg_receipt_id_state, local_xip, to_addr, stream, commit_block->get_account());
-
-//     m_para->get_resources()->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
-// }
-
 void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
     // broadcast receipt id state to all shards
     if (commit_block->get_block_class() == base::enum_xvblock_class_full) {
@@ -544,15 +502,6 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         xunit_warn("xbatch_packer::make_receipts_and_send get network fail, can not send receipts");
         return;
     }
-
-    // base::xauto_ptr<base::xvbstate_t> bstate =
-    //     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block, metrics::statestore_access_from_batchpacker_make_receipt_msg);
-    // if (bstate == nullptr) {
-    //     xwarn("xbatch_packer::make_receipts_and_send fail-get bstate.block=%s", commit_block->dump().c_str());
-    //     return;
-    // }
-
-    // xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
 
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
