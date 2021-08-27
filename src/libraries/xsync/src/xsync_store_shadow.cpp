@@ -454,7 +454,7 @@ void xsync_store_shadow_t::xsync_event_cb(mbus::xevent_ptr_t e) {
 void xsync_store_shadow_t::on_chain_event(const std::string &account, uint64_t height) {
     std::shared_ptr<xsync_chain_spans_t> chain_spans{nullptr};
     {
-        std::unique_lock<std::mutex> lck(m_lock);
+        //std::unique_lock<std::mutex> lck(m_lock);
         auto it = m_chain_spans.find(account);
         if (it != m_chain_spans.end()) {
             chain_spans = it->second;
@@ -488,7 +488,7 @@ void xsync_store_shadow_t::on_chain_event(const std::string &account, uint64_t h
 uint64_t xsync_store_shadow_t::genesis_connect_height(const std::string& account) {
     std::shared_ptr<xsync_chain_spans_t> chain_spans{nullptr};
     {
-        std::unique_lock<std::mutex> lck(m_lock);
+        //std::unique_lock<std::mutex> lck(m_lock);
         auto it = m_chain_spans.find(account);
         if (it != m_chain_spans.end()) {
             chain_spans = it->second;
@@ -520,7 +520,7 @@ std::pair<uint64_t, uint64_t> xsync_store_shadow_t::get_continuous_unused_interv
     const std::pair<uint64_t, uint64_t> height_interval){
     std::shared_ptr<xsync_chain_spans_t> chain_spans{nullptr};
     {
-        std::unique_lock<std::mutex> lck(m_lock);
+        //std::unique_lock<std::mutex> lck(m_lock);
         auto it = m_chain_spans.find(account);
         if (it != m_chain_spans.end()) {
             chain_spans = it->second;
@@ -550,7 +550,7 @@ std::pair<uint64_t, uint64_t> xsync_store_shadow_t::get_continuous_unused_interv
 uint64_t xsync_store_shadow_t::genesis_height_refresh_time_ms(const std::string& account) {
     std::shared_ptr<xsync_chain_spans_t> chain_spans{nullptr};
     {
-        std::unique_lock<std::mutex> lck(m_lock);
+        //std::unique_lock<std::mutex> lck(m_lock);
         auto it = m_chain_spans.find(account);
         if (it != m_chain_spans.end()) {
             chain_spans = it->second;

@@ -215,6 +215,42 @@ void xchain_downloader_t::on_block_committed_event(uint64_t height) {
     }
 }
 
+
+enum_result_code xchain_downloader_t::pre_handle_block(
+    std::vector<data::xblock_ptr_t> &blocks,
+    bool is_elect_chain,
+    uint64_t quota_height,
+    std::vector<base::xvblock_t*> &processed_blocks) {
+
+    for (auto block : blocks){
+        if (is_elect_chain) {
+            if (!check_auth(m_certauth, block)) {
+                xsync_warn("chain_downloader check auth fail, block is: %s", block->dump().c_str());
+                return enum_result_code::auth_failed;
+            }
+        }
+
+        //temperary code
+        auto vbindex = m_sync_store->load_block_object(block->get_block_owner(), block->get_height(), false, block->get_viewid());
+        if (vbindex == nullptr) {
+        //XTODO,need doublecheck whether allow set flag of authenticated without verify signature
+            block->set_block_flag(enum_xvblock_flag_authenticated);
+            base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
+            wait_committed_event_group(block->get_height(), quota_height);
+        } else {
+            if (vbindex->check_block_flag(enum_xvblock_flag_committed)) {
+                m_sync_store->get_shadow()->on_chain_event(block->get_block_owner(), block->get_height());
+            } else {
+                wait_committed_event_group(block->get_height(), quota_height);
+            }
+        }
+
+        processed_blocks.push_back(dynamic_cast<base::xvblock_t*>(block.get()));
+    }
+
+    return enum_result_code::success;
+}
+
 enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
     if (is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
@@ -237,6 +273,8 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_
     } else {
         if (vbindex->check_block_flag(enum_xvblock_flag_committed)) {
             m_sync_store->get_shadow()->on_chain_event(block->get_block_owner(), block->get_height());
+        } else {
+            wait_committed_event_group(block->get_height(), quota_height);
         }
     }
 
@@ -248,6 +286,7 @@ int64_t xchain_downloader_t::get_time() {
 }
 
 bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_address) {
+    #if 0
     uint64_t blk_commit_height = m_sync_store->get_latest_committed_block_height(elect_address);
     uint64_t blk_connect_height = m_sync_store->get_latest_connected_block_height(elect_address);
     if (blk_connect_height < blk_commit_height) {
@@ -255,6 +294,7 @@ bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_addres
                 m_address.c_str(), height, elect_address, blk_connect_height, blk_commit_height);
         return false;
     }
+    #endif
 
     return true;
 }
@@ -477,8 +517,8 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
             return wait_response;
         }
 
-        xauto_ptr<xvblock_t> end_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
-        height = sync::derministic_height(end_vblock->get_height(), std::make_pair(start_height,end_height));
+        uint64_t latest_end_height = m_sync_store->get_latest_end_block_height(m_address, sync_policy);
+        height = sync::derministic_height(latest_end_height, std::make_pair(start_height,end_height));
     }
 
     if (height > 0){
@@ -534,8 +574,20 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         return ignore;
     }
 
+    auto next_block = blocks[blocks.size() - 1];
     init_committed_event_group();
+    std::vector<top::base::xvblock_t *> processed_blocks;
+    enum_result_code ret = pre_handle_block(blocks, is_elect_chain, next_block->get_height(), processed_blocks);
+    if (ret != enum_result_code::success) {
+        init_committed_event_group();
+        return abort;
+    }
 
+    if (!m_sync_store->store_blocks(processed_blocks)) {
+        xsync_warn("chain_downloader on_response(failed) fail to store blocks");
+    }
+
+    #if 0
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
         xblock_ptr_t &block = blocks[i];
@@ -548,8 +600,8 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
             xsync_warn("chain_downloader on_response(failed) reason %d, block is: %s", ret, block->dump().c_str());
         }
     }
+    #endif
 
-    auto next_block = blocks[blocks.size() - 1];
     if (sync_policy == enum_chain_sync_policy_fast) {
         xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
         xblock_ptr_t block = autoptr_to_blockptr(table_block);
