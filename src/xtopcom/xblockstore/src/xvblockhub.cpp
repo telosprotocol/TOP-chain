@@ -140,9 +140,11 @@ namespace top
             m_last_access_time_ms = 0;
             m_idle_timeout_ms     = timeout_ms;
             
+            #ifdef __USE_DEDICATED_META_DATA__
             //m_meta = new base::xvactmeta_t(*init_meta);
             m_meta = init_meta;
             m_meta->add_ref();
+            #endif
         }
 
         xblockacct_t::~xblockacct_t()
@@ -172,16 +174,68 @@ namespace top
 
         bool  xblockacct_t::init()
         {
+            #ifdef __USE_DEDICATED_META_DATA__
             xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
                   dump().c_str(),m_blockstore_path.c_str(),
                   get_obj_id(),m_meta->base::xobject_t::dump().c_str());
             return true;
+            #endif
+            
+            //first load meta data from xdb/xstore
+            m_last_save_vmeta_bin.clear();
+            const std::string full_meta_path = get_blockstore_path() + get_meta_path(*this);
+            const std::string meta_content = load_value_by_path(full_meta_path);
+            m_meta = base::xvactmeta_t::load(meta_content);
+            if(nullptr == m_meta)
+            {
+                m_meta = new base::xvactmeta_t();
+                xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",empty meta",
+                      dump().c_str(),m_blockstore_path.c_str(),get_obj_id());
+            }
+            else
+            {
+                //pre-load latest execution block
+                if(load_index(m_meta->_highest_execute_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest execution block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_execute_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                
+                //pre-load latest commit block
+                if(load_index(m_meta->_highest_commit_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest commited block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_commit_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                //pre-load latest lock block
+                if(load_index(m_meta->_highest_lock_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest locked block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_lock_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                if(load_index(m_meta->_highest_cert_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest cert block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_cert_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
+                      dump().c_str(),m_blockstore_path.c_str(),
+                      get_obj_id(),m_meta->base::xobject_t::dump().c_str());
+            }
+            return true;
         }
+    
 
         bool  xblockacct_t::save_meta()
         {
-            if(0)
+            #ifdef __USE_DEDICATED_META_DATA__
+            return true;
+            #endif
+            
+            std::string vmeta_bin;
+            m_meta->serialize_to_string(vmeta_bin);
+            if (m_last_save_vmeta_bin != vmeta_bin)
             {
+                const std::string meta_path = get_blockstore_path() + get_meta_path(*this);
+                store_value_by_path(meta_path, vmeta_bin);
+                m_last_save_vmeta_bin = vmeta_bin;
+        
                 base::enum_vaccount_addr_type addr_type = get_addrtype_from_account(get_address());
                 if (addr_type == base::enum_vaccount_addr_type_block_contract) {
                     uint16_t subaddr = get_ledgersubaddr_from_account(get_address());
