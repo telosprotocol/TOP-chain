@@ -42,6 +42,13 @@ namespace top
 
             virtual bool                  execute_block(xvblock_t * target_block, const int etag=0);
 
+            xauto_ptr<xvbstate_t>         get_unit_block_state(xvblock_t * target_block, const int etag);
+        private: //unit only
+            bool                      write_unit_state_to_db(xvbstate_t & target_state,const std::string & account_addr);
+            xvbstate_t*               read_unit_state_from_db(const xvaccount_t & target_account);
+            bool                      load_unit_latest_blocks_and_base_state(const xvaccount_t & target_account, xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
+            xauto_ptr<xvbstate_t>     execute_unit_target_block(const xvaccount_t & target_account, const xobject_ptr_t<xvbstate_t> & db_base_bstate, xvblock_t * target_block);
+            
         private:
             bool                      write_state_to_db(xvbstate_t & target_state,const std::string & target_block_hash);
 

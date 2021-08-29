@@ -2924,7 +2924,7 @@ namespace top
                     if(prev_block->is_close() == false)//prev_block is still valid to use
                     {
                         update_meta_metric(prev_block);//update meta since block has change status
-                        //write_index_to_db(prev_block); //not send db event
+                        write_index_to_db(prev_block); //not send db event
                     }
                 }
                 prev_block->release_ref();//safe release now

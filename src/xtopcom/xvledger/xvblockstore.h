@@ -169,7 +169,8 @@ namespace top
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
-
+            virtual bool     set_unit_latest_executed_block_height(const xvaccount_t & account,const uint64_t new_height,const int atag = 0) = 0;
+            
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
             virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;//might mutiple certs at same height
             virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) = 0;

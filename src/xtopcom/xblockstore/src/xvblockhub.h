@@ -92,6 +92,24 @@ namespace top
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
             uint64_t            get_latest_genesis_connected_block_height() const { return m_meta->_highest_genesis_connect_height; }
             uint64_t            get_latest_executed_block_height() const { return m_meta->_highest_execute_block_height; }
+            
+            bool                set_unit_latest_executed_block_height(const uint64_t new_height) //return last one
+            {
+                if(base::enum_xvblock_level_unit != m_meta->_block_level)
+                {
+                    xassert(0);
+                    return false;
+                }
+                if(new_height == m_meta->_highest_execute_block_height)
+                    return true;
+                    
+                if(new_height > m_meta->_highest_execute_block_height)
+                {
+                    m_meta->_highest_execute_block_height = new_height;
+                    return true;
+                }
+                return false;
+            }
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr,base::xvactmeta_t * init_meta);
         protected:

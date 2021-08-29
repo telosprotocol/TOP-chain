@@ -8,6 +8,9 @@
 #include "xbase/xobject.h"
 #include "xvledger/xaccountindex.h"
 #include "xmetrics/xmetrics.h"
+#include "xvledger/xvblockbuild.h"
+#include "xvledger/xvledger.h"
+#include "xdata/xunit_bstate.h"
 
 NS_BEG2(top, base)
 
@@ -23,6 +26,7 @@ xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
     m_latest_unit_height = left.m_latest_unit_height;
     m_latest_unit_viewid = left.m_latest_unit_viewid;
     m_account_flag = left.m_account_flag;
+    m_latest_nonce = left.m_latest_nonce;
     XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
 }
 
@@ -41,6 +45,21 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
     if (is_account_destroy) {
         set_account_index_flag(enum_xaccount_index_flag_account_destroy);
     }
+    
+    //XTODO, set m_latest_nonce
+    base::xauto_ptr<base::xvbstate_t> block_bstate =
+    base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit, metrics::statestore_access_from_txpool_get_accountstate);
+    if (block_bstate == nullptr)
+    {
+        m_latest_nonce = 0; //set 0 for init
+        xerror("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", unit->dump().c_str());
+    }
+    else
+    {
+        data::xaccount_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(block_bstate.get());
+        m_latest_nonce = account_state->get_latest_send_trans_number();
+    }
+    
     XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
 }
 
@@ -49,6 +68,7 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     stream.write_compact_var(m_latest_unit_height);
     stream.write_compact_var(m_latest_unit_viewid);
     stream.write_compact_var(m_account_flag);
+    stream.write_compact_var(m_latest_nonce);
     return (stream.size() - begin_size);
 }
 
@@ -57,6 +77,7 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     stream.read_compact_var(m_latest_unit_height);
     stream.read_compact_var(m_latest_unit_viewid);
     stream.read_compact_var(m_account_flag);
+    stream.read_compact_var(m_latest_nonce);
     return (begin_size - stream.size());
 }
 

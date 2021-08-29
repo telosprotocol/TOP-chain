@@ -31,6 +31,29 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
         return false;
     }
     base::xvaccount_t _account_vaddress(account);
+    
+    const uint64_t latest_commited_height = m_para->get_vblockstore()->get_latest_committed_block_height(_account_vaddress);
+    const uint64_t latest_connect_height =  m_para->get_vblockstore()->get_latest_connected_block_height(_account_vaddress);
+    
+    if(latest_commited_height > (latest_connect_height + 1) ) //missed some commited blocks
+    {
+        xwarn("xtxpool_table_t::get_account_basic_info,missed committed block of account=%s,index=%s,missing_height=[%ld - %ld)",
+              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_connect_height + 1,latest_commited_height);
+        
+        account_index_info.set_sync_height_start(latest_connect_height + 1);
+        account_index_info.set_sync_num(latest_commited_height - latest_connect_height);
+        return false;
+    }
+    if(account_index.get_latest_unit_height() != (latest_commited_height + 2) ) //missed lock/cert blocks
+    {
+        xwarn("xtxpool_table_t::get_account_basic_info,missed lock/cert block of account=%s,index=%s,missing_height=[%ld - %ld)",
+              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_commited_height + 1,account_index.get_latest_unit_height());
+        
+        account_index_info.set_sync_height_start(latest_commited_height + 1);
+        account_index_info.set_sync_num(account_index.get_latest_unit_height() - latest_commited_height);
+        return false;
+    }
+    /*
     base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
     if (_block_ptr == nullptr) {
         xtxpool_warn("xtxpool_table_t::get_account_basic_info get block fail account:%s", account.c_str());
@@ -45,7 +68,8 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
         }
         return false;
     }
-
+    */
+   
     base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
     base::xauto_ptr<base::xvbstate_t> account_bstate =
         base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
@@ -545,6 +569,18 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
 }
 
 bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
+    
+    base::xaccount_index_t account_index;
+    if (m_table_state_cache.get_account_index(account_addr, account_index))
+    {
+        if(account_index.get_latest_nonce() > 0)
+        {
+            latest_nonce = account_index.get_latest_nonce();
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s latest nonce= from:%llu",account_addr.c_str(),latest_nonce);
+            return true;
+        }
+    }
+    
     xaccount_basic_info_t account_basic_info;
     bool result = get_account_basic_info(account_addr, account_basic_info);
     if (!result) {

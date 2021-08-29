@@ -56,6 +56,7 @@ class xaccount_index_t {
  public:
     uint64_t                get_latest_unit_height() const {return m_latest_unit_height;}
     uint64_t                get_latest_unit_viewid() const {return m_latest_unit_viewid;}
+    const uint64_t          get_latest_nonce() const {return m_latest_nonce;}
     bool                    is_match_unit(base::xvblock_t* unit) const;
     bool                    is_has_unconfirm_tx() const {return check_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx);}
     bool                    is_account_destroy() const {return check_account_index_flag(enum_xaccount_index_flag_account_destroy);}
@@ -77,6 +78,7 @@ class xaccount_index_t {
  private:
     uint64_t        m_latest_unit_height{0};
     uint64_t        m_latest_unit_viewid{0};
+    uint64_t        m_latest_nonce{0};
     uint16_t        m_account_flag{0};  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
 };
 
