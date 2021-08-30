@@ -173,15 +173,22 @@ namespace top
                 
                 const uint64_t latest_connected_height = xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(target_account);
                 const uint64_t latest_commited_height  = xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
-                if(target_block->get_height() > (latest_connected_height + 1) ) //missed some commited blocks
+                if(target_block->get_height() > (latest_connected_height + 2) ) //missed some commited blocks
                 {
-                    xwarn("xvblkstatestore_t::load_latest_blocks_and_state,missed commit block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                    xwarn("xvblkstatestore_t::load_latest_blocks_and_state,missed connected block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
                           target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
                     return false;
                 }
                 if(target_block->get_height() > ( latest_commited_height + 2) ) //missed some lock/cert blocks
                 {
                     xwarn("xvblkstatestore_t::load_latest_blocks_and_state,misssed block. account=%s,latest_commited_height=%ld,latest_commited_height=%ld,target_block=%s",
+                          target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
+                    return false;
+                }
+                
+                if(latest_commited_height > (latest_connected_height + 1) ) //missed some commited blocks
+                {
+                    xwarn("xvblkstatestore_t::load_latest_blocks_and_state,missed commit block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
                           target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
                     return false;
                 }
@@ -613,16 +620,23 @@ namespace top
             //const uint64_t latest_full_unit_height = xvchain_t::instance().get_xblockstore()->get_latest_full_block_height(target_account);
             const uint64_t latest_commited_height  = xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
             const uint64_t latest_connected_height = xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(target_account);
-            if(target_block->get_height() > (latest_connected_height + 1) ) //missed some commited blocks
+            if(target_block->get_height() > (latest_connected_height + 2) ) //missed some connected blocks
             {
-                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed commit block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed connected block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
                       target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
                 return false;
             }
         
             if(target_block->get_height() > ( latest_commited_height + 2) ) //missed some lock/cert blocks
             {
-                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,misssed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                      target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
+                return false;
+            }
+            
+            if(latest_commited_height > (latest_connected_height + 1) ) //missed some commited blocks
+            {
+                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed committed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
                       target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
                 return false;
             }
