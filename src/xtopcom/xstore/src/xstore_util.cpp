@@ -7,6 +7,7 @@
 #include "xbase/xlog.h"
 #include "xstore/xstore_util.h"
 #include "xmetrics/xmetrics.h"
+#include "xbase/xlog.h"
 
 using namespace top::metrics;
 

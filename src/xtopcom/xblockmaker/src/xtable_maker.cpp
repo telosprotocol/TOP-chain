@@ -560,7 +560,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     const std::vector<base::xventity_t*> & _proposal_table_inentitys = proposal_block->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _local_table_inentitys = local_block->get_input()->get_entitys();
     if (_proposal_table_inentitys.size() != _local_table_inentitys.size()) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-entity size not same. %s %s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-entity size not same. %s %s",
             proposal_block->dump().c_str(),
             local_block->dump().c_str());
         return false;
