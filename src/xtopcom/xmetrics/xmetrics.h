@@ -341,6 +341,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_blkmaker_unit_connect_state,
     statestore_access_from_txpool_get_accountstate,
     statestore_access_from_txpool_refreshtable,
+    statestore_access_from_blockstore,
     statestore_access_from_blkmaker_get_target_tablestate,
     statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
 

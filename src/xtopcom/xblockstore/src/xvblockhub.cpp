@@ -243,6 +243,29 @@ namespace top
             return meta_path;
         }
 
+        bool xblockacct_t::set_latest_executed_info(uint64_t height, const std::string & blockhash)
+        {
+            bool need_save_meta = false;
+            if (height >= m_meta->_highest_execute_block_height && height <= m_meta->_highest_commit_block_height) {                
+                if (height - m_meta->_highest_execute_block_height > 16) { // XTODO
+                    need_save_meta = true;
+                }
+                uint64_t old_execute_height = m_meta->_highest_execute_block_height;
+                m_meta->_highest_execute_block_height = height;
+                m_meta->_highest_execute_block_hash = blockhash;
+
+                if (need_save_meta) {
+                    save_meta();
+                    xinfo("xblockacct_t::set_latest_executed_info save meta forcely.account=%s,old_execute_height=%ld,new_execute_height=%ld", get_account().c_str(), old_execute_height, height);
+                }
+                xdbg("xblockacct_t::set_latest_executed_info succ account=%s,height=%ld", get_account().c_str(), height);
+                return true;
+            }
+            xwarn("xblockacct_t::set_latest_executed_info set height too low, account=%s,height=%ld,execute_height=%ld,commit_height=%ld", 
+                get_account().c_str(), height, m_meta->_highest_execute_block_height, m_meta->_highest_commit_block_height);
+            return false;
+        }
+
         base::xvdbstore_t* xblockacct_t::get_xdbstore()
         {
             return m_xvdb_ptr;
@@ -1603,6 +1626,8 @@ namespace top
 
         bool   xblockacct_t::execute_block(base::xvblock_t* block_ptr) //execute block and update state of acccount
         {
+            return true;  // TODO(jimmy) do nothing delete future
+#if 0// TODO(jimmy) delete future
             if(block_ptr == nullptr)
             {
                 xassert(0); //should not pass nullptr
@@ -1620,10 +1645,14 @@ namespace top
             }
 
             return execute_block(target_index.get(),block_ptr);
+#endif
         }
 
         bool   xblockacct_t::execute_block(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr) //execute block and update state of acccount
         {
+            xassert(false);
+            return false;
+#if 0//TODO(jimmy) delete future
             if(index_ptr == nullptr)
             {
                 xassert(0); //should not pass nullptr
@@ -1698,6 +1727,7 @@ namespace top
                 xwarn("xblockacct_t::execute_block(index),fail-ready to execute for block=%s highest_execute_block_height=%lld",index_ptr->dump().c_str(), m_meta->_highest_execute_block_height);
             }
             return false;
+#endif
         }
 
 
@@ -2483,7 +2513,13 @@ namespace top
             }
 
             xdbg("xblockacct_t::try_execute_all_block enter. block=%s,meta=%s", target_block->dump().c_str(), dump().c_str());
-
+#if 1    
+            // TODO(jimmy) always try to update table state
+            base::auto_reference<base::xvblock_t> auto_hold_block_ptr(target_block);
+            // get_xdbstore()->execute_block(target_block);
+            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(target_block, metrics::statestore_access_from_blockstore);
+#endif
+#if 0  // TODO(jimmy) delete future
             // try to check and execute from target block firstly, maybe target block include snapshot by syncing
             if (m_meta->_highest_execute_block_height < target_block->get_height()  // target height not executed
                 && target_block->get_block_class() == base::enum_xvblock_class_full  // must be full block
@@ -2567,6 +2603,7 @@ namespace top
             while(max_count-- > 0);
 
             xdbg("xblockacct_t::try_execute_all_block finish, %s", dump().c_str());
+#endif            
         }
 
         //return map sorted by viewid from lower to high,caller respond to release ptr later

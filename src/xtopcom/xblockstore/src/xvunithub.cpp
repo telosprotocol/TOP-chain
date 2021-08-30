@@ -410,6 +410,12 @@ namespace top
             return account_obj->get_latest_executed_block_height();
         }
 
+        bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->set_latest_executed_info(height,blockhash);
+        }
+
         //one api to get latest_commit/latest_lock/latest_cert for better performance
         base::xblock_mptrs  xvblockstore_impl::get_latest_blocks(const base::xvaccount_t & account,const int atag)
         {
