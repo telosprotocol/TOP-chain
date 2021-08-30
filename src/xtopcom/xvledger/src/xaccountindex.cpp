@@ -10,7 +10,10 @@
 #include "xmetrics/xmetrics.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
-#include "xdata/xunit_bstate.h"
+
+#ifndef __DISABLE_NONCE_OF_INDEX__
+    #include "xdata/xunit_bstate.h"
+#endif
 
 NS_BEG2(top, base)
 
@@ -46,19 +49,21 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
         set_account_index_flag(enum_xaccount_index_flag_account_destroy);
     }
     
+    m_latest_nonce = 0; //set 0 for init
     //XTODO, set m_latest_nonce
+    #ifndef __DISABLE_NONCE_OF_INDEX__
     base::xauto_ptr<base::xvbstate_t> block_bstate =
     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit, metrics::statestore_access_from_txpool_get_accountstate);
     if (block_bstate == nullptr)
     {
-        m_latest_nonce = 0; //set 0 for init
-        xerror("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", unit->dump().c_str());
+        xwarn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", unit->dump().c_str());
     }
     else
     {
         data::xaccount_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(block_bstate.get());
         m_latest_nonce = account_state->get_latest_send_trans_number();
     }
+    #endif
     
     XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
 }

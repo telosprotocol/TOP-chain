@@ -534,15 +534,26 @@ namespace top
             return nullptr;
         }
 
-        bool   xvblkstatestore_t::write_unit_state_to_db(xvbstate_t & target_state,const std::string & account_addr)
+        bool   xvblkstatestore_t::write_unit_state_to_db(xvbstate_t & target_state,xvblock_t * target_block)
         {
-            xvaccount_t target_account(account_addr);
+            if(NULL == target_block)
+                return false;
+               
+            //just persist state of the committed block
+            if((target_block->get_block_flags() & enum_xvblock_flag_committed) != 0)
+            {
+                xinfo("xvblkstatestore_t::write_unit_state_to_db,block(%s) is not committed",target_block->dump().c_str());
+                return true;
+            }
+            
+            xvaccount_t target_account(target_block->get_account());
             //const uint64_t latest_commited_height  = xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
             const uint64_t latest_executed_height = xvchain_t::instance().get_xblockstore()->get_latest_executed_block_height(target_account);
  
             if(target_state.get_block_height() < latest_executed_height)
             {
                 // no need store block
+                xinfo("xvblkstatestore_t::write_unit_state_to_db,state(%s) < latest_executed_height=%ld",target_state.dump().c_str(),latest_executed_height);
                 return true;
             }
             
@@ -728,7 +739,7 @@ namespace top
             // try execute target block state
             target_bstate = execute_unit_target_block(target_account, db_base_bstate, target_block);
             if (target_bstate != nullptr) {
-                write_unit_state_to_db(*target_bstate.get(),target_block->get_account());
+                write_unit_state_to_db(*target_bstate.get(),target_block);
                 set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
                 xdbg("xvblkstatestore_t::get_unit_block_state succ-get state by execute.block=%s",target_block->dump().c_str());
                 return target_bstate;
