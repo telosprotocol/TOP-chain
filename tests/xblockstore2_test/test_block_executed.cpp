@@ -17,6 +17,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
+#include "xblockstore/src/xvblockhub.h"
 
 using namespace top;
 using namespace top::base;
@@ -85,6 +86,152 @@ TEST_F(test_block_executed, disorder) {
     }
 
 }
+
+TEST_F(test_block_executed, execute_height_update_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 100;
+    mock::xdatamock_table mocktable(1, 4); 
+    mocktable.genrate_table_chain(max_count);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+
+    uint32_t hole_height = 5;
+    for (uint32_t i = 0; i <= max_count; ++i) {
+        if (i != hole_height) {
+            ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
+        }
+    }
+
+    {
+        EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), hole_height - 1 - 2);
+        auto exe_blk = blockstore->get_latest_executed_block(mocktable);
+        EXPECT_EQ(exe_blk->get_height(), hole_height - 1 - 2);
+        EXPECT_EQ(exe_blk->get_block_hash(), tableblocks[hole_height - 1 - 2]->get_block_hash());
+    }
+
+    std::cout << "before store hole, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[hole_height].get()));
+    std::cout << "after store hole, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    auto cert_block = blockstore->get_latest_cert_block(mocktable);
+    creator.get_xblkstatestore()->get_block_state(cert_block.get());
+    // std::cout << "after get_block_state 1, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    creator.get_xblkstatestore()->get_block_state(cert_block.get());
+    // std::cout << "after get_block_state 2, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl; 
+    creator.get_xblkstatestore()->get_block_state(cert_block.get());
+    // std::cout << "after get_block_state 3, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;  
+    xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
+}
+
+TEST_F(test_block_executed, execute_height_update_2) {
+    uint64_t max_count = 1000;
+    mock::xdatamock_table mocktable(1, 4); 
+    mocktable.genrate_table_chain(max_count);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+
+    uint64_t last_full_block_height = tableblocks[max_count]->get_last_full_block_height();
+    xblock_ptr_t last_full_table = tableblocks[last_full_block_height];
+    std::string property_snapshot;
+    {
+        mock::xvchain_creator creator;
+        base::xvblockstore_t* blockstore = creator.get_blockstore();
+        for (uint32_t i = 0; i <= max_count; ++i) {
+            ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
+        }
+
+        auto bstate = creator.get_xblkstatestore()->get_block_state(last_full_table.get());
+        xassert(bstate != nullptr);
+        bstate->take_snapshot(property_snapshot);
+    }
+
+    {
+        mock::xvchain_creator creator;
+        base::xvblockstore_t* blockstore = creator.get_blockstore();        
+        uint32_t hole_height = 5;
+        for (uint32_t i = 0; i <= max_count; ++i) {
+            if (i != hole_height) {
+                ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
+            }
+        }
+        EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), hole_height - 1 - 2);
+
+        xassert(last_full_table->is_full_state_block() == false);
+        last_full_table->set_offblock_snapshot(property_snapshot);
+        xassert(last_full_table->is_full_state_block() == true);
+        std::cout << "before store full-table, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+        std::cout << "full-table height = " << last_full_table->get_height() << std::endl;
+        ASSERT_TRUE(blockstore->store_block(mocktable, last_full_table.get()));        
+        assert(blockstore->get_latest_executed_block_height(mocktable) > last_full_table->get_height());
+        std::cout << "after store full-table, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+
+        for (uint32_t i = 0; i < 10; i++) {
+            ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[20].get()));
+            // std::cout << "after store_block repeat block, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+        }        
+        xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
+    }
+}
+
+TEST_F(test_block_executed, execute_height_update_3_BENCH) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 1000;
+    mock::xdatamock_table mocktable(1, 4); 
+    mocktable.genrate_table_chain(max_count);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+
+    std::string table_addr = mocktable.get_account();
+    blockstore->reset_cache_timeout(mocktable, 100); // idle time change to 100ms
+    std::string meta_path = "0/" + table_addr + "/meta";
+    base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
+
+    uint32_t hole_height = 5;
+    for (uint32_t i = 0; i <= max_count; ++i) {
+        if (i != hole_height) {
+            ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
+        }
+    }
+
+    // std::cout << "before store hole, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[hole_height].get()));
+    // std::cout << "after store hole, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+
+    auto cert_block = blockstore->get_latest_cert_block(mocktable);
+    for (uint32_t i = 0; i < 33; i++) {
+        creator.get_xblkstatestore()->get_block_state(cert_block.get());
+        // std::cout << "after get_block_state 1, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    }
+    xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
+
+    sleep(20); // wait for meta save to db. table has 16 times than unit
+    // change meta check execute recover
+    {
+        const std::string meta_value = xvdb_ptr->get_value(meta_path);
+        base::xauto_ptr<store::xacctmeta_t> meta_obj = new store::xacctmeta_t();
+        meta_obj->serialize_from_string(meta_value);
+        xassert(meta_obj->_highest_execute_block_height == tableblocks[max_count-2]->get_height());
+        xassert(meta_obj->_highest_execute_block_hash == tableblocks[max_count-2]->get_block_hash());
+        // change to bad 
+        meta_obj->_highest_execute_block_height = tableblocks[10]->get_height();
+        meta_obj->_highest_execute_block_hash = tableblocks[10]->get_block_hash();
+        std::string vmeta_bin;
+        meta_obj->serialize_to_string(vmeta_bin);
+        xvdb_ptr->set_value(meta_path,vmeta_bin);
+    }
+
+    xdbg("===========execute_height_update_3============");
+    // std::cout << "after set_latest_executed_info, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[10]->get_height());
+
+    for (uint32_t i = 0; i < 20; i++) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[20].get()));
+        // std::cout << "after store_block repeat block, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
+    }
+    xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
+}
+
 // // xaccount_cmd_ptr_t create_or_modify_property(xstore_face_t* store, const std::string &address, const std::string& list_name, const std::string& item_value) {
 // //     auto account = store->clone_account(address);
 // //     xaccount_cmd_ptr_t cmd;
