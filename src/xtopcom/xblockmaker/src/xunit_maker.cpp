@@ -65,14 +65,14 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         const uint64_t latest_connect_height =  get_blockstore()->get_latest_connected_block_height(*this);
         uint64_t start_sync_height = latest_connect_height + 1;
         
-        if(latest_commited_height > (latest_connect_height + 1) ) //missed some commited blocks
+        if(account_index.get_latest_unit_height() > (latest_connect_height + 1) ) //missed some commited blocks
         {
             xwarn("xunit_maker_t::check_latest_state,missed committed block of account=%s,index=%s,missing_height=[%ld - %ld)",
                   get_account().c_str(), account_index.dump().c_str(), start_sync_height,latest_commited_height);
             try_sync_lacked_blocks(start_sync_height, latest_commited_height, "missing_unit_commit", true);
             return xblockmaker_error_missing_block;
         }
-        if(account_index.get_latest_unit_height() > (latest_commited_height + 2) ) //missed locked blocks
+        if(account_index.get_latest_unit_height() > (latest_commited_height + 2) ) //missed lock/cert blocks
         {
             xwarn("xunit_maker_t::check_latest_state,missed lock/cert lock block, account=%s,index=%s,missing_height=[%ld - %ld)",
                   get_account().c_str(), account_index.dump().c_str(),start_sync_height, account_index.get_latest_unit_height());

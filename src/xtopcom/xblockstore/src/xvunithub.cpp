@@ -386,7 +386,15 @@ namespace top
 
             return nullptr;
         }
-
+    
+        uint64_t xvblockstore_impl::get_latest_full_block_height(const base::xvaccount_t & account,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            XMETRICS_GAUGE(metrics::blockstore_get_latest_committed_block_height, 1);
+            return account_obj->get_latest_full_block_height();
+        }
+    
         uint64_t xvblockstore_impl::get_latest_committed_block_height(const base::xvaccount_t & account,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);

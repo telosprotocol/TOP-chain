@@ -165,6 +165,8 @@ namespace top
 
             virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account,const int atag = 0)  = 0; // full block with committed status, genesis is a full block
             virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account,const int atag = 0)      = 0; //better performance for batch operations
+            
+            virtual uint64_t get_latest_full_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_committed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;

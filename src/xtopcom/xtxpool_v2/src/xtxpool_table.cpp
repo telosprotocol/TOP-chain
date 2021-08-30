@@ -35,7 +35,7 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     const uint64_t latest_commited_height = m_para->get_vblockstore()->get_latest_committed_block_height(_account_vaddress);
     const uint64_t latest_connect_height =  m_para->get_vblockstore()->get_latest_connected_block_height(_account_vaddress);
     
-    if(latest_commited_height > (latest_connect_height + 1) ) //missed some commited blocks
+    if(account_index.get_latest_unit_height() > (latest_connect_height + 1) ) //missed some commited blocks
     {
         xwarn("xtxpool_table_t::get_account_basic_info,missed committed block of account=%s,index=%s,missing_height=[%ld - %ld)",
               _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_connect_height + 1,latest_commited_height);
