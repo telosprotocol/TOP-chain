@@ -110,16 +110,25 @@ namespace top
             enum_xchain_zone_index m_zone_index;
             uint8_t                m_subaddr;
         };
-        
+
+        //define some special address prefix
+        XINLINE_CONSTEXPR char const * ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN            = "T80000";
+
         class xvaccount_t : virtual public xrefcount_t
         {
         public:
             enum enum_vaccount_address_size
             {
-                enum_vaccount_address_prefix_size = 6,
+                enum_vaccount_address_prefix_size = 6,  //Txyyyy, eg.T80000
                 enum_vaccount_address_min_size  = 18, //(>20,<256)
                 enum_vaccount_address_max_size  = 256,//(>20,<256)
             };
+
+            enum enum_vaccount_compact_type
+            {
+                enum_vaccount_compact_type_no_compact       = 'T',  //complete TOP address
+                enum_vaccount_compact_type_eth_main_chain   = 'U',  //TOP eth address in main chain zone consensus
+            };            
         public: //create account address of blockchain
             //account format as = T-[type|ledger_id]-public_key_address-subaddr_of_ledger(book# and table#,optional)
             //note: zone_index:range of [0,15], book_index: range of [0,127], table_index: range of [0,7]
@@ -303,7 +312,9 @@ namespace top
             {
                 return (uint8_t)(subaddr_of_zone & 0x07);
             }
-            
+            static std::string compact_address_to(const std::string & account_addr);
+            static std::string compact_address_from(const std::string & data);
+
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)
             {
