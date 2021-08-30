@@ -44,7 +44,8 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
         account_index_info.set_sync_num(latest_commited_height - latest_connect_height);
         return false;
     }
-    if(account_index.get_latest_unit_height() != (latest_commited_height + 2) ) //missed lock/cert blocks
+
+    if(account_index.get_latest_unit_height() > (latest_commited_height + 2) ) //missed lock/cert blocks
     {
         xwarn("xtxpool_table_t::get_account_basic_info,missed lock/cert block of account=%s,index=%s,missing_height=[%ld - %ld)",
               _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_commited_height + 1,account_index.get_latest_unit_height());
