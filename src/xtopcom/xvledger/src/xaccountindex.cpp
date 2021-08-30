@@ -36,7 +36,8 @@ xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
 xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
                                     bool has_unconfirm_tx,
                                     enum_xblock_consensus_type _cs_type,
-                                    bool is_account_destroy) {
+                                    bool is_account_destroy,
+                                    uint64_t latest_send_nonce) {
     m_latest_unit_height = unit->get_height();
     m_latest_unit_viewid = unit->get_viewid();
     set_latest_unit_class(unit->get_block_class());
@@ -49,21 +50,32 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
         set_account_index_flag(enum_xaccount_index_flag_account_destroy);
     }
     
-    m_latest_nonce = 0; //set 0 for init
+    m_latest_nonce = latest_send_nonce;
     //XTODO, set m_latest_nonce
-    #ifndef __DISABLE_NONCE_OF_INDEX__
-    base::xauto_ptr<base::xvbstate_t> block_bstate =
-    base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit, metrics::statestore_access_from_txpool_get_accountstate);
-    if (block_bstate == nullptr)
     {
-        xwarn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", unit->dump().c_str());
+        #ifndef __DISABLE_NONCE_OF_INDEX__
+        base::xauto_ptr<base::xvbstate_t> block_bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit, metrics::statestore_access_from_txpool_get_accountstate);
+        if (block_bstate == nullptr)
+        {
+            xwarn("xaccount_index_t::xaccount_index_t fail-get unitstate. block=%s", unit->dump().c_str());
+        }
+        else
+        {
+            data::xaccount_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(block_bstate.get());
+            const uint64_t new_nonce = account_state->get_latest_send_trans_number();
+            if(new_nonce > m_latest_nonce)
+            {
+                xinfo("xaccount_index_t::xaccount_index_t,unitstate. block=%s and m_latest_nonce=%llu,new_nonce=%llu", unit->dump().c_str(),m_latest_nonce,new_nonce);
+                m_latest_nonce = new_nonce;
+            }
+            else
+            {
+                xwarn("xaccount_index_t::xaccount_index_t,unitstate. block=%s and m_latest_nonce=%llu,new_nonce=%llu", unit->dump().c_str(),m_latest_nonce,new_nonce);
+            }
+        }
+        #endif
     }
-    else
-    {
-        data::xaccount_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(block_bstate.get());
-        m_latest_nonce = account_state->get_latest_send_trans_number();
-    }
-    #endif
     
     XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -47,7 +47,7 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<b
             }
         }
 
-        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false);
+        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false,_old_aindex.get_latest_nonce());
         proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
     }
 

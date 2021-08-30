@@ -577,7 +577,7 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
         if(account_index.get_latest_nonce() > 0)
         {
             latest_nonce = account_index.get_latest_nonce();
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s latest nonce= from:%llu",account_addr.c_str(),latest_nonce);
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s latest nonce=%llu",account_addr.c_str(),latest_nonce);
             return true;
         }
     }

@@ -35,7 +35,8 @@ class xaccount_index_t {
     xaccount_index_t(base::xvblock_t* unit,
                      bool has_unconfirm_tx,
                      enum_xblock_consensus_type _cs_type,
-                     bool is_account_destroy);
+                     bool is_account_destroy,
+                     uint64_t latest_send_nonce);
     ~xaccount_index_t();
     xaccount_index_t(const xaccount_index_t& left);
     bool operator == (const xaccount_index_t &other) const {
