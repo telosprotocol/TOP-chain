@@ -191,21 +191,13 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         uint32_t lacking_confirm_tx_num = 0;
         auto lacking_confirm_tx_ids = m_para->get_txpool()->get_lacking_confirm_tx_ids(m_zone_index, table_id, max_require_receipts);
         for (auto & table_lacking_ids : lacking_confirm_tx_ids) {
-            base::xtable_shortid_t peer_sid = table_lacking_ids.get_peer_sid();
-            uint16_t peer_zone_id = peer_sid >> 10;
-            uint16_t peer_table_id = peer_sid - (peer_zone_id << 10);
-            std::string peer_table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)peer_zone_id, peer_table_id);
-
-            xreceipt_pull_receipt_t pulled_confirm_receipt;
-            pulled_confirm_receipt.m_tx_from_account = self_table_addr;
-            pulled_confirm_receipt.m_tx_to_account = peer_table_addr;
-            pulled_confirm_receipt.m_req_node = m_vnet_driver->address();
-            pulled_confirm_receipt.m_receipt_ids = table_lacking_ids.get_receipt_ids();
+            xreceipt_pull_receipt_t pulled_confirm_receipt(
+                m_vnet_driver->address(), self_table_addr, base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()), table_lacking_ids.get_receipt_ids());
             for (auto & receiptid : pulled_confirm_receipt.m_receipt_ids) {
                 xinfo("xtxpool_service::pull_lacking_receipts confirm tx reqnode:%s,table:%s:%s,receiptid:%llu",
                       m_vnetwork_str.c_str(),
-                      self_table_addr.c_str(),
-                      peer_table_addr.c_str(),
+                      pulled_confirm_receipt.m_tx_from_account.c_str(),
+                      pulled_confirm_receipt.m_tx_to_account.c_str(),
                       receiptid);
             }
             send_pull_receipts_of_confirm(pulled_confirm_receipt);
@@ -241,21 +233,13 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         uint32_t lacking_recv_tx_num = 0;
         auto lacking_recv_tx_ids = m_para->get_txpool()->get_lacking_recv_tx_ids(m_zone_index, table_id, max_require_receipts);
         for (auto & table_lacking_ids : lacking_recv_tx_ids) {
-            base::xtable_shortid_t peer_sid = table_lacking_ids.get_peer_sid();
-            uint16_t peer_zone_id = peer_sid >> 10;
-            uint16_t peer_table_id = peer_sid - (peer_zone_id << 10);
-            std::string peer_table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)peer_zone_id, peer_table_id);
-
-            xreceipt_pull_receipt_t pulled_recv_receipt;
-            pulled_recv_receipt.m_tx_from_account = peer_table_addr;
-            pulled_recv_receipt.m_tx_to_account = self_table_addr;
-            pulled_recv_receipt.m_req_node = m_vnet_driver->address();
-            pulled_recv_receipt.m_receipt_ids = table_lacking_ids.get_receipt_ids();
+            xreceipt_pull_receipt_t pulled_recv_receipt(
+                m_vnet_driver->address(), base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()), self_table_addr, table_lacking_ids.get_receipt_ids());
             for (auto & receiptid : pulled_recv_receipt.m_receipt_ids) {
                 xinfo("xtxpool_service::pull_lacking_receipts recv tx reqnode:%s,table:%s:%s,receiptid:%llu",
                       m_vnetwork_str.c_str(),
-                      peer_table_addr.c_str(),
-                      self_table_addr.c_str(),
+                      pulled_recv_receipt.m_tx_from_account.c_str(),
+                      pulled_recv_receipt.m_tx_to_account.c_str(),
                       receiptid);
             }
             send_pull_receipts_of_recv(pulled_recv_receipt);
@@ -739,10 +723,6 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
               pulled_receipt.m_tx_to_account.c_str(),
               pulled_receipt.m_id_hash_of_receipts.size());
         xreceipt_push_t pushed_receipt;
-        pushed_receipt.m_receipt_type = enum_transaction_subtype_confirm;
-        pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
-        pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
-        pushed_receipt.m_req_node = pulled_receipt.m_req_node;
         for (auto & tx_id_hash : pulled_receipt.m_id_hash_of_receipts) {
             auto & receipt_id = tx_id_hash.first;
             auto & hash = tx_id_hash.second;
@@ -764,7 +744,14 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
                 xassert(receipt_id == tranx->get_last_action_receipt_id());
             }
         }
-        send_push_receipts(pushed_receipt, sender);
+
+        if (!pushed_receipt.m_receipts.empty()) {
+            pushed_receipt.m_receipt_type = enum_transaction_subtype_confirm;
+            pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
+            pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
+            pushed_receipt.m_req_node = pulled_receipt.m_req_node;
+            send_push_receipts(pushed_receipt, sender);
+        }
     }
 }
 
@@ -819,7 +806,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
             xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), commit_block->get_height() + 2);
             return;
         }
-        
+
         xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
         if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
             xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), commit_block->get_height());
@@ -847,6 +834,8 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
     common::xip2_t dst{to_addr.low_addr, to_addr.high_addr};
     m_vnet_driver->broadcast(dst, msg, ec);
+
+    XMETRICS_GAUGE(metrics::txpool_receipt_id_state_msg_send_num, 1);
 }
 
 void xtxpool_service::send_receipt_id_state(uint64_t now) {

@@ -168,6 +168,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_recv_tx_cur);
         RETURN_METRICS_NAME(txpool_confirm_tx_cur);
         RETURN_METRICS_NAME(txpool_unconfirm_tx_cur);
+        RETURN_METRICS_NAME(txpool_receipt_id_state_msg_send_num);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);

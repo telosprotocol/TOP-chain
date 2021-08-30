@@ -300,9 +300,16 @@ void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
         xunit_warn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
         return;
     }
+    uint32_t recv_tx_num = 0;
     for (auto & receipt : receipts) {
         send_receipt_msg(net_driver, receipt, non_shard_cross_receipts/*, receiptid_state*/);
+        if (receipt->is_recv_tx()) {
+            recv_tx_num++;
+        }
     }
+
+    XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send, recv_tx_num);
+    XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send, receipts.size() - recv_tx_num);
 }
 
 void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
