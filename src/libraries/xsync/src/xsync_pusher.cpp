@@ -107,6 +107,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     std::vector<vnetwork::xvnode_address_t> all_neighbors = m_role_xips_mgr->get_all_neighbors(self_addr);
     all_neighbors.push_back(self_addr);
     std::sort(all_neighbors.begin(), all_neighbors.end());
+    uint32_t neighbor_number = all_neighbors.size();
 
     int32_t self_position = -1;
     for (uint32_t i=0; i<all_neighbors.size(); i++) {
@@ -116,24 +117,39 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
 
+    uint32_t random = vrf_value(block->get_block_hash());
     // push archive node
     std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
-    uint32_t random = vrf_value(block->get_block_hash());
+
     if (!archive_list.empty()) {
-        std::vector<uint32_t> push_arcs = calc_push_mapping(all_neighbors.size(), archive_list.size(), self_position, random);
-        xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", all_neighbors.size(), archive_list.size(), 
+        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
+        xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
             push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_arcs) {
             vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
-            m_sync_sender->push_newblock(block, self_addr, target_addr);
+            bool found = false;
+            for (auto neighbor:all_neighbors) {
+                if (neighbor.account_address() == target_addr.account_address()) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                xsync_dbg("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                    self_addr.to_string().c_str(),
+                    target_addr.to_string().c_str(),
+                    block->get_height());
+                m_sync_sender->push_newblock(block, self_addr, target_addr);
+            }
         }
     }
 
     // push edge archive
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {
-        std::vector<uint32_t> push_edge_arcs = calc_push_mapping(all_neighbors.size(), edge_archive_list.size(), self_position, random);
-        xsync_dbg("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", all_neighbors.size(), edge_archive_list.size(), 
+        std::vector<uint32_t> push_edge_arcs = calc_push_mapping(neighbor_number, edge_archive_list.size(), self_position, random);
+        xsync_dbg("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
             push_edge_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_edge_arcs) {
             m_sync_sender->push_newblock(block, self_addr, edge_archive_list[dst_idx]);

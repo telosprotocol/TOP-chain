@@ -22,6 +22,14 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
 }
 
+bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
+    if (blocks.empty()) {
+        return true;
+    }
+    base::xvaccount_t _vaddress(blocks[0]->get_account());
+    return m_blockstore->store_blocks(_vaddress, blocks, true);
+}
+
 uint32_t xsync_store_t::add_listener(int major_type, mbus::xevent_queue_cb_t cb) {
     mbus::xmessage_bus_t *mbus = (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
     return mbus->add_listener(major_type, cb);
@@ -44,17 +52,17 @@ void xsync_store_t::remove_listener(int major_type, uint32_t id) {
 //     return _block;
 // }
 
-base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_committed_block(const std::string & account) {
-    base::xvaccount_t _vaddress(account);
+// base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_committed_block(const std::string & account) {
+//     base::xvaccount_t _vaddress(account);
     
-    auto _block = m_blockstore->get_latest_committed_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_block);
-    if (false == m_blockstore->load_block_output(_vaddress, _block.get(), metrics::blockstore_access_from_sync_load_block_objects_output)
-        || false == m_blockstore->load_block_input(_vaddress, _block.get(), metrics::blockstore_access_from_sync_load_block_objects_input) ) {
-        xerror("xsync_store_t::get_latest_committed_block fail-load block input or output. block=%s", _block->dump().c_str());
-        return nullptr;
-    }
-    return _block;
-}
+//     auto _block = m_blockstore->get_latest_committed_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_block);
+//     if (false == m_blockstore->load_block_output(_vaddress, _block.get(), metrics::blockstore_access_from_sync_load_block_objects_output)
+//         || false == m_blockstore->load_block_input(_vaddress, _block.get(), metrics::blockstore_access_from_sync_load_block_objects_input) ) {
+//         xerror("xsync_store_t::get_latest_committed_block fail-load block input or output. block=%s", _block->dump().c_str());
+//         return nullptr;
+//     }
+//     return _block;
+// }
 
 // base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_locked_block(const std::string & account) {
 //     base::xvaccount_t _vaddress(account);
@@ -219,65 +227,65 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
     return nullptr;
 }
 
-base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) {
-    base::xvaccount_t _vaddress(account);
-    uint32_t underministic_height = 0;
-    std::vector<std::vector<xvblock_ptr_t>> blocks;
-    xvblock_ptr_t block = nullptr;
-    bool exist = false;
-    if (sync_policy == enum_chain_sync_policy_fast) {
-        block = m_blockstore->get_latest_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
-    } else if (sync_policy == enum_chain_sync_policy_full) {
-        uint64_t connect_height = m_shadow->genesis_connect_height(account);
-        block = m_blockstore->load_block_object(account, connect_height, 
-            base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_sync_get_latest_connected_block);
-        //block = m_blockstore->get_latest_genesis_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
-    }
-    if (false == m_blockstore->load_block_output(_vaddress, block.get(), metrics::blockstore_access_from_sync_load_block_objects_output)
-        || false == m_blockstore->load_block_input(_vaddress, block.get(), metrics::blockstore_access_from_sync_load_block_objects_input) ) {
-        xerror("xsync_store_t::get_latest_end_block fail-load block input or output. block=%s", block->dump().c_str());
-        return nullptr;
-    }
+// base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) {
+//     base::xvaccount_t _vaddress(account);
+//     uint32_t underministic_height = 0;
+//     std::vector<std::vector<xvblock_ptr_t>> blocks;
+//     xvblock_ptr_t block = nullptr;
+//     bool exist = false;
+//     if (sync_policy == enum_chain_sync_policy_fast) {
+//         block = m_blockstore->get_latest_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
+//     } else if (sync_policy == enum_chain_sync_policy_full) {
+//         uint64_t connect_height = m_shadow->genesis_connect_height(account);
+//         block = m_blockstore->load_block_object(account, connect_height, 
+//             base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_sync_get_latest_connected_block);
+//         //block = m_blockstore->get_latest_genesis_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
+//     }
+//     if (false == m_blockstore->load_block_output(_vaddress, block.get(), metrics::blockstore_access_from_sync_load_block_objects_output)
+//         || false == m_blockstore->load_block_input(_vaddress, block.get(), metrics::blockstore_access_from_sync_load_block_objects_input) ) {
+//         xerror("xsync_store_t::get_latest_end_block fail-load block input or output. block=%s", block->dump().c_str());
+//         return nullptr;
+//     }
 
-    std::vector<xvblock_ptr_t> element;
-    element.push_back(block);
-    blocks.push_back(element);
-    for (uint32_t i = 1; i <= m_undeterministic_heights; i++) {
-        auto in_blocks = load_block_objects(account, block->get_height() + i);
-        blocks.push_back(in_blocks);
-    }
+//     std::vector<xvblock_ptr_t> element;
+//     element.push_back(block);
+//     blocks.push_back(element);
+//     for (uint32_t i = 1; i <= m_undeterministic_heights; i++) {
+//         auto in_blocks = load_block_objects(account, block->get_height() + i);
+//         blocks.push_back(in_blocks);
+//     }
 
-    for (uint32_t i = 0; i < m_undeterministic_heights; i++) {
-        auto & undeterministic_blocks = blocks[i+1];
-        auto & undeterministic_pre_blocks = blocks[i];
-        for (uint32_t j = 0; j < undeterministic_blocks.size();){
-            exist = false;
-            for (uint32_t k = 0; k < undeterministic_pre_blocks.size(); k++) {
-                auto source = undeterministic_blocks[j]->get_last_block_hash();
-                auto dst = undeterministic_pre_blocks[k]->get_block_hash();
-                if (source != dst) {
-                    continue;
-                }
-                exist = true;
-                if ((i+1) > underministic_height) {
-                    underministic_height = i+1;
-                }
-                break;
-            }
+//     for (uint32_t i = 0; i < m_undeterministic_heights; i++) {
+//         auto & undeterministic_blocks = blocks[i+1];
+//         auto & undeterministic_pre_blocks = blocks[i];
+//         for (uint32_t j = 0; j < undeterministic_blocks.size();){
+//             exist = false;
+//             for (uint32_t k = 0; k < undeterministic_pre_blocks.size(); k++) {
+//                 auto source = undeterministic_blocks[j]->get_last_block_hash();
+//                 auto dst = undeterministic_pre_blocks[k]->get_block_hash();
+//                 if (source != dst) {
+//                     continue;
+//                 }
+//                 exist = true;
+//                 if ((i+1) > underministic_height) {
+//                     underministic_height = i+1;
+//                 }
+//                 break;
+//             }
 
-            if (!exist) {
-                undeterministic_blocks.erase(undeterministic_blocks.begin() + j);
-                if (undeterministic_blocks.empty()){
-                    return blocks[underministic_height].back();
-                }
-                continue;
-            }
-            j++;
-        }
-    }
+//             if (!exist) {
+//                 undeterministic_blocks.erase(undeterministic_blocks.begin() + j);
+//                 if (undeterministic_blocks.empty()){
+//                     return blocks[underministic_height].back();
+//                 }
+//                 continue;
+//             }
+//             j++;
+//         }
+//     }
 
-    return blocks[underministic_height].back();
-}
+//     return blocks[underministic_height].back();
+// }
 
 
 std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::string & account, const uint64_t height) {

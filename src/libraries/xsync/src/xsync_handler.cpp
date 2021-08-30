@@ -233,12 +233,14 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         return;
     }
 
+    #if 0
     // check block existed already
     auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
     if (exist_block) {
         XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
         return;
     }
+    #endif
 
     if (!check_auth(m_certauth, block)) {
         xsync_warn("xsync_handler receive push_newblock(auth failed) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
@@ -489,15 +491,19 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
 
         const xchain_info_t &chain_info = it2->second;
 
-        base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
         xchain_state_info_t info;
-        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-        info.address = address;
-        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
-            info.start_height = 0;
-            info.end_height = 0;
+        if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
+            base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
+            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+            if (!block->is_full_state_block()) {
+                info.start_height = 0;
+                info.end_height = 0;
+            } else {
+                info.start_height = latest_start_block->get_height();
+                info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+            }
         } else {
-            info.start_height = latest_start_block->get_height();
+            info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
             info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
         }
         rsp_info_list.push_back(info);

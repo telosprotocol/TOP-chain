@@ -138,16 +138,19 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
 
         const std::string &address = it.first;
         const xchain_info_t &chain_info = it.second;
-
-        base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         xchain_state_info_t info;
-        info.address = address;
-        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
-            info.start_height = 0;
-            info.end_height = 0;
+        if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
+            base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
+            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+            if (!block->is_full_state_block()) {
+                info.start_height = 0;
+                info.end_height = 0;
+            } else {
+                info.start_height = latest_start_block->get_height();
+                info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+            }
         } else {
-            info.start_height = latest_start_block->get_height();
+            info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
             info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
         }
         info_list.push_back(info);
