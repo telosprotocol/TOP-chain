@@ -47,7 +47,29 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<b
             }
         }
 
-        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false,_old_aindex.get_latest_nonce());
+        // get latest tx nonce
+        uint64_t latest_tx_nonce = _old_aindex.get_latest_nonce();
+        base::xvinentity_t* primary_input_entity = unit->get_input()->get_primary_entity();
+        if (primary_input_entity != nullptr) {
+            const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
+            for (auto & action : actions) {
+                if (action.get_org_tx_hash().empty()) {
+                    break;
+                }
+                // confirm tx not has origin tx
+                base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
+                if (_subtype != base::enum_transaction_subtype_send && _subtype != base::enum_transaction_subtype_self) { // sendtx must has origin tx
+                    break;
+                }
+                xtransaction_ptr_t raw_tx = unit->query_raw_transaction(action.get_org_tx_hash());
+                xassert(raw_tx != nullptr);
+                if (raw_tx->get_tx_nonce() > latest_tx_nonce) {
+                    latest_tx_nonce = raw_tx->get_tx_nonce();
+                }
+            }
+        }
+
+        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, latest_tx_nonce);
         proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
     }
 
