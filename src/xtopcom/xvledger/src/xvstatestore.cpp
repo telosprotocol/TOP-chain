@@ -548,10 +548,10 @@ namespace top
                 return false;
                
             //just persist state of the committed block
-            if((target_block->get_block_flags() & enum_xvblock_flag_committed) != 0)
+            if((target_block->get_block_flags() & enum_xvblock_flag_committed) == 0)
             {
                 xinfo("xvblkstatestore_t::write_unit_state_to_db,block(%s) is not committed",target_block->dump().c_str());
-                return true;
+                return false;
             }
             
             xvaccount_t target_account(target_block->get_account());
@@ -562,7 +562,7 @@ namespace top
             {
                 // no need store block
                 xinfo("xvblkstatestore_t::write_unit_state_to_db,state(%s) < latest_executed_height=%ld",target_state.dump().c_str(),latest_executed_height);
-                return true;
+                return false;
             }
             
             XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
@@ -755,8 +755,8 @@ namespace top
             // try execute target block state
             target_bstate = execute_unit_target_block(target_account, db_base_bstate, target_block);
             if (target_bstate != nullptr) {
-                write_unit_state_to_db(*target_bstate.get(),target_block);
-                set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
+                if(write_unit_state_to_db(*target_bstate.get(),target_block))
+                    set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
                 xdbg("xvblkstatestore_t::get_unit_block_state succ-get state by execute.block=%s",target_block->dump().c_str());
                 return target_bstate;
             }
