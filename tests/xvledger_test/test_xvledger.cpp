@@ -192,3 +192,40 @@ TEST_F(test_xvledger, calc_address_tableid_3) {
 //     xvaccount_t _target_vaddr(tx->get_target_addr());
 //     ASSERT_EQ(_src_vaddr.get_ledger_subaddr(), _target_vaddr.get_ledger_subaddr());
 // }
+
+
+TEST_F(test_xvledger, address_compact_1) {
+    {
+        std::string address = "T80000077ae60e9d17e4f59fd614a09eae3d1312b2041a";
+        std::string compact_addr = base::xvaccount_t::compact_address_to(address);
+        std::cout << "address = " << address << " origin size = " << address.size() << " --> compact size = " << compact_addr.size() << std::endl;
+        std::string address2 = base::xvaccount_t::compact_address_from(compact_addr);
+        EXPECT_EQ(address,address2);
+        EXPECT_EQ(46,address.size());
+        EXPECT_EQ(21,compact_addr.size());
+    }
+    {
+        std::string address = "T00000LN1VBhmjztTBgLPuBCW7iEo9cw58LE1nZF";
+        std::string compact_addr = base::xvaccount_t::compact_address_to(address);
+        std::cout << "address = " << address << " origin size = " << address.size() << " --> compact size = " << compact_addr.size() << std::endl;
+        std::string address2 = base::xvaccount_t::compact_address_from(compact_addr);
+        EXPECT_EQ(address,compact_addr);
+        EXPECT_EQ(address,address2);
+    }
+    {
+        std::string address = "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg@21";
+        std::string compact_addr = base::xvaccount_t::compact_address_to(address);
+        std::cout << "address = " << address << " origin size = " << address.size() << " --> compact size = " << compact_addr.size() << std::endl;
+        std::string address2 = base::xvaccount_t::compact_address_from(compact_addr);
+        EXPECT_EQ(address,compact_addr);
+        EXPECT_EQ(address,address2);
+    }
+    {
+        std::string address = "Ta0001@2";
+        std::string compact_addr = base::xvaccount_t::compact_address_to(address);
+        std::cout << "address = " << address << " origin size = " << address.size() << " --> compact size = " << compact_addr.size() << std::endl;
+        std::string address2 = base::xvaccount_t::compact_address_from(compact_addr);
+        EXPECT_EQ(address,compact_addr);
+        EXPECT_EQ(address,address2);
+    }
+}
