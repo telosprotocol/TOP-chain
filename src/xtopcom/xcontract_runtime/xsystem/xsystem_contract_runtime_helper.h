@@ -78,8 +78,8 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
         try {                                                                                                                                                                      \
             top::contract_runtime::system::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
-        } catch (top::contract_runtime::error::xcontract_runtime_error_t const & eh) {                                                                                             \
-            result.status.ec = eh.code();                                                                                                                                          \
+        } catch (top::contract_runtime::error::xerrc_t const & eh) {                                                                                             \
+            result.status.ec = make_error_code(eh);                                                                                                                                          \
         } catch (std::exception const & eh) {                                                                                                                                      \
             result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                               \
             result.status.extra_msg = eh.what();                                                                                                                                   \
@@ -102,7 +102,7 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)action_data.data(), action_data.size());
 
 #define END_CONTRACT_API                                                                                                                                                               \
-        throw top::contract_runtime::error::xcontract_runtime_error_t{top::contract_runtime::error::xerrc_t::contract_api_not_found, "contract API " + action_name + " not found"};    \
+        throw top::contract_runtime::error::xerrc_t{top::contract_runtime::error::xerrc_t::contract_api_not_found};    \
     }
 
 NS_END3

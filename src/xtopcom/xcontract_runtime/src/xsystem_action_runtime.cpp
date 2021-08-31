@@ -13,6 +13,7 @@
 #include "xcontract_runtime/xsystem/xsystem_contract_runtime_helper.h"
 #include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
 
+#include "xsystem_contracts/xtransfer_contract.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -26,9 +27,9 @@ xtransaction_execution_result_t xtop_action_runtime<xsystem_consensus_action_t>:
     xtransaction_execution_result_t result;
 
     try {
-        xsystem_contract_manager_t manager;
-        auto system_contract = manager.system_contract(exe_ctx->contract_address());
-        system_contract->execute(this);
+        // auto system_contract = xsystem_contract_manager_t::instance().system_contract(exe_ctx->contract_address());
+        system_contracts::xbasic_system_contract_t* transfer_contract = new system_contracts::xtop_transfer_contract(exe_ctx);
+        result = transfer_contract->execute(exe_ctx);
 
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();

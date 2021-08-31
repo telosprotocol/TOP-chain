@@ -39,7 +39,7 @@ xtop_basic_property::xtop_basic_property(std::string const& name, xproperty_type
     : m_associated_contract{ associated_contract }
     , m_contract_state{ associated_contract->state() }
     , m_id{ name, type, lookup_property_category(name, type) }
-    , m_owner{ m_contract_state->state_account_address() } {
+    , m_owner{ associated_contract->address() } {
 }
 
 
