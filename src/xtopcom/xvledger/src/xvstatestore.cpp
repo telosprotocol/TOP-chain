@@ -680,7 +680,7 @@ namespace top
                 }
                 
                 // try make prev block state
-                if((prev_block->get_block_flags() & enum_xvblock_flag_committed) != 0) //only build base-state for commit
+                //if((prev_block->get_block_flags() & enum_xvblock_flag_committed) != 0) //only build base-state for commit
                 {
                     if( (prev_block->get_height() == 0)
                         || (prev_block->get_block_class() == enum_xvblock_class_full) )
