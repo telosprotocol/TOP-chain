@@ -20,6 +20,10 @@
      #define __ALLOW_TABLE_MORE_CACHE_SIZE__
  #endif
 
+#ifndef __USE_DEDICATED_META_DATA__
+    #define __USE_DEDICATED_META_DATA__
+#endif
+
 namespace top
 {
     namespace store
