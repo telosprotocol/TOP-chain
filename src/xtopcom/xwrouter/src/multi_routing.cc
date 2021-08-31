@@ -65,7 +65,7 @@ int MultiRouting::CreateRootRouting(std::shared_ptr<transport::Transport> transp
 
     TOP_INFO("kroot routing table enable bootstrapcache, register set and get");
 
-    routing_table_ptr->get_local_node_info()->set_service_type(service_type);
+    // routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     {
         std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
         root_routing_table_ = routing_table_ptr;

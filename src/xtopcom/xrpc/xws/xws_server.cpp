@@ -94,6 +94,9 @@ void xws_server::start(uint16_t nPort, uint32_t nThreadNum) {
                 std::string sequence_id = RatelimitServerHelper::GetSequenceId(data_http->content_);
                 char info[256] = {0};
                 snprintf(info, 256, "{\"errmsg\":\"request too often.\",\"errno\":110,\"sequence_id\":\"%s\"}", sequence_id.c_str());
+                XMETRICS_PACKET_ALARM("rpc_ratelimit_alarm",
+                                      "errmsg", "request too often",
+                                      "sequence_id", sequence_id);
                 data_http->connection_->send(info);
             }
             delete data_http;

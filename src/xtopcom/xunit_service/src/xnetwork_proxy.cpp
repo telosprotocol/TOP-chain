@@ -85,7 +85,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
             auto to = elect_set[0].xip;
             reset_node_id_to_xip2(to);
             set_node_id_to_xip2(to, 0x3FF);
-            auto dest_to = xcons_utl::to_address(to, network->address().version());
+            auto dest_to = xcons_utl::to_address(to, network->address().election_round());
             network->forward_broadcast_message(msg, dest_to);
 #ifdef DEBUG
             xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
@@ -278,7 +278,7 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
 
         for (auto iter = m_networks.begin(); iter != m_networks.end(); iter++) {
             auto & network_xip = iter->first;
-            common::xip2_t const group_xip2 = common::xip2_t{network_xip}.sharding();
+            common::xip2_t const group_xip2 = common::xip2_t{network_xip}.group_xip2();
             xvip2_t network_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
             if (xcons_utl::xip_equals(addr, network_group_xip)) {
                 xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));

@@ -25,10 +25,10 @@ private:
     container_t m_nodes{};
     common::xlogic_time_t m_timestamp{ 0 };
     common::xlogic_time_t m_start_time{ common::xjudgement_day };
-    common::xversion_t m_group_version{};
-    common::xversion_t m_associated_group_version{};
-    common::xversion_t m_cluster_version{};
-    common::xversion_t m_election_committee_version{};
+    common::xelection_round_t m_group_version{};
+    common::xelection_round_t m_associated_group_version{};
+    common::xelection_round_t m_cluster_version{};
+    common::xelection_round_t m_election_committee_version{};
     // std::uint64_t m_associated_election_blk_height{ 0 };
     common::xgroup_id_t m_associated_group_id{};
 
@@ -58,35 +58,35 @@ public:
     void
     associated_group_id(common::xgroup_id_t gid) noexcept;
 
-    common::xversion_t const &
+    common::xelection_round_t const &
     group_version() const noexcept;
 
-    common::xversion_t &
+    common::xelection_round_t &
     group_version() noexcept;
 
     void
-    group_version(common::xversion_t ver) noexcept;
+    group_version(common::xelection_round_t ver) noexcept;
 
-    common::xversion_t const &
+    common::xelection_round_t const &
     associated_group_version() const noexcept;
 
     void
-    associated_group_version(common::xversion_t associated_gp_ver) noexcept;
+    associated_group_version(common::xelection_round_t associated_gp_ver) noexcept;
 
-    common::xversion_t const &
+    common::xelection_round_t const &
     cluster_version() const noexcept;
 
     void
-    cluster_version(common::xversion_t ver) noexcept;
+    cluster_version(common::xelection_round_t ver) noexcept;
 
-    common::xversion_t const &
+    common::xelection_round_t const &
     election_committee_version() const noexcept;
 
-    common::xversion_t &
+    common::xelection_round_t &
     election_committee_version() noexcept;
 
     void
-    election_committee_version(common::xversion_t zec_ver) noexcept;
+    election_committee_version(common::xelection_round_t zec_ver) noexcept;
 
     common::xlogic_time_t
     timestamp() const noexcept;

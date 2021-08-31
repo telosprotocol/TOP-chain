@@ -56,8 +56,6 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     const std::string &     get_target_addr()const {return m_tx->get_target_addr();}
     uint64_t                get_tx_nonce()const {return m_tx->get_tx_nonce();}
     uint64_t                get_tx_last_nonce()const {return m_tx->get_last_nonce();}
-    const xaction_t &       get_source_action()const {return m_tx->get_source_action();}
-    const xaction_t &       get_target_action()const {return m_tx->get_target_action();}
 
     enum_transaction_subtype  get_tx_subtype() const {return m_subtype;}
     std::string             get_tx_subtype_str() const {return base::xvtxkey_t::transaction_subtype_to_string(m_subtype);}

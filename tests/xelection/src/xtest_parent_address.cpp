@@ -20,7 +20,7 @@ using top::tests::election::xcommittee_fixture_t;
 TEST_F(xcommittee_fixture_t, committee_parent_address_empty_child_address) {
     std::error_code ec;
     auto r = m_election_cache_data_accessor->parent_address(xsharding_address_t{},
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::address_empty, ec);
@@ -29,7 +29,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_empty_child_address) {
 TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_is_self) {
     std::error_code ec;
     auto r = m_election_cache_data_accessor->parent_address(top::common::build_committee_sharding_address(m_election_cache_data_accessor->network_id()),
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::associated_group_not_exist, ec);
@@ -38,7 +38,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_is_self) {
 TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_is_zec) {
     std::error_code ec;
     auto r = m_election_cache_data_accessor->parent_address(top::common::build_zec_sharding_address(m_election_cache_data_accessor->network_id()),
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::zone_not_exist, ec);
@@ -48,7 +48,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_is_zec) {
 TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_in_different_network) {
     std::error_code ec;
     auto r = m_election_cache_data_accessor->parent_address(top::common::build_committee_sharding_address(top::common::xtestnet_id),
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::network_id_mismatch, ec);
@@ -63,7 +63,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_in_different
                                                                 top::common::xdefault_cluster_id,
                                                                 top::common::xcommittee_group_id
                                                             },
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::cluster_not_exist, ec);
@@ -77,7 +77,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_in_different
                                                                 top::common::xcommittee_cluster_id,
                                                                 top::common::xdefault_group_id
                                                             },
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::group_not_exist, ec);
@@ -88,7 +88,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_zone_id_empt
     auto r = m_election_cache_data_accessor->parent_address(xsharding_address_t{
                                                                 m_election_cache_data_accessor->network_id()
                                                             },
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::zone_id_empty, ec);
@@ -100,7 +100,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_cluster_id_e
                                                                 m_election_cache_data_accessor->network_id(),
                                                                 top::common::xcommittee_zone_id,
                                                             },
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::cluster_id_empty, ec);
@@ -113,7 +113,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_group_id_emp
                                                                 top::common::xcommittee_zone_id,
                                                                 top::common::xcommittee_cluster_id
                                                             },
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::group_id_empty, ec);
@@ -122,7 +122,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_child_address_group_id_emp
 TEST_F(xcommittee_fixture_t, committee_parent_address_nonempty_version) {
     std::error_code ec;
     auto r = m_election_cache_data_accessor->parent_address(top::common:: build_committee_sharding_address(m_election_cache_data_accessor->network_id()),
-                                                            top::common::xversion_t{ 0 },
+                                                            top::common::xelection_round_t{ 0 },
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::associated_group_not_exist, ec);
@@ -131,7 +131,7 @@ TEST_F(xcommittee_fixture_t, committee_parent_address_nonempty_version) {
 TEST_F(xcommittee_fixture_t, committee_parent_address_empty_version) {
     std::error_code ec;
     auto r = m_election_cache_data_accessor->parent_address(top::common:: build_committee_sharding_address(m_election_cache_data_accessor->network_id()),
-                                                            top::common::xversion_t{},
+                                                            top::common::xelection_round_t{},
                                                             ec);
     EXPECT_TRUE(r.empty());
     EXPECT_EQ(top::election::xdata_accessor_errc_t::associated_group_not_exist, ec);

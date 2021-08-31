@@ -12,7 +12,6 @@
 using top::common::xbroadcast_id_t;
 using top::common::xnode_id_t;
 using top::common::xnode_type_t;
-using top::common::xversion_t;
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
@@ -33,8 +32,8 @@ TEST(xtest_update_committee_zone, _) {
                                                .result_of(xnode_type_t::committee)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -51,7 +50,7 @@ TEST(xtest_update_committee_zone, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -96,8 +95,8 @@ TEST(xtest_update_zec_zone, _) {
                                                .result_of(xnode_type_t::zec)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -114,7 +113,7 @@ TEST(xtest_update_zec_zone, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -159,8 +158,8 @@ TEST(xtest_update_edge_zone, _) {
                                                .result_of(xnode_type_t::edge)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -177,7 +176,7 @@ TEST(xtest_update_edge_zone, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -222,8 +221,8 @@ TEST(xtest_update_archive_zone, _) {
                                                .result_of(xnode_type_t::storage_archive)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -240,7 +239,7 @@ TEST(xtest_update_archive_zone, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -286,8 +285,8 @@ TEST(xtest_update_consensus_zone, _) {
                                                        .result_of(xnode_type_t::consensus_auditor)
                                                        .result_of(cluster_id)
                                                        .result_of(auditor_group_id);
-    auditor_group_result.group_version(xversion_t{ 0 });
-    auditor_group_result.election_committee_version(xversion_t{ 0 });
+    auditor_group_result.group_version(top::common::xelection_round_t{ 0 });
+    auditor_group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     auditor_group_result.start_time(0);
     // auditor_group_result.associated_election_blk_height(0);
 
@@ -295,8 +294,8 @@ TEST(xtest_update_consensus_zone, _) {
                                                          .result_of(xnode_type_t::consensus_validator)
                                                          .result_of(cluster_id)
                                                          .result_of(validator_group_id);
-    validator_group_result.group_version(xversion_t{ 0 });
-    validator_group_result.election_committee_version(xversion_t{ 0 });
+    validator_group_result.group_version(top::common::xelection_round_t{ 0 });
+    validator_group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     validator_group_result.start_time(0);
     // validator_group_result.associated_election_blk_height(0);
 
@@ -313,7 +312,7 @@ TEST(xtest_update_consensus_zone, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -335,7 +334,7 @@ TEST(xtest_update_consensus_zone, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i + 1023) });
@@ -385,8 +384,8 @@ TEST(xtest_update_committee_zone, update_twice) {
                                                .result_of(zone_type)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -403,7 +402,7 @@ TEST(xtest_update_committee_zone, update_twice) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -424,8 +423,8 @@ TEST(xtest_update_committee_zone, update_twice) {
                                                  .result_of(cluster_id)
                                                  .result_of(group_id);
 
-    group_result2.group_version(xversion_t{ 1 });
-    group_result2.election_committee_version(xversion_t{ 1 });
+    group_result2.group_version(top::common::xelection_round_t{ 1 });
+    group_result2.election_committee_version(top::common::xelection_round_t{ 1 });
     group_result2.start_time(2);
     // group_result2.associated_election_blk_height(1);
 
@@ -442,7 +441,7 @@ TEST(xtest_update_committee_zone, update_twice) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 1 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 1 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(1023 - i - 1) });

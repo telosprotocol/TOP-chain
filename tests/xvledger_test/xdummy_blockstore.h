@@ -82,6 +82,10 @@ public:
         return 0;
     }
 
+    bool set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override {
+        return false;
+    }
+
     base::xblock_mptrs get_latest_blocks(const base::xvaccount_t &,const int atag = 0) override {
         return {};
     }
@@ -180,6 +184,27 @@ public:
 
     bool exist_genesis_block(base::xvaccount_t const & account,const int atag = 0) override {
         return false;
+    }
+    
+    // genesis connected  blocks
+    bool set_genesis_height(const base::xvaccount_t & account, const std::string &height) override {
+        return true;
+    }
+
+    const std::string    get_genesis_height(const base::xvaccount_t & account) override {
+        return "";
+    }
+
+    bool        set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string &span) override {
+        return true;
+    }
+
+    bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) override {
+        return true;
+    }
+
+    const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override {
+        return "";
     }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;

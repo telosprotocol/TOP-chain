@@ -37,17 +37,36 @@ public:
                                                                                        std::error_code & ec) override;
 
     std::map<common::xslot_id_t, data::xnode_info_t> sharding_nodes(common::xcluster_address_t const & address,
-                                                                    common::xversion_t const & version,
+                                                                    common::xelection_round_t const & election_round,
                                                                     std::error_code & ec) const override;
 
-    common::xnode_address_t parent_address(common::xsharding_address_t const & child_address, common::xversion_t const & child_version, std::error_code & ec) const
-        noexcept override;
+    std::map<common::xslot_id_t, data::xnode_info_t> group_nodes(common::xgroup_address_t const & group_address,
+                                                                 common::xlogic_epoch_t const & group_logic_epoch,
+                                                                 std::error_code & ec) const override;
 
-    std::shared_ptr<xnode_element_t> node_element(common::xnode_address_t const & address, std::error_code & ec) const override;
+    common::xnode_address_t parent_address(common::xsharding_address_t const & child_address,
+                                           common::xelection_round_t const & child_election_round,
+                                           std::error_code & ec) const noexcept override;
 
-    common::xnode_id_t node_id_from(common::xip2_t const & xip2, std::error_code & ec) const override;
+    common::xnode_address_t parent_address(common::xgroup_address_t const & child_address,
+                                           common::xlogic_epoch_t const & child_logic_epoch,
+                                           std::error_code & ec) const noexcept override;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address, common::xversion_t const & version, std::error_code & ec) const override;
+    std::vector<common::xnode_address_t> child_addresses(common::xgroup_address_t const & parent_group_address,
+                                                         common::xlogic_epoch_t const & parent_logic_epoch,
+                                                         std::error_code & ec) const noexcept override;
+
+    std::shared_ptr<xnode_element_t> node_element(common::xgroup_address_t const & address,
+                                                  common::xlogic_epoch_t const & logic_epoch,
+                                                  common::xslot_id_t const & slot_id,
+                                                  std::error_code & ec) const override;
+
+    common::xaccount_address_t account_address_from(common::xip2_t const & xip2, std::error_code & ec) const override;
+
+    std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address, common::xelection_round_t const & election_round, std::error_code & ec) const override;
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & group_address,
+                                                    common::xlogic_epoch_t const & logic_epoch,
+                                                    std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_address_t const & group_address,
                                                               uint64_t const election_blk_height,
@@ -58,10 +77,14 @@ public:
                                                                   std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> parent_group_element(common::xsharding_address_t const & child_sharding_address,
-                                                           common::xversion_t const & child_sharding_version,
+                                                           common::xelection_round_t const & child_group_election_round,
                                                            std::error_code & ec) const override;
 
-    common::xversion_t version_from(common::xip2_t const & xip2, std::error_code & ec) const override;
+    std::shared_ptr<xgroup_element_t> parent_group_element(common::xgroup_address_t const & child_group_address,
+                                                           common::xlogic_epoch_t const & child_logic_epoch,
+                                                           std::error_code & ec) const override;
+
+    common::xelection_round_t election_epoch_from(common::xip2_t const & xip2, std::error_code & ec) const override;
 
 private:
     std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> update_zone(std::shared_ptr<xzone_element_t> const & zone_element,
@@ -115,7 +138,14 @@ private:
                                                     common::xzone_id_t const & zone_id,
                                                     common::xcluster_id_t const & cluster_id,
                                                     common::xgroup_id_t const & group_id,
-                                                    common::xversion_t const & version,
+                                                    common::xelection_round_t const & election_round,
+                                                    std::error_code & ec) const;
+
+    std::shared_ptr<xgroup_element_t> group_element(common::xnetwork_id_t const & network_id,
+                                                    common::xzone_id_t const & zone_id,
+                                                    common::xcluster_id_t const & cluster_id,
+                                                    common::xgroup_id_t const & group_id,
+                                                    common::xlogic_epoch_t const & logic_epoch,
                                                     std::error_code & ec) const;
 
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xnetwork_id_t const & network_id,

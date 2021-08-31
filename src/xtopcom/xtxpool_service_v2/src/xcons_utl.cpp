@@ -9,7 +9,7 @@ static xvip2_t broadcast_ip{(uint64_t)-1, (uint64_t)-1};
 xvip2_t xcons_utl::to_xip2(const common::xnode_address_t & address, bool bwith_version) {
     xvip2_t xip = address.xip2();
     if (!bwith_version) {
-        xip = address.xip2().sharding();
+        xip = address.xip2().group_xip2();
     }
     return xip;
 }
@@ -33,7 +33,7 @@ bool xcons_utl::is_broadcast_address(const xvip2_t & addr) {
     return xip_equals(broadcast_ip, addr);
 }
 
-common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xversion_t const & version) {
+common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xelection_round_t const & version) {
     // auto network_version_value = static_cast<common::xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
     auto network_id_value = static_cast<common::xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2));
     auto zone_id_value = static_cast<common::xzone_id_t::value_type>(get_zone_id_from_xip2(xip2));

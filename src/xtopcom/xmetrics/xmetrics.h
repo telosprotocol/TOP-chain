@@ -3,14 +3,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include "xbasic/xrunnable.h"
+#include "xbasic/xthreading/xthreadsafe_queue.hpp"
+#ifdef ENABLE_METRICS
+#include "metrics_handler/array_counter_handler.h"
 #include "metrics_handler/counter_handler.h"
 #include "metrics_handler/flow_handler.h"
 #include "metrics_handler/timer_handler.h"
 #include "metrics_handler/xmetrics_packet_info.h"
-#include "xbasic/xrunnable.h"
-#include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #include "xmetrics_event.h"
 #include "xmetrics_unit.h"
+#endif
 
 #include <chrono>
 #include <map>
@@ -60,7 +63,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_key_block_output,
     db_key_block_output_resource,
     db_key_block_state,
-    db_key_block_offdata,
 
     // consensus
     cons_drand_leader_finish_succ,
@@ -92,7 +94,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_db_write,
     store_db_delete,
     store_state_read,
-    store_state_write,
+    store_state_table_write,
+    store_state_unit_write,
     store_state_delete,
     store_block_table_read,
     store_block_unit_read,
@@ -104,15 +107,29 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_block_table_write,
     store_block_unit_write,
     store_block_other_write,
-    store_block_index_write,
-    store_block_input_write,
-    store_block_output_write,
+    store_block_index_table_write,
+    store_block_index_unit_write,
+    store_block_index_other_write,
+    store_block_input_table_write,
+    store_block_input_unit_write,
+    store_block_output_table_write,
+    store_block_output_unit_write,
     store_block_delete,
     store_tx_index_self,
     store_tx_index_send,
     store_tx_index_recv,
     store_tx_index_confirm,
     store_tx_origin,
+    store_block_meta_write,
+    store_block_meta_read,
+
+    store_dbsize_block_unit_empty,
+    store_dbsize_block_unit_light,
+    store_dbsize_block_unit_full,
+    store_dbsize_block_table_empty,
+    store_dbsize_block_table_light,
+    store_dbsize_block_table_full,
+    store_dbsize_block_other,
 
     // vledger dataobject
     dataobject_xvnode_t,
@@ -163,6 +180,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_pull_recv_tx,
     txpool_pull_confirm_tx,
     txpool_push_tx_from_proposal,
+    txpool_send_tx_cur,
+    txpool_recv_tx_cur,
+    txpool_confirm_tx_cur,
+    txpool_unconfirm_tx_cur,
 
     // blockstore
     blockstore_index_load,
@@ -317,6 +338,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_blkmaker_unit_connect_state,
     statestore_access_from_txpool_get_accountstate,
     statestore_access_from_txpool_refreshtable,
+    statestore_access_from_blockstore,
     statestore_access_from_blkmaker_get_target_tablestate,
     statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
 
@@ -338,6 +360,71 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
 
+enum E_ARRAY_COUNTER_TAG : size_t {
+    e_array_counter_begin = 0,
+
+    blockstore_sharding_table_block_commit,
+    blockstore_beacon_table_block_commit,
+    blockstore_zec_table_block_commit,
+    blockstore_sharding_table_block_full,
+    blockstore_beacon_table_block_full,
+    blockstore_zec_table_block_full,
+    blockstore_sharding_table_block_genesis_connect,
+    blockstore_beacon_table_block_genesis_connect,
+    blockstore_zec_table_block_genesis_connect,
+
+    e_array_counter_total,
+};
+using xmetrics_array_tag_t = E_ARRAY_COUNTER_TAG;
+
+#ifdef ENABLE_METRICS
+// ! attention. here the copy is not atomic.
+template <typename T>
+struct copiable_atomwrapper {
+    std::atomic<T> _a;
+
+    copiable_atomwrapper() : _a() {
+    }
+
+    copiable_atomwrapper(const std::atomic<T> & a) : _a(a.load()) {
+    }
+
+    copiable_atomwrapper(const copiable_atomwrapper & other) : _a(other._a.load()) {
+    }
+
+    copiable_atomwrapper & operator=(const copiable_atomwrapper & other) {
+        _a.store(other._a.load());
+        return *this;
+    }
+
+    copiable_atomwrapper & operator=(const T & val) {
+        _a.store(val);
+        return *this;
+    }
+
+    copiable_atomwrapper & operator++() {
+        _a.store(_a.load() + 1);
+        return *this;
+    }
+    copiable_atomwrapper operator++(int) {
+        auto ret = *this;
+        _a.store(_a.load() + 1);
+        return ret;
+    }
+    copiable_atomwrapper operator+=(const T & val) {
+        _a.store(_a.load() + val);
+        return *this;
+    }
+    copiable_atomwrapper operator-=(const T & val) {
+        _a.store(_a.load() - val);
+        return *this;
+    }
+
+    T val() {
+        return _a.load();
+    }
+};
+
 class e_metrics : public top::xbasic_runnable_t<e_metrics> {
 public:
     XDECLARE_DELETED_COPY_AND_MOVE_SEMANTICS(e_metrics);
@@ -357,6 +444,7 @@ private:
     void process_message_queue();
     void update_dump();
     void gauge_dump();
+    void array_count_dump();
 
 public:
     void timer_start(std::string metrics_name, time_point value);
@@ -366,6 +454,10 @@ public:
     void counter_set(std::string metrics_name, int64_t value);
     void flow_count(std::string metrics_name, int64_t value, time_point timestamp);
     void gauge(E_SIMPLE_METRICS_TAG tag, int64_t value);
+    int64_t gauge_get_value(E_SIMPLE_METRICS_TAG tag);
+    void array_counter_increase(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
+    void array_counter_decrease(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
+    void array_counter_set(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
 
 private:
     std::thread m_process_thread;
@@ -374,6 +466,7 @@ private:
     handler::counter_handler_t m_counter_handler;
     handler::timer_handler_t m_timer_handler;
     handler::flow_handler_t m_flow_handler;
+    handler::array_counter_handler_t m_array_counter_handler;
     constexpr static std::size_t message_queue_size{500000};
     top::threading::xthreadsafe_queue<event_message, std::vector<event_message>> m_message_queue{message_queue_size};
     std::map<std::string, metrics_variant_ptr> m_metrics_hub;  // {metrics_name, metrics_vaiant_ptr}
@@ -384,6 +477,13 @@ protected:
     };
     simple_counter s_counters[e_simple_total]; // simple counter counter
     metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
+
+    struct array_counter{
+        std::vector<copiable_atomwrapper<int64_t>> arr_value;
+        std::vector<copiable_atomwrapper<uint64_t>> arr_count;
+    };
+    array_counter a_counters[e_array_counter_total];
+    metrics_variant_ptr a_metrics[e_array_counter_total];
 };
 
 class metrics_time_auto {
@@ -401,15 +501,19 @@ public:
     metrics_appendant_info m_key;
     microseconds m_timed_out;
 };
-
-#ifdef ENABLE_METRICS
 #define XMETRICS_INIT()                                                                                                                                                            \
     {                                                                                                                                                                              \
         auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
         ins.start();                                                                                                                                                               \
     }
 
-#define SSTR(x) static_cast<std::ostringstream &>((std::ostringstream()  << x)).str()
+#define XMETRICS_UNINT()                                                                                                                                                            \
+    {                                                                                                                                                                              \
+        auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
+        ins.stop();                                                                                                                                                               \
+    }
+
+#define SSTR(x) static_cast<const std::ostringstream&>(std::ostringstream()  << x).str()
 #define ADD_THREAD_HASH(metrics_name) SSTR(metrics_name) + "&0x" + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()))
 #define STR_CONCAT_IMPL(a, b) a##b
 #define STR_CONCAT(str_a, str_b) STR_CONCAT_IMPL(str_a, str_b)
@@ -439,15 +543,26 @@ public:
 
 #define XMETRICS_FLOW_COUNT(metrics_name, value) top::metrics::e_metrics::get_instance().flow_count(metrics_name, value, std::chrono::system_clock::now());
 
-#define XMETRICS_PACKET_INFO(metrics_name, ...)                                                                                                                                    \
-    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};                                                                                                       \
+#define XMETRICS_PACKET_INFO(metrics_name, ...)                                                                                                                                \
+    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name, "real_time"};                                                               \
+    top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
+
+#define XMETRICS_PACKET_ALARM(metrics_name, ...)                                                                                                                               \
+    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name, "alarm"};                                                                   \
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
+#define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
+
+#define XMETRICS_ARRCNT_INCR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_increase(metrics_name, index, value)
+#define XMETRICS_ARRCNT_DECR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_decrease(metrics_name, index, value)
+#define XMETRICS_ARRCNT_SET(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_set(metrics_name, index, value)
+
 #else
 #define XMETRICS_INIT()
+#define XMETRICS_UNINT()
 #define XMETRICS_TIME_RECORD(metrics_name)
 #define XMETRICS_TIME_RECORD_KEY(metrics_name, key)
 #define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)
@@ -460,9 +575,14 @@ public:
 #define XMETRICS_COUNTER_SET(metrics_name, value)
 #define XMETRICS_FLOW_COUNT(metrics_name, value)
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
+#define XMETRICS_PACKET_ALARM(metrics_name, ...)
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
 #define XMETRICS_GAUGE(TAG, value)
+#define XMETRICS_GAUGE_GET_VALUE(TAG)
+#define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
+#define XMETRICS_ARRCNT_DECR(metrics_name, index, value)
+#define XMETRICS_ARRCNT_SET(metrics_name, index, value)
 #endif
 
 NS_END2

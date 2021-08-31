@@ -73,6 +73,8 @@ xunit_maker_ptr_t xtable_maker_t::create_unit_maker(const std::string & account)
     auto iter = m_unit_makers.find(account);
     if (iter == m_unit_makers.end()) {
         xunit_maker_ptr_t unitmaker = make_object_ptr<xunit_maker_t>(account, get_resources());
+        xassert(get_zone_index() == unitmaker->get_zone_index());
+        xassert(get_ledger_subaddr() == unitmaker->get_ledger_subaddr());
         m_unit_makers[account] = unitmaker;
         xdbg("xtable_maker_t::create_unit_maker unit_maker_changed add. account=%s",
             unitmaker->get_account().c_str());
@@ -558,7 +560,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     const std::vector<base::xventity_t*> & _proposal_table_inentitys = proposal_block->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _local_table_inentitys = local_block->get_input()->get_entitys();
     if (_proposal_table_inentitys.size() != _local_table_inentitys.size()) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-entity size not same. %s %s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-entity size not same. %s %s",
             proposal_block->dump().c_str(),
             local_block->dump().c_str());
         return false;

@@ -27,12 +27,12 @@ xtop_basic_element::xtop_basic_element(common::xnetwork_id_t const & network_id,
     } {
 }
 
-xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
+xtop_basic_element::xtop_basic_element(common::xelection_round_t const & election_round,
                                        common::xnetwork_id_t const & network_id,
                                        common::xzone_id_t const & zone_id,
                                        common::xcluster_id_t const & cluster_id,
                                        common::xgroup_id_t const & group_id,
-                                       uint16_t const sharding_size,
+                                       uint16_t const group_size,
                                        uint64_t const associated_blk_height)
     : m_address{
         common::xcluster_address_t{
@@ -41,20 +41,20 @@ xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
             cluster_id,
             group_id
         },
-        version,
-        sharding_size,
+        election_round,
+        group_size,
         associated_blk_height
     } {
 }
 
-xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
+xtop_basic_element::xtop_basic_element(common::xelection_round_t const & election_round,
                                        common::xnetwork_id_t const & network_id,
                                        common::xzone_id_t const & zone_id,
                                        common::xcluster_id_t const & cluster_id,
                                        common::xgroup_id_t const & group_id,
                                        common::xnode_id_t const & node_id,
                                        common::xslot_id_t const & slot_id,
-                                       uint16_t const sharding_size,
+                                       uint16_t const group_size,
                                        uint64_t const associated_blk_height)
     : m_address{
         common::xcluster_address_t{
@@ -67,8 +67,8 @@ xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
             node_id,
             slot_id
         },
-        version,
-        sharding_size,
+        election_round,
+        group_size,
         associated_blk_height
     } {
 }
@@ -76,6 +76,10 @@ xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
 common::xnode_address_t const &
 xtop_basic_element::address() const noexcept {
     return m_address;
+}
+
+common::xip2_t xtop_basic_element::xip2() const {
+    return address().xip2();
 }
 
 common::xcluster_id_t
@@ -98,6 +102,10 @@ xtop_basic_element::node_id() const noexcept {
     return m_address.node_id();
 }
 
+common::xaccount_address_t const & xtop_basic_element::account_address() const noexcept {
+    return m_address.account_address();
+}
+
 bool
 xtop_basic_element::operator==(xtop_basic_element const & other) const noexcept {
     return m_address == other.m_address;
@@ -108,9 +116,8 @@ xtop_basic_element::slot_id() const noexcept {
     return m_address.slot_id();
 }
 
-uint16_t
-xtop_basic_element::sharding_size() const noexcept {
-    return m_address.sharding_size();
+uint16_t xtop_basic_element::group_size() const noexcept {
+    return m_address.group_size();
 }
 
 uint64_t
@@ -128,9 +135,12 @@ xtop_basic_element::swap(xtop_basic_element & other) noexcept {
     m_address.swap(other.m_address);
 }
 
-common::xversion_t const &
-xtop_basic_element::version() const noexcept {
-    return m_address.version();
+common::xelection_round_t const & xtop_basic_element::election_round() const noexcept {
+    return m_address.election_round();
+}
+
+common::xlogical_version_t const & xtop_basic_element::logic_epoch() const noexcept {
+    return m_address.logic_epoch();
 }
 
 common::xzone_id_t

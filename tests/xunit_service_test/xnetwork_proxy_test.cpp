@@ -21,7 +21,7 @@ protected:
     void TearDown() override {}
 
     top::common::xnode_address_t create_address(int index, const std::string & account, std::size_t version = 1, bool bbeacon = false) {
-        common::xversion_t              ver(version);
+        common::xelection_round_t              ver(version);
         common::xnetwork_id_t           nid{1};
         common::xslot_id_t              slot_id{index};
         top::common::xcluster_address_t cluster_addr;

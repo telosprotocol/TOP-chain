@@ -11,6 +11,7 @@ enum class e_metrics_major_id : size_t {
     count = 1,
     timer = 2,
     flow = 3,
+    array = 4, // only support directly used with atomic interger for now (lack of metrics queue relevant code (todo charles))
 };
 
 enum class e_metrics_minor_id : size_t {

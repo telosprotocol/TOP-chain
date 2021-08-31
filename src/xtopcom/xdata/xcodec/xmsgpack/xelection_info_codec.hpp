@@ -57,7 +57,7 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             }
 
             case xelection_info_joined_version_index: {
-                election_info.joined_version = o.via.array.ptr[xelection_info_joined_version_index].as<top::common::xversion_t>();
+                election_info.joined_version = o.via.array.ptr[xelection_info_joined_version_index].as<top::common::xelection_round_t>();
                 XATTRIBUTE_FALLTHROUGH;
             }
             }

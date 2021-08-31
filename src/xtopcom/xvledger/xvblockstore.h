@@ -169,6 +169,7 @@ namespace top
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual bool                  set_latest_executed_info(const xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
 
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
             virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;//might mutiple certs at same height
@@ -219,6 +220,13 @@ namespace top
             //check if genesis block exist
             virtual bool                  exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) = 0;
 
+        public:
+            // genesis connected  blocks
+            virtual bool        set_genesis_height(const base::xvaccount_t & account, const std::string &height) = 0;
+            virtual const std::string    get_genesis_height(const base::xvaccount_t & account) = 0;
+            virtual bool        set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string &span) = 0;
+            virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
+            virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
         protected:
             //only allow remove flag within xvblockstore_t
             void                          remove_block_flag(xvblock_t* to_block, enum_xvblock_flag flag);

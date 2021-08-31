@@ -59,7 +59,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     m_vnet_driver = vnet_driver;
     m_vnetwork_str = vnet_driver->address().to_string();
 
-    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().version());
+    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
 
     m_node_id = static_cast<std::uint16_t>(get_node_id_from_xip2(m_xip));
     m_shard_size = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(m_xip));
@@ -240,7 +240,7 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
     }
 }
 
-bool xtxpool_service::is_belong_to_service(xtable_id_t tableid) const {
+bool xtxpool_service::is_belong_to_service(base::xtable_index_t tableid) const {
     if (tableid.get_zone_index() == m_zone_index && (tableid.get_subaddr() >= m_cover_front_table_id && tableid.get_subaddr() <= m_cover_back_table_id)) {
         return true;
     }
@@ -387,7 +387,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     return contx;
 }
 
-bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) const {
+bool xtxpool_service::is_receipt_sender(const base::xtable_index_t & tableid) const {
     return m_running && m_is_send_receipt_role && is_belong_to_service(tableid);
 }
 

@@ -36,18 +36,18 @@ xtop_election_association_result::end() const noexcept {
     return m_assocation_result.end();
 }
 
-common::xversion_t &
+common::xelection_round_t &
 xtop_election_association_result::cluster_version() noexcept {
     return m_cluster_version;
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_association_result::cluster_version() const noexcept {
     return m_cluster_version;
 }
 
 void
-xtop_election_association_result::cluster_version(common::xversion_t && cluster_ver) noexcept {
+xtop_election_association_result::cluster_version(common::xelection_round_t && cluster_ver) noexcept {
     m_cluster_version = std::move(cluster_ver);
 }
 
@@ -94,7 +94,7 @@ xtop_election_association_result::results(std::map<common::xgroup_id_t, common::
 void
 xtop_election_association_result::increase_cluster_version() {
     if (m_cluster_version.empty()) {
-        m_cluster_version = common::xversion_t{ 0 };
+        m_cluster_version = common::xelection_round_t{ 0 };
     } else {
         m_cluster_version.increase();
     }

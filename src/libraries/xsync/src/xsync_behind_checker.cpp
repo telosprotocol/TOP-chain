@@ -82,7 +82,6 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
 
     uint64_t peer_start_height = 0;
     uint64_t peer_end_height = 0;
-    uint64_t gap_between_interval = 0;
 
     vnetwork::xvnode_address_t peer_addr;
 
@@ -97,7 +96,8 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
                 sync_mode = "full";
                 gap_metric_tag_name = "xsync_full_mode_gap_" + address;
             }
-
+#ifdef ENABLE_METRICS
+            uint64_t gap_between_interval = 0;
             if (peer_end_height >= latest_end_block_height) {
                 gap_between_interval = peer_end_height - latest_end_block_height;
             } else {
@@ -105,6 +105,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             }
 
             XMETRICS_COUNTER_SET(gap_metric_tag_name, gap_between_interval);
+#endif
             XMETRICS_PACKET_INFO("xsync_interval",
                                  "mode",
                                  sync_mode,

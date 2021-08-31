@@ -12,9 +12,9 @@ std::size_t group_size{32};
 std::size_t auditor_nodes_per_segment{27};
 #if 0
 TEST_F(xtest_elect_consensus_group_contract_fixture_t, test_stake) {
-    top::config::config_register.get_instance().set(data::xmin_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(group_size));
-    top::config::config_register.get_instance().set(data::xmax_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(group_size));
-    top::config::config_register.get_instance().set(data::xauditor_nodes_per_segment_onchain_goverance_parameter_t::name, std::to_string(auditor_nodes_per_segment));
+    top::config::config_register.get_instance().set(config::xmin_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(6));
+    top::config::config_register.get_instance().set(config::xmax_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(16));
+    top::config::config_register.get_instance().set(config::xauditor_nodes_per_segment_onchain_goverance_parameter_t::name, std::to_string(auditor_nodes_per_segment));
 
     common::xnode_type_t node_type{common::xnode_type_t::consensus_auditor};
     common::xzone_id_t zid{common::xconsensus_zone_id};
@@ -29,8 +29,9 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, test_stake) {
     for (std::size_t index = 1; index <= node_count; ++index) {
         common::xnode_id_t node_id{std::string(TEST_NODE_ID_PREFIX + std::to_string(index))};
         xstandby_node_info_t standby_node_info;
-        standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
-        standby_node_info.stake_container = (100 + index) * 10000;
+        // standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
+        standby_node_info.stake_container.insert({common::xnode_type_t::consensus_auditor, (100 + index) * 10000});
+        standby_node_info.stake_container.insert({common::xnode_type_t::consensus_validator, (100 + index) * 10000});
 #if defined XENABLE_MOCK_ZEC_STAKE
         standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xrole_type_t::validator : common::xrole_type_t::advance;
 #endif

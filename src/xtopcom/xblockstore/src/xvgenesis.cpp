@@ -100,7 +100,6 @@ namespace top
             set_block_flag(base::enum_xvblock_flag_locked);
             set_block_flag(base::enum_xvblock_flag_committed);
             set_block_flag(base::enum_xvblock_flag_confirmed);
-            set_block_flag(base::enum_xvblock_flag_connected);
         }
         xgenesis_block::~xgenesis_block()
         {

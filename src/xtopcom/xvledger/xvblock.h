@@ -567,7 +567,7 @@ namespace top
         //note:once reset all flags to 0 ->indicate that block is no-longer valid
         enum enum_xvblock_flag
         {
-            enum_xvblock_flag_connected         = 0x0100, //block connected all the ways to genesis block or last full-block
+            // enum_xvblock_flag_connected         = 0x0100, //block connected all the ways to genesis block or last full-block
             enum_xvblock_flag_stored            = 0x0200, //block has been stored to db/xstore fully
             enum_xvblock_flag_unpacked          = 0x0400, //unpacked container(e.g.tableblock) into multiple unit blocks
             enum_xvblock_flag_confirmed         = 0x0800, //block has delivered receipt to receiver who confirmed and finished
@@ -576,7 +576,7 @@ namespace top
             enum_xvblock_flag_authenticated     = 0x1000, //block has been certificated --block'signature has been verified
             enum_xvblock_flag_locked            = 0x2000, //block has been locked   ---block not allow to fork
             enum_xvblock_flag_committed         = 0x4000, //block has been commited ---block to allow change state of account
-            enum_xvblock_flag_executed          = 0x8000, //block has been executed ---block has been executed and changed state
+            // enum_xvblock_flag_executed          = 0x8000, //block has been executed ---block has been executed and changed state
             enum_xvblock_flags_high4bit_mask    = 0xF000, //mask to retrive high 4bit of block flags
 
             enum_xvblock_flags_mask             = 0xFF00, //mask to get all block flags
@@ -624,7 +624,6 @@ namespace top
         public:
             virtual bool                is_valid(bool deep_test = false)    const;//not verify hash of header&input&output when deep_test is alse
             virtual bool                is_deliver(bool deep_test = false)  const;//test whether has certification ready
-            virtual bool                is_executed() const;                      //block has been executed
             virtual bool                is_input_ready(bool full_check_resources = false)  const;                  //nil-block return true because it dont need input
             virtual bool                is_output_ready(bool full_check_resources = false) const;                  //nil-block return true because it dont need output
             virtual bool                is_execute_ready() const {return true;}//check whether ready to execute bin-log
@@ -682,7 +681,6 @@ namespace top
             virtual bool                extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {return false;}
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
             virtual bool                extract_sub_txs(std::vector<xvtxindex_ptr> & sub_txs) {return false;}//as default it is none
-            virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
 
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose

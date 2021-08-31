@@ -30,7 +30,6 @@ public:
     virtual bool fetch_all(std::map<std::string, std::string>& map) override;
 
 private:
-    void update(mbus::xevent_ptr_t e);
     void chain_timer(common::xlogic_time_t time);
     void update_onchain_param(common::xlogic_time_t time);
     void filter_changes(const std::map<std::string, std::string>& map,

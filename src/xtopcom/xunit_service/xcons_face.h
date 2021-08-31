@@ -49,35 +49,12 @@ public:
     virtual void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) = 0;
 };
 
-// table index data
-struct table_index {
-    base::enum_xchain_zone_index zone_index;
-    uint16_t table_id;
-
-    table_index() {
-
-    }
-
-    table_index(base::enum_xchain_zone_index z_index, uint16_t t_id) {
-        zone_index = z_index;
-        table_id = t_id;
-    }
-
-    table_index(const table_index & rhs) {
-        zone_index = rhs.zone_index;
-        table_id = rhs.table_id;
-    }
-
-    uint32_t get_value() const {
-        return zone_index << 16 | table_id;
-    }
-};
 //compare function for table index data map
 struct table_index_compare
 {
-    bool operator()(const table_index& ti_lhs, const table_index& ti_rhs) const
+    bool operator()(const base::xtable_index_t& ti_lhs, const base::xtable_index_t& ti_rhs) const
     {
-        return ti_lhs.get_value() < ti_rhs.get_value();
+        return ti_lhs.to_table_shortid() < ti_rhs.to_table_shortid();
     };
 };
 // system election face
@@ -85,7 +62,7 @@ class xelection_cache_face {
 public:
     struct xelect_data {
         xvip2_t xip;
-        common::xversion_t joined_version;
+        common::xelection_round_t joined_version;
         uint64_t staking;
 
         xelect_data& operator=(const xelect_data & data) {
@@ -103,7 +80,7 @@ public:
 
 public:
     // load manager tables
-    virtual int32_t get_tables(const xvip2_t & xip, std::vector<table_index> * tables) = 0;
+    virtual int32_t get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables) = 0;
     // load election data from db
     virtual int32_t get_election(const xvip2_t & xip, elect_set * elect_data, bool bself = true) = 0;
     // load group election data
@@ -120,7 +97,7 @@ public:
 class xleader_election_face {
 public:
     // judge node is leader according viewid account and existed data
-    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
+    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
 
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face() = 0;

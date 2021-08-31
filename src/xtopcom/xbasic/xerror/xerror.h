@@ -11,6 +11,8 @@
 #include <system_error>
 #include <type_traits>
 
+using xbase_errc_t = enum_xerror_code;
+
 std::error_category const & base_category();
 std::error_code make_error_code(enum_xerror_code ec) noexcept;
 std::error_condition make_error_condition(enum_xerror_code ec) noexcept;

@@ -35,44 +35,125 @@ class xdatamock_table : public base::xvaccount_t {
         on_table_finish(_block);
 
         for (uint32_t i = 0; i < user_count; i++) {
-            std::string user = xdatamock_address::make_user_address_random(tableid);
-            xdatamock_unit datamock_unit(user, xdatamock_unit::enum_default_init_balance);
+            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
+            xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
             m_mock_units.push_back(datamock_unit);
         }
         xassert(m_mock_units.size() == user_count);
     }
 
+    void                                disable_fulltable() {m_config_fulltable_interval = 0;}
     const base::xvaccount_t &           get_vaccount() const {return *this;}
     const xtablestate_ptr_t &           get_table_state() const {return m_table_state;}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
-    const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}
+    const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}    
     static uint32_t                     get_full_table_interval_count() {return enum_default_full_table_interval_count;}
     xblock_ptr_t                        get_cert_block() const {return m_history_tables.back();}
-    xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}    
+    xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}
+    xblock_ptr_t                        get_commit_block() const { return m_history_tables.size() < 3 ? get_lock_block() : m_history_tables[m_history_tables.size() - 3];}    
+    std::vector<xblock_ptr_t>           get_all_genesis_units() const {
+        std::vector<xblock_ptr_t> units;
+        for (auto & mockunit : m_mock_units) {
+            units.push_back(mockunit.get_history_units()[0]);
+        }
+        return units;
+    }
+    std::vector<std::string>            get_unit_accounts() const {
+        std::vector<std::string> accounts;
+        for (auto & mockunit : m_mock_units) {
+            accounts.push_back(mockunit.get_account());
+        }
+        return accounts;
+    }
+
+    std::vector<xcons_transaction_ptr_t>   create_send_txs(const std::string & from, const std::string & to, uint32_t count) {
+        for (auto & mockunit : m_mock_units) {
+            if (from == mockunit.get_account()) {
+                return mockunit.generate_transfer_tx(to, count);
+            }
+        }
+        xassert(false);
+        return {};
+    }
+
+    std::vector<xcons_transaction_ptr_t> create_receipts(const xblock_ptr_t & commit_block) {
+        uint64_t cert_height = commit_block->get_height() + 2;
+        if (m_history_tables.size() < cert_height + 1) {
+            xassert(false);
+            return {};
+        }
+        xblock_ptr_t cert_block = m_history_tables[cert_height];
+
+        std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
+        std::vector<xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block.get(), cert_block.get());
+        for (auto & receipt : all_receipts) {
+            data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
+            all_cons_txs.push_back(constx);
+        }
+        return all_cons_txs;
+    }
+
+    void    push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {        
+        for (auto & tx : txs) {
+            push_tx(tx);
+        }
+    }
+    void    push_tx(const xcons_transaction_ptr_t & tx) {
+        auto account_addr = tx->get_account_addr();
+        for (auto & mockunit : m_mock_units) {
+            if (account_addr == mockunit.get_account()) {
+                mockunit.push_tx(tx);
+                return;
+            }
+        }
+        xdatamock_unit datamock_unit(account_addr, xdatamock_unit::enum_default_init_balance);
+        m_mock_units.push_back(datamock_unit);
+        datamock_unit.push_tx(tx);
+    }
+    xblock_ptr_t    generate_one_table() {
+        xblock_ptr_t block = generate_tableblock();
+        xassert(block != nullptr);
+        on_table_finish(block);
+        return block;
+    }
 
     void    genrate_table_chain(uint64_t max_block_height) {
         for (uint64_t i = 0; i < max_block_height; i++) {
+            generate_send_tx(); // auto generate txs internal
             xblock_ptr_t block = generate_tableblock();
             xassert(block != nullptr);
             on_table_finish(block);
         }
     }
 
+    xblock_consensus_para_t  init_consensus_para() {
+        xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), get_cert_block().get());
+        cs_para.update_latest_cert_block(get_cert_block());
+        cs_para.update_latest_lock_block(get_lock_block());
+        cs_para.update_latest_commit_block(get_commit_block());
+        cs_para.set_tableblock_consensus_para(1,"1",1,"1");
+        return cs_para;
+    }
+
+    void    do_multi_sign(const xblock_ptr_t & proposal_block) {
+        if (proposal_block != nullptr) {
+            xcertauth_util::instance().do_multi_sign(proposal_block.get());
+        }        
+    }
+
     xblock_ptr_t generate_tableblock() {
         xblock_ptr_t prev_tableblock = get_cert_block();
-        xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), prev_tableblock.get());
+        xblock_consensus_para_t cs_para = init_consensus_para();
         
         xblock_ptr_t proposal_block = nullptr;
         uint32_t history_table_count = m_history_tables.size();
-        if ( ((prev_tableblock->get_height() + 1) % enum_default_full_table_interval_count) == 0) {
+        if ( (m_config_fulltable_interval != 0) && (((prev_tableblock->get_height() + 1) % m_config_fulltable_interval) == 0) ) {
             proposal_block = generate_full_table(cs_para);
         } else {
             cs_para.set_tableblock_consensus_para(1, "1", 1, "1"); // TODO(jimmy) for light-table
             proposal_block = generate_batch_table(cs_para);
         }
-        if (proposal_block != nullptr) {
-            xcertauth_util::instance().do_multi_sign(proposal_block.get());
-        }
+        do_multi_sign(proposal_block);
         return proposal_block;
     }
     void on_table_finish(const xblock_ptr_t & block) {
@@ -92,7 +173,13 @@ class xdatamock_table : public base::xvaccount_t {
                 on_unit_finish(unit);
             }
         }
+
+        //clear all unit mock txs
+        for (auto & mockunit : m_mock_units) {
+            mockunit.clear_txs();
+        }
     }
+
     void on_unit_finish(const xobject_ptr_t<base::xvblock_t> & unit) {
         xblock_ptr_t _unit_ptr = dynamic_xobject_ptr_cast<xblock_t>(unit);
         for (auto & mockunit : m_mock_units) {
@@ -159,8 +246,6 @@ class xdatamock_table : public base::xvaccount_t {
     }
 
     xblock_ptr_t generate_batch_table(const data::xblock_consensus_para_t & cs_para) {
-        generate_send_tx();
-
         const base::xreceiptid_state_ptr_t & receiptid_state = m_table_state->get_receiptid_state();
         receiptid_state->clear_pair_modified();
 
@@ -181,15 +266,17 @@ class xdatamock_table : public base::xvaccount_t {
     }
 
     void generate_send_tx() {
+        xassert(m_mock_units.size() > 1);
         uint32_t txs_count = 0;
         for (uint32_t i = 0; i < m_mock_units.size(); i++) {
-            uint32_t send_index = (m_last_generate_send_tx_user_index + 1) % m_mock_units.size();
+            uint32_t send_index = (m_last_generate_send_tx_user_index) % m_mock_units.size();
             uint32_t recv_index = (send_index + 1) % m_mock_units.size();
-            m_last_generate_send_tx_user_index = send_index;
             xdatamock_unit & send_mockunit = m_mock_units[send_index];
             xdatamock_unit & recv_mockunit = m_mock_units[recv_index];
             std::vector<xcons_transaction_ptr_t> txs = send_mockunit.generate_transfer_tx(recv_mockunit.get_account(), 1);
             send_mockunit.push_txs(txs);
+
+            m_last_generate_send_tx_user_index = (m_last_generate_send_tx_user_index + 1) % m_mock_units.size();
 
             txs_count++;
             if (txs_count >= enum_default_batch_table_include_tx_count_max) {
@@ -201,11 +288,12 @@ class xdatamock_table : public base::xvaccount_t {
  private:
     xtablestate_ptr_t               m_table_state{nullptr};
     std::vector<xblock_ptr_t>       m_history_tables;
-    uint32_t                        m_last_generate_send_tx_user_index = 0xFFFFFFFF;
+    uint32_t                        m_last_generate_send_tx_user_index{0};
     std::vector<xdatamock_unit>     m_mock_units;
     xblock_builder_face_ptr_t       m_fulltable_builder;
     xblock_builder_face_ptr_t       m_lighttable_builder;
     xblockmaker_resources_ptr_t     m_default_resources{nullptr};
+    uint32_t                        m_config_fulltable_interval{enum_default_full_table_interval_count};
 };
 
 }

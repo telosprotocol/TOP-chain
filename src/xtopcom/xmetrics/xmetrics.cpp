@@ -51,7 +51,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_key_block_output);
         RETURN_METRICS_NAME(db_key_block_output_resource);
         RETURN_METRICS_NAME(db_key_block_state);
-        RETURN_METRICS_NAME(db_key_block_offdata);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
@@ -83,7 +82,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_db_write);
         RETURN_METRICS_NAME(store_db_delete);
         RETURN_METRICS_NAME(store_state_read);
-        RETURN_METRICS_NAME(store_state_write);
+        RETURN_METRICS_NAME(store_state_table_write);
+        RETURN_METRICS_NAME(store_state_unit_write);
         RETURN_METRICS_NAME(store_state_delete);
         RETURN_METRICS_NAME(store_block_table_read);
         RETURN_METRICS_NAME(store_block_unit_read);
@@ -95,15 +95,29 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_block_table_write);
         RETURN_METRICS_NAME(store_block_unit_write);
         RETURN_METRICS_NAME(store_block_other_write);
-        RETURN_METRICS_NAME(store_block_index_write);
-        RETURN_METRICS_NAME(store_block_input_write);
-        RETURN_METRICS_NAME(store_block_output_write);
+        RETURN_METRICS_NAME(store_block_index_table_write);
+        RETURN_METRICS_NAME(store_block_index_unit_write);
+        RETURN_METRICS_NAME(store_block_index_other_write);     
+        RETURN_METRICS_NAME(store_block_input_table_write);
+        RETURN_METRICS_NAME(store_block_input_unit_write);
+        RETURN_METRICS_NAME(store_block_output_table_write);
+        RETURN_METRICS_NAME(store_block_output_unit_write);
         RETURN_METRICS_NAME(store_block_delete);
         RETURN_METRICS_NAME(store_tx_index_self);
         RETURN_METRICS_NAME(store_tx_index_send);
         RETURN_METRICS_NAME(store_tx_index_recv);
         RETURN_METRICS_NAME(store_tx_index_confirm);
         RETURN_METRICS_NAME(store_tx_origin);
+        RETURN_METRICS_NAME(store_block_meta_write);
+        RETURN_METRICS_NAME(store_block_meta_read);
+
+        RETURN_METRICS_NAME(store_dbsize_block_unit_empty);
+        RETURN_METRICS_NAME(store_dbsize_block_unit_light);
+        RETURN_METRICS_NAME(store_dbsize_block_unit_full);
+        RETURN_METRICS_NAME(store_dbsize_block_table_empty);
+        RETURN_METRICS_NAME(store_dbsize_block_table_light);
+        RETURN_METRICS_NAME(store_dbsize_block_table_full);
+        RETURN_METRICS_NAME(store_dbsize_block_other);
 
         // vledger dataobject
         RETURN_METRICS_NAME(dataobject_xvnode_t);
@@ -150,6 +164,10 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_pull_recv_tx);
         RETURN_METRICS_NAME(txpool_pull_confirm_tx);
         RETURN_METRICS_NAME(txpool_push_tx_from_proposal);
+        RETURN_METRICS_NAME(txpool_send_tx_cur);
+        RETURN_METRICS_NAME(txpool_recv_tx_cur);
+        RETURN_METRICS_NAME(txpool_confirm_tx_cur);
+        RETURN_METRICS_NAME(txpool_unconfirm_tx_cur);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
@@ -285,6 +303,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_unit_connect_state);
         RETURN_METRICS_NAME(statestore_access_from_txpool_get_accountstate);
         RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
+        RETURN_METRICS_NAME(statestore_access_from_blockstore);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
         
         RETURN_METRICS_NAME(state_load_blk_state_suc);
@@ -305,12 +324,48 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
 }
 #undef RETURN_METRICS_NAME
 
+#define RETURN_METRICS_INFO(TAG,SIZE) case TAG: return {#TAG,SIZE}
+std::pair<char const *, std::size_t> array_counter_info(xmetrics_array_tag_t const tag) noexcept {
+    switch (tag) {
+        RETURN_METRICS_INFO(e_array_counter_begin, 0);
+
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_commit, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_commit, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_commit, 3);
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_full, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_full, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_full, 3);
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_genesis_connect, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_genesis_connect, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_genesis_connect, 3);
+        RETURN_METRICS_INFO(e_array_counter_total, 0);
+
+    default:
+        assert(false);
+        return {nullptr, 0};
+    }
+}
+#undef RETURN_METRICS_INFO
+
 void e_metrics::start() {
     if (running()) {
         return;
     }
     XMETRICS_CONFIG_GET("dump_interval", m_dump_interval);
     XMETRICS_CONFIG_GET("queue_procss_behind_sleep_time", m_queue_procss_behind_sleep_time);
+
+    for (size_t index = e_simple_begin; index < e_simple_total; index++) {
+        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
+    }
+
+    for (size_t index = e_array_counter_begin; index < e_array_counter_total; index++) {
+        auto name = array_counter_info(static_cast<xmetrics_array_tag_t>(index)).first;
+        auto size = array_counter_info(static_cast<xmetrics_array_tag_t>(index)).second;
+        a_metrics[index] = std::make_shared<metrics_array_unit>(name, size, 0);
+        a_counters[index].arr_count.resize(size, copiable_atomwrapper<uint64_t>(0));
+        a_counters[index].arr_value.resize(size, copiable_atomwrapper<int64_t>(0));
+    }
+
     running(true);
     // auto self = shared_from_this();
     // threading::xbackend_thread::spawn([this, self] { run_process(); });
@@ -324,10 +379,6 @@ void e_metrics::stop() {
 }
 
 void e_metrics::run_process() {
-    for (size_t index = e_simple_begin; index < e_simple_total; index++) {
-        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
-    }
-
     while (running()) {
         process_message_queue();
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
@@ -409,6 +460,10 @@ void e_metrics::update_dump() {
 
     // simpe metrics dump
     gauge_dump();
+
+    // array_counter metrics dump
+    array_count_dump();
+
     XMETRICS_CONFIG_GET("dump_interval", m_dump_interval);
 }
 /*
@@ -440,6 +495,27 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     }
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
+}
+int64_t e_metrics::gauge_get_value(E_SIMPLE_METRICS_TAG tag) {
+    if (tag >= e_simple_total || tag <= e_simple_begin ) {
+        return 0;
+    }
+    return s_counters[tag].value;
+}
+
+void e_metrics::array_counter_increase(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {
+    a_counters[tag].arr_count[index]++;
+    a_counters[tag].arr_value[index] += value;
+}
+
+void e_metrics::array_counter_decrease(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {
+    a_counters[tag].arr_count[index]++;
+    a_counters[tag].arr_value[index] -= value;
+}
+
+void e_metrics::array_counter_set(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {
+    a_counters[tag].arr_count[index]++;
+    a_counters[tag].arr_value[index] = value;
 }
 
 struct xsimple_merics_category
@@ -500,4 +576,19 @@ void e_metrics::gauge_dump() {
         m_counter_handler.dump_metrics_info(ptr);
     }
 }
+
+void e_metrics::array_count_dump() {
+    for (auto index = e_array_counter_begin + 1; index < e_array_counter_total; index++) {
+        auto metrics_ptr = a_metrics[index];
+        auto ptr = metrics_ptr.GetRef<metrics_array_unit_ptr>();
+        ptr->all_count = 0;
+        for (std::size_t _i = 0; _i < a_counters[index].arr_count.size(); ++_i) {
+            ptr->all_count += a_counters[index].arr_count[_i].val();
+            ptr->array_count[_i] = a_counters[index].arr_count[_i].val();
+            ptr->array_value[_i] = a_counters[index].arr_value[_i].val();
+        }
+        m_array_counter_handler.dump_metrics_info(ptr);
+    }
+}
+
 NS_END2

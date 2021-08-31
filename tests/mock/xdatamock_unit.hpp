@@ -9,6 +9,7 @@
 #include "xblockmaker/xunit_builder.h"
 #include "xstore/xaccount_context.h"
 #include "tests/mock/xcertauth_util.hpp"
+#include "tests/mock/xdatamock_address.hpp"
 
 namespace top {
 namespace mock {
@@ -67,8 +68,24 @@ class xdatamock_unit {
     };
 
  public:
-    xdatamock_unit(const std::string & account, uint64_t init_balance = enum_default_init_balance)
-    : m_account(account) {
+    xdatamock_unit(const std::string & address, uint64_t init_balance = enum_default_init_balance)
+    : m_account(address) {
+        m_enable_sign = false;
+
+        m_fullunit_builder = std::make_shared<xfullunit_builder_t>();
+        m_lightunit_builder = std::make_shared<xlightunit_builder_mock_t>();
+        m_emptyunit_builder = std::make_shared<xemptyunit_builder_t>();
+        m_default_builder_para = std::make_shared<xblock_builder_para_face_t>(nullptr);
+
+        xblock_ptr_t genesis_unit = build_genesis_block(init_balance);
+        on_unit_finish(genesis_unit);
+    }
+
+    xdatamock_unit(const xaddress_key_pair_t & addr_pair, uint64_t init_balance = enum_default_init_balance)
+    : m_account(addr_pair.m_address) {
+        m_enable_sign = true;
+        memcpy(m_private_key, addr_pair.m_private_key, 32);
+
         m_fullunit_builder = std::make_shared<xfullunit_builder_t>();
         m_lightunit_builder = std::make_shared<xlightunit_builder_mock_t>();
         m_emptyunit_builder = std::make_shared<xemptyunit_builder_t>();
@@ -85,7 +102,7 @@ class xdatamock_unit {
     const std::vector<xcons_transaction_ptr_t> & get_txs() const {return m_current_txs;}
 
  public:
-    static xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
+    xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
         uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
         data::xproperty_asset asset(amount);
@@ -96,6 +113,10 @@ class xdatamock_unit {
         tx->set_expire_duration(duration);
         tx->set_deposit(deposit);
         tx->set_digest();
+        if (m_enable_sign) {
+            std::string signature = utl::xcrypto_util::digest_sign(tx->digest(), m_private_key);
+            tx->set_signature(signature);
+        }
         tx->set_len();
         return tx;
     }
@@ -120,8 +141,25 @@ class xdatamock_unit {
         return txs;
     }
 
+    void clear_txs() {m_current_txs.clear();}
+
     void push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
-        m_current_txs = txs;
+        for (auto & tx : txs) {
+            push_tx(tx);
+        }
+    }
+    void push_tx(const xcons_transaction_ptr_t & tx) {
+        std::string account = tx->get_account_addr();
+        xassert(account == get_account());
+        if (tx->is_confirm_tx()) {
+            auto iter = m_raw_txs.find(tx->get_tx_hash());
+            if (iter == m_raw_txs.end()) {
+                xassert(false);
+            } else {
+                tx->set_raw_tx(iter->second.get());
+            }
+        }        
+        m_current_txs.push_back(tx);
     }
 
     xblock_ptr_t generate_unit(const base::xreceiptid_state_ptr_t & receiptid_state, const data::xblock_consensus_para_t & cs_para) {
@@ -133,14 +171,14 @@ class xdatamock_unit {
             proposal_block = m_fullunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, m_default_builder_para); // no need xblock_builder_para_ptr_t
         } else if (!m_current_txs.empty()) {
             xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
-            proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);
-            m_current_txs.clear();  // clear txs after make unit
+            proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);            
         } else {
-            if (get_cert_block()->get_block_class() != base::enum_xvblock_class_nil
-                || get_lock_block()->get_block_class() != base::enum_xvblock_class_nil) {
+            if (get_cert_block()->get_height() != 0
+                && (get_cert_block()->get_block_class() == base::enum_xvblock_class_light || get_lock_block()->get_block_class() == base::enum_xvblock_class_light) ) {
                 proposal_block = m_emptyunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, m_default_builder_para);
             }            
         }
+        m_current_txs.clear();  // clear txs after make unit
         return proposal_block;
     }
 
@@ -151,6 +189,20 @@ class xdatamock_unit {
             xassert(block->get_last_block_hash() == (m_history_units.back()->get_block_hash()));
         }
         m_history_units.push_back(block);
+        
+        // save raw tx
+        std::vector<xobject_ptr_t<xvtxindex_t>> sub_txs;
+        block->extract_sub_txs(sub_txs);
+        for (auto & v : sub_txs) {
+            if (v->get_tx_obj() != nullptr) {
+                xtransaction_t* raw_tx = (xtransaction_t*)v->get_tx_obj();
+                xtransaction_ptr_t raw_tx_ptr;
+                raw_tx->add_ref();
+                raw_tx_ptr.attach(raw_tx);
+                m_raw_txs[v->get_tx_hash()] = raw_tx_ptr;
+            }
+        }
+
         execute_block(block);
     }
 
@@ -194,9 +246,12 @@ class xdatamock_unit {
     }
 
  private:
+    bool                                    m_enable_sign{false};
+    uint8_t                                 m_private_key[32];
     std::string                             m_account;
     xaccount_ptr_t                          m_unit_bstate{nullptr};
     std::vector<xcons_transaction_ptr_t>    m_current_txs;
+    std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     std::vector<xblock_ptr_t>               m_history_units;
     xblock_builder_face_ptr_t               m_fullunit_builder;
     xblock_builder_face_ptr_t               m_lightunit_builder;

@@ -301,6 +301,8 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
     }
     // reset justify cert hash para
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
+    xassert(cs_para.get_proposal_height() != 0);
+    cs_para.set_parent_height(cs_para.get_proposal_height());
     m_default_builder_para->set_error_code(xsuccess);
 
     // firstly should process txs and try to make lightunit

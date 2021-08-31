@@ -82,7 +82,7 @@ namespace top
         
         class xtable_index_t
         {
-        public:
+        public:       
             xtable_index_t(xvid_t xid) {
                 m_zone_index = (enum_xchain_zone_index)get_vledger_zone_index(xid);
                 m_subaddr = (uint8_t)get_vledger_subaddr(xid);
@@ -95,8 +95,14 @@ namespace top
                 m_zone_index = (enum_xchain_zone_index)(tableid >> 10);
                 m_subaddr = (uint8_t)tableid & 0xff;
             }
+            xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
+                m_zone_index = zone_index;
+                m_subaddr = subaddr;
+                xassert(m_zone_index <= enum_chain_zone_zec_index);
+                xassert(m_subaddr < enum_vbucket_has_tables_count);
+            }
         public:
-            uint16_t                get_value() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
+            xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
             uint8_t                 get_subaddr() const {return m_subaddr;}
             
@@ -104,16 +110,25 @@ namespace top
             enum_xchain_zone_index m_zone_index;
             uint8_t                m_subaddr;
         };
-        
+
+        //define some special address prefix
+        XINLINE_CONSTEXPR char const * ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN            = "T80000";
+
         class xvaccount_t : virtual public xrefcount_t
         {
         public:
             enum enum_vaccount_address_size
             {
-                enum_vaccount_address_prefix_size = 6,
+                enum_vaccount_address_prefix_size = 6,  //Txyyyy, eg.T80000
                 enum_vaccount_address_min_size  = 18, //(>20,<256)
                 enum_vaccount_address_max_size  = 256,//(>20,<256)
             };
+
+            enum enum_vaccount_compact_type
+            {
+                enum_vaccount_compact_type_no_compact       = 'T',  //complete TOP address
+                enum_vaccount_compact_type_eth_main_chain   = 'U',  //TOP eth address in main chain zone consensus
+            };            
         public: //create account address of blockchain
             //account format as = T-[type|ledger_id]-public_key_address-subaddr_of_ledger(book# and table#,optional)
             //note: zone_index:range of [0,15], book_index: range of [0,127], table_index: range of [0,7]
@@ -297,7 +312,9 @@ namespace top
             {
                 return (uint8_t)(subaddr_of_zone & 0x07);
             }
-            
+            static std::string compact_address_to(const std::string & account_addr);
+            static std::string compact_address_from(const std::string & data);
+
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)
             {
@@ -388,7 +405,8 @@ namespace top
             inline const xtable_longid_t       get_long_table_id()//note: long table_id = [chain_id][zone_index][book_index][table_index]
             {
                 return xtable_longid_t((get_ledger_id() << 10) | get_ledger_subaddr());
-            }           
+            }
+            xtable_index_t              get_tableid() const {return xtable_index_t(m_account_xid);}
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
             inline const xvid_t         get_account_id()    const {return m_account_xid;}
             inline const std::string&   get_xvid_str()const {return m_account_xid_str;}

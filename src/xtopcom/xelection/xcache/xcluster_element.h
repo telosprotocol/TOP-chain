@@ -44,7 +44,7 @@ public:
     bool exist(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
 
     xgroup_update_result_t add_group_element(common::xgroup_id_t const & group_id,
-                                             common::xversion_t const &  version,
+                                             common::xelection_round_t const & election_round,
                                              common::xlogic_time_t const timestamp,
                                              common::xlogic_time_t const start_time,
                                              std::uint16_t const         sharding_size,
@@ -52,14 +52,17 @@ public:
                                              std::error_code &           ec);
 
     xgroup_update_result_t add_group_element(common::xgroup_id_t const & group_id,
-                                             common::xversion_t const &  version,
+                                             common::xelection_round_t const & election_round,
                                              common::xlogic_time_t const timestamp,
                                              common::xlogic_time_t const start_time,
                                              std::uint16_t const         sharding_size,
                                              std::uint64_t const         associated_election_blk_height);
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version, std::error_code & ec) const;
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version) const;
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xelection_round_t const & election_round, std::error_code & ec) const;
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xlogic_epoch_t const & logic_epoch, std::error_code & ec) const;
+
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xelection_round_t const & election_round) const;
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xlogic_epoch_t const & logic_epoch) const;
 
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height, std::error_code & ec) const;
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height) const;
@@ -67,8 +70,8 @@ public:
     std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const;
     std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
 
-    common::xversion_t group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const;
-    common::xversion_t group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
+    common::xelection_round_t group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const;
+    common::xelection_round_t group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
 
     std::vector<std::shared_ptr<xgroup_element_t>> children(common::xnode_type_t const child_type, common::xlogic_time_t const logic_time, std::error_code & ec) const;
     std::vector<std::shared_ptr<xgroup_element_t>> children(common::xnode_type_t const child_type, common::xlogic_time_t const logic_time) const;
@@ -81,7 +84,7 @@ private:
     xgroup_info_container_t::const_iterator find_with_lock_hold_outside(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
 
     xgroup_update_result_t add_group_element_with_lock_hold_outside(common::xgroup_id_t const & group_id,
-                                                                    common::xversion_t const &  version,
+                                                                    common::xelection_round_t const & election_round,
                                                                     common::xlogic_time_t const timestamp,
                                                                     common::xlogic_time_t const start_time,
                                                                     std::uint16_t const         sharding_size,

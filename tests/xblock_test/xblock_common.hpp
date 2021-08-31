@@ -34,7 +34,7 @@ class xblock_common {
 public:
     top::common::xnode_address_t create_address(int index, const std::string & account, std::size_t version = 1, bool bbeacon = false) {
         // std::size_t                       id = 1;
-        common::xversion_t              ver(version);
+        common::xelection_round_t              ver(version);
         common::xnetwork_id_t           nid{common::xtestnet_id};
         common::xslot_id_t              slot_id{index};
         top::common::xcluster_address_t cluster_addr;

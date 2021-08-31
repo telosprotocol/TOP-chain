@@ -256,29 +256,23 @@ bool xstore::get_vblock_output(const std::string &account, base::xvblock_t* bloc
     return false;
 }
 
-bool xstore::get_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) const {
-    xassert(false);
-    return false;
-}
-
-bool xstore::set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) {
-    xassert(false);
-    return false;
-}
-
 bool xstore::delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) {
     return false;
 }
 
 bool xstore::set_value(const std::string &key, const std::string &value) {
     XMETRICS_GAUGE(metrics::store_db_write, 1);
+#ifdef DB_KV_STATISTIC    
     xstore_util::metirc_key_value(key, value, true);
+#endif   
     return m_db->write(key, value);
 }
 
 bool xstore::delete_value(const std::string &key) {
     XMETRICS_GAUGE(metrics::store_db_delete, 1);
+#ifdef DB_KV_STATISTIC  
     xstore_util::metirc_key_value(key, get_value(key), false);
+#endif
     return m_db->erase(key);
 }
 

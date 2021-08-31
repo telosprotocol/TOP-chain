@@ -25,7 +25,7 @@ public:
 
 class xvnode_manager_fixture : public testing::Test, public top::vnode::xvnode_manager_t {
 protected:
-    observer_ptr<vnetwork::xvhost_face_t> vhost_;
+    observer_ptr<top::vnetwork::xvhost_face_t> vhost_;
     std::shared_ptr<election::cache::xnetwork_element_t> network_;
 
 public:

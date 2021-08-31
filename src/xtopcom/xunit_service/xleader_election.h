@@ -20,7 +20,7 @@ class xelection_cache_imp : public xelection_cache_face {
 public:
 
     // load manager tables
-    virtual int32_t get_tables(const xvip2_t & xip, std::vector<table_index> * tables);
+    virtual int32_t get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables);
 
     // load election data from db
     virtual int32_t get_election(const xvip2_t & xip, elect_set * elect_data, bool bself = true);
@@ -78,7 +78,7 @@ class xrandom_leader_election : public xleader_election_face {
     explicit xrandom_leader_election(const xobject_ptr_t<base::xvblockstore_t>& block_store, const std::shared_ptr<xelection_cache_face> & face);
  public:
     // judge is leader from view id for the address
-    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string &account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block);
+    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string &account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block);
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face();
  private:
@@ -94,7 +94,7 @@ class xrotate_leader_election : public xleader_election_face {
 
  public:
     // judge is leader from view id for the address
-    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string &account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block);
+    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string &account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block);
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face();
  private:

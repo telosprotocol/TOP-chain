@@ -357,18 +357,23 @@ xtop_account_election_address::hash() const {
 
 std::string
 xtop_account_election_address::to_string() const {
-    return m_account_address.to_string() + u8"/" + m_slot_id.to_string();
+    return m_account_address.to_string() + "/" + m_slot_id.to_string();
 }
 
-xtop_logical_version::xtop_logical_version(xversion_t const & version, std::uint16_t const sharding_size, std::uint64_t const associated_blk_height)
-  : m_version{version}, m_sharding_size{sharding_size}, m_associated_blk_height{associated_blk_height} {}
-
-xversion_t const & xtop_logical_version::version() const noexcept {
-    return m_version;
+xtop_logical_version::xtop_logical_version(xelection_round_t const & election_round, std::uint16_t const group_size, std::uint64_t const associated_blk_height)
+    : m_election_round{ election_round }, m_group_size{ group_size }, m_associated_blk_height{ associated_blk_height } {
 }
 
-std::uint16_t xtop_logical_version::sharding_size() const noexcept {
-    return m_sharding_size;
+xtop_logical_version::xtop_logical_version(std::uint16_t const group_size, std::uint64_t const associated_blk_height)
+    : m_group_size{ group_size }, m_associated_blk_height{ associated_blk_height } {
+}
+
+xelection_round_t const & xtop_logical_version::election_round() const noexcept {
+    return m_election_round;
+}
+
+std::uint16_t xtop_logical_version::group_size() const noexcept {
+    return m_group_size;
 }
 
 std::uint64_t xtop_logical_version::associated_blk_height() const noexcept {
@@ -376,17 +381,21 @@ std::uint64_t xtop_logical_version::associated_blk_height() const noexcept {
 }
 
 void xtop_logical_version::swap(xtop_logical_version & other) noexcept {
-    m_version.swap(other.m_version);
-    std::swap(m_sharding_size, other.m_sharding_size);
+    m_election_round.swap(other.m_election_round);
+    std::swap(m_group_size, other.m_group_size);
     std::swap(m_associated_blk_height, other.m_associated_blk_height);
 }
 
 bool xtop_logical_version::empty() const noexcept {
-    return m_version.empty() && broadcast(associated_blk_height());
+    return broadcast(associated_blk_height()) && m_election_round.empty();
+}
+
+bool xtop_logical_version::has_value() const noexcept {
+    return !empty();
 }
 
 bool xtop_logical_version::operator==(xtop_logical_version const & other) const noexcept {
-    return m_version == other.m_version && m_sharding_size == other.m_sharding_size && m_associated_blk_height == other.m_associated_blk_height;
+    return m_group_size == other.m_group_size && m_associated_blk_height == other.m_associated_blk_height;
 }
 
 bool xtop_logical_version::operator!=(xtop_logical_version const & other) const noexcept {
@@ -394,12 +403,14 @@ bool xtop_logical_version::operator!=(xtop_logical_version const & other) const 
 }
 
 bool xtop_logical_version::operator<(xtop_logical_version const & other) const noexcept {
-    if (m_version != other.m_version) {
-        return m_version < other.m_version;
-    }
     if (m_associated_blk_height != other.m_associated_blk_height) {
         return m_associated_blk_height < other.m_associated_blk_height;
     }
+
+    if (m_election_round != other.m_election_round) {
+        return m_election_round < other.m_election_round;
+    }
+
     return false;
 }
 
@@ -416,19 +427,21 @@ bool xtop_logical_version::operator>=(xtop_logical_version const & other) const 
 }
 
 bool xtop_logical_version::contains(xtop_logical_version const & logical_version) const noexcept {
-    if (!version().empty() && version() != logical_version.version()) {
-        return false;
+    if (broadcast(associated_blk_height()) || associated_blk_height() == logical_version.associated_blk_height()) {
+        return true;
     }
-    if (!broadcast(associated_blk_height()) && associated_blk_height() != logical_version.associated_blk_height()) {
-        return false;
+
+    if (election_round().empty() || election_round() == logical_version.election_round()) {
+        return true;
     }
-    return true;
+
+    return false;
 }
 
 xtop_logical_version::hash_result_type xtop_logical_version::hash() const {
     utl::xxh64_t hasher;
 
-    auto const version_hash = version().hash();
+    auto const version_hash = election_round().hash();
     hasher.update(&version_hash, sizeof(version_hash));
 
     auto const associated_blk_height_hash = associated_blk_height();
@@ -438,22 +451,28 @@ xtop_logical_version::hash_result_type xtop_logical_version::hash() const {
 }
 
 std::string xtop_logical_version::to_string() const {
-    return m_version.to_string() + "/" + std::to_string(m_sharding_size) + "/" + std::to_string(m_associated_blk_height);
+    return m_election_round.to_string() + "/" + std::to_string(m_group_size) + "/" + std::to_string(m_associated_blk_height);
 }
 
-xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_address)
-    : m_cluster_address{ sharding_address } {
+xtop_node_address::xtop_node_address(xgroup_address_t const & group_address)
+    : m_cluster_address{ group_address } {
 }
 
-xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_address,
-                                     xversion_t const & version,
-                                     std::uint16_t const sharding_size,
+xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
+                                     xlogic_epoch_t const & group_logic_epoch)
+    : m_cluster_address{ group_address }, m_logic_epoch{ group_logic_epoch } {
+}
+
+xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
+                                     xelection_round_t const & election_round,
+                                     std::uint16_t const group_size,
                                      std::uint64_t const associated_blk_height)
-  : m_cluster_address{ sharding_address }, m_logic_version{ version, sharding_size, associated_blk_height } {}
+    : xtop_node_address{ group_address, { election_round, group_size, associated_blk_height } } {
+}
 
-xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_address,
+xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
                                      xaccount_election_address_t const & account_election_address)
-    : m_cluster_address{ sharding_address }, m_account_election_address{ account_election_address }
+    : m_cluster_address{ group_address }, m_account_election_address{ account_election_address }
 {
     if (m_cluster_address.empty()) {
         top::error::throw_error({ xaddress_errc_t::cluster_address_empty });
@@ -464,13 +483,11 @@ xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_addres
     }
 }
 
-xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_address,
+xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
                                      xaccount_election_address_t const & account_election_address,
-                                     xversion_t const & version,
-                                     std::uint16_t const sharding_size,
-                                     std::uint64_t const associated_blk_size)
-    : m_cluster_address{ sharding_address }, m_account_election_address{ account_election_address }
-    , m_logic_version{ version, sharding_size, associated_blk_size }
+                                     xlogic_epoch_t const & group_logic_epoch)
+    : m_cluster_address{ group_address }, m_account_election_address{ account_election_address }
+    , m_logic_epoch{ group_logic_epoch }
 {
     if (m_cluster_address.empty()) {
         top::error::throw_error({ xaddress_errc_t::cluster_address_empty });
@@ -480,16 +497,24 @@ xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_addres
         top::error::throw_error({ xaddress_errc_t::account_address_empty }, m_cluster_address.to_string());
     }
 
-    if (m_logic_version.empty()) {
+    if (m_logic_epoch.empty()) {
         top::error::throw_error({ xaddress_errc_t::version_empty }, m_cluster_address.to_string() + " " + m_account_election_address.to_string());
     }
+}
+
+xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
+                                     xaccount_election_address_t const & account_election_address,
+                                     xelection_round_t const & election_round,
+                                     std::uint16_t const group_size,
+                                     std::uint64_t const associated_blk_height)
+    : xtop_node_address{ group_address, account_election_address, {election_round, group_size, associated_blk_height} } {
 }
 
 bool
 xtop_node_address::operator==(xtop_node_address const & other) const noexcept {
     return m_cluster_address          == other.m_cluster_address &&
            m_account_election_address == other.m_account_election_address &&
-           m_logic_version            == other.m_logic_version;
+           m_logic_epoch            == other.m_logic_epoch;
 }
 
 bool
@@ -507,8 +532,8 @@ xtop_node_address::operator<(xtop_node_address const & other) const noexcept {
         return m_account_election_address < other.m_account_election_address;
     }
 
-    if (m_logic_version != other.m_logic_version) {
-        return m_logic_version < other.m_logic_version;
+    if (m_logic_epoch != other.m_logic_epoch) {
+        return m_logic_epoch < other.m_logic_epoch;
     }
 
     return false;
@@ -544,13 +569,17 @@ xtop_node_address::account_election_address() const noexcept {
     return m_account_election_address;
 }
 
-xsharding_address_t const &
+xgroup_address_t const &
 xtop_node_address::cluster_address() const noexcept {
     return m_cluster_address;
 }
 
-xsharding_address_t const &
+xgroup_address_t const &
 xtop_node_address::sharding_address() const noexcept {
+    return m_cluster_address;
+}
+
+xgroup_address_t const & xtop_node_address::group_address() const noexcept {
     return m_cluster_address;
 }
 
@@ -581,17 +610,21 @@ xtop_node_address::slot_id() const noexcept {
 
 xlogical_version_t const &
 xtop_node_address::logical_version() const noexcept {
-    return m_logic_version;
+    return m_logic_epoch;
+}
+
+xlogic_epoch_t const & xtop_node_address::logic_epoch() const noexcept {
+    return m_logic_epoch;
 }
 
 std::uint16_t
-xtop_node_address::sharding_size() const noexcept {
-    return m_logic_version.sharding_size();
+xtop_node_address::group_size() const noexcept {
+    return m_logic_epoch.group_size();
 }
 
 std::uint64_t
 xtop_node_address::associated_blk_height() const noexcept {
-    return m_logic_version.associated_blk_height();
+    return m_logic_epoch.associated_blk_height();
 }
 
 xip2_t
@@ -603,7 +636,7 @@ xtop_node_address::xip2() const noexcept {
         sharding_xip.cluster_id(),
         sharding_xip.group_id(),
         m_account_election_address.slot_id(),
-        sharding_size(),
+        group_size(),
         associated_blk_height()
     };
 }
@@ -613,9 +646,8 @@ xtop_node_address::node_id() const noexcept {
     return m_account_election_address.node_id();
 }
 
-xversion_t const &
-xtop_node_address::version() const noexcept {
-    return m_logic_version.version();
+xelection_round_t const & xtop_node_address::election_round() const noexcept {
+    return m_logic_epoch.election_round();
 }
 
 xnode_type_t
@@ -633,7 +665,7 @@ xtop_node_address::type() const noexcept {
 }
 
 bool xtop_node_address::contains(xtop_node_address const & address) const noexcept {
-    if (!sharding_address().contains(address.sharding_address())) {
+    if (!group_address().contains(address.group_address())) {
         return false;
     }
 
@@ -664,13 +696,13 @@ void
 xtop_node_address::swap(xtop_node_address & other) noexcept {
     m_account_election_address.swap(other.m_account_election_address);
     m_cluster_address.swap(other.m_cluster_address);
-    m_logic_version.swap(other.m_logic_version);
+    m_logic_epoch.swap(other.m_logic_epoch);
 }
 
 
 std::string
 xtop_node_address::to_string() const {
-    return m_cluster_address.to_string() + "/" + m_account_election_address.to_string() + "/" + m_logic_version.to_string();
+    return m_cluster_address.to_string() + "/" + m_account_election_address.to_string() + "/" + m_logic_epoch.to_string();
 }
 
 std::int32_t
@@ -706,9 +738,9 @@ operator>>(base::xstream_t & stream, xtop_node_address & o) {
     return o.do_read(stream);
 }
 
-xsharding_address_t
+xgroup_address_t
 build_committee_sharding_address(xnetwork_id_t const & network_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id,
         xcommittee_zone_id,
         xcommittee_cluster_id,
@@ -716,9 +748,9 @@ build_committee_sharding_address(xnetwork_id_t const & network_id) {
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_zec_sharding_address(xnetwork_id_t const & network_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id,
         xzec_zone_id,
         xcommittee_cluster_id,
@@ -726,9 +758,9 @@ build_zec_sharding_address(xnetwork_id_t const & network_id) {
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_edge_sharding_address(xnetwork_id_t const & network_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id,
         xedge_zone_id,
         xdefault_cluster_id,
@@ -736,9 +768,9 @@ build_edge_sharding_address(xnetwork_id_t const & network_id) {
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id,
         xarchive_zone_id,
         xdefault_cluster_id,
@@ -746,10 +778,10 @@ build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_consensus_sharding_address(xgroup_id_t const & group_id,
                                  xnetwork_id_t const & network_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id,
         xconsensus_zone_id,
         xdefault_cluster_id,
@@ -757,22 +789,22 @@ build_consensus_sharding_address(xgroup_id_t const & group_id,
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_network_broadcast_sharding_address(xnetwork_id_t const & network_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_platform_broadcast_sharding_address() {
-    return xsharding_address_t{
+    return xgroup_address_t{
     };
 }
 
-xsharding_address_t
+xgroup_address_t
 build_frozen_sharding_address(xnetwork_id_t const & network_id, xcluster_id_t const & cluster_id, xgroup_id_t const & group_id) {
-    return xsharding_address_t{
+    return xgroup_address_t{
         network_id,
         xfrozen_zone_id,
         cluster_id,
@@ -821,7 +853,7 @@ hash<top::common::xnode_address_t>::operator()(top::common::xnode_address_t cons
 }
 
 std::size_t
-hash<top::common::xsharding_address_t>::operator()(top::common::xsharding_address_t const & cluster_address) const {
+hash<top::common::xgroup_address_t>::operator()(top::common::xgroup_address_t const & cluster_address) const {
     return static_cast<std::size_t>(cluster_address.hash());
 }
 

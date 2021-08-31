@@ -15,12 +15,12 @@
 
 NS_BEG3(top, election, cache)
 
-xtop_group_element::xtop_group_element(common::xversion_t const & version,
+xtop_group_element::xtop_group_element(common::xelection_round_t const & election_round,
                                        common::xgroup_id_t const & group_id,
                                        std::uint16_t const sharding_size,
                                        std::uint64_t const associated_election_blk_height,
                                        std::shared_ptr<xcluster_element_t> const & cluster_element)
-  : xbase_t{version, cluster_element->network_id(), cluster_element->zone_id(), cluster_element->cluster_id(), group_id, sharding_size, associated_election_blk_height}
+  : xbase_t{election_round, cluster_element->network_id(), cluster_element->zone_id(), cluster_element->cluster_id(), group_id, sharding_size, associated_election_blk_height}
   , m_cluster_element{cluster_element} {}
 
 std::shared_ptr<xcluster_element_t> xtop_group_element::cluster_element() const noexcept {
@@ -150,7 +150,7 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
         xdbg("adding %s %s", node_id.c_str(), common::to_string(node_type_from(zone_id())).c_str());
         m_node_elements.insert({slot_id, std::make_shared<xnode_element_t>(node_id, slot_id, election_info, shared_from_this())});
     }
-    assert(sharding_size() == m_node_elements.size());
+    assert(group_size() == m_node_elements.size());
 }
 
 void xtop_group_element::associate_parent_group(std::shared_ptr<xtop_group_element> const & parent_group, std::error_code & ec) {
@@ -254,7 +254,7 @@ void xtop_group_element::associate_parent_group(std::shared_ptr<xtop_group_eleme
           static_cast<std::uint16_t>(cluster_id().value()),
           static_cast<std::uint16_t>(group_id().value()),
           static_cast<std::uint16_t>(parent_group->group_id().value()),
-          static_cast<std::uint64_t>(parent_group->version().value()));
+          static_cast<std::uint64_t>(parent_group->election_round().value()));
 
     return;
 }
@@ -369,6 +369,10 @@ std::vector<std::shared_ptr<xtop_group_element>> xtop_group_element::associated_
     }
 
     return ret;
+}
+
+std::vector<std::shared_ptr<xtop_group_element>> xtop_group_element::associated_child_groups(std::error_code & ec) const {
+    return associated_child_groups(common::xjudgement_day, ec);
 }
 
 bool xtop_group_element::enabled(common::xlogic_time_t const logic_time) const noexcept {

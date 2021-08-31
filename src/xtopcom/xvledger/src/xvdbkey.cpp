@@ -36,7 +36,7 @@ namespace top
             return key_path;
         }
 
-        //block_object,block_state and block_offdata,...etc are all located by original block' hash
+        //block_object,block_state ...etc are all located by original block' hash
         //which may reduce keys size by dlt encode and might be higher possiblility stored at same section
         const std::string  xvdbkey_t::create_block_object_key(const xvaccount_t & account,const std::string & org_block_hash)
         {
@@ -68,17 +68,22 @@ namespace top
             return key_path;
         }
 
-        //block_object,block_state and block_offdata are all located by original block' hash
+        //block_object,block_state are all located by original block' hash
         const std::string  xvdbkey_t::create_block_state_key(const xvaccount_t & account,const std::string & org_block_hash)
         {
             const std::string key_path = "b/" + account.get_xvid_str() + "/" + org_block_hash + "/s";
             return key_path;
         }
 
-        //block_object,block_state and block_offdata are all located by original block' hash
-        const std::string  xvdbkey_t::create_block_offdata_key(const xvaccount_t & account,const std::string & org_block_hash)
+        const std::string  xvdbkey_t::create_chain_key(const xvaccount_t & account)
         {
-            const std::string key_path = "b/" + account.get_xvid_str() + "/" + org_block_hash + "/d";
+            const std::string key_path = "c/" + account.get_xvid_str();
+            return key_path;
+        }
+
+        const std::string  xvdbkey_t::create_chain_span_key(const xvaccount_t & account, const uint64_t height)
+        {
+            const std::string key_path = "c/" + account.get_xvid_str() + "/s/" + xstring_utl::uint642hex(height);
             return key_path;
         }
 

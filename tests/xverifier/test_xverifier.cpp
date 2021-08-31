@@ -13,6 +13,7 @@
 #include "xrpc/xuint_format.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
+#include "xverifier/xverifier_utl.h"
 
 using namespace top;
 using namespace top::xverifier;
@@ -440,4 +441,22 @@ TEST_F(test_xverifier, trx_verifier_legitimac_1) {
     auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
     trx_ptr->set_signature(signature);
     ASSERT_EQ(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+}
+TEST_F(test_xverifier, address_is_valid) {
+    ASSERT_EQ(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000968927100f3cb7b23e8d477298311648978d8613"));   
+    ASSERT_EQ(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T00000LhHKdV8rc9GHkgJUPS39XLCESGnJmJ2Zjg"));   
+    ASSERT_EQ(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000d49b8d3eb074344b153a8caf93f5daa277a6194e"));   
+
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000d49B8D3EB074344b153A8CAF93F5DAA277a6194E"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T800007BF0D244F6D7D17568817C6CFFA4437297E152BF"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T800007bf0D244F6D7D17568817C6CFfa4437297E152BF"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("t00000LRZAf5veEyzcVaYwdVCcYTh2nWdMQtJEnc"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("t800008c1cb12e9467dfc19d32111b2302af4cfd0954d1"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("t80000d49B8D3EB074344b153A8CAF93F5DAA277a6194E"));   
+
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("a800008c1cb12e9467dfc19d32111b2302af4cfd0954d1"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T00000LRZAf5veEyzcVaYwdVCcYTh2nWdM"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T00000LRZAf5veEyzcVaYwdVCcYTh2nWdMwdVCcYTh2nWdMwdVCcYTh2nWdM"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000d49b8d3eb074344b153a8caf93f5daa277a61"));   
+    ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000d49b8d3eb074344b153a8caf93f5daa277a6194edaa277a6194e"));
 }

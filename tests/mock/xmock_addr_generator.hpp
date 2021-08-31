@@ -15,7 +15,7 @@ public:
     vnetwork::xvnode_address_t create_beacon_addr(uint16_t _slot_id, uint16_t sharding_size, const std::string &name) {
 
         std::size_t id = 1;
-        top::common::xversion_t ver(id);
+        top::common::xelection_round_t ver(id);
 
         //common::xnetwork_id_t nid{m_net_id++};
         common::xnetwork_id_t nid{1};
@@ -34,7 +34,7 @@ public:
         common::xzone_id_t zid{1};
 
         std::size_t id = 1;
-        top::common::xversion_t ver(id);
+        top::common::xelection_round_t ver(id);
 
         //common::xnetwork_id_t nid{m_net_id++};
         common::xnetwork_id_t nid{1};
@@ -52,7 +52,7 @@ public:
         common::xzone_id_t zid{1};
 
         std::size_t id = 1;
-        top::common::xversion_t ver(id);
+        top::common::xelection_round_t ver(id);
 
         //common::xnetwork_id_t nid{m_net_id++};
         common::xnetwork_id_t nid{1};
@@ -71,7 +71,7 @@ public:
         common::xgroup_id_t gid{1};
 
         std::size_t id = 1;
-        top::common::xversion_t ver(id);
+        top::common::xelection_round_t ver(id);
 
         //common::xnetwork_id_t nid{m_net_id++};
         common::xnetwork_id_t nid{1};
@@ -88,7 +88,7 @@ public:
     vnetwork::xvnode_address_t create_validator_addr(uint16_t _slot_id, uint16_t sharding_size, const std::string &name) {
 
         std::size_t id = 1;
-        top::common::xversion_t ver(id);
+        top::common::xelection_round_t ver(id);
 
         //common::xnetwork_id_t nid{m_net_id++};
         common::xnetwork_id_t nid{1};

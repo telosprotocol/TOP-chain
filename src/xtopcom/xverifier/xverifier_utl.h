@@ -63,6 +63,8 @@ public:
      * @return int32_t  see xverifier_errors definition
      */
     static int32_t  judge_normal_contract_sendtx(data::xtransaction_ptr_t const& tx_ptr);
+
+    static bool is_valid_hex_format(std::string const& str);
 };
 
 

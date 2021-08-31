@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
+#include "tests/mock/xvchain_creator.hpp"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
 #include "xtxpool_v2/xtx_queue.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xverifier/xverifier_utl.h"
-#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -26,7 +26,7 @@ protected:
 
 TEST_F(test_send_tx_queue, continuous_txs_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xsend_tx_queue_internal_t send_tx_queue_internal(&table_para);
@@ -112,7 +112,7 @@ TEST_F(test_send_tx_queue, continuous_txs_basic) {
 
 TEST_F(test_send_tx_queue, continuous_txs_replace) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xsend_tx_queue_internal_t send_tx_queue_internal(&table_para);
@@ -142,12 +142,12 @@ TEST_F(test_send_tx_queue, continuous_txs_replace) {
     ret = continuous_txs.insert(tx_ent1b);
     ASSERT_EQ(ret, xsuccess);
 
-    ASSERT_EQ(tx1->get_transaction()->get_tx_nonce(), continuous_txs.get_back_nonce());
+    ASSERT_EQ(txs[txs_num - 1]->get_transaction()->get_tx_nonce(), continuous_txs.get_back_nonce());
 }
 
 TEST_F(test_send_tx_queue, uncontinuous_txs_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xsend_tx_queue_internal_t send_tx_queue_internal(&table_para);
@@ -182,7 +182,7 @@ TEST_F(test_send_tx_queue, uncontinuous_txs_basic) {
 
 TEST_F(test_send_tx_queue, uncontinuous_txs_replace) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xsend_tx_queue_internal_t send_tx_queue_internal(&table_para);
@@ -213,7 +213,7 @@ TEST_F(test_send_tx_queue, uncontinuous_txs_replace) {
 
 TEST_F(test_send_tx_queue, send_tx_account_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xsend_tx_queue_internal_t send_tx_queue_internal(&table_para);
@@ -295,7 +295,7 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
 
 TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};
@@ -347,7 +347,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
 
 TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};
@@ -394,7 +394,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
 
 TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};
@@ -448,7 +448,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
 
 TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};
@@ -493,9 +493,11 @@ TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {
     ASSERT_EQ(xtxpool_error_tx_nonce_duplicate, send_tx_queue.push_tx(tx_ent12, 0));
 }
 
+#if 0
+// hash continuous constraint was canceled
 TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};
@@ -530,10 +532,11 @@ TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
         ASSERT_NE(tx_ent, nullptr);
     }
 }
+#endif
 
 TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};

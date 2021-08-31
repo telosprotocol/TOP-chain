@@ -5,17 +5,30 @@
 #include "xsync/xsync_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xsync/xsync_log.h"
-
+#include "xmbus/xmessage_bus.h"
+#include "xsync/xsync_store_shadow.h"
 NS_BEG2(top, sync)
 
-xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore):
+xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow):
 m_vnode_id(vnode_id),
-m_blockstore(blockstore) {
+m_blockstore(blockstore),
+m_shadow(shadow) {
+    m_shadow->set_store(this);
 }
 
 bool xsync_store_t::store_block(base::xvblock_t* block) {
     base::xvaccount_t _vaddress(block->get_account());
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
+}
+
+uint32_t xsync_store_t::add_listener(int major_type, mbus::xevent_queue_cb_t cb) {
+    mbus::xmessage_bus_t *mbus = (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
+    return mbus->add_listener(major_type, cb);
+}
+
+void xsync_store_t::remove_listener(int major_type, uint32_t id) {
+    mbus::xmessage_bus_t *mbus = (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
+    mbus->remove_listener(major_type, id);
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_connected_block(const std::string & account) {
@@ -155,7 +168,8 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
     if (sync_policy == enum_chain_sync_policy_fast) {
         connect_height = m_blockstore->get_latest_connected_block_height(account);
     } else if (sync_policy == enum_chain_sync_policy_full) {
-        connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
+        connect_height = m_shadow->genesis_connect_height(account);
+        //connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
     }
 
     if (connect_height == 0) {
@@ -213,7 +227,10 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::
     if (sync_policy == enum_chain_sync_policy_fast) {
         block = m_blockstore->get_latest_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
     } else if (sync_policy == enum_chain_sync_policy_full) {
-        block = m_blockstore->get_latest_genesis_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
+        uint64_t connect_height = m_shadow->genesis_connect_height(account);
+        block = m_blockstore->load_block_object(account, connect_height, 
+            base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_sync_get_latest_connected_block);
+        //block = m_blockstore->get_latest_genesis_connected_block(account, metrics::blockstore_access_from_sync_get_latest_connected_block);
     }
     if (false == m_blockstore->load_block_output(_vaddress, block.get())
         || false == m_blockstore->load_block_input(_vaddress, block.get()) ) {
@@ -273,7 +290,7 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
             xerror("xsync_store_t::load_block_objects fail-load block input or output. block=%s", blks_ptr[j]->dump().c_str());
             return {};
         }
-       blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blks_ptr[j]));
+        blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blks_ptr[j]));
     }
     return blocks;
 }
@@ -289,5 +306,29 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
     }
     return blocks;
 }
+
+bool xsync_store_t::set_genesis_height(const base::xvaccount_t &account, const std::string &height) {
+    return m_blockstore->set_genesis_height(account, height);
+}
+
+const std::string xsync_store_t::get_genesis_height(const base::xvaccount_t &account) {
+    return m_blockstore->get_genesis_height(account);
+}
+
+bool xsync_store_t::set_block_span(const base::xvaccount_t &account, const uint64_t height,  const std::string &span) {
+    return m_blockstore->set_block_span(account, height, span);
+}
+
+bool xsync_store_t::delete_block_span(const base::xvaccount_t &account, const uint64_t height) {
+    return m_blockstore->delete_block_span(account, height);
+}
+
+const std::string xsync_store_t::get_block_span(const base::xvaccount_t &account, const uint64_t height) {
+    return m_blockstore->get_block_span(account, height);
+}
+
+xsync_store_shadow_t* xsync_store_t::get_shadow() {
+    return m_shadow;
+};
 
 NS_END2

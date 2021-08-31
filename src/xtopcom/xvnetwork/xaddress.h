@@ -49,8 +49,8 @@ common::xnode_address_t address_cast(common::xnode_address_t const & address) {
         return common::xnode_address_t{
             common::xsharding_address_t{
                 address.cluster_address().network_id(), address.cluster_address().zone_id(), address.cluster_address().cluster_id(), address.cluster_address().group_id()},
-            address.version(),
-            address.sharding_size(),
+            address.election_round(),
+            address.group_size(),
             address.associated_blk_height()};
     }
 

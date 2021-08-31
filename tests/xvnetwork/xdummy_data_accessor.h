@@ -17,7 +17,7 @@ class xtop_dummy_vnetwork_temp_data_accessor : public top::tests::election::xdum
     std::shared_ptr<top::election::cache::xgroup_element_t> group_element_by_logic_time(common::xsharding_address_t const & sharding_address,
                                                                           common::xlogic_time_t const         logic_time,
                                                                           std::error_code &                   ec) const override {
-        common::xversion_t    test_version1{1}, test_version0{0};
+        common::xelection_round_t    test_version1{1}, test_version0{0};
         common::xnetwork_id_t test_network_id{1}, test_network_id2{2};
         common::xzone_id_t    test_zone_id{1};
         common::xcluster_id_t test_cluster_id{1};
@@ -31,8 +31,10 @@ class xtop_dummy_vnetwork_temp_data_accessor : public top::tests::election::xdum
         std::shared_ptr<xgroup_element_t>   group_element_ptr(new xgroup_element_t{test_version1, test_group_id, sharding_size, 10, cluster_element_ptr});
         return group_element_ptr;
     }
-    common::xnode_id_t node_id_from(common::xip2_t const & xip2, std::error_code & ec) const override { return common::xnode_id_t{"test1"}; }
-    common::xversion_t version_from(common::xip2_t const & xip2, std::error_code & ec) const override { return common::xversion_t{1}; }
+    common::xnode_id_t account_address_from(common::xip2_t const & xip2, std::error_code & ec) const override { return common::xnode_id_t{"test1"}; }
+    common::xelection_round_t election_epoch_from(common::xip2_t const & xip2, std::error_code & ec) const override {
+        return common::xelection_round_t{1};
+    }
 };
 using xdummy_data_accessor_t = xtop_dummy_vnetwork_temp_data_accessor;
 

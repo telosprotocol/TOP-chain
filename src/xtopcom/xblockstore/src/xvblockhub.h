@@ -22,6 +22,13 @@ namespace top
             enum_blockstore_event_stored     = 4, //block is stored persistedly
         };
 
+        enum enum_blockstore_metrics_type
+        {
+            enum_blockstore_metrics_type_block_index        = 1,
+            enum_blockstore_metrics_type_block_object       = 2,
+            enum_blockstore_metrics_type_block_input_res    = 3,
+            enum_blockstore_metrics_type_block_output_res   = 4,
+        };
         class xblockevent_t
         {
         public:
@@ -130,6 +137,7 @@ namespace top
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
             uint64_t            get_latest_genesis_connected_block_height() const { return m_meta->_highest_genesis_connect_height; }
             uint64_t            get_latest_executed_block_height() const { return m_meta->_highest_execute_block_height; }
+            bool                set_latest_executed_info(uint64_t height,const std::string & blockhash);
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:
@@ -214,6 +222,14 @@ namespace top
             bool                   execute_block(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);//usall internal useonly
             void                   try_execute_all_block(base::xvblock_t * target_block);
 
+        public:
+            // genesis connected information
+            bool        set_genesis_height(const std::string &height);
+            const std::string    get_genesis_height();
+            bool        set_block_span(const uint64_t height,  const std::string &span);
+            bool        delete_block_span(const uint64_t height);
+            const std::string get_block_span(const uint64_t height);
+
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
             bool                resort_index_of_store(std::map<uint64_t,base::xvbindex_t*> & target_height_map);
@@ -265,7 +281,6 @@ namespace top
             void                close_blocks(); //clean all cached blocks
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_revoked(base::xvbindex_t* index_ptr);
-            bool                on_block_stored(base::xvbindex_t* index_ptr);
             bool                on_block_committed(base::xvbindex_t* index_ptr);
             bool                store_txs_to_db(base::xvbindex_t* index_ptr);
 

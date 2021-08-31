@@ -42,7 +42,7 @@ network::xnode_t EcVHost::host_node() const noexcept {
 }
 
 base::KadmliaKeyPtr directly_address(vnetwork::xvnode_address_t const & address) {
-    common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.slot_id(), address.sharding_size(), address.version().value()};
+    common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.slot_id(), address.group_size(), address.election_round().value()};
     base::KadmliaKeyPtr kad_key_ptr = base::GetKadmliaKey(xip);
 
     xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType().value());
@@ -54,7 +54,7 @@ base::KadmliaKeyPtr adapt_address(const vnetwork::xvnode_address_t & address) {
         return base::GetRootKadmliaKey(global_node_id);
     }
 
-    common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.sharding_size(), address.version().value()};
+    common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.group_size(), address.election_round().value()};
 
     base::KadmliaKeyPtr kad_key_ptr;
     if (((xip.network_id() & common::xbroadcast_id_t::network) == common::xbroadcast_id_t::network) ||

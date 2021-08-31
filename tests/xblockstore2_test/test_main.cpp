@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
     // printf("Running main() from gtest_main.cc\n");
     new xhashtest_t();
 
+    XMETRICS_INIT();
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
 

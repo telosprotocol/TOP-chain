@@ -25,7 +25,7 @@ namespace top { namespace data {
 
 REG_CLS(xtransaction_t);
 
-int32_t xtransaction_header::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
+int32_t xtransaction_t::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
     stream << m_transaction_type;
     if (is_write_without_len) {
@@ -50,7 +50,7 @@ int32_t xtransaction_header::serialize_write(base::xstream_t & stream, bool is_w
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
-int32_t xtransaction_header::serialize_read(base::xstream_t & stream) {
+int32_t xtransaction_t::serialize_read(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
     stream >> m_transaction_type;
     stream >> m_transaction_len;
@@ -83,7 +83,7 @@ xtransaction_t::~xtransaction_t() {
 
 int32_t xtransaction_t::do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_write(stream, is_write_without_len);
+    serialize_write(stream, is_write_without_len);
     m_source_action.serialize_write(stream, is_write_without_len);
     m_target_action.serialize_write(stream, is_write_without_len);
     const int32_t end_pos = stream.size();
@@ -92,7 +92,7 @@ int32_t xtransaction_t::do_write_without_hash_signature(base::xstream_t & stream
 
 int32_t xtransaction_t::do_read_without_hash_signature(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_read(stream);
+    serialize_read(stream);
     m_source_action.serialize_read(stream);
     m_target_action.serialize_read(stream);
     const int32_t end_pos = stream.size();
@@ -155,7 +155,7 @@ void xtransaction_t::set_signature(const std::string & signature) {
 void xtransaction_t::set_len() {
     base::xstream_t stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_write(stream, false);
+    serialize_write(stream, false);
     int32_t action_len = m_source_action.serialize_write(stream, false);
     m_source_action.set_action_size(action_len);
     action_len = m_target_action.serialize_write(stream, false);
@@ -247,7 +247,7 @@ bool xtransaction_t::transaction_len_check() const {
     base::xstream_t stream(base::xcontext_t::instance());
 
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_write(stream, true);
+    serialize_write(stream, true);
     int32_t action_len = m_source_action.serialize_write(stream, true);
     if (action_len != m_source_action.get_action_size()) {
         xwarn("xtransaction_t::transaction_len_check src action_len not match:%d:%d", action_len, m_source_action.get_action_size());
@@ -367,12 +367,7 @@ bool xtransaction_t::sign_check() const {
     }
 
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.c_str());
-    if (data::is_sub_account_address(common::xaccount_address_t{ get_source_addr() }) || data::is_user_contract_address(common::xaccount_address_t{ get_source_addr() })) {
-        return key_address.verify_signature(signature_obj, m_transaction_hash, get_parent_account());
-    } else {
-        return key_address.verify_signature(signature_obj, m_transaction_hash);
-    }
-
+    return key_address.verify_signature(signature_obj, m_transaction_hash);
 }
 
 bool xtransaction_t::pub_key_sign_check(xpublic_key_t const & pub_key) const {
@@ -398,6 +393,201 @@ std::string xtransaction_t::dump() const {
     get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), get_source_addr().c_str(), get_target_addr().c_str(),
     get_tx_nonce(), get_refcount(), this);
     return std::string(local_param_buf);
+}
+
+void xtransaction_t::parse_to_json(xJson::Value& result_json) const {
+    result_json["tx_structure_version"] = get_tx_version();
+    result_json["tx_deposit"] = get_deposit();
+    result_json["to_ledger_id"] = get_to_ledger_id();
+    result_json["from_ledger_id"] = get_from_ledger_id();
+    result_json["tx_type"] = get_tx_type();
+    result_json["tx_len"] = get_tx_len();
+    result_json["tx_expire_duration"] = get_expire_duration();
+    result_json["send_timestamp"] = static_cast<xJson::UInt64>(get_fire_timestamp());
+    result_json["tx_random_nonce"] = get_random_nonce();
+    result_json["premium_price"] = get_premium_price();
+    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(get_last_nonce());
+    result_json["last_tx_hash"] = data::uint64_to_str(get_last_hash());
+    result_json["challenge_proof"] = get_challenge_proof();
+    result_json["note"] = get_memo();
+
+    xJson::Value& s_action_json = result_json["sender_action"];
+    s_action_json["action_hash"] = m_source_action.get_action_hash();
+    s_action_json["action_type"] = m_source_action.get_action_type();
+    s_action_json["action_size"] = m_source_action.get_action_size();
+    s_action_json["tx_sender_account_addr"] = m_source_action.get_account_addr();
+    s_action_json["action_name"] = m_source_action.get_action_name();
+    s_action_json["action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
+    s_action_json["action_ext"] = data::uint_to_str(m_source_action.get_action_ext().data(), m_source_action.get_action_ext().size());
+    s_action_json["action_authorization"] = m_source_action.get_action_authorization();
+
+    xJson::Value& t_action_json = result_json["receiver_action"];
+    t_action_json["action_hash"] = m_target_action.get_action_hash();
+    t_action_json["action_type"] = m_target_action.get_action_type();
+    t_action_json["action_size"] = m_target_action.get_action_size();
+    t_action_json["tx_receiver_account_addr"] = m_target_action.get_account_addr();
+    t_action_json["action_name"] = m_target_action.get_action_name();
+    t_action_json["action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
+    t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
+    t_action_json["action_authorization"] = m_target_action.get_action_authorization();
+
+    result_json["ext"] = data::uint_to_str(get_ext().data(), get_ext().size());
+    result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
+    result_json["authorization"] = get_authorization();
+    xdbg("authorization: %s", to_hex_str(get_authorization()).c_str());
+}
+
+void xtransaction_t::construct_from_json(xJson::Value& request) {
+    set_tx_version(request["tx_structure_version"].asUInt());
+    set_deposit(request["tx_deposit"].asUInt());
+    set_to_ledger_id(static_cast<uint8_t>(request["to_ledger_id"].asUInt()));
+    set_from_ledger_id(static_cast<uint8_t>(request["from_ledger_id"].asUInt()));
+    set_tx_type(static_cast<uint16_t>(request["tx_type"].asUInt()));
+    set_tx_len(static_cast<uint16_t>(request["tx_len"].asUInt()));
+    set_expire_duration(static_cast<uint16_t>(request["tx_expire_duration"].asUInt()));
+    set_fire_timestamp(request["send_timestamp"].asUInt64());
+    set_random_nonce(request["tx_random_nonce"].asUInt());
+    set_premium_price(request["premium_price"].asUInt());
+    set_last_nonce(request["last_tx_nonce"].asUInt64());
+    std::string last_trans_hash = request["last_tx_hash"].asString();
+    set_last_hash(hex_to_uint64(last_trans_hash));
+    set_challenge_proof(request["challenge_proof"].asString());
+    set_memo(request["note"].asString());
+
+    const auto & from = request["sender_action"]["tx_sender_account_addr"].asString();
+    const auto & to = request["receiver_action"]["tx_receiver_account_addr"].asString();
+    auto & source_action = get_source_action();
+    source_action.set_action_hash(request["sender_action"]["action_hash"].asUInt());
+    source_action.set_action_type(static_cast<enum_xaction_type>(request["sender_action"]["action_type"].asUInt()));
+    source_action.set_action_size(static_cast<uint16_t>(request["sender_action"]["action_size"].asUInt()));
+    source_action.set_account_addr(from);
+    source_action.set_action_name(request["sender_action"]["action_name"].asString());
+    auto source_param_vec = hex_to_uint(request["sender_action"]["action_param"].asString());
+    std::string source_param((char *)source_param_vec.data(), source_param_vec.size());
+    source_action.set_action_param(std::move(source_param));
+    auto source_ext_vec = hex_to_uint(request["sender_action"]["action_ext"].asString());
+    std::string source_ext((char *)source_ext_vec.data(), source_ext_vec.size());
+    source_action.set_action_ext(std::move(source_ext));
+
+    source_action.set_action_authorization(request["sender_action"]["action_authorization"].asString());
+
+    auto & target_action = get_target_action();
+    target_action.set_action_hash(request["receiver_action"]["action_hash"].asUInt());
+    target_action.set_action_type(static_cast<enum_xaction_type>(request["receiver_action"]["action_type"].asUInt()));
+    target_action.set_action_size(static_cast<uint16_t>(request["receiver_action"]["action_size"].asUInt()));
+    target_action.set_account_addr(to);
+    target_action.set_action_name(request["receiver_action"]["action_name"].asString());
+    auto target_param_vec = hex_to_uint(request["receiver_action"]["action_param"].asString());
+    std::string target_param((char *)target_param_vec.data(), target_param_vec.size());
+    target_action.set_action_param(std::move(target_param));
+    auto target_ext_vec = hex_to_uint(request["receiver_action"]["action_ext"].asString());
+    std::string target_ext((char *)target_ext_vec.data(), target_ext_vec.size());
+    target_action.set_action_ext(std::move(target_ext));
+
+    target_action.set_action_authorization(request["receiver_action"]["action_authorization"].asString());
+
+    auto ext_vec = hex_to_uint(request["ext"].asString());
+    std::string ext((char *)ext_vec.data(), ext_vec.size());
+    set_ext(ext);
+    set_digest(std::move(hex_to_uint256(request["tx_hash"].asString())));
+
+    auto signature = hex_to_uint(request["authorization"].asString());
+    std::string signature_str((char *)signature.data(), signature.size());  // hex_to_uint client send xstream_t data 0xaaaa => string
+    set_authorization(std::move(signature_str));
+    
+    set_len();
+}
+
+// should be deleted in the end
+int32_t xtransaction_t::parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) {
+    if (source_type == xaction_type_source_null) {
+        data::xaction_source_null source_action;
+        int32_t ret = source_action.parse(get_source_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+    }
+
+    if (source_type == xaction_type_asset_out) {
+        data::xaction_asset_out source_action;
+        int32_t ret = source_action.parse(get_source_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = source_action.m_asset_out;
+    }
+
+#ifdef ENABLE_CREATE_USER  // debug use
+    if (target_type == xaction_type_create_user_account) {
+        data::xaction_create_user_account target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_new_account = target_action.m_address;
+    }
+#endif
+
+    if (target_type == xaction_type_asset_in) {
+        data::xaction_asset_in target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        if ((source_type == xaction_type_asset_out) && (target_action.m_asset.m_amount != tx_parse_data.m_asset.m_amount)) {
+            return xverifier::xverifier_error::xverifier_error_trnsafer_tx_src_dst_amount_not_same;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_run_contract) {
+        data::xaction_run_contract target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_function_name = target_action.m_function_name;
+        tx_parse_data.m_function_para = target_action.m_para;
+    }
+
+    if (target_type == xaction_type_pledge_token) {
+        data::xaction_pledge_token target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_redeem_token) {
+        data::xaction_redeem_token target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_pledge_token_vote) {
+        data::xaction_pledge_token_vote target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_vote_num = target_action.m_vote_num;
+        tx_parse_data.m_lock_duration = target_action.m_lock_duration;
+    }
+
+    if (target_type == xaction_type_redeem_token_vote) {
+        data::xaction_redeem_token_vote target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_vote_num = target_action.m_vote_num;
+    }
+
+    return 0;
 }
 
 }  // namespace data

@@ -11,6 +11,7 @@ enum xsync_command_execute_result {
     finish,
     abort_overflow,
     wait_response,
+    ignore,
 };
 
 template<class T>
@@ -69,6 +70,17 @@ class xsync_download_command_t : public xsync_command_t<xchain_downloader_t *> {
         enum_chain_sync_policy m_sync_policy;
         vnetwork::xvnode_address_t m_self_addr;
         vnetwork::xvnode_address_t m_target_addr;
+};
+
+class xsync_on_commit_event_command_t : public xsync_command_t<xchain_downloader_t *> {
+    public:
+        xsync_on_commit_event_command_t(uint64_t height) : m_height(height){
+        };
+
+        xsync_command_execute_result execute(xchain_downloader_t *downloader) override;
+
+    private:
+        uint64_t m_height;
 };
 
 class xsync_task_t {

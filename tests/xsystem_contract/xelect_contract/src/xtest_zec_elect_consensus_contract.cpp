@@ -21,7 +21,7 @@ void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
     auto const validator_group_count_per_auditor_group = validator_group_count / auditor_group_count;
 
     auto & election_association_result = m_election_association_result_store.result_of(common::xdefault_cluster_id);
-    election_association_result.cluster_version(common::xversion_t{0});
+    election_association_result.cluster_version(common::xelection_round_t{0});
     for (std::uint16_t i = 0u; i < validator_group_count; ++i) {
         common::xgroup_id_t consensus_gid{static_cast<common::xgroup_id_t::value_type>(common::xvalidator_group_id_value_begin + i)};
         auto const advance_group_id_offset = static_cast<std::uint16_t>(i / validator_group_count_per_auditor_group);
@@ -139,7 +139,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
         }
         auditor_stake /= auditor_election_group_result.size();
         group_stake_sum[auditor_group_id] += auditor_stake;
-        printf("group:%d %10lu      ", auditor_group_id.value(), auditor_stake);
+        printf("group:%d %10" PRIu64 "      ", auditor_group_id.value(), auditor_stake);
         for (std::size_t index2 = 0; index2 < per_validator_group_cnt; index2++) {
             auto validator_group_id = common::xgroup_id_t{validator_group_index};
             auto const & validaotr_election_group_result = all_election_result_store.at(auditor_group_id)
@@ -153,7 +153,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
             }
             validator_stake /= validaotr_election_group_result.size();
             group_stake_sum[validator_group_id] += validator_stake;
-            printf("group:%d %10lu      ", validator_group_id.value(), validator_stake);
+            printf("group:%d %10" PRIu64 "      ", validator_group_id.value(), validator_stake);
             validator_group_index++;
         }
         auditor_group_index++;

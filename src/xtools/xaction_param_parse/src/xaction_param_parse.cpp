@@ -7,7 +7,7 @@
 void xaction_param_parse_tool::parse_action_param(std::string const& action_str, uint32_t action_type) {
     using namespace top::data;
 
-    auto action_param = top::data::xaction_t::hex_to_uint(action_str);
+    auto action_param = top::data::hex_to_uint(action_str);
     top::base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t*)action_param.data(), (uint32_t)action_param.size());
 
     switch (action_type)

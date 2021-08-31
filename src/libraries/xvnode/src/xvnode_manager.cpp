@@ -101,8 +101,8 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
                                cluster_address.zone_id(),
                                cluster_address.cluster_id(),
                                cluster_address.group_id(),
-                               outdated_group->sharding_size(),
-                               outdated_group->version().value()};
+                               outdated_group->group_size(),
+                               outdated_group->election_round().value()};
             purely_outdated_xips.push_back(std::move(xip));
         }
 

@@ -23,7 +23,7 @@ using top::election::cache::xzone_element_t;
 using top::common::xcluster_id_t;
 using top::common::xgroup_id_t;
 using top::common::xnetwork_id_t;
-using top::common::xversion_t;
+using top::common::xelection_round_t;
 using top::common::xzone_id_t;
 using top::common::xnode_id_t;
 using top::common::xslot_id_t;

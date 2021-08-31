@@ -110,7 +110,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 } else {
                     tx->set_last_nonce(account_info_response_json["data"]["nonce"].asUInt64());
                     std::string last_trans_hash = account_info_response_json["data"]["latest_tx_hash_xxhash64"].asString();
-                    tx->set_last_hash(xrpc::hex_to_uint64(last_trans_hash));
+                    tx->set_last_hash(data::hex_to_uint64(last_trans_hash));
                 }
                 tx->set_digest();
 
@@ -121,13 +121,14 @@ void xelect_client_imp::bootstrap_node_join() {
                 utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
                 utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
                 auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-                tx->set_signature(signature);
+                tx->set_authorization(signature);
                 tx->set_len();
 
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;
                 xJson::Value tx_json;
-                tx_to_json(tx_json, tx);
+                tx->parse_to_json(tx_json["params"]);
+                tx_json["params"]["authorization"] = data::uint_to_str(tx->get_authorization().data(), tx->get_authorization().size());
                 xdbg("tx_json: %s", writer.write(tx_json).c_str());
                 send_tx_request += "&body=" + SimpleWeb::Percent::encode(writer.write(tx_json));
                 xdbg("send_tx_request: %s", send_tx_request.c_str());
@@ -158,57 +159,5 @@ void xelect_client_imp::bootstrap_node_join() {
     }
 
 }
-
-
-void xelect_client_imp::tx_to_json(xJson::Value& tx_json, const xtransaction_ptr_t& tx) {
-    if (tx == nullptr) {
-        xerror("tx is nullptr");
-        return;
-    }
-    // tx_json[xrpc::RPC_METHOD] = "send_transaction";
-    // tx_json["version"] = "1.0";
-    xJson::Value& result_json = tx_json["params"];
-
-    result_json["tx_structure_version"] = tx->get_tx_version();
-    result_json["tx_deposit"] = tx->get_deposit();
-    result_json["to_ledger_id"] = tx->get_to_ledger_id();
-    result_json["from_ledger_id"] = tx->get_from_ledger_id();
-    result_json["tx_type"] = tx->get_tx_type();
-    result_json["tx_len"] = tx->get_tx_len();
-    result_json["tx_expire_duration"] = tx->get_expire_duration();
-    result_json["send_timestamp"] = static_cast<xJson::UInt64>(tx->get_fire_timestamp());
-    result_json["tx_random_nonce"] = tx->get_random_nonce();
-    result_json["premium_price"] = tx->get_premium_price();
-    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(tx->get_last_nonce());
-    result_json["last_tx_hash"] = xrpc::uint64_to_str(tx->get_last_hash());
-    result_json["challenge_proof"] = tx->get_challenge_proof();
-    result_json["note"] = tx->get_memo();
-
-    xJson::Value& s_action_json = tx_json["params"]["sender_action"];
-    s_action_json["action_hash"] = tx->get_source_action().get_action_hash();
-    s_action_json["action_type"] = tx->get_source_action().get_action_type();
-    s_action_json["action_size"] = tx->get_source_action().get_action_size();
-    s_action_json["tx_sender_account_addr"] = tx->get_source_action().get_account_addr();
-    s_action_json["action_name"] = tx->get_source_action().get_action_name();
-    s_action_json["action_param"] = xrpc::uint_to_str(tx->get_source_action().get_action_param().data(), tx->get_source_action().get_action_param().size());
-    s_action_json["action_ext"] = xrpc::uint_to_str(tx->get_source_action().get_action_ext().data(), tx->get_source_action().get_action_ext().size());
-    s_action_json["action_authorization"] = tx->get_source_action().get_action_authorization();
-
-    xJson::Value& t_action_json = tx_json["params"]["receiver_action"];
-    t_action_json["action_hash"] = tx->get_target_action().get_action_hash();
-    t_action_json["action_type"] = tx->get_target_action().get_action_type();
-    t_action_json["action_size"] = tx->get_target_action().get_action_size();
-    t_action_json["tx_receiver_account_addr"] = tx->get_target_action().get_account_addr();
-    t_action_json["action_name"] = tx->get_target_action().get_action_name();
-    t_action_json["action_param"] = xrpc::uint_to_str(tx->get_target_action().get_action_param().data(), tx->get_target_action().get_action_param().size());
-    t_action_json["action_ext"] = xrpc::uint_to_str(tx->get_target_action().get_action_ext().data(), tx->get_target_action().get_action_ext().size());
-    t_action_json["action_authorization"] = tx->get_target_action().get_action_authorization();
-
-    result_json["ext"] = xrpc::uint_to_str(tx->get_ext().data(), tx->get_ext().size());
-    result_json["tx_hash"] = xrpc::uint_to_str(tx->digest().data(), tx->digest().size());
-    result_json["authorization"] = "0x" + to_hex_str(tx->get_authorization());
-    xdbg("authorization: %s", to_hex_str(tx->get_authorization()).c_str());
-}
-
 
 NS_END2

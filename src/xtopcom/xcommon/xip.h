@@ -127,27 +127,12 @@ public:
             xgroup_id_t const & group_id,
             xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
-    //xtop_ip(xnetwork_id_t const & network_id,
-    //        xzone_id_t const & zone_id,
-    //        xcluster_id_t const & cluster_id,
-    //        xgroup_id_t const & group_id,
-    //        xnetwork_version_t const & version,
-    //        xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
-
     xtop_ip(xnetwork_id_t const & network_id,
             xzone_id_t const & zone_id,
             xcluster_id_t const & cluster_id,
             xgroup_id_t const & group_id,
             xslot_id_t const & slot_id,
             xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
-
-    //xtop_ip(xnetwork_id_t const & network_id,
-    //        xzone_id_t const & zone_id,
-    //        xcluster_id_t const & cluster_id,
-    //        xgroup_id_t const & group_id,
-    //        xslot_id_t const & slot_id,
-    //        xnetwork_version_t const & version,
-    //        xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
     void swap(xtop_ip & other) noexcept;
 
@@ -186,7 +171,7 @@ public:
 
     value_type value() const noexcept;
 
-    xtop_ip sharding() const noexcept;
+    xtop_ip group_xip() const noexcept;
 };
 using xip_t = xtop_ip;
 
@@ -242,13 +227,6 @@ public:
                   common::xgroup_id_t const & group_id,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
-    //xtop_extended(common::xnetwork_id_t const & network_id,
-    //              common::xzone_id_t const & zone_id,
-    //              common::xcluster_id_t const & cluster_id,
-    //              common::xgroup_id_t const & group_id,
-    //              common::xnetwork_version_t const & network_version,
-    //              common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
-
     xtop_extended(common::xnetwork_id_t const & network_id,
                   common::xzone_id_t const & zone_id,
                   common::xcluster_id_t const & cluster_id,
@@ -257,21 +235,11 @@ public:
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
-    //xtop_extended(common::xnetwork_id_t const & network_id,
-    //              common::xzone_id_t const & zone_id,
-    //              common::xcluster_id_t const & cluster_id,
-    //              common::xgroup_id_t const & group_id,
-    //              common::xnetwork_version_t const & network_version,
-    //              uint16_t const size,
-    //              uint64_t const height,
-    //              common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
-
     xtop_extended(common::xnetwork_id_t const & network_id,
                   common::xzone_id_t const & zone_id,
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
                   common::xslot_id_t const & slot_id,
-                  // common::xnetwork_version_t const & network_version,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
     xtop_extended(common::xnetwork_id_t const & network_id,
@@ -279,7 +247,6 @@ public:
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
                   common::xslot_id_t const & slot_id,
-                  // common::xnetwork_version_t const & network_version,
                   uint16_t const size,
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
@@ -328,8 +295,8 @@ public:
 
     xvip2_t value() const noexcept;
 
-    xtop_extended sharding() const noexcept {
-        return xtop_extended{xip().sharding()};
+    xtop_extended group_xip2() const noexcept {
+        return xtop_extended{xip().group_xip()};
     }
 
     operator xvip2_t() const noexcept;
@@ -339,7 +306,7 @@ NS_END1
 
 NS_BEG2(top, common)
 
-using xip2_t = ::top::xextended_t<::top::common::xip_t>;
+using xip2_t = top::xextended_t<top::common::xip_t>;
 
 xnode_type_t node_type_from(xzone_id_t const & zone_id);
 
@@ -347,8 +314,6 @@ xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cl
 
 xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cluster_id, xgroup_id_t const & group_id);
 
-//bool operator==(xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept;
-//bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept;
 
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xnetwork_version_t
@@ -704,6 +669,13 @@ template <>
 struct hash<top::common::xip2_t> final {
     std::size_t operator()(top::common::xip2_t const & xip2) const noexcept {
         return xip2.hash();
+    }
+};
+
+template <>
+struct hash<top::common::xip_t> final {
+    std::size_t operator()(top::common::xip_t const & xip) const noexcept {
+        return xip.hash();
     }
 };
 

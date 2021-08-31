@@ -31,12 +31,12 @@ TEST(test_, vhost_not_run) {
     std::uint16_t const sharding_size{1024};
     std::uint16_t const associated_blk_height{0};
 
-    common::xnode_address_t src_v1(common::xsharding_address_t{common::xnetwork_id_t{1}}, account_address, common::xversion_t{1}, sharding_size, associated_blk_height);
-    common::xnode_address_t dst_v1(common::xsharding_address_t{common::xnetwork_id_t{2}}, account_address, common::xversion_t{1}, sharding_size, associated_blk_height);
+    common::xnode_address_t src_v1(common::xsharding_address_t{common::xnetwork_id_t{1}}, account_address, common::xelection_round_t{1}, sharding_size, associated_blk_height);
+    common::xnode_address_t dst_v1(common::xsharding_address_t{common::xnetwork_id_t{2}}, account_address, common::xelection_round_t{1}, sharding_size, associated_blk_height);
 
     common::xnode_address_t dst_group_address(common::xsharding_address_t{common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{64}},
                                               account_address,
-                                              common::xversion_t{1},
+                                              common::xelection_round_t{1},
                                               sharding_size,
                                               associated_blk_height);
 
@@ -110,7 +110,7 @@ TEST_F(xvhost_fixture_t, func_msg_ec) {
     // broadcast message in the same sharding
     common::xip2_t broadcast_dst_xip2_v1 =
         top::common::xip2_t{common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
-    common::xnode_address_t src = get_address(common::xversion_t{1}, common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1});
+    common::xnode_address_t src = get_address(common::xelection_round_t{1}, common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1});
     vhost_test_ptr->broadcast(src, broadcast_dst_xip2_v1, test_msg, ec);
     EXPECT_EQ(m_cnt_spread_rumor, 1);
 
@@ -121,9 +121,9 @@ TEST_F(xvhost_fixture_t, func_msg_ec) {
     EXPECT_EQ(m_cnt_spread_rumor, 2);
 
     // broadcast between different shradings
-    EXPECT_EQ(m_cnt_forward_broadcast, 0);
+    EXPECT_EQ(m_cnt_spread_rumor, 2);
     vhost_test_ptr->broadcast(src_v1, broadcast_dst_xip2_v1, test_msg, ec);
-    EXPECT_EQ(m_cnt_forward_broadcast, 1);
+    EXPECT_EQ(m_cnt_spread_rumor, 3);
     EXPECT_EQ(m_cnt, 5);
     EXPECT_EQ(ec, xvnetwork_errc2_t::success);
 }

@@ -114,23 +114,23 @@ common::xnode_id_t const & xtop_vnetwork_driver::host_node_id() const noexcept {
 
 std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::neighbors_info2() const {
     assert(m_vhost);
-    return m_vhost->members_info_of_group2(address().cluster_address(), address().version());
+    return m_vhost->members_info_of_group2(address().cluster_address(), address().election_round());
 }
 
 std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::parents_info2() const {
     assert(m_vhost);
     auto const & parent_cluster_addr = m_vhost->parent_group_address(address());
-    return m_vhost->members_info_of_group2(parent_cluster_addr.cluster_address(), parent_cluster_addr.version());
+    return m_vhost->members_info_of_group2(parent_cluster_addr.cluster_address(), parent_cluster_addr.election_round());
 }
 
-std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const {
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & election_round) const {
     try {
         assert(m_vhost);
         assert(gid >= common::xvalidator_group_id_begin && gid < common::xvalidator_group_id_end);
 
         xcluster_address_t child_cluster_address{address().network_id(), address().zone_id(), address().cluster_id(), gid};
 
-        return m_vhost->members_info_of_group2(child_cluster_address, version);
+        return m_vhost->members_info_of_group2(child_cluster_address, election_round);
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
     } catch (std::exception const & eh) {
@@ -156,7 +156,7 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
     switch (node_type) {
     case common::xnode_type_t::storage_archive:
     {
-        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xarchive_group_id, network_id()), common::xversion_t::max());
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xarchive_group_id, network_id()), common::xelection_round_t::max());
         result.reserve(tmp.size());
 
         for (auto const & n : tmp) {
@@ -168,7 +168,7 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
 
     case common::xnode_type_t::storage_full_node:
     {
-        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xfull_node_group_id, network_id()), common::xversion_t::max());
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xfull_node_group_id, network_id()), common::xelection_round_t::max());
         result.reserve(tmp.size());
 
         for (auto const & n : tmp) {

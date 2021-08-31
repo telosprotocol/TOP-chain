@@ -27,13 +27,13 @@ public:
 using xbad_version_access_t = xtop_bad_version_access;
 
 template <typename TagT, typename ValueT>
-class xtop_version final : public xhashable_t<xtop_version<TagT, std::size_t>>
-                         , public xenable_to_string_t<xtop_version<TagT, ValueT>>
+class xtop_epoch final : public xhashable_t<xtop_epoch<TagT, std::size_t>>
+                         , public xenable_to_string_t<xtop_epoch<TagT, ValueT>>
 {
     XSTATIC_ASSERT(std::is_integral<ValueT>::value);
 
 public:
-    using hash_result_type = typename xhashable_t<xtop_version<TagT, std::size_t>>::hash_result_type;
+    using hash_result_type = typename xhashable_t<xtop_epoch<TagT, std::size_t>>::hash_result_type;
     using value_type = ValueT;
 
     XSTATIC_ASSERT(std::is_integral<hash_result_type>::value && std::is_unsigned<hash_result_type>::value);
@@ -56,21 +56,21 @@ private:
     }
 
 public:
-    constexpr xtop_version()                       = default;
-    xtop_version(xtop_version const &)             = default;
-    xtop_version & operator=(xtop_version const &) = default;
-    xtop_version(xtop_version &&)                  = default;
-    xtop_version & operator=(xtop_version &&)      = default;
-    ~xtop_version()                                = default;
+    constexpr xtop_epoch()                     = default;
+    xtop_epoch(xtop_epoch const &)             = default;
+    xtop_epoch & operator=(xtop_epoch const &) = default;
+    xtop_epoch(xtop_epoch &&)                  = default;
+    xtop_epoch & operator=(xtop_epoch &&)      = default;
+    ~xtop_epoch()                              = default;
 
     constexpr
     explicit
-    xtop_version(value_type const v) noexcept
+    xtop_epoch(value_type const v) noexcept
         : m_value{ v }, m_initialized{ true } {
     }
 
     void
-    swap(xtop_version & other) noexcept {
+    swap(xtop_epoch & other) noexcept {
         std::swap(m_value, other.m_value);
         std::swap(m_initialized, other.m_initialized);
     }
@@ -79,7 +79,7 @@ public:
     constexpr
 #endif
     bool
-    operator==(xtop_version const & other) const noexcept {
+    operator==(xtop_epoch const & other) const noexcept {
         if (m_initialized != other.m_initialized) {
             return false;
         }
@@ -96,7 +96,7 @@ public:
     constexpr
 #endif
     bool
-    operator!=(xtop_version const & other) const noexcept {
+    operator!=(xtop_epoch const & other) const noexcept {
         return !(*this == other);
     }
 
@@ -104,7 +104,7 @@ public:
     constexpr
 #endif
     bool
-    operator<(xtop_version const & other) const noexcept {
+    operator<(xtop_epoch const & other) const noexcept {
         if (other.m_initialized == false) {
             return false;
         }
@@ -120,7 +120,7 @@ public:
     constexpr
 #endif
     bool
-    operator>(xtop_version const & other) const noexcept {
+    operator>(xtop_epoch const & other) const noexcept {
         return other < *this;
     }
 
@@ -128,7 +128,7 @@ public:
     constexpr
 #endif
     bool
-    operator<=(xtop_version const & other) const noexcept {
+    operator<=(xtop_epoch const & other) const noexcept {
         if (m_initialized == false) {
             return true;
         }
@@ -144,14 +144,14 @@ public:
     constexpr
 #endif
     bool
-    operator>=(xtop_version const & other) const noexcept {
+    operator>=(xtop_epoch const & other) const noexcept {
         return other <= *this;
     }
 
 #if defined(XCXX14_OR_ABOVE)
     constexpr
 #endif
-    xtop_version next(int32_t step = 1) {
+    xtop_epoch next(int32_t step = 1) {
         auto this_copy = *this;
         if (step > 0) {
             this_copy.increase(step);
@@ -165,7 +165,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_version &
+    xtop_epoch &
     operator++() {
         if (empty()) {
             assert(false);
@@ -184,7 +184,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_version
+    xtop_epoch
     operator++(int) {
         if (empty()) {
             assert(false);
@@ -198,13 +198,13 @@ public:
 
         auto old_value = m_value;
         ++m_value;
-        return xtop_version{ old_value };
+        return xtop_epoch{ old_value };
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_version &
+    xtop_epoch &
     operator--() {
         if (empty()) {
             assert(false);
@@ -223,7 +223,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_version
+    xtop_epoch
     operator--(int) {
         if (empty()) {
             assert(false);
@@ -237,13 +237,13 @@ public:
 
         auto old_value = m_value;
         --m_value;
-        return xtop_version{ old_value };
+        return xtop_epoch{ old_value };
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_version &
+    xtop_epoch &
     increase(value_type step = 1) {
         if (empty()) {
             assert(false);
@@ -263,7 +263,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_version &
+    xtop_epoch &
     decrease(value_type step = 1) {
         if (empty()) {
             assert(false);
@@ -334,7 +334,7 @@ public:
             return std::to_string(m_value);
         }
 
-        return u8"(null)";
+        return "(null)";
     }
 
     void
@@ -345,31 +345,30 @@ public:
 
     constexpr
     static
-    xtop_version
+    xtop_epoch
     max() {
-        return xtop_version{ std::numeric_limits<value_type>::max() };
+        return xtop_epoch{ std::numeric_limits<value_type>::max() };
     }
 
     constexpr
     static
-    xtop_version
+    xtop_epoch
     min() {
-        return xtop_version{ std::numeric_limits<value_type>::min() };
+        return xtop_epoch{ std::numeric_limits<value_type>::min() };
     }
 };
 
 template <typename TagT, typename ValueT>
-using xversion_t = xtop_version<TagT, ValueT>;
+using xepoch_t = xtop_epoch<TagT, ValueT>;
 
 NS_END1
 
 NS_BEG1(std)
 
 template <typename TagT, typename ValueT>
-struct hash<top::xversion_t<TagT, ValueT>> {
-    std::size_t
-    operator()(top::xversion_t<TagT, ValueT> const & version) const noexcept {
-        return version.hash();
+struct hash<top::xepoch_t<TagT, ValueT>> {
+    std::size_t operator()(top::xepoch_t<TagT, ValueT> const & epoch) const noexcept {
+        return epoch.hash();
     }
 };
 

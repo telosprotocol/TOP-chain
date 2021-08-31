@@ -22,7 +22,7 @@ NS_BEG2(top, xunit_service)
 #define CONFIRM_DELAY_TOO_MUCH_TIME (20)
 
 xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                             table_index                                      &tableid,
+                             base::xtable_index_t                             &tableid,
                              const std::string &                              account_id,
                              std::shared_ptr<xcons_service_para_face> const & para,
                              std::shared_ptr<xblock_maker_face> const &       block_maker,
@@ -39,7 +39,7 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
     m_raw_timer->start(m_timer_repeat_time_ms, m_timer_repeat_time_ms);
-    xunit_dbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.table_id);
+    xunit_dbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.to_table_shortid());
 }
 
 xbatch_packer::~xbatch_packer() {
@@ -64,7 +64,7 @@ bool xbatch_packer::on_object_close() {
     return xcsaccount_t::on_object_close();
 }
 
-table_index xbatch_packer::get_tableid() {
+base::xtable_index_t xbatch_packer::get_tableid() {
     return m_tableid;
 }
 
@@ -223,13 +223,13 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
 
     // check if this node is leader
     std::error_code ec{election::xdata_accessor_errc_t::success};
-    auto version = accessor->version_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
+    auto election_epoch = accessor->election_epoch_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
     if (ec) {
         xunit_warn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
         return false;
     }
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
-    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, version, rotate_mode);
+    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
     xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
             is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_height(), 
@@ -316,9 +316,10 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
         auto leader_election = m_para->get_resources()->get_election();
         auto accessor = m_para->get_resources()->get_data_accessor();
         std::error_code ec{election::xdata_accessor_errc_t::success};
-        auto version = accessor->version_from(common::xip2_t{from_addr.low_addr, from_addr.high_addr}, ec);
+        auto election_epoch = accessor->election_epoch_from(common::xip2_t{from_addr.low_addr, from_addr.high_addr}, ec);
         if (!ec) {
-            xvip2_t leader_xip = leader_election->get_leader_xip(packet.get_block_viewid(), get_account(), nullptr, local_addr, from_addr, version, enum_rotate_mode_rotate_by_view_id);
+            xvip2_t leader_xip =
+                leader_election->get_leader_xip(packet.get_block_viewid(), get_account(), nullptr, local_addr, from_addr, election_epoch, enum_rotate_mode_rotate_by_view_id);
             if (xcons_utl::xip_equals(leader_xip, from_addr)) {
                 valid = true;
             }

@@ -20,7 +20,7 @@ using namespace top::data;
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
-using common::xversion_t;
+using common::xelection_round_t;
 using data::xaccount_ptr_t;
 using data::xtransaction_ptr_t;
 using data::xtransaction_t;
@@ -240,6 +240,9 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
             sys_contract_zec_reward_addr,
             height,
             xstake::XPROPERTY_REWARD_DETAIL);
+        return;
+    }
+    if (xissue_detail_str.empty()) {
         return;
     }
     xstake::xissue_detail issue_detail;

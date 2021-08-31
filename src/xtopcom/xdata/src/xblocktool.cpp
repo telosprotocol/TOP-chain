@@ -258,18 +258,6 @@ std::string xblocktool_t::make_address_user_contract(const std::string & public_
     return base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_custom_contract, ledger_id, public_key_address);
 }
 
-bool xblocktool_t::is_connect_and_executed_block(base::xvblock_t* block) {
-    if (block->is_genesis_block()) {
-        return true;
-    }
-    const int block_flags = block->get_block_flags();
-    if (((block_flags & base::enum_xvblock_flag_connected) != 0)
-        && ((block_flags & base::enum_xvblock_flag_executed) != 0)) {
-        return true;
-    }
-    return false;
-}
-
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
     base::xvaccount_t _vaccount(account);
     // there is mostly two empty units

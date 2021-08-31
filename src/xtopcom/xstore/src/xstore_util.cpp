@@ -6,6 +6,7 @@
 
 #include "xstore/xstore_util.h"
 #include "xmetrics/xmetrics.h"
+#include "xbase/xlog.h"
 
 using namespace top::metrics;
 
@@ -22,12 +23,11 @@ std::map<std::string, xmetircs_tag_t> key_end = {
     {"/o", xmetircs_tag_t::db_key_block_output},
     {"/or", xmetircs_tag_t::db_key_block_output_resource},
     {"/s", xmetircs_tag_t::db_key_block_state},
-    {"/d", xmetircs_tag_t::db_key_block_offdata}
 };
 
 void xstore_util::metirc_key_value(std::string const& key, std::string const& value, bool add_or_minus) {
 #ifdef DB_KV_STATISTIC
-    assert(key.size() > 3);
+    xassert(key.size() > 3);
 
     for (auto const& start_item: key_start) {
         if (key.find(start_item.first) == 0) {

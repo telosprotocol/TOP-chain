@@ -40,6 +40,7 @@ private:
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     std::string m_instance;
 
+    std::unique_ptr<xsync_store_shadow_t> m_store_shadow{};
     std::unique_ptr<sync::xsync_store_face_t> m_sync_store{};
     std::unique_ptr<sync::xdeceit_node_manager_t> m_blacklist{};
     std::unique_ptr<sync::xsession_manager_t> m_session_mgr{};

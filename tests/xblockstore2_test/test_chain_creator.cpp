@@ -56,7 +56,7 @@ TEST_F(test_chain_creator, test_1) {
     EXPECT_EQ(latest_block->get_height(), count - 2);
 }
 
-TEST_F(test_chain_creator, test_2) {
+TEST_F(test_chain_creator, test_2_BENCH) {
     int count = 100;
     while ( count -- > 0 )
     {
@@ -83,7 +83,7 @@ TEST_F(test_chain_creator, test_2) {
     }
 }
 
-TEST_F(test_chain_creator, test_3) {
+TEST_F(test_chain_creator, test_3_BENCH) {
     mock::xvchain_creator creator;
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();

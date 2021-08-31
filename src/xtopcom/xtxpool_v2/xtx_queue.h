@@ -83,6 +83,9 @@ public:
     uint32_t size() const {
         return m_ready_tx_queue.size() + m_non_ready_tx_queue.size();
     }
+    uint32_t non_ready_size() const {
+        return m_non_ready_tx_queue.size();
+    }
     bool full() const {
         return m_xtable_info->is_send_tx_reached_upper_limit();
     }
@@ -179,6 +182,12 @@ public:
     bool is_account_need_update(const std::string & account_addr) const;
     void clear_expired_txs();
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
+    uint32_t size() const {
+        return m_send_tx_queue_internal.size();
+    }
+    uint32_t non_ready_size() const {
+        return m_send_tx_queue_internal.non_ready_size();
+    }
 
 private:
     xsend_tx_queue_internal_t m_send_tx_queue_internal;

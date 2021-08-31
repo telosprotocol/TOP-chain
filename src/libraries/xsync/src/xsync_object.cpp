@@ -5,6 +5,7 @@
 #include "xsync/xsync_object.h"
 #include "xconfig/xconfig_register.h"
 #include "xmbus/xevent_role.h"
+#include "xsyncbase/xsync_policy.h"
 
 NS_BEG2(top, sync)
 
@@ -19,7 +20,8 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_handler_thread_pool):
     m_bus{ bus },
     m_instance(vhost->host_node_id().c_str()),
-    m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore))),
+    m_store_shadow(top::make_unique<sync::xsync_store_shadow_t>()),
+    m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore), m_store_shadow.get())),
     m_blacklist(top::make_unique<sync::xdeceit_node_manager_t>()),
     m_session_mgr(top::make_unique<sync::xsession_manager_t>(XGET_CONFIG(executor_max_sessions))),
     m_role_chains_mgr(top::make_unique<sync::xrole_chains_mgr_t>(m_instance)),
@@ -30,7 +32,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get())),
     m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_peerset.get(), m_sync_sender.get())),
     m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_chains_mgr.get(),
-        m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get())),
+        m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get(), m_store_shadow.get())),
     m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, bus, make_observer(cert_ptr), m_role_chains_mgr.get(), m_sync_store.get(),
         m_sync_broadcast.get(), m_sync_sender.get())),
     m_sync_gossip(top::make_unique<sync::xsync_gossip_t>(m_instance, m_bus, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
@@ -62,8 +64,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
             m_instance,
             bus,
             m_sync_handler.get())),
-    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())) {
-
+    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())){
 }
 
 void
@@ -114,169 +115,181 @@ COMMANDS:\n\
 }
 
 std::string xtop_sync_object::status() const {
-
-    uint64_t total_beacon_cur_height = 0;
-    uint64_t total_beacon_max_height = 0;
-
-    uint64_t total_zec_cur_height = 0;
-    uint64_t total_zec_max_height = 0;
-
-    uint64_t total_shard_cur_height = 0;
-    uint64_t total_shard_max_height = 0;
-
-    uint64_t total_cur_height = 0;
-    uint64_t total_max_height = 0;
-
-    std::map<uint32_t, xsync_progress_t> beacon_tables_progress;
-    std::map<uint32_t, xsync_progress_t> zec_tables_progress;
-    std::map<uint32_t, xsync_progress_t> shard_tables_progress;
     std::string result;
-
-    map_chain_info_t all_chains = m_role_chains_mgr->get_all_chains();
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
-    bool display_zec = false;
-    bool display_shard = false;
 
-    for (const auto &role_it: roles) {
+    for (int32_t i = enum_chain_sync_policy_full; i >= 0; i--) {
+        bool display_zec = false;
+        bool display_shard = false;        
+        uint64_t total_beacon_cur_height = 0;
+        uint64_t total_beacon_max_height = 0;
 
-        const vnetwork::xvnode_address_t &self_addr = role_it.first;
-        if (common::has<common::xnode_type_t::zec>(self_addr.type()) ||
-            common::has<common::xnode_type_t::edge>(self_addr.type()) ||
-            common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
-            common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
-            common::has<common::xnode_type_t::storage>(self_addr.type())
-        ) {
-            display_zec = true;
+        uint64_t total_zec_cur_height = 0;
+        uint64_t total_zec_max_height = 0;
+
+        uint64_t total_shard_cur_height = 0;
+        uint64_t total_shard_max_height = 0;
+
+        uint64_t total_cur_height = 0;
+        uint64_t total_max_height = 0;
+
+        std::map<uint32_t, xsync_progress_t> beacon_tables_progress;
+        std::map<uint32_t, xsync_progress_t> zec_tables_progress;
+        std::map<uint32_t, xsync_progress_t> shard_tables_progress;
+        for (const auto &role_it: roles) {
+            const vnetwork::xvnode_address_t &self_addr = role_it.first;
+            if (common::has<common::xnode_type_t::zec>(self_addr.type()) ||
+                common::has<common::xnode_type_t::edge>(self_addr.type()) ||
+                common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
+                common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
+                common::has<common::xnode_type_t::storage>(self_addr.type())
+            ) {
+                display_zec = true;
+            }
+
+            if (common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
+                common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
+                common::has<common::xnode_type_t::storage>(self_addr.type())
+            ) {
+                display_shard = true;
+            }
+
+            const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
+            const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
+            for (const auto &it: chains) {
+                const std::string &address = it.first;
+
+                std::string table_prefix;
+                uint32_t table_id = 0;
+                if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
+                    continue;
+
+                if (it.second.sync_policy != i) {
+                    continue;
+                }
+
+                base::xauto_ptr<base::xvblock_t> latest_block = m_sync_store->get_latest_cert_block(address);
+                xsync_progress_t info;
+                info.cur_height = m_sync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)i);
+                info.max_height = latest_block->get_height();
+
+                if (info.max_height == 0) {
+                    info.rate = 100;
+                } else {
+                    info.rate = (double)info.cur_height*100/(double)info.max_height;
+                }
+
+                if (table_prefix == sys_contract_beacon_table_block_addr) {
+                    total_beacon_cur_height += info.cur_height;
+                    total_beacon_max_height += info.max_height;
+                    beacon_tables_progress.insert(std::make_pair(table_id, info));
+
+                } else if (table_prefix == sys_contract_zec_table_block_addr) {
+
+                    if (display_zec) {
+                        total_zec_cur_height += info.cur_height;
+                        total_zec_max_height += info.max_height;
+                        zec_tables_progress.insert(std::make_pair(table_id, info));
+                    }
+
+                } else if (table_prefix == sys_contract_sharding_table_block_addr) {
+
+                    if (display_shard) {
+                        total_shard_cur_height += info.cur_height;
+                        total_shard_max_height += info.max_height;
+                        shard_tables_progress.insert(std::make_pair(table_id, info));
+                    }
+                }
+            }
         }
 
-        if (common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
-            common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
-            common::has<common::xnode_type_t::storage>(self_addr.type())
-        ) {
-            display_shard = true;
-        }
-    }
+        total_cur_height += total_beacon_cur_height;
+        total_cur_height += total_zec_cur_height;
+        total_cur_height += total_shard_cur_height;
 
-    for (auto &it: all_chains) {
-        const std::string &address = it.first;
+        total_max_height += total_beacon_max_height;
+        total_max_height += total_zec_max_height;
+        total_max_height += total_shard_max_height;
 
-        std::string table_prefix;
-        uint32_t table_id = 0;
-        if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
+        // time
+        if ((shard_tables_progress.empty() && zec_tables_progress.empty() && beacon_tables_progress.empty())){
             continue;
-
-        base::xauto_ptr<base::xvblock_t> latest_block = m_sync_store->get_latest_cert_block(address);
-        xsync_progress_t info;
-        info.cur_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
-        info.max_height = latest_block->get_height();
-
-        if (info.max_height == 0) {
-            info.rate = 100;
-        } else {
-            info.rate = (double)info.cur_height*100/(double)info.max_height;
         }
 
-        if (table_prefix == sys_contract_beacon_table_block_addr) {
-            total_beacon_cur_height += info.cur_height;
-            total_beacon_max_height += info.max_height;
-            beacon_tables_progress.insert(std::make_pair(table_id, info));
+        // total
+        if (i == enum_chain_sync_policy_fast) {
+            result += "fast-sync-mode, total:";
+        } else {
+            result += "full-sync-mode, total:";
+        }
 
-        } else if (table_prefix == sys_contract_zec_table_block_addr) {
+        if (total_max_height == 0) {
+            result += "100.00%";
+        } else {
+            char tmp[100] = {0};
+            float f = (double)total_cur_height*100/(double)total_max_height;
+            sprintf(tmp, "%.2f", f);
+            result += tmp;
+            result += "%";
+        }
+        result += "\n";
 
-            if (display_zec) {
-                total_zec_cur_height += info.cur_height;
-                total_zec_max_height += info.max_height;
-                zec_tables_progress.insert(std::make_pair(table_id, info));
+        result += "\t\t\t";
+        result += "index\t\t";
+        result += "cur_height\t";
+        result += "max_height\n";
+
+        if (!beacon_tables_progress.empty()) {
+            result += "root-beacon chains\t\t\t\t\t\t\t";
+
+            if (total_beacon_max_height == 0) {
+                result += "100.00%";
+            } else {
+                char tmp[100] = {0};
+                float f = (double)total_beacon_cur_height*100/(double)total_beacon_max_height;
+                sprintf(tmp, "%.2f", f);
+                result += tmp;
+                result += "%";
             }
+            result += "\n";
 
-        } else if (table_prefix == sys_contract_sharding_table_block_addr) {
+            dump_chains(result, beacon_tables_progress);
+        }
 
-            if (display_shard) {
-                total_shard_cur_height += info.cur_height;
-                total_shard_max_height += info.max_height;
-                shard_tables_progress.insert(std::make_pair(table_id, info));
+        if (!zec_tables_progress.empty()) {
+            result += "sub-beacon chains\t\t\t\t\t\t\t";
+
+            if (total_zec_max_height == 0) {
+                result += "100.00%";
+            } else {
+                char tmp[100] = {0};
+                float f = (double)total_zec_cur_height*100/(double)total_zec_max_height;
+                sprintf(tmp, "%.2f", f);
+                result += tmp;
+                result += "%";
             }
+            result += "\n";
+
+            dump_chains(result, zec_tables_progress);
         }
-    }
 
-    total_cur_height += total_beacon_cur_height;
-    total_cur_height += total_zec_cur_height;
-    total_cur_height += total_shard_cur_height;
+        if (!shard_tables_progress.empty()) {
 
-    total_max_height += total_beacon_max_height;
-    total_max_height += total_zec_max_height;
-    total_max_height += total_shard_max_height;
+            result += "shard chains\t\t\t\t\t\t\t\t";
 
-    // time
+            if (total_shard_max_height == 0) {
+                result += "100.00%";
+            } else {
+                char tmp[100] = {0};
+                float f = (double)total_shard_cur_height*100/(double)total_shard_max_height;
+                sprintf(tmp, "%.2f", f);
+                result += tmp;
+                result += "%";
+            }
+            result += "\n";
 
-    // total
-    result += "total:";
-    if (total_max_height == 0) {
-       result += "100.00%";
-    } else {
-        char tmp[100] = {0};
-        float f = (double)total_cur_height*100/(double)total_max_height;
-        sprintf(tmp, "%.2f", f);
-        result += tmp;
-        result += "%";
-    }
-    result += "\n";
-
-    result += "\t\t\t";
-    result += "index\t\t";
-    result += "cur_height\t";
-    result += "max_height\n";
-
-    if (!beacon_tables_progress.empty()) {
-        result += "root-beacon chains\t\t\t\t\t\t\t";
-
-        if (total_beacon_max_height == 0) {
-            result += "100.00%";
-        } else {
-            char tmp[100] = {0};
-            float f = (double)total_beacon_cur_height*100/(double)total_beacon_max_height;
-            sprintf(tmp, "%.2f", f);
-            result += tmp;
-            result += "%";
+            dump_chains(result, shard_tables_progress);
         }
-        result += "\n";
-
-        dump_chains(result, beacon_tables_progress);
-    }
-
-    if (!zec_tables_progress.empty()) {
-        result += "sub-beacon chains\t\t\t\t\t\t\t";
-
-        if (total_zec_max_height == 0) {
-            result += "100.00%";
-        } else {
-            char tmp[100] = {0};
-            float f = (double)total_zec_cur_height*100/(double)total_zec_max_height;
-            sprintf(tmp, "%.2f", f);
-            result += tmp;
-            result += "%";
-        }
-        result += "\n";
-
-        dump_chains(result, zec_tables_progress);
-    }
-
-    if (!shard_tables_progress.empty()) {
-
-        result += "shard chains\t\t\t\t\t\t\t\t";
-
-        if (total_shard_max_height == 0) {
-            result += "100.00%";
-        } else {
-            char tmp[100] = {0};
-            float f = (double)total_shard_cur_height*100/(double)total_shard_max_height;
-            sprintf(tmp, "%.2f", f);
-            result += tmp;
-            result += "%";
-        }
-        result += "\n";
-
-        dump_chains(result, shard_tables_progress);
     }
 
     return result;

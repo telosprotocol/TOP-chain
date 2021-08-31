@@ -16,7 +16,7 @@ NS_BEG3(top, data, election)
 class xtop_election_info final {
 public:
     // xstandby_node_info_t standby_info{};
-    common::xversion_t joined_version{};     // at which version of the group the node is added in
+    common::xelection_round_t joined_version{};     // at which version of the group the node is added in
     std::uint64_t stake{ 0 };
     std::uint64_t comprehensive_stake{ 0 };
     xpublic_key_t consensus_public_key{};    // public key for consensus business

@@ -14,7 +14,6 @@ using top::common::xbroadcast_id_t;
 using top::common::xnode_id_t;
 using top::common::xnode_type_t;
 using top::common::xslot_id_t;
-using top::common::xversion_t;
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
@@ -35,8 +34,8 @@ TEST(xtest_committee_sharding_nodes, _) {
                                                .result_of(xnode_type_t::committee)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -50,11 +49,11 @@ TEST(xtest_committee_sharding_nodes, _) {
 #if defined XENABLE_MOCK_ZEC_STAKE
         standby_node_info.user_request_role = top::common::xrole_type_t::advance;
 #endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -75,7 +74,7 @@ TEST(xtest_committee_sharding_nodes, _) {
         cluster_id,
         group_id
     };
-    auto sharding_nodes = data_accessor.sharding_nodes(committee_sharding_address, top::common::xversion_t{ 0 }, ec);
+    auto sharding_nodes = data_accessor.sharding_nodes(committee_sharding_address, top::common::xelection_round_t{ 0 }, ec);
 
     ASSERT_EQ(0, ec.value());
     ASSERT_EQ(node_count, sharding_nodes.size());
@@ -102,8 +101,8 @@ TEST(xtest_zec_sharding_nodes, _) {
                                                .result_of(xnode_type_t::zec)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -121,7 +120,7 @@ TEST(xtest_zec_sharding_nodes, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -142,7 +141,7 @@ TEST(xtest_zec_sharding_nodes, _) {
         cluster_id,
         group_id
     };
-    auto sharding_nodes = data_accessor.sharding_nodes(zec_sharding_address, top::common::xversion_t{ 0 }, ec);
+    auto sharding_nodes = data_accessor.sharding_nodes(zec_sharding_address, top::common::xelection_round_t{ 0 }, ec);
 
     ASSERT_EQ(0, ec.value());
     ASSERT_EQ(node_count, sharding_nodes.size());
@@ -169,8 +168,8 @@ TEST(xtest_edge_sharding_nodes, _) {
                                                .result_of(xnode_type_t::edge)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -188,7 +187,7 @@ TEST(xtest_edge_sharding_nodes, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -209,7 +208,7 @@ TEST(xtest_edge_sharding_nodes, _) {
         cluster_id,
         group_id
     };
-    auto sharding_nodes = data_accessor.sharding_nodes(edge_sharding_address, top::common::xversion_t{ 0 }, ec);
+    auto sharding_nodes = data_accessor.sharding_nodes(edge_sharding_address, top::common::xelection_round_t{ 0 }, ec);
 
     ASSERT_EQ(0, ec.value());
     ASSERT_EQ(node_count, sharding_nodes.size());
@@ -236,8 +235,8 @@ TEST(xtest_archive_sharding_nodes, _) {
                                                .result_of(xnode_type_t::storage_archive)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
-    group_result.group_version(xversion_t{ 0 });
-    group_result.election_committee_version(xversion_t{ 0 });
+    group_result.group_version(top::common::xelection_round_t{ 0 });
+    group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     group_result.start_time(0);
     // group_result.associated_election_blk_height(0);
 
@@ -255,7 +254,7 @@ TEST(xtest_archive_sharding_nodes, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -276,7 +275,7 @@ TEST(xtest_archive_sharding_nodes, _) {
         cluster_id,
         group_id
     };
-    auto sharding_nodes = data_accessor.sharding_nodes(archive_sharding_address, top::common::xversion_t{ 0 }, ec);
+    auto sharding_nodes = data_accessor.sharding_nodes(archive_sharding_address, top::common::xelection_round_t{ 0 }, ec);
 
     ASSERT_EQ(0, ec.value());
     ASSERT_EQ(node_count, sharding_nodes.size());
@@ -304,8 +303,8 @@ TEST(xtest_consensus_sharding_nodes, _) {
                                                        .result_of(xnode_type_t::consensus_auditor)
                                                        .result_of(cluster_id)
                                                        .result_of(auditor_group_id);
-    auditor_group_result.group_version(xversion_t{ 0 });
-    auditor_group_result.election_committee_version(xversion_t{ 0 });
+    auditor_group_result.group_version(top::common::xelection_round_t{ 0 });
+    auditor_group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     auditor_group_result.start_time(0);
     // auditor_group_result.associated_election_blk_height(0);
 
@@ -313,8 +312,8 @@ TEST(xtest_consensus_sharding_nodes, _) {
                                                          .result_of(xnode_type_t::consensus_validator)
                                                          .result_of(cluster_id)
                                                          .result_of(validator_group_id);
-    validator_group_result.group_version(xversion_t{ 0 });
-    validator_group_result.election_committee_version(xversion_t{ 0 });
+    validator_group_result.group_version(top::common::xelection_round_t{ 0 });
+    validator_group_result.election_committee_version(top::common::xelection_round_t{ 0 });
     validator_group_result.start_time(0);
     // validator_group_result.associated_election_blk_height(0);
 
@@ -332,7 +331,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
@@ -354,7 +353,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = xversion_t{ 0 };
+        new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(xnode_id_t{ std::to_string(i + node_count) });
@@ -375,7 +374,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
         cluster_id,
         auditor_group_id
     };
-    auto auditor_sharding_nodes = data_accessor.sharding_nodes(auditor_sharding_address, top::common::xversion_t{ 0 }, ec);
+    auto auditor_sharding_nodes = data_accessor.sharding_nodes(auditor_sharding_address, top::common::xelection_round_t{ 0 }, ec);
     ASSERT_EQ(0, ec.value());
     ASSERT_EQ(node_count, auditor_sharding_nodes.size());
 
@@ -385,7 +384,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
         cluster_id,
         validator_group_id
     };
-    auto validator_sharding_nodes = data_accessor.sharding_nodes(validator_sharding_address, top::common::xversion_t{ 0 }, ec);
+    auto validator_sharding_nodes = data_accessor.sharding_nodes(validator_sharding_address, top::common::xelection_round_t{ 0 }, ec);
     ASSERT_EQ(0, ec.value());
     ASSERT_EQ(node_count, validator_sharding_nodes.size());
 
