@@ -28,6 +28,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xcontract_runtime/xaccount_vm_execution_result.h"
 #include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xcontract_runtime/xsystem/xsystem_action_runtime.h"
 #include "xcontract_runtime/xuser/xuser_action_runtime.h"
 #include "xcontract_runtime/xvm_executor_face.h"
 #include "xdata/xcons_transaction.h"
@@ -45,6 +46,7 @@ static auto x = _();
 class xtop_account_vm : public xvm_executor_face_t {
 private:
     std::unique_ptr<user::xuser_action_runtime_t> user_action_runtime_{ top::make_unique<user::xuser_action_runtime_t>() };
+    std::unique_ptr<system::xsystem_action_runtime_t> sys_action_runtime_{ top::make_unique<system::xsystem_action_runtime_t>() };
 
 public:
     xtop_account_vm() = default;
