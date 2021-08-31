@@ -365,8 +365,8 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
 xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {
     std::string value = get_input()->query_resource(txhash);
     if (!value.empty()) {
-        xtransaction_ptr_t raw_tx = make_object_ptr<xtransaction_t>();
-        raw_tx->serialize_from_string(value);
+        xtransaction_ptr_t raw_tx;
+        xtransaction_t::set_tx_by_serialized_data(raw_tx, value);
         return raw_tx;
     }
     return nullptr;

@@ -452,7 +452,7 @@ bool api_method_imp::getProperty(const user_info & uinfo,
 }
 
 bool api_method_imp::hash_signature(top::data::xtransaction_t * trans_action, const std::array<std::uint8_t, PRI_KEY_LEN> & private_key) {
-    trans_action->set_digest();
+    trans_action->set_digest_2();
     std::string auth_str = xcrypto_util::digest_sign(trans_action->digest(), private_key);
     trans_action->set_authorization(uint_to_str(auth_str.c_str(), auth_str.size()));
 

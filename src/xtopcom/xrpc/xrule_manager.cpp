@@ -181,7 +181,8 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
     auto & params = json_proc.m_request_json["params"];
 
     // tx version 1
-    if (params.isMember("tx_structure_version")) {
+    auto version = params["tx_structure_version"].asUInt();
+    if (version != 2) {
         xdbg("check tx verison 1");
         CONDTION_FAIL_THROW(
             params["tx_structure_version"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_structure_version or tx_structure_version is not valid");
