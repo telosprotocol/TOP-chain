@@ -35,25 +35,42 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     const uint64_t latest_commited_height = m_para->get_vblockstore()->get_latest_committed_block_height(_account_vaddress);
     const uint64_t latest_connect_height =  m_para->get_vblockstore()->get_latest_connected_block_height(_account_vaddress);
     
-    if(account_index.get_latest_unit_height() > (latest_connect_height + 1) ) //missed some commited blocks
+    if(latest_commited_height > (latest_connect_height + 1) ) //missed some commited blocks
     {
-        xwarn("xtxpool_table_t::get_account_basic_info,missed committed block of account=%s,index=%s,missing_height=[%ld - %ld)",
-              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_connect_height + 1,latest_commited_height);
+        xwarn("xtxpool_table_t::get_account_basic_info,missed committed block of account=%s,index=%s,latest_connect_height=%ld,latest_commited_height=%ld",
+              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_connect_height,latest_commited_height);
         
         account_index_info.set_sync_height_start(latest_connect_height + 1);
         account_index_info.set_sync_num(latest_commited_height - latest_connect_height);
         return false;
     }
 
-    if(account_index.get_latest_unit_height() > (latest_commited_height + 2) ) //missed lock/cert blocks
+    //try to sync blocks
+    uint64_t  start_sync_height = 0;
+    uint32_t  total_sync_num = 0;
+    if(account_index.get_latest_unit_height() > (latest_connect_height + 2) ) //missed some connected blocks
     {
-        xwarn("xtxpool_table_t::get_account_basic_info,missed lock/cert block of account=%s,index=%s,missing_height=[%ld - %ld)",
-              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_commited_height + 1,account_index.get_latest_unit_height());
+        xwarn("xtxpool_table_t::get_account_basic_info,missed connected block of account=%s,index=%s,latest_connect_height=%ld,latest_commited_height=%ld",
+              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_connect_height,latest_commited_height);
         
-        account_index_info.set_sync_height_start(latest_commited_height + 1);
-        account_index_info.set_sync_num(account_index.get_latest_unit_height() - latest_commited_height);
-        return false;
+        start_sync_height = latest_connect_height + 1;
+        total_sync_num = account_index.get_latest_unit_height() - latest_connect_height;
     }
+    else if(account_index.get_latest_unit_height() > (latest_commited_height + 2) ) //missed lock/cert blocks
+    {
+        xwarn("xtxpool_table_t::get_account_basic_info,missed cert block of account=%s,index=%s,latest_connect_height=%ld,latest_commited_height=%ld",
+              _account_vaddress.get_account().c_str(), account_index.dump().c_str(), latest_connect_height,latest_commited_height);
+ 
+        start_sync_height = latest_commited_height + 1;
+        total_sync_num = account_index.get_latest_unit_height() - latest_commited_height;
+    }
+    
+    if( (start_sync_height != 0) && (total_sync_num != 0) )
+    {
+        account_index_info.set_sync_height_start(start_sync_height);
+        account_index_info.set_sync_num(total_sync_num);
+    }
+    
     /*
     base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
     if (_block_ptr == nullptr) {
@@ -572,13 +589,14 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
 bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
     
     base::xaccount_index_t account_index;
+    
+    uint64_t nonce_from_index = 0;
     if (m_table_state_cache.get_account_index(account_addr, account_index))
     {
         if(account_index.get_latest_nonce() > 0)
         {
-            latest_nonce = account_index.get_latest_nonce();
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s latest nonce=%llu",account_addr.c_str(),latest_nonce);
-            return true;
+            nonce_from_index = account_index.get_latest_nonce();
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s latest nonce=%llu",account_addr.c_str(),nonce_from_index);
         }
     }
     
