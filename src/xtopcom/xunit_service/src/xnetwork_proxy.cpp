@@ -292,24 +292,33 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
     return false;
 }
 
-void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
+bool xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
                                        const std::vector<data::xcons_transaction_ptr_t> & receipts,
                                        std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) {
     auto net_driver = find(from_addr);
-    if (net_driver == nullptr) {
-        xunit_warn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
-        return;
-    }
+
     uint32_t recv_tx_num = 0;
     for (auto & receipt : receipts) {
-        send_receipt_msg(net_driver, receipt, non_shard_cross_receipts/*, receiptid_state*/);
+        if (net_driver != nullptr) {
+            send_receipt_msg(net_driver, receipt, non_shard_cross_receipts);
+        } else {
+            xunit_warn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt:%s addr:%s", receipt->dump().c_str(), xcons_utl::xip_to_hex(from_addr).c_str());
+        }
+
         if (receipt->is_recv_tx()) {
             recv_tx_num++;
         }
     }
 
-    XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send, recv_tx_num);
-    XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send, receipts.size() - recv_tx_num);
+    if (net_driver != nullptr) {
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send, recv_tx_num);
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send, receipts.size() - recv_tx_num);
+        return true;
+    } else {
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send_fail, recv_tx_num);
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send_fail, receipts.size() - recv_tx_num);
+        return false;
+    }
 }
 
 void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,

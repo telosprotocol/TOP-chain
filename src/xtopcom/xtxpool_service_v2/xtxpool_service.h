@@ -75,9 +75,10 @@ private:
     // xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
     void send_pull_receipts_of_confirm(xreceipt_pull_receipt_t & pulled_receipt);
     void send_pull_receipts_of_recv(xreceipt_pull_receipt_t & pulled_receipt);
-    void send_push_receipts(xreceipt_push_t & pushed_receipt, vnetwork::xvnode_address_t const & target);
+    void send_push_receipts(xreceipt_push_t & pushed_receipt);
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
     void send_table_receipt_id_state(uint16_t table_id);
+    void drop_msg(vnetwork::xmessage_t const & message, std::string reason);
 
 private:
     xvip2_t m_xip;

@@ -11,7 +11,6 @@
 
 NS_BEG2(top, xtxpool_service_v2)
 
-const uint32_t max_require_receipts = 15;
 class xreceipt_pull_receipt_t : public top::basic::xserialize_face_t {
 public:
     xreceipt_pull_receipt_t() {
