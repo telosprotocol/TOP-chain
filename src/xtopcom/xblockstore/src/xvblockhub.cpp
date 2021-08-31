@@ -21,7 +21,7 @@
  #endif
 
 #ifndef __USE_DEDICATED_META_DATA__
-    #define __USE_DEDICATED_META_DATA__
+    //#define __USE_DEDICATED_META_DATA__
 #endif
 
 namespace top
