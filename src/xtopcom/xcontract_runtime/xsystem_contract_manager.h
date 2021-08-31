@@ -27,6 +27,14 @@ public:
     xtop_system_contract_manager & operator=(xtop_system_contract_manager &&) = default;
     ~xtop_system_contract_manager() = default;
 
+
+    /**
+     * @brief get an instance
+     *
+     * @return xtop_system_contract_manager&
+     */
+    static xtop_system_contract_manager& instance();
+
     void deploy();
 
     observer_ptr<system_contracts::xbasic_system_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;

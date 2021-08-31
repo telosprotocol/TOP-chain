@@ -21,7 +21,8 @@ using xcontract_type_t = xtop_contract_type;
 
 struct xtop_contract_metadata {
     xtop_contract_metadata() = default;
-    xtop_contract_metadata(xtop_contract_metadata const& meta);
+    xtop_contract_metadata(xtop_contract_metadata const& meta) = default;
+    xtop_contract_metadata(common::xaccount_address_t const& account, xcontract_type_t type = xcontract_type_t::system);
 
     xcontract_type_t m_type{ xcontract_type_t::invalid };
     common::xaccount_address_t m_account{};
@@ -40,10 +41,12 @@ public:
     xtop_basic_contract & operator=(xtop_basic_contract &&) = default;
     ~xtop_basic_contract() override = default;
 
+    xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
     common::xaccount_address_t address() const override final;
     common::xaccount_address_t sender() const override final;
     common::xaccount_address_t recver() const override final;
     observer_ptr<xcontract_state_t> const & state() const noexcept;
+    void state(observer_ptr<xcontract_state_t> const& state) noexcept;
     xcontract_type_t type() const;
 
 protected:

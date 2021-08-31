@@ -14,7 +14,7 @@ private:
     contract_common::properties::xtoken_property_t m_balance{"balance", this};
 
 public:
-    xtop_transfer_contract();
+    xtop_transfer_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
 
     BEGIN_CONTRACT_API()
     DECLARE_API(xtop_transfer_contract::transfer);
