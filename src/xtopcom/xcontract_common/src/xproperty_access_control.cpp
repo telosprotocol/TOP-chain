@@ -408,6 +408,18 @@ void xtop_property_access_control::load_access_control_data(xproperty_access_con
 }
 
 
+std::string xtop_property_access_control::binlog() const noexcept {
+    std::string binlog;
+    canvas_->encode(binlog);
+    return binlog;
+}
+
+std::string xtop_property_access_control::fullstate_bin() const noexcept {
+    std::string fullstate_bin;
+    bstate_->take_snapshot(fullstate_bin);
+    return fullstate_bin;
+}
+
 bool xtop_property_access_control::read_permitted(common::xaccount_address_t const & reader, xproperty_identifier_t const & property_id) const noexcept {
     return true;
 }

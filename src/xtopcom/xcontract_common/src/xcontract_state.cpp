@@ -73,4 +73,12 @@ void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code) {
     top::error::throw_error(ec);
 }
 
+std::string xtop_contract_state::binlog() const {
+    return m_ac->binlog();
+}
+
+std::string xtop_contract_state::fullstate_bin() const {
+    return m_ac->fullstate_bin();
+}
+
 NS_END2
