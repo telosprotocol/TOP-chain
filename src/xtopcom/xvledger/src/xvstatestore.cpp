@@ -617,29 +617,35 @@ namespace top
         bool xvblkstatestore_t::load_unit_latest_blocks_and_base_state(const xvaccount_t & target_account, xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks)
         {
             //const uint64_t latest_full_unit_height = xvchain_t::instance().get_xblockstore()->get_latest_full_block_height(target_account);
-            const uint64_t latest_commited_height  = xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
             const uint64_t latest_connected_height = xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(target_account);
-            if(target_block->get_height() > (latest_connected_height + 2) ) //missed some connected blocks
+            if(target_block->get_height() > latest_connected_height) //only check for block > connected
             {
-                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed connected block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
-                      target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
-                return false;
-            }
-        
-            if(target_block->get_height() > ( latest_commited_height + 2) ) //missed some lock/cert blocks
-            {
-                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
-                      target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
-                return false;
+                const uint64_t latest_commited_height  = xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
+                
+                if(target_block->get_height() > (latest_connected_height + 2) ) //missed some connected blocks
+                {
+                    xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed connected block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                          target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
+                    return false;
+                }
+                
+                if(target_block->get_height() > ( latest_commited_height + 2) ) //missed some lock/cert blocks
+                {
+                    xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                          target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
+                    return false;
+                }
+                
+                if(latest_commited_height > (latest_connected_height + 1) ) //missed some commited blocks
+                {
+                    xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed committed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
+                          target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
+                    return false;
+                }
+
             }
             
-            if(latest_commited_height > (latest_connected_height + 1) ) //missed some commited blocks
-            {
-                xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state,missed committed block. account=%s,latest_commited_height=%ld,latest_connected_height=%ld,target_block=%s",
-                      target_account.get_account().c_str(), latest_commited_height,latest_connected_height, target_block->dump().c_str());
-                return false;
-            }
-
+          
             xobject_ptr_t<xvblock_t> cur_block;
             target_block->add_ref();
             cur_block.attach(target_block);
@@ -733,7 +739,7 @@ namespace top
             xassert(target_bstate->get_block_viewid() == target_block->get_viewid());
             
             //just persist state of the committed block
-            if(base_bstate->get_block_height() > db_base_bstate->get_block_height())
+            if( (db_base_bstate == nullptr) || (base_bstate->get_block_height() > db_base_bstate->get_block_height()) )
                 write_unit_state_to_db(*base_bstate.get(),target_account);
             
             xdbg("xvblkstatestore_t::execute_unit_target_block succ.latest_blocks size=%zu,block=%s", latest_blocks.size(), target_block->dump().c_str());

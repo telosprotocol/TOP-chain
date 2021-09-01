@@ -60,9 +60,14 @@ namespace top
                         xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin);
                         XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
                         
+                        m_last_save_vmeta_bin.clear();
                         old_meta_ptr->close();
                         old_meta_ptr->release_ref();
                     }
+                }
+                else
+                {
+                    save_meta();
                 }
                 
                 //clean it fromt table first,since base::on_object_close may clean up parent node information
@@ -90,6 +95,7 @@ namespace top
             else
                 new_meta_ptr->release_ref();
             
+            m_meta_ptr->serialize_to_string(m_last_save_vmeta_bin);
             return m_meta_ptr;
         }
         
@@ -104,10 +110,14 @@ namespace top
 
             if(vmeta_bin.empty() == false)
             {
-                const std::string full_meta_path = "/" + xvactmeta_t::get_meta_path(*this);
-                xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin);
-                
-                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                if(m_last_save_vmeta_bin != vmeta_bin)
+                {
+                    const std::string full_meta_path = "/" + xvactmeta_t::get_meta_path(*this);
+                    if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
+                        m_last_save_vmeta_bin = vmeta_bin;
+                    XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                }
+
                 return true;
             }
             return false;
