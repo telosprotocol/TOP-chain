@@ -7,12 +7,8 @@
 NS_BEG2(top, contract_runtime)
 
 xtop_system_contract_manager& xtop_system_contract_manager::instance() {
-    static xtop_system_contract_manager* manager;
-    if (nullptr == manager) {
-        manager = new xtop_system_contract_manager();
-    }
-
-    return *manager;
+    static xtop_system_contract_manager manager;
+    return manager;
 
 }
 

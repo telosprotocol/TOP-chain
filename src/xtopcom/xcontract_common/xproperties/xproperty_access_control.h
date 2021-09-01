@@ -148,7 +148,7 @@ public:
      * @param prop_id the property identifier
      * @param prop_key the specific key
      */
-        template<typename KEYT, typename VALUET, typename = typename std::enable_if<std::is_same<KEYT, std::string>::value &&
+    template<typename KEYT, typename VALUET, typename = typename std::enable_if<std::is_same<KEYT, std::string>::value &&
                                                                             (
                                                                                 std::is_same<VALUET, std::string>::value ||
                                                                                 std::is_same<VALUET, std::int8_t>::value ||
@@ -431,6 +431,10 @@ public:
     virtual bool write_permitted(common::xaccount_address_t const & writer, xproperty_identifier_t const & property_id) const noexcept;
 
     bool read_permitted(common::xaccount_address_t const & reader, std::string const & property_full_name) const noexcept;
+
+    std::string binlog() const noexcept;
+    std::string fullstate_bin() const noexcept;
+
 };
 using xproperty_access_control_t = xtop_property_access_control;
 
