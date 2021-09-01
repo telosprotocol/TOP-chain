@@ -67,7 +67,6 @@ class xstore final: public xstore_face_t {
 
 public:
     virtual bool delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) override;
-    virtual bool  execute_block(base::xvblock_t* block) override;
 
  private:
     std::string                     m_store_path;

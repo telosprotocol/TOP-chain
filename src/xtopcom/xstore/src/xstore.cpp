@@ -293,9 +293,5 @@ bool  xstore::find_values(const std::string & key,std::vector<std::string> & val
     return false;
 }
 
-bool  xstore::execute_block(base::xvblock_t* vblock) {
-    return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(vblock, metrics::statestore_access_from_vnodesrv_load_state);
-}
-
 } // namespace store
 } // namespace top
