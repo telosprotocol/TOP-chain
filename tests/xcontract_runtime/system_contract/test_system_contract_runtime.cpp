@@ -44,6 +44,7 @@ void test_system_contract_runtime::TearDown() {
 
 
 TEST_F(test_system_contract_runtime, run_system_contract) {
+    contract_common::properties::xproperty_identifier_t propety_identifier("balance", properties::xproperty_type_t::token, properties::xenum_property_category::system);
 
     auto transfer_tx = top::make_object_ptr<top::data::xtransaction_t>();
     uint64_t amount = 1000;
@@ -52,12 +53,13 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     transfer_tx->make_tx_run_contract("transfer", param);
 
-
     contract_ctx_ = std::make_shared<top::contract_common::xcontract_execution_context_t>(transfer_tx, contract_state_);
     contract_ctx_->execution_stage(contract_common::xcontract_execution_stage_t{contract_common::xtop_enum_contract_execution_stage::target_action});
-    contract_runtime_->execute(top::make_observer(contract_ctx_.get()));
 
-    contract_common::properties::xproperty_identifier_t propety_identifier("balance", properties::xproperty_type_t::token, properties::xenum_property_category::system);
+    // before execution
+    // EXPECT_EQ(contract_ctx_->contract_state()->access_control()->balance(common::xaccount_address_t{contract_address}, propety_identifier), 0);
+    contract_runtime_->execute(top::make_observer(contract_ctx_.get()));
+    // after execution
     EXPECT_EQ(contract_ctx_->contract_state()->access_control()->balance(common::xaccount_address_t{contract_address}, propety_identifier), amount);
 
 }

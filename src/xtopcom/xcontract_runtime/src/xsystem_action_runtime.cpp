@@ -30,6 +30,8 @@ xtransaction_execution_result_t xtop_action_runtime<xsystem_consensus_action_t>:
         // auto system_contract = xsystem_contract_manager_t::instance().system_contract(exe_ctx->contract_address());
         system_contracts::xbasic_system_contract_t* transfer_contract = new system_contracts::xtop_transfer_contract(exe_ctx);
         result = transfer_contract->execute(exe_ctx);
+        result.binlog = exe_ctx->contract_state()->binlog();
+        result.fullstate_log = exe_ctx->contract_state()->fullstate_bin();
 
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
