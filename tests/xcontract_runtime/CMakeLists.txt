@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 add_compile_options(-Wno-unused-parameter)
-aux_source_directory(./src runtime_src)
+aux_source_directory(./src xcontract_runtime_src)
 aux_source_directory(./erc20 erc20_src)
 
 if (BUILD_RUSTVM)
@@ -8,7 +8,6 @@ if (BUILD_RUSTVM)
     add_dependencies(xcontract_runtime_test_erc20 xcontract_runtime xcontract_api xxbase)
     target_link_libraries(xcontract_runtime_test_erc20 PRIVATE xcontract_runtime xcontract_api xxbase pthread gtest)
 endif()
-
-# add_dependencies(xcontract_runtime_test xcontract_runtime xvm  xloader xxbase xblockstore)
-
-# target_link_libraries(xcontract_runtime_test PRIVATE xcontract_runtime xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)
+add_executable(xcontract_runtime_test ${xcontract_runtime_src})
+add_dependencies(xcontract_runtime_test xcontract_runtime xvm  xloader xxbase xblockstore)
+target_link_libraries(xcontract_runtime_test PRIVATE xcontract_runtime xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)

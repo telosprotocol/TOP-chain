@@ -1,3 +1,4 @@
+#if 0
 #include "tests/xcontract_runtime/xuser_contract_runtime_fixture.h"
 
 #include "xbase/xmem.h"
@@ -85,3 +86,4 @@ end
 }
 
 NS_END3
+#endif

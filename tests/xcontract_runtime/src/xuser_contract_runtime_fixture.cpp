@@ -1,3 +1,4 @@
+#if 0
 #include "tests/xcontract_runtime/xuser_contract_runtime_fixture.h"
 
 #include "xbasic/xmemory.hpp"
@@ -21,3 +22,4 @@ void contract_runtime_fixture::TearDown() {
 }
 
 NS_END3
+#endif
