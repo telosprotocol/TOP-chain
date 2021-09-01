@@ -24,22 +24,44 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     contract_common::properties::xproperty_access_control_data_t ac_data; // final get from config or program initialization start
     contract_common::properties::xproperty_access_control_t ac{ make_observer(block_state.get()), ac_data };
 
+#if 0
     auto const & actions = xaction_generator_t::generate(txs);
+#else
+    
+    // std::vector<data::xconsensus_action_t<data::xtop_action_type_t::system>> actions;
+    // for (auto const & tx : txs) {
+    //     actions.push_back(data::xconsensus_action_t<data::xtop_action_type_t::system>{tx});
+    //     static_cast<data::xbasic_top_action_t>(data::xconsensus_action_t<data::xtop_action_type_t::system>{tx});
+    // }
+
+    std::vector<std::unique_ptr<data::xbasic_top_action_t>> basic_action;
+    for (auto const & tx : txs) {
+        data::xconsensus_action_t<data::xtop_action_type_t::system> * action = new data::xconsensus_action_t<data::xtop_action_type_t::system>{tx};
+        data::xbasic_top_action_t * basic_ptr = static_cast<data::xbasic_top_action_t *>(action);
+        std::unique_ptr<data::xbasic_top_action_t> a = top::make_unique<data::xbasic_top_action_t>();
+        a.reset(basic_ptr);
+        basic_action.push_back(std::move(a));
+    }
+
+#endif
     auto i = 0u;
     try {
-        for (i = 0u; i < actions.size(); ++i) {
-            switch (actions[i].type()) {
+        for (i = 0u; i < basic_action.size(); ++i) {
+            switch (basic_action[i]->type()) {
             case data::xtop_action_type_t::system:
             {
+                auto const & action = dynamic_cast<data::xconsensus_action_t<data::xtop_action_type_t::system> const &>(*(basic_action[i].get()));
+                contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
+                system_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
                 break;
             }
 
             case data::xtop_action_type_t::user:
             {
-                auto const & action = dynamic_cast<data::xconsensus_action_t<data::xtop_action_type_t::user> const &>(actions[i]);
-                contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
-                result.transaction_results[i] = user_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
-                break;
+                // auto const & action = dynamic_cast<data::xconsensus_action_t<data::xtop_action_type_t::user> const &>(actions[i]);
+                // contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
+                // result.transaction_results[i] = user_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
+                // break;
             }
 
             case data::xtop_action_type_t::kernel:

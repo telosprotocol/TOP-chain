@@ -81,6 +81,11 @@ public:
     }
 
     xbyte_buffer_t map_at(std::string const & property_short_name, std::string const & key, properties::xproperty_category_t category, properties::xproperty_type_t type) const;
+
+    void token_create(const std::string & prop_name, const properties::xproperty_type_t type, const properties::xproperty_category_t category) {
+        properties::xtop_property_identifier prop_id(prop_name, type, category);
+        m_ac->token_prop_create(m_action_account_address, prop_id);
+    };
 };
 
 NS_END2

@@ -45,6 +45,10 @@ xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t
 
 template <typename ActionT>
 xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(ActionT const & action) {
+    // const data::xbasic_top_action_t * basic_ptr = static_cast<data::xbasic_top_action_t const &>(action);
+    // std::unique_ptr<data::xbasic_top_action_t> a = top::make_unique<data::xbasic_top_action_t>();
+    // a.reset(basic_ptr);
+    // basic_action.push_back(std::move(a));
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{ top::make_unique<contract_common::xcontract_execution_context_t>(action, m_contract_state) };
     assert(m_associated_runtime != nullptr);
     auto observed_exectx = top::make_observer(execution_context.get());
