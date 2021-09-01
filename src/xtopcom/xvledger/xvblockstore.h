@@ -213,7 +213,6 @@ namespace top
             //execute_block will move to statestore soon
             //execute block and update state of acccount
             //note: block must be committed and connected
-            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) = 0;
             virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type,const int atag = 0) = 0;
 
         public:
