@@ -175,9 +175,18 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_drop_receive_receipt_msg);
         RETURN_METRICS_NAME(txpool_drop_push_receipt_msg);
         RETURN_METRICS_NAME(txpool_drop_pull_recv_receipt_msg);
-        RETURN_METRICS_NAME(txpool_drop_pull_confirm_receipt_msg);
         RETURN_METRICS_NAME(txpool_drop_pull_confirm_receipt_msg_v2);
         RETURN_METRICS_NAME(txpool_drop_receipt_id_state_msg);
+        RETURN_METRICS_NAME(txpool_try_sync_table_block);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_1_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_2_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_3_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_4_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_5_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_6_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_7to12_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_13to30_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_exceed_30_clock);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);

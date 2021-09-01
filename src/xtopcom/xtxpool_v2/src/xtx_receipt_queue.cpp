@@ -31,7 +31,12 @@ void xreceipt_queue_internal_t::erase_tx(const uint256_t & hash) {
     auto it_tx_map = m_tx_map.find(hash_str);
     if (it_tx_map != m_tx_map.end()) {
         auto & tx_ent = *it_tx_map->second;
-        xtxpool_info("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
+        xtxpool_info("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s,delay:%llu",
+                     m_xtable_info->get_table_addr().c_str(),
+                     tx_ent->get_tx()->dump(true).c_str(),
+                     delay);
+        XMETRICS_FLOW_COUNT("txpool_tx_delay_from_push_to_confirm_" + tx_ent->get_tx()->get_tx_subtype_str(), delay);
         m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
         m_tx_queue.erase(it_tx_map->second);
         m_tx_map.erase(it_tx_map);
@@ -326,8 +331,8 @@ void xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx(const tx_info_t & t
             peer_table_receipts = it->second;
         }
         peer_table_receipts->update_latest_receipt_id(receiptid);
-    } 
-    
+    }
+
     if (txinfo.get_subtype() == enum_transaction_subtype_confirm) {
         auto it = m_confirm_tx_peer_table_map.find(peer_table_sid);
         if (it == m_confirm_tx_peer_table_map.end()) {

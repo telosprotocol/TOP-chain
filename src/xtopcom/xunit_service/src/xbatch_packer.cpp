@@ -505,6 +505,11 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
 
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
+    if (all_receipts.empty()) {
+        xunit_info("xbatch_packer::make_receipts_and_send no receipt created,commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+        return;
+    }
+
     for (auto & receipt : all_receipts) {
         data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
         all_cons_txs.push_back(constx);

@@ -15,6 +15,7 @@
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
+#include "xverifier/xverifier_errors.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
 
@@ -22,7 +23,7 @@ namespace top {
 namespace xtxpool_v2 {
 
 #define state_update_too_long_time (600)
-#define load_table_block_num_max (50)
+#define load_table_block_num_max (20)
 #define table_fail_behind_height_diff_max (5)
 #define table_sync_on_demand_num_max (10)
 
@@ -340,6 +341,9 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
         int32_t ret = verify_cons_tx(tx);
         if (ret != xsuccess) {
             xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", tx->dump(true).c_str(), ret);
+            if (ret == xverifier::xverifier_error::xverifier_error_tx_duration_expired) {
+                return xsuccess;
+            }
             return ret;
         }
 
@@ -405,7 +409,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
 
         for (uint64_t height = load_height_max - 1; height >= load_height_min; height--) {
             base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(
-                m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_on_block_event);
+                m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_refresh_table);
 
             if (commit_block != nullptr) {
                 m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
@@ -417,6 +421,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                     m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block");
                 m_para->get_bus()->push_event(ev);
                 xtxpool_warn("xtxpool_table_t::refresh_table load table block fail:table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), sync_from_height, height);
+                XMETRICS_GAUGE(metrics::txpool_try_sync_table_block, 1);
                 break;
             }
         }
@@ -636,12 +641,12 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
 }
 
 void xtxpool_table_t::update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id) {
-    xtxpool_info("xtxpool_table_t::update_peer_confirm_id table:%s,peer table:%d,confirm id:%llu", m_xtable_info.get_account().c_str(), peer_table_sid, confirm_id);
+    xtxpool_dbg("xtxpool_table_t::update_peer_confirm_id table:%s,peer table:%d,confirm id:%llu", m_xtable_info.get_account().c_str(), peer_table_sid, confirm_id);
     m_unconfirm_id_height.update_peer_confirm_id(peer_table_sid, confirm_id);
 }
 
 void xtxpool_table_t::update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
-    xtxpool_info("xtxpool_table_t::update_peer_receiptid_pair table:%s,peer table:%d,id pair:%s", m_xtable_info.get_account().c_str(), peer_table_sid, pair.dump().c_str());
+    xtxpool_dbg("xtxpool_table_t::update_peer_receiptid_pair table:%s,peer table:%d,id pair:%s", m_xtable_info.get_account().c_str(), peer_table_sid, pair.dump().c_str());
     m_unconfirm_id_height.update_peer_confirm_id(peer_table_sid, pair.get_confirmid_max());
 
     {
