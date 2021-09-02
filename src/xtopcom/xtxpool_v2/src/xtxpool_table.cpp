@@ -387,11 +387,11 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
         xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());    
         update_table_state(tablestate);
         new_state_height = tablestate->get_block_height();
+    }
 
-        {
-            std::lock_guard<std::mutex> lck(m_mgr_mutex);
-            m_txmgr_table.clear_expired_txs();
-        }
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        m_txmgr_table.clear_expired_txs();
     }
 
     uint64_t left_end = 0;
