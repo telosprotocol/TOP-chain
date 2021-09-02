@@ -289,14 +289,14 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
             }
 
             xlightunit_action_t txaction(action);
-            tx_info_t txinfo(_unit_header->get_account(), txaction.get_tx_hash_256(), txaction.get_tx_subtype());
-            uint64_t txnonce = 0;
-            xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
-            if (_rawtx != nullptr) {
-                txnonce = _rawtx->get_tx_nonce();
-            }
-
             if (update_txmgr) {
+                tx_info_t txinfo(_unit_header->get_account(), txaction.get_tx_hash_256(), txaction.get_tx_subtype());
+                uint64_t txnonce = 0;
+                xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
+                if (_rawtx != nullptr) {
+                    txnonce = _rawtx->get_tx_nonce();
+                }
+
                 update_id_state_para_vec.push_back(update_id_state_para(txinfo, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce));
             }
 
@@ -372,26 +372,30 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
 }
 
 void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
-    base::xvaccount_t _vaddr(m_xtable_info.get_table_addr());
-    auto latest_committed_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr, metrics::blockstore_access_from_txpool_refresh_table);
-    base::xauto_ptr<base::xvbstate_t> bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_committed_block.get(), metrics::statestore_access_from_txpool_refreshtable);
-    if (bstate == nullptr) {
-        xtxpool_warn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), latest_committed_block->dump().c_str());
-        return;
+    auto latest_committed_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(m_xtable_info, metrics::blockstore_access_from_txpool_refresh_table);
+    xtxpool_dbg("xtxpool_table_t::refresh_table begin table:%s,commit_height:%llu", m_xtable_info.get_account().c_str(), latest_committed_block->get_height());
+
+    uint64_t old_state_height = m_table_state_cache.get_state_height();
+    uint64_t new_state_height = old_state_height;
+    if (old_state_height < latest_committed_block()->get_height()) {
+        base::xauto_ptr<base::xvbstate_t> bstate =
+            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_committed_block.get(), metrics::statestore_access_from_txpool_refreshtable);
+        if (bstate == nullptr) {
+            xtxpool_warn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), latest_committed_block->dump().c_str());
+            return;
+        }
+        xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());    
+        update_table_state(tablestate);
+        new_state_height = tablestate->get_block_height();
+
+        {
+            std::lock_guard<std::mutex> lck(m_mgr_mutex);
+            m_txmgr_table.clear_expired_txs();
+        }
     }
 
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-    xtxpool_info("xtxpool_table_t::refresh_table table:%s height:%llu", tablestate->get_account().c_str(), tablestate->get_block_height());
-    update_table_state(tablestate);
-
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        m_txmgr_table.clear_expired_txs();
-    }
-
-    uint64_t left_end;
-    uint64_t right_end;
+    uint64_t left_end = 0;
+    uint64_t right_end = 0;
     bool ret = m_unconfirm_id_height.get_lacking_section(left_end, right_end, load_table_block_num_max);
     if (ret) {
         uint64_t load_height_max = right_end;
@@ -401,7 +405,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                 xtxpool_warn("xtxpool_table_t::refresh_table load commit block fail,table:%s", m_xtable_info.get_account().c_str());
                 return;
             }
-            m_para->get_vblockstore()->load_block_input(latest_committed_block->get_account(), latest_committed_block.get());
+            // m_para->get_vblockstore()->load_block_input(latest_committed_block->get_account(), latest_committed_block.get(), metrics::blockstore_access_from_txpool_refresh_table);
             deal_commit_table_block(dynamic_cast<xblock_t *>(latest_committed_block.get()), false);
             load_height_max = latest_committed_block->get_height() - 1;
             load_height_min = (load_height_max >= load_table_block_num_max) ? (load_height_max + 1 - load_table_block_num_max) : 1;
@@ -412,7 +416,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                 m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_refresh_table);
 
             if (commit_block != nullptr) {
-                m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
+                // m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get(), metrics::blockstore_access_from_txpool_refresh_table);
                 deal_commit_table_block(dynamic_cast<xblock_t *>(commit_block.get()), false);
             } else {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
@@ -426,6 +430,8 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
             }
         }
     }
+    xtxpool_info("xtxpool_table_t::refresh_table finish table:%s,old_state_height:%llu,new_state_height=%llu,get_lacking_ret=%d,left_end=%ld,right_end=%ld", 
+        m_xtable_info.get_account().c_str(), old_state_height, new_state_height, ret, left_end, right_end);
 }
 
 // void xtxpool_table_t::update_non_ready_accounts() {
