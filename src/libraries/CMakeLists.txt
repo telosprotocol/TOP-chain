@@ -1,6 +1,7 @@
 add_compile_options(-static)
 
 add_subdirectory(xapplication)
+add_subdirectory(xpara_proxy)
 add_subdirectory(xelect)
 add_subdirectory(xvnode)
 add_subdirectory(xchaininit)
