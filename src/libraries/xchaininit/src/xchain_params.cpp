@@ -93,7 +93,6 @@ void xchain_params::load_platform_config() {
     platform_params.public_endpoints = XGET_CONFIG(platform_public_endpoints);
     platform_params.url_endpoints = XGET_CONFIG(platform_url_endpoints);
     platform_params.show_cmd = XGET_CONFIG(platform_show_cmd);
-    platform_params.db_path = XGET_CONFIG(platform_db_path);
 }
 
 int xchain_params::get_uuid(std::string& uuid) {

@@ -362,7 +362,6 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     config_center.set("datadir", datadir);
     config_center.set(config::xdb_path_configuration_t::name, chain_db_path);
     config_center.set(config::xlog_path_configuration_t::name, log_path);
-    config_center.set(config::xplatform_db_path_configuration_t::name, chain_db_path);
 
     uint16_t net_port = 0;
     config_center.get<uint16_t>("net_port", net_port);
