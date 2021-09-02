@@ -28,6 +28,7 @@
 #include <unordered_map>
 
 NS_BEG2(top, contract_runtime)
+using block_sniff_func = std::function<bool(xobject_ptr_t<base::xvblock_t>)>;
 
 class xtop_block_sniff_config {
     using data_type = std::unordered_map<common::xaccount_address_t, std::function<bool(xobject_ptr_t<base::xvblock_t>)>>;
