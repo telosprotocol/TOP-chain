@@ -64,8 +64,6 @@ public:
     std::string action_name() const;
     data::enum_xaction_type action_type() const;
     xbyte_buffer_t action_data() const;
-private:
-    const 
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;
 
