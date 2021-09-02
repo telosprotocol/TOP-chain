@@ -313,11 +313,6 @@ bool xtop_application::create_genesis_account(std::string const & address, uint6
         xerror("xtop_application::create_genesis_account store genesis block fail");
         return false;
     }
-    ret = m_blockstore->execute_block(_vaddr, genesis_block.get());
-    if (!ret) {
-        xerror("xtop_application::create_genesis_account execute genesis block fail");
-        return false;
-    }
     return true;
 }
 
@@ -342,11 +337,6 @@ bool xtop_application::create_genesis_account(std::string const & address, chain
     auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
     if (!ret) {
         xerror("xtop_application::create_genesis_account store genesis block fail");
-        return false;
-    }
-    ret = m_blockstore->execute_block(_vaddr, genesis_block.get());
-    if (!ret) {
-        xerror("xtop_application::create_genesis_account execute genesis block fail");
         return false;
     }
     return true;

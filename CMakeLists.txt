@@ -310,6 +310,9 @@ if (XENABLE_MEMCHECK_DBG)
 endif()
 
 if (STATIC_CONSENSUS)
+    if (NOT XENABLE_MOCK_ZEC_STAKE)
+        message(FATAL_ERROR "should define mock_stake_zec before static_consensus")
+    endif()
     add_definitions(-DSTATIC_CONSENSUS)
 endif()
 
@@ -318,6 +321,13 @@ if (ELECT_WHEREAFTER)
         message(FATAL_ERROR "should define static_consensus before elect_whereafter")
     endif()
     add_definitions(-DELECT_WHEREAFTER)
+endif()
+
+if (CONSENSUS_SWAP)
+    if (NOT ELECT_WHEREAFTER)
+        message(FATAL_ERROR "should define elect_whereafter before consensus_swap")
+    endif()
+    add_definitions(-DCONSENSUS_SWAP)
 endif()
 
 if (NO_TX_BATCH)
