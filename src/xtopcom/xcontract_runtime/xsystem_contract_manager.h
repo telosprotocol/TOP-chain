@@ -54,13 +54,6 @@ public:
 
     explicit xtop_system_contract_manager(observer_ptr<base::xvblockstore_t> const & blockstore);
 
-    /**
-     * @brief get an instance
-     *
-     * @return xtop_system_contract_manager&
-     */
-    static xtop_system_contract_manager& instance();
-    // void initialize(base::xvblockstore_t* blockstore);
     void deploy();
     void setup(base::xvblockstore_t * blockstore);
 private:

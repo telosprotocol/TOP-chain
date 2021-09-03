@@ -10,11 +10,14 @@
 
 NS_BEG2(top, contract_common)
 
-xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const& account, xcontract_type_t type): m_type(type), m_account(account) {}
+xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const& account, xcontract_type_t type)
+    : m_type(type), m_account(account) {
+}
 
-xtop_basic_contract::xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context) :
-                                m_associated_execution_context(exec_context), m_state(exec_context->contract_state()), m_contract_meta(exec_context->contract_address()) {
-
+xtop_basic_contract::xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context)
+    : m_associated_execution_context(exec_context)
+    , m_state(exec_context->contract_state())
+    , m_contract_meta(exec_context->contract_address()) {
 }
 
 common::xaccount_address_t xtop_basic_contract::address() const {
@@ -27,10 +30,6 @@ xcontract_type_t xtop_basic_contract::type() const {
 
 observer_ptr<xcontract_state_t> const & xtop_basic_contract::state() const noexcept {
     return m_state;
-}
-
-void xtop_basic_contract::state(observer_ptr<xcontract_state_t> const& state) noexcept {
-    m_state = state;
 }
 
 common::xaccount_address_t xtop_basic_contract::sender() const {

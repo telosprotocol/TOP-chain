@@ -16,6 +16,8 @@ NS_BEG2(top, contract_common)
 struct xtop_contract_execution_output {
     std::map<std::string, xbyte_buffer_t> receipt_data;
     std::vector<xfollowup_transaction_datum_t> followup_transaction_data;
+    std::string binlog;
+    std::string contract_state_snapshot;
 };
 using xcontract_execution_output_t = xtop_contract_execution_output;
 

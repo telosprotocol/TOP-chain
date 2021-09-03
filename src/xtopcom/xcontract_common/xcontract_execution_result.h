@@ -12,8 +12,6 @@ NS_BEG2(top, contract_common)
 struct xtop_contract_execution_result {
     xcontract_execution_status_t status;
     xcontract_execution_output_t output;
-    std::string binlog;
-    std::string fullstate_log;
 };
 using xcontract_execution_result_t = xtop_contract_execution_result;
 

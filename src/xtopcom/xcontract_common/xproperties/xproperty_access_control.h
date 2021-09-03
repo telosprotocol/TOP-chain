@@ -432,8 +432,9 @@ public:
 
     bool read_permitted(common::xaccount_address_t const & reader, std::string const & property_full_name) const noexcept;
 
-    std::string binlog() const noexcept;
-    std::string fullstate_bin() const noexcept;
+    std::string binlog(std::error_code & ec) const;
+    std::string binlog() const;
+    std::string fullstate_bin() const;
 
 };
 using xproperty_access_control_t = xtop_property_access_control;

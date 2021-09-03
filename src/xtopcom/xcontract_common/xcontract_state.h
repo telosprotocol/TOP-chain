@@ -72,6 +72,7 @@ public:
     void deploy_bin_code(xbyte_buffer_t bin_code, std::error_code & ec);
     void deploy_bin_code(xbyte_buffer_t bin_code);
 
+    std::string binlog(std::error_code & ec) const;
     std::string binlog() const;
     std::string fullstate_bin() const;
 

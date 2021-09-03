@@ -43,6 +43,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::deploy_code_failed:
         return "deploy code failed";
 
+    case xerrc_t::get_binlog_failed:
+        return "canvas encode binlog failed";
+
     default:
         return "unknown contract runtime error";
     }

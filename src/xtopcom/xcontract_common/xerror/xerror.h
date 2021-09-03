@@ -26,6 +26,7 @@ enum class xenum_errc {
     account_not_matched,
     token_not_enough,
     deploy_code_failed,
+    get_binlog_failed,
     unknown_error,
 };
 using xerrc_t = xenum_errc;

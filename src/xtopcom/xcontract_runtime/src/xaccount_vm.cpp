@@ -17,6 +17,10 @@
 
 NS_BEG2(top, contract_runtime)
 
+xtop_account_vm::xtop_account_vm(observer_ptr<xsystem_contract_manager_t> const & system_contract_manager)
+  : sys_action_runtime_{ top::make_unique<system::xsystem_action_runtime_t>(system_contract_manager) } {
+}
+
 xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) {
     xaccount_vm_execution_result_t result;
     result.transaction_results.reserve(txs.size());
@@ -29,40 +33,34 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     try {
         for (i = 0u; i < actions.size(); ++i) {
             switch (actions[i].type()) {
-                case data::xtop_action_type_t::system:
-                {
-                    auto const& action = dynamic_cast<data::xconsensus_action_t<data::xtop_action_type_t::system> const&>(actions[i]);
-                    contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
-                    result.transaction_results[i] = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
-                    break;
-                }
+            case data::xtop_action_type_t::system:
+            {
+                auto const & action = dynamic_cast<data::xsystem_consensus_action_t const &>(actions[i]);
+                contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
+                result.transaction_results[i] = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
+                break;
+            }
 
-                case data::xtop_action_type_t::user:
-                {
-                    auto const & action = dynamic_cast<data::xconsensus_action_t<data::xtop_action_type_t::user> const &>(actions[i]);
-                    contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
-                    result.transaction_results[i] = user_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
-                    break;
-                }
+            case data::xtop_action_type_t::user:
+            {
+                auto const & action = dynamic_cast<data::xuser_consensus_action_t const &>(actions[i]);
+                contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
+                result.transaction_results[i] = user_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
+                break;
+            }
 
-                case data::xtop_action_type_t::kernel:
-                {
-                    // TODO: in fact, we don't have kernel actions. this is just a placeholder.
-                    break;
-                }
+            case data::xtop_action_type_t::event:
+            {
+                // TODO: we don't have event action either. this is just a placeholder.
+                break;
+            }
 
-                case data::xtop_action_type_t::event:
-                {
-                    // TODO: we don't have event action either. this is just a placeholder.
-                    break;
-                }
-
-                default:
-                {
-                    assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
-                    result.status.ec = error::xerrc_t::invalid_contract_type;
-                    break;
-                }
+            default:
+            {
+                assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
+                result.status.ec = error::xerrc_t::invalid_contract_type;
+                break;
+            }
             }
 
             if (result.transaction_results[i].status.ec) {

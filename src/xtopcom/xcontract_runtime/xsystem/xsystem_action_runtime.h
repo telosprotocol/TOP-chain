@@ -4,22 +4,29 @@
 
 #pragma once
 
+#include "xbasic/xmemory.hpp"
 #include "xcontract_runtime/xaction_runtime.h"
+#include "xcontract_runtime/xsystem_contract_manager.h"
 #include "xdata/xconsensus_action.h"
 
 NS_BEG2(top, contract_runtime)
 
 template <>
-class xtop_action_runtime<data::xconsensus_action_t<data::xtop_action_type_t::system>> {
+class xtop_action_runtime<data::xsystem_consensus_action_t> {
+private:
+    observer_ptr<xsystem_contract_manager_t> system_contract_manager_;
+
 public:
-    xtop_action_runtime() = default;
+    // xtop_action_runtime() = default;
     xtop_action_runtime(xtop_action_runtime const &) = delete;
     xtop_action_runtime & operator=(xtop_action_runtime const &) = delete;
     xtop_action_runtime(xtop_action_runtime &&) = default;
     xtop_action_runtime & operator=(xtop_action_runtime &&) = default;
     ~xtop_action_runtime() = default;
 
-    std::unique_ptr<xaction_session_t<data::xconsensus_action_t<data::xtop_action_type_t::system>>> new_session(observer_ptr<contract_common::xcontract_state_t> contract_state);
+    explicit xtop_action_runtime(observer_ptr<xsystem_contract_manager_t> const & system_contract_manager) noexcept;
+
+    std::unique_ptr<xaction_session_t<data::xsystem_consensus_action_t>> new_session(observer_ptr<contract_common::xcontract_state_t> contract_state);
 
     xtransaction_execution_result_t execute(observer_ptr<contract_common::xcontract_execution_context_t> tx_ctx);
 };
