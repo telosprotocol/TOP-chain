@@ -63,10 +63,11 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_blockstore.attach(store::get_vblockstore());
 
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
-        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
+        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()),
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
 
+    m_sys_contract_mgr = top::make_unique<contract_runtime::xsystem_contract_manager_t>(make_observer(m_blockstore.get()));
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
 #ifdef MOCK_CA
     m_cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
@@ -85,6 +86,8 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().register_address();
+
+    m_sys_contract_mgr->deploy();
 
     // create all genesis block in one interface
     std::error_code ec;

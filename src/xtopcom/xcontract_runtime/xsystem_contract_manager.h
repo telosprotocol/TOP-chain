@@ -42,7 +42,7 @@ class xtop_system_contract_manager {
     using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
-    // base::xvblockstore_t* m_blockstore;
+    observer_ptr<base::xvblockstore_t> m_blockstore;
 
 public:
     xtop_system_contract_manager() = default;
@@ -52,12 +52,15 @@ public:
     xtop_system_contract_manager & operator=(xtop_system_contract_manager &&) = default;
     ~xtop_system_contract_manager() = default;
 
+    explicit xtop_system_contract_manager(observer_ptr<base::xvblockstore_t> const & blockstore);
+
     /**
      * @brief get an instance
      *
      * @return xtop_system_contract_manager&
      */
-    static xtop_system_contract_manager & instance();
+    static xtop_system_contract_manager& instance();
+    // void initialize(base::xvblockstore_t* blockstore);
     void deploy();
     void setup(base::xvblockstore_t * blockstore);
 private:
