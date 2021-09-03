@@ -1,3 +1,4 @@
+#include <iostream>
 #include "xcontract_common/xcontract_api_params.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 #include "xbase/xutl.h"

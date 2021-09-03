@@ -35,14 +35,6 @@
 
 NS_BEG2(top, contract_runtime)
 
-static auto _ = []() -> std::unique_ptr<xsystem_contract_manager_t> {
-    std::unique_ptr<xsystem_contract_manager_t> system_contract_manager{top::make_unique<xsystem_contract_manager_t>()};
-    system_contract_manager->deploy();
-    return system_contract_manager;
-};
-
-static auto x = _();
-
 class xtop_account_vm : public xvm_executor_face_t {
 private:
     std::unique_ptr<user::xuser_action_runtime_t> user_action_runtime_{ top::make_unique<user::xuser_action_runtime_t>() };
