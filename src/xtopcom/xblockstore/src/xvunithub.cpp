@@ -966,7 +966,21 @@ namespace top
             XMETRICS_GAUGE(metrics::blockstore_load_block_index, 1);
             return account_obj->load_index(height,required_block,atag);
         }
-
+    
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_latest_committed_index(const base::xvaccount_t & account,const int atag)//just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            XMETRICS_GAUGE(metrics::blockstore_load_block_index, 1);
+            return account_obj->load_latest_committed_index();
+        }
+        
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_latest_connected_index(const base::xvaccount_t & account,const int atag)//just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            XMETRICS_GAUGE(metrics::blockstore_load_block_index, 1);
+            return account_obj->load_latest_connected_index();
+        }
+ 
         //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
         bool                xvblockstore_impl::clean_caches(const base::xvaccount_t & account,const int atag)
         {

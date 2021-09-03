@@ -118,6 +118,9 @@ namespace top
             virtual base::xauto_ptr<base::xvbindex_t>  load_block_index(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvbindex_t>  load_block_index(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvbindex_t>  load_block_index(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,const int atag = 0) override;//just return the highest viewid of matched flag
+            
+            virtual base::xauto_ptr<base::xvbindex_t> load_latest_committed_index(const base::xvaccount_t & account,const int atag = 0)  override;//block with committed status
+            virtual base::xauto_ptr<base::xvbindex_t> load_latest_connected_index(const base::xvaccount_t & account,const int atag = 0)  override;
 
         public:
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account

@@ -208,6 +208,9 @@ namespace top
             virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
             virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block,const int atag = 0) = 0;//just return the highest viewid of matched flag
 
+            virtual xauto_ptr<xvbindex_t> load_latest_committed_index(const xvaccount_t & account,const int atag = 0)  = 0;//block with committed status
+            virtual xauto_ptr<xvbindex_t> load_latest_connected_index(const xvaccount_t & account,const int atag = 0)  = 0;
+            
         public:
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
             virtual bool                  clean_caches(const xvaccount_t & account,const int atag = 0) = 0;
