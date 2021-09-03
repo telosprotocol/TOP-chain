@@ -7,6 +7,7 @@
 #include "xloader/xconfig_offchain_loader.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xmetrics/xmetrics.h"
+#include "xconfig/xchain_names.h"
 
 #include "xpara_proxy/xpara_proxy.h"
 
@@ -89,6 +90,16 @@ int para_proxy_chain_init(const std::string& config_file, const std::string& con
 #endif
 
     config_center.dump();
+
+
+    auto const chain_name = XGET_CONFIG(chain_name);
+    uint32_t chain_id;
+    if (!config_center.get("chain_id", chain_id)) {
+        assert(0);
+    }
+    // uint32_t chain_id = std::atoi(chain_id_str.c_str());
+    assert(chain_id != base::enum_main_chain_id && chain_id != base::enum_test_chain_id);
+    config::set_chain_name_id(chain_name, chain_id);
 
     auto const log_level = XGET_CONFIG(log_level);
     auto const log_path = XGET_CONFIG(log_path);
