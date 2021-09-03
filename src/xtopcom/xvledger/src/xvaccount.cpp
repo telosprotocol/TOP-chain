@@ -53,6 +53,30 @@ namespace top
         {
             XMETRICS_GAUGE(metrics::dataobject_xvaccount, -1);
         }
+    
+        bool  xvaccount_t::is_unit_address() const
+        {
+            if(   (get_addr_type() == enum_vaccount_addr_type_secp256k1_eth_user_account)
+               || (get_addr_type() == enum_vaccount_addr_type_secp256k1_user_account) )
+            {
+                if(m_account_addr.size() >= 25) //unit address must be full address
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    
+        bool  xvaccount_t::is_table_address() const
+        {
+            if(  (get_addr_type() == enum_vaccount_addr_type_block_contract)
+               &&(m_account_addr.size() <= 10) ) //table address must like "Ta0000@255"
+            {
+                return true;
+            }
+            return false;
+        }
+
         
         xvactmeta_t*  xvactmeta_t::load(const std::string & meta_serialized_data)
         {

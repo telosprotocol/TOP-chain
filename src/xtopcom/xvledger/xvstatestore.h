@@ -43,12 +43,15 @@ namespace top
             virtual bool                  execute_block(xvblock_t * target_block, const int etag=0);
 
             xauto_ptr<xvbstate_t>         get_unit_block_state(xvblock_t * target_block, const int etag);
+            xauto_ptr<xvbstate_t>         get_unit_block_state(const xvaccount_t & target_account,const uint64_t  target_block_height,const std::string & target_block_hash,const int etag);
+            
         private: //unit only
             bool                      write_unit_state_to_db(xvbstate_t & target_state,const xvaccount_t & target_account);
             xvbstate_t*               read_unit_state_from_db(const xvaccount_t & target_account);
             bool                      load_unit_latest_blocks_and_base_state(const xvaccount_t & target_account, xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
             xauto_ptr<xvbstate_t>     execute_unit_target_block(const xvaccount_t & target_account, const xobject_ptr_t<xvbstate_t> & db_base_bstate, xvblock_t * target_block);
             
+            xauto_ptr<xvbstate_t>     get_block_state_internal(const xvaccount_t & target_account,const uint64_t  target_block_height,const std::string & target_block_hash,enum_xvblock_level target_block_level,const int etag);
         private:
             bool                      write_state_to_db(xvbstate_t & target_state,const std::string & target_block_hash);
 
@@ -62,7 +65,7 @@ namespace top
             bool                      delete_states_of_db(const xvaccount_t & target_account,const uint64_t block_height);
 
             bool                      load_latest_blocks_and_state(xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
-            xobject_ptr_t<xvbstate_t> rebuild_bstate(const xvaccount_t & target_account, xobject_ptr_t<xvbstate_t> & base_state, const std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
+            xobject_ptr_t<xvbstate_t> rebuild_bstate(const xvaccount_t & target_account,xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_state, const std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
             xobject_ptr_t<xvbstate_t> make_state_from_current_block(const xvaccount_t & target_account, xvblock_t * current_block);
             void                      clear_persisted_state(xvblock_t * target_block);
             xauto_ptr<xvbstate_t>     execute_target_block(const xvaccount_t & target_account, xvblock_t * target_block);

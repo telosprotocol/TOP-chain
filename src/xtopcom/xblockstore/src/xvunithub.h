@@ -81,9 +81,12 @@ namespace top
             virtual uint64_t get_latest_full_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_committed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual bool     get_latest_connected_block(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag = 0) override;
+            
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
-            virtual bool     set_unit_latest_executed_block_height(const base::xvaccount_t & account,const uint64_t new_height,const int atag = 0) override;
+            virtual bool     get_latest_executed_block(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag = 0) override;
+            virtual bool     set_unit_latest_executed_block(const base::xvaccount_t & account,const uint64_t new_height,const std::string & new_block_hash,const int atag = 0) override;
             
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xblock_vector               load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag = 0) override;

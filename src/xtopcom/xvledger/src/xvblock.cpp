@@ -24,7 +24,7 @@ namespace top
         {
             XMETRICS_GAUGE(metrics::dataobject_xvheader, 1);
             m_types     = 0;
-            m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
+            m_versions  = (1 << 16) | (1 << 8);//[8:features][8:major][8:minor][8:patch]
             m_chainid   = 0;
             m_height    = 0;
             m_weight    = 1;
@@ -36,7 +36,7 @@ namespace top
         {
             XMETRICS_GAUGE(metrics::dataobject_xvheader, 1);
             m_types     = 0;
-            m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
+            m_versions  = (1 << 16) | (1 << 8);//[8:features][8:major][8:minor][8:patch]
             m_chainid   = 0;
             m_height    = 0;
             m_weight    = 1;

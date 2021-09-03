@@ -415,7 +415,23 @@ namespace top
             }
             return 0;
         }
-
+    
+        bool     xvblockstore_impl::get_latest_connected_block(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            XMETRICS_GAUGE(metrics::blockstore_get_latest_connected_block_height, 1);
+            // XTODO use load_latest_connected_index for invoke update meta
+            base::xauto_ptr<base::xvbindex_t> _bindex = account_obj->load_latest_connected_index();
+            if (_bindex != nullptr)
+            {
+                block_height = _bindex->get_height();
+                block_hash   = _bindex->get_block_hash();
+                return true;
+            }
+            return false;
+        }
+     
         uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
@@ -432,12 +448,20 @@ namespace top
             return account_obj->get_latest_executed_block_height();
         }
     
-        bool   xvblockstore_impl::set_unit_latest_executed_block_height(const base::xvaccount_t & account,const uint64_t new_height,const int atag)
+        bool    xvblockstore_impl::get_latest_executed_block(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             XMETRICS_GAUGE(metrics::blockstore_get_latest_executed_block_height, 1);
-            return account_obj->set_unit_latest_executed_block_height(new_height);
+            return account_obj->get_latest_executed_block(block_height,block_hash);
+        }
+    
+        bool   xvblockstore_impl::set_unit_latest_executed_block(const base::xvaccount_t & account,const uint64_t new_height,const std::string & new_block_hash,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            XMETRICS_GAUGE(metrics::blockstore_get_latest_executed_block_height, 1);
+            return account_obj->set_unit_latest_executed_block(new_height,new_block_hash);
         }
 
         //one api to get latest_commit/latest_lock/latest_cert for better performance

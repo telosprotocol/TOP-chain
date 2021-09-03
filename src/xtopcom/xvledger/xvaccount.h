@@ -403,7 +403,8 @@ namespace top
             inline const std::string&   get_address() const {return m_account_addr;}
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
-            
+            bool                        is_unit_address() const;
+            bool                        is_table_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;

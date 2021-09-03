@@ -935,6 +935,7 @@ namespace top
             
             m_block_height = for_block.get_height();
             m_block_viewid = for_block.get_viewid();
+            m_block_hash   = for_block.get_block_hash();
             
             m_last_block_hash = for_block.get_last_block_hash();
             m_last_full_block_hash = for_block.get_last_full_block_hash();
@@ -959,6 +960,7 @@ namespace top
             
             m_block_height = for_block.get_height();
             m_block_viewid = for_block.get_viewid();
+            m_block_hash   = for_block.get_block_hash();
             
             m_last_block_hash = for_block.get_last_block_hash();
             m_last_full_block_hash = for_block.get_last_full_block_hash();
@@ -985,6 +987,7 @@ namespace top
             
             m_block_height = proposal_header.get_height();
             m_block_viewid = viewid;
+            m_block_hash   = std::string();//proposal block dont have block hash yet
             
             m_last_block_hash = proposal_header.get_last_block_hash();
             m_last_full_block_hash = proposal_header.get_last_full_block_hash();
@@ -1012,6 +1015,7 @@ namespace top
             m_block_height = proposal_header.get_height();
             xassert(m_block_height == 0); // it must be genesis block
             m_block_viewid = 0;
+            m_block_hash   = std::string();//proposal block dont have block hash yet
             
             m_last_block_hash = proposal_header.get_last_block_hash();
             m_last_full_block_hash = proposal_header.get_last_full_block_hash();
@@ -1027,7 +1031,7 @@ namespace top
         }
         
         //debug & ut-test only
-        xvbstate_t::xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit)
+        xvbstate_t::xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string block_hash,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit)
             :xvexestate_t(account,(enum_xdata_type)enum_xobject_type_vbstate)
         {
             XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
@@ -1037,6 +1041,7 @@ namespace top
             
             m_block_height = block_height;
             m_block_viewid = block_viewid;
+            m_block_hash   = block_hash;
             
             m_last_block_hash = last_block_hash;
             m_last_full_block_hash = last_full_block_hash;
@@ -1059,6 +1064,7 @@ namespace top
             
             m_block_height = obj.m_block_height;
             m_block_viewid = obj.m_block_viewid;
+            m_block_hash   = obj.m_block_hash;
             
             m_last_block_hash = obj.m_last_block_hash;
             m_last_full_block_hash = obj.m_last_full_block_hash;
@@ -1086,8 +1092,8 @@ namespace top
         std::string xvbstate_t::dump() const
         {
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{xvbstate:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 "}",
-             get_account().c_str(),get_block_height(),get_block_viewid());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvbstate:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",hash=%s}",
+             get_account().c_str(),get_block_height(),get_block_viewid(),xstring_utl::to_hex(get_block_hash()).c_str());
             return std::string(local_param_buf);
         }
         
@@ -1132,6 +1138,12 @@ namespace top
             stream.write_tiny_string(m_last_full_block_hash);
             
             xvexestate_t::do_write(stream);
+            
+            if( (m_block_height != 0) //not affect genesis block
+               && (xvheader_t::cal_block_version_major(m_block_versions) > 0) )//new state version
+            {
+                stream.write_tiny_string(m_block_hash);
+            }
             return (stream.size() - begin_size);
         }
         
@@ -1156,6 +1168,17 @@ namespace top
             //set unit name immidiately after read them
             set_unit_name(make_unit_name(account_addr,m_block_height));
             xvexestate_t::do_read(stream);
+            
+            if( (m_block_height != 0)//not affect genesis block
+                && (xvheader_t::cal_block_version_major(m_block_versions) > 0) )//new state version
+            {
+                stream.read_tiny_string(m_block_hash);
+            }
+            else //old version
+            {
+                m_block_hash.clear();
+            }
+            
             return (begin_size - stream.size());
         }
     
