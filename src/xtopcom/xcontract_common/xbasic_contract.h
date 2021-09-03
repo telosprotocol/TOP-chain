@@ -42,6 +42,7 @@ public:
     ~xtop_basic_contract() override = default;
 
     xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
+    xcontract_execution_result_t execute(observer_ptr<xcontract_execution_context_t> exe_ctx);
     common::xaccount_address_t address() const override final;
     common::xaccount_address_t sender() const override final;
     common::xaccount_address_t recver() const override final;
