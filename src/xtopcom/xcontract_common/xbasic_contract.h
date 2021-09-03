@@ -46,7 +46,6 @@ public:
     common::xaccount_address_t sender() const override final;
     common::xaccount_address_t recver() const override final;
     observer_ptr<xcontract_state_t> const & state() const noexcept;
-    void state(observer_ptr<xcontract_state_t> const& state) noexcept;
     xcontract_type_t type() const;
 
 protected:

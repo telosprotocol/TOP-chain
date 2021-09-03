@@ -17,21 +17,22 @@
 
 NS_BEG2(top, contract_runtime)
 
-using xsystem_consensus_action_t = data::xconsensus_action_t<data::xtop_action_type_t::system>;
-
-std::unique_ptr<xaction_session_t<xsystem_consensus_action_t>> xtop_action_runtime<xsystem_consensus_action_t>::new_session(observer_ptr<contract_common::xcontract_state_t> contract_state) {
-    return top::make_unique<xaction_session_t<xsystem_consensus_action_t>>(top::make_observer(this), contract_state);
+xtop_action_runtime<data::xsystem_consensus_action_t>::xtop_action_runtime(observer_ptr<xsystem_contract_manager_t> const & system_contract_manager) noexcept
+  : system_contract_manager_{system_contract_manager} {
 }
 
-xtransaction_execution_result_t xtop_action_runtime<xsystem_consensus_action_t>::execute(observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
+std::unique_ptr<xaction_session_t<data::xsystem_consensus_action_t>> xtop_action_runtime<data::xsystem_consensus_action_t>::new_session(observer_ptr<contract_common::xcontract_state_t> contract_state) {
+    return top::make_unique<xaction_session_t<data::xsystem_consensus_action_t>>(top::make_observer(this), contract_state);
+}
+
+xtransaction_execution_result_t xtop_action_runtime<data::xsystem_consensus_action_t>::execute(observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
     xtransaction_execution_result_t result;
 
     try {
-        // auto system_contract = xsystem_contract_manager_t::instance().system_contract(exe_ctx->contract_address());
-        system_contracts::xbasic_system_contract_t* transfer_contract = new system_contracts::xtop_transfer_contract(exe_ctx);
-        result = transfer_contract->execute(exe_ctx);
-        result.binlog = exe_ctx->contract_state()->binlog();
-        result.fullstate_log = exe_ctx->contract_state()->fullstate_bin();
+        auto system_contract = system_contract_manager_->system_contract(exe_ctx->contract_address());
+        result = system_contract->execute(exe_ctx);
+        // result.binlog = exe_ctx->contract_state()->binlog();
+        // result.fullstate_log = exe_ctx->contract_state()->fullstate_bin();
 
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();

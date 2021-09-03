@@ -407,14 +407,24 @@ void xtop_property_access_control::load_access_control_data(xproperty_access_con
     ac_data_ = data;
 }
 
+std::string xtop_property_access_control::binlog(std::error_code & ec) const {
+    std::string r;
+    assert(canvas_ != nullptr);
+    if (canvas_->encode(r)) {
+        ec = error::xerrc_t::get_binlog_failed;
+    }
 
-std::string xtop_property_access_control::binlog() const noexcept {
-    std::string binlog;
-    canvas_->encode(binlog);
-    return binlog;
+    return r;
 }
 
-std::string xtop_property_access_control::fullstate_bin() const noexcept {
+std::string xtop_property_access_control::binlog() const {
+    std::error_code ec;
+    auto r = binlog(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+std::string xtop_property_access_control::fullstate_bin() const {
     std::string fullstate_bin;
     bstate_->take_snapshot(fullstate_bin);
     return fullstate_bin;

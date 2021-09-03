@@ -18,6 +18,7 @@ std::string const contract_address = "T00000Li18Pb8WuxQUphZPfmN6QCWTL9kwWPTns1";
 
 class test_system_contract_runtime : public testing::Test {
 protected:
+    std::unique_ptr<top::contract_runtime::xsystem_contract_manager_t> system_contract_manager_{};
     top::xobject_ptr_t<top::base::xvbstate_t> bstate_{};
     std::shared_ptr<top::contract_common::properties::xproperty_access_control_t> property_access_control_{};
     std::shared_ptr<top::contract_common::xcontract_state_t> contract_state_{};
@@ -33,7 +34,7 @@ void test_system_contract_runtime::SetUp()  {
     bstate_.attach(new top::base::xvbstate_t{contract_address, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::contract_common::properties::xproperty_access_control_data_t{});
     contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
-    contract_runtime_ = top::make_unique<top::contract_runtime::system::xsystem_action_runtime_t>();
+    contract_runtime_ = top::make_unique<top::contract_runtime::system::xsystem_action_runtime_t>(top::make_observer(system_contract_manager_.get()));
 }
 
 void test_system_contract_runtime::TearDown() {

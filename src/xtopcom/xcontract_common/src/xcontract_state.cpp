@@ -73,6 +73,11 @@ void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code) {
     top::error::throw_error(ec);
 }
 
+std::string xtop_contract_state::binlog(std::error_code & ec) const {
+    assert(m_ac);
+    return m_ac->binlog(ec);
+}
+
 std::string xtop_contract_state::binlog() const {
     return m_ac->binlog();
 }

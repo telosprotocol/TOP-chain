@@ -149,6 +149,8 @@ public:
 
     xobject_ptr_t<store::xsyncvstore_t> syncstore() const noexcept;
 
+    observer_ptr<contract_runtime::xsystem_contract_manager_t> system_contract_manager() const noexcept;
+
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;
 
