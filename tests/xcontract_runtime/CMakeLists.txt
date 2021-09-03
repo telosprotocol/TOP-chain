@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 add_compile_options(-Wno-unused-parameter)
-aux_source_directory(./src runtime_src)
+aux_source_directory(./src xcontract_runtime_src)
 aux_source_directory(./erc20 erc20_src)
 aux_source_directory(./system_contract  system_contract_src)
 
