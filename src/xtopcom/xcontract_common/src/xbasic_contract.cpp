@@ -20,6 +20,11 @@ xtop_basic_contract::xtop_basic_contract(observer_ptr<contract_common::xcontract
     , m_contract_meta(exec_context->contract_address()) {
 }
 
+xcontract_execution_result_t xtop_basic_contract::execute(observer_ptr<xcontract_execution_context_t> exe_ctx) {
+    // just do nothing
+    return exe_ctx->execution_result();
+}
+
 common::xaccount_address_t xtop_basic_contract::address() const {
     return m_contract_meta.m_account;
 }
