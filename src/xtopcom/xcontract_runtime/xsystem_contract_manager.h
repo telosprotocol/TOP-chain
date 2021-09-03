@@ -35,6 +35,10 @@ class xtop_system_contract_manager {
         contract_deploy_type_t m_deploy_type;
         common::xnode_type_t m_broadcast_target{ common::xnode_type_t::invalid };
         contract_broadcast_policy_t m_broadcast_policy{ contract_broadcast_policy_t::invalid };
+
+        xtop_contract_deployment_data(std::shared_ptr<system_contracts::xbasic_system_contract_t> contract, xblock_sniff_config_t config)
+          : system_contract(contract), sniff_config(std::move(config)) {
+        }
     };
     using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
@@ -72,6 +76,7 @@ private:
 
     bool contains(common::xaccount_address_t const & address) const noexcept;
 
+    bool process_sniff(base::xvblock_ptr_t block);
 };
 using xsystem_contract_manager_t = xtop_system_contract_manager;
 
