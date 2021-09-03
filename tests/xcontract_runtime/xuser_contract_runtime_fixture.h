@@ -1,5 +1,5 @@
 #pragma once
-
+#if 0
 #include "xvledger/xvstate.h"
 #include "xbase/xobject_ptr.h"
 #include "xcontract_runtime/xuser/xuser_action_runtime.h"
@@ -26,3 +26,4 @@ protected:
 };
 
 NS_END3
+#endif
