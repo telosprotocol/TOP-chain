@@ -2397,6 +2397,9 @@ namespace top
         }
         void      xblockacct_t::try_execute_all_block(base::xvblock_t * target_block)
         {
+            xassert(false);
+            return;
+#if 0
             if (m_meta->_highest_execute_block_height >= m_meta->_highest_commit_block_height) {
                 return;
             }
@@ -2409,6 +2412,7 @@ namespace top
             // TODO(jimmy) always try to update table state
             base::auto_reference<base::xvblock_t> auto_hold_block_ptr(target_block);
             base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(target_block, metrics::statestore_access_from_blockstore);
+#endif
         }
 
         //return map sorted by viewid from lower to high,caller respond to release ptr later

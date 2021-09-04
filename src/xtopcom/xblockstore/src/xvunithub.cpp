@@ -8,12 +8,9 @@
 #include "xbase/xthread.h"
 #include "xvunithub.h"
 
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
-#else
-#define METRICS_TAG(tag, val)
-#endif
+
 
 namespace top
 {
@@ -658,12 +655,12 @@ namespace top
                 else
                     container_account->clean_caches(false,true);
             }
-
+#if 0  // TODO(jimmy)
             if(execute_block)
             {
                 container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
             }
-
+#endif
             return true; //still return true since tableblock has been stored successful
         }
 
@@ -675,19 +672,28 @@ namespace top
                 return false;
             }
 
-            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false)
+            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false
+            || (block->get_height() == 0 && block->check_block_flag(base::enum_xvblock_flag_committed) == false))
             {
                 xerror("xvblockstore_impl::store_block,unauthorized block(%s)",block->dump().c_str());
                 return false;
             }
 
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            METRICS_TAG(atag, 1);
-            if(store_block(account_obj,block))
+            bool ret = false;
             {
-                return true;
+                LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+                METRICS_TAG(atag, 1);
+                ret = store_block(account_obj,block);
             }
-            return false;
+
+            // XTODO only tabletable need execute immediately after stored
+            if (block->get_block_level() == base::enum_xvblock_level_table) {
+                // TODO(jimmy) commit tableblock try to update table state
+                base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
+                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+            }
+
+            return ret;
         }
 
         bool                xvblockstore_impl::store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block)
