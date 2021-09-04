@@ -151,7 +151,13 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
             m_tables[zone][i]->add_shard(shard.get());
         }
     }
-    m_statistic.inc_table_num(add_table_num);
+    if (add_table_num > 0) {
+        m_statistic.inc_table_num(add_table_num);
+        {
+            std::lock_guard<std::mutex> lck(m_peer_table_height_cache_mutex);
+            m_peer_table_height_cache.clear();
+        }
+    }
 }
 
 void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
@@ -247,24 +253,24 @@ void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) 
 //     return table->get_unconfirmed_tx(to_table_addr, receipt_id);
 // }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {
     if (!is_table_subscribed(zone, subaddr)) {
         return {};
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(max_num);
+        return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(total_num);
     }
     return {};
 }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {
     if (!is_table_subscribed(zone, subaddr)) {
         return {};
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_confirm_tx_ids(max_num);
+        return m_tables[zone][subaddr]->get_lacking_confirm_tx_ids(total_num);
     }
     return {};
 }
@@ -367,6 +373,26 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
 
 void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     auto peer_sid = receiptid_state->get_self_tableid();
+    auto height = receiptid_state->get_block_height();
+
+    {
+        std::lock_guard<std::mutex> lck(m_peer_table_height_cache_mutex);
+        auto iter = m_peer_table_height_cache.find(peer_sid);
+        if (iter != m_peer_table_height_cache.end()) {
+            if (height <= iter->second) {
+                xdbg("xtxpool_t::update_peer_receipt_id_state peer_sid:%d,height:%llu:%llu already updated", peer_sid, height, iter->second);
+                return;
+            }
+        }
+        m_peer_table_height_cache[peer_sid] = height;
+    }
+
+    base::xtable_index_t peer_table_idx(peer_sid);
+    auto peer_table = m_tables[peer_table_idx.get_zone_index()][peer_table_idx.get_subaddr()];
+    if (peer_table != nullptr) {
+        peer_table->update_receiptid_state(receiptid_state);
+    }
+
     xdbg("xtxpool_t::update_peer_receipt_id_state peer_sid:%d,height:%llu,all_pairs:%s",
          peer_sid,
          receiptid_state->get_block_height(),
@@ -381,6 +407,14 @@ void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t 
             }
         }
     }
+}
+
+std::vector<xcons_transaction_ptr_t> xtxpool_t::get_receipts(uint8_t zone, uint16_t subaddr) {
+    auto table = m_tables[zone][subaddr];
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_receipts();
 }
 
 xcons_transaction_ptr_t xtxpool_t::build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) {

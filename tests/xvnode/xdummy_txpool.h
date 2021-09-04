@@ -28,14 +28,15 @@ public:
     // xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override {return nullptr;}
     xcons_transaction_ptr_t build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) override {return nullptr;}
     xcons_transaction_ptr_t build_confirm_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) override {return nullptr;}
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override {return {};}
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override {return {};}
     // const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override {return false;}
     void print_statistic_values() const override {};
     // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;};
     // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;}
     void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override {}
+    std::vector<xcons_transaction_ptr_t> get_receipts(uint8_t zone, uint16_t subaddr) override {return {};}
 };
 
 using xdummy_txpool_t = xtop_dummy_txpool;

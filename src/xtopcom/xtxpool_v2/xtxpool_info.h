@@ -7,6 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtransaction.h"
 #include "xmetrics/xmetrics.h"
+#include "xtxpool_v2/xreceipt_state_cache.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xverifier_utl.h"
 
@@ -332,8 +333,8 @@ class xtxpool_table_info_t : public base::xvaccount_t {
 public:
     xtxpool_table_info_t() = delete;
     xtxpool_table_info_t(const xtxpool_table_info_t &) = delete;
-    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic, std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
-      : base::xvaccount_t(address), m_statistic(statistic), m_all_table_sids(all_table_sids) {
+    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic, xtable_state_cache_t *table_state_cache, std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
+      : base::xvaccount_t(address), m_statistic(statistic), m_table_state_cache(table_state_cache), m_all_table_sids(all_table_sids) {
         XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, 1);
         m_shards.push_back(shard);
     }
@@ -576,10 +577,15 @@ public:
         return *m_all_table_sids;
     }
 
+    xtable_state_cache_t * get_table_state_cache() {
+        return m_table_state_cache;
+    }
+
 private:
     std::vector<xtxpool_shard_info_t *> m_shards;
     xtx_counter_t m_counter{};
     xtxpool_statistic_t * m_statistic{nullptr};
+    xtable_state_cache_t * m_table_state_cache{nullptr};
     std::set<base::xtable_shortid_t> * m_all_table_sids{nullptr};
     std::set<base::xtable_shortid_t> m_empty{};
 };

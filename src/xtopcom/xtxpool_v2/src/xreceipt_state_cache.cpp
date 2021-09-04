@@ -17,6 +17,10 @@ void xtable_state_cache_t::update(const data::xtablestate_ptr_t & table_state) {
     std::lock_guard<std::mutex> lck(m_mutex);
     m_table_state = table_state;
     m_update_time = xverifier::xtx_utl::get_gmttime_s();
+    xdbg("xtable_state_cache_t::update this:%p,table:%d,id state:%s",
+         this,
+         table_state->get_receiptid_state()->get_self_tableid(),
+         table_state->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
 }
 uint64_t xtable_state_cache_t::get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const {
     auto peer_table_sid = tx->get_tx()->get_peer_tableid();
@@ -32,6 +36,7 @@ uint64_t xtable_state_cache_t::get_confirmid_max(base::xtable_shortid_t peer_tab
         }
     }
     m_table_state->get_receiptid_state()->find_pair(peer_table_sid, receiptid_pair);
+    xdbg("xtable_state_cache_t::get_confirmid_max this:%p,table:%d,peer:%d,id:%llu", this, m_table_state->get_receiptid_state()->get_self_tableid(), peer_table_sid, receiptid_pair.get_confirmid_max());
     return receiptid_pair.get_confirmid_max();
 }
 uint64_t xtable_state_cache_t::get_recvid_max(base::xtable_shortid_t peer_table_sid) const {
@@ -43,6 +48,7 @@ uint64_t xtable_state_cache_t::get_recvid_max(base::xtable_shortid_t peer_table_
         }
     }
     m_table_state->get_receiptid_state()->find_pair(peer_table_sid, receiptid_pair);
+    xdbg("xtable_state_cache_t::get_recvid_max this:%p,table:%d,peer:%d,id:%llu", this, m_table_state->get_receiptid_state()->get_self_tableid(), peer_table_sid, receiptid_pair.get_recvid_max());
     return receiptid_pair.get_recvid_max();
 }
 
@@ -76,9 +82,10 @@ bool xtable_state_cache_t::get_account_index(const std::string & account, base::
 bool xtable_state_cache_t::init_table_state() const {
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_table_account);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(committed_block.get(),metrics::statestore_access_from_txpool_get_accountstate);
+    base::xauto_ptr<base::xvbstate_t> bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(committed_block.get(), metrics::statestore_access_from_txpool_get_accountstate);
     if (bstate == nullptr) {
-        xwarn("xtable_state_cache_t::init_table_state fail-get tablestate. block=%s", committed_block->dump().c_str());
+        xwarn("xtable_state_cache_t::init_table_state fail-get tablestate. this:%p,block=%s", this, committed_block->dump().c_str());
         return false;
     }
 

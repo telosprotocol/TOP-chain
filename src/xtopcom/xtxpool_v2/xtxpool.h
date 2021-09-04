@@ -41,14 +41,15 @@ public:
     // xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
     xcons_transaction_ptr_t build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) override;
     xcons_transaction_ptr_t build_confirm_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) override;
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override;
     // const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
     void print_statistic_values() const override;
     // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override;
+    std::vector<xcons_transaction_ptr_t> get_receipts(uint8_t zone, uint16_t subaddr) override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;
@@ -62,6 +63,8 @@ private:
     mutable std::mutex m_mutex[enum_xtxpool_table_type_max];
     xtxpool_statistic_t m_statistic;
     std::set<base::xtable_shortid_t> m_all_table_sids;
+    std::map<base::xtable_shortid_t, uint64_t> m_peer_table_height_cache;
+    mutable std::mutex m_peer_table_height_cache_mutex;
 };
 
 }  // namespace xtxpool_v2

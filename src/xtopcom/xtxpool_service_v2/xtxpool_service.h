@@ -67,6 +67,7 @@ private:
     // void on_message_pull_recv_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);  // keep it for compatibility
     void on_message_receipt_id_state_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    // void on_message_neighbor_sync_req(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);                        // keep it for compatibility
     bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;  // keep it for compatibility
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
@@ -79,6 +80,7 @@ private:
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
     void send_table_receipt_id_state(uint16_t table_id);
     void drop_msg(vnetwork::xmessage_t const & message, std::string reason);
+    // void send_neighbor_sync_req(base::xtable_shortid_t table_sid);
 
 private:
     xvip2_t m_xip;
@@ -95,6 +97,8 @@ private:
     volatile bool m_running{false};
     std::string m_vnetwork_str;
     std::unordered_map<uint16_t, table_info> m_table_info_cache;
+    uint64_t m_first_elect_height{0};
+    uint64_t m_cur_elect_height{0};
 };
 
 NS_END2

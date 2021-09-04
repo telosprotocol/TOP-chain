@@ -33,8 +33,10 @@ enum enum_txpool_service_msg_type  // under pdu  enum_xpdu_type_consensus
     enum_txpool_service_msg_type_recv_receipt = 2,
 };
 
-// pull 2 for table-table lacking receipts at most. if pull much, a node that newly selected into will pull a large number of receipts.
-#define load_blocks_for_missing_block_event_max (2)
+// pull 5 for table-table lacking receipts at most. if pull much, a node that newly selected into will pull a large number of receipts.
+#define pull_lacking_receipt_num_max (5)
+#define thresold_lacking_receipt_num_to_sync_by_neighbor (15)
+#define neighbor_sync_receipt_num_max (10)
 
 class txpool_receipt_message_para_t : public top::base::xobject_t {
 public:
@@ -60,6 +62,15 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     m_xip = xip;
     m_vnet_driver = vnet_driver;
     m_vnetwork_str = vnet_driver->address().to_string();
+
+    common::xip2_t xip2(m_xip);
+
+    uint64_t elect_height = xip2.height();
+    if (m_first_elect_height == 0) {
+        m_first_elect_height = elect_height;
+    }
+    m_cur_elect_height = elect_height;
+    xdbg("xtxpool_service::set_params node:%s,m_first_elect_height:%llu,m_cur_elect_height:%llu", m_vnetwork_str.c_str(), m_first_elect_height, m_cur_elect_height);
 
     common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
 
@@ -173,6 +184,15 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
     if (!m_running) {
         return;
     }
+
+    if (m_cur_elect_height == m_first_elect_height && m_first_elect_height > 10) {
+        xdbg("xtxpool_service::pull_lacking_receipts new service:%s not pull,m_first_elect_height:%llu,m_cur_elect_height:%llu",
+             m_vnetwork_str.c_str(),
+             m_first_elect_height,
+             m_cur_elect_height);
+        return;
+    }
+
     for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
         if (!xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts(now, table_id, m_node_id)) {
             continue;
@@ -189,11 +209,27 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
 
         std::string self_table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)m_zone_index, table_id);
 
-        uint32_t lacking_confirm_tx_num = 0;
-        auto lacking_confirm_tx_ids = m_para->get_txpool()->get_lacking_confirm_tx_ids(m_zone_index, table_id, load_blocks_for_missing_block_event_max);
+        uint32_t total_lacking_confirm_tx_num = 0;
+        uint32_t total_lacking_recv_tx_num = 0;
+        auto lacking_confirm_tx_ids = m_para->get_txpool()->get_lacking_confirm_tx_ids(m_zone_index, table_id, total_lacking_confirm_tx_num);
+        auto lacking_recv_tx_ids = m_para->get_txpool()->get_lacking_recv_tx_ids(m_zone_index, table_id, total_lacking_recv_tx_num);
+
+        base::xtable_index_t table_idx(m_zone_index, table_id);
+
+        // if (total_lacking_confirm_tx_num + total_lacking_recv_tx_num > thresold_lacking_receipt_num_to_sync_by_neighbor) {
+        //     xwarn("xtxpool_service::pull_lacking_receipts too many lacking receipts:%u, not pull.", total_lacking_confirm_tx_num + total_lacking_recv_tx_num);
+        //     send_neighbor_sync_req(table_idx.to_table_shortid());
+        //     return;
+        // }
+
+        int32_t lacking_confirm_tx_num = 0;
+        // uint32_t left_num = pull_lacking_receipt_num_max;
         for (auto & table_lacking_ids : lacking_confirm_tx_ids) {
-            xreceipt_pull_receipt_t pulled_confirm_receipt(
-                m_vnet_driver->address(), self_table_addr, base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()), table_lacking_ids.get_receipt_ids());
+            xreceipt_pull_receipt_t pulled_confirm_receipt(m_vnet_driver->address(),
+                                                           self_table_addr,
+                                                           base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()),
+                                                           table_lacking_ids.get_receipt_ids(),
+                                                           pull_lacking_receipt_num_max);
             for (auto & receiptid : pulled_confirm_receipt.m_receipt_ids) {
                 xinfo("xtxpool_service::pull_lacking_receipts confirm tx reqnode:%s,table:%s:%s,receiptid:%llu",
                       m_vnetwork_str.c_str(),
@@ -202,9 +238,14 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
                       receiptid);
             }
             send_pull_receipts_of_confirm(pulled_confirm_receipt);
-            lacking_confirm_tx_num += table_lacking_ids.get_receipt_ids().size();
+            lacking_confirm_tx_num += pulled_confirm_receipt.m_receipt_ids.size();
+
+            // if (pulled_confirm_receipt.m_receipt_ids.size() >= left_num) {
+            //     break;
+            // }
+            // left_num -= pulled_confirm_receipt.m_receipt_ids.size();
         }
-        // auto lacking_confirm_tx_hashs = m_para->get_txpool()->get_lacking_confirm_tx_hashs(m_zone_index, table_id, load_blocks_for_missing_block_event_max);
+        // auto lacking_confirm_tx_hashs = m_para->get_txpool()->get_lacking_confirm_tx_hashs(m_zone_index, table_id, pull_lacking_receipt_num_max);
         // for (auto table_lacking_hashs : lacking_confirm_tx_hashs) {
         //     base::xtable_shortid_t peer_sid = table_lacking_hashs.get_peer_sid();
         //     uint16_t peer_zone_id = peer_sid >> 10;
@@ -232,10 +273,13 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         XMETRICS_GAUGE(metrics::txpool_pull_confirm_tx, lacking_confirm_tx_num);
 
         uint32_t lacking_recv_tx_num = 0;
-        auto lacking_recv_tx_ids = m_para->get_txpool()->get_lacking_recv_tx_ids(m_zone_index, table_id, load_blocks_for_missing_block_event_max);
+        // left_num = pull_lacking_receipt_num_max;
         for (auto & table_lacking_ids : lacking_recv_tx_ids) {
-            xreceipt_pull_receipt_t pulled_recv_receipt(
-                m_vnet_driver->address(), base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()), self_table_addr, table_lacking_ids.get_receipt_ids());
+            xreceipt_pull_receipt_t pulled_recv_receipt(m_vnet_driver->address(),
+                                                        base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()),
+                                                        self_table_addr,
+                                                        table_lacking_ids.get_receipt_ids(),
+                                                        pull_lacking_receipt_num_max);
             for (auto & receiptid : pulled_recv_receipt.m_receipt_ids) {
                 xinfo("xtxpool_service::pull_lacking_receipts recv tx reqnode:%s,table:%s:%s,receiptid:%llu",
                       m_vnetwork_str.c_str(),
@@ -244,7 +288,11 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
                       receiptid);
             }
             send_pull_receipts_of_recv(pulled_recv_receipt);
-            lacking_recv_tx_num += table_lacking_ids.get_receipt_ids().size();
+            lacking_recv_tx_num += pulled_recv_receipt.m_receipt_ids.size();
+            // if (pulled_recv_receipt.m_receipt_ids.size() >= left_num) {
+            //     break;
+            // }
+            // left_num -= pulled_recv_receipt.m_receipt_ids.size();
         }
         XMETRICS_GAUGE(metrics::txpool_pull_recv_tx, lacking_recv_tx_num);
     }
@@ -376,6 +424,38 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
     m_para->get_txpool()->push_receipt(tx_ent, false, false);
 }
+
+// void xtxpool_service::on_message_neighbor_sync_req(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
+//     (void)sender;
+//     XMETRICS_TIME_RECORD("txpool_message_neighbor_sync");
+//     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
+//     xneighbor_sync_req_t sync_req;
+//     auto ret = sync_req.serialize_from(stream);
+
+//     if (ret <= 0) {
+//         xerror("xtxpool_service::on_message_neighbor_sync_req sync_req serialize_from fail ret:%d", ret);
+//         return;
+//     }
+
+//     xinfo("xtxpool_service::on_message_neighbor_sync_req sync table:%d,at_node:%s,msg id:%x,hash:%x", sync_req.m_table_sid, m_vnetwork_str.c_str(), message.id(),
+//     message.hash());
+
+//     base::xtable_index_t table_idx(sync_req.m_table_sid);
+//     auto receipts = m_para->get_txpool()->get_receipts(table_idx.get_zone_index(), table_idx.get_subaddr());
+
+//     for (uint32_t i = 0; i < receipts.size();) {
+//         xneighbor_sync_rsp_t neighbor_sync_rsp;
+//         uint32_t num = (neighbor_sync_receipt_num_max < (receipts.size() - i)) ? neighbor_sync_receipt_num_max : (receipts.size() - i);
+//         neighbor_sync_rsp.m_receipts.insert(neighbor_sync_rsp.m_receipts.end(), receipts.begin() + i, receipts.begin() + i + num);
+
+//         base::xstream_t stream(base::xcontext_t::instance());
+//         vnetwork::xmessage_t msg;
+//         neighbor_sync_rsp.serialize_to(stream);
+//         msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_neighbor_sync_rsp);
+//         m_vnet_driver->send_to(sender, msg);
+//         i += num;
+//     }
+// }
 
 #if 0
 xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {
@@ -664,7 +744,7 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
         return;
     }
 
-    if (pulled_receipt.m_receipt_ids.size() > load_blocks_for_missing_block_event_max) {
+    if (pulled_receipt.m_receipt_ids.size() > pull_lacking_receipt_num_max) {
         xerror("xtxpool_service::on_message_pull_receipt_received receipts in one request");
         return;
     }
@@ -732,7 +812,7 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
         return;
     }
 
-    if (pulled_receipt.m_id_hash_of_receipts.size() > load_blocks_for_missing_block_event_max) {
+    if (pulled_receipt.m_id_hash_of_receipts.size() > pull_lacking_receipt_num_max) {
         xerror("xtxpool_service::on_message_pull_confirm_receipt_received receipts in one request");
         return;
     }
@@ -873,5 +953,32 @@ void xtxpool_service::send_receipt_id_state(uint64_t now) {
         }
     }
 }
+
+// void xtxpool_service::send_neighbor_sync_req(base::xtable_shortid_t table_sid) {
+//     xvip2_t neighbor_xip = m_xip;
+//     uint16_t rand_node_id = xverifier::xtx_utl::get_gmttime_s() % m_shard_size;
+//     if (rand_node_id != m_node_id) {
+//         set_node_id_to_xip2(neighbor_xip, rand_node_id);
+//     } else if (m_node_id + 1 >= m_shard_size) {
+//         set_node_id_to_xip2(neighbor_xip, 0);
+//     } else {
+//         set_node_id_to_xip2(neighbor_xip, m_node_id + 1);
+//     }
+//     xdbg("xtxpool_service::send_receipt_sync_req m_xip:{%" PRIu64 ", %" PRIu64 "} ,neighbor_xip:{%" PRIu64 ", %" PRIu64 "}",
+//          m_xip.high_addr,
+//          m_xip.low_addr,
+//          neighbor_xip.high_addr,
+//          neighbor_xip.low_addr);
+
+//     common::xnode_address_t neighbor_node_addr = xcons_utl::to_address(neighbor_xip, m_vnet_driver->address().election_round());
+
+//     xneighbor_sync_req_t neighbor_sync_req;
+//     neighbor_sync_req.m_table_sid = table_sid;
+//     base::xstream_t stream(base::xcontext_t::instance());
+//     vnetwork::xmessage_t msg;
+//     neighbor_sync_req.serialize_to(stream);
+//     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_neighbor_sync_req);
+//     m_vnet_driver->send_to(neighbor_node_addr, msg);
+// }
 
 NS_END2
