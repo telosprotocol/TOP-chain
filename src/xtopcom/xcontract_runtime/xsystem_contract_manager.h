@@ -42,7 +42,6 @@ class xtop_system_contract_manager {
     using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
-    observer_ptr<base::xvblockstore_t> m_blockstore;
 
 public:
     xtop_system_contract_manager() = default;
@@ -52,23 +51,13 @@ public:
     xtop_system_contract_manager & operator=(xtop_system_contract_manager &&) = default;
     ~xtop_system_contract_manager() = default;
 
-    explicit xtop_system_contract_manager(observer_ptr<base::xvblockstore_t> const & blockstore);
-
     void deploy();
     void setup(base::xvblockstore_t * blockstore);
-private:
+
     observer_ptr<system_contracts::xbasic_system_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
     bool contains(common::xaccount_address_t const & address) const noexcept;
 
 private:
-    // void deploy_system_contract(common::xaccount_address_t const& address,
-    //                             xblock_sniff_config_t sniff_config,
-    //                             contract_deploy_type_t deploy_type,
-    //                             std::string const& broadcast_target,
-    //                             contract_broadcast_policy_t broadcast_policy = contract_broadcast_policy_t::invalid);
-
-    // void init_system_contract(common::xaccount_address_t const & contract_address);
-
     void setup_address(const common::xaccount_address_t & contract_address, const common::xaccount_address_t & cluster_address);
     // need vm support
     void setup_chain(const common::xaccount_address_t & cluster_address, base::xvblockstore_t * blockstore);

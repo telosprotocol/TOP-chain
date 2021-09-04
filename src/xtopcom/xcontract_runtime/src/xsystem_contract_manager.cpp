@@ -4,6 +4,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xtransaction.h"
+#include "xsystem_contracts/xelection/rec/xrec_standby_pool_contract.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
 
 using namespace top::base;
@@ -33,9 +34,6 @@ using namespace top::system_contracts;
     }
 
 NS_BEG2(top, contract_runtime)
-
-xtop_system_contract_manager::xtop_system_contract_manager(observer_ptr<base::xvblockstore_t> const & blockstore) : m_blockstore {blockstore} {
-}
 
 void xtop_system_contract_manager::deploy() {
     m_system_contract_deployment_data = {
