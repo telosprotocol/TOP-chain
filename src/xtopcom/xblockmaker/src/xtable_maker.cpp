@@ -137,8 +137,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     std::map<std::string,bool> unready_accounts;
     for (auto & tx : input_table_txs) {
         std::string unit_account = tx->get_account_addr();
-        if(unready_accounts.find(unit_account) != unready_accounts.end()) //found nont ready account
-            continue;;
+        //if(unready_accounts.find(unit_account) != unready_accounts.end()) //found nont ready account
+        //    continue;;
         
         // 1.check unit maker state
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
