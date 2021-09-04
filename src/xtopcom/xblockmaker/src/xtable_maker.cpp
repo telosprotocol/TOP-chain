@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -134,9 +134,12 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     base::xtable_shortid_t last_tableid = 0xFFFF;
     uint64_t last_receipt_id = 0;
 
+    std::map<std::string,bool> unready_accounts;
     for (auto & tx : input_table_txs) {
         std::string unit_account = tx->get_account_addr();
-
+        if(unready_accounts.find(unit_account) != unready_accounts.end()) //found nont ready account
+            continue;;
+        
         // 1.check unit maker state
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
         base::xaccount_index_t accountindex;
@@ -146,6 +149,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             // TODO(jimmy) sync
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
+            
+            unready_accounts[unit_account] = false;
             continue;
         }
 

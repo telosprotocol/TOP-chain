@@ -109,14 +109,6 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
             break;
         }
 
-        // TODO(jimmy) move to statestore load connectted block before make unit state
-        if (latest_connect_height+ 4 < latest_block->get_height()) {  // allow connected height update more slowly
-            lacked_block_height = latest_block->get_height() - 1;
-            xwarn("xblock_maker_t::update_account_state fail-connect block behind too much. %s, account=%s,index=%s,connect_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), latest_connect_height);
-            try_sync_lacked_blocks(start_sync_height, lacked_block_height, "connect_unit_behind", true);
-            break;
-        }
         if (!update_account_state(latest_block, lacked_block_height)) {
             xassert(lacked_block_height > 0);
             if (lacked_block_height > 0) {
