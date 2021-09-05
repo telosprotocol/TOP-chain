@@ -16,6 +16,9 @@
 #include "xstore/xstore_face.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvnetwork/xvhost_face.h"
+#include "xdata/xcons_transaction.h"
+#include "xtxexecutor/xtransaction_prepare.h"
+#include "xdata/xtransaction_cache.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
@@ -37,7 +40,8 @@ public:
                       observer_ptr<store::xstore_face_t> store = nullptr,
                       observer_ptr<base::xvblockstore_t> block_store = nullptr,
                       observer_ptr<elect::ElectMain> elect_main = nullptr,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr,
+                      observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr);
     virtual ~xedge_method_base() {
     }
     void do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip);
@@ -61,6 +65,7 @@ protected:
     std::shared_ptr<xcluster_query_manager> m_cluster_query_mgr;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
+    observer_ptr<data::xtransaction_cache_t> m_transaction_cache;
 };
 
 class xedge_http_method : public xedge_method_base<xedge_http_handler> {
@@ -72,8 +77,9 @@ public:
                       observer_ptr<store::xstore_face_t> store,
                       observer_ptr<base::xvblockstore_t> block_store,
                       observer_ptr<elect::ElectMain> elect_main,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-      : xedge_method_base<xedge_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, elect_main, election_cache_data_accessor) {
+                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                      observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr)
+      : xedge_method_base<xedge_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, elect_main, election_cache_data_accessor, transaction_cache) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
@@ -92,8 +98,9 @@ public:
                     observer_ptr<store::xstore_face_t> store,
                     observer_ptr<base::xvblockstore_t> block_store,
                     observer_ptr<elect::ElectMain> elect_main,
-                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-      : xedge_method_base<xedge_ws_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, elect_main, election_cache_data_accessor) {
+                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                    observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr)
+      : xedge_method_base<xedge_ws_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, elect_main, election_cache_data_accessor, transaction_cache) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->send(content, [](const error_code & ec) {
@@ -115,10 +122,12 @@ xedge_method_base<T>::xedge_method_base(shared_ptr<xrpc_edge_vhost> edge_vhost,
                                         observer_ptr<store::xstore_face_t> store,
                                         observer_ptr<base::xvblockstore_t> block_store,
                                         observer_ptr<elect::ElectMain> elect_main,
-                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                                        observer_ptr<data::xtransaction_cache_t> const & transaction_cache)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, nullptr))
+  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, nullptr, transaction_cache))
   , m_archive_flag(archive_flag)
+  , m_transaction_cache(transaction_cache)
 {
     m_edge_handler_ptr = top::make_unique<T>(edge_vhost, ioc, election_cache_data_accessor);
     m_edge_handler_ptr->init();
@@ -164,16 +173,57 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     tx->construct_from_json(request);
 
     if (!tx->digest_check()) {
+        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_digest", 1);
         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction hash error"};
     }
     auto & target_action = tx->get_target_action();
     if (!(target_action.get_account_addr() == sys_contract_rec_standby_pool_addr && target_action.get_action_name() == "nodeJoinNetwork2")) {
         if (!tx->sign_check()) {
+            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction sign error"};
         }
     }
+    tx->set_len();
+    if (m_archive_flag) {
+        xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+        txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
+        int32_t ret = tx_prepare.check();
+        if (ret != xsuccess) {
+            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_prepare", 1);
+            //std::string err = std::string("transaction txpool check error (") + std::to_string(ret) + ")";
+            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, tx_prepare.get_err_msg(ret)};
+        }
+        std::string old_target_addr = tx->get_target_address();
+        if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_target_addr()})) {
+            auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
+            tx->adjust_target_address(tableid.get_subaddr());
+        }
+        // 1. validation check
+        ret = xverifier::xtx_verifier::verify_send_tx_validation(tx.get());
+        if (ret) {
+            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_validation", 1);
+            std::string err = std::string("transaction validation check failed (") + std::to_string(ret) + ")";
+            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, err};
+        }
+        // 2. legal check, include hash/signature check and white/black check
+        if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
+            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_whitelist", 1);
+            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "whitelist check failed"};
+        }
+        // 3. tx duration expire check
+        uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+        ret = xverifier::xtx_verifier::verify_tx_duration_expiration(tx.get(), now);
+        if (ret) {
+            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_expiration", 1);
+            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "duration expiration check failed"};
+        }
+        tx->set_target_addr(old_target_addr);
 
-    const auto & tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
+        std::string hash((char *)json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
+        if (m_transaction_cache != nullptr)
+            m_transaction_cache->tx_add(hash, tx);
+    }
+    std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
     xinfo_rpc("send tx hash:%s", tx_hash.c_str());
     XMETRICS_PACKET_INFO("rpc_tx_ip",
                          "tx_hash", tx_hash,

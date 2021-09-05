@@ -18,7 +18,8 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
               observer_ptr<store::xstore_face_t> const & store,
               observer_ptr<base::xvblockstore_t> const & block_store,
               observer_ptr<elect::ElectMain> elect_main,
-              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+              observer_ptr<data::xtransaction_cache_t> const & transaction_cache)
 {
     assert(nullptr != vhost);
     assert(nullptr != router_ptr);
@@ -42,7 +43,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         init_rpc_cb_thread();
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));
         auto ip = vhost->address().xip2();
-        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, false, store, block_store, elect_main, election_cache_data_accessor);
+        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, false, store, block_store, elect_main, election_cache_data_accessor, transaction_cache);
         http_server_ptr->start(http_port);
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, false, store, block_store, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
@@ -58,9 +59,9 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         init_rpc_cb_thread();
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));
         auto ip = vhost->address().xip2();
-        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, true, store, block_store, elect_main, election_cache_data_accessor);
+        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, true, store, block_store, elect_main, election_cache_data_accessor, transaction_cache);
         http_server_ptr->start(http_port);
-        shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, store, block_store, elect_main, election_cache_data_accessor);
+        shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, store, block_store, elect_main, election_cache_data_accessor, transaction_cache);
         ws_server_ptr->start(ws_port);
         xdbg("start arc rpc service.");
         break;

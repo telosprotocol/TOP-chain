@@ -20,6 +20,7 @@
 #include "xvnode/xvnode_face.h"
 #include "xvnode/xvnode_factory_face.h"
 #include "xvnode/xvnode_manager_face.h"
+#include "xbasic/xtimer_driver_fwd.h"
 
 #include <memory>
 #include <mutex>
@@ -67,7 +68,8 @@ public:
                        observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                       observer_ptr<xbase_timer_driver_t> const & timer_driver);
 
     xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,

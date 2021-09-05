@@ -175,6 +175,8 @@ class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transa
     const std::string & get_ext() const {return m_ext;};
     void set_memo(const std::string & memo) {m_memo = memo;};
     const std::string & get_memo() const {return m_memo;};
+    void set_target_addr(const std::string & addr) {m_target_addr = addr;};
+    const std::string & get_target_address() const {return m_target_addr;};
 
     // header
 private:
