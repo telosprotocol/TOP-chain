@@ -8,7 +8,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
-#include "xcontract_common/xcontract_state_fwd.h"
+#include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xcontract_execution_stage.h"
 #include "xcontract_common/xcontract_execution_result.h"
 #include "xdata/xtransaction.h"

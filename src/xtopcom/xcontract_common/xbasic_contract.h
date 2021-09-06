@@ -5,9 +5,9 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xcontract_common/xcontract_state_fwd.h"
-#include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_face.h"
+#include "xcontract_common/xcontract_fwd.h"
+#include "xcontract_common/xcontract_state.h"
 
 
 NS_BEG2(top, contract_common)

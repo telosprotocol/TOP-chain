@@ -21,7 +21,7 @@ void xtop_property_utl::property_assert(bool condition, error::xerrc_t error_enu
 
 
 xtop_property_access_control::xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate,
-                                                           xproperty_access_control_data_t ac_data)
+                                                           state_accessor::xstate_access_control_data_t ac_data)
     : bstate_(bstate), canvas_{ make_object_ptr<base::xvcanvas_t>() }, ac_data_(ac_data) {
 }
 
@@ -281,7 +281,7 @@ std::string xtop_property_access_control::string_prop_query(common::xaccount_add
  * @brief token apis
  *
  */
-void xtop_property_access_control::token_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+void xtop_property_access_control::token_prop_create(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         property_assert(!property_exist(user, prop_id), "[xtop_property_access_control::token_prop_create]property already exist, prop_name: " + prop_name, error::xerrc_t::property_already_exist);
@@ -295,7 +295,7 @@ void xtop_property_access_control::token_prop_create(common::xaccount_address_t 
 
 }
 
-uint64_t xtop_property_access_control::withdraw(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount) {
+uint64_t xtop_property_access_control::withdraw(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, uint64_t amount) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_token_var(prop_name);
@@ -308,7 +308,7 @@ uint64_t xtop_property_access_control::withdraw(common::xaccount_address_t const
     }
 }
 
-uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount) {
+uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, uint64_t amount) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_token_var(prop_name);
@@ -322,7 +322,7 @@ uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const 
 
 }
 
-uint64_t xtop_property_access_control::balance(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+uint64_t xtop_property_access_control::balance(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_token_var(prop_name);
@@ -337,55 +337,7 @@ uint64_t xtop_property_access_control::balance(common::xaccount_address_t const 
 }
 
 
-
-/**
- * @brief code api
- *
- */
-void xtop_property_access_control::code_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
-    auto prop_name = prop_id.full_name();
-    if (write_permitted(user, prop_id)) {
-        property_assert(!property_exist(user, prop_id), "[xtop_property_access_control::code_prop_create]property already exist, prop_name: " + prop_name, error::xerrc_t::property_already_exist);
-        auto prop = bstate_->new_code_var(prop_name, canvas_.get());
-        property_assert(prop, "[xtop_property_access_control::code_prop_create]property create error, prop_name: " + prop_name);
-    } else {
-        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
-        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_create]permission denied");
-    }
-}
-
-
-
-std::string xtop_property_access_control::code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
-    auto prop_name = prop_id.full_name();
-    if (read_permitted(user, prop_id)) {
-        auto prop = bstate_->load_code_var(prop_name);
-        property_assert(prop, "[xtop_property_access_control::code_prop_query]property not exist, prop_name: " + prop_name);
-
-        return prop->query();
-    } else {
-        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
-        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_query]permission denied");
-        return {};
-    }
-}
-
-bool xtop_property_access_control::code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code) {
-    auto prop_name = prop_id.full_name();
-    if (write_permitted(user, prop_id)) {
-        auto prop = bstate_->load_code_var(prop_name);
-        property_assert(prop, "[xtop_property_access_control::code_prop_query]property not exist, prop_name: " + prop_name);
-        return prop->deploy_code(code, canvas_.get());
-
-    } else {
-        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
-        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_query]permission denied");
-        return {};
-    }
-}
-
-
-std::string xtop_property_access_control::src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const {
+std::string xtop_property_access_control::src_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::error_code & ec) const {
     assert(!ec);
     auto prop_name = prop_id.full_name();
     auto prop = bstate_->load_code_var(prop_name);
@@ -394,14 +346,14 @@ std::string xtop_property_access_control::src_code(xproperty_identifier_t const 
     return prop->query();
 }
 
-std::string xtop_property_access_control::src_code(xproperty_identifier_t const & prop_id) const {
+std::string xtop_property_access_control::src_code(state_accessor::properties::xproperty_identifier_t const & prop_id) const {
     std::error_code ec;
     auto r = src_code(prop_id, ec);
     top::error::throw_error(ec);
     return r;
 }
 
-void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec) {
+void xtop_property_access_control::deploy_src_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec) {
     assert(!ec);
     if (bstate_->find_property(prop_id.full_name())) {
         ec = error::xerrc_t::property_already_exist;
@@ -414,13 +366,13 @@ void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const 
     }
 }
 
-void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code) {
+void xtop_property_access_control::deploy_src_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::string src_code) {
     std::error_code ec;
     deploy_src_code(prop_id, std::move(src_code), ec);
     top::error::throw_error(ec);
 }
 
-xbyte_buffer_t xtop_property_access_control::bin_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const {
+xbyte_buffer_t xtop_property_access_control::bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::error_code & ec) const {
     assert(!ec);
     auto prop_name = prop_id.full_name();
     auto prop = bstate_->load_code_var(prop_name);
@@ -429,14 +381,14 @@ xbyte_buffer_t xtop_property_access_control::bin_code(xproperty_identifier_t con
     return { std::begin(prop->query()), std::end(prop->query()) };
 }
 
-xbyte_buffer_t xtop_property_access_control::bin_code(xproperty_identifier_t const & prop_id) const {
+xbyte_buffer_t xtop_property_access_control::bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id) const {
     std::error_code ec;
     auto r = bin_code(prop_id, ec);
     top::error::throw_error(ec);
     return r;
 }
 
-void xtop_property_access_control::deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec) {
+void xtop_property_access_control::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec) {
     assert(!ec);
     if (bstate_->find_property(prop_id.full_name())) {
         ec = error::xerrc_t::property_already_exist;
@@ -449,7 +401,7 @@ void xtop_property_access_control::deploy_bin_code(xproperty_identifier_t const 
     }
 }
 
-void xtop_property_access_control::deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code) {
+void xtop_property_access_control::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code) {
     std::error_code ec;
     deploy_bin_code(prop_id, std::move(bin_code), ec);
     top::error::throw_error(ec);
@@ -468,7 +420,9 @@ uint64_t xtop_property_access_control::blockchain_height() const {
     return bstate_->get_block_height();
 }
 
-bool xtop_property_access_control::property_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & property_id, std::error_code & ec) const {
+bool xtop_property_access_control::property_exist(common::xaccount_address_t const & user,
+                                                  state_accessor::properties::xproperty_identifier_t const & property_id,
+                                                  std::error_code & ec) const {
     assert(!ec);
     auto prop_name = property_id.full_name();
     if (read_permitted(user, property_id)) {
@@ -479,14 +433,14 @@ bool xtop_property_access_control::property_exist(common::xaccount_address_t con
     }
 }
 
-bool xtop_property_access_control::property_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & property_id) const {
+bool xtop_property_access_control::property_exist(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & property_id) const {
     std::error_code ec;
     auto ret = property_exist(user, property_id, ec);
     top::error::throw_error(ec);
     return ret;
 }
 
-bool xtop_property_access_control::system_property(xproperty_identifier_t const & property_id) const {
+bool xtop_property_access_control::system_property(state_accessor::properties::xproperty_identifier_t const & property_id) const {
     return false;
 }
 
@@ -503,7 +457,7 @@ void xtop_property_access_control::property_assert(bool condition, std::string c
 void xtop_property_access_control::load_access_control_data(std::string const & json) {
 
 }
-void xtop_property_access_control::load_access_control_data(xproperty_access_control_data_t const& data) {
+void xtop_property_access_control::load_access_control_data(state_accessor::xstate_access_control_data_t const & data) {
     ac_data_ = data;
 }
 
@@ -530,7 +484,8 @@ std::string xtop_property_access_control::fullstate_bin() const {
     return fullstate_bin;
 }
 
-bool xtop_property_access_control::read_permitted(common::xaccount_address_t const & reader, xproperty_identifier_t const & property_id) const noexcept {
+bool xtop_property_access_control::read_permitted(common::xaccount_address_t const & reader,
+                                                  state_accessor::properties::xproperty_identifier_t const & property_id) const noexcept {
     return true;
 }
 
@@ -538,7 +493,8 @@ bool xtop_property_access_control::read_permitted(common::xaccount_address_t con
     return true;
 }
 
-bool xtop_property_access_control::write_permitted(common::xaccount_address_t const & writer, xproperty_identifier_t const & property_id) const noexcept {
+bool xtop_property_access_control::write_permitted(common::xaccount_address_t const & writer,
+                                                   state_accessor::properties::xproperty_identifier_t const & property_id) const noexcept {
     return true;
 }
 

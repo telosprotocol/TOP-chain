@@ -25,13 +25,13 @@
 #endif
 
 #include "xbasic/xbyte_buffer.h"
-#include "xbasic/xmemory.hpp"
 #include "xbasic/xerror/xthrow_error.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
-#include "xcontract_common/xproperties/xbasic_property.h"
-#include "xcontract_common/xproperties/xproperty_identifier.h"
+#include "xbasic/xmemory.hpp"
 #include "xcontract_common/xcontract_state_fwd.h"
+#include "xcontract_common/xproperties/xbasic_property.h"
+#include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xdata/xtransaction.h"
+#include "xstate_accessor/xproperties/xproperty_identifier.h"
 
 #include <cassert>
 #include <type_traits>
@@ -60,7 +60,9 @@ public:
     explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac);
 
     common::xaccount_address_t state_account_address() const;
-    observer_ptr<properties::xproperty_access_control_t> const& access_control() const;
+    observer_ptr<properties::xproperty_access_control_t> const & access_control() const;
+
+
 
     std::string src_code(std::error_code & ec) const;
     std::string src_code() const;
@@ -75,16 +77,6 @@ public:
     std::string binlog(std::error_code & ec) const;
     std::string binlog() const;
     std::string fullstate_bin() const;
-
-    template <typename KeyT, typename ValueT>
-    ValueT map_at(std::string const & property_full_name, KeyT const & key) const {
-        std::error_code ec;
-        auto ret = m_ac->map_at<KeyT, ValueT>(m_action_account_address, property_full_name, key, ec);
-        top::error::throw_error(ec);
-        return ret;
-    }
-
-    xbyte_buffer_t map_at(std::string const & property_short_name, std::string const & key, properties::xproperty_category_t category, properties::xproperty_type_t type) const;
 };
 
 NS_END2
