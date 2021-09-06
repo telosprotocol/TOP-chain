@@ -34,5 +34,5 @@ public:
 NS_END2
 
 NS_BEG3(top, contract_runtime, system)
-using xsystem_action_runtime_t = xaction_runtime_t<data::xconsensus_action_t<data::xtop_action_type_t::system>>;
+using xsystem_action_runtime_t = xaction_runtime_t<data::xsystem_consensus_action_t>;
 NS_END3
