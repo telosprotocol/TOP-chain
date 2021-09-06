@@ -26,9 +26,12 @@ static std::vector<std::uint8_t> book_ids{};
 static std::once_flag book_ids_once_flag{};
 static constexpr std::size_t book_id_count{enum_vbucket_has_books_count};
 
-xtop_vnetwork_driver::xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost, common::xnode_address_t const & address) : m_vhost{vhost}, m_address{address} {
+xtop_vnetwork_driver::xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost,
+                                           common::xnode_address_t const & address,
+                                           common::xelection_round_t const & joined_election_round)
+  : m_vhost{vhost}, m_address{address}, m_joined_election_round(joined_election_round) {
     if (m_vhost == nullptr) {
-        top::error::throw_error({ xvnetwork_errc_t::vhost_empty }, "constructing xvnetwork_driver_t at address " + m_address.to_string());
+        top::error::throw_error({xvnetwork_errc_t::vhost_empty}, "constructing xvnetwork_driver_t at address " + m_address.to_string());
     }
 }
 
@@ -431,6 +434,10 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
               static_cast<std::uint32_t>(msg.id()),
               msg_time);
     }
+}
+
+common::xelection_round_t const & xtop_vnetwork_driver::joined_election_round() const {
+    return m_joined_election_round;
 }
 
 NS_END2

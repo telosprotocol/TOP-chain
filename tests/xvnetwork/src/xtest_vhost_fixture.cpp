@@ -81,7 +81,7 @@ void xvnetwork_driver_fixture_t::SetUp() {
                                                                std::move(dummy_message_filter_ptr));
 
     vnetwork_driver_test_ptr = std::make_shared<top::vnetwork::xvnetwork_driver_t>(
-        make_observer(vhost_test_ptr), get_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id));
+        make_observer(vhost_test_ptr), get_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id), common::xelection_round_t{0});
 
     vnetwork_driver_test_ptr->start();
     vhost_test_ptr->start();

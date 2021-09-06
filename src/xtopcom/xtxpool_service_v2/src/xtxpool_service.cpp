@@ -37,6 +37,7 @@ enum enum_txpool_service_msg_type  // under pdu  enum_xpdu_type_consensus
 #define pull_lacking_receipt_num_max (5)
 #define thresold_lacking_receipt_num_to_sync_by_neighbor (15)
 #define neighbor_sync_receipt_num_max (10)
+#define pull_lacking_permission_max_round_num_of_first_join_round (1)
 
 class txpool_receipt_message_para_t : public top::base::xobject_t {
 public:
@@ -63,14 +64,10 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     m_vnet_driver = vnet_driver;
     m_vnetwork_str = vnet_driver->address().to_string();
 
-    common::xip2_t xip2(m_xip);
-
-    uint64_t elect_height = xip2.height();
-    if (m_first_elect_height == 0) {
-        m_first_elect_height = elect_height;
-    }
-    m_cur_elect_height = elect_height;
-    xdbg("xtxpool_service::set_params node:%s,m_first_elect_height:%llu,m_cur_elect_height:%llu", m_vnetwork_str.c_str(), m_first_elect_height, m_cur_elect_height);
+    xinfo("xtxpool_service::set_params node:%s,joined election round:%llu,cur election round:%llu",
+          m_vnetwork_str.c_str(),
+          m_vnet_driver->joined_election_round().value(),
+          m_vnet_driver->address().election_round().value());
 
     common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
 
@@ -185,11 +182,10 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         return;
     }
 
-    if (m_cur_elect_height == m_first_elect_height && m_first_elect_height > 10) {
-        xdbg("xtxpool_service::pull_lacking_receipts new service:%s not pull,m_first_elect_height:%llu,m_cur_elect_height:%llu",
-             m_vnetwork_str.c_str(),
-             m_first_elect_height,
-             m_cur_elect_height);
+    auto joined_round = m_vnet_driver->joined_election_round().value();
+    auto cur_round = m_vnet_driver->address().election_round().value();
+    if (joined_round == cur_round && joined_round > pull_lacking_permission_max_round_num_of_first_join_round) {
+        xinfo("xtxpool_service::pull_lacking_receipts new service:%s not pull,joind round:%llu,cur round:%llu", m_vnetwork_str.c_str(), joined_round, cur_round);
         return;
     }
 
@@ -223,27 +219,29 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         // }
 
         int32_t lacking_confirm_tx_num = 0;
-        // uint32_t left_num = pull_lacking_receipt_num_max;
+        uint32_t left_num = pull_lacking_receipt_num_max;
         for (auto & table_lacking_ids : lacking_confirm_tx_ids) {
             xreceipt_pull_receipt_t pulled_confirm_receipt(m_vnet_driver->address(),
                                                            self_table_addr,
                                                            base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()),
                                                            table_lacking_ids.get_receipt_ids(),
-                                                           pull_lacking_receipt_num_max);
+                                                           left_num);
             for (auto & receiptid : pulled_confirm_receipt.m_receipt_ids) {
-                xinfo("xtxpool_service::pull_lacking_receipts confirm tx reqnode:%s,table:%s:%s,receiptid:%llu",
+                xinfo("xtxpool_service::pull_lacking_receipts confirm tx reqnode:%s,table:%s:%s,receiptid:%llu,joind round:%llu,cur round:%llu",
                       m_vnetwork_str.c_str(),
                       pulled_confirm_receipt.m_tx_from_account.c_str(),
                       pulled_confirm_receipt.m_tx_to_account.c_str(),
-                      receiptid);
+                      receiptid,
+                      joined_round,
+                      cur_round);
             }
             send_pull_receipts_of_confirm(pulled_confirm_receipt);
             lacking_confirm_tx_num += pulled_confirm_receipt.m_receipt_ids.size();
 
-            // if (pulled_confirm_receipt.m_receipt_ids.size() >= left_num) {
-            //     break;
-            // }
-            // left_num -= pulled_confirm_receipt.m_receipt_ids.size();
+            if (pulled_confirm_receipt.m_receipt_ids.size() >= left_num) {
+                break;
+            }
+            left_num -= pulled_confirm_receipt.m_receipt_ids.size();
         }
         // auto lacking_confirm_tx_hashs = m_para->get_txpool()->get_lacking_confirm_tx_hashs(m_zone_index, table_id, pull_lacking_receipt_num_max);
         // for (auto table_lacking_hashs : lacking_confirm_tx_hashs) {
@@ -273,26 +271,28 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         XMETRICS_GAUGE(metrics::txpool_pull_confirm_tx, lacking_confirm_tx_num);
 
         uint32_t lacking_recv_tx_num = 0;
-        // left_num = pull_lacking_receipt_num_max;
+        left_num = pull_lacking_receipt_num_max;
         for (auto & table_lacking_ids : lacking_recv_tx_ids) {
             xreceipt_pull_receipt_t pulled_recv_receipt(m_vnet_driver->address(),
                                                         base::xvaccount_t::make_table_account_address(table_lacking_ids.get_peer_sid()),
                                                         self_table_addr,
                                                         table_lacking_ids.get_receipt_ids(),
-                                                        pull_lacking_receipt_num_max);
+                                                        left_num);
             for (auto & receiptid : pulled_recv_receipt.m_receipt_ids) {
-                xinfo("xtxpool_service::pull_lacking_receipts recv tx reqnode:%s,table:%s:%s,receiptid:%llu",
+                xinfo("xtxpool_service::pull_lacking_receipts recv tx reqnode:%s,table:%s:%s,receiptid:%llu,joind round:%llu,cur round:%llu",
                       m_vnetwork_str.c_str(),
                       pulled_recv_receipt.m_tx_from_account.c_str(),
                       pulled_recv_receipt.m_tx_to_account.c_str(),
-                      receiptid);
+                      receiptid,
+                      joined_round,
+                      cur_round);
             }
             send_pull_receipts_of_recv(pulled_recv_receipt);
             lacking_recv_tx_num += pulled_recv_receipt.m_receipt_ids.size();
-            // if (pulled_recv_receipt.m_receipt_ids.size() >= left_num) {
-            //     break;
-            // }
-            // left_num -= pulled_recv_receipt.m_receipt_ids.size();
+            if (pulled_recv_receipt.m_receipt_ids.size() >= left_num) {
+                break;
+            }
+            left_num -= pulled_recv_receipt.m_receipt_ids.size();
         }
         XMETRICS_GAUGE(metrics::txpool_pull_recv_tx, lacking_recv_tx_num);
     }

@@ -97,8 +97,6 @@ private:
     volatile bool m_running{false};
     std::string m_vnetwork_str;
     std::unordered_map<uint16_t, table_info> m_table_info_cache;
-    uint64_t m_first_elect_height{0};
-    uint64_t m_cur_elect_height{0};
 };
 
 NS_END2

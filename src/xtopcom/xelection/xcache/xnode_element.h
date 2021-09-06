@@ -45,7 +45,7 @@ public:
 
     data::election::xelection_info_t const & election_info() const noexcept;
 
-    common::xelection_round_t const & joined_version() const noexcept;
+    common::xelection_round_t const & joined_election_round() const noexcept;
 
     std::uint64_t staking() const noexcept;
 
