@@ -50,6 +50,9 @@ XINLINE_CONSTEXPR char const* XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY = "@42-e"
 XINLINE_CONSTEXPR char const* XPROPERTY_CONTRACT_GROUP_ASSOC_KEY     = "@43";
 
 
+XINLINE_CONSTEXPR char const* XPROPERTY_PARACHAIN_KEY     = "@50";
+
+
 // the corresponding token num of already expired locked vote
 
 XINLINE_CONSTEXPR const char* XPORPERTY_CONTRACT_TIME_KEY                = "@102";
