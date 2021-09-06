@@ -27,7 +27,6 @@
 #include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xcontract_runtime/xsystem/xdata_stream.h"
 
 #include <cstdint>
 #include <string>
@@ -36,6 +35,36 @@
 #include <utility>
 
 NS_BEG3(top, contract_runtime, system)
+
+template <typename StreamT>
+struct Functor {
+    Functor(StreamT & ds) : m_ds(ds) {
+    }
+
+    template <typename T>
+    void operator()(T & t) const {
+        m_ds >> t;
+    }
+
+private:
+    StreamT & m_ds;
+};
+
+template <std::size_t I = 0, typename FuncT, typename... Tp>
+inline typename std::enable_if<I == sizeof...(Tp)>::type for_each(std::tuple<Tp...> &, FuncT) {
+}
+
+template <std::size_t I = 0, typename FuncT, typename... Tp>
+inline typename std::enable_if<(I < sizeof...(Tp))>::type for_each(std::tuple<Tp...> & t, FuncT f) {
+    f(std::get<I>(t));
+    for_each<I + 1, FuncT, Tp...>(t, f);
+}
+
+template <typename... Args>
+base::xstream_t & operator>>(base::xstream_t & ds, std::tuple<Args...> & t) {
+    for_each(t, Functor<base::xstream_t>(ds));
+    return ds;
+}
 
 template <typename Callable, typename Obj, typename Tuple, std::size_t ... I>
 auto do_call(Callable && func, Obj && obj, Tuple && tuple, top::index_sequence<I...>)
