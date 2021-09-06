@@ -172,7 +172,6 @@ XDEFINE_CONFIGURATION(grpc_port);
 XDEFINE_CONFIGURATION(dht_port);
 XDEFINE_CONFIGURATION(msg_port);
 XDEFINE_CONFIGURATION(ws_port);
-XDEFINE_CONFIGURATION(network_id);
 XDEFINE_CONFIGURATION(log_level);
 XDEFINE_CONFIGURATION(log_path);
 XDEFINE_CONFIGURATION(db_path);
@@ -184,7 +183,6 @@ XDEFINE_CONFIGURATION(platform_first_node);
 XDEFINE_CONFIGURATION(platform_business_port);
 XDEFINE_CONFIGURATION(platform_public_endpoints);
 XDEFINE_CONFIGURATION(platform_show_cmd);
-XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(platform_url_endpoints);
 
 

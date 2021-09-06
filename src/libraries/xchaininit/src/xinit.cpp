@@ -11,7 +11,6 @@
 #include "xchaininit/xinit.h"
 #include "xchaininit/xconfig.h"
 #include "xchaininit/xchain_options.h"
-#include "xchaininit/xchain_params.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -95,6 +94,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     XMETRICS_INIT();
     g_topchain_init_finish_flag = false;
 
+    // offchain_loader must be the first!
     auto& config_center = top::config::xconfig_register_t::get_instance();
     auto offchain_loader = std::make_shared<loader::xconfig_offchain_loader_t>(config_file, config_extra);
     config_center.add_loader(offchain_loader);
@@ -102,10 +102,6 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     config_center.remove_loader(offchain_loader);
     config_center.init_static_config();
 
-
-    xchain_params chain_params;
-    // attention: put chain_params.initconfig_using_configcenter behind config_center
-    chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
     global_node_signkey = DecodePrivateString(user_params.signkey);
@@ -189,14 +185,6 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     delete hash_plugin;
     return 0;
 }
-
-// Commented out by Charles.Liu 2020.05.19
-// node_type has been deleted in config.json
-// void
-// set_node_type(const uint32_t role_type) {
-//     auto& user_params = data::xuser_params::get_instance();
-//     user_params.node_role_type = static_cast<top::common::xrole_type_t>(role_type);
-// }
 
 bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result) {
     if (config_file.empty()) {
@@ -362,7 +350,6 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     config_center.set("datadir", datadir);
     config_center.set(config::xdb_path_configuration_t::name, chain_db_path);
     config_center.set(config::xlog_path_configuration_t::name, log_path);
-    config_center.set(config::xplatform_db_path_configuration_t::name, chain_db_path);
 
     uint16_t net_port = 0;
     config_center.get<uint16_t>("net_port", net_port);
@@ -387,9 +374,6 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     config_center.dump();
 #endif
 
-    xchain_params chain_params;
-    // attention: put chain_params.initconfig_using_configcenter behind config_center
-    chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
 
