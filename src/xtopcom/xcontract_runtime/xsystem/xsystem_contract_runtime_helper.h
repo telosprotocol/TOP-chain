@@ -79,8 +79,9 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
         try {                                                                                                                                                                      \
             top::contract_runtime::system::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
-        } catch (top::contract_runtime::error::xerrc_t const & eh) {                                                                                             \
-            result.status.ec = make_error_code(eh);                                                                                                                                          \
+        } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
+            result.status.ec = eh.code();                                                                                                                                          \
+            result.status.extra_msg = eh.what();                                                                                                                                   \
         } catch (std::exception const & eh) {                                                                                                                                      \
             result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                               \
             result.status.extra_msg = eh.what();                                                                                                                                   \
@@ -102,8 +103,9 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         auto const & action_data = exe_ctx->action_data();                                                                                                                         \
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)action_data.data(), action_data.size());
 
-#define END_CONTRACT_API                                                                                                                                                               \
-        throw top::contract_runtime::error::xerrc_t{top::contract_runtime::error::xerrc_t::contract_api_not_found};    \
+#define END_CONTRACT_API                                                                                                                                                           \
+        top::error::throw_error(top::contract_runtime::error::xerrc_t::contract_api_not_found);                                                                                    \
+        return {};                                                                                                                                                                 \
     }
 
 #define XCONTRACT_ENSURE(condition, msg)                                                                                                                                           \

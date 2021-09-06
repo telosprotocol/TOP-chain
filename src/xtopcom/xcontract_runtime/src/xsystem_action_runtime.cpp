@@ -7,12 +7,9 @@
 #include "xbasic/xerror/xerror.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_session.h"
-
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xcontract_runtime/xsystem_contract_manager.h"
 #include "xcontract_runtime/xsystem/xsystem_contract_runtime_helper.h"
-#include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
-
+#include "xcontract_runtime/xsystem_contract_manager.h"
 #include "xsystem_contracts/xtransfer_contract.h"
 
 NS_BEG2(top, contract_runtime)
@@ -29,11 +26,12 @@ xtransaction_execution_result_t xtop_action_runtime<data::xsystem_consensus_acti
     xtransaction_execution_result_t result;
 
     try {
-        auto system_contract = system_contract_manager_->system_contract(exe_ctx->contract_address());
-        result = system_contract->execute(exe_ctx);
-        // result.binlog = exe_ctx->contract_state()->binlog();
-        // result.fullstate_log = exe_ctx->contract_state()->fullstate_bin();
+        assert(system_contract_manager_ != nullptr);
 
+        auto system_contract = system_contract_manager_->system_contract(exe_ctx->contract_address());
+        assert(system_contract != nullptr);
+
+        result = system_contract->execute(exe_ctx);
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
