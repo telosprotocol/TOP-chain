@@ -40,7 +40,8 @@ common::xaccount_address_t xtop_contract_state::state_account_address() const {
 //}
 
 std::string xtop_contract_state::src_code(std::error_code & ec) const {
-    properties::xproperty_identifier_t src_property_id{"src_code", properties::xproperty_type_t::src_code, properties::xproperty_category_t::user };
+    state_accessor::properties::xproperty_identifier_t src_property_id{
+        "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
     return m_ac->src_code(src_property_id, ec);
 }
 
@@ -52,7 +53,8 @@ std::string xtop_contract_state::src_code() const {
 }
 
 void xtop_contract_state::deploy_src_code(std::string code, std::error_code & ec) {
-    properties::xproperty_identifier_t src_property_id{"src_code", properties::xproperty_type_t::src_code, properties::xproperty_category_t::user};
+    state_accessor::properties::xproperty_identifier_t src_property_id{
+        "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
     m_ac->deploy_src_code(src_property_id, std::move(code), ec);
 }
 
@@ -63,7 +65,8 @@ void xtop_contract_state::deploy_src_code(std::string code) {
 }
 
 void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code, std::error_code & ec) {
-    properties::xproperty_identifier_t src_property_id{ "src_code", properties::xproperty_type_t::src_code, properties::xproperty_category_t::user };
+    state_accessor::properties::xproperty_identifier_t src_property_id{
+        "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
     m_ac->deploy_bin_code(src_property_id, std::move(code), ec);
 }
 

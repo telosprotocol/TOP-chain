@@ -26,14 +26,14 @@
 #endif
 
 #include "xbasic/xbyte_buffer.h"
-#include "xbasic/xmemory.hpp"
 #include "xbasic/xenable_to_string.h"
-#include "xbasic/xserializable_based_on.h"
 #include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xmemory.hpp"
+#include "xbasic/xserializable_based_on.h"
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xerror/xerror.h"
-#include "xcontract_common/xproperties/xaccess_control_data.h"
-#include "xcontract_common/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xaccess_control_data.h"
+#include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xvledger/xvcanvas.h"
 #include "xvledger/xvstate.h"
 
@@ -55,7 +55,7 @@ class xtop_property_access_control {
 private:
     top::observer_ptr<top::base::xvbstate_t> bstate_;
     top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
-    xproperty_access_control_data_t ac_data_;
+    state_accessor::xstate_access_control_data_t ac_data_;
 
 public:
     xtop_property_access_control(xtop_property_access_control const&) = delete;
@@ -64,7 +64,7 @@ public:
     xtop_property_access_control& operator=(xtop_property_access_control&&) = default;
     ~xtop_property_access_control() =  default;
 
-    explicit xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate, xproperty_access_control_data_t ac_data);
+    explicit xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate, state_accessor::xstate_access_control_data_t ac_data);
 
     /***********************************************************************/
     /*****************        attribute related apis       *****************/
@@ -85,7 +85,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    void map_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void map_prop_create(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
      * @brief add a key of the map property
@@ -104,7 +104,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    void map_prop_add(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, KEYT const& prop_key, VALUET const& prop_value);
+    void map_prop_add(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, KEYT const& prop_key, VALUET const& prop_value);
     /**
      * @brief update a specific key of the map property
      *
@@ -122,7 +122,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    void map_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, KEYT const& prop_key, VALUET const& prop_value);
+    void map_prop_update(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, KEYT const& prop_key, VALUET const& prop_value);
     /**
      * @brief update the entire map property
      *
@@ -139,7 +139,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    void map_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::map<KEYT, VALUET> const& prop_value);
+    void map_prop_update(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, std::map<KEYT, VALUET> const& prop_value);
 
     /**
      * @brief erase the specific key of the map property
@@ -157,7 +157,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    void map_prop_erase(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, KEYT const& prop_key);
+    void map_prop_erase(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, KEYT const& prop_key);
     // /**
     //  * @brief remove the entire map property
     //  *
@@ -179,7 +179,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    void map_prop_clear(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void map_prop_clear(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
      * @brief query a specific key of the map property
@@ -198,7 +198,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    std::string map_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, KEYT const& prop_key);
+    std::string map_prop_query(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, KEYT const& prop_key);
     /**
      * @brief query the entire map property
      *
@@ -215,7 +215,7 @@ public:
                                                                                 std::is_same<VALUET, std::int64_t>::value ||
                                                                                 std::is_same<VALUET, std::uint64_t>::value
                                                                             )>::type>
-    std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
      * @brief query the entire map property from cross slice
@@ -231,7 +231,7 @@ public:
                                                  (std::is_same<VALUET, std::string>::value || std::is_same<VALUET, std::int8_t>::value ||
                                                   std::is_same<VALUET, std::int16_t>::value || std::is_same<VALUET, std::int32_t>::value ||
                                                   std::is_same<VALUET, std::int64_t>::value || std::is_same<VALUET, std::uint64_t>::value)>::type>
-    std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, common::xaccount_address_t const & contract, xproperty_identifier_t const & prop_id);
+    std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, common::xaccount_address_t const & contract, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /// @brief Get the mapped string type value specified by the string key.
     /// @param reader
@@ -349,7 +349,7 @@ public:
      * @param prop_id the property id
      *
      */
-    void string_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void string_prop_create(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
      * @brief update the string property
@@ -358,7 +358,7 @@ public:
      * @param prop_id the property id
      * @param prop_value the property value
      */
-    void string_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_value);
+    void string_prop_update(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, std::string const& prop_value);
 
     /**
      * @brief clear the string property
@@ -366,7 +366,7 @@ public:
      * @param prop_name the property name
      * @param prop_id the property id
      */
-    void string_prop_clear(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void string_prop_clear(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
     
     /**
      * @brief query the string property
@@ -375,7 +375,7 @@ public:
      * @param prop_id the property id
      * @return std::string  the property value
      */
-    std::string string_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    std::string string_prop_query(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
      * @brief query the string property from cross slice
@@ -385,7 +385,7 @@ public:
      * @param prop_id the property id
      * @return std::string  the property value
      */
-    std::string string_prop_query(common::xaccount_address_t const & user, common::xaccount_address_t const & contract, xproperty_identifier_t const & prop_id);
+    std::string string_prop_query(common::xaccount_address_t const & user, common::xaccount_address_t const & contract, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
         // TOKEN apis
         /**
@@ -394,7 +394,7 @@ public:
          * @param user the user addr
          * @param prop_id the property identifier
          */
-        void token_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+        void token_prop_create(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
      * @brief withdraw balance from current env account
@@ -404,7 +404,7 @@ public:
      * @param amount the amount of the token
      * @return uint64_t  the amount to withdraw
      */
-    uint64_t withdraw(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount);
+    uint64_t withdraw(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, uint64_t amount);
 
     /**
      * @brief deposit balance to current env account
@@ -413,7 +413,7 @@ public:
      * @param token_prop the type of the token
      * @return uint64_t the amount to deposti
      */
-    uint64_t deposit(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount);
+    uint64_t deposit(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, uint64_t amount);
 
     /**
      * @brief balance of the current execute environment account address
@@ -422,47 +422,24 @@ public:
      * @param prop_id  the property identifier
      * @return uint64_t
      */
-    uint64_t balance(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    uint64_t balance(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
-    // CODE apis
-    /**
-     * @brief create code property
-     *
-     * @param prop_name the name of code property
-     */
-    void code_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_ide);
+    std::string src_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::error_code & ec) const;
+    std::string src_code(state_accessor::properties::xproperty_identifier_t const & prop_id) const;
 
-    /**
-     * @brief query code property
-     * @param prop_name the name of code property
-     * @return std::string
-     */
-    std::string code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void deploy_src_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec);
+    void deploy_src_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::string src_code);
 
-    /**
-     * @brief set code property
-     * @param prop_name the name of code property
-     * @return std::string
-     */
-    bool code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code);
+    xbyte_buffer_t bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id, std::error_code & ec) const;
+    xbyte_buffer_t bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id) const;
 
+    void deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec);
+    void deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code);
 
-    std::string src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
-    std::string src_code(xproperty_identifier_t const & prop_id) const;
+    bool property_exist(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, std::error_code & ec) const;
+    bool property_exist(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) const;
 
-    void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec);
-    void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code);
-
-    xbyte_buffer_t bin_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
-    xbyte_buffer_t bin_code(xproperty_identifier_t const & prop_id) const;
-
-    void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec);
-    void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code);
-
-    bool property_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::error_code & ec) const;
-    bool property_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) const;
-
-    bool system_property(xproperty_identifier_t const & property_id) const;
+    bool system_property(state_accessor::properties::xproperty_identifier_t const & property_id) const;
 
 public:
     /***********************************************************************/
@@ -485,10 +462,10 @@ public:
 
 
     virtual void load_access_control_data(std::string const & json);
-    virtual void load_access_control_data(xproperty_access_control_data_t const& data);
+    virtual void load_access_control_data(state_accessor::xstate_access_control_data_t const & data);
 
-    virtual bool read_permitted(common::xaccount_address_t const & reader, xproperty_identifier_t const & property_id) const noexcept;
-    virtual bool write_permitted(common::xaccount_address_t const & writer, xproperty_identifier_t const & property_id) const noexcept;
+    virtual bool read_permitted(common::xaccount_address_t const & reader, state_accessor::properties::xproperty_identifier_t const & property_id) const noexcept;
+    virtual bool write_permitted(common::xaccount_address_t const & writer, state_accessor::properties::xproperty_identifier_t const & property_id) const noexcept;
 
     bool read_permitted(common::xaccount_address_t const & reader, std::string const & property_full_name) const noexcept;
 

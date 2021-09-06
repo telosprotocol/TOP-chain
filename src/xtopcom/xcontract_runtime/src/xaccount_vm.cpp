@@ -25,7 +25,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     xaccount_vm_execution_result_t result;
     result.transaction_results.reserve(txs.size());
 
-    contract_common::properties::xproperty_access_control_data_t ac_data; // final get from config or program initialization start
+    state_accessor::xstate_access_control_data_t ac_data; // final get from config or program initialization start
     contract_common::properties::xproperty_access_control_t ac{ make_observer(block_state.get()), ac_data };
 
     auto const & actions = xaction_generator_t::generate(txs);

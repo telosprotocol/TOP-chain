@@ -3,8 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xcontract_common/xproperties/xproperty_token.h"
+
 #include "xcontract_common/xerror/xerror.h"
-#include "xcontract_common/xcontract_state.h"
+#include "xstate_accessor/xproperties/xproperty_type.h"
 
 
 NS_BEG3(top, contract_common, properties)
@@ -14,9 +15,7 @@ NS_BEG3(top, contract_common, properties)
  }
 
 xtop_token_property::xtop_token_property(std::string const& prop_name, contract_common::xbasic_contract_t* contract)
-                                           :xbasic_property_t{prop_name, xproperty_type_t::token, make_observer(contract)} {
-    m_contract_state->access_control()->token_prop_create(accessor(), m_id);
-
+    : xbasic_property_t{ prop_name, state_accessor::properties::xproperty_type_t::token, make_observer(contract) } {
 }
 
 uint64_t xtop_token_property::value() const {
