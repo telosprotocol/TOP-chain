@@ -34,7 +34,7 @@
 
 // std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
 
-// class test_slash_contract: public testing::Test {
+// class test_slash_contract_other: public testing::Test {
 // public:
 
 //     static void SetUpTestCase() {
@@ -116,13 +116,13 @@
 
 //    static xobject_ptr_t<xstore_face_t> m_store;
 //    static shared_ptr<xaccount_context_t> m_table_slash_account_ctx_ptr;
-//    static shared_ptr<xaccount_context_t> m_beacon_slash_account_ctx_ptr;
+//    static shared_ptr<xaccount_context_t> m_zec_slash_account_ctx_ptr;
 
 // };
 
-// xobject_ptr_t<xstore_face_t> test_slash_contract::m_store;
-// shared_ptr<xaccount_context_t> test_slash_contract::m_table_slash_account_ctx_ptr;
-// shared_ptr<xaccount_context_t> test_slash_contract::m_beacon_slash_account_ctx_ptr;
+// xobject_ptr_t<xstore_face_t> test_slash_contract_other::m_store;
+// shared_ptr<xaccount_context_t> test_slash_contract_other::m_table_slash_account_ctx_ptr;
+// shared_ptr<xaccount_context_t> test_slash_contract_other::m_zec_slash_account_ctx_ptr;
 
 
 // xaccount_cmd_ptr_t create_or_modify_property(xstore_face_t* store, const std::string &address, const std::string& list_name, const std::string& item_value) {
@@ -164,7 +164,7 @@
 //     return tx;
 // }
 
-// TEST_F(test_slash_contract, table_slash_info_collection) {
+// TEST_F(test_slash_contract_other, table_slash_info_collection) {
 //     // for block
 //     std::string table_block_addr = std::string(sys_contract_sharding_table_block_addr) + std::string("@3");
 //     std::string address = xblocktool_t::make_address_user_account(table_block_addr);
@@ -212,11 +212,11 @@
 // }
 
 
-// TEST_F(test_slash_contract, beacon_slash_info_summarize) {
+// TEST_F(test_slash_contract_other, beacon_slash_info_summarize) {
 
-//     m_beacon_slash_account_ctx_ptr = make_shared<xaccount_context_t>(sys_contract_zec_slash_info_addr, store::xstore_factory::create_store_with_memdb().get());
-//     m_beacon_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-//     m_beacon_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+//     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(sys_contract_zec_slash_info_addr, store::xstore_factory::create_store_with_memdb().get());
+//     m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+//     m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
 //     xunqualified_node_info_t  node_info;
 //     for (auto i = 0; i < 5; ++i) {
@@ -238,16 +238,16 @@
 //     auto trx_ptr = summarize_slash_info(std::string((char*) target_stream.data(), target_stream.size()));
 
 //     xvm_service vs;
-//     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_beacon_slash_account_ctx_ptr.get());
+//     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_zec_slash_account_ctx_ptr.get());
 //     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 // }
 
-// TEST_F(test_slash_contract, beacon_slash_do_slash) {
+// TEST_F(test_slash_contract_other, beacon_slash_do_slash) {
 //     auto const table_time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tableStatistic_report_schedule_interval);
 //     auto trx_ptr = do_unqualified_node_slash(table_time_interval + 1);
 
 //     xvm_service vs;
-//     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_beacon_slash_account_ctx_ptr.get());
+//     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_zec_slash_account_ctx_ptr.get());
 //     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 
 // }

@@ -1,4 +1,6 @@
-// #define private public
+#ifndef private
+#define private public
+#endif
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
@@ -36,26 +38,6 @@ using namespace top::contract;
 using namespace top::tests::election;
 
 NS_BEG3(top, xvm, system_contracts)
-
-class xtop_hash_t : public top::base::xhashplugin_t {
-public:
-    xtop_hash_t()
-      : base::xhashplugin_t(-1)  //-1 = support every hash types
-    {
-    }
-
-private:
-    xtop_hash_t(const xtop_hash_t &) = delete;
-    xtop_hash_t & operator=(const xtop_hash_t &) = delete;
-
-public:
-    virtual ~xtop_hash_t(){};
-    virtual const std::string hash(const std::string & input, enum_xhash_type type) override {
-        xassert(type == enum_xhash_type_sha2_256);
-        auto hash = utl::xsha2_256_t::digest(input);
-        return std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    }
-};
 
 static std::vector<std::string> test_account = {
     "T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv",
@@ -572,27 +554,9 @@ static std::vector<std::string> test_account = {
     "T00000LZMHuHoF3m43Svho8WqJAe9j7j4YmMwYaw",
 };
 
-
 class xtop_test_table_contract : public testing::Test {
 public:
     xtop_test_table_contract() : m_table_contract(common::xnetwork_id_t{255}), node_serv{common::xaccount_address_t{"mocked_nodesvr"}, "null"} {
-        auto hash_plugin = new xtop_hash_t();
-        // top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
-        // top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
-        // top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
-        top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
-        top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
-        // data::xrootblock_para_t para;
-        // data::xrootblock_t::init(para);
-        // auto node_id = common::xnode_id_t{"T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"};
-        // auto sign_key = "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=";
-        // m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
-        // m_store = top::store::xstore_factory::create_store_with_memdb();
-        // base::xvchain_t::instance().set_xdbstore(m_store.get());
-        // m_blockstore.attach(store::get_vblockstore());
-        // m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
-        // contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
-        // contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
         nodeservice_add_group(1, m_group_xip1, test_account, 256);
         nodeservice_add_group(1, m_group_xip2, test_account, 512);
     }
@@ -607,254 +571,316 @@ public:
         assert(node_group->get_nodes().size() == num);
     }
 
-    void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, const uint32_t blk_count, std::vector<base::xvoter> const & voter_info, xstatistics_data_t & data){
-        // height
-        // uint64_t block_height = get_network_height_from_xip2(leader_xip);
-        uint64_t block_height = 10;
-        auto it_height = data.detail.find(block_height);
-        if (it_height == data.detail.end()) {
-            xelection_related_statistics_data_t election_related_data;
-            std::pair<std::map<uint64_t, xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
-            it_height = ret.first;
-        }
-        // gid
-        uint8_t group_idx = uint8_t(get_group_id_from_xip2(leader_xip));
-        common::xgroup_id_t group_id = common::xgroup_id_t{group_idx};
-        common::xcluster_id_t cluster_id = common::xcluster_id_t{0};
-        common::xzone_id_t zone_id = common::xzone_id_t{0};
-        common::xnetwork_id_t network_id = common::xnetwork_id_t{0};
-        common::xgroup_address_t group_addr(network_id, zone_id, cluster_id, group_id);
-        auto it_group = it_height->second.group_statistics_data.find(group_addr);
-        if (it_group == it_height->second.group_statistics_data.end()) {
-            xgroup_related_statistics_data_t group_related_data;
-            auto ret = it_height->second.group_statistics_data.insert(std::make_pair(group_addr, group_related_data));
-            it_group = ret.first;
-        }
-        // nid
-        uint16_t slot_idx = uint16_t(get_node_id_from_xip2(leader_xip));
-        // common::xslot_id_t slot_id = common::xslot_id_t{slot_idx};
-        if(it_group->second.account_statistics_data.size() < size_t(slot_idx+1)){
-            it_group->second.account_statistics_data.resize(slot_idx+1);
-        }
-        // workload
-        it_group->second.account_statistics_data[slot_idx].block_data.block_count += blk_count;
-        it_group->second.account_statistics_data[slot_idx].block_data.transaction_count += txs_count;
-        // vote
-        uint32_t vote_count = 0;
-        for (auto const & item : voter_info) {
-            if (item.is_voted) {
-                it_group->second.account_statistics_data[slot_idx].vote_data.vote_count++;
-                vote_count++;
-            }
-        }
-        // printf("[tableblock_statistics] xip: [%" PRIu64 ", %" PRIu64 "], block_height: %" PRIu64 ", group_id: %u, slot_id: %u, "
-        //     "work add block_count: %u, block_count: %u, add txs_count %u, transaction_count: %u, add vote count: %u, vote_count: %u\n",
-        //         leader_xip.high_addr,
-        //         leader_xip.low_addr,
-        //         block_height,
-        //         group_idx,
-        //         slot_idx,
-        //         1,
-        //         it_group->second.account_statistics_data[slot_idx].block_data.block_count,
-        //         txs_count, 
-        //         it_group->second.account_statistics_data[slot_idx].block_data.transaction_count,
-        //         vote_count,
-        //         it_group->second.account_statistics_data[slot_idx].vote_data.vote_count);
-    }
-
-    std::map<common::xgroup_address_t, xgroup_workload_t> test_get_workload_from_data(xstatistics_data_t const & stat_data) {
-        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
-        // auto node_service = contract::xcontract_manager_t::instance().get_node_service();
-        auto workload_per_tableblock = 2;
-        auto workload_per_tx = 1;
-        for (auto const & static_item: stat_data.detail) {
-            auto elect_statistic = static_item.second;
-            for (auto const & group_item: elect_statistic.group_statistics_data) {
-                common::xgroup_address_t const & group_addr = group_item.first;
-                xgroup_related_statistics_data_t const & group_account_data = group_item.second;
-                xvip2_t const &group_xvip2 = top::common::xip2_t{
-                    group_addr.network_id(),
-                    group_addr.zone_id(),
-                    group_addr.cluster_id(),
-                    group_addr.group_id(),
-                    (uint16_t)group_account_data.account_statistics_data.size(),
-                    static_item.first};
-                // printf("[xzec_workload_contract_v2::accumulate_workload] group xvip2: %" PRIu64 ", %" PRIu64 "\n",
-                //        group_xvip2.high_addr,
-                //        group_xvip2.low_addr);
-                for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                    auto account_str = group_addr.to_string() + "_" +std::to_string(slotid);
-                    uint32_t block_count = group_account_data.account_statistics_data[slotid].block_data.block_count;
-                    uint32_t tx_count = group_account_data.account_statistics_data[slotid].block_data.transaction_count;
-                    uint32_t workload = block_count * workload_per_tableblock + tx_count * workload_per_tx;
-                    if (workload > 0) {
-                        auto it2 = group_workload.find(group_addr);
-                        if (it2 == group_workload.end()) {
-                            xgroup_workload_t group_workload_info;
-                            auto ret = group_workload.insert(std::make_pair(group_addr, group_workload_info));
-                            XCONTRACT_ENSURE(ret.second, "insert workload failed");
-                            it2 = ret.first;
-                        }
-
-                        it2->second.m_leader_count[account_str] += workload;
-                    }
-                }
-            }
-        }
-        return group_workload;
-    }
-
-    int rand_num(int min, int max) {
-        char tmp;
-        std::string buffer;
-        std::random_device rd;
-        std::default_random_engine random(rd());
-        int temp = max - min + 1;
-        return (random() % temp) + min;
-    }
-
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
 
-    xstatistics_data_t data;
-    xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
-    xobject_ptr_t<store::xstore_face_t> m_store;
-    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
-    xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xcontract::xtable_statistic_info_collection_contract m_table_contract;
-
     common::xip2_t m_group_xip1{common::xnetwork_id_t{255}, common::xconsensus_zone_id, common::xdefault_cluster_id, common::xgroup_id_t{1}, 256, 1};
     common::xip2_t m_group_xip2{common::xnetwork_id_t{255}, common::xconsensus_zone_id, common::xdefault_cluster_id, common::xgroup_id_t{64}, 512, 1};
     common::xgroup_address_t m_group_addr1{m_group_xip1.xip()};
     common::xgroup_address_t m_group_addr2{m_group_xip2.xip()};
-    std::string m_table{std::string{sys_contract_sharding_statistic_info_addr} + "@" + std::to_string(1)};
+    std::string m_table_addr{std::string{sys_contract_sharding_statistic_info_addr} + "@" + std::to_string(1)};
     xmocked_vnodesvr_t node_serv;
 };
 using xtest_table_contract_t = xtop_test_table_contract;
 
 TEST_F(xtest_table_contract_t, test_node_service) {
-    xstatistics_data_t data;
-    xelection_related_statistics_data_t elect_data;
-    auto vnode_group = node_serv.get_group(m_group_xip2);
-    assert(vnode_group != nullptr);
-
-    xgroup_related_statistics_data_t group_data;
-    // set vote data
-    for (std::size_t i = 0; i < vnode_group->get_size(); ++i) {
-        xaccount_related_statistics_data_t account_data;
-        account_data.block_data.block_count = i;
-        account_data.block_data.transaction_count = i;
-        group_data.account_statistics_data.push_back(account_data);
-    }
-    elect_data.group_statistics_data[m_group_addr2] = group_data;
-    data.detail[1] = elect_data;
     for (std::size_t i = 0; i < 512; ++i) {
-        EXPECT_EQ(data.detail[1].group_statistics_data[m_group_addr2].account_statistics_data[i].block_data.block_count, i);
-        EXPECT_EQ(data.detail[1].group_statistics_data[m_group_addr2].account_statistics_data[i].block_data.transaction_count, i);
+        auto account_str = node_serv.get_group(m_group_xip2)->get_node(i)->get_account();
+        EXPECT_EQ(account_str, test_account[i]);
     }
 }
 
 TEST_F(xtest_table_contract_t, test_get_workload_from_data) {
-    xvip2_t leader_xip_test[8];
-    leader_xip_test[0] = {0x2080c04, 10}; // group id 3, node id 4, time 10
-    leader_xip_test[1] = {0xa181c08, 20}; // group id 7, node id 8, time 10
-    leader_xip_test[2] = {0xa181808, 20}; // group id 6, node id 8, time 20
-    leader_xip_test[3] = {0x2080c00, 10}; // group id 3, node id 0, time 10
-    leader_xip_test[4] = {0x2080c01, 10}; // group id 3, node id 1, time 10
-    leader_xip_test[5] = {0x2080c02, 10}; // group id 3, node id 2, time 10
-    leader_xip_test[6] = {0x2080c06, 10}; // group id 3, node id 6, time 10
-    leader_xip_test[7] = {0x2080c00, 10}; // group id 3, node id 0, time 10
-
-    uint32_t tx_count_test[8] = {100, 110, 120, 130, 140, 150, 160, 170};
-    uint32_t blk_count_test[8] = {10, 11, 12, 13, 14, 15, 16, 17};
-    
-    std::vector<std::vector<base::xvoter>> voter_info_test;
-    std::vector<base::xvoter> temp;
-    for(int i = 0; i < 8; i++){
-        base::xvoter vote;
-        vote.is_voted = 0;
-        temp.push_back(vote);
-        vote.is_voted = 1;
-        temp.push_back(vote);
-        voter_info_test.push_back(temp);
-    }
-    for(size_t i = 0; i < 8; i++){
-        tableblock_statistics_handle(leader_xip_test[i], tx_count_test[i], blk_count_test[i], voter_info_test[i], data);
-    }
-    auto const stat_data = data;
-    auto group_workload = test_get_workload_from_data(stat_data);
-    EXPECT_EQ(group_workload.size(), 3);
-    common::xgroup_address_t group_addr7(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{7});
-    common::xgroup_address_t group_addr6(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{6});
-    common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
-
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count.size(), 5);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(0)], (130+170)+2*30);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(1)], 140+2*14);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(2)], 150+2*15);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(3)], 0);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(4)], 100+2*10);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(5)], 0);
-    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(6)], 160+2*16);
-
-    EXPECT_EQ(group_workload[group_addr7].m_leader_count.size(), 1);
-    for(size_t slotid = 0; slotid < 9; ++slotid) {
-        if(slotid == 8) {
-            EXPECT_EQ(group_workload[group_addr7].m_leader_count[group_addr7.to_string() + "_" + std::to_string(slotid)], 110+2*11);
-        } else {
-            EXPECT_EQ(group_workload[group_addr7].m_leader_count[group_addr7.to_string() + "_" + std::to_string(slotid)], 0);
+    xstatistics_data_t stat_data;
+    xelection_related_statistics_data_t elect_data;
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+1) * 5;
+            account_data.block_data.transaction_count = (i+1) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
         }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr1, group_data));
     }
-    EXPECT_EQ(group_workload[group_addr6].m_leader_count.size(), 1);  
-    for(size_t slotid = 0; slotid < 9; ++slotid) {
-        if(slotid == 8) {
-            EXPECT_EQ(group_workload[group_addr6].m_leader_count[group_addr6.to_string() + "_" + std::to_string(slotid)], 120+2*12);
-        } else {
-            EXPECT_EQ(group_workload[group_addr6].m_leader_count[group_addr6.to_string() + "_" + std::to_string(slotid)], 0);
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+2) * 5;
+            account_data.block_data.transaction_count = (i+2) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
         }
-    }  
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr2, group_data));
+    }
+    stat_data.detail.insert(std::make_pair(1, elect_data));
+
+    std::map<std::string, std::string> str_old;
+    std::map<std::string, std::string> str_new;
+    m_table_contract.get_workload_from_data(&node_serv, stat_data, str_old, str_new);
+    std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+    for (auto it = str_new.begin(); it != str_new.end(); it++) {
+        common::xgroup_address_t group_address;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->first.data(), it->first.size());
+            stream >> group_address;
+        }
+        xgroup_workload_t total_workload;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->second.data(), it->second.size());
+            total_workload.serialize_from(stream);
+        }
+        group_workload[group_address] = total_workload;
+    }
+
+    EXPECT_EQ(group_workload.size(), 2);
+    EXPECT_EQ(group_workload.count(m_group_addr1), true);
+    EXPECT_EQ(group_workload.count(m_group_addr2), true);
+    for (auto i = 0; i < 10; i++) {
+        EXPECT_EQ(group_workload[m_group_addr1].m_leader_count[test_account[i]], (i+1) * 20);
+        EXPECT_EQ(group_workload[m_group_addr2].m_leader_count[test_account[i]], (i+2) * 20);
+    }
+
+    str_old = str_new;
+    str_new.clear();
+    group_workload.clear();
+    m_table_contract.get_workload_from_data(&node_serv, stat_data, str_old, str_new);
+    for (auto it = str_new.begin(); it != str_new.end(); it++) {
+        common::xgroup_address_t group_address;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->first.data(), it->first.size());
+            stream >> group_address;
+        }
+        xgroup_workload_t total_workload;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->second.data(), it->second.size());
+            total_workload.serialize_from(stream);
+        }
+        group_workload[group_address] = total_workload;
+    }
+
+    EXPECT_EQ(group_workload.size(), 2);
+    EXPECT_EQ(group_workload.count(m_group_addr1), true);
+    EXPECT_EQ(group_workload.count(m_group_addr2), true);
+    for (auto i = 0; i < 10; i++) {
+        EXPECT_EQ(group_workload[m_group_addr1].m_leader_count[test_account[i]], (i+1) * 20 * 2);
+        EXPECT_EQ(group_workload[m_group_addr2].m_leader_count[test_account[i]], (i+2) * 20 * 2);
+    }
+}
+
+TEST_F(xtest_table_contract_t, test_process_workload_data_internal) {
+    xstatistics_data_t stat_data;
+    xelection_related_statistics_data_t elect_data;
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+1) * 5;
+            account_data.block_data.transaction_count = (i+1) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr1, group_data));
+    }
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+2) * 5;
+            account_data.block_data.transaction_count = (i+2) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr2, group_data));
+    }
+    stat_data.detail.insert(std::make_pair(1, elect_data));
+
+    std::map<std::string, std::string> str_old;
+    std::map<std::string, std::string> str_new;
+    std::string tgas_old;
+    std::string tgas_new;
+    m_table_contract.process_workload_data_internal(&node_serv, stat_data, 100, str_old, tgas_old, str_new, tgas_new);
+    std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+    for (auto it = str_new.begin(); it != str_new.end(); it++) {
+        common::xgroup_address_t group_address;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->first.data(), it->first.size());
+            stream >> group_address;
+        }
+        xgroup_workload_t total_workload;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->second.data(), it->second.size());
+            total_workload.serialize_from(stream);
+        }
+        group_workload[group_address] = total_workload;
+    }
+
+    EXPECT_EQ(group_workload.size(), 2);
+    EXPECT_EQ(group_workload.count(m_group_addr1), true);
+    EXPECT_EQ(group_workload.count(m_group_addr2), true);
+    for (auto i = 0; i < 10; i++) {
+        EXPECT_EQ(group_workload[m_group_addr1].m_leader_count[test_account[i]], (i+1) * 20);
+        EXPECT_EQ(group_workload[m_group_addr2].m_leader_count[test_account[i]], (i+2) * 20);
+    }
+    EXPECT_EQ(tgas_new, "100");
+
+    str_old = str_new;
+    str_new.clear();
+    tgas_old = tgas_new;
+    tgas_new.clear();
+    group_workload.clear();
+    m_table_contract.process_workload_data_internal(&node_serv, stat_data, 200, str_old, tgas_old, str_new, tgas_new);
+    for (auto it = str_new.begin(); it != str_new.end(); it++) {
+        common::xgroup_address_t group_address;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->first.data(), it->first.size());
+            stream >> group_address;
+        }
+        xgroup_workload_t total_workload;
+        {
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)it->second.data(), it->second.size());
+            total_workload.serialize_from(stream);
+        }
+        group_workload[group_address] = total_workload;
+    }
+
+    EXPECT_EQ(group_workload.size(), 2);
+    EXPECT_EQ(group_workload.count(m_group_addr1), true);
+    EXPECT_EQ(group_workload.count(m_group_addr2), true);
+    for (auto i = 0; i < 10; i++) {
+        EXPECT_EQ(group_workload[m_group_addr1].m_leader_count[test_account[i]], (i+1) * 20 * 2);
+        EXPECT_EQ(group_workload[m_group_addr2].m_leader_count[test_account[i]], (i+2) * 20 * 2);
+    }
+    EXPECT_EQ(tgas_new, "300");
+}
+
+TEST_F(xtest_table_contract_t, test_process_workload_data) {
+    auto vbstate = make_object_ptr<xvbstate_t>(m_table_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
+    auto unitstate = std::make_shared<xunit_bstate_t>(vbstate.get());
+    auto account_context = std::make_shared<xaccount_context_t>(unitstate);
+    auto contract_helper = std::make_shared<xcontract_helper>(account_context.get(), common::xnode_id_t{m_table_addr}, m_table_addr);
+    m_table_contract.set_contract_helper(contract_helper);
+    m_table_contract.setup();
+
+    xstatistics_data_t stat_data;
+    xelection_related_statistics_data_t elect_data;
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+1) * 5;
+            account_data.block_data.transaction_count = (i+1) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr1, group_data));
+    }
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+2) * 5;
+            account_data.block_data.transaction_count = (i+2) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr2, group_data));
+    }
+    stat_data.detail.insert(std::make_pair(1, elect_data));
+    m_table_contract.process_workload_data(&node_serv, stat_data, 10);
+    auto str = m_table_contract.STRING_GET2(XPORPERTY_CONTRACT_TGAS_KEY);
+    EXPECT_EQ(str, "10");
+    std::map<std::string, std::string> map;
+    m_table_contract.MAP_COPY_GET(XPORPERTY_CONTRACT_WORKLOAD_KEY, map);
+    EXPECT_EQ(map.size(), 2);
+}
+
+TEST_F(xtest_table_contract_t, test_upload_data_internal) {
+    auto vbstate = make_object_ptr<xvbstate_t>(m_table_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
+    auto unitstate = std::make_shared<xunit_bstate_t>(vbstate.get());
+    auto account_context = std::make_shared<xaccount_context_t>(unitstate);
+    auto contract_helper = std::make_shared<xcontract_helper>(account_context.get(), common::xnode_id_t{m_table_addr}, m_table_addr);
+    m_table_contract.set_contract_helper(contract_helper);
+    m_table_contract.setup();
+
+    xstatistics_data_t stat_data;
+    xelection_related_statistics_data_t elect_data;
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+1) * 5;
+            account_data.block_data.transaction_count = (i+1) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr1, group_data));
+    }
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 10; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+2) * 5;
+            account_data.block_data.transaction_count = (i+2) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr2, group_data));
+    }
+    stat_data.detail.insert(std::make_pair(1, elect_data));
+    m_table_contract.process_workload_data(&node_serv, stat_data, 10);
+
+    std::string call_contract_str{};
+    m_table_contract.upload_workload_internal(call_contract_str);
+    EXPECT_EQ(call_contract_str.empty(), false);
+    auto str = m_table_contract.STRING_GET2(XPORPERTY_CONTRACT_TGAS_KEY);
+    EXPECT_EQ(str, "0");
+    std::map<std::string, std::string> map;
+    m_table_contract.MAP_COPY_GET(XPORPERTY_CONTRACT_WORKLOAD_KEY, map);
+    EXPECT_EQ(map.size(), 0);
 }
 
 #if 0
-
-TEST_F(xtest_table_contract_t, test_get_workload_from_data_time) {
-    std::vector<xvip2_t> leader_xip_test;
-
-    for (auto i = 0; i < 256; i++) {
-        common::xip2_t ip{common::xnetwork_id_t{255}, common::xconsensus_zone_id, common::xdefault_cluster_id, common::xgroup_id_t{1}, common::xslot_id_t{i}};
-        leader_xip_test.emplace_back(ip);
+TEST_F(xtest_table_contract_t, test_process_workload_data_internal_1r_bench) {
+    xstatistics_data_t stat_data;
+    xelection_related_statistics_data_t elect_data;
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 256; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+1) * 5;
+            account_data.block_data.transaction_count = (i+1) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr1, group_data));
     }
+    {
+        xgroup_related_statistics_data_t group_data;
+        for (auto i = 0; i < 512; i++) {
+            xaccount_related_statistics_data_t account_data;
+            account_data.block_data.block_count = (i+2) * 5;
+            account_data.block_data.transaction_count = (i+2) * 10;
+            group_data.account_statistics_data.emplace_back(account_data);
+        }
+        elect_data.group_statistics_data.insert(std::make_pair(m_group_addr2, group_data));
+    }
+    stat_data.detail.insert(std::make_pair(1, elect_data));
 
-    for (auto i = 0; i < 512; i++) {
-        common::xip2_t ip{common::xnetwork_id_t{255}, common::xconsensus_zone_id, common::xdefault_cluster_id, common::xgroup_id_t{64}, common::xslot_id_t{i}};
-        leader_xip_test.emplace_back(ip);
-    }
+    std::map<std::string, std::string> str_old;
+    std::map<std::string, std::string> str_new;
+    std::string tgas_old;
+    std::string tgas_new;
 
-    std::vector<std::vector<base::xvoter>> voter_info_test;
-    std::vector<base::xvoter> temp;
-    for(int i = 0; i < 8; i++){
-        base::xvoter vote;
-        vote.is_voted = 0;
-        temp.push_back(vote);
-        vote.is_voted = 1;
-        temp.push_back(vote);
-        voter_info_test.push_back(temp);
-    }
-    for(size_t i = 0; i < 256; i++){
-        tableblock_statistics_handle(leader_xip_test[i], 5, 5, voter_info_test[0], data);
-    }
-    auto const stat_data = data;
     uint64_t time_total = 0;
     uint64_t num_in_second = 0;
     uint64_t last_timestamp = 0;
     uint32_t second = 1;
     uint64_t num_total = 0;
     uint64_t max_rounds = 0;
-    uint64_t min_rounds = 0;
+    uint64_t min_rounds = 0xffffffff;
     uint64_t rounds = 100;
     for (;;) {
+        str_old = str_new;
+        tgas_old = tgas_new;
+        str_new.clear();
+        tgas_old.clear();
         uint64_t time_s = xtime_utl::time_now_ms();
-        auto group_workload = test_get_workload_from_data(stat_data);
+        m_table_contract.process_workload_data_internal(&node_serv, stat_data, 100, str_old, tgas_old, str_new, tgas_new);
         uint64_t time_e = xtime_utl::time_now_ms();
         time_total += time_e - time_s;
         num_in_second++;
@@ -878,5 +904,86 @@ TEST_F(xtest_table_contract_t, test_get_workload_from_data_time) {
     std::cout << "max rounds per second: " << max_rounds << std::endl;
     std::cout << "min rounds per second: " << min_rounds << std::endl;
 }
+
+// TEST_F(xtest_table_contract_t, test_process_workload_data_internal_5r_bench) {
+//     nodeservice_add_group(2, m_group_xip1, test_account, 256);
+//     nodeservice_add_group(2, m_group_xip2, test_account, 512);
+//     nodeservice_add_group(3, m_group_xip1, test_account, 256);
+//     nodeservice_add_group(3, m_group_xip2, test_account, 512);
+//     nodeservice_add_group(4, m_group_xip1, test_account, 256);
+//     nodeservice_add_group(4, m_group_xip2, test_account, 512);
+//     nodeservice_add_group(5, m_group_xip1, test_account, 256);
+//     nodeservice_add_group(5, m_group_xip2, test_account, 512);
+//     xstatistics_data_t stat_data;
+//     xelection_related_statistics_data_t elect_data;
+//     {
+//         xgroup_related_statistics_data_t group_data;
+//         for (auto i = 0; i < 256; i++) {
+//             xaccount_related_statistics_data_t account_data;
+//             account_data.block_data.block_count = (i+1) * 5;
+//             account_data.block_data.transaction_count = (i+1) * 10;
+//             group_data.account_statistics_data.emplace_back(account_data);
+//         }
+//         elect_data.group_statistics_data.insert(std::make_pair(m_group_addr1, group_data));
+//     }
+//     {
+//         xgroup_related_statistics_data_t group_data;
+//         for (auto i = 0; i < 512; i++) {
+//             xaccount_related_statistics_data_t account_data;
+//             account_data.block_data.block_count = (i+2) * 5;
+//             account_data.block_data.transaction_count = (i+2) * 10;
+//             group_data.account_statistics_data.emplace_back(account_data);
+//         }
+//         elect_data.group_statistics_data.insert(std::make_pair(m_group_addr2, group_data));
+//     }
+//     stat_data.detail.insert(std::make_pair(1, elect_data));
+//     stat_data.detail.insert(std::make_pair(2, elect_data));
+//     // stat_data.detail.insert(std::make_pair(3, elect_data));
+//     // stat_data.detail.insert(std::make_pair(4, elect_data));
+//     // stat_data.detail.insert(std::make_pair(5, elect_data));
+
+//     std::map<std::string, std::string> str_old;
+//     std::map<std::string, std::string> str_new;
+//     std::string tgas_old;
+//     std::string tgas_new;
+
+//     uint64_t time_total = 0;
+//     uint64_t num_in_second = 0;
+//     uint64_t last_timestamp = 0;
+//     uint32_t second = 1;
+//     uint64_t num_total = 0;
+//     uint64_t max_rounds = 0;
+//     uint64_t min_rounds = 0xffffffff;
+//     uint64_t rounds = 100;
+//     for (;;) {
+//         str_old = str_new;
+//         tgas_old = tgas_new;
+//         str_new.clear();
+//         tgas_old.clear();
+//         uint64_t time_s = xtime_utl::time_now_ms();
+//         m_table_contract.process_workload_data_internal(&node_serv, stat_data, 100, str_old, tgas_old, str_new, tgas_new);
+//         uint64_t time_e = xtime_utl::time_now_ms();
+//         time_total += time_e - time_s;
+//         num_in_second++;
+//         if (time_total / 1000 >= second) {
+//             std::cout << "second " << second << "(" << time_total - last_timestamp << "ms)" << ", total rounds: " << num_in_second << std::endl;
+//             num_total += num_in_second;
+//             if (num_in_second > max_rounds) {
+//                 max_rounds = num_in_second;
+//             } else if (num_in_second < min_rounds) {
+//                 min_rounds = num_in_second;
+//             }
+//             if (second >= rounds) {
+//                 break;
+//             } else {
+//                 num_in_second = 0;
+//                 second++;
+//             }
+//         }
+//     }
+//     std::cout << "avr rounds per second: " << num_total/rounds << std::endl;
+//     std::cout << "max rounds per second: " << max_rounds << std::endl;
+//     std::cout << "min rounds per second: " << min_rounds << std::endl;
+// }
 #endif
 NS_END3

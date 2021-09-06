@@ -97,9 +97,10 @@ class xdatamock_unit {
 
     const std::string &     get_account() const {return m_account;}
     xblock_ptr_t            get_cert_block() const {return m_history_units.back();}
-    xblock_ptr_t            get_lock_block() const { return m_history_units.size() == 1 ? m_history_units[0] : m_history_units[m_history_units.size() - 2];}    
+    xblock_ptr_t            get_lock_block() const { return m_history_units.size() == 1 ? m_history_units[0] : m_history_units[m_history_units.size() - 2];}
     const std::vector<xblock_ptr_t> &   get_history_units() const {return m_history_units;}
     const std::vector<xcons_transaction_ptr_t> & get_txs() const {return m_current_txs;}
+    xaccount_ptr_t          get_account_state() const {return m_unit_bstate;}
 
  public:
     xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
@@ -158,7 +159,7 @@ class xdatamock_unit {
             } else {
                 tx->set_raw_tx(iter->second.get());
             }
-        }        
+        }
         m_current_txs.push_back(tx);
     }
 
@@ -171,12 +172,12 @@ class xdatamock_unit {
             proposal_block = m_fullunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, m_default_builder_para); // no need xblock_builder_para_ptr_t
         } else if (!m_current_txs.empty()) {
             xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
-            proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);            
+            proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);
         } else {
             if (get_cert_block()->get_height() != 0
                 && (get_cert_block()->get_block_class() == base::enum_xvblock_class_light || get_lock_block()->get_block_class() == base::enum_xvblock_class_light) ) {
                 proposal_block = m_emptyunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, m_default_builder_para);
-            }            
+            }
         }
         m_current_txs.clear();  // clear txs after make unit
         return proposal_block;
@@ -189,7 +190,7 @@ class xdatamock_unit {
             xassert(block->get_last_block_hash() == (m_history_units.back()->get_block_hash()));
         }
         m_history_units.push_back(block);
-        
+
         // save raw tx
         std::vector<xobject_ptr_t<xvtxindex_t>> sub_txs;
         block->extract_sub_txs(sub_txs);
