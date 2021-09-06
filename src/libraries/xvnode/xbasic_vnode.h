@@ -20,10 +20,13 @@ NS_BEG2(top, vnode)
 
 class xtop_basic_vnode : public xvnode_face_t {
 protected:
+    // std::shared_ptr<election::cache::xgroup_element_t> m_associated_group_element;
+
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
 
     common::xnode_address_t m_address;
+    common::xelection_round_t m_joined_election_round;
 
     mutable std::mutex m_neighbors_xip2_mutex{};
     mutable std::vector<common::xip2_t> m_neighbors_xip2;
@@ -41,6 +44,7 @@ protected:
     xtop_basic_vnode() = default;
 
     explicit xtop_basic_vnode(common::xnode_address_t address,
+                              common::xelection_round_t joined_election_round,
                               observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept;
 
@@ -53,6 +57,8 @@ public:
 
     common::xnode_type_t type() const noexcept override;
     common::xnode_address_t const & address() const noexcept override;
+
+    common::xelection_round_t const & joined_election_round() const noexcept override;
 
     void broadcast(common::xip2_t const & broadcast_dst, vnetwork::xmessage_t const & msg, std::error_code & ec) override;
     void send_to(common::xip2_t const & unicast_dst, vnetwork::xmessage_t const & msg, std::error_code & ec) override;

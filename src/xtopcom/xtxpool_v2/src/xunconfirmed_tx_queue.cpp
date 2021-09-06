@@ -115,7 +115,7 @@ const xcons_transaction_ptr_t xpeer_tables_t::find(uint16_t peer_table_sid, uint
 }
 
 void xpeer_tables_t::update_receiptid_state(const xtable_state_cache_t & table_state_cache) {
-    for (auto peer_table : m_peer_tables) {
+    for (auto & peer_table : m_peer_tables) {
         auto & peer_table_sid = peer_table.first;
         auto & peer_table_txs = peer_table.second;
         peer_table_txs->update_receipt_id(table_state_cache.get_confirmid_max(peer_table_sid), m_all_unconfirm_txs);

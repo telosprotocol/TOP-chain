@@ -43,7 +43,7 @@ xtop_node_element::hash() const {
 }
 
 common::xelection_round_t const &
-xtop_node_element::joined_version() const noexcept {
+xtop_node_element::joined_election_round() const noexcept {
     return m_election_info.joined_version;
 }
 

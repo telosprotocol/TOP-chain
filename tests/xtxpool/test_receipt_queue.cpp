@@ -38,7 +38,8 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     uint256_t last_tx_hash = {};
     xtx_para_t para;
 

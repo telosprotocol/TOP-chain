@@ -7,6 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtransaction.h"
 #include "xmetrics/xmetrics.h"
+#include "xtxpool_v2/xreceipt_state_cache.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xverifier_utl.h"
 
@@ -101,26 +102,36 @@ public:
         uint64_t tx_time = tx->get_receipt_gmtime();
         if (now < tx_time) {
             xtxpool_info("xtxpool_t::update_receipt_recv_num time not fit with other nodes,now:%llu tx_time:%llu,tx:%s", now, tx_time, tx->dump().c_str());
-            m_receipt_recv_num_by_1_clock++;
+            // m_receipt_recv_num_by_1_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_1_clock, 1);
         } else if (now - tx_time < 10) {
-            m_receipt_recv_num_by_1_clock++;
+            // m_receipt_recv_num_by_1_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_1_clock, 1);
         } else if (now - tx_time < 20) {
-            m_receipt_recv_num_by_2_clock++;
+            // m_receipt_recv_num_by_2_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_2_clock, 1);
         } else if (now - tx_time < 30) {
-            m_receipt_recv_num_by_3_clock++;
+            // m_receipt_recv_num_by_3_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_3_clock, 1);
         } else if (now - tx_time < 40) {
-            m_receipt_recv_num_by_4_clock++;
+            // m_receipt_recv_num_by_4_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_4_clock, 1);
         } else if (now - tx_time < 50) {
-            m_receipt_recv_num_by_5_clock++;
+            // m_receipt_recv_num_by_5_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_5_clock, 1);
         } else if (now - tx_time < 60) {
-            m_receipt_recv_num_by_6_clock++;
+            // m_receipt_recv_num_by_6_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_by_6_clock, 1);
         } else if (now - tx_time < 120) {
-            m_receipt_recv_num_7to12_clock++;
+            // m_receipt_recv_num_7to12_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_7to12_clock, 1);
         } else if (now - tx_time < 300) {
-            m_receipt_recv_num_13to30_clock++;
+            // m_receipt_recv_num_13to30_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_13to30_clock, 1);
             xtxpool_info("xtxpool_t::update_receipt_recv_num receipt came too late,delay:%llu,tx:%s", now - tx_time, tx->dump().c_str());
         } else {
-            m_receipt_recv_num_exceed_30_clock++;
+            // m_receipt_recv_num_exceed_30_clock++;
+            XMETRICS_GAUGE(metrics::txpool_receipt_recv_num_exceed_30_clock, 1);
             xtxpool_warn("xtxpool_t::update_receipt_recv_num receipt came delay exceed 300s,delay:%llu,tx:%s", now - tx_time, tx->dump().c_str());
         }
     }
@@ -170,25 +181,25 @@ public:
                              "pulled_confirm",
                              m_pulled_confirm_tx_num.load());
 
-        XMETRICS_PACKET_INFO("txpool_receipt_delay",
-                             "1clk",
-                             m_receipt_recv_num_by_1_clock.load(),
-                             "2clk",
-                             m_receipt_recv_num_by_2_clock.load(),
-                             "3clk",
-                             m_receipt_recv_num_by_3_clock.load(),
-                             "4clk",
-                             m_receipt_recv_num_by_4_clock.load(),
-                             "5clk",
-                             m_receipt_recv_num_by_5_clock.load(),
-                             "6clk",
-                             m_receipt_recv_num_by_6_clock.load(),
-                             "7to12clk",
-                             m_receipt_recv_num_7to12_clock.load(),
-                             "13to30clk",
-                             m_receipt_recv_num_13to30_clock.load(),
-                             "ex30clk",
-                             m_receipt_recv_num_exceed_30_clock.load());
+        // XMETRICS_PACKET_INFO("txpool_receipt_delay",
+        //                      "1clk",
+        //                      m_receipt_recv_num_by_1_clock.load(),
+        //                      "2clk",
+        //                      m_receipt_recv_num_by_2_clock.load(),
+        //                      "3clk",
+        //                      m_receipt_recv_num_by_3_clock.load(),
+        //                      "4clk",
+        //                      m_receipt_recv_num_by_4_clock.load(),
+        //                      "5clk",
+        //                      m_receipt_recv_num_by_5_clock.load(),
+        //                      "6clk",
+        //                      m_receipt_recv_num_by_6_clock.load(),
+        //                      "7to12clk",
+        //                      m_receipt_recv_num_7to12_clock.load(),
+        //                      "13to30clk",
+        //                      m_receipt_recv_num_13to30_clock.load(),
+        //                      "ex30clk",
+        //                      m_receipt_recv_num_exceed_30_clock.load());
 
         XMETRICS_PACKET_INFO("txpool_cache",
                              "send_cur",
@@ -264,15 +275,15 @@ private:
     std::atomic<uint32_t> m_received_confirm_tx_num{0};
     std::atomic<uint32_t> m_pulled_recv_tx_num{0};
     std::atomic<uint32_t> m_pulled_confirm_tx_num{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_1_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_2_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_3_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_4_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_5_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_6_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_7to12_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_13to30_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_exceed_30_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_by_1_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_by_2_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_by_3_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_by_4_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_by_5_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_by_6_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_7to12_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_13to30_clock{0};
+    // std::atomic<uint32_t> m_receipt_recv_num_exceed_30_clock{0};
     std::atomic<uint32_t> m_push_tx_send_cur_num{0};
     std::atomic<uint32_t> m_push_tx_recv_cur_num{0};
     std::atomic<uint32_t> m_push_tx_confirm_cur_num{0};
@@ -322,7 +333,8 @@ class xtxpool_table_info_t : public base::xvaccount_t {
 public:
     xtxpool_table_info_t() = delete;
     xtxpool_table_info_t(const xtxpool_table_info_t &) = delete;
-    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic) : base::xvaccount_t(address), m_statistic(statistic) {
+    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic, xtable_state_cache_t *table_state_cache, std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
+      : base::xvaccount_t(address), m_statistic(statistic), m_table_state_cache(table_state_cache), m_all_table_sids(all_table_sids) {
         XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, 1);
         m_shards.push_back(shard);
     }
@@ -558,10 +570,24 @@ public:
         return m_counter.get_conf_tx_count();
     }
 
+    const std::set<base::xtable_shortid_t> get_all_table_sids() const {
+        if (m_all_table_sids == nullptr) {
+            return m_empty;
+        }
+        return *m_all_table_sids;
+    }
+
+    xtable_state_cache_t * get_table_state_cache() {
+        return m_table_state_cache;
+    }
+
 private:
     std::vector<xtxpool_shard_info_t *> m_shards;
     xtx_counter_t m_counter{};
     xtxpool_statistic_t * m_statistic{nullptr};
+    xtable_state_cache_t * m_table_state_cache{nullptr};
+    std::set<base::xtable_shortid_t> * m_all_table_sids{nullptr};
+    std::set<base::xtable_shortid_t> m_empty{};
 };
 
 }  // namespace xtxpool_v2

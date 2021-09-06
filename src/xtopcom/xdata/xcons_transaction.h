@@ -71,6 +71,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_last_action_recv_tx_use_send_tx_tgas() const;
     enum_xunit_tx_exec_status   get_last_action_exec_status() const;
     uint64_t                get_last_action_receipt_id() const;
+    uint64_t                get_last_action_sender_confirmed_receipt_id() const;
 
  public:
     const xtransaction_exec_state_t & get_tx_execute_state() const {return m_execute_state;}
@@ -88,6 +89,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_tx_exec_status();}
     uint32_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}
     void                    set_current_receipt_id(base::xtable_shortid_t self_tableid, base::xtable_shortid_t peer_tableid, uint64_t receiptid) {m_execute_state.set_receipt_id(self_tableid, peer_tableid, receiptid);}
+    void                    set_current_sender_confirmed_receipt_id(uint64_t receiptid) {m_execute_state.set_sender_confirmed_receipt_id(receiptid);}
 
     uint64_t                get_receipt_clock() const {return get_prove_cert()->get_clock();}
     uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_gmtime();}

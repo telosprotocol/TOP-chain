@@ -61,7 +61,7 @@ const std::shared_ptr<xtx_entry> xnon_ready_accounts_t::find_tx(const std::strin
 
 const std::vector<std::string> xnon_ready_accounts_t::get_accounts() const {
     std::vector<std::string> accounts;
-    for (auto account_txs : m_account_map) {
+    for (auto & account_txs : m_account_map) {
         accounts.push_back(account_txs.first);
     }
     return accounts;
@@ -72,7 +72,7 @@ const std::vector<std::shared_ptr<xtx_entry>> xnon_ready_accounts_t::pop_account
     auto it_account = m_account_map.find(account_addr);
     if (it_account != m_account_map.end()) {
         auto & txs_map = it_account->second;
-        for (auto it_tx : txs_map) {
+        for (auto & it_tx : txs_map) {
             txs.push_back(it_tx.second);
             m_xtable_info->tx_dec(it_tx.second->get_tx()->get_tx_subtype(), 1);
         }

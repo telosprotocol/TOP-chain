@@ -36,12 +36,15 @@ public:
     bool is_account_need_update(const std::string & account_addr) const;
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     bool is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const;
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
     void clear_expired_txs();
     uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
+
+    void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
+    std::vector<xcons_transaction_ptr_t> get_receipts();
 
 private:
     void queue_to_pending();

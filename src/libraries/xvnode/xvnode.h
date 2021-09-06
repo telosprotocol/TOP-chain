@@ -60,7 +60,7 @@ public:
 
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                observer_ptr<vnetwork::xvhost_face_t> const & vhost,
-               std::shared_ptr<election::cache::xgroup_element_t> const & group_info,
+               std::shared_ptr<election::cache::xgroup_element_t> group_info,
                observer_ptr<router::xrouter_face_t> const & router,
                observer_ptr<store::xstore_face_t> const & store,
                observer_ptr<base::xvblockstore_t> const & block_store,
@@ -76,7 +76,8 @@ public:
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
                common::xslot_id_t const & slot_id,
-               common::xelection_round_t const & election_round,
+               common::xelection_round_t joined_election_round,
+               common::xelection_round_t election_round,
                std::uint16_t const group_size,
                std::uint64_t const associated_blk_height,
                observer_ptr<vnetwork::xvhost_face_t> const & vhost,

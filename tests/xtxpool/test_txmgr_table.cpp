@@ -28,7 +28,8 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -72,7 +73,8 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -94,7 +96,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -172,7 +175,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -237,7 +241,8 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -276,7 +281,8 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -378,7 +384,8 @@ TEST_F(test_txmgr_table, expired_tx) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -420,7 +427,8 @@ TEST_F(test_txmgr_table, repeat_receipt) {
 
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     xtxmgr_table_t txmgr_table(&table_para);
     xtx_para_t para;
 

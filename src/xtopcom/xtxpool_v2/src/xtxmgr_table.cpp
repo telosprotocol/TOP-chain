@@ -138,7 +138,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     send_tx_queue_to_pending();
     ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_locked_nonce_map());
 
-    for (auto send_txs_account : send_txs_accounts) {
+    for (auto & send_txs_account : send_txs_accounts) {
         auto & account_txs = send_txs_account->get_txs();
         ready_txs.insert(ready_txs.end(), account_txs.begin(), account_txs.end());
     }
@@ -196,12 +196,12 @@ bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
     return false;
 }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(uint32_t max_num) const {
-    return m_new_receipt_queue.get_lacking_recv_tx_ids(max_num);
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(uint32_t & total_num) const {
+    return m_new_receipt_queue.get_lacking_recv_tx_ids(total_num);
 }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_confirm_tx_ids(uint32_t max_num) const {
-    return m_new_receipt_queue.get_lacking_confirm_tx_ids(max_num);
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_confirm_tx_ids(uint32_t & total_num) const {
+    return m_new_receipt_queue.get_lacking_confirm_tx_ids(total_num);
 }
 
 void xtxmgr_table_t::clear_expired_txs() {
@@ -252,15 +252,23 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
         }
     }
 
-    for (auto tx_ent : expired_send_txs) {
+    for (auto & tx_ent : expired_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, true);
     }
 
-    for (auto tx_ent : push_succ_send_txs) {
+    for (auto & tx_ent : push_succ_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, false);
     }
+}
+
+void xtxmgr_table_t::update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
+    m_new_receipt_queue.update_peer_receiptid_pair(peer_table_sid, pair);
+}
+
+std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_receipts() {
+    return m_new_receipt_queue.get_receipts();
 }
 
 }  // namespace xtxpool_v2

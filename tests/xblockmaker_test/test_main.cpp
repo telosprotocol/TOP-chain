@@ -7,6 +7,7 @@
 #include "xdata/xrootblock.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xmetrics/xmetrics.h"
 using namespace std;
 using namespace top;
 using namespace top::config;
@@ -50,6 +51,11 @@ int main(int argc, char **argv) {
     xset_log_level(enum_xlog_level_debug);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
+    XMETRICS_INIT();
 
-    return RUN_ALL_TESTS();
+    auto i = RUN_ALL_TESTS();
+    sleep(2);
+    XMETRICS_UNINT();
+    sleep(2);
+    return 0;
 }
