@@ -71,6 +71,10 @@ void xtop_unit_state_face::erase_map_key(properties::xtypeless_property_identifi
     state_accessor_->remove_property_cell<properties::xproperty_type_t::map>(property_id, key, ec);
 }
 
+bool xtop_unit_state_face::exist_map_key(properties::xtypeless_property_identifier_t const & property_id, std::string const & key, std::error_code & ec) const {
+    return state_accessor_->exist_property_cell_key<properties::xproperty_type_t::map>(property_id, key, ec);
+}
+
 void xtop_unit_state_face::set_deque_value(properties::xtypeless_property_identifier_t const & property_id, std::size_t const key, xbyte_buffer_t const & value, std::error_code & ec) {
     state_accessor_->set_property_cell_value<properties::xproperty_type_t::deque>(property_id, key, value, ec);
 }
@@ -98,6 +102,10 @@ void xtop_unit_state_face::push_deque_front(properties::xtypeless_property_ident
 void xtop_unit_state_face::push_deque_back(properties::xtypeless_property_identifier_t const & property_id, xbyte_buffer_t const & value, std::error_code & ec) {
 
 }
+
+// bool xtop_unit_state_face::exist_deque_key(properties::xtypeless_property_identifier_t const & property_id, std::string const & key, std::error_code & ec) const {
+//     return state_accessor_->exist_property_cell_key<properties::xproperty_type_t::deque>(property_id, key, ec);
+// }
 
 }
 }

@@ -663,6 +663,56 @@ xstate_accessor_t::get_property_cell_value<properties::xproperty_type_t::deque>(
 }
 
 template <>
+bool xstate_accessor_t::exist_property_cell_key<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
+                                                                                   properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
+                                                                                   std::error_code & ec) const {
+    assert(!ec);
+    assert(bstate_ != nullptr);
+    assert(canvas_ != nullptr);
+
+    assert(!properties::system_property(property_id));
+
+    auto const & property_name = property_id.full_name();
+    auto map_property = bstate_->load_string_map_var(property_name);
+    if (map_property == nullptr) {
+        ec = error::xerrc_t::property_not_exist;
+        return false;
+    }
+
+    assert(map_property != nullptr);
+    if (!map_property->find(key)) {
+        return false;
+    }
+
+    return true;
+}
+
+template <>
+bool xstate_accessor_t::exist_property_cell_key<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
+                                                                                     properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
+                                                                                     std::error_code & ec) const {
+    assert(!ec);
+    assert(bstate_ != nullptr);
+    assert(canvas_ != nullptr);
+
+    assert(!properties::system_property(property_id));
+
+    auto const & property_name = property_id.full_name();
+    auto deque_property = bstate_->load_string_deque_var(property_name);
+    if (deque_property == nullptr) {
+        ec = error::xerrc_t::property_not_exist;
+        return false;
+    }
+
+    assert(deque_property != nullptr);
+    if (key >= deque_property->query().size()) {
+        return false;
+    }
+
+    return true;
+}
+
+template <>
 void xstate_accessor_t::remove_property_cell<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, typename properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);

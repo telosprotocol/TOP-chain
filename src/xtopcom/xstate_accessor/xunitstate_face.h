@@ -46,6 +46,7 @@ public:
     virtual xbyte_buffer_t get_map_value(properties::xtypeless_property_identifier_t const & property_id, std::string const & key, std::error_code & ec) const;
     virtual std::map<std::string, xbyte_buffer_t> get_map(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
     virtual void erase_map_key(properties::xtypeless_property_identifier_t const & property_id, std::string const & key, std::error_code & ec);
+    virtual bool exist_map_key(properties::xtypeless_property_identifier_t const & property_id, std::string const & key, std::error_code & ec) const;
 
     virtual void set_deque_value(properties::xtypeless_property_identifier_t const & property_id, std::size_t const key, xbyte_buffer_t const & value, std::error_code & ec);
     virtual xbyte_buffer_t get_deque_value(properties::xtypeless_property_identifier_t const & property_id, std::size_t const pos, std::error_code & ec) const;

@@ -24,4 +24,11 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_elect_consensus_addr{ "T200024uH
 XINLINE_CONSTEXPR char const * sys_contract_zec_standby_pool_addr{ "T200024uCQ5Di2vZmPURNYVUuvWm5p7EaFQrRLs76@2" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_group_assoc_addr{ "T200024uN3e6AujFyvDXY4h5t6or3DgKpu5rTKELD@2" };
 
+XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
+XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
+
+XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
+XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
+
 NS_END2

@@ -182,6 +182,25 @@ public:
     void map_prop_clear(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
 
     /**
+     * @brief query a specific key of the map property whether exist
+     *
+     * @param user the user addr
+     * @param prop_id the property identifier
+     * @param prop_key the specific key
+     * @return exist or not
+     */
+    template<typename KEYT, typename VALUET, typename = typename std::enable_if<std::is_same<KEYT, std::string>::value &&
+                                                                            (
+                                                                                std::is_same<VALUET, std::string>::value ||
+                                                                                std::is_same<VALUET, std::int8_t>::value ||
+                                                                                std::is_same<VALUET, std::int16_t>::value ||
+                                                                                std::is_same<VALUET, std::int32_t>::value ||
+                                                                                std::is_same<VALUET, std::int64_t>::value ||
+                                                                                std::is_same<VALUET, std::uint64_t>::value
+                                                                            )>::type>
+    bool map_prop_exist(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, KEYT const& prop_key);
+
+    /**
      * @brief query a specific key of the map property
      *
      * @param user the user addr

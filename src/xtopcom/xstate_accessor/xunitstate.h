@@ -38,6 +38,9 @@ public:
     // ============================== account context related APIs ==============================
     void string_create(std::string const & property_name, std::error_code & ec);
     xobject_ptr_t<base::xvbstate_t> internal_state_object(common::xaccount_address_t const & account_address, std::error_code & ec) const;
+
+    std::map<std::string, xbyte_buffer_t> get_map(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & other_account_address, std::error_code & ec) const;
+    std::string get_string(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & other_account_address, std::error_code & ec) const;
 };
 using xunit_state_t = xtop_unit_state;
 
