@@ -5,6 +5,7 @@
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 
 #include "xbasic/xerror/xthrow_error.h"
+#include "xvledger/xvledger.h"
 
 #include <cassert>
 
@@ -148,6 +149,29 @@ std::map<std::string, std::string> xtop_property_access_control::map_prop_query<
 
 }
 
+template <>
+std::map<std::string, std::string> xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                                                          common::xaccount_address_t const & contract,
+                                                                                                          xproperty_identifier_t const & prop_id) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        base::xvaccount_t _vaddr(contract.to_string());
+        base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr);
+        if (_bstate == nullptr) {
+            xwarn("[xtop_property_access_control::map_prop_query]fail-get latest connectted state.account=%s", contract.to_string().c_str());
+            std::error_code ec{error::xerrc_t::state_get_failed};
+            top::error::throw_error(ec, "[xtop_property_access_control::map_prop_query]state get failed");
+            return {};
+        }
+        auto prop = bstate_->load_string_map_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::map_prop_query]property not exist, prop_name: " + prop_name);
+        return prop->query();
+    } else {
+        std::error_code ec{error::xerrc_t::property_permission_not_allowed};
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_query]permission denied");
+        return {};
+    }
+}
 
 /**
  *
@@ -175,6 +199,82 @@ std::string xtop_property_access_control::STR_PROP_QUERY(std::string const& prop
     return prop->query();
 }
 
+void xtop_property_access_control::string_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        property_assert(!property_exist(user, prop_id), "[xtop_property_access_control::string_prop_create]property already exist，prop_name: " + prop_name, error::xerrc_t::property_already_exist);
+        auto prop = bstate_->new_string_var(prop_name, canvas_.get());
+        property_assert(prop, "[xtop_property_access_control::string_prop_create]property create error，prop_name: " + prop_name);
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::string_prop_create]permission denied");
+    }
+}
+
+void xtop_property_access_control::string_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_value) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        auto prop = bstate_->load_string_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::string_prop_update]property not exist, prop_name: " + prop_name);
+        property_assert(prop->reset(prop_value, canvas_.get()), "[xtop_property_access_control::string_prop_update]property update error, prop_name: " + prop_name);
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::string_prop_update]permission denied");
+    }
+
+}
+
+void xtop_property_access_control::string_prop_clear(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        auto prop = bstate_->load_string_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::string_prop_clear]property not exist, prop_name: " + prop_name);
+
+        xassert(false); // TODO(jimmy)
+        // property_assert(prop->reset(), "[xtop_property_access_control::string_prop_clear]property reset error,  prop_name: " + prop_name);
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::string_prop_clear]permission denied");
+    }
+
+}
+
+std::string xtop_property_access_control::string_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        auto prop = bstate_->load_string_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::string_prop_query]property not exist, prop_name: " + prop_name);
+        return prop->query();
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::string_prop_query]permission denied");
+        return {};
+    }
+
+}
+
+std::string xtop_property_access_control::string_prop_query(common::xaccount_address_t const & user,
+                                                            common::xaccount_address_t const & contract,
+                                                            xproperty_identifier_t const & prop_id) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        base::xvaccount_t _vaddr(contract.to_string());
+        base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr);
+        if (_bstate == nullptr) {
+            xwarn("[xtop_property_access_control::string_prop_query]fail-get latest connectted state.account=%s", contract.to_string().c_str());
+            std::error_code ec{error::xerrc_t::state_get_failed};
+            top::error::throw_error(ec, "[xtop_property_access_control::string_prop_query]state get failed");
+            return {};
+        }
+        auto prop = bstate_->load_string_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::string_prop_query]property not exist, prop_name: " + prop_name);
+        return prop->query();
+    } else {
+        std::error_code ec{error::xerrc_t::property_permission_not_allowed};
+        top::error::throw_error(ec, "[xtop_property_access_control::string_prop_query]permission denied");
+        return {};
+    }
+}
 
 /**
  *

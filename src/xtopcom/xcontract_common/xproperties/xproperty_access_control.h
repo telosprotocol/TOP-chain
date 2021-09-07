@@ -217,6 +217,22 @@ public:
                                                                             )>::type>
     std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
+    /**
+     * @brief query the entire map property from cross slice
+     *
+     * @param user the user addr
+     * @param contract contract
+     * @param prop_name the property identifier
+     * @return std::map<std::string, std::string> the entire map property
+     */
+    template <typename KEYT,
+              typename VALUET,
+              typename = typename std::enable_if<std::is_same<KEYT, std::string>::value &&
+                                                 (std::is_same<VALUET, std::string>::value || std::is_same<VALUET, std::int8_t>::value ||
+                                                  std::is_same<VALUET, std::int16_t>::value || std::is_same<VALUET, std::int32_t>::value ||
+                                                  std::is_same<VALUET, std::int64_t>::value || std::is_same<VALUET, std::uint64_t>::value)>::type>
+    std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, common::xaccount_address_t const & contract, xproperty_identifier_t const & prop_id);
+
     /// @brief Get the mapped string type value specified by the string key.
     /// @param reader
     /// @param property_full_name Property full name
@@ -326,15 +342,59 @@ public:
      */
     virtual std::string STR_PROP_QUERY(std::string const& prop_name);
 
-
-    // TOKEN apis
     /**
-     * @brief create main token property
+     * @brief create a string property
      *
-     * @param user the user addr
-     * @param prop_id the property identifier
+     * @param prop_name the property name
+     * @param prop_id the property id
+     *
      */
-    void token_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void string_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+
+    /**
+     * @brief update the string property
+     *
+     * @param prop_name the property name
+     * @param prop_id the property id
+     * @param prop_value the property value
+     */
+    void string_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_value);
+
+    /**
+     * @brief clear the string property
+     *
+     * @param prop_name the property name
+     * @param prop_id the property id
+     */
+    void string_prop_clear(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    
+    /**
+     * @brief query the string property
+     *
+     * @param prop_name the property name
+     * @param prop_id the property id
+     * @return std::string  the property value
+     */
+    std::string string_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+
+    /**
+     * @brief query the string property from cross slice
+     *
+     * @param prop_name the property name
+     * @param contract the contract name
+     * @param prop_id the property id
+     * @return std::string  the property value
+     */
+    std::string string_prop_query(common::xaccount_address_t const & user, common::xaccount_address_t const & contract, xproperty_identifier_t const & prop_id);
+
+        // TOKEN apis
+        /**
+         * @brief create main token property
+         *
+         * @param user the user addr
+         * @param prop_id the property identifier
+         */
+        void token_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
     /**
      * @brief withdraw balance from current env account

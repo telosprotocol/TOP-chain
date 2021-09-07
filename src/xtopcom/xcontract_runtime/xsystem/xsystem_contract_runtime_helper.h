@@ -24,15 +24,16 @@
 #    pragma warning(pop)
 #endif
 
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xcontract_runtime/xsystem/xdata_stream.h"
 
-#include <string>
-#include <type_traits>
-#include <tuple>
-#include <utility>
 #include <cstdint>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 NS_BEG3(top, contract_runtime, system)
 
@@ -104,5 +105,13 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
 #define END_CONTRACT_API                                                                                                                                                               \
         throw top::contract_runtime::error::xerrc_t{top::contract_runtime::error::xerrc_t::contract_api_not_found};    \
     }
+
+#define XCONTRACT_ENSURE(condition, msg)                                                                                                                                           \
+    do {                                                                                                                                                                           \
+        if (!(condition)) {                                                                                                                                                        \
+            std::error_code ec{contract_runtime::error::xenum_errc::enum_vm_exception};                                                                                            \
+            top::error::throw_error(ec, msg);                                                                                                                                      \
+        }                                                                                                                                                                          \
+    } while (false)
 
 NS_END3
