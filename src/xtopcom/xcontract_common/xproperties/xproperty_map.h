@@ -66,6 +66,11 @@ public:
     std::string query(KEYT const& prop_key) {
         return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
     }
+
+    std::map<std::string, std::string> query(common::xaccount_address_t const & contract) {
+        return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), contract, m_id);
+    }
+
     std::map<std::string, std::string> clone() {
         return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id);
     }
