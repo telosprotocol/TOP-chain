@@ -118,3 +118,4 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
 }
 
 NS_END2
+
