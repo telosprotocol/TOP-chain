@@ -65,8 +65,6 @@ public:
     void deploy();
 
     observer_ptr<system_contracts::xbasic_system_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
-
-private:
     template<typename system_contract_type>
     void deploy_system_contract(common::xaccount_address_t const& address,
                                 xblock_sniff_config_t sniff_config,
@@ -74,6 +72,7 @@ private:
                                 common::xnode_type_t broadcast_target,
                                 contract_broadcast_policy_t broadcast_policy);
 
+private:
     void init_system_contract(common::xaccount_address_t const & contract_address);
 
     bool contains(common::xaccount_address_t const & address) const noexcept;
@@ -100,7 +99,7 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
 
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::contract_common::properties::xproperty_access_control_data_t{});
+    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{address}, top::make_observer(property_access_control.get()));
     auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(tx, contract_state);
     data.m_system_contract = std::make_shared<system_contract_type>(top::make_observer(contract_ctx.get()));
