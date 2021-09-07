@@ -112,6 +112,17 @@ public:
                                                                                        typename properties::xkey_type_of_t<PropertyTypeV>::type const & key,
                                                                                        std::error_code & ec) const;
 
+    /// @brief Check if property cell key exist. Only map and deque are supported.
+    /// @param property_id Property ID.
+    /// @param key Cell position key.
+    /// @param ec Log the error code in the operation.
+    /// @return exist or not.
+    template <properties::xproperty_type_t PropertyTypeV, typename std::enable_if<PropertyTypeV == properties::xproperty_type_t::map || 
+                                                                                  PropertyTypeV == properties::xproperty_type_t::deque>::type * = nullptr>
+    bool exist_property_cell_key(properties::xtypeless_property_identifier_t const & property_id,
+                                 typename properties::xkey_type_of_t<PropertyTypeV>::type const & key,
+                                 std::error_code & ec) const;
+
     /// @brief Remove property cell at the position key. Only map and deque are supported.
     /// @param property_id Property ID.
     /// @param key Cell position key.

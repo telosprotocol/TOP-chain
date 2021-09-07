@@ -28,6 +28,18 @@ xcontract_type_t xtop_basic_contract::type() const {
     return m_contract_meta.m_type;
 }
 
+data::enum_xaction_type xtop_basic_contract::action_type() const {
+    return m_associated_execution_context->action_type();
+}
+
+xbyte_buffer_t xtop_basic_contract::action_data() const {
+    return m_associated_execution_context->action_data();
+}
+
+data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
+    return m_associated_execution_context->transaction_type();
+}
+
 observer_ptr<xcontract_state_t> const & xtop_basic_contract::state() const noexcept {
     return m_state;
 }

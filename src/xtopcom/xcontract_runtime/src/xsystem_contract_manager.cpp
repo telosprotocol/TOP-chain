@@ -8,8 +8,8 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xtransaction.h"
-#include "xsystem_contracts/xelection/rec/xrec_standby_pool_contract.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
+#include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 
 using namespace top::base;
 using namespace top::common;

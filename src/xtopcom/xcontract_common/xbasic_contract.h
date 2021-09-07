@@ -47,6 +47,14 @@ public:
     common::xaccount_address_t recver() const override final;
     observer_ptr<xcontract_state_t> const & state() const noexcept;
     xcontract_type_t type() const;
+    data::enum_xaction_type action_type() const;
+    xbyte_buffer_t action_data() const;
+    data::enum_xtransaction_type transaction_type() const;
+
+    // TODO: time get
+    common::xlogic_time_t time() const {
+        return 0;
+    }
 
 protected:
     xtop_basic_contract() = default;

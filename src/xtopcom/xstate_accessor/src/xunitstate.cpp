@@ -49,6 +49,48 @@ xobject_ptr_t<base::xvbstate_t> xtop_unit_state::internal_state_object(common::x
     return other_state;
 }
 
+std::map<std::string, xbyte_buffer_t> xtop_unit_state::get_map(properties::xtypeless_property_identifier_t const & property_id,
+                                                               common::xaccount_address_t const & other_account_address,
+                                                               std::error_code & ec) const{
+    auto const & other_state = internal_state_object(other_account_address, ec);
+    if (ec) {
+        return {};
+    }
 
+    auto const & peroperty_name = property_id.full_name();
+    auto map_property = other_state->load_string_map_var(peroperty_name);
+    if (map_property == nullptr) {
+        assert(!properties::system_property(property_id));
+        ec = error::xerrc_t::property_not_exist;
+        return {};
+    }
+
+    auto map = map_property->query();
+    properties::xtype_of_t<properties::xproperty_type_t::map>::type ret;
+    for (auto & pair : map) {
+        ret.insert({std::move(pair.first), {std::begin(pair.second), std::end(pair.second)}});
+    }
+    return ret;
+}
+
+std::string xtop_unit_state::get_string(properties::xtypeless_property_identifier_t const & property_id,
+                                        common::xaccount_address_t const & other_account_address,
+                                        std::error_code & ec) const {
+    auto const & other_state = internal_state_object(other_account_address, ec);
+    if (ec) {
+        return {};
+    }
+
+    auto const & peroperty_name = property_id.full_name();
+    auto string_property = other_state->load_string_var(peroperty_name);
+    if (string_property == nullptr) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+        }
+        return {};
+    }
+
+    return string_property->query();
+}
 }
 }

@@ -132,6 +132,20 @@ void xtop_property_access_control::map_prop_clear<std::string, std::string>(comm
 }
 
 template<>
+bool xtop_property_access_control::map_prop_exist<std::string, std::string>(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, std::string const& prop_key) {
+    auto prop_name = prop_id.full_name();
+    if (read_permitted(user, prop_id)) {
+        auto prop = bstate_->load_string_map_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::map_prop_query]property not exist, prop_name: " + prop_name + ", prop_key: " + prop_key);
+        return prop->find(prop_key);
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_query]permission denied");
+        return false;
+    }
+}
+
+template <>
 std::string xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user,
                                                                                    state_accessor::properties::xproperty_identifier_t const & prop_id,
                                                                                    std::string const & prop_key) {
@@ -146,7 +160,6 @@ std::string xtop_property_access_control::map_prop_query<std::string, std::strin
         return {};
     }
 }
-
 
 template<>
 std::map<std::string, std::string> xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user,
