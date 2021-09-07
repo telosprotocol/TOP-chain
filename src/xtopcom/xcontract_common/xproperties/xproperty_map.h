@@ -37,7 +37,7 @@ public:
     ~xtop_map_property() = default;
 
     explicit xtop_map_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
-                                :xbasic_property_t{prop_name, xproperty_type_t::map , make_observer(contract)} {
+                                :xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::map , make_observer(contract)} {
         m_contract_state->access_control()->map_prop_create<std::string, std::string>(accessor(), m_id);
 
     }

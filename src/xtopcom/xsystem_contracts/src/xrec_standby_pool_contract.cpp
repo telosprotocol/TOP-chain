@@ -7,6 +7,12 @@
 #include "xdata/xrootblock.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
 
+#ifndef XSYSCONTRACT_MODULE
+#    define XSYSCONTRACT_MODULE "sysContract_"
+#endif
+#define XCONTRACT_PREFIX "RecStandby_"
+#define XREC_STANDBY XSYSCONTRACT_MODULE XCONTRACT_PREFIX
+
 using namespace top::contract_common;
 using namespace top::xstake;
 using namespace top::data::election;
