@@ -31,7 +31,8 @@ xtop_property_access_control::xtop_property_access_control(top::observer_ptr<top
  *
  */
 template<>
-void xtop_property_access_control::map_prop_create<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+void xtop_property_access_control::map_prop_create<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                             state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         property_assert(!property_exist(user, prop_id), "[xtop_property_access_control::map_prop_create]property already exist，prop_name: " + prop_name, error::xerrc_t::property_already_exist);
@@ -44,7 +45,10 @@ void xtop_property_access_control::map_prop_create<std::string, std::string>(com
 }
 
 template<>
-void xtop_property_access_control::map_prop_add<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_key, std::string const& prop_value) {
+void xtop_property_access_control::map_prop_add<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                          state_accessor::properties::xproperty_identifier_t const & prop_id,
+                                                                          std::string const & prop_key,
+                                                                          std::string const & prop_value) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -57,7 +61,10 @@ void xtop_property_access_control::map_prop_add<std::string, std::string>(common
 }
 
 template<>
-void xtop_property_access_control::map_prop_update<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_key,  std::string const& prop_value) {
+void xtop_property_access_control::map_prop_update<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                             state_accessor::properties::xproperty_identifier_t const & prop_id,
+                                                                             std::string const & prop_key,
+                                                                             std::string const & prop_value) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -74,7 +81,9 @@ void xtop_property_access_control::map_prop_update<std::string, std::string>(com
 
 
 template<>
-void xtop_property_access_control::map_prop_update<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::map<std::string, std::string> const& prop_value) {
+void xtop_property_access_control::map_prop_update<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                             state_accessor::properties::xproperty_identifier_t const & prop_id,
+                                                                             std::map<std::string, std::string> const & prop_value) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -88,7 +97,9 @@ void xtop_property_access_control::map_prop_update<std::string, std::string>(com
 }
 
 template<>
-void xtop_property_access_control::map_prop_erase<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_key) {
+void xtop_property_access_control::map_prop_erase<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                            state_accessor::properties::xproperty_identifier_t const & prop_id,
+                                                                            std::string const & prop_key) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -104,7 +115,8 @@ void xtop_property_access_control::map_prop_erase<std::string, std::string>(comm
 }
 
 template<>
-void xtop_property_access_control::map_prop_clear<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+void xtop_property_access_control::map_prop_clear<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                            state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -120,7 +132,9 @@ void xtop_property_access_control::map_prop_clear<std::string, std::string>(comm
 }
 
 template<>
-std::string xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_key) {
+std::string xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                                   state_accessor::properties::xproperty_identifier_t const & prop_id,
+                                                                                   std::string const & prop_key) {
     auto prop_name = prop_id.full_name();
     if (read_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -135,7 +149,8 @@ std::string xtop_property_access_control::map_prop_query<std::string, std::strin
 
 
 template<>
-std::map<std::string, std::string> xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+std::map<std::string, std::string> xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user,
+                                                                                                          state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
@@ -152,7 +167,7 @@ std::map<std::string, std::string> xtop_property_access_control::map_prop_query<
 template <>
 std::map<std::string, std::string> xtop_property_access_control::map_prop_query<std::string, std::string>(common::xaccount_address_t const & user,
                                                                                                           common::xaccount_address_t const & contract,
-                                                                                                          xproperty_identifier_t const & prop_id) {
+                                                                                                          state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         base::xvaccount_t _vaddr(contract.to_string());
@@ -199,7 +214,7 @@ std::string xtop_property_access_control::STR_PROP_QUERY(std::string const& prop
     return prop->query();
 }
 
-void xtop_property_access_control::string_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+void xtop_property_access_control::string_prop_create(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         property_assert(!property_exist(user, prop_id), "[xtop_property_access_control::string_prop_create]property already exist，prop_name: " + prop_name, error::xerrc_t::property_already_exist);
@@ -211,7 +226,9 @@ void xtop_property_access_control::string_prop_create(common::xaccount_address_t
     }
 }
 
-void xtop_property_access_control::string_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& prop_value) {
+void xtop_property_access_control::string_prop_update(common::xaccount_address_t const & user,
+                                                      state_accessor::properties::xproperty_identifier_t const & prop_id,
+                                                      std::string const & prop_value) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_var(prop_name);
@@ -224,7 +241,7 @@ void xtop_property_access_control::string_prop_update(common::xaccount_address_t
 
 }
 
-void xtop_property_access_control::string_prop_clear(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+void xtop_property_access_control::string_prop_clear(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_var(prop_name);
@@ -239,7 +256,7 @@ void xtop_property_access_control::string_prop_clear(common::xaccount_address_t 
 
 }
 
-std::string xtop_property_access_control::string_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) {
+std::string xtop_property_access_control::string_prop_query(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_var(prop_name);
@@ -255,7 +272,7 @@ std::string xtop_property_access_control::string_prop_query(common::xaccount_add
 
 std::string xtop_property_access_control::string_prop_query(common::xaccount_address_t const & user,
                                                             common::xaccount_address_t const & contract,
-                                                            xproperty_identifier_t const & prop_id) {
+                                                            state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
         base::xvaccount_t _vaddr(contract.to_string());

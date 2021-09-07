@@ -21,7 +21,7 @@ public:
     ~xtop_string_property() = default;
 
     explicit xtop_string_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
-                                :xbasic_property_t{prop_name, xproperty_type_t::string , make_observer(contract)} {
+                                :xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::string , make_observer(contract)} {
         m_contract_state->access_control()->string_prop_create(accessor(), m_id);
 
     }
