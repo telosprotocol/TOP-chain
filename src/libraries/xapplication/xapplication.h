@@ -15,7 +15,7 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
-#include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xdata/xblocktool.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
@@ -95,7 +95,7 @@ private:
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
-    std::unique_ptr<contract_runtime::xsystem_contract_manager_t> m_sys_contract_mgr;
+    std::unique_ptr<contract_runtime::system::xsystem_contract_manager_t> m_sys_contract_mgr;
     std::vector<std::unique_ptr<xchain_application_t>> m_chain_applications{};
 
 public:
@@ -149,7 +149,7 @@ public:
 
     xobject_ptr_t<store::xsyncvstore_t> syncstore() const noexcept;
 
-    observer_ptr<contract_runtime::xsystem_contract_manager_t> system_contract_manager() const noexcept;
+    observer_ptr<contract_runtime::system::xsystem_contract_manager_t> system_contract_manager() const noexcept;
 
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;

@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xsystem_contract_runtime/xsystem_contract_manager.h"
 
 #include "xbasic/xutility.h"
 #include "xcontract_common/xcontract_state.h"
@@ -16,7 +16,7 @@
 #include "xsystem_contracts/xtransfer_contract.h"
 
 
-NS_BEG2(top, contract_runtime)
+NS_BEG3(top, contract_runtime, system)
 
 void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) {
     m_blockstore = blockstore;
@@ -66,4 +66,4 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     xdbg("xtop_system_contract_manager::init_contract_chain contract_adress: %s, %s", contract_address.c_str(), ret ? "SUCC" : "FAIL");
 }
 
-NS_END2
+NS_END3

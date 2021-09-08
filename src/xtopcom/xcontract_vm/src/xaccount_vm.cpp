@@ -2,23 +2,23 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xcontract_runtime/xaccount_vm.h"
+#include "xcontract_vm/xaccount_vm.h"
 
 #include "xbase/xlog.h"
 #include "xbasic/xerror/xchain_error.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_runtime/xaction_session.h"
-#include "xcontract_runtime/xerror/xerror.h"
 #include "xcontract_runtime/xtop_action_generator.h"
+#include "xcontract_vm/xerror/xerror.h"
 #include "xdata/xconsensus_action.h"
 
 #include <memory>
 
-NS_BEG2(top, contract_runtime)
+NS_BEG2(top, contract_vm)
 
-xtop_account_vm::xtop_account_vm(observer_ptr<xsystem_contract_manager_t> const & system_contract_manager)
-  : sys_action_runtime_{ top::make_unique<system::xsystem_action_runtime_t>(system_contract_manager) } {
+xtop_account_vm::xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & system_contract_manager)
+  : sys_action_runtime_{top::make_unique<contract_runtime::system::xsystem_action_runtime_t>(system_contract_manager)} {
 }
 
 xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) {
@@ -28,7 +28,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     state_accessor::xstate_access_control_data_t ac_data; // final get from config or program initialization start
     contract_common::properties::xproperty_access_control_t ac{ make_observer(block_state.get()), ac_data };
 
-    auto const & actions = xaction_generator_t::generate(txs);
+    auto const & actions = contract_runtime::xaction_generator_t::generate(txs);
     auto i = 0u;
     try {
         for (i = 0u; i < actions.size(); ++i) {
@@ -65,10 +65,10 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
 
             if (result.transaction_results[i].status.ec) {
                 for (auto j = i + 1; j < result.transaction_results.size(); ++j) {
-                    result.transaction_results[j].status.ec = contract_runtime::error::xerrc_t::transaction_execution_abort;
+                    result.transaction_results[j].status.ec = error::xerrc_t::transaction_execution_abort;
                 }
 
-                result.status.ec = contract_runtime::error::xerrc_t::transaction_execution_abort;
+                result.status.ec = error::xerrc_t::transaction_execution_abort;
                 break;
             }
         }
@@ -79,11 +79,11 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     }
 
     for (auto j = i; j < result.transaction_results.size(); ++j) {
-        result.transaction_results[j].status.ec = contract_runtime::error::xerrc_t::transaction_execution_abort;
+        result.transaction_results[j].status.ec = error::xerrc_t::transaction_execution_abort;
     }
 
     if (i < result.transaction_results.size()) {
-        result.status.ec = contract_runtime::error::xerrc_t::transaction_execution_abort;
+        result.status.ec = error::xerrc_t::transaction_execution_abort;
     }
 
     return result;

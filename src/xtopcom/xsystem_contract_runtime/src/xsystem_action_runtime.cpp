@@ -2,19 +2,19 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xcontract_runtime/xsystem/xsystem_action_runtime.h"
+#include "xsystem_contract_runtime/xsystem_action_runtime.h"
 
 #include "xbasic/xerror/xerror.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_session.h"
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xcontract_runtime/xsystem/xsystem_contract_runtime_helper.h"
-#include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xsystem_contract_runtime/xsystem_contract_runtime_helper.h"
+#include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xsystem_contracts/xtransfer_contract.h"
 
 NS_BEG2(top, contract_runtime)
 
-xtop_action_runtime<data::xsystem_consensus_action_t>::xtop_action_runtime(observer_ptr<xsystem_contract_manager_t> const & system_contract_manager) noexcept
+xtop_action_runtime<data::xsystem_consensus_action_t>::xtop_action_runtime(observer_ptr<system::xsystem_contract_manager_t> const & system_contract_manager) noexcept
   : system_contract_manager_{system_contract_manager} {
 }
 
