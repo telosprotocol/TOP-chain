@@ -16,6 +16,9 @@
 // #include "xcontract_runtime/xaccount_vm.h"
 #include "xdata/xblockbuild.h"
 
+#include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xcontract_runtime/xaccount_vm.h"
+
 NS_BEG2(top, blockmaker)
 
 xlightunit_builder_t::xlightunit_builder_t() {

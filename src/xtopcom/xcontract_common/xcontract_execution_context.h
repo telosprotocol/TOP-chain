@@ -8,6 +8,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
+#include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xcontract_execution_stage.h"
 #include "xcontract_common/xcontract_execution_result.h"
@@ -31,6 +32,7 @@ private:
     data::xconsensus_action_stage_t m_stage{data::xconsensus_action_stage_t::invalid};
     xcontract_execution_result_t m_execution_result; // execution result
 
+    xcontract_execution_param_t m_param;
 
 public:
     xtop_contract_execution_context() = default;
@@ -41,7 +43,7 @@ public:
     ~xtop_contract_execution_context() = default;
 
     xtop_contract_execution_context(xobject_ptr_t<data::xtransaction_t> tx, observer_ptr<xcontract_state_t> s) noexcept;
-    xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s) noexcept;
+    xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
     xcontract_execution_stage_t execution_stage() const noexcept;
@@ -64,6 +66,8 @@ public:
     std::string action_name() const;
     data::enum_xaction_type action_type() const;
     xbyte_buffer_t action_data() const;
+
+    common::xlogic_time_t time() const;
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;
 

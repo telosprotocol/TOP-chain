@@ -24,7 +24,7 @@ void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) 
 
 void xtop_system_contract_manager::deploy() {
     // deploy one system contract
-    deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{"address"}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
+    // deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{"address"}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }
 
 bool xtop_system_contract_manager::contains(common::xaccount_address_t const & address) const noexcept {

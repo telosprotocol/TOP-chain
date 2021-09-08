@@ -51,11 +51,7 @@ public:
     data::enum_xaction_type action_type() const;
     xbyte_buffer_t action_data() const;
     data::enum_xtransaction_type transaction_type() const;
-
-    // TODO: time get
-    common::xlogic_time_t time() const {
-        return 0;
-    }
+    common::xlogic_time_t time() const;
 
 protected:
     xtop_basic_contract() = default;
