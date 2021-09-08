@@ -37,9 +37,10 @@ enum class enum_block_sniff_type: uint8_t {
     timer,
     block
 };
+using xblock_sniff_type_t = enum_block_sniff_type;
 
 class xtop_block_sniff_config {
-    using data_type = std::unordered_map<common::xaccount_address_t, enum_block_sniff_type>;
+    using data_type = std::unordered_map<common::xaccount_address_t, xblock_sniff_type_t>;
     data_type m_data;
 
 public:
@@ -50,8 +51,8 @@ public:
     xtop_block_sniff_config & operator=(xtop_block_sniff_config &&) = default;
     ~xtop_block_sniff_config() = default;
 
-    xtop_block_sniff_config(std::initializer_list<std::pair<common::xaccount_address_t const, enum_block_sniff_type>> init_list);
-    xtop_block_sniff_config & operator=(std::initializer_list<std::pair<common::xaccount_address_t const, enum_block_sniff_type>> init_list);
+    xtop_block_sniff_config(std::initializer_list<std::pair<common::xaccount_address_t const, xblock_sniff_type_t>> init_list);
+    xtop_block_sniff_config & operator=(std::initializer_list<std::pair<common::xaccount_address_t const, xblock_sniff_type_t>> init_list);
 
     bool contains(common::xaccount_address_t const & address) const noexcept;
 };
