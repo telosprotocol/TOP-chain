@@ -235,7 +235,7 @@ public:
             std::cout << "===> " << filename << " generated success!" << std::endl; 
         };
         mkdir("all_table_tx_info", 0750);
-        uint32_t thread_num = 8;
+        uint32_t thread_num = 4;
         if (address_vec.size() < thread_num) {
             query_and_make_file(this, address_vec[0]);
         } else {
@@ -635,6 +635,7 @@ private:
                 std::cout << account << " missing block at height " << h << std::endl;
                 continue;
             }
+            // std::cout << account << " parse block at height " << h << std::endl;
 
             if (block->get_block_class() == base::enum_xvblock_class_nil) {
                 empty_table_block_num++;
@@ -653,6 +654,7 @@ private:
             }
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
+            // std::cout << account << " parse light block at height " << h << " entitys_count " << entitys_count << std::endl;
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
                 total_unit_block_num++;
                 base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);

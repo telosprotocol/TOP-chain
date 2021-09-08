@@ -13,6 +13,7 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvpropertyrules.h"
 #include "xcrypto/xckey.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"
 #include "xdata/xdata_defines.h"
@@ -1380,7 +1381,8 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
         height = m_current_table_commit_height;
     } else {
         base::xvaccount_t _vaddr(owner);
-        height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(_vaddr);
+        // height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(_vaddr);
+        height = data::xblocktool_t::get_latest_committed_unit_height(base::xvchain_t::instance().get_xblockstore(), owner, metrics::blockstore_access_from_account_context);
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;

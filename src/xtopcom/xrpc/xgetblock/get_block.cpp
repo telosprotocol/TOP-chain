@@ -9,6 +9,7 @@
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
@@ -851,15 +852,20 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
 
 void get_block_handle::getLatestBlock() {
     std::string owner = m_js_req["account_addr"].asString();
-    auto vblock = m_block_store->get_latest_committed_block(owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
+    // auto vblock = m_block_store->get_latest_committed_block(owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
+    auto vblock = data::xblocktool_t::get_latest_committed_unit(m_block_store, owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (owner == sys_contract_zec_slash_info_addr) {
         assert(false);
         std::error_code ec;
         xJson::Value value;
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, bp->get_height(), top::contract::xjson_format_t::detail, value, ec);
-        if (ec) {
-            value["query_status"] = ec.message();
+        if (bp == nullptr) {
+            value["query_status"] = "not_found";
+        } else {
+            top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, bp->get_height(), top::contract::xjson_format_t::detail, value, ec);
+            if (ec) {
+                value["query_status"] = ec.message();
+            }
         }
 
         m_js_rsp["value"] = value;
@@ -934,7 +940,8 @@ void get_block_handle::getBlock() {
             value["statistic_info"] = statistic_prop;
         }
     } else if (type == "last") {
-        auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_block);
+        // auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_block);
+        auto vblock = data::xblocktool_t::get_latest_committed_unit(m_block_store, owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp);
     }
@@ -950,7 +957,7 @@ void get_block_handle::getProperty() {
     xJson::Value value;
     uint64_t height = 0;
     if (type == "last") {
-        height = m_block_store->get_latest_committed_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_height);
+        height = data::xblocktool_t::get_latest_committed_unit_height(m_block_store, owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
     } else if (type == "height") {
         height = m_js_req["height"].asUInt64();
     }

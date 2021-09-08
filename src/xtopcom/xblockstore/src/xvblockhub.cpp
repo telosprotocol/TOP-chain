@@ -2826,11 +2826,12 @@ namespace top
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
             if(0 != new_idx->get_height())
             {
-                //just keep low 4bit flags about unpack/store/connect etc
-                new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
-                new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
-                new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
-
+                if (new_raw_block->get_block_level() == base::enum_xvblock_level_table) {
+                    //just keep low 4bit flags about unpack/store/connect etc
+                    new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
+                    new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
+                    new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
+                }
                 load_index(new_idx->get_height()); //always load index first for non-genesis block
             }
 

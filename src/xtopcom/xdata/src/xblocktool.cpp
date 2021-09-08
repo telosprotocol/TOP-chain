@@ -12,6 +12,7 @@
 #include "xdata/xtransaction_v1.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstate.h"
+#include "xvledger/xvledger.h"
 
 NS_BEG2(top, data)
 
@@ -563,6 +564,157 @@ base::xreceiptid_state_ptr_t xblocktool_t::get_receiptid_from_property_prove(con
 
     base::xreceiptid_state_ptr_t receiptid = xtable_bstate_t::make_receiptid_from_state(_temp_bstate.get());
     return receiptid;
+}
+
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_unit(base::xvblockstore_t* blockstore, const std::string & account, const int atag) {
+    base::xvaccount_t _vaccount(account);
+    base::xauto_ptr<base::xvblock_t> latest_cert_unit = blockstore->get_latest_cert_block(_vaccount, atag);
+    if (latest_cert_unit == nullptr) {
+        return nullptr;
+    }
+    if (latest_cert_unit->check_block_flag(base::enum_xvblock_flag_committed)) {
+        return latest_cert_unit;
+    }
+
+    std::string table_addr = base::xvaccount_t::make_table_account_address(_vaccount);
+    base::xvaccount_t table_vaccount(table_addr);
+    base::xauto_ptr<base::xvblock_t> table_block = blockstore->get_latest_committed_block(table_vaccount, atag);
+    if (table_block == nullptr) {
+        return nullptr;
+    }
+
+    base::xauto_ptr<base::xvbstate_t> bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get(), atag);
+    if (bstate == nullptr) {
+        xwarn("xblocktool_t::get_latest_committed_unit fail-get bstate.table=%s,block=%s", table_addr.c_str(), table_block->dump().c_str());
+        return nullptr;
+    }
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+
+    base::xaccount_index_t account_index;
+    bool ret = tablestate->get_account_index(account, account_index);
+    if (!ret) {
+        xwarn("xblocktool_t::get_latest_committed_unit get account index fail account:%s", account.c_str());
+        return nullptr;
+    }
+
+    auto unit_height = account_index.get_latest_unit_height();
+    auto unit_viewid = account_index.get_latest_unit_viewid();
+
+    if (latest_cert_unit->get_height() == unit_height && latest_cert_unit->get_viewid() == unit_viewid) {
+        return latest_cert_unit;
+    }
+
+    auto commit_unit_block = blockstore->load_block_object(_vaccount, unit_height, unit_viewid, false, atag);
+    if (commit_unit_block == nullptr) {
+        xwarn("xblocktool_t::get_latest_committed_unit load unit block fail account:%s,height=%llu,viewid:%llu", account.c_str(), unit_height, unit_viewid);
+        return nullptr;
+    }
+    return commit_unit_block;
+}
+
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connected_unit(base::xvblockstore_t* blockstore, const std::string & account, const int atag) {
+    base::xvaccount_t _vaccount(account);
+
+    base::xauto_ptr<base::xvblock_t> latest_connected_block = blockstore->get_latest_connected_block(_vaccount, atag);
+    if (latest_connected_block == nullptr) {
+        xassert(0);
+        return nullptr;
+    }
+
+    std::string table_addr = base::xvaccount_t::make_table_account_address(_vaccount);
+    base::xvaccount_t table_vaccount(table_addr);
+    base::xauto_ptr<base::xvblock_t> table_block = blockstore->get_latest_committed_block(table_vaccount, atag);
+    if (table_block == nullptr) {
+        return latest_connected_block;
+    }
+
+    if (latest_connected_block->get_parent_block_height() > table_block->get_height()) {
+        xwarn("xblocktool_t::get_latest_connected_unit table:%s is fall behind,hegiht:%llu,account:%s height:%llu",
+              table_addr.c_str(),
+              table_block->get_height(),
+              account.c_str(),
+              latest_connected_block->get_parent_block_height());
+        return latest_connected_block;
+    }
+
+    base::xauto_ptr<base::xvbstate_t> bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get(), atag);
+    if (bstate == nullptr) {
+        xwarn("xblocktool_t::get_latest_connected_unit fail-get bstate.table=%s,block=%s", table_addr.c_str(), table_block->dump().c_str());
+        return latest_connected_block;
+    }
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+
+    base::xaccount_index_t account_index;
+    bool ret = tablestate->get_account_index(account, account_index);
+    if (!ret) {
+        xwarn("xblocktool_t::get_latest_connected_unit get account index fail account:%s", account.c_str());
+        return latest_connected_block;
+    }
+
+    auto unit_height = account_index.get_latest_unit_height();
+    auto unit_viewid = account_index.get_latest_unit_viewid();
+
+    if (unit_height < latest_connected_block->get_height()) {
+        xerror("xblocktool_t::get_latest_connected_unit account index height:%llu < latest connect height:%llu", unit_height, latest_connected_block->get_height());
+        return latest_connected_block;
+    } else if (unit_height == latest_connected_block->get_height() || unit_height > latest_connected_block->get_height() + 2) {
+        return latest_connected_block;
+    } else if (unit_height == latest_connected_block->get_height() + 1) {
+        auto commit_block = blockstore->load_block_object(_vaccount, unit_height, unit_viewid, false, atag);
+        if (commit_block == nullptr) {
+            xwarn("xblocktool_t::get_latest_connected_unit load unit block fail account:%s,height=%llu,viewid:%llu", account.c_str(), unit_height, unit_viewid);
+            return latest_connected_block;
+        } else {
+            return commit_block;
+        }
+    } else {
+        auto commit_block = blockstore->load_block_object(_vaccount, unit_height, unit_viewid, false, atag);
+        auto next_blocks = blockstore->load_block_object(_vaccount, latest_connected_block->get_height() + 1, atag);
+        for (auto block : next_blocks.get_vector()) {
+            if (block->check_block_flag(base::enum_xvblock_flag_committed)) {
+                if (commit_block == nullptr) {
+                    return block;
+                }
+            }
+            if (commit_block != nullptr && block->get_block_hash() == commit_block->get_last_block_hash()) {
+                return commit_block;
+            }
+        }
+        return latest_connected_block;
+    }
+}
+
+uint64_t xblocktool_t::get_latest_committed_unit_height(base::xvblockstore_t* blockstore, const std::string & account, const int atag) {
+    auto block = get_latest_committed_unit(blockstore, account, atag);
+    if (block == nullptr) {
+        return 0;
+    }
+    return block->get_height();
+}
+
+uint64_t xblocktool_t::get_latest_connected_unit_height(base::xvblockstore_t* blockstore, const std::string & account, const int atag) {
+    auto block = get_latest_connected_unit(blockstore, account, atag);
+    if (block == nullptr) {
+        return 0;
+    }
+    return block->get_height();
+}
+
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_full_unit(base::xvblockstore_t* blockstore, const std::string & account, const int atag) {
+    auto connect_block = get_latest_connected_unit(blockstore, account, atag);
+    if(connect_block != nullptr) {
+        if(connect_block->get_block_class() == base::enum_xvblock_class_full)
+        {
+            return connect_block;
+        }
+        auto latest_committed_full_height = connect_block->get_last_full_block_height();
+        auto latest_committed_full_hash = connect_block->get_last_full_block_hash();
+        return blockstore->load_block_object(account, latest_committed_full_height, latest_committed_full_hash, false, atag);
+    }
+
+    return nullptr;
 }
 
 NS_END2

@@ -43,19 +43,27 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     }
     xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
     if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
-        base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_connected_block(_account_vaddress);
-        if (account_index.get_latest_unit_height() > _start_block_ptr->get_height()) {
+        // base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_connected_block(_account_vaddress);
+        base::xauto_ptr<base::xvblock_t> _start_block_ptr = data::xblocktool_t::get_latest_connected_unit(m_para->get_vblockstore(), account, metrics::statestore_access_from_txpool_get_accountstate);
+        if (_start_block_ptr == nullptr) {
+            account_index_info.set_sync_height_start(1);
+            account_index_info.set_sync_num(account_index.get_latest_unit_height());
+        } else if (account_index.get_latest_unit_height() > _start_block_ptr->get_height()) {
             account_index_info.set_sync_height_start(_start_block_ptr->get_height() + 1);
             account_index_info.set_sync_num(account_index.get_latest_unit_height() - _start_block_ptr->get_height());
         }
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
+    // base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
+    base::xauto_ptr<base::xvblock_t> commit_unit = data::xblocktool_t::get_latest_committed_unit(m_para->get_vblockstore(), account, metrics::statestore_access_from_txpool_get_accountstate);
+    if (commit_unit == nullptr) {
+        return false;
+    }
     base::xauto_ptr<base::xvbstate_t> account_bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_unit.get(), metrics::statestore_access_from_txpool_get_accountstate);
     if (account_bstate == nullptr) {
-        xtxpool_warn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
+        xtxpool_warn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", commit_unit->dump().c_str());
         return false;
     }
 

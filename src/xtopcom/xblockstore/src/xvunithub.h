@@ -136,6 +136,7 @@ namespace top
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override;
 
             bool                         store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
+            bool                         on_block_committed(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
         protected:
             bool    get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj);
 
@@ -152,6 +153,7 @@ namespace top
 
         private:
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
+            bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
 
             virtual bool                on_object_close() override;
             virtual bool                on_timer_start(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms) override;   //attached into io-thread

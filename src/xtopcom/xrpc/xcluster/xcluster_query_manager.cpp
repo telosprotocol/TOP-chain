@@ -180,7 +180,8 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     } else if (type == "last") {
-        auto vb = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_committed_block);
+        // auto vb = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_committed_block);
+        auto vb = data::xblocktool_t::get_latest_committed_unit(m_block_store.get(), owner, metrics::blockstore_access_from_rpc_get_committed_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     }

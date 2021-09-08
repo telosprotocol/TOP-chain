@@ -20,6 +20,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xdata/xblock.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xproperty.h"
 #include "xdata/xtableblock.h"
@@ -59,7 +60,8 @@ bool xstore::open() const {
 xaccount_ptr_t xstore::query_account(const std::string &address) const {
     base::xvaccount_t _vaddr(address);
     XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
-    auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(_vaddr);
+    // auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(_vaddr);
+    auto _block = data::xblocktool_t::get_latest_connected_unit(base::xvchain_t::instance().get_xblockstore(), address, metrics::statestore_access_from_vnodesrv_load_state);
     if (_block == nullptr) {
         xerror("xstore::query_account fail-load latest connectted block. account=%s", address.c_str());
         return nullptr;

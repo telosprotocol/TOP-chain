@@ -57,6 +57,11 @@ class xblocktool_t {
     static bool             verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
     static bool             can_make_next_empty_block(const base::xblock_mptrs & latest_blocks, uint32_t max_empty_num);
     static bool             can_make_next_full_table(base::xvblock_t* latest_cert_block, uint32_t max_light_num);
+    static base::xauto_ptr<base::xvblock_t> get_latest_committed_unit(base::xvblockstore_t* blockstore, const std::string & account, const int atag);
+    static base::xauto_ptr<base::xvblock_t> get_latest_connected_unit(base::xvblockstore_t* blockstore, const std::string & account, const int atag);
+    static uint64_t         get_latest_committed_unit_height(base::xvblockstore_t* blockstore, const std::string & account, const int atag);
+    static uint64_t         get_latest_connected_unit_height(base::xvblockstore_t* blockstore, const std::string & account, const int atag);
+    static base::xauto_ptr<base::xvblock_t> get_latest_full_unit(base::xvblockstore_t* blockstore, const std::string & account, const int atag);
 
  public:
     static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);

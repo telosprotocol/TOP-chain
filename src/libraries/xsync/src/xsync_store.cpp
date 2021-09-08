@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xsync/xsync_store.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xsync/xsync_log.h"
 #include "xmbus/xmessage_bus.h"
@@ -19,6 +20,8 @@ m_shadow(shadow) {
 bool xsync_store_t::store_block(base::xvblock_t* block) {
     if (block->get_block_level() == base::enum_xvblock_level_unit) {
         XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
+        // block->set_block_flag(base::enum_xvblock_flag_committed);
+        // block->set_block_flag(base::enum_xvblock_flag_locked);
     } else if (block->get_block_level() == base::enum_xvblock_level_table) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }
@@ -102,7 +105,10 @@ void xsync_store_t::update_latest_genesis_connected_block(const std::string & ac
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_full_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
-    auto _block = m_blockstore->get_latest_committed_full_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
+    xassert(base::xvaccount_t::get_addrtype_from_account(account) != base::enum_vaccount_addr_type_block_contract);
+
+    // auto _block = m_blockstore->get_latest_committed_full_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
+    auto _block = data::xblocktool_t::get_latest_full_unit(m_blockstore.get(), account, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
     if (false == m_blockstore->load_block_output(_vaddress, _block.get())
         || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
         xerror("xsync_store_t::get_latest_full_block fail-load block input or output. block=%s", _block->dump().c_str());
