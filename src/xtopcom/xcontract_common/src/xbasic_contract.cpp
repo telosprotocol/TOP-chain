@@ -104,4 +104,8 @@ void xtop_basic_contract::write_receipt_data(std::string const & key, xbyte_buff
     receipt_data.emplace(key, std::move(value));
 }
 
+common::xlogic_time_t xtop_basic_contract::time() const {
+    return m_associated_execution_context->time();
+}
+
 NS_END2

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
+#include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_runtime/xaction_runtime_fwd.h"
 #include "xcontract_runtime/xaction_session_fwd.h"
@@ -28,7 +29,7 @@ public:
 
     xtop_action_session(observer_ptr<xaction_runtime_t<ActionT>> associated_runtime, observer_ptr<contract_common::xcontract_state_t> contract_state) noexcept;
 
-    xtransaction_execution_result_t execute_action(ActionT const & action);
+    xtransaction_execution_result_t execute_action(ActionT const & action, contract_common::xcontract_execution_param_t m_param);
 };
 
 template <typename ActionT>
@@ -44,12 +45,14 @@ NS_END2
 NS_BEG2(top, contract_runtime)
 
 template <typename ActionT>
-xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t<ActionT>> associated_runtime, observer_ptr<contract_common::xcontract_state_t> contract_state) noexcept : m_associated_runtime{ std::move(associated_runtime) }, m_contract_state{ std::move(contract_state) } {
+xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t<ActionT>> associated_runtime,
+                                                  observer_ptr<contract_common::xcontract_state_t> contract_state) noexcept
+  : m_associated_runtime{std::move(associated_runtime)}, m_contract_state{std::move(contract_state)} {
 }
 
 template <typename ActionT>
-xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(ActionT const & action) {
-    std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{ top::make_unique<contract_common::xcontract_execution_context_t>(action, m_contract_state) };
+xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(ActionT const & action, contract_common::xcontract_execution_param_t param) {
+    std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(action, m_contract_state, param)};
     assert(m_associated_runtime != nullptr);
     auto observed_exectx = top::make_observer(execution_context.get());
 

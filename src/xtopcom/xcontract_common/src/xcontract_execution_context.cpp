@@ -13,8 +13,8 @@ xtop_contract_execution_context::xtop_contract_execution_context(xobject_ptr_t<d
   : m_contract_state{s}, m_tx{std::move(tx)} {
 }
 
-xtop_contract_execution_context::xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s) noexcept
-  : m_contract_state{s}, m_action{std::move(action)} {
+xtop_contract_execution_context::xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept
+  : m_contract_state{s}, m_action{std::move(action)}, m_param(param) {
 }
 
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
@@ -91,6 +91,10 @@ data::enum_xaction_type xtop_contract_execution_context::action_type() const {
 xbyte_buffer_t xtop_contract_execution_context::action_data() const {
     auto const & action_param = m_tx->get_target_action().get_action_param();
     return {std::begin(action_param), std::end(action_param)};
+}
+
+common::xlogic_time_t xtop_contract_execution_context::time() const {
+    return m_param.m_clock;
 }
 
 NS_END2

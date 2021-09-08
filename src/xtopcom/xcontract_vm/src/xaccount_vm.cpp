@@ -6,6 +6,7 @@
 
 #include "xbase/xlog.h"
 #include "xbasic/xerror/xchain_error.h"
+#include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_runtime/xaction_session.h"
@@ -21,12 +22,15 @@ xtop_account_vm::xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_
   : sys_action_runtime_{top::make_unique<contract_runtime::system::xsystem_action_runtime_t>(system_contract_manager)} {
 }
 
-xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) {
+xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                                                        xobject_ptr_t<base::xvbstate_t> block_state,
+                                                        const data::xblock_consensus_para_t & cs_para) {
     xaccount_vm_execution_result_t result;
     result.transaction_results.reserve(txs.size());
 
-    state_accessor::xstate_access_control_data_t ac_data; // final get from config or program initialization start
-    contract_common::properties::xproperty_access_control_t ac{ make_observer(block_state.get()), ac_data };
+    state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
+    contract_common::properties::xproperty_access_control_t ac{make_observer(block_state.get()), ac_data};
+    contract_common::xcontract_execution_param_t param(cs_para);
 
     auto const & actions = contract_runtime::xaction_generator_t::generate(txs);
     auto i = 0u;
@@ -37,7 +41,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
             {
                 auto const & action = dynamic_cast<data::xsystem_consensus_action_t const &>(actions[i]);
                 contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
-                result.transaction_results[i] = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
+                result.transaction_results[i] = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action, param);
                 break;
             }
 
@@ -45,7 +49,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
             {
                 auto const & action = dynamic_cast<data::xuser_consensus_action_t const &>(actions[i]);
                 contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
-                result.transaction_results[i] = user_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action);
+                result.transaction_results[i] = user_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action, param);
                 break;
             }
 

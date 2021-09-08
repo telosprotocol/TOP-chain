@@ -50,7 +50,9 @@ public:
 
     explicit xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & system_contract_manager);
 
-    xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) override;
+    xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                                           xobject_ptr_t<base::xvbstate_t> block_state,
+                                           const data::xblock_consensus_para_t & cs_para) override;
 };
 using xaccount_vm_t = xtop_account_vm;
 

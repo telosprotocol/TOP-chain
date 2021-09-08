@@ -4,14 +4,15 @@
 
 #pragma once
 
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
-#include "xcontract_common/xcontract_state_fwd.h"
+#include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xcontract_execution_result.h"
-#include "xdata/xtransaction.h"
+#include "xcontract_common/xcontract_state_fwd.h"
 #include "xdata/xconsensus_action_stage.h"
+#include "xdata/xtransaction.h"
 
 #include <map>
 #include <string>
@@ -25,6 +26,7 @@ private:
     ActionT m_action;
     std::map<std::string, xbyte_buffer_t> m_receipt_data; // input receipt
     xcontract_execution_result_t m_execution_result; // execution result
+    xcontract_execution_param_t m_param;
 
 public:
     xtop_action_execution_context() = default;
@@ -34,7 +36,7 @@ public:
     xtop_action_execution_context & operator=(xtop_action_execution_context &&) = default;
     ~xtop_action_execution_context() = default;
 
-    xtop_action_execution_context(ActionT action, observer_ptr<xcontract_state_t> s) noexcept;
+    xtop_action_execution_context(ActionT action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
 
@@ -67,7 +69,8 @@ NS_END2
 NS_BEG2(top, contract_common)
 
 template <typename ActionT>
-xtop_action_execution_context<ActionT>::xtop_action_execution_context(ActionT action, observer_ptr<xcontract_state_t> s) noexcept : m_action{ std::move(action) }, m_contract_state{ s } {
+xtop_action_execution_context<ActionT>::xtop_action_execution_context(ActionT action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept
+  : m_action{std::move(action)}, m_contract_state{s}, m_param{param} {
 }
 
 template <typename ActionT>
