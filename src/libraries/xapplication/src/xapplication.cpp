@@ -56,7 +56,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()}
-  , m_sys_contract_mgr{top::make_unique<contract_runtime::xsystem_contract_manager_t>()} {
+  , m_sys_contract_mgr{top::make_unique<contract_runtime::system::xsystem_contract_manager_t>()} {
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
@@ -265,7 +265,7 @@ xobject_ptr_t<store::xsyncvstore_t> xtop_application::syncstore() const noexcept
     return m_syncstore;
 }
 
-observer_ptr<contract_runtime::xsystem_contract_manager_t> xtop_application::system_contract_manager() const noexcept {
+observer_ptr<contract_runtime::system::xsystem_contract_manager_t> xtop_application::system_contract_manager() const noexcept {
     return make_observer(m_sys_contract_mgr.get());
 }
 

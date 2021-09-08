@@ -6,12 +6,12 @@
 
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xmemory.hpp"
-#include "xcontract_runtime/xaccount_vm_execution_result.h"
-#include "xcontract_runtime/xsystem_contract_manager.h"
-#include "xcontract_runtime/xsystem/xsystem_action_runtime.h"
 #include "xcontract_runtime/xuser/xuser_action_runtime.h"
-#include "xcontract_runtime/xvm_executor_face.h"
+#include "xcontract_vm/xaccount_vm_execution_result.h"
+#include "xcontract_vm/xvm_executor_face.h"
 #include "xdata/xcons_transaction.h"
+#include "xsystem_contract_runtime/xsystem_action_runtime.h"
+#include "xsystem_contract_runtime/xsystem_contract_manager.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -33,12 +33,12 @@
 #    pragma warning(pop)
 #endif
 
-NS_BEG2(top, contract_runtime)
+NS_BEG2(top, contract_vm)
 
 class xtop_account_vm : public xvm_executor_face_t {
 private:
-    std::unique_ptr<user::xuser_action_runtime_t> user_action_runtime_{ top::make_unique<user::xuser_action_runtime_t>() };
-    std::unique_ptr<system::xsystem_action_runtime_t> sys_action_runtime_;
+    std::unique_ptr<contract_runtime::user::xuser_action_runtime_t> user_action_runtime_{top::make_unique<contract_runtime::user::xuser_action_runtime_t>()};
+    std::unique_ptr<contract_runtime::system::xsystem_action_runtime_t> sys_action_runtime_;
 
 public:
     // xtop_account_vm() = default;
@@ -48,7 +48,7 @@ public:
     xtop_account_vm & operator=(xtop_account_vm &&) = default;
     ~xtop_account_vm() override = default;
 
-    explicit xtop_account_vm(observer_ptr<xsystem_contract_manager_t> const & system_contract_manager);
+    explicit xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & system_contract_manager);
 
     xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) override;
 };

@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
-NS_BEG2(top, contract_runtime)
+NS_BEG3(top, contract_runtime, system)
 
 enum class enum_contract_deploy_type: uint8_t {
     rec,
@@ -116,5 +116,5 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
 
 }
 
-NS_END2
+NS_END3
 

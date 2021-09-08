@@ -25,11 +25,11 @@
 #endif
 
 #include "xbase/xobject_ptr.h"
-#include "xcontract_runtime/xaccount_vm_execution_result.h"
+#include "xcontract_vm/xaccount_vm_execution_result.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtop_action.h"
 
-NS_BEG2(top, contract_runtime)
+NS_BEG2(top, contract_vm)
 
 class xtop_vm_executor_face {
 public:

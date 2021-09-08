@@ -10,7 +10,7 @@
 #include <system_error>
 #include <vector>
 
-NS_BEG2(top, contract_runtime)
+NS_BEG2(top, contract_vm)
 
 struct xtop_account_vm_execution_status {
     std::error_code ec;
@@ -20,7 +20,7 @@ using xaccount_vm_execution_status_t = xtop_account_vm_execution_status;
 
 struct xtop_account_vm_execution_result {
     xaccount_vm_execution_status_t status;
-    std::vector<xtransaction_execution_result_t> transaction_results;
+    std::vector<contract_runtime::xtransaction_execution_result_t> transaction_results;
 };
 using xaccount_vm_execution_result_t = xtop_account_vm_execution_result;
 

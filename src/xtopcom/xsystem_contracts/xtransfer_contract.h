@@ -4,7 +4,7 @@
 #include "xcontract_common/xcontract_execution_context.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 #include "xcontract_common/xproperties/xproperty_token.h"
-#include "xcontract_runtime/xsystem/xsystem_contract_runtime_helper.h"
+#include "xsystem_contract_runtime/xsystem_contract_runtime_helper.h"
 
 NS_BEG2(top, system_contracts)
 
