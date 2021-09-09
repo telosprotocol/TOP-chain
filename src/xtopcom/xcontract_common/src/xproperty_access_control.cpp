@@ -5,6 +5,7 @@
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 
 #include "xbasic/xerror/xthrow_error.h"
+#include "xdata/xproperty.h"
 #include "xvledger/xvledger.h"
 
 #include <cassert>
@@ -491,10 +492,56 @@ void xtop_property_access_control::load_access_control_data(state_accessor::xsta
     ac_data_ = data;
 }
 
+uint256_t xtop_property_access_control::latest_sendtx_hash(std::error_code& ec) const {
+    assert(!ec);
+
+    uint256_t hash;
+    assert(bstate_ != nullptr);
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        ec = error::xerrc_t::property_not_exist;
+        return hash;
+    }
+
+    auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
+    if (value.empty()) return hash;
+
+    return uint256_t((uint8_t*)value.c_str());
+}
+
+uint256_t xtop_property_access_control::latest_sendtx_hash() const {
+    std::error_code ec;
+    auto res = latest_sendtx_hash(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
+uint64_t  xtop_property_access_control::latest_sendtx_nonce(std::error_code& ec) const {
+    assert(!ec);
+
+    uint64_t nonce{0};
+    assert(bstate_ != nullptr);
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        ec = error::xerrc_t::property_not_exist;
+        return nonce;
+    }
+
+    auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
+    if (value.empty()) return nonce;
+
+    return base::xstring_utl::touint64(value);
+}
+
+uint64_t  xtop_property_access_control::latest_sendtx_nonce() const {
+    std::error_code ec;
+    auto res = latest_sendtx_nonce(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
 std::string xtop_property_access_control::binlog(std::error_code & ec) const {
     std::string r;
     assert(canvas_ != nullptr);
-    if (canvas_->encode(r)) {
+    if (canvas_->encode(r) < 0) {
         ec = error::xerrc_t::get_binlog_failed;
     }
 

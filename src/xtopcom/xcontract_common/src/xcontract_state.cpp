@@ -89,4 +89,26 @@ std::string xtop_contract_state::fullstate_bin() const {
     return m_ac->fullstate_bin();
 }
 
+uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code& ec) const {
+    assert(m_ac);
+    return m_ac->latest_sendtx_hash(ec);
+}
+
+
+uint256_t  xtop_contract_state::latest_sendtx_hash() const {
+    assert(m_ac);
+    return m_ac->latest_sendtx_hash();
+}
+
+uint64_t  xtop_contract_state::latest_sendtx_nonce(std::error_code& ec) const {
+    assert(m_ac);
+    return m_ac->latest_sendtx_nonce(ec);
+}
+
+
+uint64_t  xtop_contract_state::latest_sendtx_nonce() const {
+    assert(m_ac);
+    return m_ac->latest_sendtx_nonce();
+}
+
 NS_END2

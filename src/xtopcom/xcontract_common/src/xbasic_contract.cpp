@@ -62,8 +62,11 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
                                std::string const & method_params,
                                xfollowup_transaction_schedule_type_t type) {
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
+
+    auto latest_hash = state()->latest_sendtx_hash();
+    auto latest_nonce = state()->latest_sendtx_nonce();
     tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
-    // tx->set_last_trans_hash_and_nonce(account_send_trans_hash(), account_send_trans_number()); //todo set nonce and hash
+    tx->set_last_trans_hash_and_nonce(latest_hash, latest_nonce);
     tx->set_different_source_target_address(address().value(), target_addr.value());
     tx->set_digest();
     tx->set_len();

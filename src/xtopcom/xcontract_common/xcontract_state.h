@@ -77,6 +77,13 @@ public:
     std::string binlog(std::error_code & ec) const;
     std::string binlog() const;
     std::string fullstate_bin() const;
+
+    uint256_t latest_sendtx_hash(std::error_code& ec) const;
+    uint256_t latest_sendtx_hash() const;
+    uint64_t  latest_sendtx_nonce(std::error_code& ec) const;
+    uint64_t  latest_sendtx_nonce() const;
+
+
 };
 
 NS_END2
