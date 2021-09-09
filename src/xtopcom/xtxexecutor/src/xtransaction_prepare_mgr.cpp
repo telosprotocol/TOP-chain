@@ -28,22 +28,6 @@ void xtransaction_prepare_mgr::stop() {
     if (m_mbus != nullptr)
         m_mbus->remove_listener(top::mbus::xevent_major_type_store, m_listener);
 }
-/*bool xtransaction_prepare_mgr::running() {
-    return m_running;
-} */
-/*bool xtransaction_prepare_mgr::on_timer_fire(const int32_t thread_id,
-                           const int64_t timer_id,
-                           const int64_t current_time_ms,
-                           const int32_t start_timeout_ms,
-                           int32_t & in_out_cur_interval_ms) {
-    xdbg("xtransaction_prepare_mgr on_timer_fire,timer_id=%lld,current_time_ms =%lld,start_timeout_ms=%d, in_out_cur_interval_ms=%d \n",
-           (int64_t)get_timer_id(),
-           (int64_t)current_time_ms,
-           start_timeout_ms,
-           in_out_cur_interval_ms);
-    m_transaction_cache->tx_clean();
-    return true;
-}*/
 void xtransaction_prepare_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
         return;
@@ -143,10 +127,6 @@ std::string xtransaction_prepare_mgr::tx_exec_status_to_str(uint8_t exec_status)
         return "success";
     }
     return "failure";
-}
-void xtransaction_prepare_mgr::set_timer_driver(const observer_ptr<xbase_timer_driver_t> timer_driver) {
-    m_timer_driver = timer_driver;
-    return;
 }
 void xtransaction_prepare_mgr::do_check_tx() {
     xdbg("do_check_tx1");

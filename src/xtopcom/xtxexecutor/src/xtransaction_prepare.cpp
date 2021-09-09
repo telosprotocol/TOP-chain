@@ -85,7 +85,7 @@ int32_t xtransaction_prepare_t::check() {
     return xsuccess;
 }
 
-std::string xtransaction_prepare_t::get_err_msg(const int32_t type) {
+std::string xtransaction_prepare_t::get_err_msg(const int32_t type) const {
     if (type == xverifier::xverifier_error::xverifier_error_src_dst_addr_same)
         return "Source address and destination address are the same";
     else if (type == xverifier::xverifier_error::xverifier_error_tx_min_deposit_invalid)

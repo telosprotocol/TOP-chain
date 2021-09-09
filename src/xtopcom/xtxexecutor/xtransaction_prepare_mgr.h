@@ -23,18 +23,11 @@ public:
         observer_ptr<data::xtransaction_cache_t> const & transaction_cache) :
         m_mbus(mbus), m_timer_driver(timer_driver),
         m_transaction_cache(transaction_cache) {}         
-/*    xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-        base::xcontext_t & _context,
-        int32_t timer_thread_id,
-        observer_ptr<data::xtransaction_cache_t> const & transaction_cache)
-        :base::xxtimer_t(_context,timer_thread_id), m_mbus(mbus),
-        //m_mbus(mbus), m_timer_driver{std::make_shared<xbase_timer_driver_t>(std::make_shared<xbase_io_context_wrapper_t>())}
- */
     void start() override;
     void stop() override;
 //    bool running();
     std::string tx_exec_status_to_str(uint8_t exec_status);
-    void set_timer_driver(const observer_ptr<xbase_timer_driver_t> timer_driver);
+//    void set_timer_driver(const observer_ptr<xbase_timer_driver_t> timer_driver);
 private:
     xtransaction_prepare_mgr();
     xtransaction_prepare_mgr(const xtransaction_prepare_mgr &);
@@ -49,7 +42,6 @@ private:
     observer_ptr<xbase_timer_driver_t> m_timer_driver;
     observer_ptr<data::xtransaction_cache_t> m_transaction_cache;
     uint32_t m_listener;
-//    bool m_running{false};
 };
 
 NS_END2

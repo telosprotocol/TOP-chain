@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <string>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "xtxexecutor/xunit_service_error.h"
 
@@ -43,7 +43,7 @@ class xtransaction_prepare_t{
     int32_t check();
     int32_t parse();
     //int32_t exec();
-    std::string get_err_msg(const int32_t type);
+    std::string get_err_msg(const int32_t type) const;
 
  private:
     int32_t source_action_exec();
