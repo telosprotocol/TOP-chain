@@ -386,7 +386,7 @@ public:
      * @param prop_id the property id
      */
     void string_prop_clear(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id);
-    
+
     /**
      * @brief query the string property
      *
@@ -478,6 +478,11 @@ public:
     common::xaccount_address_t address() const;
 
     uint64_t blockchain_height() const;
+
+    uint256_t latest_sendtx_hash(std::error_code& ec) const;
+    uint256_t latest_sendtx_hash() const;
+    uint64_t  latest_sendtx_nonce(std::error_code& ec) const;
+    uint64_t  latest_sendtx_nonce() const;
 
 
     virtual void load_access_control_data(std::string const & json);

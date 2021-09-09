@@ -67,6 +67,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     consensus_result.m_property_binlog = result.output.binlog;
     consensus_result.m_full_state = result.output.contract_state_snapshot;
 
+
     base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_address.value(), tx, consensus_result));
     xassert(block);
 

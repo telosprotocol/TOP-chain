@@ -6,6 +6,10 @@ xtop_transfer_contract::xtop_transfer_contract(observer_ptr<contract_common::xco
                                                 xtop_basic_system_contract(exec_context) {
 }
 
+void xtop_transfer_contract::init() {
+    m_balance.deposit(1000);
+}
+
 void xtop_transfer_contract::transfer(uint64_t const amount) {
     if (at_source_action_stage()) {
         m_balance.withdraw(amount);
