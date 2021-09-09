@@ -64,7 +64,7 @@ namespace top
         }
 
         void xvtransaction_store_t::set_send_unit_info(const xvtxindex_ptr & txindex) {
-            xassert(txindex->get_block_height() > 0);
+//            xassert(txindex->get_block_height() > 0);
             xassert(m_send_unit_height == 0 && m_send_unit_hash.empty());
             m_send_unit_height = txindex->get_block_height();
             m_send_unit_hash = txindex->get_block_hash();
@@ -72,7 +72,7 @@ namespace top
             //set_raw_tx(txindex->get_raw_tx());
         }
         void xvtransaction_store_t::set_recv_unit_info(const xvtxindex_ptr & txindex) {
-            xassert(txindex->get_block_height() > 0);
+//            xassert(txindex->get_block_height() > 0);
             xassert(m_recv_unit_height == 0 && m_recv_unit_hash.empty());
             m_recv_unit_addr = txindex->get_block_addr();
             m_recv_unit_height = txindex->get_block_height();
@@ -81,7 +81,7 @@ namespace top
             //set_raw_tx(txindex->get_raw_tx());
         }
         void xvtransaction_store_t::set_confirm_unit_info(const xvtxindex_ptr & txindex) {
-            xassert(txindex->get_block_height() > 0);
+//            xassert(txindex->get_block_height() > 0);
             xassert(m_confirm_unit_height == 0 && m_confirm_unit_hash.empty());
             m_confirm_unit_height = txindex->get_block_height();
             m_confirm_unit_hash = txindex->get_block_hash();

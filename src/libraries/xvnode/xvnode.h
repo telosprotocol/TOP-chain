@@ -22,6 +22,10 @@
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xbasic_vnode.h"
+#include "xvnode/xvnode_face.h"
+#include "xtxexecutor/xtransaction_prepare_mgr.h"
+#include "xbasic/xtimer_driver_fwd.h"
+#include "xdata/xtransaction_cache.h"
 
 #include <memory>
 
@@ -51,6 +55,10 @@ private:
     std::shared_ptr<xunit_service::xcons_proxy_face> m_cons_face;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
 
+    observer_ptr<top::xbase_timer_driver_t> m_timer_driver;
+    std::shared_ptr<txexecutor::xtransaction_prepare_mgr>      m_tx_prepare_mgr;
+    std::shared_ptr<data::xtransaction_cache_t> m_transaction_cache;
+
 public:
     xtop_vnode(xtop_vnode const &) = delete;
     xtop_vnode & operator=(xtop_vnode const &) = delete;
@@ -71,7 +79,8 @@ public:
                observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+               observer_ptr<xbase_timer_driver_t> const & timer_driver);
 
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
@@ -90,7 +99,8 @@ public:
                observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+               observer_ptr<xbase_timer_driver_t> const & timer_driver);
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const noexcept;
 
@@ -107,6 +117,7 @@ private:
     void update_contract_manager(bool destory);
     void sync_add_vnet();
     void sync_remove_vnet();
+    void update_tx_cache_service();
 };
 
 using xvnode_t = xtop_vnode;

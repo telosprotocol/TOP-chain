@@ -6,13 +6,13 @@
 #include "xconfig/xconfig_register.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "test_xtxexecutor_util.hpp"
+//#include "test_xtxexecutor_util.hpp"
 
 using namespace top::txexecutor;
 using namespace top::data;
 using namespace top;
 using namespace top::store;
-
+/*
 class test_vote : public testing::Test {
  protected:
     void SetUp() override {
@@ -437,3 +437,4 @@ TEST_F(test_vote, DISABLED_abolish_vote_illegal) {
     ret = vote_confirm.source_confirm_action_exec();
     EXPECT_EQ(0, source_context->get_unvote_num_change());
 }
+*/
