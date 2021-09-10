@@ -14,9 +14,7 @@
 
 #include "xsystem_contracts/xsystem_contract_addresses.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
-
-#include "xsystem_contracts/xtransfer_contract.h"
-
+#include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
 NS_BEG3(top, contract_runtime, system)
 
@@ -26,7 +24,8 @@ void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) 
 
 void xtop_system_contract_manager::deploy() {
     // deploy one system contract
-    deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
+    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
+    deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
 }
 
 bool xtop_system_contract_manager::contains(common::xaccount_address_t const & address) const noexcept {
@@ -58,7 +57,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     top::base::xstream_t param_stream(base::xcontext_t::instance());
     param_stream << amount;
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
-    tx->make_tx_run_contract(asset_out, "init", param);
+    tx->make_tx_run_contract(asset_out, "setup", param);
     tx->set_same_source_target_address(contract_address.value());
     tx->set_digest();
     tx->set_len();

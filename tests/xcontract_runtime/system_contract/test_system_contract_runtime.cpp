@@ -28,6 +28,8 @@
 #include "xcontract_vm/xaccount_vm.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
+#include "xdata/xdata_common.h"
+#include "cbuild/generated/version.h"
 
 NS_BEG3(top, tests, contract_runtime)
 
@@ -155,20 +157,47 @@ TEST_F(test_system_contract_runtime, account_vm) {
         tx->m_tx->m_target_action.m_account_addr = sys_contract_rec_standby_pool_addr;
         tx->m_tx->m_target_addr = sys_contract_rec_standby_pool_addr;
         tx->m_subtype = enum_transaction_subtype::enum_transaction_subtype_recv;
-    }
-    base::xvbstate_t state;
-    {
-        base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)state_encode.data(),(int32_t)state_encode.size());
-        state.serialize_from(stream);
-    }
 
-    auto proposal_bstate = make_object_ptr<base::xvbstate_t>(state);
+        base::xstream_t param_stream(base::xcontext_t::instance());
+        param_stream << common::xtop_node_id{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
+        param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
+#if defined XENABLE_MOCK_ZEC_STAKE
+        ENUM_SERIALIZE(param_stream, common::xrole_type_t::advance);
+        param_stream << std::string{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
+        param_stream << static_cast<uint64_t>(top::config::to_chainid(XGET_CONFIG(chain_name)));
+#endif
+        param_stream << PROGRAM_VERSION;
+        std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+        tx->m_tx->make_tx_run_contract("nodeJoinNetwork2", param);
+        tx->m_tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_standby_pool_addr);
+        tx->m_tx->set_fire_and_expire_time(600);
+        tx->m_tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+    }
+    // base::xvbstate_t state;
+    // {
+    //     base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)state_encode.data(),(int32_t)state_encode.size());
+    //     state.serialize_from(stream);
+    // }
+
+    // auto proposal_bstate = make_object_ptr<base::xvbstate_t>(bstate_);
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(tx);
-    auto temp_manager = make_unique<system::xsystem_contract_manager_t>();
+    auto config = xblock_sniff_config_t{};
+    // auto temp_manager = make_unique<system::xsystem_contract_manager_t>();
+    // temp_manager->deploy_data<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, config, system::contract_deploy_type_t::rec, common::xnode_type_t::committee, system::contract_broadcast_policy_t::normal);
+    // temp_manager->deploy_data<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, config, system::contract_deploy_type_t::rec, common::xnode_type_t::committee, system::contract_broadcast_policy_t::normal);
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    contract_vm::xaccount_vm_t vm(temp_manager);
-    auto result = vm.execute(input_txs, proposal_bstate, cs_para);
+    system_contract_manager_->initialize(blockstore);
+    system_contract_manager_->deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, system::contract_deploy_type_t::rec, common::xnode_type_t::zec, system::contract_broadcast_policy_t::invalid);
+    system_contract_manager_->deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, xblock_sniff_config_t{}, system::contract_deploy_type_t::rec, common::xnode_type_t::zec, system::contract_broadcast_policy_t::invalid);
+
+    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, std::string{sys_contract_rec_standby_pool_addr});
+    bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
+
+    contract_vm::xaccount_vm_t vm(system_contract_manager_);
+    auto result = vm.execute(input_txs, bstate_, cs_para);
 }
 
 
