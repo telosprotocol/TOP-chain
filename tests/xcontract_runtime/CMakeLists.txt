@@ -10,7 +10,7 @@ if (BUILD_RUSTVM)
     target_link_libraries(xcontract_runtime_test_erc20 PRIVATE xcontract_runtime xcontract_api xxbase pthread gtest)
 endif()
 
-#add_executable(xcontract_runtime_test ${runtime_src} ${system_contract_src})
-#add_dependencies(xcontract_runtime_test xcontract_runtime xvm  xloader xxbase xblockstore)
+add_executable(xcontract_runtime_test ${xcontract_runtime_src} ${system_contract_src})
+add_dependencies(xcontract_runtime_test xcontract_runtime xvm  xloader xxbase xblockstore)
 
-#target_link_libraries(xcontract_runtime_test PRIVATE xcontract_runtime xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)
+target_link_libraries(xcontract_runtime_test PRIVATE xcontract_runtime xcontract_vm xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)
