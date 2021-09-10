@@ -413,6 +413,7 @@ bool xunit_maker_t::can_make_next_full_block() const {
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
     xassert(current_lightunit_count > 0);
     uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+#if 0    
     if (current_lightunit_count >= max_limit_lightunit_count) {
         if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {
             return true;
@@ -422,6 +423,12 @@ bool xunit_maker_t::can_make_next_full_block() const {
                 get_account().c_str(), get_latest_bstate()->get_block_height(), current_lightunit_count, get_latest_bstate()->get_unconfirm_sendtx_num());
         }
     }
+#else
+    if (current_lightunit_count >= max_limit_lightunit_count) {  // TODO(jimmy)
+        return true;
+    }    
+#endif
+
     return false;
 }
 

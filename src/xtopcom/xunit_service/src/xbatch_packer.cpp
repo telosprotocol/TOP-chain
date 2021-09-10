@@ -456,6 +456,13 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                             "proposal_finish_succ", _evt_obj->get_target_proposal()->dump(),
                             "is_leader", is_leader,
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+        
+        if (is_leader) {
+            auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();
+            auto last_height_tag = "cons_table_last_succ_height_" + get_account();
+            XMETRICS_COUNTER_SET( last_viewid_tag , _evt_obj->get_target_proposal()->get_viewid());
+            XMETRICS_COUNTER_SET( last_height_tag , _evt_obj->get_target_proposal()->get_height());
+        }
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
         xassert(vblock->is_input_ready(true));
