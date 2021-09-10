@@ -51,7 +51,7 @@ public:
     data::xconsensus_action_stage_t consensus_action_stage() const noexcept;
     void consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept;
     xcontract_execution_result_t execution_result() const noexcept;
-    void add_followup_transaction(data::xtransaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
+    void add_followup_transaction(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
 
     void receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data);
     std::map<std::string, xbyte_buffer_t> & receipt_data() noexcept;
