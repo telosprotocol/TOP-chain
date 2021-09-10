@@ -7,6 +7,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xaddress.h"
+#include "xdata/xaction.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
 #include "xdata/xconsensus_action_stage.h"
@@ -38,6 +39,7 @@ public:
     std::string action_name() const;
     xbyte_buffer_t action_data() const;
     data::enum_xtransaction_type transaction_type() const;
+    data::enum_xaction_type transaction_target_action_type() const;
 };
 
 NS_END2
@@ -156,6 +158,14 @@ data::enum_xtransaction_type xtop_consensus_action<ActionTypeV>::transaction_typ
     assert(tx != nullptr);
 
     return data::enum_xtransaction_type(tx->get_tx_type());
+}
+
+template <xtop_action_type_t ActionTypeV>
+data::enum_xaction_type xtop_consensus_action<ActionTypeV>::transaction_target_action_type() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_target_action().get_action_type();
 }
 
 NS_END2

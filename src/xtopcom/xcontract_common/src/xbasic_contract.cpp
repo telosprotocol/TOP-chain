@@ -14,16 +14,16 @@ xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const&
     : m_type(type), m_account(account) {
 }
 
-xtop_basic_contract::xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context)
-    : m_associated_execution_context(exec_context)
-    , m_state(exec_context->contract_state())
-    , m_contract_meta(exec_context->contract_address()) {
-}
+//xtop_basic_contract::xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const & exec_context)
+//    : m_associated_execution_context(exec_context)
+//    , m_state(exec_context->contract_state())
+//    , m_contract_meta(exec_context->contract_address()) {
+//}
 
-xcontract_execution_result_t xtop_basic_contract::execute(observer_ptr<xcontract_execution_context_t> exe_ctx) {
-    // just do nothing
-    return exe_ctx->execution_result();
-}
+//xcontract_execution_result_t xtop_basic_contract::execute(observer_ptr<xcontract_execution_context_t> exe_ctx) {
+//    // just do nothing
+//    return exe_ctx->execution_result();
+//}
 
 common::xaccount_address_t xtop_basic_contract::address() const {
     return m_contract_meta.m_account;
@@ -45,8 +45,8 @@ data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
     return m_associated_execution_context->transaction_type();
 }
 
-observer_ptr<xcontract_state_t> const & xtop_basic_contract::state() const noexcept {
-    return m_state;
+observer_ptr<xcontract_state_t> xtop_basic_contract::state() const noexcept {
+    return m_associated_execution_context->contract_state();
 }
 
 common::xaccount_address_t xtop_basic_contract::sender() const {

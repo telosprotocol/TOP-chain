@@ -29,10 +29,11 @@ public:
     virtual common::xaccount_address_t recver() const = 0;
     virtual common::xaccount_address_t address() const = 0;
 
+    virtual void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) = 0;
+
 protected:
     xtop_contract_face() = default;
 
-    virtual void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) = 0;
     virtual bool at_source_action_stage() const noexcept = 0;
     virtual bool at_target_action_stage() const noexcept = 0;
     virtual bool at_confirm_action_stage() const noexcept = 0;

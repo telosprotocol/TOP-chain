@@ -32,25 +32,17 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     contract_common::properties::xproperty_access_control_t ac{make_observer(block_state.get()), ac_data};
     contract_common::xcontract_execution_param_t param(cs_para);
 
-#if 0
-    auto const & actions = contract_runtime::xaction_generator_t::generate(txs);
-#else
-    std::vector<std::unique_ptr<data::xbasic_top_action_t>> basic_action;
-    for (auto const & tx : txs) {
-        std::unique_ptr<data::xbasic_top_action_t> a = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::system>>(tx);
-        basic_action.emplace_back(std::move(a));
-    }
+    auto actions = contract_runtime::xaction_generator_t::generate(txs);
 
-#endif
     auto i = 0u;
     try {
-        for (i = 0u; i < basic_action.size(); ++i) {
-            switch (basic_action[i]->type()) {
+        for (i = 0u; i < actions.size(); ++i) {
+            switch (actions[i]->type()) {
             case data::xtop_action_type_t::system:
             {
-                auto const & action = dynamic_cast<data::xsystem_consensus_action_t const &>(*basic_action[i]);
-                contract_common::xcontract_state_t contract_state{ action.contract_address(), make_observer(std::addressof(ac)) };
-                result.transaction_results[i] = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(action, param);
+                auto const * action = static_cast<data::xsystem_consensus_action_t const *>(actions[i].get());
+                contract_common::xcontract_state_t contract_state{ action->contract_address(), make_observer(std::addressof(ac)) };
+                result.transaction_results[i] = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(std::move(actions[i]), param);
                 break;
             }
 

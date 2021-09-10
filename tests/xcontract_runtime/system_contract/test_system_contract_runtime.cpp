@@ -14,6 +14,7 @@
 #include "xsystem_contracts/xtransfer_contract.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvledger.h"
+#include "xcontract_runtime/xtop_action_generator.h"
 
 
 #include "tests/mock/xvchain_creator.hpp"
@@ -76,7 +77,6 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     system_contract_manager_->initialize(blockstore);
     system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{contract_address}, xblock_sniff_config_t{}, system::contract_deploy_type_t::rec, common::xnode_type_t::zec, system::contract_broadcast_policy_t::invalid);
 
-
     auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address);
     bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
     assert(bstate_ != nullptr);
@@ -91,9 +91,15 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     transfer_tx->make_tx_run_contract("transfer", param);
 
-    property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
-    contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
-    contract_ctx_ = std::make_shared<top::contract_common::xcontract_execution_context_t>(transfer_tx, contract_state_);
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(transfer_tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+
+    property_access_control_ =
+        std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
+    contract_state_ =
+        std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
+
+    contract_ctx_ = std::make_shared<top::contract_common::xcontract_execution_context_t>(std::move(action), contract_state_);
     contract_ctx_->execution_stage(contract_common::xcontract_execution_stage_t{contract_common::xtop_enum_contract_execution_stage::target_action});
 
     // before execution
@@ -124,8 +130,11 @@ TEST_F(test_system_contract_runtime, init_system_contract) {
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
-    auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(tx, contract_state);
-    auto transfer_contract = std::make_shared<system_contracts::xtop_transfer_contract>(top::make_observer(contract_ctx.get()));
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+    auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(std::move(action), contract_state);
+    auto transfer_contract = std::make_shared<system_contracts::xtop_transfer_contract>();
+    transfer_contract->reset_execution_context(top::make_observer(contract_ctx.get()));
 
     state_accessor::properties::xproperty_identifier_t propety_identifier("balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xenum_property_category::system);
     transfer_contract->state()->access_control()->property_exist(common::xaccount_address_t{contract_address}, propety_identifier);

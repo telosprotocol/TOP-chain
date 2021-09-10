@@ -20,16 +20,16 @@ xtop_token_property::xtop_token_property(std::string const& prop_name, contract_
 }
 
 uint64_t xtop_token_property::value() const {
-    return m_contract_state->access_control()->balance(accessor(), m_id);
+    return m_associated_contract->state()->access_control()->balance(accessor(), m_id);
 }
 
 void xtop_token_property::withdraw(std::uint64_t amount) {
     xproperty_utl_t::property_assert(amount > value(),  error::xerrc_t::token_not_enough, "[xtop_token_property::withdraw]withdraw amount overflow, amount: " + std::to_string(amount));
-    m_contract_state->access_control()->withdraw(accessor(), m_id, amount);
+    m_associated_contract->state()->access_control()->withdraw(accessor(), m_id, amount);
 }
 
 void xtop_token_property::deposit(std::uint64_t amount) {
     xproperty_utl_t::property_assert(xtoken_safe_t::transfer_safe_rule(amount),  error::xerrc_t::token_not_enough, "[xtop_token_property::deposit]deposit amount overflow, amount: " + std::to_string(amount));
-    m_contract_state->access_control()->deposit(accessor(), m_id, amount);
+    m_associated_contract->state()->access_control()->deposit(accessor(), m_id, amount);
 }
 NS_END3

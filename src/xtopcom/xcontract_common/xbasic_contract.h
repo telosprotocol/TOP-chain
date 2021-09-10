@@ -31,8 +31,10 @@ struct xtop_contract_metadata {
 class xtop_basic_contract : public xcontract_face_t {
 protected:
     observer_ptr<xcontract_execution_context_t> m_associated_execution_context{nullptr};
-    observer_ptr<xcontract_state_t> m_state{nullptr};
     xcontract_metadata_t m_contract_meta;
+
+protected:
+    xtop_basic_contract() = default;
 
 public:
     xtop_basic_contract(xtop_basic_contract const &) = delete;
@@ -41,12 +43,12 @@ public:
     xtop_basic_contract & operator=(xtop_basic_contract &&) = default;
     ~xtop_basic_contract() override = default;
 
-    xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
-    xcontract_execution_result_t execute(observer_ptr<xcontract_execution_context_t> exe_ctx);
     common::xaccount_address_t address() const override final;
     common::xaccount_address_t sender() const override final;
     common::xaccount_address_t recver() const override final;
-    observer_ptr<xcontract_state_t> const & state() const noexcept;
+    void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) override final;
+
+    observer_ptr<xcontract_state_t> state() const noexcept;
     xcontract_type_t type() const;
     data::enum_xaction_type action_type() const;
     xbyte_buffer_t action_data() const;
@@ -54,9 +56,6 @@ public:
     common::xlogic_time_t time() const;
 
 protected:
-    xtop_basic_contract() = default;
-
-    void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) override final;
     bool at_source_action_stage() const noexcept override final;
     bool at_target_action_stage() const noexcept override final;
     bool at_confirm_action_stage() const noexcept override final;
