@@ -40,7 +40,7 @@ namespace top
             virtual const std::string   get_value(const std::string & key) const override;
             virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search
             
-            virtual bool                execute_block(base::xvblock_t* block) override;
+            virtual bool                execute_block(base::xvblock_t* block);
                         
         public:
             virtual std::string         get_store_path() const  override {return m_store_path;}
