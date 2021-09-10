@@ -69,7 +69,7 @@ common::xaccount_address_t xtop_contract_execution_context::sender() const {
 }
 
 common::xaccount_address_t xtop_contract_execution_context::recver() const {
-    // return common::xaccount_address_t{m_tx->get_target_addr()};
+    if (m_tx) return common::xaccount_address_t{m_tx->get_target_addr()};
     common::xaccount_address_t ret;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
@@ -91,7 +91,7 @@ common::xaccount_address_t xtop_contract_execution_context::contract_address() c
 }
 
 data::enum_xtransaction_type xtop_contract_execution_context::transaction_type() const noexcept {
-    // return static_cast<data::enum_xtransaction_type>(m_tx->get_tx_type());
+    if (m_tx) return static_cast<data::enum_xtransaction_type>(m_tx->get_tx_type());
     data::enum_xtransaction_type ret = data::enum_xtransaction_type::xtransaction_type_max;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
@@ -109,7 +109,7 @@ data::enum_xtransaction_type xtop_contract_execution_context::transaction_type()
 }
 
 std::string xtop_contract_execution_context::action_name() const {
-    // return m_tx->get_target_action_name();
+    if (m_tx) return m_tx->get_target_action_name();
     std::string ret;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
@@ -131,8 +131,11 @@ data::enum_xaction_type xtop_contract_execution_context::action_type() const {
 }
 
 xbyte_buffer_t xtop_contract_execution_context::action_data() const {
-    // auto const & action_param = m_tx->get_target_action().get_action_param();
-    // return {std::begin(action_param), std::end(action_param)};
+    if (m_tx) {
+        auto const & action_param = m_tx->get_target_action().get_action_param();
+        return {std::begin(action_param), std::end(action_param)};
+    }
+
     xbyte_buffer_t ret;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{

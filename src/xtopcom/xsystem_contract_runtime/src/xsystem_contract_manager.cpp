@@ -54,7 +54,11 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     // system contract object has been created
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
     data::xproperty_asset asset_out{0};
-    tx->make_tx_run_contract(asset_out, "init", "");
+    uint64_t amount = 1000;
+    top::base::xstream_t param_stream(base::xcontext_t::instance());
+    param_stream << amount;
+    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+    tx->make_tx_run_contract(asset_out, "init", param);
     tx->set_same_source_target_address(contract_address.value());
     tx->set_digest();
     tx->set_len();

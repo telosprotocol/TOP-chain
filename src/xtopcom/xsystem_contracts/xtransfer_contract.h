@@ -22,7 +22,7 @@ public:
     END_CONTRACT_API
 
 private:
-    void init();
+    void init(uint64_t amount);
     void transfer(uint64_t const amount);
 };
 using xtransfer_contract_t = xtop_transfer_contract;
