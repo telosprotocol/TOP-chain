@@ -59,7 +59,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(Act
     xscope_executer_t reset_action{ [&execution_context] {
         execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
     } };
-    execution_context->consensus_action_stage(action.stage());
+    execution_context->consensus_action_stage(execution_context->action_stage());
     auto result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;

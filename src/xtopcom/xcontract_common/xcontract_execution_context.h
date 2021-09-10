@@ -25,7 +25,7 @@ class xtop_contract_execution_context {
 private:
     observer_ptr<xcontract_state_t> m_contract_state{};
     xobject_ptr_t<data::xtransaction_t> m_tx;
-    data::xbasic_top_action_t m_action;
+    const data::xbasic_top_action_t * m_action;
     std::map<std::string, xbyte_buffer_t> m_receipt_data; // input receipt
 
     xcontract_execution_stage_t m_execution_stage{xcontract_execution_stage_t::invalid};
@@ -43,7 +43,7 @@ public:
     ~xtop_contract_execution_context() = default;
 
     xtop_contract_execution_context(xobject_ptr_t<data::xtransaction_t> tx, observer_ptr<xcontract_state_t> s) noexcept;
-    xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept;
+    xtop_contract_execution_context(data::xbasic_top_action_t const & action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
     xcontract_execution_stage_t execution_stage() const noexcept;
@@ -66,6 +66,7 @@ public:
     std::string action_name() const;
     data::enum_xaction_type action_type() const;
     xbyte_buffer_t action_data() const;
+    data::xconsensus_action_stage_t action_stage() const;
 
     common::xlogic_time_t time() const;
 };
