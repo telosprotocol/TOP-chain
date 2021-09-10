@@ -132,7 +132,14 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         this->reset_execution_context(exe_ctx);                                                                                                                                    \
         auto const & action_name = exe_ctx->action_name();                                                                                                                         \
         auto const & action_data = exe_ctx->action_data();                                                                                                                         \
-        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)action_data.data(), action_data.size());
+        std::unique_ptr<base::xstream_t> stream_ptr;                                                                                                                               \
+        if (action_data.empty()) {                                                                                                                                                 \
+            stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance());                                                                                          \
+        } else {                                                                                                                                                                   \
+            stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance(), const_cast<uint8_t *>(action_data.data()), static_cast<uint32_t>(action_data.size()));    \
+        }                                                                                                                                                                          \
+        assert(stream_ptr != nullptr);                                                                                                                                             \
+        auto & stream = *stream_ptr;
 
 #define END_CONTRACT_API                                                                                                                                                           \
         top::error::throw_error(top::contract_runtime::error::xerrc_t::contract_api_not_found);                                                                                    \
