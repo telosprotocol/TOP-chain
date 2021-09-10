@@ -70,9 +70,17 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
+    uint64_t init_value = 1000;
     system_contract_manager_->initialize(blockstore);
     system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{contract_address}, xblock_sniff_config_t{}, system::contract_deploy_type_t::rec, common::xnode_type_t::zec, system::contract_broadcast_policy_t::invalid);
+
+
+    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address);
+    bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
+    assert(bstate_ != nullptr);
     state_accessor::properties::xproperty_identifier_t propety_identifier("balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xenum_property_category::system);
+    uint64_t balance = bstate_->load_token_var(propety_identifier.full_name())->get_balance();
+    EXPECT_EQ(balance, init_value);
 
     auto transfer_tx = top::make_object_ptr<top::data::xtransaction_t>();
     uint64_t amount = 1000;
@@ -81,6 +89,8 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     transfer_tx->make_tx_run_contract("transfer", param);
 
+    property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
+    contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
     contract_ctx_ = std::make_shared<top::contract_common::xcontract_execution_context_t>(transfer_tx, contract_state_);
     contract_ctx_->execution_stage(contract_common::xcontract_execution_stage_t{contract_common::xtop_enum_contract_execution_stage::target_action});
 

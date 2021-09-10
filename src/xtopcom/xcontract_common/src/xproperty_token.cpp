@@ -16,6 +16,7 @@ NS_BEG3(top, contract_common, properties)
 
 xtop_token_property::xtop_token_property(std::string const& prop_name, contract_common::xbasic_contract_t* contract)
     : xbasic_property_t{ prop_name, state_accessor::properties::xproperty_type_t::token, make_observer(contract) } {
+    m_contract_state->access_control()->token_prop_create(accessor(), m_id);
 }
 
 uint64_t xtop_token_property::value() const {
