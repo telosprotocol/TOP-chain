@@ -6,6 +6,7 @@
 
 #include "xbase/xns_macro.h"
 #include "xdata/xtransaction.h"
+#include "xdata/xcons_transaction.h"
 
 NS_BEG2(top, contract_common)
 
@@ -24,9 +25,9 @@ struct xtop_followup_transaction_datum {
     xtop_followup_transaction_datum & operator=(xtop_followup_transaction_datum &&) = default;
     ~xtop_followup_transaction_datum() = default;
 
-    xtop_followup_transaction_datum(data::xtransaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
+    xtop_followup_transaction_datum(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
 
-    data::xtransaction_ptr_t followed_transaction{nullptr};
+    data::xcons_transaction_ptr_t followed_transaction{nullptr};
     xfollowup_transaction_schedule_type_t schedule_type{xfollowup_transaction_schedule_type_t::invalid};
 };
 using xfollowup_transaction_datum_t = xtop_followup_transaction_datum;

@@ -62,6 +62,7 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
                                std::string const & method_params,
                                xfollowup_transaction_schedule_type_t type) {
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
 
     auto latest_hash = state()->latest_sendtx_hash();
     auto latest_nonce = state()->latest_sendtx_nonce();
@@ -71,7 +72,7 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     tx->set_digest();
     tx->set_len();
 
-    m_associated_execution_context->add_followup_transaction(std::move(tx), type);
+    m_associated_execution_context->add_followup_transaction(std::move(cons_tx), type);
 }
 
 void xtop_basic_contract::reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) {

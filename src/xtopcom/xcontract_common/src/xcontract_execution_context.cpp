@@ -41,7 +41,7 @@ xcontract_execution_result_t xtop_contract_execution_context::execution_result()
     return m_execution_result;
 }
 
-void xtop_contract_execution_context::add_followup_transaction(data::xtransaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type) {
+void xtop_contract_execution_context::add_followup_transaction(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type) {
     m_execution_result.output.followup_transaction_data.emplace_back(std::move(tx), type);
 }
 
