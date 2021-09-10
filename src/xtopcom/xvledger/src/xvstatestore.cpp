@@ -329,6 +329,11 @@ namespace top
             // TODO(jimmy) get executed height and commit height together
             uint64_t old_execute_height = base::xvchain_t::instance().get_xblockstore()->get_latest_executed_block_height(target_account);
             uint64_t _highest_commit_block_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
+
+            if (old_execute_height >= _highest_commit_block_height) {
+                return true;
+            }
+
             uint64_t _begin_height = old_execute_height == 0 ? 0 : old_execute_height + 1;
             uint64_t max_count = 32;
             uint64_t new_execute_height = old_execute_height;
