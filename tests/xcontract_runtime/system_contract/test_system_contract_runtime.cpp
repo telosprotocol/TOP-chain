@@ -26,6 +26,8 @@
 #define private public
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xcontract_vm/xaccount_vm.h"
+#include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
+#include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
 NS_BEG3(top, tests, contract_runtime)
 
@@ -129,22 +131,20 @@ TEST_F(test_system_contract_runtime, account_vm) {
         cs_para.m_account = "Ta0001@0";
         cs_para.m_random_seed = base::xstring_utl::base64_decode("ODI3OTg4ODkxOTMzOTU3NDk3OA==");
     }
-    xtransaction_t raw_tx;
+    xobject_ptr_t<xtransaction_t> raw_tx{make_object_ptr<xtransaction_t>()};
     {
         base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)tx_raw_encode.data(),(int32_t)tx_raw_encode.size());
-        raw_tx.serialize_from(stream);
+        raw_tx->serialize_from(stream);
     }
-    xcons_transaction_t tx;
+    xobject_ptr_t<xcons_transaction_t> tx{make_object_ptr<xcons_transaction_t>()};
     {
         base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)tx_encode.data(),(int32_t)tx_encode.size());
-        tx.serialize_from(stream);
-        tx.m_tx.release();
-        tx.m_tx.detach();
-        tx.m_tx.attach(&raw_tx);
-        tx.m_tx->m_source_action.m_account_addr = "T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks";
-        tx.m_tx->m_target_action.m_account_addr = sys_contract_rec_standby_pool_addr;
-        tx.m_tx->m_target_addr = sys_contract_rec_standby_pool_addr;
-        tx.m_subtype = enum_transaction_subtype::enum_transaction_subtype_recv;
+        tx->serialize_from(stream);
+        tx->m_tx = raw_tx;
+        tx->m_tx->m_source_action.m_account_addr = "T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks";
+        tx->m_tx->m_target_action.m_account_addr = sys_contract_rec_standby_pool_addr;
+        tx->m_tx->m_target_addr = sys_contract_rec_standby_pool_addr;
+        tx->m_subtype = enum_transaction_subtype::enum_transaction_subtype_recv;
     }
     base::xvbstate_t state;
     {

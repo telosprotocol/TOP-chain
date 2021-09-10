@@ -26,7 +26,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
                                                         xobject_ptr_t<base::xvbstate_t> block_state,
                                                         const data::xblock_consensus_para_t & cs_para) {
     xaccount_vm_execution_result_t result;
-    result.transaction_results.reserve(txs.size());
+    result.transaction_results.resize(txs.size());
 
     state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
     contract_common::properties::xproperty_access_control_t ac{make_observer(block_state.get()), ac_data};
@@ -38,7 +38,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
     std::vector<std::unique_ptr<data::xbasic_top_action_t>> basic_action;
     for (auto const & tx : txs) {
         std::unique_ptr<data::xbasic_top_action_t> a = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::system>>(tx);
-        basic_action.push_back(std::move(a));
+        basic_action.emplace_back(std::move(a));
     }
 
 #endif
