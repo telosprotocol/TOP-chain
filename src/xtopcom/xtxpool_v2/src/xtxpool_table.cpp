@@ -776,5 +776,9 @@ std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_receipts() {
     return m_txmgr_table.get_receipts();
 }
 
+void xtxpool_table_t::unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const {
+    m_unconfirm_id_height.cache_status(sender_cache_size, receiver_cache_size, height_record_size);
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top

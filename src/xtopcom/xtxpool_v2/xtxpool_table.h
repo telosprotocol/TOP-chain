@@ -124,6 +124,7 @@ public:
     }
     std::vector<xcons_transaction_ptr_t> get_receipts();
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;

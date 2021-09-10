@@ -30,6 +30,7 @@ public:
     bool get_height_by_id(uint64_t receipt_id, uint64_t & height) const;
     bool is_all_loaded() const;
     bool get_resend_id_height(uint64_t & receipt_id, uint64_t & height, uint64_t cur_time) const;
+    uint32_t size() const;
 
 private:
     uint64_t m_confirm_id{0xFFFFFFFFFFFFFFFF};
@@ -51,6 +52,7 @@ public:
     bool get_height_by_id(base::xtable_shortid_t table_sid, uint64_t receipt_id, uint64_t & height) const;
     bool is_all_unconfirm_id_recovered() const;
     std::vector<xresend_id_height_t> get_resend_id_height_list(uint64_t cur_time) const;
+    uint32_t size() const;
 
 private:
     std::map<base::xtable_shortid_t, xunconfirm_id_height_list_t> m_table_sid_unconfirm_list_map;
@@ -62,6 +64,7 @@ public:
     void record_height(uint64_t height);
     bool is_record_height(uint64_t height) const;
     bool get_latest_lacking_saction(uint64_t & left_end, uint64_t & right_end, uint16_t max_lacking_num) const;
+    uint32_t size() const;
 
 private:
     void print() const;
@@ -92,6 +95,7 @@ public:
     bool get_receiver_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const;
     std::vector<xresend_id_height_t> get_sender_resend_id_height_list(uint64_t cur_time) const;
     std::vector<xresend_id_height_t> get_receiver_resend_id_height_list(uint64_t cur_time) const;
+    void cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
 
 private:
     xtable_unconfirm_id_height_t m_sender_unconfirm_id_height;

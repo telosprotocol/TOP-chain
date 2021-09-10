@@ -60,6 +60,34 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_s
 
 void xtxpool_t::print_statistic_values() const {
     m_statistic.print();
+
+    uint32_t sender_cache_size = 0;
+    uint32_t receiver_cache_size = 0;
+    uint32_t height_record_size = 0;
+
+    for (int32_t i = 0; i < enum_xtxpool_table_type_max; i++) {
+        for (int32_t j = 0; j < enum_vbucket_has_tables_count; j++) {
+            auto table = m_tables[i][j];
+            if (table != nullptr) {
+                uint32_t table_sender_cache_size = 0;
+                uint32_t table_receiver_cache_size = 0;
+                uint32_t table_height_record_size = 0;
+                table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+                xinfo("xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u",
+                      table->table_sid(),
+                      table_sender_cache_size,
+                      table_receiver_cache_size,
+                      table_height_record_size);
+                sender_cache_size += table_sender_cache_size;
+                receiver_cache_size += table_receiver_cache_size;
+                height_record_size += table_height_record_size;
+            }
+        }
+    }
+
+    XMETRICS_COUNTER_SET("txpool_sender_unconfirm_cache", sender_cache_size);
+    XMETRICS_COUNTER_SET("txpool_receiver_unconfirm_cache", receiver_cache_size);
+    XMETRICS_COUNTER_SET("txpool_height_record_cache", height_record_size);
 }
 
 // bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {

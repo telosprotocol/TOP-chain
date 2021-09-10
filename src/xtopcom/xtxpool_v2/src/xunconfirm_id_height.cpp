@@ -7,6 +7,8 @@
 #include "xbase/xns_macro.h"
 #include "xvledger/xvaccount.h"
 
+#include <sstream>
+
 NS_BEG2(top, xtxpool_v2)
 
 void xunconfirm_id_height_list_t::update_confirm_id(uint64_t confirm_id) {
@@ -76,6 +78,10 @@ bool xunconfirm_id_height_list_t::get_resend_id_height(uint64_t & receipt_id, ui
         return true;
     }
     return false;
+}
+
+uint32_t xunconfirm_id_height_list_t::size() const {
+    return m_id_height_map.size();
 }
 
 void xtable_unconfirm_id_height_t::update_confirm_id(base::xtable_shortid_t table_sid, uint64_t confirm_id) {
@@ -152,6 +158,14 @@ std::vector<xresend_id_height_t> xtable_unconfirm_id_height_t::get_resend_id_hei
         }
     }
     return resend_vec;
+}
+
+uint32_t xtable_unconfirm_id_height_t::size() const {
+    uint32_t count = 0;
+    for (auto & id_height_list : m_table_sid_unconfirm_list_map) {
+        count += id_height_list.second.size();
+    }
+    return count;
 }
 
 void xprocessed_height_record_t::update_min_height(uint64_t height) {
@@ -256,6 +270,10 @@ bool xprocessed_height_record_t::get_latest_lacking_saction(uint64_t & left_end,
     return false;
 }
 
+uint32_t xprocessed_height_record_t::size() const {
+    return m_bit_record.size();
+}
+
 void xprocessed_height_record_t::print() const {
     xdbg("m_min_height:%llu,m_max_height:%llu,m_min_record_height:%llu,m_max_record_height:%llu,m_bit_record size:%u",
          m_min_height,
@@ -341,6 +359,13 @@ std::vector<xresend_id_height_t> xunconfirm_id_height::get_sender_resend_id_heig
 std::vector<xresend_id_height_t> xunconfirm_id_height::get_receiver_resend_id_height_list(uint64_t cur_time) const {
     std::lock_guard<std::mutex> lck(m_mutex);
     return m_receiver_unconfirm_id_height.get_resend_id_height_list(cur_time);
+}
+
+void xunconfirm_id_height::cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    sender_cache_size = m_sender_unconfirm_id_height.size();
+    receiver_cache_size = m_receiver_unconfirm_id_height.size();
+    height_record_size = m_processed_height_record.size();
 }
 
 NS_END2
