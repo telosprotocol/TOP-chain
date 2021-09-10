@@ -38,45 +38,45 @@ public:
 
     explicit xtop_map_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
                                 :xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::map , make_observer(contract)} {
-        m_contract_state->access_control()->map_prop_create<std::string, std::string>(accessor(), m_id);
+        m_associated_contract->state()->access_control()->map_prop_create<std::string, std::string>(accessor(), m_id);
 
     }
 
 
     void add(KEYT const& prop_key, VALUET const& prop_value) {
-        m_contract_state->access_control()->map_prop_add<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);
+        m_associated_contract->state()->access_control()->map_prop_add<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);
     }
 
     void erase(KEYT const& prop_key) {
-        m_contract_state->access_control()->map_prop_erase<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
+        m_associated_contract->state()->access_control()->map_prop_erase<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
     }
 
     void update(KEYT const& prop_key,  VALUET const& prop_value) {
-        m_contract_state->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);
+        m_associated_contract->state()->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);
     }
 
     void update(std::map<std::string, std::string> const& prop_value) {
-        m_contract_state->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, prop_value);
+        m_associated_contract->state()->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, prop_value);
     }
 
     void clear() {
-        m_contract_state->access_control()->map_prop_clear<std::string, std::string>(accessor(), m_id);
+        m_associated_contract->state()->access_control()->map_prop_clear<std::string, std::string>(accessor(), m_id);
     }
 
     bool exist(KEYT const& prop_key) {
-        return m_contract_state->access_control()->map_prop_exist<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
+        return m_associated_contract->state()->access_control()->map_prop_exist<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
     }
 
     std::string query(KEYT const& prop_key) {
-        return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
+        return m_associated_contract->state()->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
     }
 
     std::map<std::string, std::string> clone() {
-        return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id);
+        return m_associated_contract->state()->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id);
     }
 
     std::map<std::string, std::string> clone(common::xaccount_address_t const & contract) {
-        return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), contract, m_id);
+        return m_associated_contract->state()->access_control()->map_prop_query<std::string, std::string>(accessor(), contract, m_id);
     }
 
 };

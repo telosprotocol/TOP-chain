@@ -9,12 +9,18 @@
 NS_BEG2(top, system_contracts)
 
 class xtop_transfer_contract : public xbasic_system_contract_t {
-
 private:
     contract_common::properties::xtoken_property_t m_balance{"balance", this};
 
 public:
-    xtop_transfer_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
+    xtop_transfer_contract() = default;
+    xtop_transfer_contract(xtop_transfer_contract const &) = delete;
+    xtop_transfer_contract & operator=(xtop_transfer_contract const &) = delete;
+    xtop_transfer_contract(xtop_transfer_contract &&) = default;
+    xtop_transfer_contract & operator=(xtop_transfer_contract &&) = default;
+    ~xtop_transfer_contract() override = default;
+
+    // explicit xtop_transfer_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
 
     BEGIN_CONTRACT_API()
     DECLARE_API(xtop_transfer_contract::init);

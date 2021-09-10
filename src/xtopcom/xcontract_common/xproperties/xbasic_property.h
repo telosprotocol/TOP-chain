@@ -16,10 +16,8 @@ NS_BEG3(top, contract_common, properties)
 class xtop_basic_property {
 protected:
     observer_ptr<xbasic_contract_t> m_associated_contract{ nullptr };
-    observer_ptr<xcontract_state_t> m_contract_state{nullptr};
     state_accessor::properties::xproperty_identifier_t m_id;
     common::xaccount_address_t m_owner;
-    observer_ptr<base::xvbstate_t> m_associated_state{ nullptr };
 
 public:
     xtop_basic_property(xtop_basic_property const &) = delete;

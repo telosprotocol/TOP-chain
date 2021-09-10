@@ -11,6 +11,7 @@
 #include "xcontract_runtime/xaction_session_fwd.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xconsensus_action_fwd.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -29,7 +30,7 @@ public:
 
     xtop_action_session(observer_ptr<xaction_runtime_t<ActionT>> associated_runtime, observer_ptr<contract_common::xcontract_state_t> contract_state) noexcept;
 
-    xtransaction_execution_result_t execute_action(ActionT const & action, contract_common::xcontract_execution_param_t m_param);
+    xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action, contract_common::xcontract_execution_param_t m_param);
 };
 
 template <typename ActionT>
@@ -51,8 +52,9 @@ xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t
 }
 
 template <typename ActionT>
-xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(ActionT const & action, contract_common::xcontract_execution_param_t param) {
-    std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(action, m_contract_state, param)};
+xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
+                                                                             contract_common::xcontract_execution_param_t param) {
+    std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), m_contract_state, param)};
     assert(m_associated_runtime != nullptr);
     auto observed_exectx = top::make_observer(execution_context.get());
 

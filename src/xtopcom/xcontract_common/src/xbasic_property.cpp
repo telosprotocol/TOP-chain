@@ -37,7 +37,6 @@ static state_accessor::properties::xproperty_category_t lookup_property_category
 
 xtop_basic_property::xtop_basic_property(std::string const & name, state_accessor::properties::xproperty_type_t type, observer_ptr<xbasic_contract_t> associated_contract) noexcept
     : m_associated_contract{ associated_contract }
-    , m_contract_state{ associated_contract->state() }
     , m_id{ name, type, lookup_property_category(name, type) }
     , m_owner{ associated_contract->address() } {
 }
@@ -52,7 +51,7 @@ common::xaccount_address_t xtop_basic_property::owner() const {
 }
 
 common::xaccount_address_t xtop_basic_property::accessor() const {
-    return m_contract_state->state_account_address();
+    return m_associated_contract->state()->state_account_address();
 }
 
 NS_END3

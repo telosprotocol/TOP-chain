@@ -22,24 +22,24 @@ public:
 
     explicit xtop_string_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
                                 :xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::string , make_observer(contract)} {
-        m_contract_state->access_control()->string_prop_create(accessor(), m_id);
+        m_associated_contract->state()->access_control()->string_prop_create(accessor(), m_id);
 
     }
 
     void update(std::string const& prop_value) {
-        m_contract_state->access_control()->string_prop_update(accessor(), m_id, prop_value);
+        m_associated_contract->state()->access_control()->string_prop_update(accessor(), m_id, prop_value);
     }
 
     void clear() {
-        m_contract_state->access_control()->string_prop_clear(accessor(), m_id);
+        m_associated_contract->state()->access_control()->string_prop_clear(accessor(), m_id);
     }
 
     std::string query() {
-        return m_contract_state->access_control()->string_prop_query(accessor(), m_id);
+        return m_associated_contract->state()->access_control()->string_prop_query(accessor(), m_id);
     }
 
     std::string query(common::xaccount_address_t const & contract) {
-        return m_contract_state->access_control()->string_prop_query(accessor(), contract, m_id);
+        return m_associated_contract->state()->access_control()->string_prop_query(accessor(), contract, m_id);
     }
 
 };
