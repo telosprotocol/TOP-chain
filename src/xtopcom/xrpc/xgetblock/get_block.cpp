@@ -511,7 +511,7 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
         result_json["tx_state"] = "success";
     } else if (cons["confirm_unit_info"]["exec_status"].asString() == "failure") {
         result_json["tx_state"] = "fail";
-    } else if (cons["send_unit_info"]["height"].asUInt64() == 0) {
+    } else if (cons["send_unit_info"]["height"].asUInt64() > 0) {
         result_json["tx_state"] = "queue";
     } else {
         result_json["tx_state"] = "pending";

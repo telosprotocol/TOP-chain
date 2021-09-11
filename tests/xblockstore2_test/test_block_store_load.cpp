@@ -503,8 +503,10 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     // store first tableblock
     for (int i = 0; i < 200; i++) {
         auto test_block = table_blocks[i];
-        test_block->reset_block_flags();
-        test_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        if (test_block->get_height() > 0) {
+            test_block->reset_block_flags();
+            test_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        }
         ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
     }
 

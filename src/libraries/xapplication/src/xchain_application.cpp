@@ -75,7 +75,9 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                               make_observer(m_cons_mgr),
                                                               make_observer(m_txpool_service_mgr.get()),
                                                               m_application->txpool(),
-                                                              make_observer(m_election_cache_data_accessor))} {}
+                                                              make_observer(m_election_cache_data_accessor),
+                                                              m_application->timer_driver())} {
+                                                              }
 
 void xtop_chain_application::start() {
     contract::xcontract_manager_t::instance().install_monitors(
