@@ -90,6 +90,9 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     param_stream << amount;
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     transfer_tx->make_tx_run_contract("transfer", param);
+    transfer_tx->set_different_source_target_address("T00000LS7SABDaqKaKfNDqbsyXB23F8dndquCeEu", contract_address);
+    transfer_tx->set_digest();
+    transfer_tx->set_len();
 
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(transfer_tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);

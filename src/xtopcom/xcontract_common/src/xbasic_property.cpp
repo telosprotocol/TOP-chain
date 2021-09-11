@@ -41,6 +41,8 @@ xtop_basic_property::xtop_basic_property(std::string const & name, state_accesso
     , m_owner{ associated_contract->address() } {
 }
 
+void xtop_basic_property::create() {
+}
 
 state_accessor::properties::xproperty_identifier_t const & xtop_basic_property::identifier() const {
     return m_id;

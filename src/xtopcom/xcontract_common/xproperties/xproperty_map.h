@@ -28,7 +28,7 @@ NS_BEG3(top, contract_common, properties)
 
 template<typename KEYT, typename VALUET, typename = typename std::enable_if<std::is_convertible<KEYT, std::string>::value &&
                                                                             std::is_convertible<VALUET, std::string>::value>::type>
-class xtop_map_property: public xtop_basic_property {
+class xtop_map_property: public xbasic_property_t {
 public:
     xtop_map_property(xtop_map_property const&) = delete;
     xtop_map_property& operator=(xtop_map_property const&) = delete;
@@ -38,10 +38,11 @@ public:
 
     explicit xtop_map_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
                                 :xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::map , make_observer(contract)} {
-        m_associated_contract->state()->access_control()->map_prop_create<std::string, std::string>(accessor(), m_id);
-
     }
 
+    void create() override final {
+        m_associated_contract->state()->access_control()->map_prop_create<std::string, std::string>(accessor(), m_id);
+    }
 
     void add(KEYT const& prop_key, VALUET const& prop_value) {
         m_associated_contract->state()->access_control()->map_prop_add<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);

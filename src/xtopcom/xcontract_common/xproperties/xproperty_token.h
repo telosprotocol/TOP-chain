@@ -24,7 +24,7 @@ private:
 using xtoken_safe_t = xtop_token_safe;
 
 // token object
-class xtop_token_property: public xtop_basic_property {
+class xtop_token_property: public xbasic_property_t {
 public:
     xtop_token_property(xtop_token_property const&) = delete;
     xtop_token_property& operator=(xtop_token_property const&) = delete;
@@ -33,6 +33,8 @@ public:
     ~xtop_token_property() =  default;
 
     explicit xtop_token_property(std::string const& prop_name, contract_common::xbasic_contract_t* contract);
+
+    void create() override final;
 
     uint64_t value() const;
     void withdraw(std::uint64_t amount);
