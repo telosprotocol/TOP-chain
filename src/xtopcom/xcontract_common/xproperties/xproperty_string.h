@@ -12,7 +12,7 @@
 
 NS_BEG3(top, contract_common, properties)
 
-class xtop_string_property: public xtop_basic_property {
+class xtop_string_property: public xbasic_property_t {
 public:
     xtop_string_property(xtop_string_property const&) = delete;
     xtop_string_property& operator=(xtop_string_property const&) = delete;
@@ -20,28 +20,14 @@ public:
     xtop_string_property& operator=(xtop_string_property&&) = default;
     ~xtop_string_property() = default;
 
-    explicit xtop_string_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
-                                :xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::string , make_observer(contract)} {
-        m_associated_contract->state()->access_control()->string_prop_create(accessor(), m_id);
+    explicit xtop_string_property(std::string const & prop_name, contract_common::xbasic_contract_t * contract);
 
-    }
+    void create() override final;
+    void update(std::string const & prop_value);
+    void clear();
 
-    void update(std::string const& prop_value) {
-        m_associated_contract->state()->access_control()->string_prop_update(accessor(), m_id, prop_value);
-    }
-
-    void clear() {
-        m_associated_contract->state()->access_control()->string_prop_clear(accessor(), m_id);
-    }
-
-    std::string query() {
-        return m_associated_contract->state()->access_control()->string_prop_query(accessor(), m_id);
-    }
-
-    std::string query(common::xaccount_address_t const & contract) {
-        return m_associated_contract->state()->access_control()->string_prop_query(accessor(), contract, m_id);
-    }
-
+    std::string query() const;
+    std::string query(common::xaccount_address_t const & contract) const;
 };
 
 using xstring_property_t = xtop_string_property;

@@ -6,8 +6,9 @@ NS_BEG2(top, system_contracts)
 //                                                xtop_basic_system_contract(exec_context) {
 //}
 
-void xtop_transfer_contract::init(uint64_t amount) {
-    m_balance.deposit(amount);
+void xtop_transfer_contract::init() {
+    m_balance.create();
+    m_balance.deposit(1000);
 }
 
 void xtop_transfer_contract::transfer(uint64_t const amount) {
