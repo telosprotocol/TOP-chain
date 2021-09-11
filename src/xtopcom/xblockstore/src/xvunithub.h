@@ -82,7 +82,7 @@ namespace top
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
-
+            virtual bool     set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override;
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xblock_vector               load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag = 0) override;
@@ -121,9 +121,8 @@ namespace top
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
             virtual bool                reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms,const int atag = 0) override;
 
-        public://execute_block will move to statestore soon
+        public:
             //note: block must be committed and connected
-            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override; //execute block and update state of acccount
             virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag = 0) override;
 
         public:

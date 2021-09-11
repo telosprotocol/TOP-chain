@@ -410,6 +410,12 @@ namespace top
             return account_obj->get_latest_executed_block_height();
         }
 
+        bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->set_latest_executed_info(height,blockhash);
+        }
+
         //one api to get latest_commit/latest_lock/latest_cert for better performance
         base::xblock_mptrs  xvblockstore_impl::get_latest_blocks(const base::xvaccount_t & account,const int atag)
         {
@@ -733,19 +739,6 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             METRICS_TAG(atag, 1);
             return account_obj->delete_block(block);
-        }
-
-        //note: block must be committed and connected
-        bool                xvblockstore_impl::execute_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag) //execute block and update state of acccount
-        {
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::execute_block,block NOT match account:%",account.get_account().c_str());
-                return false;
-            }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            METRICS_TAG(atag, 1);
-            return account_obj->execute_block(block);
         }
 
         base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag)

@@ -137,6 +137,7 @@ namespace top
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
             uint64_t            get_latest_genesis_connected_block_height() const { return m_meta->_highest_genesis_connect_height; }
             uint64_t            get_latest_executed_block_height() const { return m_meta->_highest_execute_block_height; }
+            bool                set_latest_executed_info(uint64_t height,const std::string & blockhash);
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:
@@ -217,8 +218,6 @@ namespace top
             bool                   load_block_output(base::xvblock_t* target_block);
             bool                   load_block_flags(base::xvblock_t* target_block);//update block'flags
 
-            bool                   execute_block(base::xvblock_t* block_ptr); //execute block and update state of acccount
-            bool                   execute_block(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);//usall internal useonly
             void                   try_execute_all_block(base::xvblock_t * target_block);
 
         public:

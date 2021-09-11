@@ -38,7 +38,6 @@ class xdatamock_tx {
         xassert(m_blockchain->get_account_mstate().get_latest_send_trans_number() == 1);
         base::xvaccount_t _addr(account);
         m_resource->get_blockstore()->store_block(_addr, block.get());
-        m_resource->get_blockstore()->execute_block(_addr, block.get());
     }
 
     xdatamock_tx(const xblockmaker_resources_ptr_t & resouces, const std::string & account, const xecprikey_t & pri_key_obj, uint64_t init_balance = enum_default_init_balance)
@@ -52,7 +51,6 @@ class xdatamock_tx {
         xassert(m_blockchain->get_account_mstate().get_latest_send_trans_number() == 1);
         base::xvaccount_t _addr(account);
         m_resource->get_blockstore()->store_block(_addr, block.get());
-        m_resource->get_blockstore()->execute_block(_addr, block.get());
     }
 
     xdatamock_tx(const xblockmaker_resources_ptr_t & resouces, uint64_t init_balance = enum_default_init_balance) {
@@ -74,7 +72,6 @@ class xdatamock_tx {
         xassert(m_blockchain->get_account_mstate().get_latest_send_trans_number() == 1);
         base::xvaccount_t _addr(m_account);
         m_resource->get_blockstore()->store_block(_addr, block.get());
-        m_resource->get_blockstore()->execute_block(_addr, block.get());
     }
 
     const std::string & get_account() const {return m_account;}

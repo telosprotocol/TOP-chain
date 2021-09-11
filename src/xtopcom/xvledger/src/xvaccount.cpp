@@ -52,6 +52,47 @@ namespace top
         {
             XMETRICS_GAUGE(metrics::dataobject_xvaccount, -1);
         }
-    
+
+        std::string xvaccount_t::compact_address_to(const std::string & account_addr)
+        {
+            std::string compact_addr;
+            enum_vaccount_addr_type addr_type = get_addrtype_from_account(account_addr);
+            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account)
+            {
+                char compact_type = enum_vaccount_compact_type_eth_main_chain;
+                xassert(ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN == account_addr.substr(0, enum_vaccount_address_prefix_size));
+                compact_addr = account_addr.substr(enum_vaccount_address_prefix_size);
+                compact_addr = base::xstring_utl::from_hex(compact_addr);
+                return compact_type + compact_addr;
+            }
+            else
+            {
+                return account_addr;
+            }
+        }
+        std::string xvaccount_t::compact_address_from(const std::string & data)
+        {
+            // the first byte is compact type
+            enum_vaccount_compact_type compact_type = (enum_vaccount_compact_type)data[0];
+
+            if (compact_type == enum_vaccount_compact_type_no_compact)
+            {
+                return data;
+            }
+            else if (compact_type == enum_vaccount_compact_type_eth_main_chain)
+            {
+                std::string compact_addr = data.substr(1);
+                std::string account_addr;
+                compact_addr = base::xstring_utl::to_hex(compact_addr);
+                account_addr = ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN + compact_addr;
+                return account_addr;
+            }
+            else
+            {
+                xassert(false);
+                return {};
+            }
+        }
+
     };//end of namespace of base
 };//end of namespace of top

@@ -82,6 +82,10 @@ public:
         return 0;
     }
 
+    bool set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override {
+        return false;
+    }
+
     base::xblock_mptrs get_latest_blocks(const base::xvaccount_t &,const int atag = 0) override {
         return {};
     }
@@ -167,10 +171,6 @@ public:
     }
 
     bool reset_cache_timeout(const base::xvaccount_t &, const uint32_t,const int atag = 0) override {
-        return false;
-    }
-
-    bool execute_block(const base::xvaccount_t &, base::xvblock_t *,const int atag = 0) override {
         return false;
     }
 

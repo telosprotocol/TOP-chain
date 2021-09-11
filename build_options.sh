@@ -117,6 +117,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DELECT_WHEREAFTER=ON"
         echo "BUILD WITH ELECT WHEREAFTER"
     ;;
+    consensus_swap)
+        CMAKE_EXTRA_OPTIONS+=" -DCONSENSUS_SWAP=ON"
+        echo "BUILD WITH CONSENSUS SWAP"
+    ;;
     no_tx_batch)
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"

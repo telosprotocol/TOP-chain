@@ -65,7 +65,10 @@ void check_consensus_str(std::string const & str) {
     auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
     auto const validator_group_count = XGET_CONFIG(validator_group_count);
 
-    CHECK(group_string_value.size() == auditor_group_count + validator_group_count, "validator + auditor group num wrong.");
+    CHECK(group_string_value.size() == auditor_group_count + validator_group_count,
+          "validator + auditor group num wrong. %zu != %d",
+          group_string_value.size(),
+          auditor_group_count + validator_group_count);
 
     auto vi = 0;
     for (auto index = 1; index <= auditor_group_count; index++) {
@@ -76,6 +79,40 @@ void check_consensus_str(std::string const & str) {
     }
 
     std::cout << std::endl;
+}
+
+void check_standby_str(std::string const & str){
+        std::vector<std::string> node_standby_infos;
+        top::base::xstring_utl::split_string(str, ',', node_standby_infos);
+        std::cout << "standby size: " << node_standby_infos.size() << std::endl;
+        // node_id:pub_key:type.stake|type.stake,node_id:pub_key:type.stake|type.stake,...
+        for (auto const & nodes : node_standby_infos) {
+            std::vector<std::string> one_node_info;
+            top::base::xstring_utl::split_string(nodes, ':', one_node_info);
+            std::string node_id_str = one_node_info[0];
+            std::string node_pub_key_str = one_node_info[1];
+            std::vector<std::string> type_stake_pairs;
+            top::base::xstring_utl::split_string(one_node_info[2], '|', type_stake_pairs);
+            std::cout << "--------" << std::endl;
+            std::cout<<" node_id: "<<node_id_str<<std::endl;
+            std::cout<<" pub_key: "<<node_pub_key_str<<std::endl;
+
+            CHECK(node_id_str.size() == 40, "node id length != 40 at %s", node_id_str.c_str());
+            CHECK(node_pub_key_str.size() == 88, "pub key length != 88 at %s", node_pub_key_str.c_str());
+
+            for (auto const & each_pair : type_stake_pairs) {
+                std::vector<std::string> type_stake;
+                top::base::xstring_utl::split_string(each_pair, '.', type_stake);
+                std::string node_type_str = type_stake[0];
+                CHECK(
+                    (node_type_str == "rec" || node_type_str == "zec" || node_type_str == "adv" || node_type_str == "con" || node_type_str == "edge" || node_type_str == "archive"),
+                    "node_type wrong!");
+
+                uint64_t stake = static_cast<std::uint64_t>(std::atoi(type_stake[1].c_str()));
+                std::cout << "    type: " << node_type_str << "  stake: " << stake << std::endl;
+            }
+        }
+        return;
 }
 
 int main(int argc, char * argv[]) {
@@ -110,6 +147,11 @@ int main(int argc, char * argv[]) {
     CHECK(!archive_start_nodes_infos.empty(), "archive_start_nodes info is empty");
     check_str("archive", archive_start_nodes_infos);
 
-    std::cout << "config file format right" << std::endl;
+    std::string standby_start_nodes_info;
+    config_center.get(std::string("standby_start_nodes"),standby_start_nodes_info);
+    CHECK(!standby_start_nodes_info.empty(),"standby_start_nodes info is empty");
+    check_standby_str(standby_start_nodes_info);
+
+    std::cout << std::endl << std::endl << "result: OK! config file format right" << std::endl;
     return 0;
 }

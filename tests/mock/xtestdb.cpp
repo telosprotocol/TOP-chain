@@ -118,11 +118,6 @@ namespace top
             return true;
         }
 
-        bool             xstoredb_t::execute_block(base::xvblock_t* block)
-        {
-            return true;
-        }
-
         bool             xstoredb_t::set_value(const std::string & key, const std::string& value)
         {
             m_dumy_store[key] = value;

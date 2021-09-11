@@ -169,6 +169,7 @@ namespace top
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual bool                  set_latest_executed_info(const xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
 
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
             virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;//might mutiple certs at same height
@@ -212,7 +213,6 @@ namespace top
             //execute_block will move to statestore soon
             //execute block and update state of acccount
             //note: block must be committed and connected
-            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) = 0;
             virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type,const int atag = 0) = 0;
 
         public:

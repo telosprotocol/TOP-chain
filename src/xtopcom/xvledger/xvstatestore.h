@@ -43,10 +43,11 @@ namespace top
             virtual bool                  execute_block(xvblock_t * target_block, const int etag=0);
 
         private:
-            bool                      write_state_to_db(xvbstate_t & target_state,const std::string & target_block_hash);
+            xauto_ptr<xvbstate_t>     get_block_state_internal(const xvaccount_t & target_account, xvblock_t * target_block, const int etag=0);
+            bool                      write_state_to_db(const xvaccount_t & target_account, xvbstate_t & target_state,const std::string & target_block_hash);
 
             xvbstate_t*               read_state_from_db(const xvbindex_t * for_block);
-            xvbstate_t*               read_state_from_db(const xvblock_t * for_block);
+            xvbstate_t*               read_state_from_db(const xvaccount_t & target_account, const xvblock_t * for_block);
             xvbstate_t*               read_state_from_db(const xvaccount_t & target_account,uint64_t block_height,const std::string & block_hash);
 
             bool                      delete_state_of_db(const xvbindex_t & target_index);
@@ -57,11 +58,13 @@ namespace top
             bool                      load_latest_blocks_and_state(xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
             xobject_ptr_t<xvbstate_t> rebuild_bstate(const xvaccount_t & target_account, const xobject_ptr_t<xvbstate_t> & base_state, const std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
             xobject_ptr_t<xvbstate_t> make_state_from_current_block(const xvaccount_t & target_account, xvblock_t * current_block);
-            void                      clear_persisted_state(xvblock_t * target_block);
+            void                      clear_persisted_state(const xvaccount_t & target_account, xvblock_t * target_block);
             xauto_ptr<xvbstate_t>     execute_target_block(const xvaccount_t & target_account, xvblock_t * target_block);
 
             xobject_ptr_t<xvbstate_t> get_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash);
             void                      set_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash, const xobject_ptr_t<xvbstate_t> & state);
+            bool                      recover_highest_execute_height(const xvaccount_t & target_account, uint64_t old_execute_height);
+            bool                      try_update_execute_height(const xvaccount_t & target_account);
 
         private:
             base::xlru_cache<std::string, xobject_ptr_t<xvbstate_t>> m_table_state_cache;  //tablestate cache
