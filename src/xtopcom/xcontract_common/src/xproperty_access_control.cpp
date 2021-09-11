@@ -70,7 +70,7 @@ void xtop_property_access_control::map_prop_update<std::string, std::string>(com
     if (write_permitted(user, prop_id)) {
         auto prop = bstate_->load_string_map_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::map_prop_update]property not exist, prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
-        property_assert(prop->find(prop_key), "[xtop_property_access_control::map_prop_update]property update key not exist,  prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
+        // property_assert(prop->find(prop_key), "[xtop_property_access_control::map_prop_update]property update key not exist,  prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
 
         property_assert(prop->insert(prop_key, prop_value, canvas_.get()), "[xtop_property_access_control::map_prop_update]property update key error, prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
     } else {
@@ -484,7 +484,6 @@ void xtop_property_access_control::property_assert(bool condition, std::string c
     xtop_property_utl::property_assert(condition, error_enum, exception_msg);
 }
 
-
 void xtop_property_access_control::load_access_control_data(std::string const & json) {
 
 }
@@ -498,8 +497,9 @@ uint256_t xtop_property_access_control::latest_sendtx_hash(std::error_code& ec) 
     uint256_t hash;
     assert(bstate_ != nullptr);
     if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
-        ec = error::xerrc_t::property_not_exist;
-        return hash;
+        // ec = error::xerrc_t::property_not_exist;
+        // base::xvpropertyrules_t::is_valid_native_property(key)) {
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
     }
 
     auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
@@ -521,7 +521,8 @@ uint64_t  xtop_property_access_control::latest_sendtx_nonce(std::error_code& ec)
     uint64_t nonce{0};
     assert(bstate_ != nullptr);
     if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
-        ec = error::xerrc_t::property_not_exist;
+        // ec = error::xerrc_t::property_not_exist;
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
         return nonce;
     }
 
@@ -558,6 +559,7 @@ std::string xtop_property_access_control::binlog() const {
 std::string xtop_property_access_control::fullstate_bin() const {
     std::string fullstate_bin;
     bstate_->take_snapshot(fullstate_bin);
+
     return fullstate_bin;
 }
 

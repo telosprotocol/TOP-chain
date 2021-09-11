@@ -32,6 +32,7 @@ enum class xenum_errc : uint16_t {
     create_property_failed,
     update_property_failed,
     property_not_changed,
+    empty_property_name,
 
     property_id_conversion_invalid,
 
