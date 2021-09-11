@@ -108,8 +108,8 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
         try {                                                                                                                                                                      \
             top::contract_runtime::system::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
-            result.output.binlog = state()->binlog();                                                                                                                   \
-            result.output.contract_state_snapshot = state()->fullstate_bin();                                                                                                                 \
+            result.output.binlog = state()->binlog();                                                                                                                              \
+            result.output.contract_state_snapshot = state()->fullstate_bin();                                                                                                      \
         } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
             result.status.ec = eh.code();                                                                                                                                          \
             result.status.extra_msg = eh.what();                                                                                                                                   \

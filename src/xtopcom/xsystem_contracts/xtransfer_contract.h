@@ -23,12 +23,12 @@ public:
     // explicit xtop_transfer_contract(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);
 
     BEGIN_CONTRACT_API()
-    DECLARE_API(xtop_transfer_contract::init);
+    DECLARE_API(xtop_transfer_contract::setup);
     DECLARE_API(xtop_transfer_contract::transfer);
     END_CONTRACT_API
 
 private:
-    void init(uint64_t amount);
+    void setup();
     void transfer(uint64_t const amount);
 };
 using xtransfer_contract_t = xtop_transfer_contract;

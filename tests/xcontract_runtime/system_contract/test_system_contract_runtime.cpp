@@ -30,7 +30,6 @@
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 #include "xdata/xdata_common.h"
-#include "cbuild/generated/version.h"
 
 NS_BEG3(top, tests, contract_runtime)
 
@@ -73,7 +72,7 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    uint64_t init_value = 1000;
+    uint64_t init_value = 0;
     system_contract_manager_->initialize(blockstore);
     system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{contract_address}, xblock_sniff_config_t{}, system::contract_deploy_type_t::rec, common::xnode_type_t::zec, system::contract_broadcast_policy_t::invalid);
 
@@ -178,7 +177,7 @@ TEST_F(test_system_contract_runtime, account_vm) {
         param_stream << std::string{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
         param_stream << static_cast<uint64_t>(top::config::to_chainid(XGET_CONFIG(chain_name)));
 #endif
-        param_stream << PROGRAM_VERSION;
+        param_stream << std::string("1.1.1");
         std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
         tx->m_tx->make_tx_run_contract("nodeJoinNetwork2", param);
         tx->m_tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_standby_pool_addr);

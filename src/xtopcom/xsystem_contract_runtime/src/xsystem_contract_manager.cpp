@@ -25,14 +25,13 @@ void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) 
 
 void xtop_system_contract_manager::deploy() {
     // deploy one system contract
-    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
+    //deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
-    deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
+    //deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }
 
 bool xtop_system_contract_manager::contains(common::xaccount_address_t const & address) const noexcept {
     return m_system_contract_deployment_data.find(address) != std::end(m_system_contract_deployment_data);
-
 }
 
 observer_ptr<system_contracts::xbasic_system_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const noexcept {
@@ -54,11 +53,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
 
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
     data::xproperty_asset asset_out{0};
-    uint64_t amount = 1000;
-    top::base::xstream_t param_stream(base::xcontext_t::instance());
-    param_stream << amount;
-    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
-    tx->make_tx_run_contract(asset_out, "setup", param);
+    tx->make_tx_run_contract(asset_out, "setup", "");
     tx->set_same_source_target_address(contract_address.value());
     tx->set_digest();
     tx->set_len();
@@ -79,6 +74,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     xtransaction_result_t consensus_result;
     consensus_result.m_property_binlog = result.output.binlog;
     consensus_result.m_full_state = result.output.contract_state_snapshot;
+    // assert(!result.output.binlog.empty());
 
     base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_address.value(), tx, consensus_result));
     xassert(block);

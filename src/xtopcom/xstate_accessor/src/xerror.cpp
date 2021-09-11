@@ -59,6 +59,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::property_not_changed:
         return "property not changed";
 
+    case xerrc_t::empty_property_name:
+        return "property name is empty";
+
     default:
         return "unknown error";
     }

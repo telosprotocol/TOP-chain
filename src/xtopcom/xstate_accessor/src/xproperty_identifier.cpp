@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xerror/xerror.h"
 
 #include <cassert>
 
@@ -12,6 +13,12 @@ xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string
     : m_name{ std::move(name) }, m_category{ category } {
     assert(!m_name.empty());
     assert(category != xproperty_category_t::invalid);
+    if (m_name.front() == category_character(m_category)) {
+        m_name = m_name.substr(1);
+        if (m_name.empty()) {
+            top::error::throw_error(state_accessor::error::xerrc_t::empty_property_name);
+        }
+    }
 }
 
 std::string xtop_typeless_property_identifier::full_name() const {
