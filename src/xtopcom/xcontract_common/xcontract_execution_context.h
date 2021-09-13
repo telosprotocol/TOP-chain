@@ -53,6 +53,7 @@ public:
     void consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept;
     xcontract_execution_result_t execution_result() const noexcept;
     void add_followup_transaction(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
+    std::vector<xfollowup_transaction_datum_t> followup_transaction();
 
     void receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data);
     std::map<std::string, xbyte_buffer_t> & receipt_data() noexcept;
@@ -66,7 +67,11 @@ public:
 
     std::string action_name() const;
     data::enum_xaction_type action_type() const;
+    data::enum_xaction_type source_action_type() const;
+    data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
+    xbyte_buffer_t source_action_data() const;
+    xbyte_buffer_t target_action_data() const;
     data::xconsensus_action_stage_t action_stage() const;
 
     common::xlogic_time_t time() const;

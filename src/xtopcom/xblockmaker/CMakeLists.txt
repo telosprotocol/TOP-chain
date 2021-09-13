@@ -17,7 +17,7 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         xchain_upgrade
         xstake
         xxbase
-        xcontract_runtime
+        xcontract_vm
     )
 ELSE()
     target_link_libraries(xblockmaker PRIVATE
@@ -31,7 +31,7 @@ ELSE()
         xstake
         xxbase
         intel_aes64
-        xcontract_runtime
+        xcontract_vm
     )
 ENDIF()
 

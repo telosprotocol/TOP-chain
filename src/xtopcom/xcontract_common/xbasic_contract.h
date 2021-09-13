@@ -51,9 +51,15 @@ public:
     observer_ptr<xcontract_state_t> state() const noexcept;
     xcontract_type_t type() const;
     data::enum_xaction_type action_type() const;
+    data::enum_xaction_type source_action_type() const;
+    data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
+    xbyte_buffer_t source_action_data() const;
+    xbyte_buffer_t target_action_data() const;
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
+
+    std::vector<xfollowup_transaction_datum_t> followup_transaction();
 
 protected:
     bool at_source_action_stage() const noexcept override final;

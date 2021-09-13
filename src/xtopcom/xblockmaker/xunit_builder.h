@@ -26,6 +26,7 @@ class xlightunit_builder_para_t : public xblock_builder_para_face_t {
 
     void                                            set_fail_tx(const xcons_transaction_ptr_t & tx) {m_fail_txs.push_back(tx);}
     void                                            set_fail_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_fail_txs = txs;}
+    void                                            set_pack_tx(const xcons_transaction_ptr_t & tx) {m_pack_txs.push_back(tx);}
     void                                            set_pack_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_pack_txs = txs;}
     void                                            set_unchange_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_unchange_txs = txs;}
     const base::xreceiptid_state_ptr_t &            get_receiptid_state() const {return m_receiptid_state;}

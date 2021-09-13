@@ -24,8 +24,7 @@ void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) 
 }
 
 void xtop_system_contract_manager::deploy() {
-    // deploy one system contract
-    //deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
+    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
     //deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }

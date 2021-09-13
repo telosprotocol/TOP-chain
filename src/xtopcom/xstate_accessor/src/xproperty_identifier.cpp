@@ -13,19 +13,20 @@ xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string
     : m_name{ std::move(name) }, m_category{ category } {
     assert(!m_name.empty());
     assert(category != xproperty_category_t::invalid);
-    if (m_name.front() == category_character(m_category)) {
-        m_name = m_name.substr(1);
+    // if (m_name.front() == category_character(m_category)) {
+    //     m_name = m_name.substr(1);
         if (m_name.empty()) {
             top::error::throw_error(state_accessor::error::xerrc_t::empty_property_name);
         }
-    }
+    // }
 }
 
 std::string xtop_typeless_property_identifier::full_name() const {
-    if (m_fullname.empty()) {
-        m_fullname = category_character(m_category) + m_name;
-    }
-    return m_fullname;
+    // if (m_fullname.empty()) {
+    //     m_fullname = category_character(m_category) + m_name;
+    // }
+    // return m_fullname;
+    return m_name;
 }
 
 std::string const & xtop_typeless_property_identifier::name() const {
