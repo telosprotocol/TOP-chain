@@ -11,13 +11,18 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
     switch (tag) {
         RETURN_METRICS_NAME(e_simple_begin);
         RETURN_METRICS_NAME(blockstore_cache_block_total);
-        RETURN_METRICS_NAME(dataobject_cur_xbase_type_cons_transaction);
         RETURN_METRICS_NAME(vhost_recv_msg);
         RETURN_METRICS_NAME(vhost_recv_callback);
         RETURN_METRICS_NAME(vnode_recv_msg);
         RETURN_METRICS_NAME(vnode_recv_callback);
 
-        // dataobjec
+        // dataobject
+        RETURN_METRICS_NAME(dataobject_cons_transaction);
+        RETURN_METRICS_NAME(dataobject_block_lightunit);
+        RETURN_METRICS_NAME(dataobject_block_fullunit);
+        RETURN_METRICS_NAME(dataobject_block_lighttable);
+        RETURN_METRICS_NAME(dataobject_block_fulltable);
+        RETURN_METRICS_NAME(dataobject_block_empty);
         RETURN_METRICS_NAME(dataobject_tx_receipt_t);
         RETURN_METRICS_NAME(dataobject_unit_state);
         RETURN_METRICS_NAME(dataobject_xvtxindex);
@@ -160,6 +165,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_confirm_tx_retry_send);
         RETURN_METRICS_NAME(txpool_recv_tx_first_send);
         RETURN_METRICS_NAME(txpool_confirm_tx_first_send);
+        RETURN_METRICS_NAME(txpool_request_origin_tx);        
         RETURN_METRICS_NAME(txpool_push_tx_send_fail_pool_full);
         RETURN_METRICS_NAME(txpool_pull_recv_tx);
         RETURN_METRICS_NAME(txpool_pull_confirm_tx);

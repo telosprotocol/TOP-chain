@@ -161,24 +161,20 @@ void  xblock_t::batch_units_to_receiptids(const std::vector<xblock_ptr_t> & unit
 
 xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type)
     : base::xvblock_t(header, cert, nullptr, nullptr, type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
 xblock_t::xblock_t(enum_xdata_type type) : base::xvblock_t(type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
 xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type)
   : base::xvblock_t(header, cert, input, output, type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
 xblock_t::~xblock_t() {
     xdbg("xblock_t::~xblock_t %s", dump().c_str());
-    XMETRICS_XBASE_DATA_CATEGORY_DELETE(get_obj_type());
     MEMCHECK_REMOVE_TRACE(this);
 }
 
