@@ -4,10 +4,12 @@
 
 #include <string>
 
-#include "xvledger/xvblockbuild.h"
-#include "xtxexecutor/xtransaction_executor.h"
-#include "xtxexecutor/xtransaction_context.h"
 #include "xdata/xgenesis_data.h"
+#include "xmetrics/xmetrics.h"
+#include "xtxexecutor/xtransaction_context.h"
+#include "xtxexecutor/xtransaction_executor.h"
+#include "xvledger/xvaccount.h"
+#include "xvledger/xvblockbuild.h"
 
 NS_BEG2(top, txexecutor)
 
@@ -24,6 +26,14 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
 
     xtransaction_context_t tx_context(account_context, tx);
     int32_t action_ret = tx_context.exec();
+
+    bool const sys_contract = base::xvaccount_t::get_addrtype_from_account(tx->get_account_addr()) == base::enum_vaccount_addr_type_native_contract;
+    XMETRICS_GAUGE(metrics::txexecutor_total_system_contract_count, static_cast<int64_t>(sys_contract));
+
+    if (sys_contract) {
+        XMETRICS_GAUGE(metrics::txexecutor_system_contract_failed_count, static_cast<int64_t>(static_cast<bool>(action_ret)));
+    }
+
     if (action_ret) {
         return action_ret;
     }
