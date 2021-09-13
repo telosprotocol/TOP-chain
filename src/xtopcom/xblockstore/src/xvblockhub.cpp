@@ -892,6 +892,17 @@ namespace top
                     }
                 }
             }
+            else // fix-4077
+            {
+                base::xauto_ptr<base::xvbindex_t> connectindex(query_index(m_meta->_highest_connect_block_height, base::enum_xvblock_flag_committed));
+                if (m_meta->_highest_connect_block_height == connectindex->get_height()
+                    && m_meta->_highest_connect_block_hash != connectindex->get_block_hash())
+                {
+                    m_meta->_highest_connect_block_hash = connectindex->get_block_hash();
+                    xwarn("xblockacct_t::load_latest_connected_index,recover _highest_connect_block_hash,account=%s,height=%ld",get_account().c_str(), m_meta->_highest_connect_block_height);
+                }
+            }
+
             //note:when ask_full_search is true ,here may do heavy job to search all blocks until highest one
             if(ask_full_search)
             {
