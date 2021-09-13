@@ -234,6 +234,7 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         return;
     }
 
+    // to be deleted
     // check block existed already
     auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
     if (exist_block) {
@@ -486,8 +487,10 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
     m_peer_keeper->handle_message(network_self, from_address, info_list);
 
     std::shared_ptr<xrole_chains_t> role_chains = m_role_chains_mgr->get_role(network_self);
-    if (role_chains == nullptr)
+    if (role_chains == nullptr) {
+        xsync_dbg("xsync_handler broadcast_chain_state network address %s is not exist", network_self.to_string().c_str());
         return;
+    }
 
     const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
 
@@ -498,20 +501,27 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
         const std::string &address = it.address;
 
         auto it2 = chains.find(address);
-        if (it2 == chains.end())
+        if (it2 == chains.end()) {
+            xsync_dbg("xsync_handler broadcast_chain_state chain address %s is not exist", address.c_str());
             continue;
+        }
 
         const xchain_info_t &chain_info = it2->second;
 
-        base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
         xchain_state_info_t info;
-        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         info.address = address;
-        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
-            info.start_height = 0;
-            info.end_height = 0;
+        if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
+            base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
+            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+            if (!block->is_full_state_block()) {
+                info.start_height = 0;
+                info.end_height = 0;
+            } else {
+                info.start_height = latest_start_block->get_height();
+                info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+            }
         } else {
-            info.start_height = latest_start_block->get_height();
+            info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
             info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
         }
         rsp_info_list.push_back(info);

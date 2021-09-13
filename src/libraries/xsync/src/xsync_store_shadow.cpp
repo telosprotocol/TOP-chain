@@ -88,6 +88,9 @@ int32_t xcommon_span_t::do_read(base::xstream_t & stream){
 
 void xcommon_span_t::update_unused_position() {
     uint64_t offset = m_lowest_unused_postion - m_span_index;
+    if (offset >= m_quota_of_bitmap) {
+        return;
+    }
     uint64_t k = OFFSET_IN_SEGMENT(offset);
     for (int i = SEGMENT_INDEX(offset); i < SEGMENT_SIZE; i++,k=0) {
         for (int j = k; j < 64; j++) {
