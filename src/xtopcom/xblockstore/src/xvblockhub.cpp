@@ -784,6 +784,16 @@ namespace top
                     }
                 }
             }
+            else // fix-4077
+            {
+                base::xauto_ptr<base::xvbindex_t> connectindex(query_index(m_meta->_highest_connect_block_height, base::enum_xvblock_flag_committed));
+                if (m_meta->_highest_connect_block_height == connectindex->get_height()
+                    && m_meta->_highest_connect_block_hash != connectindex->get_block_hash())
+                {
+                    m_meta->_highest_connect_block_hash = connectindex->get_block_hash();
+                    xwarn("xblockacct_t::load_latest_connected_index,recover _highest_connect_block_hash,account=%s,height=%ld",get_account().c_str(), m_meta->_highest_connect_block_height);
+                }
+            }
 
             bool full_search_more = true;
             std::vector<base::xauto_ptr<base::xvbindex_t>> fire_stored_events;
@@ -890,16 +900,6 @@ namespace top
                             return alternative;
                         }
                     }
-                }
-            }
-            else // fix-4077
-            {
-                base::xauto_ptr<base::xvbindex_t> connectindex(query_index(m_meta->_highest_connect_block_height, base::enum_xvblock_flag_committed));
-                if (m_meta->_highest_connect_block_height == connectindex->get_height()
-                    && m_meta->_highest_connect_block_hash != connectindex->get_block_hash())
-                {
-                    m_meta->_highest_connect_block_hash = connectindex->get_block_hash();
-                    xwarn("xblockacct_t::load_latest_connected_index,recover _highest_connect_block_hash,account=%s,height=%ld",get_account().c_str(), m_meta->_highest_connect_block_height);
                 }
             }
 
