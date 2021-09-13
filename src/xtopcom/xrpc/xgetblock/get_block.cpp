@@ -217,7 +217,7 @@ void get_block_handle::getIssuanceDetail() {
                 workload.serialize_from(stream);
                 xJson::Value jn;
                 jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
+                auto const & key_str = m.first;
                 common::xcluster_address_t cluster;
                 base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
                 key_stream >> cluster;
