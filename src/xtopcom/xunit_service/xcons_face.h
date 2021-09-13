@@ -220,6 +220,7 @@ protected:
         // TODO(jimmy) for debug
         int64_t in, out;
         int32_t queue_size = picker->count_calls(in, out);
+        XMETRICS_COUNTER_SET("mailbox_us" + picker->get_thread_id(), queue_size);
         bool discard = queue_size >= max_mailbox_num;
         if (discard) {
             xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);

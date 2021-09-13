@@ -295,6 +295,7 @@ void xtxpool_service_dispatcher_imp_t::dispatch(base::xcall_t & call) {
 bool xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit() {
     int64_t in, out;
     int32_t queue_size = count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_txpool_fast_thread", queue_size);
     bool discard = queue_size >= max_mailbox_num;
     if (discard) {
         xwarn("xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
@@ -310,6 +311,7 @@ void xtxpool_service_timer_t::dispatch(base::xcall_t & call) {
 bool xtxpool_service_timer_t::is_mailbox_over_limit() {
     int64_t in, out;
     int32_t queue_size = count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_txpool_slow_thread", queue_size);
     bool discard = queue_size >= max_mailbox_num;
     if (discard) {
         xwarn("xtxpool_service_timer_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);

@@ -106,6 +106,9 @@ void xsync_netmsg_dispatcher_t::dispatch(
 
     // TODO use semaphore & task queue
     auto ret = m_thread_pool[idx]->send_call(tmp_func);
+    int64_t in, out;
+    int32_t queue_size = m_thread_pool[idx]->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_sync_" + idx, queue_size);
 
     if (ret != 0) {
         xsync_warn("send call failed %d", ret);
