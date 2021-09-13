@@ -52,6 +52,10 @@ void xtop_contract_execution_context::add_followup_transaction(data::xcons_trans
     m_execution_result.output.followup_transaction_data.emplace_back(std::move(tx), type);
 }
 
+std::vector<xfollowup_transaction_datum_t> xtop_contract_execution_context::followup_transaction() {
+    return m_execution_result.output.followup_transaction_data;
+}
+
 void xtop_contract_execution_context::receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data) {
     m_receipt_data = std::move(receipt_data);
 }
@@ -155,6 +159,38 @@ data::enum_xaction_type xtop_contract_execution_context::action_type() const {
     return ret;
 }
 
+data::enum_xaction_type xtop_contract_execution_context::source_action_type() const {
+    data::enum_xaction_type ret;
+    switch (m_action->type()) {
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_source_action_type();
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
+    }
+
+    return ret;
+}
+
+data::enum_xaction_type xtop_contract_execution_context::target_action_type() const {
+    data::enum_xaction_type ret;
+    switch (m_action->type()) {
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_target_action_type();
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
+    }
+
+    return ret;
+}
+
 xbyte_buffer_t xtop_contract_execution_context::action_data() const {
     xbyte_buffer_t ret;
     switch (m_action->type()) {
@@ -164,6 +200,40 @@ xbyte_buffer_t xtop_contract_execution_context::action_data() const {
         }
         case data::xtop_action_type_t::user:{
             ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->action_data();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
+xbyte_buffer_t xtop_contract_execution_context::source_action_data() const {
+    xbyte_buffer_t ret;
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
+xbyte_buffer_t xtop_contract_execution_context::target_action_data() const {
+    xbyte_buffer_t ret;
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
             break;
         }
         default:

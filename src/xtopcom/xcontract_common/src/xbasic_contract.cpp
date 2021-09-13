@@ -37,8 +37,24 @@ data::enum_xaction_type xtop_basic_contract::action_type() const {
     return m_associated_execution_context->action_type();
 }
 
+data::enum_xaction_type xtop_basic_contract::source_action_type() const {
+    return m_associated_execution_context->source_action_type();
+}
+
+data::enum_xaction_type xtop_basic_contract::target_action_type() const {
+    return m_associated_execution_context->target_action_type();
+}
+
 xbyte_buffer_t xtop_basic_contract::action_data() const {
     return m_associated_execution_context->action_data();
+}
+
+xbyte_buffer_t xtop_basic_contract::source_action_data() const {
+    return m_associated_execution_context->source_action_data();
+}
+
+xbyte_buffer_t xtop_basic_contract::target_action_data() const {
+    return m_associated_execution_context->target_action_data();
 }
 
 data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
@@ -73,6 +89,10 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     tx->set_len();
 
     m_associated_execution_context->add_followup_transaction(std::move(cons_tx), type);
+}
+
+std::vector<xfollowup_transaction_datum_t> xtop_basic_contract::followup_transaction() {
+    return m_associated_execution_context->followup_transaction();
 }
 
 void xtop_basic_contract::reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) {

@@ -60,7 +60,10 @@ public:
      *
      * @return xtop_system_contract_manager&
      */
-    static xtop_system_contract_manager& instance();
+    static xtop_system_contract_manager& instance() {
+        static xtop_system_contract_manager * inst = new xtop_system_contract_manager();
+        return *inst;
+    };
     void initialize(base::xvblockstore_t* blockstore);
     void deploy();
 

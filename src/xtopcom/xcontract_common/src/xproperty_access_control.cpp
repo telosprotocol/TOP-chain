@@ -329,6 +329,9 @@ void xtop_property_access_control::token_prop_create(common::xaccount_address_t 
 uint64_t xtop_property_access_control::withdraw(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, uint64_t amount) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
+        if (!bstate_->find_property(data::XPROPERTY_BALANCE_AVAILABLE)) {
+            bstate_->new_token_var(data::XPROPERTY_BALANCE_AVAILABLE, canvas_.get());
+        }
         auto prop = bstate_->load_token_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::withdraw]property not exist, token_prop: " + prop_name + ", amount: " + std::to_string(amount));
         return prop->withdraw((base::vtoken_t)amount, canvas_.get());
@@ -342,6 +345,9 @@ uint64_t xtop_property_access_control::withdraw(common::xaccount_address_t const
 uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id, uint64_t amount) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
+        if (!bstate_->find_property(data::XPROPERTY_BALANCE_AVAILABLE)) {
+            bstate_->new_token_var(data::XPROPERTY_BALANCE_AVAILABLE, canvas_.get());
+        }
         auto prop = bstate_->load_token_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::deposit]token property not exist, token_prop: " + prop_name + ", amount: " + std::to_string(amount));
         return prop->deposit((base::vtoken_t)amount, canvas_.get());
@@ -356,6 +362,9 @@ uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const 
 uint64_t xtop_property_access_control::balance(common::xaccount_address_t const & user, state_accessor::properties::xproperty_identifier_t const & prop_id) {
     auto prop_name = prop_id.full_name();
     if (write_permitted(user, prop_id)) {
+        if (!bstate_->find_property(data::XPROPERTY_BALANCE_AVAILABLE)) {
+            bstate_->new_token_var(data::XPROPERTY_BALANCE_AVAILABLE, canvas_.get());
+        }
         auto prop = bstate_->load_token_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::balance]property not exist, token_prop: " + prop_name);
         return (uint64_t)prop->get_balance();
