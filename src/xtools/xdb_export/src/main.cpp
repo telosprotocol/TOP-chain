@@ -611,6 +611,10 @@ private:
         int full_unit_block_num{0};
         int total_unit_block_num{0};
         int recv_num{0};
+        uint32_t tx_v1_num = 0;
+        uint64_t tx_v1_total_size = 0;
+        uint32_t tx_v2_num = 0;
+        uint64_t tx_v2_total_size = 0;
         int tableid{-1};
         {
             std::vector<std::string> parts;
@@ -673,7 +677,19 @@ private:
                         continue;
                     }
                     data::xlightunit_action_t txaction(action);
+                    auto tx_size = block->query_tx_size(txaction.get_tx_hash());
                     auto tx_ptr = block->query_raw_transaction(txaction.get_tx_hash());
+                    if (tx_size > 0) {
+                        if (tx_ptr != nullptr) {
+                            if (tx_ptr->get_tx_version() == 2) {
+                                tx_v2_num++;
+                                tx_v2_total_size += tx_size;
+                            } else {
+                                tx_v1_num++;
+                                tx_v1_total_size += tx_size;
+                            }
+                        }
+                    }
                     tx_ext_t tx_ext;
                     if (tx_ptr != nullptr) {
                         tx_ext.src = tx_ptr->get_source_addr();
@@ -742,6 +758,16 @@ private:
         j["table info"]["total send num"] = send.size();
         j["table info"]["total recv num"] = recv_num;
         j["table info"]["total confirm num"] = confirm.size();
+        j["table info"]["total tx v1 num"] = tx_v1_num;
+        j["table info"]["total tx v1 size"] = tx_v1_total_size;
+        if (tx_v1_num != 0) {
+            j["table info"]["tx v1 avg size"] = tx_v1_total_size / tx_v1_num;
+        }
+        j["table info"]["total tx v2 num"] = tx_v2_num;
+        j["table info"]["total tx v2 size"] = tx_v2_total_size;
+        if (tx_v2_num != 0) {
+            j["table info"]["tx v2 avg size"] = tx_v2_total_size / tx_v2_num;
+        }
         // process tx map
         auto t2 = xtime_utl::time_now_ms();
         std::vector<tx_ext_t> sendv;

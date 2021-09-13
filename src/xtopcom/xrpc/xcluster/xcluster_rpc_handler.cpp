@@ -69,15 +69,15 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
     std::string tx_hash;
     std::string account;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
-        xstream_t stream(xcontext_t::instance(), (uint8_t *)(edge_msg.m_message_body.data()), edge_msg.m_message_body.size());
-        xtransaction_ptr_t tx_ptr = make_object_ptr<xtransaction_t>();
-        auto ret = tx_ptr->serialize_from(stream);
-        assert(ret != 0);
+        xtransaction_ptr_t tx_ptr;
+        auto ret = xtransaction_t::set_tx_by_serialized_data(tx_ptr, edge_msg.m_message_body);
+        assert(ret == true);
 
         tx_hash = tx_ptr->get_digest_hex_str();
         account = tx_ptr->get_source_addr();
-        xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s,%s,src %s,dst %s,%" PRIx64,
+        xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
                tx_hash.c_str(),
+               tx_ptr->get_tx_version(),
                account.c_str(),
                edge_sender.to_string().c_str(),
                m_cluster_vhost->address().to_string().c_str(),
