@@ -37,7 +37,7 @@ class xmemtrace_plugin_t : public base::xdbgplugin_t {
     virtual bool       on_object_releaseref(xobject_t* target) override;
 
  private:
-    void               fresh_obj_count(int mgr_type);
+    void               fresh_obj_count(int mgr_type, xobject_t* target);
 
  private:
     static constexpr int m_obj_type_max{base::enum_xobject_type_max - XMEMTRACE_XOBJECT_TYPE_MIN};  // enum_xobject_type_max enum_xobject_type_min

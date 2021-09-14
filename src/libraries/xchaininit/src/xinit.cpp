@@ -17,6 +17,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xmemcheck_dbg.h"
+#include "xdata/xmem_trace.h"
 #include "xconfig/xconfig_register.h"
 #include "xloader/xconfig_offchain_loader.h"
 #include "xloader/xconfig_genesis_loader.h"
@@ -90,9 +91,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     setup_options();
 
     //using top::elect::xbeacon_xelect_imp;
-    auto hash_plugin = new xtop_hash_t();
 
     XMETRICS_INIT();
+    MEMTRACE_INIT();
+    auto hash_plugin = new xtop_hash_t();
+
     g_topchain_init_finish_flag = false;
 
     auto& config_center = top::config::xconfig_register_t::get_instance();
