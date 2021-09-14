@@ -12,6 +12,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(e_simple_begin);
         RETURN_METRICS_NAME(blockstore_cache_block_total);
         RETURN_METRICS_NAME(dataobject_cur_xbase_type_cons_transaction);
+        RETURN_METRICS_NAME(vhost_queue_size);
+        RETURN_METRICS_NAME(vhost_mem_bytes);
         RETURN_METRICS_NAME(vhost_recv_msg);
         RETURN_METRICS_NAME(vhost_recv_callback);
         RETURN_METRICS_NAME(vnode_recv_msg);
