@@ -4,6 +4,8 @@
 
 #pragma once
 #include "xbase/xcontext.h"
+#include "xdata/xtransaction_v1.h"
+#include "xdata/xtransaction_v2.h"
 #include "xedge_local_method.hpp"
 #include "xedge_rpc_handler.h"
 #include "xmetrics/xmetrics.h"
@@ -57,6 +59,8 @@ public:
         m_edge_handler_ptr->reset_edge_handler(edge_vhost);
         m_edge_local_method_ptr->reset_edge_local_method(xip2);
     }
+
+    void set_tx_by_version(xtransaction_ptr_t & tx_ptr, uint32_t version);
 
 protected:
     unique_ptr<T> m_edge_handler_ptr;
@@ -166,10 +170,21 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
 }
 
 template <class T>
+void xedge_method_base<T>::set_tx_by_version(xtransaction_ptr_t & tx_ptr, uint32_t version) {
+    if (version == 2) {
+        xdbg("tx version2, %d", version);
+        tx_ptr = make_object_ptr<data::xtransaction_v2_t>();
+    } else {
+        xdbg("tx version1, %d", version);
+        tx_ptr = make_object_ptr<data::xtransaction_v1_t>();
+    }
+}
+
+template <class T>
 void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip) {
-    json_proc.m_tx_ptr = make_object_ptr<data::xtransaction_t>();
-    auto & tx = json_proc.m_tx_ptr;
     auto & request = json_proc.m_request_json["params"];
+    set_tx_by_version(json_proc.m_tx_ptr, request["tx_structure_version"].asUInt());
+    auto & tx = json_proc.m_tx_ptr;
     tx->construct_from_json(request);
 
     if (!tx->digest_check()) {
@@ -247,6 +262,8 @@ shared_ptr<xrpc_msg_request_t> xedge_method_base<T>::generate_request(const xvno
         base::xstream_t stream(xcontext_t::instance());
         // json_proc.m_tx_ptr->add_modified_count();
         json_proc.m_tx_ptr->serialize_to(stream);
+        std::string metric_name = "edge_txout_v" + std::to_string(json_proc.m_tx_ptr->get_tx_version()) + "_type" + std::to_string(json_proc.m_tx_ptr->get_tx_type());
+        XMETRICS_COUNTER_INCREMENT(metric_name, stream.size());
         edge_msg_ptr =
             std::make_shared<xrpc_msg_request_t>(type(), json_proc.m_tx_type, source_address, uuid, client_id, account, string((const char *)stream.data(), stream.size()));
     } else {

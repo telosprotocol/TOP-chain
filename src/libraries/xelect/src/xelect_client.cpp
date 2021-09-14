@@ -17,6 +17,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xtransaction_v2.h"
 #include "xelect_common/elect_option.h"
 #include "xmbus/xevent_store.h"
 #include "xpbase/base/top_log.h"
@@ -60,8 +61,7 @@ void xelect_client_imp::bootstrap_node_join() {
         for (auto& item : seed_edge_host_set) {
             std::string seed_edge_host = item + ":" + http_port;
             HttpClient client(seed_edge_host);
-            xdbg("boostrap to %s", seed_edge_host.c_str());
-
+            xdbg("bootstrap to %s", seed_edge_host.c_str());
 
             try {
                 std::string token_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=requestToken&sequence_id=1";
@@ -86,8 +86,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 const auto& account_info_response_str = account_info_response->content.string();
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
 
-
-                xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+                xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
                 param_stream << user_params.account;
                 param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };

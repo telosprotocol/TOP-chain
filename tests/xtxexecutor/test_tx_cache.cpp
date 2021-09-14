@@ -2,6 +2,7 @@
 #include "xstore/xstore_face.h"
 #include "xstore/xaccount_context.h"
 #include "xdata/xaction_parse.h"
+#include "xdata/xtransaction_v1.h"
 #include "xtxexecutor/xtransaction_context.h"
 #include "xconfig/xconfig_register.h"
 #include "xchain_timer/xchain_timer.h"
@@ -21,7 +22,7 @@ class test_tx_cache : public testing::Test {
     void SetUp() override {
         xinit_log("./cache_test.log", true, true);
         xset_log_level(enum_xlog_level_debug);
-        xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+        xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
         tx->set_deposit(100000);
         struct timeval val;
         base::xtime_utl::gettimeofday(&val);
@@ -51,7 +52,7 @@ TEST_F(test_tx_cache, test_prepare_mgr) {
 }
 TEST_F(test_tx_cache, test_cache) {
     m_transaction_cache = std::make_shared<data::xtransaction_cache_t>();
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
     tx->set_deposit(100000);
     struct timeval val;
     base::xtime_utl::gettimeofday(&val);

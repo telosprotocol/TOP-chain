@@ -5,12 +5,13 @@
 #pragma once
 
 #include <string>
+#include "xbase/xcxx_config.h"
 #include "xbase/xint.h"
 #include "xbase/xdata.h"
 
 namespace top { namespace data {
 
-XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_TOP                       = "TOP";
+XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_TOP                       = "";
 
 // $1-9 reserved for future
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_AVAILABLE              = "$0";  //available balance

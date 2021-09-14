@@ -6,6 +6,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xunit_bstate.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xtransaction_v1.h"
 #include "xblockmaker/xunit_builder.h"
 #include "xstore/xaccount_context.h"
 #include "tests/mock/xcertauth_util.hpp"
@@ -104,7 +105,7 @@ class xdatamock_unit {
  public:
     xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
         uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
-        xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+        xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
         data::xproperty_asset asset(amount);
         tx->make_tx_transfer(asset);
         tx->set_last_trans_hash_and_nonce(last_tx_hash, last_tx_nonce);
@@ -115,7 +116,7 @@ class xdatamock_unit {
         tx->set_digest();
         if (m_enable_sign) {
             std::string signature = utl::xcrypto_util::digest_sign(tx->digest(), m_private_key);
-            tx->set_signature(signature);
+            tx->set_authorization(signature);
         }
         tx->set_len();
         return tx;
@@ -195,7 +196,7 @@ class xdatamock_unit {
         block->extract_sub_txs(sub_txs);
         for (auto & v : sub_txs) {
             if (v->get_tx_obj() != nullptr) {
-                xtransaction_t* raw_tx = (xtransaction_t*)v->get_tx_obj();
+                xtransaction_t* raw_tx = dynamic_cast<xtransaction_t*>(v->get_tx_obj());
                 xtransaction_ptr_t raw_tx_ptr;
                 raw_tx->add_ref();
                 raw_tx_ptr.attach(raw_tx);
