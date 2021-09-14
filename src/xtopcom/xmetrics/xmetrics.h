@@ -25,6 +25,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin+1,
     dataobject_cur_xbase_type_cons_transaction,
+    vhost_queue_size,
+    vhost_mem_bytes,
     vhost_recv_msg,
     vhost_recv_callback,
     vnode_recv_msg,

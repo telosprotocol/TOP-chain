@@ -624,6 +624,8 @@ void xtop_vhost::on_network_data_ready(common::xnode_id_t const &, xbyte_buffer_
         XMETRICS_COUNTER_INCREMENT("vhost_total_size_of_all_messages", bytes.size());
 #endif
         m_message_queue.push(bytes);
+        XMETRICS_GAUGE(metrics::vhost_queue_size, 1);
+        XMETRICS_GAUGE(metrics::vhost_mem_bytes, bytes.size());
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] std::exception exception caught: %s", eh.what());
     } catch (...) {
@@ -644,7 +646,7 @@ void xtop_vhost::do_handle_network_data() {
     while (running()) {
         try {
             auto all_byte_messages = m_message_queue.wait_and_pop_all();
-
+            XMETRICS_GAUGE(metrics::vhost_queue_size, (-1) * all_byte_messages.size());
             XMETRICS_FLOW_COUNT("vhost_handle_data_ready_called", all_byte_messages.size());
 
             XMETRICS_TIME_RECORD("vhost_handle_data_ready_called_time");
@@ -657,7 +659,7 @@ void xtop_vhost::do_handle_network_data() {
                     xwarn("[vnetwork] vhost is not running!");
                     break;
                 }
-
+                XMETRICS_GAUGE(metrics::vhost_mem_bytes, (-1) * bytes.size());
                 try {
                     if (bytes.empty()) {
                         // this may be a stop notification message.
