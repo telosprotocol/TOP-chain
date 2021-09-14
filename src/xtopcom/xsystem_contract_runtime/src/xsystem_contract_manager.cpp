@@ -11,7 +11,7 @@
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
-#include "xdata/xtransaction.h"
+#include "xdata/xtransaction_v2.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
 #include "xsystem_contracts/xtransfer_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
@@ -50,7 +50,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     }
     xdbg("xtop_system_contract_manager::init_contract_chain contract account %s genesis block not exist", contract_address.c_str());
 
-    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
+    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset_out{0};
     tx->make_tx_run_contract(asset_out, "setup", "");
     tx->set_same_source_target_address(contract_address.value());

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
-#include "xdata/xtransaction.h"
 #include "xdata/xcons_transaction.h"
 
 NS_BEG2(top, contract_common)

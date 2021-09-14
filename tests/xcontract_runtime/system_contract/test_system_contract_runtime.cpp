@@ -8,6 +8,7 @@
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xtransaction_v2.h"
 #include "xdb/xdb_face.h"
 #include "xdb/xdb_factory.h"
 #include "xstore/xstore_face.h"
@@ -83,7 +84,7 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     uint64_t balance = bstate_->load_token_var(propety_identifier.full_name())->get_balance();
     EXPECT_EQ(balance, init_value);
 
-    auto transfer_tx = top::make_object_ptr<top::data::xtransaction_t>();
+    auto transfer_tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     uint64_t amount = 1000;
     top::base::xstream_t param_stream(base::xcontext_t::instance());
     param_stream << amount;
@@ -128,7 +129,7 @@ TEST_F(test_system_contract_runtime, deploy_system_contract) {
 }
 
 TEST_F(test_system_contract_runtime, init_system_contract) {
-    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
+    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
@@ -154,7 +155,7 @@ TEST_F(test_system_contract_runtime, account_vm) {
         cs_para.m_account = "Ta0001@0";
         cs_para.m_random_seed = base::xstring_utl::base64_decode("ODI3OTg4ODkxOTMzOTU3NDk3OA==");
     }
-    xobject_ptr_t<xtransaction_t> raw_tx{make_object_ptr<xtransaction_t>()};
+    xobject_ptr_t<xtransaction_t> raw_tx{make_object_ptr<xtransaction_v2_t>()};
     {
         base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)tx_raw_encode.data(),(int32_t)tx_raw_encode.size());
         raw_tx->serialize_from(stream);
@@ -164,9 +165,8 @@ TEST_F(test_system_contract_runtime, account_vm) {
         base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)tx_encode.data(),(int32_t)tx_encode.size());
         tx->serialize_from(stream);
         tx->m_tx = raw_tx;
-        tx->m_tx->m_source_action.m_account_addr = "T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks";
-        tx->m_tx->m_target_action.m_account_addr = sys_contract_rec_standby_pool_addr;
-        tx->m_tx->m_target_addr = sys_contract_rec_standby_pool_addr;
+        tx->m_tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_standby_pool_addr);
+        // tx->m_tx->m_target_addr = sys_contract_rec_standby_pool_addr;
         tx->m_subtype = enum_transaction_subtype::enum_transaction_subtype_recv;
 
         base::xstream_t param_stream(base::xcontext_t::instance());
