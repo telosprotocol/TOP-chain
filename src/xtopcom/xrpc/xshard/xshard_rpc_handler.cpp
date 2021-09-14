@@ -58,6 +58,9 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(edge_sender, message, timer_height);
     base::xcall_t asyn_call(process_request, para.get());
     m_thread->send_call(asyn_call);
+    int64_t in, out;
+    int32_t queue_size = m_thread->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_shard_rpc", queue_size);
 }
 
 void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg, xjson_proc_t & json_proc) {

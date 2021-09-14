@@ -884,7 +884,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     auto iter = m_table_info_cache.find(table_id);
     if (iter != m_table_info_cache.end()) {
         auto & table_info = iter->second;
-        uint64_t cur_height = m_para->get_vblockstore()->get_latest_committed_block_height(vaccount, metrics::blockstore_access_from_txpool_sync_status);
+        uint64_t cur_height = m_para->get_vblockstore()->get_latest_committed_block_height(vaccount, metrics::blockstore_access_from_txpool_id_state);
         if (table_info.m_last_property_height >= cur_height) {
             xinfo("xtxpool_service::send_table_receipt_id_state table:%s height(%llu:%llu) not change,reuse property_prove",
                   table_addr.c_str(),
@@ -894,7 +894,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
         }
     }
     if (property_prove == nullptr) {
-        auto commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_sync_status);
+        auto commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_id_state);
 
         if (commit_block->get_height() == 0) {
             xinfo("xtxpool_service::send_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
@@ -906,7 +906,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
             return;
         }
 
-        auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_sync_status);
+        auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_id_state);
         if (cert_block == nullptr) {
             xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), commit_block->get_height() + 2);
             return;

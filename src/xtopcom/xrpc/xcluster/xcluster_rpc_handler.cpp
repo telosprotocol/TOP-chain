@@ -63,6 +63,9 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(edge_sender, message);
     base::xcall_t asyn_call(process_request, para.get());
     m_thread->send_call(asyn_call);
+    int64_t in, out;
+    int32_t queue_size = m_thread->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_cluster_rpc", queue_size);
 }
 
 void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {

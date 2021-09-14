@@ -42,6 +42,9 @@ void xrpc_edge_vhost::on_message(const xvnode_address_t& sender, const xmessage_
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(sender, message);
     base::xcall_t asyn_call(process_request, para.get());
     m_thread->send_call(asyn_call);
+    int64_t in, out;
+    int32_t queue_size = m_thread->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_edge_rpc", queue_size);
 }
 
 void xrpc_edge_vhost::register_message_handler(enum_xrpc_type msg_type, xedge_message_callback_t cb)

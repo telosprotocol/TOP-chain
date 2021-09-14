@@ -239,7 +239,7 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zon
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_resend_txs(now);
+        return table->get_resend_txs(now);
     }
     return {};
 }
@@ -250,7 +250,7 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_uncon
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        m_tables[zone][subaddr]->refresh_table(refresh_unconfirm_txs);
+        table->refresh_table(refresh_unconfirm_txs);
     }
 }
 
@@ -287,7 +287,7 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_re
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(total_num);
+        return table->get_lacking_recv_tx_ids(total_num);
     }
     return {};
 }
@@ -298,7 +298,7 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_co
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_confirm_tx_ids(total_num);
+        return table->get_lacking_confirm_tx_ids(total_num);
     }
     return {};
 }
@@ -320,7 +320,7 @@ bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->need_sync_lacking_receipts();
+        return table->need_sync_lacking_receipts();
     }
     return false;
 }

@@ -97,6 +97,7 @@ public:
 
         int64_t in, out;
         int32_t queue_size = m_observed_thread->count_calls(in, out);
+        XMETRICS_COUNTER_SET("mailbox_sync_event", queue_size);
         bool discard = queue_size >= m_max_thread_calls;
         before_event_pushed(e, discard);
 

@@ -13,7 +13,6 @@
 #include "xtxpool_v2/xtxpool_info.h"
 #include "xtxpool_v2/xtxpool_resources_face.h"
 #include "xtxpool_v2/xunconfirm_id_height.h"
-#include "xtxpool_v2/xunconfirmed_tx_queue.h"
 
 #include <map>
 #include <set>

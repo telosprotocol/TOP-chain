@@ -176,6 +176,9 @@ namespace top
                 };
                 new_plugin->add_ref();//add reference to hold by m_monitor_expire
                 send_call(_add_new_plugin_job,(void*)new_plugin);//send account ptr to store'thread to manage lifecycle
+                int64_t in, out;
+                int32_t queue_size = count_calls(in, out);
+                XMETRICS_COUNTER_SET("mailbox_blockstore_" + std::to_string(get_thread_id()), queue_size);
             }
             target_table->set_account_plugin(account_address, new_plugin, base::enum_xvaccount_plugin_blockmgr);
             inout_account_obj.transfer_owner(new_plugin);

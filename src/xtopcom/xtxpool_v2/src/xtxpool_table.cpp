@@ -405,8 +405,6 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                 xtxpool_warn("xtxpool_table_t::refresh_table load commit block fail,table:%s", m_xtable_info.get_account().c_str());
                 return;
             }
-            // m_para->get_vblockstore()->load_block_input(latest_committed_block->get_account(), latest_committed_block.get(),
-            // metrics::blockstore_access_from_txpool_refresh_table);
             deal_commit_table_block(dynamic_cast<xblock_t *>(latest_committed_block.get()), false);
             load_height_max = latest_committed_block->get_height() - 1;
             load_height_min = (load_height_max >= load_table_block_num_max) ? (load_height_max + 1 - load_table_block_num_max) : 1;
@@ -417,7 +415,6 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                 m_para->get_vblockstore()->load_block_object(m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_refresh_table);
 
             if (commit_block != nullptr) {
-                // m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get(), metrics::blockstore_access_from_txpool_refresh_table);
                 deal_commit_table_block(dynamic_cast<xblock_t *>(commit_block.get()), false);
             } else {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
@@ -695,7 +692,7 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_table_t::get_lack
 
 xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype) {
     base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(
-        m_xtable_info, commit_height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_create_recv_receipt);
+        m_xtable_info, commit_height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_create_receipt);
     if (commit_block == nullptr) {
         xerror("xtxpool_table_t::build_receipt fail-commit table block not exist table=%s,peer table:%d,receipt id:%llu,table_height:%llu,subtype:%d",
                m_xtable_info.get_account().c_str(),
@@ -707,7 +704,7 @@ xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t pe
     }
 
     base::xauto_ptr<base::xvblock_t> cert_block =
-        m_para->get_vblockstore()->load_block_object(m_xtable_info, commit_height + 2, 0, false, metrics::blockstore_access_from_txpool_create_recv_receipt);
+        m_para->get_vblockstore()->load_block_object(m_xtable_info, commit_height + 2, 0, false, metrics::blockstore_access_from_txpool_create_receipt);
     if (cert_block == nullptr) {
         xerror("xtxpool_table_t::build_receipt fail-cert table block not exist table=%s,peer table:%d,receipt id:%llu,table_height:%llu,subtype:%d",
                m_xtable_info.get_account().c_str(),
