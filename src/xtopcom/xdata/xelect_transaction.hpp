@@ -51,7 +51,6 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_standby_pool_contract_logic_timeout_limitation);
 
         // slash related
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(tableStatistic_report_schedule_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_collection_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
