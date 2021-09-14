@@ -921,7 +921,8 @@ namespace top
             else
             {
                 base::xauto_ptr<base::xvbindex_t> connectindex(query_index(m_meta->_highest_connect_block_height, base::enum_xvblock_flag_committed));
-                if (m_meta->_highest_connect_block_height == connectindex->get_height()
+                if (connectindex != nullptr
+                    && m_meta->_highest_connect_block_height == connectindex->get_height()
                     && m_meta->_highest_connect_block_hash != connectindex->get_block_hash())
                 {
                     m_meta->_highest_connect_block_hash = connectindex->get_block_hash();
