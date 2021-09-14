@@ -170,6 +170,7 @@ int32_t xtx_verifier::verify_tx_fire_expiration(data::xtransaction_t const * trx
 int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr) {
     static std::vector<std::string> open_sys_contracts = {
         sys_contract_rec_registration_addr,
+        sys_contract_rec_parachain_registration_addr,
         sys_contract_rec_standby_pool_addr,
         sys_contract_sharding_vote_addr,
         sys_contract_rec_tcc_addr,

@@ -45,6 +45,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size);
 
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(rec_parachain_registration_on_timer_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(rec_standby_pool_update_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(zec_standby_pool_update_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_standby_pool_contract_height_step_limitation);
