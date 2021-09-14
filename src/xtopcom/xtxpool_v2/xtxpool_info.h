@@ -175,7 +175,7 @@ public:
                              "received_recv",
                              m_received_recv_tx_num.load(),
                              "received_confirm",
-                             m_received_recv_tx_num.load(),
+                             m_received_confirm_tx_num.load(),
                              "pulled_recv",
                              m_pulled_recv_tx_num.load(),
                              "pulled_confirm",
