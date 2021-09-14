@@ -4,7 +4,7 @@
 
 #include "xcontract_common/xbasic_contract.h"
 #include "xcontract_common/xerror/xerror.h"
-#include "xdata/xtransaction.h"
+#include "xdata/xtransaction_v2.h"
 
 #include <cassert>
 
@@ -77,7 +77,7 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
                                std::string const & method_name,
                                std::string const & method_params,
                                xfollowup_transaction_schedule_type_t type) {
-    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_t>();
+    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
 
     auto latest_hash = state()->latest_sendtx_hash();

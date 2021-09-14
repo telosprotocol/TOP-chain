@@ -5,7 +5,6 @@
 #pragma once
 
 #include <string>
-#include "xbase/xcontext.h"
 #if defined(__clang__)
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wpedantic"
@@ -16,6 +15,7 @@
 #    pragma warning(push, 0)
 #endif
 
+#include "xbase/xcontext.h"
 #include "xbase/xdata.h"
 
 #if defined(__clang__)
