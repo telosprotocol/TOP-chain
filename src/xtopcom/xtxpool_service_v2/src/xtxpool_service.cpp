@@ -483,12 +483,14 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
     if (!m_running) {
         xwarn(
             "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_digest_hex_str().c_str());
+        XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);  // 1-succ 0-fail
         return false;
     }
 
     int32_t ret = xverifier::xtx_verifier::verify_send_tx_source(tx.get(), local);
     if (ret) {
         xwarn("[global_trace][xtxpool_service]tx=%s,account=%s verify send tx source fail", tx->get_digest_hex_str().c_str(), tx->get_source_addr().c_str());
+        XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);
         return ret;
     }
 
@@ -499,6 +501,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
                tx->get_source_addr().c_str(),
                tableid.get_zone_index(),
                tableid.get_subaddr());
+        XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);
         return xtxpool_v2::xtxpool_error_transaction_not_belong_to_this_service;
     }
 
@@ -509,7 +512,13 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(cons_tx, para);
-    return m_para->get_txpool()->push_send_tx(tx_ent);
+    ret = m_para->get_txpool()->push_send_tx(tx_ent);
+    if (ret == xsuccess) {
+        XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 1);  // 1-succ 0-fail
+    } else {
+        XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);
+    }
+    return ret;
 }
 
 xcons_transaction_ptr_t xtxpool_service::get_confirmed_tx(const uint256_t & hash) {

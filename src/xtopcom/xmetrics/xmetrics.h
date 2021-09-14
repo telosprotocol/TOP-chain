@@ -24,11 +24,18 @@ NS_BEG2(top, metrics)
 enum E_SIMPLE_METRICS_TAG : size_t {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin+1,
-    dataobject_cur_xbase_type_cons_transaction,
+
     vhost_recv_msg,
     vhost_recv_callback,
     vnode_recv_msg,
     vnode_recv_callback,
+
+    dataobject_cons_transaction,
+    dataobject_block_lightunit,
+    dataobject_block_fullunit,
+    dataobject_block_lighttable,
+    dataobject_block_fulltable,
+    dataobject_block_empty,
     dataobject_tx_receipt_t,
     dataobject_unit_state,
     dataobject_xvtxindex,
@@ -176,6 +183,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_confirm_tx_retry_send,
     txpool_recv_tx_first_send,
     txpool_confirm_tx_first_send,
+    txpool_request_origin_tx,
     txpool_push_tx_send_fail_pool_full,
     txpool_pull_recv_tx,
     txpool_pull_confirm_tx,
@@ -590,8 +598,6 @@ public:
     top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name, "alarm"};                                                                   \
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
-#define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
-#define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
@@ -622,8 +628,6 @@ public:
 #define XMETRICS_FLOW_COUNT(metrics_name, value)
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_PACKET_ALARM(metrics_name, ...)
-#define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
-#define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
 #define XMETRICS_GAUGE(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG)
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
