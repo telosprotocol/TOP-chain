@@ -364,6 +364,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     data_table_unpack_units,
     data_table_unpack_one_unit,
 
+    txexecutor_total_system_contract_count,
+    txexecutor_system_contract_failed_count,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
