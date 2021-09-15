@@ -69,9 +69,6 @@ public:
     register_xcls() { top::base::xcontext_t::register_xobject((top::base::enum_xobject_type)data_cls::get_object_type(), data_cls::create_object); }
 };
 
-#ifndef REG_CLS
-#    define REG_CLS(CLS)                                                                                                                                                           \
-        register_xcls<CLS> g_##CLS
-#endif  // REG_CLS
+#    define REG_CLS(CLS)
 
 }  // namespace top

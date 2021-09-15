@@ -22,11 +22,11 @@ class xfullunit_block_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_fullunit_block };
  public:
+    xfullunit_block_t();
     xfullunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
     virtual ~xfullunit_block_t();
  private:
-    xfullunit_block_t();
     xfullunit_block_t(const xfullunit_block_t &);
     xfullunit_block_t & operator = (const xfullunit_block_t &);
  public:

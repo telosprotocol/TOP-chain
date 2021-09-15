@@ -101,6 +101,7 @@ xrootblock_input_t* m_rootblock_input = nullptr;
 bool xrootblock_t::init(const xrootblock_para_t & para) {
     std::call_once(m_flag, [&] () {
         xvblock_t::register_object(base::xcontext_t::instance());  // rootblock init before blockstore
+        xblock_t::register_object(base::xcontext_t::instance());// rootblock init before blockstore
         std::string _chain_name = XGET_CONFIG(chain_name);
         base::enum_xchain_id chainid = top::config::to_chainid(_chain_name);
 

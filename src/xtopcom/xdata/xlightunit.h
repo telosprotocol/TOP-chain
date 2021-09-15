@@ -71,12 +71,12 @@ class xlightunit_block_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_lightunit_block };
  public:
+    xlightunit_block_t();
     xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
 
  protected:
     virtual ~xlightunit_block_t();
  private:
-    xlightunit_block_t();
     xlightunit_block_t(const xlightunit_block_t &);
     xlightunit_block_t & operator = (const xlightunit_block_t &);
  public:

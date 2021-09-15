@@ -76,6 +76,7 @@ class xblock_t : public base::xvblock_t {
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
     static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
     static std::string dump_header(base::xvheader_t* header);
+    static void  register_object(base::xcontext_t & _context);
 public:
     xblock_t(enum_xdata_type type);
     xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type);
