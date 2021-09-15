@@ -130,6 +130,7 @@ TEST_F(test_system_contract_runtime, deploy_system_contract) {
 
 TEST_F(test_system_contract_runtime, init_system_contract) {
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
+    tx->set_different_source_target_address("T00000LS7SABDaqKaKfNDqbsyXB23F8dndquCeEu", contract_address);
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
@@ -206,6 +207,61 @@ TEST_F(test_system_contract_runtime, account_vm) {
     // std::cout << data::to_hex_str(result.transaction_results[0].output.contract_state_snapshot) << std::endl;
     // std::cout << data::to_hex_str(result.transaction_results[1].output.binlog) << std::endl;
     // std::cout << data::to_hex_str(result.transaction_results[1].output.contract_state_snapshot) << std::endl;
+}
+
+TEST_F(test_system_contract_runtime, test_asset_api_normal) {
+    auto transfer_contract = std::make_shared<system_contracts::xtop_transfer_contract>();
+
+    auto tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
+    data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{100000}};
+    tx->make_tx_run_contract(asset_out, "just_test_asset_api", "");
+    tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_registration_addr);
+
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+    auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(std::move(action), contract_state);
+
+    transfer_contract->reset_execution_context(contract_ctx);
+
+    std::error_code err;
+    auto amount = transfer_contract->src_action_asset_amount(err);
+    auto token_name = transfer_contract->src_action_asset_name(err);
+    assert(!err);
+
+    EXPECT_EQ(amount, 100000);
+    EXPECT_EQ(token_name, data::XPROPERTY_ASSET_TOP);
+
+}
+
+TEST_F(test_system_contract_runtime, test_asset_api_fail) {
+    auto transfer_contract = std::make_shared<system_contracts::xtop_transfer_contract>();
+
+    auto tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
+
+    data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, uint64_t{100000}};
+    tx->make_tx_transfer(asset);
+    tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_registration_addr);
+
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+    auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(std::move(action), contract_state);
+
+    transfer_contract->reset_execution_context(contract_ctx);
+
+    std::error_code err;
+    auto amount = transfer_contract->src_action_asset_amount(err);
+    assert(err); // have error
+    EXPECT_EQ(err.value(), (int)contract_common::error::xerrc_t::src_action_asset_not_exist);
+    auto token_name = transfer_contract->src_action_asset_name(err);
+    assert(err); // have error
+    EXPECT_EQ(err.value(), (int)contract_common::error::xerrc_t::src_action_asset_not_exist);
+
 }
 
 

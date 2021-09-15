@@ -57,6 +57,32 @@ xbyte_buffer_t xtop_basic_contract::target_action_data() const {
     return m_associated_execution_context->target_action_data();
 }
 
+data::xproperty_asset xtop_basic_contract::src_action_asset(std::error_code& ec) const {
+    data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
+
+    auto src_data = source_action_data();
+    if (src_data.empty() || data::enum_xaction_type::xaction_type_asset_out != source_action_type()) {
+        ec = error::xerrc_t::src_action_asset_not_exist;
+        return asset_out;
+    }
+
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_data.data(), src_data.size());
+    stream >> asset_out.m_token_name;
+    stream >> asset_out.m_amount;
+
+    return asset_out;
+}
+
+uint64_t  xtop_basic_contract::src_action_asset_amount(std::error_code& ec) const {
+    auto asset_out = src_action_asset(ec);
+    return asset_out.m_amount;
+}
+
+std::string xtop_basic_contract::src_action_asset_name(std::error_code& ec) const {
+    auto asset_out = src_action_asset(ec);
+    return asset_out.m_token_name;
+}
+
 data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
     return m_associated_execution_context->transaction_type();
 }

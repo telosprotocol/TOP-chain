@@ -56,6 +56,9 @@ public:
     xbyte_buffer_t action_data() const;
     xbyte_buffer_t source_action_data() const;
     xbyte_buffer_t target_action_data() const;
+    uint64_t  src_action_asset_amount(std::error_code& ec) const;
+    std::string src_action_asset_name(std::error_code& ec) const;
+    data::xproperty_asset src_action_asset(std::error_code& ec) const;
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
 
@@ -72,6 +75,7 @@ protected:
               std::string const & method_name,
               std::string const & method_params,
               xfollowup_transaction_schedule_type_t type) override;
+
 };
 
 NS_END2

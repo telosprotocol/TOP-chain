@@ -17,6 +17,7 @@ enum class xenum_errc {
 
     receipt_data_not_found,
     receipt_data_already_exist,
+    src_action_asset_not_exist,
 
     property_internal_error,
     property_permission_not_allowed,
