@@ -154,7 +154,7 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
     return 0;
 }
 
-bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
+bool ApiMethod::set_default_prikey(std::ostringstream & out_str, const bool is_query) {
     if (g_userinfo.account.size() == 0) {
         std::string str_pri = get_prikey_from_daemon(out_str);
         if (!str_pri.empty()) {
@@ -173,6 +173,10 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
             if (accounts.size() > 1) {
                 cout << "There are multiple accounts in your wallet, please set a default account first." << std::endl;
                 return false;
+            }
+            if (is_query) {
+                g_userinfo.account = accounts[0];
+                return true;
             }
             // cout << "set_default_prikey:" <<accounts[0] <<endl;
             std::string str_pri = xChainSDK::xcrypto::import_existing_keystore(cache_pw, g_keystore_dir + "/" + accounts[0]);
@@ -935,9 +939,10 @@ void ApiMethod::register_node(const std::string & mortgage_d,
 
 void ApiMethod::query_miner_reward(std::string & target, std::ostringstream & out_str) {
     if (target.empty()) {
-        if (!set_default_prikey(out_str)) {
+        if (!set_default_prikey(out_str, true)) {
             return;
         }
+        target = g_userinfo.account;
     } else {
         g_userinfo.account = target;
     }

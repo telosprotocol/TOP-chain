@@ -35,7 +35,7 @@ public:
 
     ApiMethod();
     ~ApiMethod();
-    bool set_default_prikey(std::ostringstream & out_str);
+    bool set_default_prikey(std::ostringstream & out_str, const bool is_query = false);
     int update_account(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str, xJson::Value & root);
     xJson::Value get_response_from_daemon();
