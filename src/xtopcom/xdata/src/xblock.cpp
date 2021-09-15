@@ -4,6 +4,14 @@
 
 #include "xdata/xblock.h"
 #include "xdata/xmemcheck_dbg.h"
+#include "xdata/xfullunit.h"
+#include "xdata/xlightunit.h"
+#include "xdata/xemptyblock.h"
+#include "xdata/xtableblock.h"
+#include "xdata/xfull_tableblock.h"
+#include "xdata/xrootblock.h"
+#include "xdata/xcons_transaction.h"
+#include "xvledger/xtxreceipt.h"
 
 #include "xbase/xhash.h"
 #include "xbase/xobject.h"
@@ -157,6 +165,47 @@ void  xblock_t::batch_units_to_receiptids(const std::vector<xblock_ptr_t> & unit
             }
         }
     }
+}
+
+void  xblock_t::register_object(base::xcontext_t & _context) {
+    static int32_t static_registered_flag = 0;
+    ++static_registered_flag;
+    if(static_registered_flag > 1)
+        return;
+    
+    auto lambda_new_fullunit= [](const int type)->xobject_t*{
+        return new xfullunit_block_t();
+    };
+    auto lambda_new_lightunit= [](const int type)->xobject_t*{
+        return new xlightunit_block_t();
+    };
+    auto lambda_new_cons_transaction = [](const int type)->xobject_t*{
+        return new xcons_transaction_t();
+    };
+    auto lambda_new_lighttable = [](const int type)->xobject_t*{
+        return new xtable_block_t();
+    };
+    auto lambda_new_fulltable = [](const int type)->xobject_t*{
+        return new xfull_tableblock_t();
+    };
+    auto lambda_new_emptyblock = [](const int type)->xobject_t*{
+        return new xemptyblock_t();
+    };
+    auto lambda_new_txreceipt = [](const int type)->xobject_t*{
+        return new base::xtx_receipt_t();
+    };    
+    auto lambda_new_tx = [](const int type)->xobject_t*{
+        return new xtransaction_t();
+    };        
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xfullunit_block_t::get_object_type(),lambda_new_fullunit);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xlightunit_block_t::get_object_type(),lambda_new_lightunit);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xcons_transaction_t::get_object_type(),lambda_new_cons_transaction);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtable_block_t::get_object_type(),lambda_new_lighttable);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xfull_tableblock_t::get_object_type(),lambda_new_fulltable);    
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xemptyblock_t::get_object_type(),lambda_new_emptyblock);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xtx_receipt_t::get_object_type(),lambda_new_txreceipt);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_t::get_object_type(),lambda_new_tx);
+    xkinfo("xblock_t::register_object,finish");    
 }
 
 xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type)

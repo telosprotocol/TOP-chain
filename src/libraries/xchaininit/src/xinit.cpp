@@ -182,8 +182,27 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     xinfo("#####################################################################");
 
     // make block here
+    uint32_t count = 0;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5*60));
+        count++;
+
+#if defined XENABLE_MEMTRACE_DBG
+        if (count > 12) {
+            count = 0;
+            std::map<int,int64_t> type_mem_info;
+            top::base::xcontext_t::instance().get_object_mem_info(type_mem_info);
+            for (auto & v : type_mem_info) {
+                XMETRICS_COUNTER_SET("xbasemem_size_type_" + std::to_string(v.first), v.second);
+            }
+        }
+#endif
+        const int64_t total_obj_mem = top::base::xcontext_t::instance().get_total_object_mem_size();
+        const int64_t total_cache_mem = top::base::xcontext_t::instance().get_total_bytes_mem_size();
+
+        XMETRICS_COUNTER_SET("xbasemem_size_total_cache", total_cache_mem);
+        XMETRICS_COUNTER_SET("xbasemem_size_total_objects", total_obj_mem);
+        xinfo("holding cache mem=%lld vs total_obj_mem=%lld \n",total_cache_mem,total_obj_mem);
     }
     // todo adapter to vnode type
 
@@ -487,8 +506,27 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("================================================");
 
     // make block here
+    uint32_t count = 0;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5*60));
+        count++;
+
+#if defined XENABLE_MEMTRACE_DBG
+        if (count > 12) {
+            count = 0;
+            std::map<int,int64_t> type_mem_info;
+            top::base::xcontext_t::instance().get_object_mem_info(type_mem_info);
+            for (auto & v : type_mem_info) {
+                XMETRICS_COUNTER_SET("xbasemem_size_type_" + std::to_string(v.first), v.second);
+            }
+        }
+#endif
+        const int64_t total_obj_mem = top::base::xcontext_t::instance().get_total_object_mem_size();
+        const int64_t total_cache_mem = top::base::xcontext_t::instance().get_total_bytes_mem_size();
+
+        XMETRICS_COUNTER_SET("xbasemem_size_total_cache", total_cache_mem);
+        XMETRICS_COUNTER_SET("xbasemem_size_total_objects", total_obj_mem);
+        xinfo("holding cache mem=%lld vs total_obj_mem=%lld \n",total_cache_mem,total_obj_mem);
     }
 
     config_center.clear_loaders();
