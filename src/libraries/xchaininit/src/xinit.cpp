@@ -320,7 +320,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     using namespace rpc;
     //using top::elect::xbeacon_xelect_imp;
 
-    auto hash_plugin = new xtop_hash_t();
+    
     std::string chain_db_path;
     std::string log_path;
     std::string bwlist_path;
@@ -347,7 +347,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 
 
     XMETRICS_INIT();
-
+    MEMTRACE_INIT();
+    auto hash_plugin = new xtop_hash_t();
 
     std::cout << "xnode config initializing..."  << std::endl;
     xinfo("xnode config initializing...") ;
