@@ -11,7 +11,7 @@
 #include "xchain_timer/xchain_timer.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xdata/xtransaction.h"
+#include "xdata/xtransaction_v2.h"
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
@@ -73,7 +73,9 @@ public:
         destination_action.set_action_name("submitProposal");
         destination_action.set_action_param(target_param);
 
-        data::xtransaction_ptr_t submit_proposal_trx = make_object_ptr<xtransaction_t>();
+        data::xtransaction_v2_ptr_t submit_proposal_trx = make_object_ptr<xtransaction_v2_t>();
+        submit_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
+        submit_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
         submit_proposal_trx->set_source_action(source_action);
         submit_proposal_trx->set_target_action(destination_action);
         return submit_proposal_trx;
@@ -90,7 +92,9 @@ public:
         destination_action.set_action_name("withdrawProposal");
         destination_action.set_action_param(target_param);
 
-        data::xtransaction_ptr_t withdraw_proposal_trx = make_object_ptr<xtransaction_t>();
+        data::xtransaction_v2_ptr_t withdraw_proposal_trx = make_object_ptr<xtransaction_v2_t>();
+        withdraw_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
+        withdraw_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
         withdraw_proposal_trx->set_source_action(source_action);
         withdraw_proposal_trx->set_target_action(destination_action);
         return withdraw_proposal_trx;
@@ -106,7 +110,9 @@ public:
         destination_action.set_action_name("tccVote");
         destination_action.set_action_param(target_param);
 
-        data::xtransaction_ptr_t vote_proposal_trx = make_object_ptr<xtransaction_t>();
+        data::xtransaction_v2_ptr_t vote_proposal_trx = make_object_ptr<xtransaction_v2_t>();
+        vote_proposal_trx->set_source_addr("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB");
+        vote_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
         vote_proposal_trx->set_source_action(source_action);
         vote_proposal_trx->set_target_action(destination_action);
         return vote_proposal_trx;

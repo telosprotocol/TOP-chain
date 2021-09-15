@@ -25,6 +25,7 @@ enum enum_xtopcom_object_type {
     xdata_type_table_block                  = 9,
     xdata_type_fulltable_block              = 10,
     xdata_type_table_proposal_input         = 11,
+    xdata_type_transaction_v2               = 12,
 
     xtopcom_object_type_max
 };
@@ -37,12 +38,10 @@ class xbase_dataunit_t : public base::xdataunit_t {
  public:
     xbase_dataunit_t()
     : base::xdataunit_t((enum_xdata_type)object_type_value) {
-        XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
     }
 
  protected:
     virtual ~xbase_dataunit_t() {
-        XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
     }
 
  public:

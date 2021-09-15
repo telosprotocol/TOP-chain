@@ -24,11 +24,18 @@ NS_BEG2(top, metrics)
 enum E_SIMPLE_METRICS_TAG : size_t {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin+1,
-    dataobject_cur_xbase_type_cons_transaction,
+
     vhost_recv_msg,
     vhost_recv_callback,
     vnode_recv_msg,
     vnode_recv_callback,
+
+    dataobject_cons_transaction,
+    dataobject_block_lightunit,
+    dataobject_block_fullunit,
+    dataobject_block_lighttable,
+    dataobject_block_fulltable,
+    dataobject_block_empty,
     dataobject_tx_receipt_t,
     dataobject_unit_state,
     dataobject_xvtxindex,
@@ -176,6 +183,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_confirm_tx_retry_send,
     txpool_recv_tx_first_send,
     txpool_confirm_tx_first_send,
+    txpool_request_origin_tx,
     txpool_push_tx_send_fail_pool_full,
     txpool_pull_recv_tx,
     txpool_pull_confirm_tx,
@@ -501,6 +509,28 @@ public:
     metrics_appendant_info m_key;
     microseconds m_timed_out;
 };
+
+static uint64_t cpu_time() {
+    struct timespec time;
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time);
+    return uint64_t(time.tv_sec) * 1000000 + uint64_t(time.tv_nsec) / 1000;
+}
+
+class metrics_cpu_time_auto {
+public:
+    metrics_cpu_time_auto(std::string metrics_name, metrics_appendant_info key = std::string{"NOT SET appendant_info"}, microseconds timed_out = DEFAULT_TIMED_OUT)
+      : m_metrics_name{metrics_name}, m_key{key}, m_timed_out{timed_out} {
+        char c[15] = {0};
+        snprintf(c, 14, "%p", (void*)(this));
+        m_metrics_name = m_metrics_name + "&" + c;
+        e_metrics::get_instance().timer_start(m_metrics_name, time_point(std::chrono::microseconds{cpu_time()}));
+    }
+    ~metrics_cpu_time_auto() { e_metrics::get_instance().timer_end(m_metrics_name, time_point(std::chrono::microseconds{cpu_time()}), m_key, m_timed_out); }
+
+    std::string m_metrics_name;
+    metrics_appendant_info m_key;
+    microseconds m_timed_out;
+};
 #define XMETRICS_INIT()                                                                                                                                                            \
     {                                                                                                                                                                              \
         auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
@@ -528,6 +558,13 @@ public:
 #define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                             \
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key, MICROSECOND(timeout) }
 
+#define XMETRICS_CPU_TIME_RECORD(metrics_name)                                                                                                                                         \
+    top::metrics::metrics_cpu_time_auto STR_CONCAT(metrics_cpu_time_auto, __LINE__) { metrics_name }
+#define XMETRICS_CPU_TIME_RECORD_KEY(metrics_name, key)                                                                                                                                \
+    top::metrics::metrics_cpu_time_auto STR_CONCAT(metrics_cpu_time_auto, __LINE__) { metrics_name, key }
+#define XMETRICS_CPU_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                             \
+    top::metrics::metrics_cpu_time_auto STR_CONCAT(metrics_cpu_time_auto, __LINE__) { metrics_name, key, MICROSECOND(timeout) }
+
 #define XMETRICS_TIMER_START(metrics_name) top::metrics::e_metrics::get_instance().timer_start(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
 
 #define XMETRICS_TIMER_STOP(metrics_name) top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
@@ -536,6 +573,16 @@ public:
 
 #define XMETRICS_TIMER_STOP_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                              \
     top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now(), key, MICROSECOND(timeout));
+
+#define XMETRICS_CPU_TIMER_START(metrics_name) top::metrics::e_metrics::get_instance().timer_start(ADD_THREAD_HASH(metrics_name), time_point(std::chrono::microseconds{cpu_time()}));
+
+#define XMETRICS_CPU_TIMER_STOP(metrics_name) top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), time_point(std::chrono::microseconds{cpu_time()}));
+
+#define XMETRICS_CPU_TIMER_STOP_KEY(metrics_name, key) top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), time_point(std::chrono::microseconds{cpu_time()}), key);
+
+#define XMETRICS_CPU_TIMER_STOP_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                              \
+    top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), time_point(std::chrono::microseconds{cpu_time()}), key, MICROSECOND(timeout));
+
 
 #define XMETRICS_COUNTER_INCREMENT(metrics_name, value) top::metrics::e_metrics::get_instance().counter_increase(metrics_name, value)
 #define XMETRICS_COUNTER_DECREMENT(metrics_name, value) top::metrics::e_metrics::get_instance().counter_decrease(metrics_name, value)
@@ -551,8 +598,6 @@ public:
     top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name, "alarm"};                                                                   \
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
-#define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
-#define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
@@ -566,18 +611,23 @@ public:
 #define XMETRICS_TIME_RECORD(metrics_name)
 #define XMETRICS_TIME_RECORD_KEY(metrics_name, key)
 #define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)
+#define XMETRICS_CPU_TIME_RECORD(metrics_name)
+#define XMETRICS_CPU_TIME_RECORD_KEY(metrics_name, key)
+#define XMETRICS_CPU_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)
 #define XMETRICS_TIMER_START(metrics_name)
 #define XMETRICS_TIMER_STOP(metrics_name)
 #define XMETRICS_TIMER_STOP_KEY(metrics_name, key)
 #define XMETRICS_TIMER_STOP_KEY_WITH_TIMEOUT(metrics_name, key, timeout)
+#define XMETRICS_CPU_TIMER_START(metrics_name)
+#define XMETRICS_CPU_TIMER_STOP(metrics_name)
+#define XMETRICS_CPU_TIMER_STOP_KEY(metrics_name, key)
+#define XMETRICS_CPU_TIMER_STOP_KEY_WITH_TIMEOUT(metrics_name, key, timeout)
 #define XMETRICS_COUNTER_INCREMENT(metrics_name, value)
 #define XMETRICS_COUNTER_DECREMENT(metrics_name, value)
 #define XMETRICS_COUNTER_SET(metrics_name, value)
 #define XMETRICS_FLOW_COUNT(metrics_name, value)
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_PACKET_ALARM(metrics_name, ...)
-#define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
-#define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
 #define XMETRICS_GAUGE(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG)
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)

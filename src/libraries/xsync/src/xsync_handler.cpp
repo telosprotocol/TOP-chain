@@ -568,7 +568,7 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     }
 
     if (!common::has<common::xnode_type_t::rec>(from_address.type()) && !common::has<common::xnode_type_t::zec>(from_address.type()) &&
-        !common::has<common::xnode_type_t::consensus>(from_address.type())) {
+        !common::has<common::xnode_type_t::consensus>(from_address.type()) && !common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
         xsync_warn("xsync_handler receive cross_cluster_chain_state(source must be consensus) %" PRIx64 " count(%u) %s %s",
             msg_hash, info_list.size(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;

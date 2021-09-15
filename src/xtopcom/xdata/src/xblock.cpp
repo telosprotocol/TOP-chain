@@ -161,24 +161,20 @@ void  xblock_t::batch_units_to_receiptids(const std::vector<xblock_ptr_t> & unit
 
 xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type)
     : base::xvblock_t(header, cert, nullptr, nullptr, type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
 xblock_t::xblock_t(enum_xdata_type type) : base::xvblock_t(type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
 xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type)
   : base::xvblock_t(header, cert, input, output, type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
 xblock_t::~xblock_t() {
     xdbg("xblock_t::~xblock_t %s", dump().c_str());
-    XMETRICS_XBASE_DATA_CATEGORY_DELETE(get_obj_type());
     MEMCHECK_REMOVE_TRACE(this);
 }
 
@@ -365,11 +361,16 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
 xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {
     std::string value = get_input()->query_resource(txhash);
     if (!value.empty()) {
-        xtransaction_ptr_t raw_tx = make_object_ptr<xtransaction_t>();
-        raw_tx->serialize_from_string(value);
+        xtransaction_ptr_t raw_tx;
+        xtransaction_t::set_tx_by_serialized_data(raw_tx, value);
         return raw_tx;
     }
     return nullptr;
+}
+
+uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
+    std::string value = get_input()->query_resource(txhash);
+    return value.size();
 }
 
 std::vector<xlightunit_action_ptr_t> xblock_t::get_lighttable_tx_actions() const {

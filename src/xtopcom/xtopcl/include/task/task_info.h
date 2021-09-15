@@ -3,7 +3,7 @@
 #include <map>
 #include <functional>
 #include <memory>
-#include "xdata/xtransaction.h"
+#include "xdata/xtransaction_v1.h"
 #include <iostream>
 
 namespace xChainSDK {
@@ -18,7 +18,8 @@ namespace xChainSDK {
     class task_info {
     public:
         task_info() : use_transaction(false) {
-            trans_action = top::make_object_ptr<top::data::xtransaction_t>();
+            trans_action = top::make_object_ptr<top::data::xtransaction_v1_t>();
+            trans_action->set_tx_version(2);
         }
         virtual ~task_info() {
         //    std::cout << "destory task_info" << std::endl;

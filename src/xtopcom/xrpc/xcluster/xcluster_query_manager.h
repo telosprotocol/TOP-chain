@@ -9,6 +9,7 @@
 #include "xstore/xstore_face.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnetwork/xvhost_face.h"
+#include "xdata/xtransaction_cache.h"
 
 #include <string>
 #include <utility>
@@ -21,7 +22,8 @@ class xcluster_query_manager {
 public:
     explicit xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                     observer_ptr<base::xvblockstore_t> block_store,
-                                    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service);
+                                    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
+                                    observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr);
     void call_method(xjson_proc_t & json_proc);
     void getAccount(xjson_proc_t & json_proc);
     void getTransaction(xjson_proc_t & json_proc);
@@ -53,5 +55,6 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_service;
     std::unordered_map<std::string, query_method_handler> m_query_method_map;
     chain_info::get_block_handle m_bh;
+    observer_ptr<data::xtransaction_cache_t> m_transaction_cache;
 };
 NS_END2

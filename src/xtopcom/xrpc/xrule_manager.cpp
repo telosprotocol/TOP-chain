@@ -181,16 +181,21 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
     auto & params = json_proc.m_request_json["params"];
 
     // tx version 1
-    if (params.isMember("tx_structure_version")) {
-        xdbg("check tx verison 1");
+    auto version = params["tx_structure_version"].asUInt();
+    auto tx_sender_account_addr = params["sender_action"]["tx_sender_account_addr"].asString();
+    if (version != 2 || !tx_sender_account_addr.empty()) {
         CONDTION_FAIL_THROW(
             params["tx_structure_version"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_structure_version or tx_structure_version is not valid");
-        CONDTION_FAIL_THROW(params["to_ledger_id"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params to_ledger_id or to_ledger_id is not valid");
-        CONDTION_FAIL_THROW(params["from_ledger_id"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params from_ledger_id or from_ledger_id is not valid");
-        CONDTION_FAIL_THROW(params["tx_len"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_len or tx_len is not valid");
-        CONDTION_FAIL_THROW(params["tx_random_nonce"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_random_nonce or tx_random_nonce is not valid");
-        CONDTION_FAIL_THROW(params["last_tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params last_tx_hash or last_tx_hash is not valid");
-        CONDTION_FAIL_THROW(params["challenge_proof"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params challenge_proof or challenge_proof is not valid");
+        if (version != 2) {
+            CONDTION_FAIL_THROW(params["to_ledger_id"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params to_ledger_id or to_ledger_id is not valid");
+            CONDTION_FAIL_THROW(params["from_ledger_id"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params from_ledger_id or from_ledger_id is not valid");
+            CONDTION_FAIL_THROW(params["tx_len"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_len or tx_len is not valid");
+            CONDTION_FAIL_THROW(params["tx_random_nonce"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_random_nonce or tx_random_nonce is not valid");
+            CONDTION_FAIL_THROW(params["last_tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params last_tx_hash or last_tx_hash is not valid");
+            CONDTION_FAIL_THROW(params["challenge_proof"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params challenge_proof or challenge_proof is not valid");
+            CONDTION_FAIL_THROW(params["tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_hash");
+        }
+
         CONDTION_FAIL_THROW(params["sender_action"].isObject(), enum_xrpc_error_code::rpc_param_param_lack, "miss param sender_action");
         CONDTION_FAIL_THROW(params["receiver_action"].isObject(), enum_xrpc_error_code::rpc_param_param_lack, "miss param receiver_action");
         auto & source_action = params["sender_action"];
@@ -218,7 +223,6 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
         CONDTION_FAIL_THROW(target_action["action_authorization"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param receiver_action action_authorization");
         CONDTION_FAIL_THROW(target_action["action_ext"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param receiver_action action_ext");
 
-        CONDTION_FAIL_THROW(params["tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_hash");
         std::string src_addr = source_action["tx_sender_account_addr"].asString();
         std::string dst_addr = target_action["tx_receiver_account_addr"].asString();
         CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr), enum_xrpc_error_code::rpc_param_param_lack, "tx_sender_account_addr invalid");

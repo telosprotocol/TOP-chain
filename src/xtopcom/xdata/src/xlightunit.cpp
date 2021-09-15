@@ -38,16 +38,16 @@ void xlightunit_block_para_t::set_input_txs(const std::vector<xcons_transaction_
 
 xlightunit_block_t::xlightunit_block_t()
 : xblock_t((enum_xdata_type)object_type_value) {
-
+    XMETRICS_GAUGE(metrics::dataobject_block_lightunit, 1);
 }
 
 xlightunit_block_t::xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
-
+    XMETRICS_GAUGE(metrics::dataobject_block_lightunit, 1);
 }
 
 xlightunit_block_t::~xlightunit_block_t() {
-
+    XMETRICS_GAUGE(metrics::dataobject_block_lightunit, -1);
 }
 
 base::xobject_t * xlightunit_block_t::create_object(int type) {
@@ -78,7 +78,7 @@ bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_
     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = get_txs();
     xassert(!txs_info.empty());
     for (auto & tx : txs_info) {
-        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, tx->get_raw_tx().get(), tx->get_tx_hash(), tx->get_tx_subtype());
+        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, dynamic_cast<xdataunit_t*>(tx->get_raw_tx().get()), tx->get_tx_hash(), tx->get_tx_subtype());
         sub_txs.push_back(tx_index);
     }
     return true;

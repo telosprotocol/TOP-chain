@@ -511,7 +511,7 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
         result_json["tx_state"] = "success";
     } else if (cons["confirm_unit_info"]["exec_status"].asString() == "failure") {
         result_json["tx_state"] = "fail";
-    } else if (cons["send_unit_info"]["height"].asUInt64() == 0) {
+    } else if (cons["send_unit_info"]["height"].asUInt64() > 0) {
         result_json["tx_state"] = "queue";
     } else {
         result_json["tx_state"] = "pending";
@@ -524,11 +524,11 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
     xJson::Value result_json;
     xJson::Value cons;
     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
+        xtransaction_ptr_t tx_ptr;
         auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
         tx->add_ref();
-        xtransaction_ptr_t tx_ptr;
         tx_ptr.attach(tx);
-
+        
         xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {

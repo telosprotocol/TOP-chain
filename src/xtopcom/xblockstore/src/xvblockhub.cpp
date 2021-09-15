@@ -918,6 +918,17 @@ namespace top
                     }
                 }
             }
+            else
+            {
+                base::xauto_ptr<base::xvbindex_t> connectindex(query_index(m_meta->_highest_connect_block_height, base::enum_xvblock_flag_committed));
+                if (connectindex != nullptr
+                    && m_meta->_highest_connect_block_height == connectindex->get_height()
+                    && m_meta->_highest_connect_block_hash != connectindex->get_block_hash())
+                {
+                    m_meta->_highest_connect_block_hash = connectindex->get_block_hash();
+                    xwarn("xblockacct_t::load_latest_connected_index,recover _highest_connect_block_hash,account=%s,height=%ld",get_account().c_str(), m_meta->_highest_connect_block_height);
+                }
+            }
 
             bool full_search_more = true;
             if(full_search_more) //search more
@@ -2397,6 +2408,9 @@ namespace top
         }
         void      xblockacct_t::try_execute_all_block(base::xvblock_t * target_block)
         {
+            xassert(false);
+            return;
+#if 0
             if (m_meta->_highest_execute_block_height >= m_meta->_highest_commit_block_height) {
                 return;
             }
@@ -2409,6 +2423,7 @@ namespace top
             // TODO(jimmy) always try to update table state
             base::auto_reference<base::xvblock_t> auto_hold_block_ptr(target_block);
             base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(target_block, metrics::statestore_access_from_blockstore);
+#endif
         }
 
         //return map sorted by viewid from lower to high,caller respond to release ptr later

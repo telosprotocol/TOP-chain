@@ -702,8 +702,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
 }
 
 void ApiMethod::create_chain_account(std::ostringstream & out_str) {
-    cout<<"Please input password:"<<endl;
-    cache_pw = input_hiding();
+    cache_pw = " "; // the password of create account is fixed to be one whitespace
 
     if (!set_default_prikey(out_str)) {
         return;

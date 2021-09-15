@@ -13,6 +13,7 @@
 #include "xerror/xrpc_error.h"
 #include "xerror/xrpc_error_json.h"
 #include "prerequest/xpre_request_handler_server.h"
+#include "xdata/xtransaction_cache.h"
 
 NS_BEG2(top, xrpc)
 #define CLEAN_TIME          60
@@ -28,7 +29,8 @@ class xrpc_service : public xrpc_once_flag{
 public:
     xrpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost, common::xip2_t xip2, bool archive_flag = false, observer_ptr<store::xstore_face_t> store = nullptr,
                  observer_ptr<base::xvblockstore_t> block_store = nullptr, observer_ptr<elect::ElectMain> elect_main = nullptr,
-                 observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+                 observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr,
+                 observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr);
     void execute(shared_ptr<conn_type>& conn, const std::string& content, const std::string & ip);
     void clean_token_timeout(long seconds) noexcept;
     void cancel_token_timeout() noexcept;
@@ -46,10 +48,11 @@ private:
 template<typename T>
 xrpc_service<T>::xrpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost, common::xip2_t xip2, bool archive_flag, observer_ptr<store::xstore_face_t> store,
                               observer_ptr<base::xvblockstore_t> block_store, observer_ptr<elect::ElectMain> elect_main,
-                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
+                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                              observer_ptr<data::xtransaction_cache_t> const & transaction_cache) {
     m_rule_mgr_ptr = top::make_unique<xfilter_manager>();
     m_io_service = std::make_shared<asio::io_service>();
-    m_edge_method_mgr_ptr = top::make_unique<T>(edge_vhost, xip2, m_io_service, archive_flag, store, block_store, elect_main, election_cache_data_accessor);
+    m_edge_method_mgr_ptr = top::make_unique<T>(edge_vhost, xip2, m_io_service, archive_flag, store, block_store, elect_main, election_cache_data_accessor, transaction_cache);
     m_pre_request_handler_mgr_ptr = top::make_unique<xpre_request_handler_mgr>();
     call_once(m_once_flag, [this](){
         clean_token_timeout(CLEAN_TIME);

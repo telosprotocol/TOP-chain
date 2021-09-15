@@ -19,6 +19,7 @@
 #include "xrpc/xrpc_service.hpp"
 #include "xrpc/xratelimit/xratelimit_server.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
+#include "xdata/xtransaction_cache.h"
 
 NS_BEG2(top, xrpc)
 using std::thread;
@@ -29,7 +30,8 @@ class xws_server : public std::enable_shared_from_this<xws_server> {
 public:
     xws_server(shared_ptr<xrpc_edge_vhost> edge_vhost, common::xip2_t xip2, bool archive_flag = false,
                observer_ptr<store::xstore_face_t> store = nullptr, observer_ptr<base::xvblockstore_t> block_store = nullptr, observer_ptr<elect::ElectMain> elect_main = nullptr,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr,
+               observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr);
     void start(uint16_t nPort, uint32_t nThreadNum = 1);
     void start_service(shared_ptr<WsServer::Connection> connection, shared_ptr<WsServer::InMessage> in_message);
     ~xws_server();

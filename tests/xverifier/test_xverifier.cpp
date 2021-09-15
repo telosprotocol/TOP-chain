@@ -262,7 +262,10 @@ TEST_F(test_xverifier, trx_verifier_validation_5_system_contract_call_limit) {
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, trx_verifier_validation_6_unuse_member) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    xtransaction_ptr_t trx_base_ptr = make_a_normal_transfer_tx();
+    trx_base_ptr->add_ref();
+    xtransaction_v1_ptr_t trx_ptr;
+    trx_ptr.attach(dynamic_cast<xtransaction_v1_t*>(trx_base_ptr.get()));
     trx_ptr->set_tx_version(1);
     trx_ptr->set_digest();
     trx_ptr->set_len();
@@ -376,7 +379,7 @@ TEST_F(test_xverifier, trx_verifier_source_1) {
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
     ASSERT_NE(xtx_verifier::verify_send_tx_source(trx_ptr.get(), false), xverifier_error::xverifier_success);
-    trx_ptr->set_signature("111");
+    trx_ptr->set_authorization("111");
     ASSERT_EQ(xtx_verifier::verify_send_tx_source(trx_ptr.get(), false), xverifier_error::xverifier_success);
 }
 
@@ -401,7 +404,7 @@ TEST_F(test_xverifier, trx_verifier_signature_1) {
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
     ASSERT_NE(xtx_verifier::verify_tx_signature(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
-    trx_ptr->set_signature("111");
+    trx_ptr->set_authorization("111");
     ASSERT_NE(xtx_verifier::verify_tx_signature(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
 
     uint8_t addr_type = base::enum_vaccount_addr_type_secp256k1_user_account;
@@ -415,7 +418,7 @@ TEST_F(test_xverifier, trx_verifier_signature_1) {
 
     utl::xecdsasig_t signature_obj = pri_key_obj.sign(trx_ptr->digest());
     auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-    trx_ptr->set_signature(signature);
+    trx_ptr->set_authorization(signature);
     ASSERT_EQ(xtx_verifier::verify_tx_signature(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
 }
 
@@ -425,7 +428,7 @@ TEST_F(test_xverifier, trx_verifier_legitimac_1) {
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
     ASSERT_NE(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
-    trx_ptr->set_signature("111");
+    trx_ptr->set_authorization("111");
     ASSERT_NE(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
 
     uint8_t addr_type = base::enum_vaccount_addr_type_secp256k1_user_account;
@@ -439,7 +442,7 @@ TEST_F(test_xverifier, trx_verifier_legitimac_1) {
 
     utl::xecdsasig_t signature_obj = pri_key_obj.sign(trx_ptr->digest());
     auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-    trx_ptr->set_signature(signature);
+    trx_ptr->set_authorization(signature);
     ASSERT_EQ(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, address_is_valid) {

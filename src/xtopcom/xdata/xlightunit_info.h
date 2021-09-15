@@ -61,7 +61,7 @@ class xlightunit_tx_info_t : public xlightunit_action_t {
     : xlightunit_action_t(_action) {
         if (raw_tx != nullptr) {
             raw_tx->add_ref();
-            m_raw_tx.attach(raw_tx);
+            m_raw_tx.attach(dynamic_cast<xtransaction_t*>(raw_tx));
         }
     }
 

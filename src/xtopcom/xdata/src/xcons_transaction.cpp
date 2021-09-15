@@ -13,28 +13,27 @@ namespace top { namespace data {
 REG_CLS(xcons_transaction_t);
 
 xcons_transaction_t::xcons_transaction_t() {
-    XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
+    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
 }
 
 xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     tx->add_ref();
     m_tx.attach(tx);
-    XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
+    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
     update_transation();
 }
 
 xcons_transaction_t::xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt) {
     if (!full_txreceipt.get_tx_org_bin().empty()) {
-        m_tx = make_object_ptr<data::xtransaction_t>();
-        m_tx->serialize_from_string(full_txreceipt.get_tx_org_bin());
+        xtransaction_t::set_tx_by_serialized_data(m_tx, full_txreceipt.get_tx_org_bin());
     }
     m_receipt = full_txreceipt.get_txreceipt();
-    XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
+    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
     update_transation();
 }
 
 xcons_transaction_t::~xcons_transaction_t() {
-    XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, -1);
+    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, -1);
 }
 
 bool xcons_transaction_t::set_raw_tx(xtransaction_t* raw_tx) {
@@ -116,14 +115,15 @@ int32_t xcons_transaction_t::do_read(base::xstream_t & stream) {
     uint8_t has_tx;
     stream >> has_tx;
     if (has_tx) {
-        xtransaction_t* _tx = (xtransaction_t*)base::xdataunit_t::read_from(stream);
+        auto _tx = base::xdataunit_t::read_from(stream);
         xassert(_tx != nullptr);
-        m_tx.attach(_tx);
+        auto tx = dynamic_cast<xtransaction_t*>(_tx);
+        m_tx.attach(tx);
     }
     uint8_t has_receipt;
     stream >> has_receipt;
     if (has_receipt) {
-        base::xtx_receipt_t* _receipt = (base::xtx_receipt_t*)base::xdataunit_t::read_from(stream);
+        base::xtx_receipt_t* _receipt = dynamic_cast<base::xtx_receipt_t*>(base::xdataunit_t::read_from(stream));
         xassert(_receipt != nullptr);
         m_receipt.attach(_receipt);
     }
