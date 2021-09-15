@@ -330,7 +330,6 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         receipt->serialize_to(stream);
-        // pair.do_write(stream);
         vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()},
                                                         receipt->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
 

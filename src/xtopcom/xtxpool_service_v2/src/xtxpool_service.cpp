@@ -529,10 +529,8 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
         xassert(cons_tx->is_recv_tx());
         base::xtable_index_t target_tableindex = cons_tx->get_self_table_index();  // receipt should send to self table
 
-        base::xreceiptid_pair_t pair;
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);
-        pair.do_write(stream);
         vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_recv_receipt);
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(cons_tx, para);

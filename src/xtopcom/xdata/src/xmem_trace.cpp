@@ -58,6 +58,7 @@ bool xmemtrace_plugin_t::on_object_releaseref(xobject_t* target) {
 void xmemtrace_plugin_t::init() {
     xkinfo("xmemtrace_plugin_t::init");
     xmemtrace_plugin_t * dbg_plugin = new xmemtrace_plugin_t();
+    top::base::xobject_t::set_mem_tracking_mode(true);
     top::base::xcontext_t::instance().set_debug_modes(top::base::xcontext_t::enum_debug_mode_memory_check);
     top::base::xcontext_t::instance().set_debug_plugin(dbg_plugin);
 }

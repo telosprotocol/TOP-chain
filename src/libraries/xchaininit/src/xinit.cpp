@@ -512,7 +512,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
         count++;
 
 #if defined XENABLE_MEMTRACE_DBG
-        if (count > 12) {
+        if (count > 6) {
             count = 0;
             std::map<int,int64_t> type_mem_info;
             top::base::xcontext_t::instance().get_object_mem_info(type_mem_info);
