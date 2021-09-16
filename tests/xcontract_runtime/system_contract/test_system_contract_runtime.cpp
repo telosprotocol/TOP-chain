@@ -258,6 +258,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_fail) {
     auto amount = transfer_contract->src_action_asset_amount(err);
     assert(err); // have error
     EXPECT_EQ(err.value(), (int)contract_common::error::xerrc_t::src_action_asset_not_exist);
+    err.clear();
     auto token_name = transfer_contract->src_action_asset_name(err);
     assert(err); // have error
     EXPECT_EQ(err.value(), (int)contract_common::error::xerrc_t::src_action_asset_not_exist);
