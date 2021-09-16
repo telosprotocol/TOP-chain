@@ -70,6 +70,14 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_key_block_output,
     db_key_block_output_resource,
     db_key_block_state,
+    db_read,
+    db_write,
+    db_delete,
+    db_read_size,
+    db_write_size,
+    db_read_tick,
+    db_write_tick,
+    db_delete_tick,
 
     // consensus
     cons_drand_leader_finish_succ,
@@ -611,6 +619,7 @@ public:
     metrics_appendant_info m_key;
     microseconds m_timed_out;
 };
+
 #define XMETRICS_INIT()                                                                                                                                                            \
     {                                                                                                                                                                              \
         auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
@@ -681,6 +690,24 @@ public:
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
+class simple_metrics_tickcounter {
+public:
+    simple_metrics_tickcounter(E_SIMPLE_METRICS_TAG tag) {
+        m_start = cpu_time();
+    }
+
+    ~simple_metrics_tickcounter() {
+        uint64_t end = cpu_time();
+        top::metrics::e_metrics::get_instance().gauge(m_tag, end - m_start);
+    }
+private:
+    E_SIMPLE_METRICS_TAG m_tag;
+    uint64_t m_start;
+};
+
+#define XMETRICS_TIMER(tag) \
+    metrics::simple_metrics_tickcounter tick(tag); // micro seconds
+
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_increase(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_decrease(metrics_name, index, value)
 #define XMETRICS_ARRCNT_SET(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_set(metrics_name, index, value)
@@ -713,6 +740,7 @@ public:
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_SET(metrics_name, index, value)
+#define XMETRICS_TIMER(tag)
 #endif
 
 NS_END2

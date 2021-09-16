@@ -56,6 +56,14 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_key_block_output);
         RETURN_METRICS_NAME(db_key_block_output_resource);
         RETURN_METRICS_NAME(db_key_block_state);
+        RETURN_METRICS_NAME(db_read);
+        RETURN_METRICS_NAME(db_write);
+        RETURN_METRICS_NAME(db_delete);
+        RETURN_METRICS_NAME(db_read_size);
+        RETURN_METRICS_NAME(db_write_size);
+        RETURN_METRICS_NAME(db_read_tick);
+        RETURN_METRICS_NAME(db_write_tick);
+        RETURN_METRICS_NAME(db_delete_tick);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
