@@ -62,6 +62,12 @@ common::xnode_address_t xtop_vnetwork_driver::parent_group_address() const {
     return m_vhost->parent_group_address(m_address);
 }
 
+void msg_metrics(xmessage_t const & message,  metrics::E_SIMPLE_METRICS_TAG tag_start) {
+        auto const message_category = common::get_message_category(message.id());
+        auto delta = (uint16_t)message_category - (uint16_t)xmessage_category_consensus;
+        XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)(tag_start + delta), 1);
+}
+
 void xtop_vnetwork_driver::send_to(common::xnode_address_t const & to, xmessage_t const & message, network::xtransmission_property_t const & transmission_property) {
     assert(m_vhost);
     #if VHOST_METRICS
@@ -69,6 +75,7 @@ void xtop_vnetwork_driver::send_to(common::xnode_address_t const & to, xmessage_
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
     #endif
+    msg_metrics(message, metrics::message_send_category_begin);
     m_vhost->send(message, m_address, to, transmission_property);
 }
 
@@ -79,6 +86,7 @@ void xtop_vnetwork_driver::broadcast(xmessage_t const & message) {
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
     #endif
+    msg_metrics(message, metrics::message_broad_category_begin);
     m_vhost->broadcast(message, m_address);
 }
 
@@ -89,21 +97,25 @@ void xtop_vnetwork_driver::forward_broadcast_message(xmessage_t const & message,
                                    "_out_vnetwork_driver_forward_broadcast_message" + std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
     #endif
+    msg_metrics(message, metrics::message_broad_category_begin);
     m_vhost->forward_broadcast_message(message, m_address, dst);
 }
 
 void xtop_vnetwork_driver::broadcast_to(common::xnode_address_t const & dst, xmessage_t const & message) {
     assert(m_vhost);
+    msg_metrics(message, metrics::message_broad_category_begin);
     m_vhost->broadcast_to_all(message, address(), dst);
 }
 
 void xtop_vnetwork_driver::send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) {
     assert(m_vhost);
+    msg_metrics(message, metrics::message_send_category_begin);
     m_vhost->send(m_address, to, message, ec);
 }
 
 void xtop_vnetwork_driver::broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) {
     assert(m_vhost);
+    msg_metrics(message, metrics::message_broad_category_begin);
     m_vhost->broadcast(m_address, to, message, ec);
 }
 

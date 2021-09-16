@@ -12,7 +12,7 @@ NS_BEG2(top, mbus)
 
 // <editor-fold defaultstate="collapsed" desc="event type network">
 
-class xevent_network_t : public xevent_t {
+class xevent_network_t : public xbus_event_t {
 public:
 
     enum _minor_type_ {
@@ -28,7 +28,7 @@ public:
             int _minor_type = (int) none,
             direction_type dir = to_listener,
             bool _sync = true) :
-    xevent_t(xevent_major_type_network,
+    xbus_event_t(xevent_major_type_network,
     _minor_type,
     dir,
     _sync),
