@@ -389,7 +389,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
     
     blockstore_access_from_vnodesrv,
-
+    blockstore_tick,
     // statestore
     statestore_access,
     statestore_access_begin,

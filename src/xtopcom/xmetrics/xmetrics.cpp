@@ -348,6 +348,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_bft_init_blk);
 
         RETURN_METRICS_NAME(blockstore_access_from_vnodesrv);
+        RETURN_METRICS_NAME(blockstore_tick);
 
         // state store
         RETURN_METRICS_NAME(statestore_access);
