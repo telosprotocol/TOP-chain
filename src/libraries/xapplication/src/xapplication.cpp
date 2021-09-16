@@ -90,8 +90,8 @@ void xtop_application::start() {
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
 
-    contract_runtime::system::xtop_system_contract_manager::instance().initialize(m_blockstore.get());
-    contract_runtime::system::xtop_system_contract_manager::instance().deploy();
+    contract_runtime::system::xtop_system_contract_manager::instance()->initialize(m_blockstore.get());
+    contract_runtime::system::xtop_system_contract_manager::instance()->deploy();
 
     // m_sys_contract_mgr->deploy();
 

@@ -12,9 +12,16 @@ NS_BEG2(top, contract_common)
 enum class xenum_followup_transaction_schedule_type {
     invalid,
     immediately,
-    normal
+    delay
 };
 using xfollowup_transaction_schedule_type_t = xenum_followup_transaction_schedule_type;
+
+enum class xenum_followup_transaction_execute_type {
+    unexecuted,
+    success,
+    fail
+};
+using xfollowup_transaction_execute_type_t = xenum_followup_transaction_execute_type;
 
 struct xtop_followup_transaction_datum {
     xtop_followup_transaction_datum() = default;
@@ -28,6 +35,7 @@ struct xtop_followup_transaction_datum {
 
     data::xcons_transaction_ptr_t followed_transaction{nullptr};
     xfollowup_transaction_schedule_type_t schedule_type{xfollowup_transaction_schedule_type_t::invalid};
+    xfollowup_transaction_execute_type_t execute_type{xfollowup_transaction_execute_type_t::unexecuted};
 };
 using xfollowup_transaction_datum_t = xtop_followup_transaction_datum;
 

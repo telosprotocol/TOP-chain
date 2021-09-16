@@ -60,7 +60,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     xobject_ptr_t<base::xvbstate_t> bstate =
         make_object_ptr<base::xvbstate_t>(contract_address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     auto property_access_control =
-        top::make_unique<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+        top::make_unique<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     auto contract_state = top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(property_access_control.get()));
 
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());

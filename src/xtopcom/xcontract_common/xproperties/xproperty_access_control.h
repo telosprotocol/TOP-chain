@@ -31,6 +31,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xserializable_based_on.h"
 #include "xcommon/xaddress.h"
+#include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xstate_accessor/xaccess_control_data.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
@@ -56,6 +57,10 @@ private:
     top::observer_ptr<top::base::xvbstate_t> bstate_;
     top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
     state_accessor::xstate_access_control_data_t ac_data_;
+    const contract_common::xcontract_execution_param_t m_param;
+
+    uint64_t m_latest_sendtx_nonce;
+    uint256_t m_latest_sendtx_hash;
 
 public:
     xtop_property_access_control(xtop_property_access_control const&) = delete;
@@ -64,7 +69,9 @@ public:
     xtop_property_access_control& operator=(xtop_property_access_control&&) = default;
     ~xtop_property_access_control() =  default;
 
-    explicit xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate, state_accessor::xstate_access_control_data_t ac_data);
+    explicit xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate,
+                                          state_accessor::xstate_access_control_data_t ac_data,
+                                          contract_common::xcontract_execution_param_t const & param);
 
     /***********************************************************************/
     /*****************        attribute related apis       *****************/
@@ -479,10 +486,22 @@ public:
 
     uint64_t blockchain_height() const;
 
+    uint256_t load_latest_sendtx_hash(std::error_code& ec) const;
+    uint64_t  load_latest_sendtx_nonce(std::error_code& ec) const;
+    void update_latest_sendtx_hash(std::error_code& ec);
+    void update_latest_sendtx_nonce(std::error_code& ec);
     uint256_t latest_sendtx_hash(std::error_code& ec) const;
     uint256_t latest_sendtx_hash() const;
+    void latest_sendtx_hash(uint256_t hash, std::error_code& ec);
+    void latest_sendtx_hash(uint256_t hash);
     uint64_t  latest_sendtx_nonce(std::error_code& ec) const;
     uint64_t  latest_sendtx_nonce() const;
+    void latest_sendtx_nonce(uint64_t nonce, std::error_code& ec);
+    void latest_sendtx_nonce(uint64_t nonce);
+    bool verify_sendtx_nonce(data::xcons_transaction_ptr_t const & trans, std::error_code & ec);
+
+    void create_time(std::error_code& ec);
+    void create_time();
 
 
     virtual void load_access_control_data(std::string const & json);

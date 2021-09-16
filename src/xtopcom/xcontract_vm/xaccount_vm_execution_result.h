@@ -22,6 +22,8 @@ using xaccount_vm_execution_status_t = xtop_account_vm_execution_status;
 struct xtop_account_vm_execution_result {
     xaccount_vm_execution_status_t status;
     std::vector<contract_runtime::xtransaction_execution_result_t> transaction_results;
+    std::string binlog;
+    std::string contract_state_snapshot;
 };
 using xaccount_vm_execution_result_t = xtop_account_vm_execution_result;
 

@@ -54,15 +54,33 @@ xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t
 template <typename ActionT>
 xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
                                                                              contract_common::xcontract_execution_param_t param) {
+    xtransaction_execution_result_t result;
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), m_contract_state, param)};
+
+    std::error_code ec;
+    if (false == execution_context->verify_action(ec)) {
+        assert(ec);
+        result.status.ec = ec;
+    }
+
     assert(m_associated_runtime != nullptr);
     auto observed_exectx = top::make_observer(execution_context.get());
 
     xscope_executer_t reset_action{ [&execution_context] {
         execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
     } };
-    execution_context->consensus_action_stage(execution_context->action_stage());
-    auto result = m_associated_runtime->execute(observed_exectx);
+    auto stage = execution_context->action_stage();
+    execution_context->consensus_action_stage(stage);
+    if (stage == data::xconsensus_action_stage_t::send) {
+        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::source_action);
+    } else if (stage == data::xconsensus_action_stage_t::recv || stage == data::xconsensus_action_stage_t::self) {
+        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
+    } else if (stage == data::xconsensus_action_stage_t::confirm) {
+        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::confirm_action);
+    } else {
+        assert(false);
+    }
+    result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;
     }
