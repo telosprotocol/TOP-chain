@@ -11,12 +11,12 @@ NS_BEG2(top, mbus)
 
 // <editor-fold defaultstate="collapsed" desc="event type timer">
 
-class xevent_timer_t : public xevent_t {
+class xevent_timer_t : public xbus_event_t {
 public:
 
     xevent_timer_t(uint32_t ms_interval = 1000,
             bool _sync = false) :
-    xevent_t(xevent_major_type_timer,
+    xbus_event_t(xevent_major_type_timer,
     0,
     to_listener,
     _sync),
@@ -29,11 +29,11 @@ public:
 
 using xevent_timer_ptr_t = xobject_ptr_t<xevent_timer_t>;
 
-class xevent_chain_timer_t : public xevent_t {
+class xevent_chain_timer_t : public xbus_event_t {
 public:
 
     xevent_chain_timer_t(base::xvblock_t* _time_block) :
-    xevent_t(xevent_major_type_chain_timer,
+    xbus_event_t(xevent_major_type_chain_timer,
     0,
     to_listener,
     false),

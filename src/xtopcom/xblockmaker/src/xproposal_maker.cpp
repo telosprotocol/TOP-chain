@@ -62,6 +62,7 @@ xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t* bloc
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para) {
+    XMETRICS_TIMER(metrics::cons_make_proposal_tick);
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
     xtablestate_ptr_t tablestate = get_target_tablestate(latest_cert_block.get());
@@ -117,6 +118,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 }
 
 int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
+    XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
     xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height());
 

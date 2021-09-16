@@ -10,7 +10,7 @@
 
 NS_BEG2(top, mbus)
 
-class xevent_sync_executor_t : public xevent_t {
+class xevent_sync_executor_t : public xbus_event_t {
 public:
 
     enum _minor_type_ {
@@ -22,7 +22,7 @@ public:
     xevent_sync_executor_t(_minor_type_ mt = none,
             direction_type dir = to_listener,
             bool _sync = true) :
-    xevent_t(xevent_major_type_sync_executor,
+    xbus_event_t(xevent_major_type_sync_executor,
     (int) mt,
     dir,
     _sync) {

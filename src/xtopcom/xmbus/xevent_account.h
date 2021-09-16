@@ -5,7 +5,7 @@
 
 NS_BEG2(top, mbus)
 
-class xevent_account_t : public xevent_t {
+class xevent_account_t : public xbus_event_t {
 public:
     enum _minor_type_ {
         none,
@@ -14,7 +14,7 @@ public:
     };
 
     xevent_account_t(_minor_type_ type)
-    : xevent_t(xevent_major_type_account, type, to_listener, true) {
+    : xbus_event_t(xevent_major_type_account, type, to_listener, true) {
     }
 };
 

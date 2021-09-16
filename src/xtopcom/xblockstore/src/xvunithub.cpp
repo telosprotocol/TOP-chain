@@ -86,6 +86,7 @@ namespace top
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
                 return nullptr;\
             }\
+            XMETRICS_TIMER(metrics::blockstore_tick);\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
                 xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
@@ -100,6 +101,7 @@ namespace top
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
                 return 0;\
             }\
+            XMETRICS_TIMER(metrics::blockstore_tick);\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
                 xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
