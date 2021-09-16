@@ -1094,6 +1094,8 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
             xaccount_context_t::deserilize_vote_map_field(v.first, duration, lock_time);
             xaccount_context_t::deserilize_vote_map_value(v.second, vote_num);
             xdbg("pledge_redeem_vote %d, %d, %d", vote_num, duration, lock_time);
+            if (vote_num == 0)
+                continue;
             xJson::Value j;
             j["vote_num"] = static_cast<unsigned long long>(vote_num);
             if (duration != 0)
