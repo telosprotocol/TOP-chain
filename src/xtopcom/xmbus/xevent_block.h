@@ -12,7 +12,7 @@
 
 NS_BEG2(top, mbus)
 
-class xevent_block_t : public xevent_t {
+class xevent_block_t : public xbus_event_t {
 public:
 
     enum _minor_type_ {
@@ -24,7 +24,7 @@ public:
             bool _new_block,
             direction_type dir = to_listener,
             bool _sync = true) :
-    xevent_t(xevent_major_type_block,
+    xbus_event_t(xevent_major_type_block,
     (int) none,
     dir,
     _sync),

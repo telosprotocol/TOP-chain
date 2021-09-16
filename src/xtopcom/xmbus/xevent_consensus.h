@@ -14,7 +14,7 @@ NS_BEG2(top, mbus)
 
 using namespace top;
 
-class xevent_consensus_t : public xevent_t {
+class xevent_consensus_t : public xbus_event_t {
 public:
 
     enum _minor_type_ {
@@ -25,7 +25,7 @@ public:
             int minor_type,
             direction_type dir = to_listener,
             bool _sync = true) :
-    xevent_t(
+    xbus_event_t(
     xevent_major_type_consensus,
     minor_type,
     dir,

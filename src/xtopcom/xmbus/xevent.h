@@ -6,6 +6,7 @@
 
 #include "xbase/xobject_ptr.h"
 #include "xbase/xvevent.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, mbus)
 
@@ -32,6 +33,20 @@ enum xevent_major_type_t {
     xevent_major_type_blockfetcher,
     xevent_major_type_sync,
     xevent_major_type_max
+};
+
+class xbus_event_t : public xevent_t {
+public:
+    explicit xbus_event_t(int _major_type,
+                     int _minor_type = 0,
+                     direction_type dir = to_listener,
+                     bool _sync = true) 
+        : xevent_t(_major_type, _minor_type, dir, _sync) {
+            XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + _major_type), 1);
+        }
+    virtual ~xbus_event_t() {
+        XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + major_type), -1);
+    }
 };
 
 NS_END2

@@ -56,6 +56,14 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_key_block_output);
         RETURN_METRICS_NAME(db_key_block_output_resource);
         RETURN_METRICS_NAME(db_key_block_state);
+        RETURN_METRICS_NAME(db_read);
+        RETURN_METRICS_NAME(db_write);
+        RETURN_METRICS_NAME(db_delete);
+        RETURN_METRICS_NAME(db_read_size);
+        RETURN_METRICS_NAME(db_write_size);
+        RETURN_METRICS_NAME(db_read_tick);
+        RETURN_METRICS_NAME(db_write_tick);
+        RETURN_METRICS_NAME(db_delete_tick);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
@@ -81,6 +89,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
+        RETURN_METRICS_NAME(cons_make_proposal_tick);
+        RETURN_METRICS_NAME(cons_verify_proposal_tick);
 
         // store
         RETURN_METRICS_NAME(store_db_read);
@@ -143,6 +153,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
         RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
 
+        RETURN_METRICS_NAME(message_category_recv);
         RETURN_METRICS_NAME(message_category_consensus);
         RETURN_METRICS_NAME(message_category_timer);
         RETURN_METRICS_NAME(message_category_txpool);
@@ -151,12 +162,67 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast);
         RETURN_METRICS_NAME(message_category_unknown);
 
+        RETURN_METRICS_NAME(message_category_send);
+        RETURN_METRICS_NAME(message_send_category_consensus);
+        RETURN_METRICS_NAME(message_send_category_timer);
+        RETURN_METRICS_NAME(message_send_category_txpool);
+        RETURN_METRICS_NAME(message_send_category_rpc);
+        RETURN_METRICS_NAME(message_send_category_sync);
+        RETURN_METRICS_NAME(message_send_block_broadcast);
+        RETURN_METRICS_NAME(message_send_category_unknown);
+
+        RETURN_METRICS_NAME(message_category_broad);
+        RETURN_METRICS_NAME(message_broad_category_consensus);
+        RETURN_METRICS_NAME(message_broad_category_timer);
+        RETURN_METRICS_NAME(message_broad_category_txpool);
+        RETURN_METRICS_NAME(message_broad_category_rpc);
+        RETURN_METRICS_NAME(message_broad_category_sync);
+        RETURN_METRICS_NAME(message_broad_block_broadcast);
+        RETURN_METRICS_NAME(message_broad_category_unknown);
+
         // sync 
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
         RETURN_METRICS_NAME(xsync_recv_invalid_block);
         RETURN_METRICS_NAME(xsync_recv_duplicate_block);
         RETURN_METRICS_NAME(xsync_recv_block_size);
+        RETURN_METRICS_NAME(xsync_getblocks_recv_req);
+        RETURN_METRICS_NAME(xsync_getblocks_send_resp);
+        RETURN_METRICS_NAME(xsync_recv_broadcast_newblockhash);
+        RETURN_METRICS_NAME(xsync_recv_blocks);
+        RETURN_METRICS_NAME(xsync_recv_blocks_size);
+        RETURN_METRICS_NAME(xsync_handler_blocks);
+        RETURN_METRICS_NAME(xsync_recv_gossip_recv);
+        RETURN_METRICS_NAME(xsync_bytes_gossip_recv);
+        RETURN_METRICS_NAME(xsync_recv_get_on_demand_blocks);
+        RETURN_METRICS_NAME(xsync_recv_get_on_demand_blocks_bytes);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_blocks);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_blocks_bytes);
+        RETURN_METRICS_NAME(xsync_recv_broadcast_chain_state);
+        RETURN_METRICS_NAME(xsync_recv_broadcast_chain_state_bytes);
+        RETURN_METRICS_NAME(xsync_recv_response_chain_state);
+        RETURN_METRICS_NAME(xsync_recv_response_chain_state_bytes);
+        RETURN_METRICS_NAME(xsync_recv_cross_cluster_chain_state);
+        RETURN_METRICS_NAME(xsync_recv_cross_cluster_chain_state_bytes);
+        RETURN_METRICS_NAME(xsync_recv_blocks_by_hashes);
+        RETURN_METRICS_NAME(xsync_recv_blocks_by_hashes_bytes);
+        RETURN_METRICS_NAME(xsync_handler_blocks_by_hashes);
+        RETURN_METRICS_NAME(xsync_cost_role_add_event);
+        RETURN_METRICS_NAME(xsync_cost_role_remove_event);
+        RETURN_METRICS_NAME(xsync_handle_chain_snapshot_request);
+        RETURN_METRICS_NAME(xsync_handler_chain_snapshot_reponse);
+        RETURN_METRICS_NAME(xsync_handle_ondemand_chain_snapshot_request);
+        RETURN_METRICS_NAME(xsync_handle_ondemand_chain_snapshot_reponse);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_by_hash_blocks_req);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_by_hash_blocks_req_bytes);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_by_hash_blocks_resp);
+        RETURN_METRICS_NAME(xsync_recv_on_demand_by_hash_blocks_resp_bytes);
+        RETURN_METRICS_NAME(xsync_behind_download);
+        RETURN_METRICS_NAME(xsync_behind_check);
+        RETURN_METRICS_NAME(xsync_behind_on_demand);
+        RETURN_METRICS_NAME(xsync_behind_on_demand_by_hash);
+        RETURN_METRICS_NAME(xsync_recv_get_blocks_by_hashes);
+        RETURN_METRICS_NAME(xsync_recv_get_blocks_by_hashes_bytes);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
@@ -285,6 +351,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_bft_init_blk);
 
         RETURN_METRICS_NAME(blockstore_access_from_vnodesrv);
+        RETURN_METRICS_NAME(blockstore_tick);
 
         // state store
         RETURN_METRICS_NAME(statestore_access);
@@ -327,6 +394,23 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
 
         RETURN_METRICS_NAME(txexecutor_total_system_contract_count);
         RETURN_METRICS_NAME(txexecutor_system_contract_failed_count);
+
+        RETURN_METRICS_NAME(xevent_major_type_none);
+        RETURN_METRICS_NAME(xevent_major_type_timer);
+        RETURN_METRICS_NAME(xevent_major_type_chain_timer);
+        RETURN_METRICS_NAME(xevent_major_type_store);
+        RETURN_METRICS_NAME(xevent_major_type_sync_executor);
+        RETURN_METRICS_NAME(xevent_major_type_network);
+        RETURN_METRICS_NAME(xevent_major_type_dispatch);      
+        RETURN_METRICS_NAME(xevent_major_type_deceit);
+        RETURN_METRICS_NAME(xevent_major_type_consensus);
+        RETURN_METRICS_NAME(xevent_major_type_transaction);
+        RETURN_METRICS_NAME(xevent_major_type_behind);
+        RETURN_METRICS_NAME(xevent_major_type_vnode);
+        RETURN_METRICS_NAME(xevent_major_type_account);
+        RETURN_METRICS_NAME(xevent_major_type_role);
+        RETURN_METRICS_NAME(xevent_major_type_blockfetcher);
+        RETURN_METRICS_NAME(xevent_major_type_sync);
 
         default: assert(false); return nullptr;
     }
@@ -544,7 +628,10 @@ xsimple_merics_category g_cates[] = {
     {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end},
     {statestore_access, statestore_access_begin, statestore_access_end},
     {blockstore_access_from_mbus, blockstore_access_from_mbus_begin, blockstore_access_from_mbus_end},
-    {blockstore_access_from_rpc, blockstore_access_from_rpc_begin, blockstore_access_from_rpc_end}
+    {blockstore_access_from_rpc, blockstore_access_from_rpc_begin, blockstore_access_from_rpc_end},
+    {message_category_recv, message_category_begin, message_category_end},
+    {message_category_send, message_send_category_begin, message_send_category_end},
+    {message_category_broad, message_broad_category_begin, message_broad_category_end}
 };
 
 bool is_category(E_SIMPLE_METRICS_TAG tag) {

@@ -16,9 +16,9 @@
 
 NS_BEG2(top, mbus)
 
-struct xevent_vnode_t : public xevent_t {
+struct xevent_vnode_t : public xbus_event_t {
     xevent_vnode_t(bool _destory, std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face> const & _unit_service, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & _driver)
-      : xevent_t(xevent_major_type_vnode), destory(_destory), unit_service(_unit_service), driver(_driver) {}
+      : xbus_event_t(xevent_major_type_vnode), destory(_destory), unit_service(_unit_service), driver(_driver) {}
 
     void wait() {
         std::unique_lock<std::mutex> lk(lock);

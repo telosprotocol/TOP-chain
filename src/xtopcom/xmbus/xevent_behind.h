@@ -11,10 +11,11 @@
 #include "xdata/xblock.h"
 #include "xvnetwork/xaddress.h"
 #include "xsyncbase/xsync_policy.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, mbus)
 
-class xevent_behind_t : public xevent_t {
+class xevent_behind_t : public xbus_event_t {
 public:
 
     enum _minor_type_ {
@@ -26,7 +27,8 @@ public:
 
     xevent_behind_t(_minor_type_ sub_type,
             direction_type dir = to_listener, bool _sync = true)
-    : xevent_t(xevent_major_type_behind, (int) sub_type, dir, _sync) {
+    : xbus_event_t(xevent_major_type_behind, (int) sub_type, dir, _sync) {
+
     }
 };
 
@@ -54,6 +56,7 @@ public:
     self_addr(_self_addr),
     from_addr(_from_addr),
     reason(_reason) {
+        XMETRICS_GAUGE(metrics::xsync_behind_download, 1);
     }
 
     std::string address;
@@ -78,6 +81,7 @@ public:
     xevent_behind_t(type_check, dir, _sync),
     address(_address),
     reason(_reason) {
+        XMETRICS_GAUGE(metrics::xsync_behind_check, 1);
     }
 
     std::string address;
@@ -100,6 +104,7 @@ public:
     count(_count),
     is_consensus(_is_consensus),
     reason(_reason) {
+        XMETRICS_GAUGE(metrics::xsync_behind_on_demand, 1);
     }
 
     std::string address;
@@ -121,6 +126,7 @@ public:
     address(_address),
     hash(_hash),
     reason(_reason) {
+        XMETRICS_GAUGE(metrics::xsync_behind_on_demand_by_hash, 1);
     }
 
     std::string address;

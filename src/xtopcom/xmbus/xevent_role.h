@@ -5,7 +5,7 @@
 
 NS_BEG2(top, mbus)
 
-class xevent_role_t : public xevent_t {
+class xevent_role_t : public xbus_event_t {
 public:
     enum _minor_type_ {
         none,
@@ -14,7 +14,7 @@ public:
     };
 
     xevent_role_t(_minor_type_ type, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver)
-    : xevent_t(xevent_major_type_role, type, to_listener, true)
+    : xbus_event_t(xevent_major_type_role, type, to_listener, true)
     , m_vnetwork_driver(vnetwork_driver) {
     }
 

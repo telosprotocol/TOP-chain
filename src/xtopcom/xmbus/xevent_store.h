@@ -15,7 +15,7 @@ NS_BEG2(top, mbus)
 // <editor-fold defaultstate="collapsed" desc="event type store">
 // published by store, common to ask missed things
 
-class xevent_store_t : public xevent_t {
+class xevent_store_t : public xbus_event_t {
 public:
 
     enum _minor_type_ {
@@ -29,7 +29,7 @@ public:
             const std::string& _owner,
             direction_type dir = to_listener,
             bool _sync = true) :
-    xevent_t(xevent_major_type_store,
+    xbus_event_t(xevent_major_type_store,
     (int) sub_type,
     dir,
     _sync),
