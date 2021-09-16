@@ -70,11 +70,13 @@ public:
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
-    xbyte_buffer_t source_action_data() const;
-    xbyte_buffer_t target_action_data() const;
+    std::string source_action_data() const;
+    std::string target_action_data() const;
     data::xconsensus_action_stage_t action_stage() const;
 
     common::xlogic_time_t time() const;
+
+    bool verify_action(std::error_code & ec);
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;
 

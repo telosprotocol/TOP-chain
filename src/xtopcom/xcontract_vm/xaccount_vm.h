@@ -35,6 +35,13 @@
 
 NS_BEG2(top, contract_vm)
 
+struct xtop_account_vm_execution_assemble {
+    std::vector<data::xcons_transaction_ptr_t> txs;
+    xobject_ptr_t<base::xvbstate_t> block_state;
+    data::xblock_consensus_para_t cs_para;
+};
+using xaccount_vm_execution_assemble_t = xtop_account_vm_execution_assemble;
+
 class xtop_account_vm : public xvm_executor_face_t {
 private:
     std::unique_ptr<contract_runtime::user::xuser_action_runtime_t> user_action_runtime_{top::make_unique<contract_runtime::user::xuser_action_runtime_t>()};
@@ -50,9 +57,17 @@ public:
 
     explicit xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & system_contract_manager);
 
+    std::vector<xaccount_vm_execution_result_t> execute(std::vector<xaccount_vm_execution_assemble_t> & assemble);
+
     xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
                                            xobject_ptr_t<base::xvbstate_t> block_state,
                                            const data::xblock_consensus_para_t & cs_para) override;
+
+private:
+    contract_runtime::xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
+                                                                     contract_common::properties::xproperty_access_control_t & ac,
+                                                                     const contract_common::xcontract_execution_param_t & param);
+    void abort(const size_t start_index, const size_t size, xaccount_vm_execution_result_t & result);
 };
 using xaccount_vm_t = xtop_account_vm;
 

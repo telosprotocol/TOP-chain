@@ -80,40 +80,65 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
 
-    if (input_txs.size() == 1 &&
-        input_txs[0]->get_tx_subtype() == base::enum_transaction_subtype_recv &&
-        input_txs[0]->get_transaction()->get_target_addr() == sys_contract_rec_standby_pool_addr) {
+    bool new_vm{false};
+    if (input_txs.size() == 1 && input_txs[0]->get_tx_subtype() == enum_transaction_subtype_recv) {
+        if (input_txs[0]->get_target_addr() == sys_contract_rec_standby_pool_addr || input_txs[0]->get_target_addr() == sys_contract_rec_registration_addr) {
+            new_vm = true;
+        }
+    }
+    if (new_vm) {
+        for (auto const & tx : input_txs) {
+            printf("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+        }
         xassert(!cs_para.get_table_account().empty());
         xassert(!cs_para.get_random_seed().empty());
         xassert(cs_para.get_table_proposal_height() > 0);
 
-        auto system_contract_manager = make_unique<contract_runtime::system::xsystem_contract_manager_t>();
-        system_contract_manager.reset(&contract_runtime::system::xsystem_contract_manager_t::instance());
+        // auto system_contract_manager = make_unique<contract_runtime::system::xsystem_contract_manager_t>();
+        auto * system_contract_manager = contract_runtime::system::xsystem_contract_manager_t::instance();
         xassert(system_contract_manager != nullptr);
         auto _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
         auto proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
-
-        contract_vm::xaccount_vm_t vm(system_contract_manager);
+        contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
         auto result = vm.execute(input_txs, proposal_bstate, cs_para);
 
-        size_t last_success_index = 0;
+        std::vector<xcons_transaction_ptr_t> output_txs = input_txs;
+        std::vector<xcons_transaction_ptr_t> follow_up_immediate_txs;
+        std::vector<xcons_transaction_ptr_t> follow_up_delay_txs;
         for (auto i = 0u; i < result.transaction_results.size(); i++) {
             auto const & r = result.transaction_results[i];
+            auto & tx = output_txs[i];
             if (r.status.ec) {
-                input_txs[i]->set_current_exec_status(enum_xunit_tx_exec_status_fail);
-                lightunit_build_para->set_fail_tx(input_txs[i]);
+                tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
+                if (tx->is_send_tx() || tx->is_self_tx()) {
+                    lightunit_build_para->set_fail_tx(tx);
+                } else if (tx->is_recv_tx()) {
+                    lightunit_build_para->set_pack_tx(tx);
+                } else {
+                    xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
+                }
             } else {
-                input_txs[i]->set_current_exec_status(enum_xunit_tx_exec_status_success);
-                lightunit_build_para->set_pack_tx(input_txs[i]);
-                // for (auto tx : r.output.followup_transaction_data) {
-                //     lightunit_build_para->set_pack_tx(tx.followed_transaction);
-                //     printf("tx %d add one new create tx\n", i);
-                //     xdbg("tx %d fail\n", i);
-                // }
-                last_success_index = i;
+                tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+                lightunit_build_para->set_pack_tx(tx);
+                for (auto & follow_up : r.output.followup_transaction_data) {
+                    if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
+                        follow_up_immediate_txs.emplace_back(follow_up.followed_transaction);
+                    } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
+                        follow_up_delay_txs.emplace_back(follow_up.followed_transaction);
+                    } else {
+                        xwarn("[xlightunit_builder_t::build_block] invalid follow up tx type: %d", follow_up.schedule_type);
+                    }
+                }
             }
         }
-        if (result.status.ec) {
+        for (auto const & follow_up : follow_up_immediate_txs) {
+            lightunit_build_para->set_pack_tx(follow_up);
+        }
+        // TODO lon: add follow_up_delay_txs to tx pool
+        for (auto const & follow_up : follow_up_delay_txs) {
+
+        }
+        if (lightunit_build_para->get_pack_txs().size() == 0) {
             build_para->set_error_code(xblockmaker_error_tx_execute);
             return nullptr;
         }
@@ -121,8 +146,8 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         // lightunit_build_para->set_pack_txs(input_txs);
         xlightunit_block_para_t lightunit_para;
         lightunit_para.set_input_txs(lightunit_build_para->get_pack_txs());
-        lightunit_para.set_fullstate_bin(result.transaction_results[last_success_index].output.contract_state_snapshot);
-        lightunit_para.set_binlog(result.transaction_results[last_success_index].output.binlog);
+        lightunit_para.set_fullstate_bin(result.contract_state_snapshot);
+        lightunit_para.set_binlog(result.binlog);
 
         base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
         alloc_tx_receiptid(lightunit_build_para->get_pack_txs(), receiptid_state);
@@ -131,6 +156,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         proposal_unit.attach((data::xblock_t *)_proposal_block);
         return proposal_unit;
     } else {
+        for (auto const & tx : input_txs) {
+            printf("------>old vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+        }
         txexecutor::xbatch_txs_result_t exec_result;
         auto exec_ret = construct_block_builder_para(prev_block, prev_bstate, cs_para, build_para, exec_result);
         if (exec_ret != xsuccess) {

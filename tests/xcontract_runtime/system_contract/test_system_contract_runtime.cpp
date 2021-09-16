@@ -56,7 +56,7 @@ protected:
 
 void test_system_contract_runtime::SetUp()  {
     bstate_.attach(new top::base::xvbstate_t{contract_address, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
-    property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
+    property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
     system_contract_manager_ = top::make_unique<top::contract_runtime::system::xsystem_contract_manager_t>();
     contract_runtime_ = top::make_unique<top::contract_runtime::system::xsystem_action_runtime_t>(top::make_observer(system_contract_manager_.get()));
@@ -98,7 +98,7 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
 
     property_access_control_ =
-        std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
+        std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     contract_state_ =
         std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
 
@@ -132,7 +132,7 @@ TEST_F(test_system_contract_runtime, init_system_contract) {
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->set_different_source_target_address("T00000LS7SABDaqKaKfNDqbsyXB23F8dndquCeEu", contract_address);
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
@@ -144,10 +144,9 @@ TEST_F(test_system_contract_runtime, init_system_contract) {
     transfer_contract->state()->access_control()->property_exist(common::xaccount_address_t{contract_address}, propety_identifier);
 }
 
-static std::string tx_encode{"YgEAAC8EAAABYwEAAP4BAAADAO4BAAAAAAAAAACghgEAWALTojlhAAAAAAAAAAAAAAAAAAAAAAAAAAD1LGNwXb7p9gAAAAAAAAAAAAAAAAAAAAAAAFMAKAAAAFQwMDAwMExVdXFFaVdpVnNLSFRiQ0pUYzJZcVRlRDZpWlZzcW10a3MAAAAADwAAAAMAAABUT1AAAAAAAAAAAAAAAAAAAAAAAAAAAAUA+AArAAAAVDIwMDAxMzhDUXd5ekZ4YldaNTltTmprcTNlWjNlSDQxdDdiNW1pZG1AMBAAAABub2RlSm9pbk5ldHdvcmsyoQAAACgAAABUMDAwMDBMVXVxRWlXaVZzS0hUYkNKVGMyWXFUZUQ2aVpWc3FtdGtz/wAAAAIAAABYAAAAQkZxUzZBbDE5TGt5Y3VIaHJITXVJL0UxRzYrclppNE5KVFExdzFVNTVVbk1qaEJuYjgvZXk0cGorTW42OWx5VkIwK3I2R1I2TTZlZXR0OVR2L3lvaXpJPf8AAAAAAAAABQAAADEuMi4zAAAAAAAAAABgrFjVIn/LdKPX4VQMr+OLo9/X/Yb/gC+kI50eI2y4rUEAAAAAN9Mjy8K/Fs2FNQ2ymUoej86WcB4FZc1m19QTLkkXHa5Da+JXj8iPcXIPlHb1AwavtV0QasxPrDGZzRwytG2h5AAAAAAAAAAAAWEBAAAnAgAAfSBgrFjVIn/LdKPX4VQMr+OLo9/X/Yb/gC+kI50eI2y4rQJkKFQwMDAwMExVdXFFaVdpVnNLSFRiQ0pUYzJZcVRlRDZpWlZzcW10a3MMcnVuX2NvbnRyYWN0PwYBMAQ1MDAwATIEMTQ4MgE3ATEBOAExATkCNTEBYQQxMDI0YAEAAKEBAABtAQAA1/9AAG0BAADQDfgC8RmS6t6O+sfq++EBAADrz7uDDbr6dRmm7+EC/////w8ABAUA/wAA9gEAAQBJAf8HBBAA/9BJSCBR7n9jFYKiuNxYehtFc6dIPKB1hOiWSviCKEtsgBfocyAJFy72uNhOYXIuWQGM43obE6Jfd23/uKSVR49m65WxNSDfD+EjdhUkTyQYUn8ywP9MkAqLo2BdfXPaOsBDHNgA3yDpoGW9b/SSkOk88W0mo3AbG7X77NvF3TQKg3YnAphS51h0AAAAWAAAACVljNAAAAAAIQACxVss1s0Tmi0Fjkl7J/eewO9gMOvthiG+vB73ORC+XaEgAGpCwqAG5DGfk7SvacFFaVIjo9PPR1RR2qe8mJ16nJ09BAAPWQAA8DkDPx32QAyxz7UF7FKXPTr+5c79hQmls4dw987DIheYxNMgAIeSzZe+L/gzFF4i9wnNY76V4GET+f4IFlUAXAyeogWyBAAHAAABIwAAAAECAQkXLva42E5hci5ZAYzjehsTol93bf+4pJVHj2brlbE1"};
-static std::string tx_raw_encode{"YwEAAP4BAAADAO4BAAAAAAAAAACghgEAWALTojlhAAAAAAAAAAAAAAAAAAAAAAAAAAD1LGNwXb7p9gAAAAAAAAAAAAAAAAAAAAAAAFMAKAAAAFQwMDAwMExVdXFFaVdpVnNLSFRiQ0pUYzJZcVRlRDZpWlZzcW10a3MAAAAADwAAAAMAAABUT1AAAAAAAAAAAAAAAAAAAAAAAAAAAAUA+AArAAAAVDIwMDAxMzhDUXd5ekZ4YldaNTltTmprcTNlWjNlSDQxdDdiNW1pZG1AMBAAAABub2RlSm9pbk5ldHdvcmsyoQAAACgAAABUMDAwMDBMVXVxRWlXaVZzS0hUYkNKVGMyWXFUZUQ2aVpWc3FtdGtz/wAAAAIAAABYAAAAQkZxUzZBbDE5TGt5Y3VIaHJITXVJL0UxRzYrclppNE5KVFExdzFVNTVVbk1qaEJuYjgvZXk0cGorTW42OWx5VkIwK3I2R1I2TTZlZXR0OVR2L3lvaXpJPf8AAAAAAAAABQAAADEuMi4zAAAAAAAAAABgrFjVIn/LdKPX4VQMr+OLo9/X/Yb/gC+kI50eI2y4rUEAAAAAN9Mjy8K/Fs2FNQ2ymUoej86WcB4FZc1m19QTLkkXHa5Da+JXj8iPcXIPlHb1AwavtV0QasxPrDGZzRwytG2h5AAAAAAAAAAA"};
-static std::string state_encode{"zP9AABMIAACbb+kT///wAAIAAQAABAAAK1QyMDAwMTM4Q1F3eXpGeGJXWjU5bU5qa3EzZVozZUg0MXQ3YjVtaWRtQDAgURwSG4KjdC7Q2gqex8xWArZGJxSx4KnNhYKVF+3FDrsgci9w70uCt981w4VF+8wFtyGxPebwKP9JmNoWaudR9VYDAJ//AAA1AAAAAyQwNj8CATEBMQEyILz0fquEPcC6YIqUpacIRFMuD1l0YgqOsMHsWQiuRexjuP8AABEAAAADJDA3B5Tv4QK3/wAAKgkAAANANDEPmxKRgcz/ko7ZKFQwMDAwMExLZkJZZndUY05uaURTUXFqOGZqNWF0aURxUDhaRUpKdjaV2VhCRkZWbmhlQlMyeUpMd2xiK3E2eEgvREwrUm90YnZSZGQ5WWVKS3VnMXRQK1dwcFRkQjM2S3pNT0h4bUhUc2g1dTlCS2dQRGdYcHBGdnlCZXFZVXhvVFU9hs0CAQDNAgIAzRAAAM0gAADNQAQAzYAAAA+lMS4xLjDD2ShUMDAwMDBMTEo4QXNONGhSRUR0Q3B1S0F4SkZ3cWthOUx3aUFvbjNNldlYQkR1bEpoRTJoY1ZjY1g2aXBpUVE3bGVyVGppaUxPUEhGUlZJaEZxRnBGR0VjZ1FsRUgxbHhNYzJUeGtWT215Y3dQa2RhREpEeWVNQW9FV3hGUmtoQjdvpgAY8BJOaTUzVWI3MjZIY1BYWmZDNHo2ekxnVG81a3M2R3pUVXBMAf9HTlJIZVJHdzRZWm5USGVOR3hZdHVBc3ZTc2xUVjdUSE1zM0E5UkpNKzFWZzYzZ3lRNFhtSzJpOEhXK2YzSWFNN0thdmNIN0pNaFRQRnpLdFdwN0lYVzSmABjwElRTaXA4WGJqdXRydG04UmtRenNIS3F0MjhnOTd4ZFV4Z6YA/0dFVFRnRXY2SEZGdHhUVkNRWkJpb1hjNU0yb1hiNWlQUWdvTzZxbFhsUEV6VFBLNEQyeXV6NHBBZlFxZnh3QUJSdmkwbmYxRVkwQ1Z5OVozSEpmMitDUaYAGPASVXY3ZThSWkxOdG5FMUs5c0VmRTlTWWU3NHJ3WWt6RXVipgD/R0Y3ZTJFdDg2elkzUElKMkJoL3dneGNLVFRkZ3hmZnV2YUhKM0FiUjk5YlFyOWpBZ1VOS0N5RzlxYllEYmdVNzRlVVREWkZjb0t5Y0dXZTdVRjRTY0ZvpgAY8BJWcEw5WFJ0VmRVNVJ3Zm5tckN0Smh2UUZ4SjhUQjQ2Z0KmAP9HUCtzOTZpbHVyaHJhRlU3UkQyVWE2MHJEOENwZ0R4Q2pXY3A2N3lxN0Q1MDBnZjBlajV2Qkdpd3FaMkd3b0VXQWNYRkhxVWxUUVc4SXFJV0hDazVlS2umABjwElhSU0RrenJVc3NlWm1mSkZuU1NCc2dtNzU0WHdWOVNMd6YA/0dETDErdStRQlRmMTUvc3VzUDhKSEFyMGNickhyejhpWFJuTGZaNDdpemFGdGMxWkdoRDJPVHVDRU1VTk8wY1FDMExobnZaNlFoa2FpaVB1UGI2dEM1OKYAGfARcXAxTmtmb29NQXc3QnR5MmlYVHhnVENmc3lnTW54clSmAP9HRnloQTZCUDJtVGJnT3Ntc1FGalEwOXI5aVhuK2YzZm1jZU9iK08xYVltcjZxRG83S3dEdjI1aU9NUlY4bkJPZ3VudjZFVUF0akRLaWR2TUU5WWt1QlGmABjwEmFGbVJBeWJTS1RLakU4VVh5ZjdhdDJXY3c4aW9ka29aOKYA/0dNcG45dDRQRGVIb2RvVWVpYW1paXBzUzNibk5HVDRNYmsveW5HSlkxcG5JdXF2NG5sRWhWT3YxQ1VaNUpiZU5jV1YvVk5UaW4zeHV2bC9zT0tOeDFMVaYAGPASY05mY3FGUEg5dnkzRVlBcGtyY1hMY1FOMmhiMXlnWldFpgD/RkM4MUoyUGxkS1VNMitKamtnem1MV2NIckFiUXk3VzlPWkZZSGRjM215VG9JTWxyWFlIdXJhRXArbmNTZkdFT2t4dzNCWFlaUXRBenA2Z0Q3VUtTaESmABnwEmVYTnFXN21DQ29qMjNMRXN4RW1OY1dLczhtNmtKSDQ0NqYA/0dOOUlRdXgxTlEwQnlCQ1lBQVZkczVTaTUzOGdhekgzZ05JUzVzT0RhZE5SQTJ6dnZLRFRTS2hmd1g1R05XdHZiMG5tb0dIalFwOUo5RWxNeU9Vd0Jra6YAGfARZnpZblZVYXlKU2dlWDNYZEtDZ0I0dms3QlZVb3FzdW2mAP9HUElNeWV2UnlWb0tOb2doYmNkTVp1clNOakhFUzVsdE8wQmhZTUNUb0RPVDRhQmxMQnU0U2xWU2dVR1pkTG9yODBLdVpidTVDeFRsOWNlZmVGTlNFZlWmABjwEmd2N2pMQzNEUTNpM2d1VFZMRVZoR2FTdFI0UmFVSlZ3QaYA/0dNbWx5Y09PL3k4Wi9NRHJDVXc1OThuSVUwR1pseEFnWVgrLzNNRWk2VXZndURmbml2amRVTEhPN0wyeVJrTTloV3kzQ2gzbUtLeXFNdklNRzJXK1B5a6YAGPASaENYVUM1aVFDUkVlZm5SUFJGaHh3REpURWJ1Zmk0MUVMpgD/R0Z5VUJFRy9lTzVTb21hRFFaaWRvZnA3bjBzMGVxLzlzY1JBeFdwOHcrZmJiM0NuT1NmZmROM0NlTkh6SktZZ0JCbUs1YW5YdHZYa2tCWUNtVzcrdGlVpgALUDEuMMPD"};
 TEST_F(test_system_contract_runtime, account_vm) {
+    std::string account{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
+    std::string public_key{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
     data::xblock_consensus_para_t cs_para;
     {
         cs_para.m_clock = 5796740;
@@ -156,53 +155,80 @@ TEST_F(test_system_contract_runtime, account_vm) {
         cs_para.m_account = "Ta0001@0";
         cs_para.m_random_seed = base::xstring_utl::base64_decode("ODI3OTg4ODkxOTMzOTU3NDk3OA==");
     }
-    xobject_ptr_t<xtransaction_t> raw_tx{make_object_ptr<xtransaction_v2_t>()};
-    {
-        base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)tx_raw_encode.data(),(int32_t)tx_raw_encode.size());
-        raw_tx->serialize_from(stream);
-    }
-    xobject_ptr_t<xcons_transaction_t> tx{make_object_ptr<xcons_transaction_t>()};
-    {
-        base::xstream_t stream(base::xcontext_t::instance(),(uint8_t*)tx_encode.data(),(int32_t)tx_encode.size());
-        tx->serialize_from(stream);
-        tx->m_tx = raw_tx;
-        tx->m_tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_standby_pool_addr);
-        // tx->m_tx->m_target_addr = sys_contract_rec_standby_pool_addr;
-        tx->m_subtype = enum_transaction_subtype::enum_transaction_subtype_recv;
 
-        base::xstream_t param_stream(base::xcontext_t::instance());
-        param_stream << common::xtop_node_id{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
-        param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+    base::xstream_t param_stream(base::xcontext_t::instance());
+    param_stream << common::xtop_node_id{account};
+    param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
 #if defined XENABLE_MOCK_ZEC_STAKE
-        ENUM_SERIALIZE(param_stream, common::xrole_type_t::advance);
-        param_stream << std::string{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
-        param_stream << static_cast<uint64_t>(top::config::to_chainid(XGET_CONFIG(chain_name)));
+    ENUM_SERIALIZE(param_stream, common::xrole_type_t::advance);
+    param_stream << public_key;
+    param_stream << static_cast<uint64_t>(top::config::to_chainid(XGET_CONFIG(chain_name)));
 #endif
-        param_stream << std::string("1.1.1");
-        std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
-        tx->m_tx->make_tx_run_contract("nodeJoinNetwork2", param);
-        tx->m_tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_standby_pool_addr);
-        tx->m_tx->set_fire_and_expire_time(600);
-        tx->m_tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
-    }
+    param_stream << std::string("1.1.1");
+    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+    tx->make_tx_run_contract("nodeJoinNetwork2", param);
+    tx->set_different_source_target_address(account, sys_contract_rec_standby_pool_addr);
+    tx->set_fire_and_expire_time(600);
+    tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+    tx->set_tx_type(xtransaction_type_run_contract_new);
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    cons_tx->set_tx_subtype(enum_transaction_subtype_recv);
+
     std::vector<xcons_transaction_ptr_t> input_txs;
-    input_txs.emplace_back(tx);
+    input_txs.emplace_back(cons_tx);
     auto config = xblock_sniff_config_t{};
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    contract_runtime::system::xtop_system_contract_manager::instance().initialize(blockstore);
-    contract_runtime::system::xtop_system_contract_manager::instance().deploy();
-    auto system_contract_manager = make_unique<contract_runtime::system::xsystem_contract_manager_t>();
-    system_contract_manager.reset(&contract_runtime::system::xsystem_contract_manager_t::instance());
+    contract_runtime::system::xtop_system_contract_manager::instance()->initialize(blockstore);
+    contract_runtime::system::xtop_system_contract_manager::instance()->deploy();
+    // auto system_contract_manager = make_unique<contract_runtime::system::xsystem_contract_manager_t>();
+    auto * system_contract_manager = contract_runtime::system::xsystem_contract_manager_t::instance();
+    xassert(system_contract_manager != nullptr);
 
     auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, std::string{sys_contract_rec_standby_pool_addr});
-    bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
 
-    contract_vm::xaccount_vm_t vm(system_contract_manager);
-    // auto result = vm.execute(input_txs, bstate_, cs_para);
-    // EXPECT_EQ(result.status.ec.value(), 0);
-    // EXPECT_EQ(result.transaction_results.size(), 2);
+    contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
+    auto result = vm.execute(input_txs, bstate, cs_para);
+    EXPECT_EQ(result.status.ec.value(), 0);
+    EXPECT_EQ(result.transaction_results.size(), 1);
+
+
+    std::vector<xcons_transaction_ptr_t> output_txs = input_txs;
+    std::vector<xcons_transaction_ptr_t> follow_up_immediate_txs;
+    std::vector<xcons_transaction_ptr_t> follow_up_delay_txs;
+    std::vector<xcons_transaction_ptr_t> pack_txs;
+    for (auto i = 0u; i < result.transaction_results.size(); i++) {
+        auto const & r = result.transaction_results[i];
+        auto & tx = output_txs[i];
+        if (r.status.ec) {
+            tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
+            if (tx->is_send_tx() || tx->is_self_tx()) {
+            } else if (tx->is_recv_tx()) {
+            } else {
+                xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
+            }
+        } else {
+            tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+            pack_txs.emplace_back(tx);
+            for (auto & follow_up : r.output.followup_transaction_data) {
+                if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
+                    follow_up_immediate_txs.emplace_back(follow_up.followed_transaction);
+                } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
+                    follow_up_delay_txs.emplace_back(follow_up.followed_transaction);
+                } else {
+                    xwarn("[xlightunit_builder_t::build_block] invalid follow up tx type: %d", follow_up.schedule_type);
+                }
+            }
+        }
+    }
+    for (auto const & follow_up : follow_up_immediate_txs) {
+        pack_txs.emplace_back(follow_up);
+    }
+    EXPECT_EQ(follow_up_immediate_txs.size(), 1);
+    EXPECT_EQ(pack_txs.size(), 2);
     // std::cout << data::to_hex_str(result.transaction_results[0].output.binlog) << std::endl;
     // std::cout << data::to_hex_str(result.transaction_results[0].output.contract_state_snapshot) << std::endl;
     // std::cout << data::to_hex_str(result.transaction_results[1].output.binlog) << std::endl;
@@ -218,7 +244,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_normal) {
     tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_registration_addr);
 
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
@@ -246,7 +272,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_fail) {
     tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_registration_addr);
 
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);

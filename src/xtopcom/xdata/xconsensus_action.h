@@ -35,11 +35,13 @@ public:
     common::xaccount_address_t contract_address() const;
     common::xaccount_address_t execution_address() const;
     uint64_t max_gas_amount() const;
+    uint64_t last_nonce() const noexcept;
     uint64_t nonce() const noexcept;
+    uint256_t hash() const noexcept;
     std::string action_name() const;
     xbyte_buffer_t action_data() const;
-    xbyte_buffer_t transaction_source_action_data() const;
-    xbyte_buffer_t transaction_target_action_data() const;
+    std::string transaction_source_action_data() const;
+    std::string transaction_target_action_data() const;
     data::enum_xtransaction_type transaction_type() const;
     data::enum_xaction_type transaction_source_action_type() const;
     data::enum_xaction_type transaction_target_action_type() const;
@@ -140,6 +142,22 @@ uint64_t xtop_consensus_action<ActionTypeV>::nonce() const noexcept {
 }
 
 template <xtop_action_type_t ActionTypeV>
+uint64_t xtop_consensus_action<ActionTypeV>::last_nonce() const noexcept {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+    
+    return tx->get_transaction()->get_last_nonce();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint256_t xtop_consensus_action<ActionTypeV>::hash() const noexcept {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+    
+    return tx->get_tx_hash_256();
+}
+
+template <xtop_action_type_t ActionTypeV>
 std::string xtop_consensus_action<ActionTypeV>::action_name() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
@@ -156,19 +174,26 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::action_data() const {
 }
 
 template <xtop_action_type_t ActionTypeV>
-xbyte_buffer_t xtop_consensus_action<ActionTypeV>::transaction_source_action_data() const {
+std::string xtop_consensus_action<ActionTypeV>::transaction_source_action_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return { std::begin(tx->get_transaction()->get_source_action().get_action_param()), std::end(tx->get_transaction()->get_source_action().get_action_param()) };
+    auto temp = tx->get_transaction()->get_source_action().get_action_param();
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)temp.data(), temp.size());
+    data::xproperty_asset asset_out{0};
+    stream >> asset_out.m_token_name;
+    stream >> asset_out.m_amount;
+    printf("in action tx asset out %s, %ld\n", asset_out.m_token_name.c_str(), asset_out.m_amount);
+
+    return tx->get_transaction()->get_source_action().get_action_param();
 }
 
 template <xtop_action_type_t ActionTypeV>
-xbyte_buffer_t xtop_consensus_action<ActionTypeV>::transaction_target_action_data() const {
+std::string xtop_consensus_action<ActionTypeV>::transaction_target_action_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return { std::begin(tx->get_transaction()->get_target_action().get_action_param()), std::end(tx->get_transaction()->get_target_action().get_action_param()) };
+    return tx->get_transaction()->get_target_action().get_action_param();
 }
 
 template <xtop_action_type_t ActionTypeV>

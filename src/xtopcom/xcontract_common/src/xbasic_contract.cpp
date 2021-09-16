@@ -27,7 +27,11 @@ xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const&
 //}
 
 common::xaccount_address_t xtop_basic_contract::address() const {
-    return m_contract_meta.m_account;
+    if (m_associated_execution_context) {
+        return m_associated_execution_context->contract_state()->access_control()->address();
+    } else {
+        return m_contract_meta.m_account;
+    }
 }
 
 xcontract_type_t xtop_basic_contract::type() const {
@@ -50,11 +54,11 @@ xbyte_buffer_t xtop_basic_contract::action_data() const {
     return m_associated_execution_context->action_data();
 }
 
-xbyte_buffer_t xtop_basic_contract::source_action_data() const {
+std::string xtop_basic_contract::source_action_data() const {
     return m_associated_execution_context->source_action_data();
 }
 
-xbyte_buffer_t xtop_basic_contract::target_action_data() const {
+std::string xtop_basic_contract::target_action_data() const {
     return m_associated_execution_context->target_action_data();
 }
 
@@ -111,7 +115,6 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
                                std::string const & method_params,
                                xfollowup_transaction_schedule_type_t type) {
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
-    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
 
     auto latest_hash = state()->latest_sendtx_hash();
     auto latest_nonce = state()->latest_sendtx_nonce();
@@ -120,6 +123,8 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     tx->set_different_source_target_address(address().value(), target_addr.value());
     tx->set_digest();
     tx->set_len();
+    tx->set_tx_type(data::enum_xtransaction_type::xtransaction_type_run_contract);
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
 
     m_associated_execution_context->add_followup_transaction(std::move(cons_tx), type);
 }

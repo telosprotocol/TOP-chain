@@ -208,8 +208,8 @@ xbyte_buffer_t xtop_contract_execution_context::action_data() const {
     return ret;
 }
 
-xbyte_buffer_t xtop_contract_execution_context::source_action_data() const {
-    xbyte_buffer_t ret;
+std::string xtop_contract_execution_context::source_action_data() const {
+    std::string ret;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
             ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
@@ -225,8 +225,8 @@ xbyte_buffer_t xtop_contract_execution_context::source_action_data() const {
     return ret;
 }
 
-xbyte_buffer_t xtop_contract_execution_context::target_action_data() const {
-    xbyte_buffer_t ret;
+std::string xtop_contract_execution_context::target_action_data() const {
+    std::string ret;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
             ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
@@ -261,6 +261,48 @@ data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() 
 
 common::xlogic_time_t xtop_contract_execution_context::time() const {
     return m_param.m_clock;
+}
+
+bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
+    assert(!ec);
+
+    uint64_t last_nonce{0};
+    uint64_t nonce{0};
+    uint256_t hash{};
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            auto stage = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->stage();
+            if (stage != data::xconsensus_action_stage_t::send && stage != data::xconsensus_action_stage_t::self) {
+                return true;
+            }
+            last_nonce = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_nonce();
+            nonce = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->nonce();
+            hash = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->hash();
+            
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            auto stage = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->stage();
+            if (stage != data::xconsensus_action_stage_t::send && stage != data::xconsensus_action_stage_t::self) {
+                return true;
+            }
+            last_nonce = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_nonce();
+            nonce = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->nonce();
+            hash = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->hash();
+            break;
+        }
+        default:
+            break;
+    }
+    if (contract_state()->access_control()->latest_sendtx_nonce() != last_nonce) {
+        ec = error::xerrc_t::nonce_mismatch;
+        return false;
+    }
+
+    contract_state()->access_control()->latest_sendtx_nonce(nonce);
+    contract_state()->access_control()->latest_sendtx_hash(hash);
+
+    return true;
 }
 
 NS_END2

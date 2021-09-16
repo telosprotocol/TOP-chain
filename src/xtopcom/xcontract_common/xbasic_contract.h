@@ -56,8 +56,8 @@ public:
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
-    xbyte_buffer_t source_action_data() const;
-    xbyte_buffer_t target_action_data() const;
+    std::string source_action_data() const;
+    std::string target_action_data() const;
     uint64_t  src_action_asset_amount(std::error_code& ec) const;
     std::string src_action_asset_name(std::error_code& ec) const;
     state_accessor::xtoken_t src_action_asset(std::error_code& ec) const;
