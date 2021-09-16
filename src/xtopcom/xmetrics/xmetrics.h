@@ -169,6 +169,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_end_contains_duplicate,
     message_category_unknown_contains_duplicate = message_category_end_contains_duplicate,
 
+    message_category_recv,
     message_category_begin,
     message_category_consensus = message_category_begin,
     message_category_timer,
@@ -176,9 +177,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_rpc,
     message_category_sync,
     message_block_broadcast,
-    message_category_end,
-    message_category_unknown = message_category_end,
+    message_category_unknown,
+    message_category_end = message_category_unknown,
 
+    message_category_send,
     message_send_category_begin,
     message_send_category_consensus = message_send_category_begin,
     message_send_category_timer,
@@ -186,9 +188,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_send_category_rpc,
     message_send_category_sync,
     message_send_block_broadcast,
-    message_send_category_end,
-    message_send_category_unknown = message_send_category_end,
+    message_send_category_unknown,
+    message_send_category_end = message_send_category_unknown,
 
+    message_category_broad,
     message_broad_category_begin,
     message_broad_category_consensus = message_broad_category_begin,
     message_broad_category_timer,
@@ -196,8 +199,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_broad_category_rpc,
     message_broad_category_sync,
     message_broad_block_broadcast,
-    message_broad_category_end,
-    message_broad_category_unknown = message_broad_category_end,
+    message_broad_category_unknown,
+    message_broad_category_end = message_broad_category_unknown,
 
     // sync 
     xsync_recv_new_block,
@@ -437,6 +440,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     // event
     xevent_begin,
+    xevent_major_type_none = xevent_begin,
     xevent_major_type_timer,
     xevent_major_type_chain_timer,
     xevent_major_type_store,
@@ -452,7 +456,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xevent_major_type_role,
     xevent_major_type_blockfetcher,
     xevent_major_type_sync,
-    xevent_end,
+    xevent_end=xevent_major_type_sync,
 
     e_simple_total,
 };

@@ -153,6 +153,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
         RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
 
+        RETURN_METRICS_NAME(message_category_recv);
         RETURN_METRICS_NAME(message_category_consensus);
         RETURN_METRICS_NAME(message_category_timer);
         RETURN_METRICS_NAME(message_category_txpool);
@@ -161,6 +162,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast);
         RETURN_METRICS_NAME(message_category_unknown);
 
+        RETURN_METRICS_NAME(message_category_send);
         RETURN_METRICS_NAME(message_send_category_consensus);
         RETURN_METRICS_NAME(message_send_category_timer);
         RETURN_METRICS_NAME(message_send_category_txpool);
@@ -169,6 +171,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_send_block_broadcast);
         RETURN_METRICS_NAME(message_send_category_unknown);
 
+        RETURN_METRICS_NAME(message_category_broad);
         RETURN_METRICS_NAME(message_broad_category_consensus);
         RETURN_METRICS_NAME(message_broad_category_timer);
         RETURN_METRICS_NAME(message_broad_category_txpool);
@@ -392,6 +395,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txexecutor_total_system_contract_count);
         RETURN_METRICS_NAME(txexecutor_system_contract_failed_count);
 
+        RETURN_METRICS_NAME(xevent_major_type_none);
         RETURN_METRICS_NAME(xevent_major_type_timer);
         RETURN_METRICS_NAME(xevent_major_type_chain_timer);
         RETURN_METRICS_NAME(xevent_major_type_store);
@@ -624,7 +628,10 @@ xsimple_merics_category g_cates[] = {
     {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end},
     {statestore_access, statestore_access_begin, statestore_access_end},
     {blockstore_access_from_mbus, blockstore_access_from_mbus_begin, blockstore_access_from_mbus_end},
-    {blockstore_access_from_rpc, blockstore_access_from_rpc_begin, blockstore_access_from_rpc_end}
+    {blockstore_access_from_rpc, blockstore_access_from_rpc_begin, blockstore_access_from_rpc_end},
+    {message_category_recv, message_category_begin, message_category_end},
+    {message_category_send, message_send_category_begin, message_send_category_end},
+    {message_category_broad, message_broad_category_begin, message_broad_category_end}
 };
 
 bool is_category(E_SIMPLE_METRICS_TAG tag) {
