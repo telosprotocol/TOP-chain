@@ -357,9 +357,9 @@ bool xdb::close() {
 
 bool xdb::read(const std::string& key, std::string& value) const {
     XMETRICS_TIMER(metrics::db_read_tick);
-    XMETRICS_GAUGE(metrics::db_read, 1);
     auto ret = m_db_impl->read(key, value);
     XMETRICS_GAUGE(metrics::db_read_size, value.size());
+    XMETRICS_GAUGE(metrics::db_read, ret ? 1 : 0);
     return ret;
 }
 
@@ -369,34 +369,39 @@ bool xdb::exists(const std::string& key) const {
 
 bool xdb::write(const std::string& key, const std::string& value) {
     XMETRICS_TIMER(metrics::db_write_tick);
-    XMETRICS_GAUGE(metrics::db_write, 1);
     XMETRICS_GAUGE(metrics::db_write_size, value.size());
-    return m_db_impl->write(key, value);
+    auto ret = m_db_impl->write(key, value);
+    XMETRICS_GAUGE(metrics::db_write, ret ? 1 : 0);
+    return ret;
 }
 
 bool xdb::write(const std::string& key, const char* data, size_t size) {
     XMETRICS_TIMER(metrics::db_write_tick);
-    XMETRICS_GAUGE(metrics::db_write, 1);
     XMETRICS_GAUGE(metrics::db_write_size, size);
-    return m_db_impl->write(key, data, size);
+    auto ret = m_db_impl->write(key, data, size);
+    XMETRICS_GAUGE(metrics::db_write, ret ? 1 : 0);
+    return ret;
 }
 
 bool xdb::write(const std::map<std::string, std::string>& batches) {
     XMETRICS_TIMER(metrics::db_write_tick);
-    XMETRICS_GAUGE(metrics::db_write, 1);
-    return m_db_impl->write(batches);
+    auto ret = m_db_impl->write(batches);
+    XMETRICS_GAUGE(metrics::db_write, ret ? 1 : 0);
+    return ret;
 }
 
 bool xdb::erase(const std::string& key) {
     XMETRICS_TIMER(metrics::db_delete_tick);
-    XMETRICS_GAUGE(metrics::db_delete, 1);
-    return m_db_impl->erase(key);
+    auto ret = m_db_impl->erase(key);
+    XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
+    return ret;
 }
 
 bool xdb::erase(const std::vector<std::string>& keys) {
     XMETRICS_TIMER(metrics::db_delete_tick);
-    XMETRICS_GAUGE(metrics::db_delete, 1);
-    return m_db_impl->erase(keys);
+    auto ret = m_db_impl->erase(keys);
+    XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
+    return ret;
 }
 
 bool xdb::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) {
@@ -409,8 +414,9 @@ void xdb::destroy(const std::string& m_db_name) {
 
 bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values) const {
     XMETRICS_TIMER(metrics::db_read_tick);
-    XMETRICS_GAUGE(metrics::db_read, 1);
-    return m_db_impl->read_range(prefix, values);
+    auto ret =  m_db_impl->read_range(prefix, values);
+    XMETRICS_GAUGE(metrics::db_read, ret ? 1 : 0);
+    return ret;
 }
 
 xdb_transaction_t* xdb::begin_transaction() {
