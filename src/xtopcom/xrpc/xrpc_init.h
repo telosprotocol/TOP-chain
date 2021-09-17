@@ -24,7 +24,8 @@ public:
               observer_ptr<base::xvblockstore_t> const & block_store,
               observer_ptr<base::xvtxstore_t> const & txstore,
               observer_ptr<elect::ElectMain> elect_main,
-              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+              observer_ptr<mbus::xmessage_bus_face_t> const & bus);
 
     void stop();
 
