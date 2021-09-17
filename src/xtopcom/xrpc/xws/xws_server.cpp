@@ -23,12 +23,13 @@ xws_server::xws_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                        observer_ptr<base::xvblockstore_t> block_store,
                        observer_ptr<base::xvtxstore_t> txstore,
                        observer_ptr<elect::ElectMain> elect_main,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                       observer_ptr<mbus::xmessage_bus_face_t> const & bus) {
 #if defined XDISABLE_RATELIMIT
     m_enable_ratelimit = false;
 #endif
     if (m_rpc_service == nullptr) {
-        m_rpc_service = top::make_unique<xrpc_service<xedge_ws_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        m_rpc_service = top::make_unique<xrpc_service<xedge_ws_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor, bus);
     } else {
         m_rpc_service->reset_edge_method_mgr(edge_vhost, xip2);
     }

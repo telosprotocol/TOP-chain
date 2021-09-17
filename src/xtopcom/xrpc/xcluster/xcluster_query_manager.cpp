@@ -16,6 +16,7 @@
 #include "xstore/xtgas_singleton.h"
 #include "xutility/xhash.h"
 #include "xvm/manager/xcontract_address_map.h"
+#include "xmbus/xevent_behind.h"
 
 using namespace top::data;
 
@@ -35,8 +36,11 @@ using store::xstore_face_t;
 xcluster_query_manager::xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                                observer_ptr<base::xvblockstore_t> block_store,
                                                observer_ptr<base::xvtxstore_t> txstore,
-                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service)
-  : m_store(store), m_block_store(block_store), m_txstore(txstore), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr) {
+                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
+                                               observer_ptr<mbus::xmessage_bus_face_t> const & bus,
+                                               bool archive_flag)
+  : m_store(store), m_block_store(block_store), m_txstore(txstore), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr),
+    m_bus(bus), m_archive_flag(archive_flag) {  
     CLUSTER_REGISTER_V1_METHOD(getAccount);
     CLUSTER_REGISTER_V1_METHOD(getTransaction);
     CLUSTER_REGISTER_V1_METHOD(get_transactionlist);
@@ -89,8 +93,9 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     xtransaction_cache_data_t cache_data;
     if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, std::make_shared<xtransaction_cache_data_t>(cache_data))) {
     // if (m_transaction_cache != nullptr && m_transaction_cache->tx_get(strHash, std::make_shared<>(cache_data)) == 1) {
-        if (cache_data.jv["send_unit_info"].empty()) {
+        if (cache_data.jv["send_unit_info"].empty() && cache_data.jv["recv_unit_info"].empty()) {
             cache_data.jv.removeMember("send_unit_info");
+            cache_data.jv.removeMember("recv_unit_info");
             xdbg("find tx:%s", tx_hash_str.c_str());
             xJson::Value result_json;
             result_json["tx_consensus_state"] = cache_data.jv;
@@ -116,7 +121,34 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
             tx_ptr = cons_tx_ptr->get_transaction();
         }
     }
-    json_proc.m_response_json["data"] = m_bh.parse_tx(tx_hash, tx_ptr, version);
+    //json_proc.m_response_json["data"] = m_bh.parse_tx(tx_hash, tx_ptr, version);
+    xJson::Value result_json;
+    if (m_bh.parse_tx(tx_hash, tx_ptr, version, result_json) != 0) {  // not find tx
+        if (m_archive_flag && m_bus != nullptr) {
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(account, strHash, "unit_lack");
+            m_bus->push_event(ev);
+        }
+        throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+    }
+    
+    if (result_json["tx_state"] != "pending" && result_json["tx_state"] != "queue")
+    {
+        json_proc.m_response_json["data"] = result_json;
+        return;        
+    }
+
+    struct timeval val;
+    base::xtime_utl::gettimeofday(&val);
+    uint64_t tx_time = result_json["original_tx_info"]["send_timestamp"].asUInt64();
+    xdbg("tx time: %" PRIu64 ",%" PRIu64, tx_time, (uint64_t)val.tv_sec);
+    if (tx_time + 60 < (uint64_t)val.tv_sec) {  // 1 minute
+        if (m_archive_flag && m_bus != nullptr) {
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(account, strHash, "unit_lack");
+            m_bus->push_event(ev);
+        }
+    }
+    json_proc.m_response_json["data"] = result_json;
+    return;
 }
 
 void xcluster_query_manager::get_transactionlist(xjson_proc_t & json_proc) {

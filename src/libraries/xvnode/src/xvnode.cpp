@@ -238,7 +238,8 @@ void xtop_vnode::update_rpc_service() {
                                                            m_block_store,
                                                            m_txstore,
                                                            m_elect_main,
-                                                           m_election_cache_data_accessor);
+                                                           m_election_cache_data_accessor,
+                                                           m_bus);
     }
 }
 // void xtop_vnode::update_tx_cache_service() {
