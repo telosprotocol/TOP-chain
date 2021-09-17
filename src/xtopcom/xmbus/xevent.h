@@ -42,10 +42,18 @@ public:
                      direction_type dir = to_listener,
                      bool _sync = true) 
         : xevent_t(_major_type, _minor_type, dir, _sync) {
-            XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + _major_type), 1);
+            auto tag = (metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + _major_type);
+            xassert(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync);
+            if(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync) {
+                XMETRICS_GAUGE(tag, 1);
+            }
         }
     virtual ~xbus_event_t() {
-        XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + major_type), -1);
+        auto tag = (metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + major_type);
+        xassert(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync);
+        if(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync) {
+            XMETRICS_GAUGE(tag, -1);
+        }
     }
 };
 
