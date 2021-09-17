@@ -34,7 +34,8 @@ public:
                  observer_ptr<base::xvblockstore_t> block_store = nullptr,
                  observer_ptr<base::xvtxstore_t> txstore = nullptr,
                  observer_ptr<elect::ElectMain> elect_main = nullptr,
-                 observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+                 observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr,
+                 observer_ptr<mbus::xmessage_bus_face_t> const & bus = nullptr);
     void execute(shared_ptr<conn_type>& conn, const std::string& content, const std::string & ip);
     void clean_token_timeout(long seconds) noexcept;
     void cancel_token_timeout() noexcept;
@@ -56,10 +57,11 @@ xrpc_service<T>::xrpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
                               observer_ptr<base::xvblockstore_t> block_store,
                               observer_ptr<base::xvtxstore_t> txstore,
                               observer_ptr<elect::ElectMain> elect_main,
-                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
+                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                              observer_ptr<mbus::xmessage_bus_face_t> const & bus) {
     m_rule_mgr_ptr = top::make_unique<xfilter_manager>();
     m_io_service = std::make_shared<asio::io_service>();
-    m_edge_method_mgr_ptr = top::make_unique<T>(edge_vhost, xip2, m_io_service, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
+    m_edge_method_mgr_ptr = top::make_unique<T>(edge_vhost, xip2, m_io_service, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor, bus);
     m_pre_request_handler_mgr_ptr = top::make_unique<xpre_request_handler_mgr>();
     call_once(m_once_flag, [this](){
         clean_token_timeout(CLEAN_TIME);

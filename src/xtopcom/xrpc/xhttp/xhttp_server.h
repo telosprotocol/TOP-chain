@@ -34,7 +34,8 @@ public:
                  observer_ptr<base::xvblockstore_t> block_store = nullptr,
                  observer_ptr<base::xvtxstore_t> txstore = nullptr,
                  observer_ptr<elect::ElectMain> elect_main = nullptr,
-                 observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+                 observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr,
+                 observer_ptr<mbus::xmessage_bus_face_t> const & bus = nullptr);
     void start(uint16_t nPort, uint32_t nThreadNum = 1);
     void start_service(shared_ptr<SimpleWeb::ServerBase<SimpleWeb::HTTP>::Response> response, shared_ptr<SimpleWeb::ServerBase<SimpleWeb::HTTP>::Request> request);
     ~xhttp_server();
@@ -47,6 +48,7 @@ private:
     RatelimitConfig                                 m_config;
     unique_ptr<RatelimitServer>                     m_ratelimit{ nullptr };
     bool                                            m_enable_ratelimit{ true };
+    observer_ptr<mbus::xmessage_bus_face_t>         m_bus;
 };
 
 NS_END2
