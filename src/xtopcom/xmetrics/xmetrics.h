@@ -458,6 +458,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xevent_major_type_sync,
     xevent_end=xevent_major_type_sync,
 
+    // rpc
+    rpc_edge_tx_request,
+    rpc_edge_query_request,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

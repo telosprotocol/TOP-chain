@@ -103,6 +103,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                    dst.to_string().c_str(),
                    msg.hash());
                 vd->forward_broadcast_message(msg, dst);
+                XMETRICS_GAUGE(metrics::rpc_edge_tx_request, msg.payload().size());
             } else {
                 auto count = 0;
                 auto msghash = msg.hash();
@@ -127,8 +128,8 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                     }
                     ++count;
                 }
+                XMETRICS_GAUGE(metrics::rpc_edge_query_request, msg.payload().size());
             }
-            XMETRICS_COUNTER_INCREMENT("rpc_edge_request", 1);
         } catch (const xrpc_error &e) {
             throw e;
         } catch (top::error::xtop_error_t const & eh) {
