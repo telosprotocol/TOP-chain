@@ -13,6 +13,21 @@
 
 NS_BEG2(top, common)
 
+enum class xenum_registration_type : uint32_t {
+    invalid = 0x00000000,
+    primary = 0x00000001,
+    intermediate = 0x0000002,
+    senior = 0x00000004,
+    hardcode = senior | intermediate | primary,
+};
+using xregistration_type_t = xenum_registration_type;
+
+XINLINE_CONSTEXPR char const * XREG_TYPE_PRIMARY = "primary";
+XINLINE_CONSTEXPR char const * XREG_TYPE_INTERMEDIATE = "intermediate";
+XINLINE_CONSTEXPR char const * XREG_TYPE_SENIOR = "senior";
+
+common::xregistration_type_t to_registration_type(std::string const & reg_type);
+
 enum class xenum_old_role_type : uint32_t {
     invalid = static_cast<std::underlying_type<xold_node_type_t>::type>(xold_node_type_t::invalid),
     edge = static_cast<std::underlying_type<xold_node_type_t>::type>(xold_node_type_t::edge),

@@ -11,6 +11,18 @@
 
 NS_BEG2(top, common)
 
+common::xregistration_type_t to_registration_type(std::string const & reg_type) {
+    common::xregistration_type_t registration_type = common::xregistration_type_t::invalid;
+    if (reg_type == XREG_TYPE_PRIMARY) {
+        registration_type = common::xregistration_type_t::primary;
+    } else if (reg_type == XREG_TYPE_INTERMEDIATE) {
+        registration_type = common::xregistration_type_t::intermediate;
+    } else if (reg_type == XREG_TYPE_SENIOR) {
+        registration_type = common::xregistration_type_t::senior;
+    }
+    return registration_type;
+}
+
 std::int32_t operator<<(top::base::xstream_t & stream, xrole_type_t const & role_type) {
     return stream << static_cast<std::underlying_type<xrole_type_t>::type>(role_type);
 }
