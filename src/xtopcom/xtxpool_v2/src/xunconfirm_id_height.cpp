@@ -168,6 +168,22 @@ uint32_t xtable_unconfirm_id_height_t::size() const {
     return count;
 }
 
+void xtable_unconfirm_id_height_t::refresh_as_sender(base::xreceiptid_state_ptr_t table_receiptid_state) {
+    for (auto & table_sid_unconfirm_list : m_table_sid_unconfirm_list_map) {
+        base::xreceiptid_pair_t pair;
+        auto & peer_table_id = table_sid_unconfirm_list.first;
+        table_receiptid_state->find_pair(peer_table_id, pair);
+        table_sid_unconfirm_list.second.update_confirm_id(pair.get_confirmid_max());
+    }
+}
+
+void xtable_unconfirm_id_height_t::refresh_as_receiver(base::xtable_shortid_t self_table_sid, const xreceiptid_state_cache_t & receiptid_state_cache) {
+    for (auto & table_sid_unconfirm_list : m_table_sid_unconfirm_list_map) {
+        auto & peer_table_id = table_sid_unconfirm_list.first;
+        table_sid_unconfirm_list.second.update_confirm_id(receiptid_state_cache.get_confirmid_max(peer_table_id, self_table_sid));
+    }
+}
+
 void xprocessed_height_record_t::update_min_height(uint64_t height) {
     uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0UL);
     if (new_min_height > m_min_height) {
@@ -336,10 +352,10 @@ void xunconfirm_id_height::update_peer_confirm_id(base::xtable_shortid_t peer_ta
     m_receiver_unconfirm_id_height.update_confirm_id(peer_table_sid, confirm_id);
 }
 
-void xunconfirm_id_height::update_this_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id) {
-    std::lock_guard<std::mutex> lck(m_mutex);
-    m_sender_unconfirm_id_height.update_confirm_id(peer_table_sid, confirm_id);
-}
+// void xunconfirm_id_height::update_this_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id) {
+//     std::lock_guard<std::mutex> lck(m_mutex);
+//     m_sender_unconfirm_id_height.update_confirm_id(peer_table_sid, confirm_id);
+// }
 
 bool xunconfirm_id_height::get_sender_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const {
     std::lock_guard<std::mutex> lck(m_mutex);
@@ -366,6 +382,14 @@ void xunconfirm_id_height::cache_status(uint32_t & sender_cache_size, uint32_t &
     sender_cache_size = m_sender_unconfirm_id_height.size();
     receiver_cache_size = m_receiver_unconfirm_id_height.size();
     height_record_size = m_processed_height_record.size();
+}
+
+void xunconfirm_id_height::refresh(base::xtable_shortid_t self_table_sid, const xreceiptid_state_cache_t & receiptid_state_cache) {
+    auto table_receiptid_state = receiptid_state_cache.get_table_receiptid_state(self_table_sid);
+    if (table_receiptid_state != nullptr) {
+        m_sender_unconfirm_id_height.refresh_as_sender(table_receiptid_state);
+    }
+    m_receiver_unconfirm_id_height.refresh_as_receiver(self_table_sid, receiptid_state_cache);
 }
 
 NS_END2

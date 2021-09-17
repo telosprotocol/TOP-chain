@@ -11,6 +11,8 @@
 
 NS_BEG2(top, sync)
 
+#define max_sync_netmsg_mailbox_num (1024)
+
 class xsync_netmsg_dispatcher_thread_event_para_t : public top::base::xobject_t {
 public:
     xsync_netmsg_dispatcher_thread_event_para_t(xsync_handler_t *sync_handler, const vnetwork::xvnode_address_t &from_address,
@@ -104,11 +106,15 @@ void xsync_netmsg_dispatcher_t::dispatch(
 
     uint32_t idx = xtime_utl::get_fast_randomu()%m_thread_count;
 
-    // TODO use semaphore & task queue
-    auto ret = m_thread_pool[idx]->send_call(tmp_func);
     int64_t in, out;
     int32_t queue_size = m_thread_pool[idx]->count_calls(in, out);
     XMETRICS_COUNTER_SET("mailbox_sync_netmsg_" + std::to_string(idx), queue_size);
+    if (queue_size >= max_sync_netmsg_mailbox_num) {
+        xsync_warn("xsync_netmsg_dispatcher_t::dispatch,mailbox is full:%d", queue_size);
+        return;
+    }
+    // TODO use semaphore & task queue
+    auto ret = m_thread_pool[idx]->send_call(tmp_func);
 
     if (ret != 0) {
         xsync_warn("send call failed %d", ret);

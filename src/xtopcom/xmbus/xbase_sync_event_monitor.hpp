@@ -137,7 +137,7 @@ protected:
     xevent_reg_holder_t m_reg_holder;
     xobject_ptr_t<xiothread_t> m_thread{};
     observer_ptr<xiothread_t> m_observed_thread{ nullptr };
-    int32_t m_max_thread_calls{10000}; // total max thread calls for all instances shared same thread
+    int32_t m_max_thread_calls{1024}; // total max thread calls for all instances shared same thread
 };
 
 NS_END2

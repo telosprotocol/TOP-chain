@@ -7,6 +7,7 @@
 #include "xbase/xns_macro.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvtxindex.h"
+#include "xtxpool_v2/xreceiptid_state_cache.h"
 
 #include <inttypes.h>
 
@@ -53,6 +54,8 @@ public:
     bool is_all_unconfirm_id_recovered() const;
     std::vector<xresend_id_height_t> get_resend_id_height_list(uint64_t cur_time) const;
     uint32_t size() const;
+    void refresh_as_sender(base::xreceiptid_state_ptr_t table_receiptid_state);
+    void refresh_as_receiver(base::xtable_shortid_t self_table_sid, const xreceiptid_state_cache_t & receiptid_state_cache);
 
 private:
     std::map<base::xtable_shortid_t, xunconfirm_id_height_list_t> m_table_sid_unconfirm_list_map;
@@ -90,12 +93,13 @@ public:
     bool get_lacking_section(uint64_t & left_end, uint64_t & right_end, uint16_t max_lacking_num) const;
     void update_unconfirm_id_height(uint64_t table_height, uint64_t time, const std::vector<xtx_id_height_info> & tx_id_height_infos);
     void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
-    void update_this_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
+    // void update_this_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
     bool get_sender_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const;
     bool get_receiver_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const;
     std::vector<xresend_id_height_t> get_sender_resend_id_height_list(uint64_t cur_time) const;
     std::vector<xresend_id_height_t> get_receiver_resend_id_height_list(uint64_t cur_time) const;
     void cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
+    void refresh(base::xtable_shortid_t self_table_sid, const xreceiptid_state_cache_t & receiptid_state_cache);
 
 private:
     xtable_unconfirm_id_height_t m_sender_unconfirm_id_height;

@@ -78,18 +78,22 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     auto type = node_addr.type();
     if (common::has<common::xnode_type_t::committee>(type)) {
         m_is_send_receipt_role = true;
+        m_is_send_id_state_role = true;
         m_zone_index = base::enum_chain_zone_beacon_index;
         m_node_type = common::xnode_type_t::committee;
     } else if (common::has<common::xnode_type_t::zec>(type)) {
         m_is_send_receipt_role = true;
+        m_is_send_id_state_role = true;
         m_zone_index = base::enum_chain_zone_zec_index;
         m_node_type = common::xnode_type_t::zec;
     } else if (common::has<common::xnode_type_t::auditor>(type)) {
         m_is_send_receipt_role = true;
+        m_is_send_id_state_role = false;
         m_zone_index = base::enum_chain_zone_consensus_index;
         m_node_type = common::xnode_type_t::auditor;
     } else if (common::has<common::xnode_type_t::validator>(type)) {
         m_is_send_receipt_role = false;
+        m_is_send_id_state_role = true;
         m_zone_index = base::enum_chain_zone_consensus_index;
         m_node_type = common::xnode_type_t::validator;
     } else {
@@ -759,29 +763,15 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
               pulled_receipt.m_tx_to_account.c_str(),
               pulled_receipt.m_receipt_ids.size());
         xreceipt_push_t pushed_receipt;
-        for (auto & receiptid : pulled_receipt.m_receipt_ids) {
-            xdbg("xtxpool_service::on_message_pull_receipt_received reqnode:%s,table:%s:%s,%s tx receiptid:%llu",
-                 pulled_receipt.m_req_node.to_string().c_str(),
-                 pulled_receipt.m_tx_from_account.c_str(),
-                 pulled_receipt.m_tx_to_account.c_str(),
-                 (is_pull_recv ? "recv" : "confirm"),
-                 receiptid);
-            // auto tranx = m_para->get_txpool()->get_unconfirmed_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receiptid);
-            xcons_transaction_ptr_t tx = nullptr;
-            if (is_pull_recv) {
-                tx = m_para->get_txpool()->build_recv_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receiptid);
-            } else {
-                tx = m_para->get_txpool()->build_confirm_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receiptid);
-            }
-            if (tx != nullptr) {
-                xdbg("xtxpool_service::on_message_pull_receipt_received reqnode:%s,table:%s:%s tx:%s",
-                     pulled_receipt.m_req_node.to_string().c_str(),
-                     pulled_receipt.m_tx_from_account.c_str(),
-                     pulled_receipt.m_tx_to_account.c_str(),
-                     tx->dump().c_str());
-                pushed_receipt.m_receipts.push_back(tx);
-            }
+
+        base::xtable_shortid_t from_table_sid = base::xvaccount_t(pulled_receipt.m_tx_from_account).get_short_table_id();
+        base::xtable_shortid_t to_table_sid = base::xvaccount_t(pulled_receipt.m_tx_to_account).get_short_table_id();
+        if (is_pull_recv) {
+            m_para->get_txpool()->build_recv_tx(from_table_sid, to_table_sid, pulled_receipt.m_receipt_ids, pushed_receipt.m_receipts);
+        } else {
+            m_para->get_txpool()->build_confirm_tx(from_table_sid, to_table_sid, pulled_receipt.m_receipt_ids, pushed_receipt.m_receipts);
         }
+
         if (!pushed_receipt.m_receipts.empty()) {
             pushed_receipt.m_receipt_type = is_pull_recv ? enum_transaction_subtype_recv : enum_transaction_subtype_confirm;
             pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
@@ -823,28 +813,16 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
               pulled_receipt.m_tx_from_account.c_str(),
               pulled_receipt.m_tx_to_account.c_str(),
               pulled_receipt.m_id_hash_of_receipts.size());
-        xreceipt_push_t pushed_receipt;
-        for (auto & tx_id_hash : pulled_receipt.m_id_hash_of_receipts) {
-            auto & receipt_id = tx_id_hash.first;
-            auto & hash = tx_id_hash.second;
-            xdbg("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s",
-                 pulled_receipt.m_tx_from_account.c_str(),
-                 pulled_receipt.m_tx_to_account.c_str(),
-                 receipt_id,
-                 to_hex_str(hash).c_str());
 
-            // auto tranx = get_confirmed_tx(hash);
-            auto tranx = m_para->get_txpool()->build_confirm_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receipt_id);
-            if (tranx != nullptr) {
-                xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s receiptid:%llu,confirm_tx:%s",
-                      pulled_receipt.m_tx_from_account.c_str(),
-                      pulled_receipt.m_tx_to_account.c_str(),
-                      receipt_id,
-                      tranx->dump().c_str());
-                pushed_receipt.m_receipts.push_back(tranx);
-                xassert(receipt_id == tranx->get_last_action_receipt_id());
-            }
+        std::vector<uint64_t> receiptids;
+        for (auto & tx_id_hash : pulled_receipt.m_id_hash_of_receipts) {
+            receiptids.push_back(tx_id_hash.first);
         }
+
+        xreceipt_push_t pushed_receipt;
+        base::xtable_shortid_t from_table_sid = base::xvaccount_t(pulled_receipt.m_tx_from_account).get_short_table_id();
+        base::xtable_shortid_t to_table_sid = base::xvaccount_t(pulled_receipt.m_tx_to_account).get_short_table_id();
+        m_para->get_txpool()->build_confirm_tx(from_table_sid, to_table_sid, receiptids, pushed_receipt.m_receipts);
 
         if (!pushed_receipt.m_receipts.empty()) {
             pushed_receipt.m_receipt_type = enum_transaction_subtype_confirm;
@@ -942,7 +920,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
 }
 
 void xtxpool_service::send_receipt_id_state(uint64_t now) {
-    if (m_running && m_is_send_receipt_role) {
+    if (m_running && m_is_send_id_state_role) {
         for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
             if (!xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(now, table_id, m_shard_size, m_node_id)) {
                 continue;

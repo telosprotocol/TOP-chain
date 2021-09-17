@@ -179,9 +179,9 @@ bool xtxmgr_table_t::is_account_need_update(const std::string & account_addr) co
     return m_send_tx_queue.is_account_need_update(account_addr);
 }
 
-void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    m_new_receipt_queue.update_receiptid_state(receiptid_state);
-}
+// void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+//     m_new_receipt_queue.update_receiptid_state(receiptid_state);
+// }
 
 bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
     auto account_addr = tx->get_tx()->get_account_addr();
@@ -209,13 +209,13 @@ void xtxmgr_table_t::clear_expired_txs() {
     m_pending_accounts.clear_expired_txs();
 }
 
-uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
-    return m_new_receipt_queue.get_latest_recv_receipt_id(peer_table_sid);
-}
+// uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+//     return m_new_receipt_queue.get_latest_recv_receipt_id(peer_table_sid);
+// }
 
-uint64_t xtxmgr_table_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
-    return m_new_receipt_queue.get_latest_confirm_receipt_id(peer_table_sid);
-}
+// uint64_t xtxmgr_table_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+//     return m_new_receipt_queue.get_latest_confirm_receipt_id(peer_table_sid);
+// }
 
 bool xtxmgr_table_t::get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const {
     bool ret = m_send_tx_queue.get_account_nonce_cache(account_addr, latest_nonce);
@@ -261,14 +261,6 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, false);
     }
-}
-
-void xtxmgr_table_t::update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
-    m_new_receipt_queue.update_peer_receiptid_pair(peer_table_sid, pair);
-}
-
-std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_receipts() {
-    return m_new_receipt_queue.get_receipts();
 }
 
 }  // namespace xtxpool_v2

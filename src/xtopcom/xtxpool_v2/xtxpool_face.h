@@ -246,8 +246,14 @@ public:
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_table_state(const data::xtablestate_ptr_t & table_state) = 0;
     // virtual xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const = 0;
-    virtual xcons_transaction_ptr_t build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) = 0;
-    virtual xcons_transaction_ptr_t build_confirm_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) = 0;
+    virtual void build_recv_tx(base::xtable_shortid_t from_table_sid,
+                               base::xtable_shortid_t to_table_sid,
+                               std::vector<uint64_t> receiptids,
+                               std::vector<xcons_transaction_ptr_t> & receipts) = 0;
+    virtual void build_confirm_tx(base::xtable_shortid_t from_table_sid,
+                                  base::xtable_shortid_t to_table_sid,
+                                  std::vector<uint64_t> receiptids,
+                                  std::vector<xcons_transaction_ptr_t> & receipts) = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
     // virtual const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
@@ -256,7 +262,6 @@ public:
     // virtual bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const = 0;
     // virtual bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const = 0;
     virtual void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
-    virtual std::vector<xcons_transaction_ptr_t> get_receipts(uint8_t zone, uint16_t subaddr) = 0;
 };
 
 class xtxpool_instance {

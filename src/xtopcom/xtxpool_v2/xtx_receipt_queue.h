@@ -76,16 +76,15 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_receipt_id(uint64_t latest_receipt_id);
-    void update_max_pull_id(uint64_t max_pull_id);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t upper_receipt_id, uint32_t max_num) const;
     void erase(uint64_t receipt_id);
     bool empty() const {
         return m_txs.empty();
     }
-    void get_lacking_ids(std::vector<uint64_t> & lacking_ids) const;
-    uint64_t get_latest_receipt_id() const {
-        return m_latest_receipt_id;
-    }
+    void get_lacking_ids(std::vector<uint64_t> & lacking_ids, uint64_t max_pull_id) const;
+    // uint64_t get_latest_receipt_id() const {
+    //     return m_latest_receipt_id;
+    // }
     uint32_t size() const {
         return m_txs.size();
     }
@@ -94,15 +93,13 @@ private:
     std::map<uint64_t, std::shared_ptr<xtx_entry>> m_txs;
     xreceipt_queue_internal_t * m_receipt_queue_internal;
     uint64_t m_latest_receipt_id{0};
-    uint64_t m_max_pull_id{0};
-    uint64_t m_max_pull_id_update_time{0};
 };
 
 using xtx_peer_table_map_t = std::map<base::xtable_shortid_t, std::shared_ptr<xpeer_table_receipts_t>>;
 
 class xreceipt_queue_new_t {
 public:
-    xreceipt_queue_new_t(xtxpool_table_info_t * xtable_info) : m_receipt_queue_internal(xtable_info) {
+    xreceipt_queue_new_t(xtxpool_table_info_t * xtable_info, xtxpool_resources_face * para) : m_receipt_queue_internal(xtable_info), m_para(para) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t recv_txs_max_num,
@@ -111,16 +108,13 @@ public:
                                                        uint32_t & confirm_txs_num) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
-    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    // void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
     void update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid);
-    uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
-    uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
-    uint32_t get_recv_tx_count() const;
+    // uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
+    // uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     uint32_t size() const;
-    void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
-    std::vector<xcons_transaction_ptr_t> get_receipts();
 
 private:
     xtx_peer_table_map_t & get_peer_table_map(bool is_recv_tx) {
@@ -130,10 +124,11 @@ private:
             return m_confirm_tx_peer_table_map;
         }
     }
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_receipt_ids(const xtx_peer_table_map_t & peer_table_map, uint32_t & total_num) const;
+
     xreceipt_queue_internal_t m_receipt_queue_internal;
     xtx_peer_table_map_t m_recv_tx_peer_table_map;
     xtx_peer_table_map_t m_confirm_tx_peer_table_map;
+    xtxpool_resources_face * m_para;
 };
 
 }  // namespace xtxpool_v2

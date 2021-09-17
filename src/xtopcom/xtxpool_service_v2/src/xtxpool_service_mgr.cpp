@@ -22,7 +22,7 @@
 
 NS_BEG2(top, xtxpool_service_v2)
 
-#define max_mailbox_num (8192)
+#define max_mailbox_num (1024)
 
 #define print_txpool_statistic_values_freq (300)  // print txpool statistic values every 5 minites
 
@@ -220,9 +220,12 @@ void xtxpool_service_mgr::on_timer() {
             // only receipt sender need recover unconfirmed txs.
             if (service->is_send_receipt_role()) {
                 pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
-                receipts_recender_service_vec.push_back(service);
             } else {
                 pull_lacking_receipts_service_vec.push_back(service);
+            }
+
+            if (service->is_send_id_state_role()) {
+                receipts_recender_service_vec.push_back(service);
             }
 
             if (is_time_for_refresh_table) {

@@ -173,44 +173,44 @@ TEST_F(test_receipt_strategy, is_receiptid_state_sender_for_talbe) {
     ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(100, 0, 4, 2), false);
     ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(100, 0, 4, 3), false);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(100, 28, 4, 0), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(100, 28, 4, 1), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(100, 28, 4, 2), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(100, 28, 4, 3), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(228, 28, 4, 0), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(228, 28, 4, 1), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(228, 28, 4, 2), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(228, 28, 4, 3), false);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(99, 29, 4, 0), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(99, 29, 4, 1), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(99, 29, 4, 2), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(99, 29, 4, 3), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(227, 29, 4, 0), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(227, 29, 4, 1), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(227, 29, 4, 2), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(227, 29, 4, 3), false);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(98, 30, 4, 0), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(98, 30, 4, 1), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(98, 30, 4, 2), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(98, 30, 4, 3), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(226, 30, 4, 0), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(226, 30, 4, 1), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(226, 30, 4, 2), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(226, 30, 4, 3), true);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(97, 31, 4, 0), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(97, 31, 4, 1), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(97, 31, 4, 2), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(97, 31, 4, 3), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(225, 31, 4, 0), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(225, 31, 4, 1), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(225, 31, 4, 2), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(225, 31, 4, 3), false);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(164, 28, 4, 0), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(164, 28, 4, 1), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(164, 28, 4, 2), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(164, 28, 4, 3), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(356, 28, 4, 0), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(356, 28, 4, 1), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(356, 28, 4, 2), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(356, 28, 4, 3), false);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(163, 29, 4, 0), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(163, 29, 4, 1), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(163, 29, 4, 2), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(163, 29, 4, 3), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(355, 29, 4, 0), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(355, 29, 4, 1), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(355, 29, 4, 2), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(355, 29, 4, 3), true);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(162, 30, 4, 0), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(162, 30, 4, 1), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(162, 30, 4, 2), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(162, 30, 4, 3), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(354, 30, 4, 0), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(354, 30, 4, 1), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(354, 30, 4, 2), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(354, 30, 4, 3), false);
 
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(161, 31, 4, 0), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(161, 31, 4, 1), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(161, 31, 4, 2), false);
-    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(161, 31, 4, 3), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(353, 31, 4, 0), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(353, 31, 4, 1), true);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(353, 31, 4, 2), false);
+    ASSERT_EQ(xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(353, 31, 4, 3), false);
 }
 

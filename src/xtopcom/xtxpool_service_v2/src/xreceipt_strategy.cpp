@@ -13,7 +13,7 @@ NS_BEG2(top, xtxpool_service_v2)
 #define receipt_sender_select_num (2)           // select 2 nodes to send receipt at the first time
 #define receipt_pull_msg_sender_select_num (1)  // select 1 node to send recept pull msg
 #define receipt_resender_select_num (1)         // select 1 nodes to resend receipt
-#define receiptid_state_send_interval (64)      // every 64 seconds send receipt id state of a table
+#define receiptid_state_send_interval (128)     // every 128 seconds send receipt id state of a table
 
 bool xreceipt_strategy_t::is_time_for_refresh_table(uint64_t now) {
     return (now % refresh_table_interval) == 0;
@@ -43,13 +43,13 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
     bool is_time_for_resend = ((random_num % receipt_resend_interval) == 0);
     uint16_t resend_node_pos = ((now / receipt_resend_interval) + (uint64_t)table_id) % shard_size;
     xdbg("xreceipt_strategy_t::is_resend_node_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,self_node_id:%d",
-          table_id,
-          now,
-          receipt_resend_interval,
-          is_time_for_resend,
-          shard_size,
-          resend_node_pos,
-          self_node_id);
+         table_id,
+         now,
+         receipt_resend_interval,
+         is_time_for_resend,
+         shard_size,
+         resend_node_pos,
+         self_node_id);
     return (is_time_for_resend && resend_node_pos == self_node_id);
 }
 
@@ -59,13 +59,13 @@ bool xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(uint64_t now, uint
     bool is_time_for_resend = ((random_num % receiptid_state_send_interval) == 0);
     uint16_t resend_node_pos = ((now / receiptid_state_send_interval) + (uint64_t)table_id) % shard_size;
     xdbg("xreceipt_strategy_t::is_receiptid_state_sender_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,node_id:%d",
-          table_id,
-          now,
-          receiptid_state_send_interval,
-          is_time_for_resend,
-          shard_size,
-          resend_node_pos,
-          node_id);
+         table_id,
+         now,
+         receiptid_state_send_interval,
+         is_time_for_resend,
+         shard_size,
+         resend_node_pos,
+         node_id);
     return (is_time_for_resend && resend_node_pos == node_id);
 }
 
@@ -120,13 +120,13 @@ bool xreceipt_strategy_t::is_selected_receipt_pull_msg_processor(uint64_t now, u
     uint32_t rand_pos = (table_id + now) % shard_size;
     bool ret = is_selected_pos(node_id, rand_pos, select_num, shard_size);
     xdbg("xreceipt_strategy_t::is_selected_receipt_pull_msg_processor ret:%d table:%u rand_pos:%u select_num:%u node_id:%u shard_size:%u now:%llu",
-          ret,
-          table_id,
-          rand_pos,
-          select_num,
-          node_id,
-          shard_size,
-          now);
+         ret,
+         table_id,
+         rand_pos,
+         select_num,
+         node_id,
+         shard_size,
+         now);
     return ret;
 }
 

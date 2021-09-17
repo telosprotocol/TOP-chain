@@ -48,6 +48,9 @@ public:
     bool is_send_receipt_role() const override {
         return m_is_send_receipt_role;
     }
+    bool is_send_id_state_role() const override {
+        return m_is_send_id_state_role;
+    }
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const override;
     void resend_receipts(uint64_t now) override;  // keep it for compatibility
@@ -88,6 +91,7 @@ private:
     observer_ptr<router::xrouter_face_t> m_router;
     observer_ptr<xtxpool_svc_para_t> m_para;
     bool m_is_send_receipt_role{false};
+    bool m_is_send_id_state_role{false};
     uint16_t m_cover_front_table_id;  // [m_cover_front_table_id,m_cover_back_table_id) is the scope for this service
     uint16_t m_cover_back_table_id;
     base::enum_xchain_zone_index m_zone_index;

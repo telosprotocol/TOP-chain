@@ -21,8 +21,8 @@ using data::xcons_transaction_ptr_t;
 
 class xtxmgr_table_t {
 public:
-    xtxmgr_table_t(xtxpool_table_info_t * xtable_info)
-      : m_xtable_info(xtable_info), m_send_tx_queue(xtable_info), m_new_receipt_queue(xtable_info), m_pending_accounts(xtable_info) {
+    xtxmgr_table_t(xtxpool_table_info_t * xtable_info, xtxpool_resources_face * para)
+      : m_xtable_info(xtable_info), m_send_tx_queue(xtable_info), m_new_receipt_queue(xtable_info, para), m_pending_accounts(xtable_info) {
     }
 
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce);
@@ -34,17 +34,14 @@ public:
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     bool is_account_need_update(const std::string & account_addr) const;
-    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    // void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     bool is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
     void clear_expired_txs();
-    uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
-    uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
+    // uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
+    // uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
-
-    void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
-    std::vector<xcons_transaction_ptr_t> get_receipts();
 
 private:
     void queue_to_pending();

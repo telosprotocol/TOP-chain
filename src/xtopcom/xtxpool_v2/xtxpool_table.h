@@ -86,10 +86,7 @@ public:
                     xtxpool_shard_info_t * shard,
                     xtxpool_statistic_t * statistic,
                     std::set<base::xtable_shortid_t> * all_sid_set = nullptr)
-      : m_para(para)
-      , m_table_state_cache(para, table_addr)
-      , m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set)
-      , m_txmgr_table(&m_xtable_info) {
+      : m_para(para), m_table_state_cache(para, table_addr), m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set), m_txmgr_table(&m_xtable_info, para) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
@@ -114,15 +111,12 @@ public:
     // bool is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const;
     // bool is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const;
 
-    void update_peer_receiptid_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
-    xcons_transaction_ptr_t build_recv_tx(const std::string & peer_table_addr, uint64_t receipt_id);
-    xcons_transaction_ptr_t build_confirm_tx(const std::string & peer_table_addr, uint64_t receipt_id);
+    void build_recv_tx(base::xtable_shortid_t peer_table_sid, std::vector<uint64_t> receiptids, std::vector<xcons_transaction_ptr_t> & receipts);
+    void build_confirm_tx(base::xtable_shortid_t peer_table_sid, std::vector<uint64_t> receiptids, std::vector<xcons_transaction_ptr_t> & receipts);
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
-    std::vector<xcons_transaction_ptr_t> get_receipts();
-    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
 
 private:
@@ -137,10 +131,8 @@ private:
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt_real(const std::shared_ptr<xtx_entry> & tx);
-    void update_sender_unconfirm_id_height(const base::xreceiptid_state_ptr_t & receipt_id_state);
     void deal_commit_table_block(xblock_t * table_block, bool update_txmgr);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
-    void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
 
     xtxpool_resources_face * m_para;
     xtable_state_cache_t m_table_state_cache;
@@ -152,7 +144,6 @@ private:
     // uint64_t m_unconfirmed_tx_num{0};
 
     xunconfirm_id_height m_unconfirm_id_height;
-    uint64_t m_receipt_id_state_height{0};
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts

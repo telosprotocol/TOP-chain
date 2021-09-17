@@ -6,6 +6,7 @@
 #include "xtxpool_v2/xtxmgr_table.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xverifier/xverifier_utl.h"
+#include "xtxpool_v2/xtxpool_para.h"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -30,7 +31,8 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
@@ -75,7 +77,8 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
@@ -98,7 +101,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
@@ -177,7 +181,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
@@ -243,7 +248,8 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
@@ -283,7 +289,8 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
@@ -386,7 +393,8 @@ TEST_F(test_txmgr_table, expired_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     xtx_para_t para;
@@ -429,10 +437,11 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxmgr_table_t txmgr_table(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
-    xreceipt_queue_new_t receipt_queue(&table_para);
+    xreceipt_queue_new_t receipt_queue(&table_para, &resource);
 
     uint32_t tx_num = 5;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
@@ -449,11 +458,4 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     ASSERT_EQ(ret, 0);
     bool is_repeat = txmgr_table.is_repeat_tx(tx_ent);
     ASSERT_EQ(is_repeat, true);
-
-    base::xreceiptid_state_ptr_t receiptid_state = std::make_shared<base::xreceiptid_state_t>();
-    xreceiptid_pair_t receiptid_pair(0, 0, 1);
-    receiptid_state->add_pair(1, receiptid_pair);
-    txmgr_table.update_receiptid_state(receiptid_state);
-    ret = txmgr_table.push_receipt(tx_ent);
-    ASSERT_NE(ret, 0);
 }

@@ -20,6 +20,8 @@ using base::xstream_t;
 using data::xtransaction_ptr_t;
 using data::xtransaction_t;
 
+#define max_cluster_rpc_mailbox_num (1024)
+
 xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> cluster_vhost,
                                            observer_ptr<xrouter_face_t> router_ptr,
                                            xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
@@ -59,13 +61,17 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
         }
         return true;
     };
+    int64_t in, out;
+    int32_t queue_size = m_thread->count_calls(in, out);
+    if (queue_size >= max_cluster_rpc_mailbox_num) {
+        xkinfo_rpc("xcluster_rpc_handler::on_message cluster rpc mailbox is full:%d", queue_size);
+        return;
+    }
+    XMETRICS_COUNTER_SET("mailbox_cluster_rpc", queue_size);
 
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(edge_sender, message);
     base::xcall_t asyn_call(process_request, para.get());
     m_thread->send_call(asyn_call);
-    int64_t in, out;
-    int32_t queue_size = m_thread->count_calls(in, out);
-    XMETRICS_COUNTER_SET("mailbox_cluster_rpc", queue_size);
 }
 
 void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
