@@ -10,8 +10,6 @@
 
 namespace top { namespace data {
 
-REG_CLS(xcons_transaction_t);
-
 xcons_transaction_t::xcons_transaction_t() {
     XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
 }

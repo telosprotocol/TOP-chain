@@ -13,19 +13,19 @@ namespace top {
 
 // the real enum_xdata_type value = enum_xdata_type_max(355) - enum_xtopcom_object_type
 enum enum_xtopcom_object_type {
-    xdata_type_transaction                  = 0,
-    xdata_type_cons_transaction             = 1,
-    xdata_type_tx_receipt                   = 2,
-    xdata_type_prove_cert                   = 3,
-    xdata_type_empty_block                  = 4,
-    xdata_type_rootblock                    = 5,
-    xdata_type_rootblock_input_entity       = 6,
-    xdata_type_lightunit_block              = 7,
-    xdata_type_fullunit_block               = 8,
-    xdata_type_table_block                  = 9,
-    xdata_type_fulltable_block              = 10,
-    xdata_type_table_proposal_input         = 11,
-    xdata_type_transaction_v2               = 12,
+    xdata_type_transaction                  = 0,  // 355
+    xdata_type_cons_transaction             = 1,  // 354
+    xdata_type_tx_receipt                   = 2,  // 353
+    xdata_type_prove_cert                   = 3,  // 352
+    xdata_type_empty_block                  = 4,  // 351
+    xdata_type_rootblock                    = 5,  // 350
+    xdata_type_rootblock_input_entity       = 6,  // 349
+    xdata_type_lightunit_block              = 7,  // 348
+    xdata_type_fullunit_block               = 8,  // 347
+    xdata_type_table_block                  = 9,  // 346
+    xdata_type_fulltable_block              = 10, // 345
+    xdata_type_table_proposal_input         = 11, // 344
+    xdata_type_transaction_v2               = 12, // 343
 
     xtopcom_object_type_max
 };
@@ -61,15 +61,5 @@ class xbase_dataunit_t : public base::xdataunit_t {
     }
 };
 
-template <class data_cls>
-class register_xcls {
-public:
-    register_xcls() { top::base::xcontext_t::register_xobject((top::base::enum_xobject_type)data_cls::get_object_type(), data_cls::create_object); }
-};
-
-#ifndef REG_CLS
-#    define REG_CLS(CLS)                                                                                                                                                           \
-        register_xcls<CLS> g_##CLS
-#endif  // REG_CLS
 
 }  // namespace top

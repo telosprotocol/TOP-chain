@@ -23,8 +23,6 @@ namespace top { namespace data {
 
 using namespace top::base;
 
-REG_CLS(xtransaction_v2_t);
-
 xtransaction_v2_t::xtransaction_v2_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
     XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, 1);

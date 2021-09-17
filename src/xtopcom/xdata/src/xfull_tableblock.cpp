@@ -11,8 +11,6 @@
 
 NS_BEG2(top, data)
 
-REG_CLS(xfull_tableblock_t);
-
 xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data, const int64_t tgas_balance_change) {
     m_snapshot = snapshot;
     m_block_statistics_data = statistics_data;
