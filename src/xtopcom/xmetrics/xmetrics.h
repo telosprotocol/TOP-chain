@@ -702,7 +702,7 @@ public:
 
 class simple_metrics_tickcounter {
 public:
-    simple_metrics_tickcounter(E_SIMPLE_METRICS_TAG tag) {
+    simple_metrics_tickcounter(E_SIMPLE_METRICS_TAG tag) : m_tag(tag) {
         m_start = cpu_time();
     }
 
@@ -716,7 +716,7 @@ private:
 };
 
 #define XMETRICS_TIMER(tag) \
-    metrics::simple_metrics_tickcounter tick(tag); // micro seconds
+    top::metrics::simple_metrics_tickcounter tick(tag); // micro seconds
 
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_increase(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_decrease(metrics_name, index, value)

@@ -589,6 +589,8 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     if (tag >= e_simple_total || tag <= e_simple_begin ) {
         return;
     }
+    // todo: remove for send & broadcast support vhost
+    xassert(tag < message_category_send || tag > message_broad_category_end);
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
 }

@@ -209,4 +209,76 @@ TEST_F(metrics_test, performance) {
         SLEEP_SECOND(3);
     }
 }
+
+enum xevent_major_type_t {
+    xevent_major_type_none,
+    xevent_major_type_timer,
+    xevent_major_type_chain_timer,
+    xevent_major_type_store,
+    xevent_major_type_sync_executor,
+    xevent_major_type_network,
+    // for dispatch message, due to multi-vnode
+    // there is a dispatcher to send all message
+    xevent_major_type_dispatch,
+    // major type for all deceit types
+    xevent_major_type_deceit,
+    xevent_major_type_consensus,
+    xevent_major_type_transaction,
+    xevent_major_type_behind,
+    xevent_major_type_vnode,
+    xevent_major_type_account,
+    xevent_major_type_role,
+    xevent_major_type_blockfetcher,
+    xevent_major_type_sync,
+    xevent_major_type_max
+};
+
+void test_metrics_minus() {
+    for (auto _major = (int)xevent_major_type_none; _major < (int)xevent_major_type_behind; _major++) {
+        XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)(top::metrics::xevent_begin + _major), -1);
+    }
+}
+
+TEST_F(metrics_test, gauge) {
+    int gauge_start = (int)top::metrics::e_simple_begin;
+    int end = (int)top::metrics::e_simple_total;
+    for(int round = 1; round <= 10; round++) {
+        for(int gauge = gauge_start; gauge < end; gauge++) {
+            // todo remove later
+            if (gauge < top::metrics::message_category_send || gauge > top::metrics::message_broad_category_end) {
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)gauge, 1);
+            }
+        }
+        if ((round % 2) == 0) {
+            for(int gauge = gauge_start; gauge < end; gauge++) {
+                if (gauge < top::metrics::message_category_send || gauge > top::metrics::message_broad_category_end) {
+                    XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)gauge, -1);
+                }
+            }
+        }
+
+        top::metrics::e_metrics::get_instance().gauge_dump();
+    }
+    
+    for (auto _major = (int)xevent_major_type_none; _major < (int)xevent_major_type_behind; _major++) {
+        XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)(top::metrics::xevent_begin + _major), 1);
+    }
+    
+    std::thread t1 = std::thread(&test_metrics_minus);
+    t1.detach();
+    
+    for(auto gauge = gauge_start+1; gauge < end; gauge++) {
+        if (gauge < top::metrics::message_category_send || gauge > top::metrics::message_broad_category_end) {
+            auto value = XMETRICS_GAUGE_GET_VALUE((top::metrics::E_SIMPLE_METRICS_TAG)gauge);
+            EXPECT_EQ(value, 5);
+        }
+    }
+
+    {
+        XMETRICS_TIMER(top::metrics::db_delete_tick);
+        SLEEP_MILLSECOND(20);
+    }
+    EXPECT_GT(XMETRICS_GAUGE_GET_VALUE(top::metrics::db_delete_tick), 20);
+}
+
 // #endif
