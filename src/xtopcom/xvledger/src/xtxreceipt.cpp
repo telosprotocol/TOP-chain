@@ -13,8 +13,6 @@ namespace top
 {
     namespace base
     {
-        REG_CLS(xtx_receipt_t);
-
         xtx_receipt_t::xtx_receipt_t()
         : m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
             XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);

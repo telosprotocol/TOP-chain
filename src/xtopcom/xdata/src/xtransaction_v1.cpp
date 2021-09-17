@@ -26,8 +26,6 @@
 #include <cinttypes>
 namespace top { namespace data {
 
-REG_CLS(xtransaction_v1_t);
-
 int32_t xtransaction_v1_t::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
     stream << m_transaction_type;

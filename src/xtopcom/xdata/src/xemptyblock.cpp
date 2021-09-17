@@ -11,8 +11,6 @@
 
 NS_BEG2(top, data)
 
-REG_CLS(xemptyblock_t);
-
 xemptyblock_t::xemptyblock_t(base::xvheader_t & header, base::xvqcert_t & cert)
 : xblock_t(header, cert, (enum_xdata_type)object_type_value) {
     XMETRICS_GAUGE(metrics::dataobject_block_empty, 1);

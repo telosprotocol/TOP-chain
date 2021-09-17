@@ -43,11 +43,11 @@ class xfull_tableblock_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_fulltable_block };
  public:
+    xfull_tableblock_t();
     xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
     virtual ~xfull_tableblock_t();
  private:
-    xfull_tableblock_t();
     xfull_tableblock_t(const xfull_tableblock_t &);
     xfull_tableblock_t & operator = (const xfull_tableblock_t &);
  public:
