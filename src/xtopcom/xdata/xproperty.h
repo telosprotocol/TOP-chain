@@ -53,6 +53,7 @@ XINLINE_CONSTEXPR char const* XPROPERTY_CONTRACT_GROUP_ASSOC_KEY     = "@43";
 XINLINE_CONSTEXPR char const* XPROPERTY_PARACHAIN_KEY     = "@50";
 
 XINLINE_CONSTEXPR char const* XPORPERTY_BEACON_REG_KEY = "@101";
+XINLINE_CONSTEXPR char const* XPORPERTY_ZEC_REG_KEY = "@201";
 
 // the corresponding token num of already expired locked vote
 
