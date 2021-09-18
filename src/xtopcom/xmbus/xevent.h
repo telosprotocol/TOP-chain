@@ -43,17 +43,13 @@ public:
                      bool _sync = true) 
         : xevent_t(_major_type, _minor_type, dir, _sync) {
             auto tag = (metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + _major_type);
-            xassert(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync);
-            if(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync) {
-                XMETRICS_GAUGE(tag, 1);
-            }
+            xassert(tag >= top::metrics::xevent_begin && tag <= top::metrics::xevent_end);
+            XMETRICS_GAUGE(tag, 1);
         }
     virtual ~xbus_event_t() {
         auto tag = (metrics::E_SIMPLE_METRICS_TAG)(metrics::xevent_begin + major_type);
-        xassert(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync);
-        if(tag >= top::metrics::xevent_major_type_none && tag <= top::metrics::xevent_major_type_sync) {
-            XMETRICS_GAUGE(tag, -1);
-        }
+        xassert(tag >= top::metrics::xevent_begin && tag <= top::metrics::xevent_end);
+        XMETRICS_GAUGE(tag, -1);
     }
 };
 

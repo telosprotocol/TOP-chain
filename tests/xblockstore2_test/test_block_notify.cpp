@@ -77,7 +77,7 @@ TEST_F(test_block_notify, inorder_dup_commit) {
 
     EXPECT_EQ(max_count - 2, notified_count);
     EXPECT_EQ(0, notified_connect);
-    EXPECT_EQ((max_count - 2) * 5, notified_commit);
+    EXPECT_EQ((max_count - 2) * 1, notified_commit);  // only table commit event
 
     // duplicate store
     for (auto & block : tableblocks) {
@@ -86,7 +86,7 @@ TEST_F(test_block_notify, inorder_dup_commit) {
 
     EXPECT_EQ(max_count - 2, notified_count);
     EXPECT_EQ(0, notified_connect);
-    EXPECT_EQ((max_count - 2) * 5, notified_commit);
+    EXPECT_EQ((max_count - 2) * 1, notified_commit);// only table commit event
 }
 
 TEST_F(test_block_notify, disorder_commit) {

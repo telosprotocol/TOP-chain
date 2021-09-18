@@ -122,35 +122,24 @@ xevent_queue_ptr_t xmessage_bus_t::get_queue(int major_type) {
 
 //XTODO,add implmentation for below
 xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_t * target_index) {
-    if (target_index->get_address() != sys_contract_beacon_timer_addr) {
-        return  make_object_ptr<mbus::xevent_store_block_to_db_t>(target_index->get_address(), target_index, true);
-    } else {
-        return nullptr;
-    }
+    xassert(false);  // no use now
+    return nullptr;
 }
 
 xevent_ptr_t  xmessage_bus_t::create_event_for_revoke_index_to_db(base::xvbindex_t * target_index)
 {
+    xassert(false);  // no use now
     return nullptr;
 }
 
 xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * this_block_ptr) {
-    if (this_block_ptr->get_account() != sys_contract_beacon_timer_addr) {
-        data::xblock_t* block = dynamic_cast<data::xblock_t*>(this_block_ptr);
-        xassert(block != nullptr);
-        block->add_ref();
-        data::xblock_ptr_t obj;
-        obj.attach(block);
-
-        return  make_object_ptr<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
-    } else {
-         return nullptr;
-     }
+    xassert(false);  // no use now
+    return nullptr;
 }
 
 
 xevent_ptr_t  xmessage_bus_t::create_event_for_store_committed_block(base::xvbindex_t * target_index) {
-    if (target_index->get_address() != sys_contract_beacon_timer_addr) {
+    if (target_index->get_block_level() == base::enum_xvblock_level_table) {
         return  make_object_ptr<mbus::xevent_store_block_committed_t>(target_index->get_address(), target_index, true);
     } else {
         return nullptr;

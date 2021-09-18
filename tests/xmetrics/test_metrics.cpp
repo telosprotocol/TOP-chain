@@ -245,13 +245,13 @@ TEST_F(metrics_test, gauge) {
     for(int round = 1; round <= 10; round++) {
         for(int gauge = gauge_start; gauge < end; gauge++) {
             // todo remove later
-            if (gauge < top::metrics::message_category_send || gauge > top::metrics::message_broad_category_end) {
+            if (gauge < (int)top::metrics::message_category_send || gauge > (int)top::metrics::message_broad_category_end) {
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)gauge, 1);
             }
         }
         if ((round % 2) == 0) {
             for(int gauge = gauge_start; gauge < end; gauge++) {
-                if (gauge < top::metrics::message_category_send || gauge > top::metrics::message_broad_category_end) {
+                if (gauge < (int)top::metrics::message_category_send || gauge > (int)top::metrics::message_broad_category_end) {
                     XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)gauge, -1);
                 }
             }
@@ -268,7 +268,7 @@ TEST_F(metrics_test, gauge) {
     t1.detach();
     
     for(auto gauge = gauge_start+1; gauge < end; gauge++) {
-        if (gauge < top::metrics::message_category_send || gauge > top::metrics::message_broad_category_end) {
+        if (gauge < (int)top::metrics::message_category_send || gauge > (int)top::metrics::message_broad_category_end) {
             auto value = XMETRICS_GAUGE_GET_VALUE((top::metrics::E_SIMPLE_METRICS_TAG)gauge);
             EXPECT_EQ(value, 5);
         }
