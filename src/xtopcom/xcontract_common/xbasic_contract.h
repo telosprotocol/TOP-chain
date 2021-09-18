@@ -63,6 +63,7 @@ public:
     state_accessor::xtoken_t src_action_asset(std::error_code& ec) const;
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
+    common::xlogic_time_t timestamp() const;
 
     std::vector<xfollowup_transaction_datum_t> followup_transaction();
 
@@ -77,6 +78,7 @@ protected:
               std::string const & method_name,
               std::string const & method_params,
               xfollowup_transaction_schedule_type_t type) override;
+    void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec);
 };
 
 NS_END2

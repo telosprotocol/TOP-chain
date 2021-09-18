@@ -46,6 +46,7 @@ namespace top {
                 is_limit_tx = true;
                 break;
             case data::xtransaction_type_run_contract: // run contract
+            case data::xtransaction_type_run_contract_new: // run contract
                 if ((trx_ptr->get_target_action_name() == vote_interface ||  trx_ptr->get_target_action_name() == claim_reward_interface) &&
                  ((trx_ptr->get_target_addr().substr(0, strlen(top::sys_contract_sharding_vote_addr)) == top::sys_contract_sharding_vote_addr) ||
                    trx_ptr->get_target_addr().substr(0, strlen(top::sys_contract_sharding_reward_claiming_addr)) == top::sys_contract_sharding_reward_claiming_addr)) { // vote & claim user reward

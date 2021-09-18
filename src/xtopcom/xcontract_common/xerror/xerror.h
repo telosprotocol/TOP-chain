@@ -30,6 +30,7 @@ enum class xenum_errc {
     get_binlog_failed,
     state_get_failed,
     nonce_mismatch,
+    user_contract_forbid_create_transfer,
     unknown_error,
 };
 using xerrc_t = xenum_errc;

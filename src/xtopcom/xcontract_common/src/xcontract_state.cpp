@@ -100,6 +100,15 @@ uint256_t  xtop_contract_state::latest_sendtx_hash() const {
     return m_ac->latest_sendtx_hash();
 }
 
+void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code& ec) {
+    assert(m_ac);
+    m_ac->latest_sendtx_hash(hash, ec);
+}
+void xtop_contract_state::latest_sendtx_hash(uint256_t hash) {
+    assert(m_ac);
+    m_ac->latest_sendtx_hash(hash);
+}
+
 uint64_t  xtop_contract_state::latest_sendtx_nonce(std::error_code& ec) const {
     assert(m_ac);
     return m_ac->latest_sendtx_nonce(ec);
@@ -109,6 +118,52 @@ uint64_t  xtop_contract_state::latest_sendtx_nonce(std::error_code& ec) const {
 uint64_t  xtop_contract_state::latest_sendtx_nonce() const {
     assert(m_ac);
     return m_ac->latest_sendtx_nonce();
+}
+
+void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce, std::error_code& ec) {
+    assert(m_ac);
+    m_ac->latest_sendtx_nonce(nonce, ec);
+}
+void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce) {
+    assert(m_ac);
+    m_ac->latest_sendtx_nonce(nonce);
+}
+
+uint256_t xtop_contract_state::latest_followup_tx_hash(std::error_code& ec) const {
+    assert(m_ac);
+    return m_ac->latest_followup_tx_hash(ec);
+}
+
+uint256_t xtop_contract_state::latest_followup_tx_hash() const {
+    assert(m_ac);
+    return m_ac->latest_followup_tx_hash();
+}
+
+void xtop_contract_state::latest_followup_tx_hash(uint256_t hash, std::error_code& ec) {
+    assert(m_ac);
+    m_ac->latest_followup_tx_hash(hash, ec);
+}
+void xtop_contract_state::latest_followup_tx_hash(uint256_t hash) {
+    assert(m_ac);
+    m_ac->latest_followup_tx_hash(hash);
+}
+
+uint64_t  xtop_contract_state::latest_followup_tx_nonce(std::error_code& ec) const {
+    assert(m_ac);
+    return m_ac->latest_followup_tx_nonce(ec);
+}
+uint64_t  xtop_contract_state::latest_followup_tx_nonce() const {
+    assert(m_ac);
+    return m_ac->latest_followup_tx_nonce();
+}
+
+void xtop_contract_state::latest_followup_tx_nonce(uint64_t nonce, std::error_code& ec) {
+    assert(m_ac);
+    m_ac->latest_followup_tx_nonce(nonce, ec);
+}
+void xtop_contract_state::latest_followup_tx_nonce(uint64_t nonce) {
+    assert(m_ac);
+    m_ac->latest_followup_tx_nonce(nonce);
 }
 
 NS_END2

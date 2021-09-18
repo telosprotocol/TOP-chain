@@ -80,8 +80,21 @@ public:
 
     uint256_t latest_sendtx_hash(std::error_code& ec) const;
     uint256_t latest_sendtx_hash() const;
+    void latest_sendtx_hash(uint256_t hash, std::error_code& ec);
+    void latest_sendtx_hash(uint256_t hash);
     uint64_t  latest_sendtx_nonce(std::error_code& ec) const;
     uint64_t  latest_sendtx_nonce() const;
+    void latest_sendtx_nonce(uint64_t nonce, std::error_code& ec);
+    void latest_sendtx_nonce(uint64_t nonce);
+
+    uint256_t latest_followup_tx_hash(std::error_code& ec) const;
+    uint256_t latest_followup_tx_hash() const;
+    void latest_followup_tx_hash(uint256_t hash, std::error_code& ec);
+    void latest_followup_tx_hash(uint256_t hash);
+    uint64_t  latest_followup_tx_nonce(std::error_code& ec) const;
+    uint64_t  latest_followup_tx_nonce() const;
+    void latest_followup_tx_nonce(uint64_t nonce, std::error_code& ec);
+    void latest_followup_tx_nonce(uint64_t nonce);
 
 
 };

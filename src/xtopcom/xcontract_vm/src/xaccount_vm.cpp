@@ -69,10 +69,22 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
         abort(i, result_size, result);
         result.status.ec = error::xerrc_t::transaction_execution_abort;
     }
-    ac.create_time();
-    std::error_code ec;
-    ac.update_latest_sendtx_hash(ec);
-    ac.update_latest_sendtx_nonce(ec);
+
+    auto last_nonce = ac.latest_sendtx_nonce();
+    auto last_hash = ac.latest_sendtx_hash();
+    for (auto & r : result.transaction_results) {
+        for (auto & follow_up : r.output.followup_transaction_data) {
+            if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
+                assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
+                follow_up.followed_transaction->get_transaction()->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+                follow_up.followed_transaction->get_transaction()->set_digest();
+                follow_up.followed_transaction->get_transaction()->set_digest();
+                last_hash = follow_up.followed_transaction->get_tx_hash_256();
+                last_nonce = follow_up.followed_transaction->get_tx_nonce();
+            }
+        }
+    }
+
     result.binlog = ac.binlog();
     result.contract_state_snapshot = ac.fullstate_bin();
 
@@ -116,7 +128,8 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
     }
 
-    for (auto & follow_up : result.output.followup_transaction_data) {
+    auto followup_transaction_data = result.output.followup_transaction_data;
+    for (auto & follow_up : followup_transaction_data) {
         if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (follow_up.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto follow_up_action = contract_runtime::xaction_generator_t::generate(follow_up.followed_transaction);
@@ -127,22 +140,18 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
                     result.output.followup_transaction_data.clear();
                     break;
                 }
-                follow_up.execute_type = contract_common::xenum_followup_transaction_execute_type::success;
+                follow_up.execute_type = contract_common::xfollowup_transaction_execute_type_t::success;
                 for (auto & double_follow_up : follow_up_result.output.followup_transaction_data) {
                     result.output.followup_transaction_data.emplace_back(std::move(double_follow_up));
                 }
-            } else if (follow_up.execute_type == contract_common::xenum_followup_transaction_execute_type::success) {
-                result.output.followup_transaction_data.emplace_back(std::move(follow_up));
+            } else if (follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::success) {
+
             } else {
                 xerror("[xtop_account_vm::execute_action] error follow up tx execute type: %d", follow_up.execute_type);
                 assert(false);
             }
         } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
-            if (follow_up.execute_type != contract_common::xenum_followup_transaction_execute_type::unexecuted) {
-                xerror("[xtop_account_vm::execute_action] error follow up tx execute type: %d", follow_up.execute_type);
-                assert(false);
-            }
-            result.output.followup_transaction_data.emplace_back(std::move(follow_up));
+            assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
         } else {
             xerror("[xtop_account_vm::execute_action] error follow up tx schedule type: %d", follow_up.schedule_type);
             assert(false);
