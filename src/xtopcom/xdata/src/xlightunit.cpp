@@ -16,8 +16,6 @@
 
 NS_BEG2(top, data)
 
-REG_CLS(xlightunit_block_t);
-
 xlightunit_block_para_t::~xlightunit_block_para_t() {
 
 }

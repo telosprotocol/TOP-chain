@@ -32,3 +32,6 @@ elseif (XDB_TYPE STREQUAL "LEVELDB")
 
 endif()
 
+if (BUILD_METRICS)
+    target_link_libraries(xdb PRIVATE xmetrics)
+endif()

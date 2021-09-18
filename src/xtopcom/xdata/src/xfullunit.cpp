@@ -10,8 +10,6 @@
 
 NS_BEG2(top, data)
 
-REG_CLS(xfullunit_block_t);
-
 xfullunit_block_t::xfullunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
     XMETRICS_GAUGE(metrics::dataobject_block_fullunit, 1);

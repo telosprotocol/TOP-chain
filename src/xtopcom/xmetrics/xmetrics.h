@@ -70,6 +70,14 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_key_block_output,
     db_key_block_output_resource,
     db_key_block_state,
+    db_read,
+    db_write,
+    db_delete,
+    db_read_size,
+    db_write_size,
+    db_read_tick,
+    db_write_tick,
+    db_delete_tick,
 
     // consensus
     cons_drand_leader_finish_succ,
@@ -95,6 +103,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_make_proposal_view_changed,
     cons_view_fire_clock_delay,
     cons_fail_backup_view_not_match,
+    cons_make_proposal_tick,
+    cons_verify_proposal_tick,
 
     // store
     store_db_read,
@@ -159,6 +169,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_end_contains_duplicate,
     message_category_unknown_contains_duplicate = message_category_end_contains_duplicate,
 
+    message_category_recv,
     message_category_begin,
     message_category_consensus = message_category_begin,
     message_category_timer,
@@ -166,8 +177,30 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_rpc,
     message_category_sync,
     message_block_broadcast,
-    message_category_end,
-    message_category_unknown = message_category_end,
+    message_category_unknown,
+    message_category_end = message_category_unknown,
+
+    message_category_send,
+    message_send_category_begin,
+    message_send_category_consensus = message_send_category_begin,
+    message_send_category_timer,
+    message_send_category_txpool,
+    message_send_category_rpc,
+    message_send_category_sync,
+    message_send_block_broadcast,
+    message_send_category_unknown,
+    message_send_category_end = message_send_category_unknown,
+
+    message_category_broad,
+    message_broad_category_begin,
+    message_broad_category_consensus = message_broad_category_begin,
+    message_broad_category_timer,
+    message_broad_category_txpool,
+    message_broad_category_rpc,
+    message_broad_category_sync,
+    message_broad_block_broadcast,
+    message_broad_category_unknown,
+    message_broad_category_end = message_broad_category_unknown,
 
     // sync 
     xsync_recv_new_block,
@@ -175,6 +208,44 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_recv_invalid_block,
     xsync_recv_duplicate_block,
     xsync_recv_block_size,
+    xsync_getblocks_recv_req,
+    xsync_getblocks_send_resp,
+    xsync_recv_broadcast_newblockhash,
+    xsync_recv_blocks,
+    xsync_recv_blocks_size,
+    xsync_handler_blocks,
+    xsync_recv_gossip_recv,
+    xsync_bytes_gossip_recv,
+    xsync_recv_get_on_demand_blocks,
+    xsync_recv_get_on_demand_blocks_bytes,
+    xsync_recv_on_demand_blocks,
+    xsync_recv_on_demand_blocks_bytes,
+    xsync_recv_broadcast_chain_state,
+    xsync_recv_broadcast_chain_state_bytes,
+    xsync_recv_response_chain_state,
+    xsync_recv_response_chain_state_bytes,
+    xsync_recv_cross_cluster_chain_state,
+    xsync_recv_cross_cluster_chain_state_bytes,
+    xsync_recv_blocks_by_hashes,
+    xsync_recv_blocks_by_hashes_bytes,
+    xsync_handler_blocks_by_hashes,
+    xsync_cost_role_add_event,
+    xsync_cost_role_remove_event,
+    xsync_handle_chain_snapshot_request,
+    xsync_handler_chain_snapshot_reponse,
+    xsync_handle_ondemand_chain_snapshot_request,
+    xsync_handle_ondemand_chain_snapshot_reponse,
+    xsync_recv_on_demand_by_hash_blocks_req,
+    xsync_recv_on_demand_by_hash_blocks_req_bytes,
+    xsync_recv_on_demand_by_hash_blocks_resp,
+    xsync_recv_on_demand_by_hash_blocks_resp_bytes,
+    xsync_behind_download,
+    xsync_behind_check,
+    xsync_behind_on_demand,
+    xsync_behind_on_demand_by_hash,
+    xsync_recv_get_blocks_by_hashes,
+    xsync_recv_get_blocks_by_hashes_bytes,
+
 
     // txpool
     txpool_received_self_send_receipt_num,
@@ -321,7 +392,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
     
     blockstore_access_from_vnodesrv,
-
+    blockstore_tick,
     // statestore
     statestore_access,
     statestore_access_begin,
@@ -363,6 +434,33 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // data structure
     data_table_unpack_units,
     data_table_unpack_one_unit,
+
+    txexecutor_total_system_contract_count,
+    txexecutor_system_contract_failed_count,
+
+    // event
+    xevent_begin,
+    xevent_major_type_none = xevent_begin,
+    xevent_major_type_timer,
+    xevent_major_type_chain_timer,
+    xevent_major_type_store,
+    xevent_major_type_sync_executor,
+    xevent_major_type_network,
+    xevent_major_type_dispatch,      
+    xevent_major_type_deceit,
+    xevent_major_type_consensus,
+    xevent_major_type_transaction,
+    xevent_major_type_behind,
+    xevent_major_type_vnode,
+    xevent_major_type_account,
+    xevent_major_type_role,
+    xevent_major_type_blockfetcher,
+    xevent_major_type_sync,
+    xevent_end=xevent_major_type_sync,
+
+    // rpc
+    rpc_edge_tx_request,
+    rpc_edge_query_request,
 
     e_simple_total,
 };
@@ -531,6 +629,7 @@ public:
     metrics_appendant_info m_key;
     microseconds m_timed_out;
 };
+
 #define XMETRICS_INIT()                                                                                                                                                            \
     {                                                                                                                                                                              \
         auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
@@ -601,6 +700,24 @@ public:
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
+class simple_metrics_tickcounter {
+public:
+    simple_metrics_tickcounter(E_SIMPLE_METRICS_TAG tag) : m_tag(tag) {
+        m_start = cpu_time();
+    }
+
+    ~simple_metrics_tickcounter() {
+        uint64_t end = cpu_time();
+        top::metrics::e_metrics::get_instance().gauge(m_tag, end - m_start);
+    }
+private:
+    E_SIMPLE_METRICS_TAG m_tag;
+    uint64_t m_start;
+};
+
+#define XMETRICS_TIMER(tag) \
+    top::metrics::simple_metrics_tickcounter tick(tag); // micro seconds
+
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_increase(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_decrease(metrics_name, index, value)
 #define XMETRICS_ARRCNT_SET(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_set(metrics_name, index, value)
@@ -633,6 +750,7 @@ public:
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_SET(metrics_name, index, value)
+#define XMETRICS_TIMER(tag)
 #endif
 
 NS_END2
