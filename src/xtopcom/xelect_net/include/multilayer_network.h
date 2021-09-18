@@ -46,7 +46,7 @@ public:
 
     int RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb);
 
-    std::shared_ptr<network::xnetwork_driver_face_t> GetEcVhost(const uint32_t & xnetwork_id) const noexcept;
+    std::shared_ptr<elect::xnetwork_driver_face_t> GetEcVhost(const uint32_t & xnetwork_id) const noexcept;
 
     std::vector<std::string> GetServiceNeighbours(const common::xip2_t & xip2);
 

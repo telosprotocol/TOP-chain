@@ -41,8 +41,6 @@ public:
 
     void broadcast(xmessage_t const &) override {}
 
-    void forward_broadcast_message(xmessage_t const &, xvnode_address_t const &) override {}
-
     void send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override {}
     void broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override {}
 

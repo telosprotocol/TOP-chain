@@ -123,6 +123,8 @@ void ElectRoutingTable::PrintRoutingTable() {
                          get_local_node_info()->kadmlia_key()->GetServiceType().info().c_str(),
                          "node_size",
                          m_nodes.size(),
+                         "broadcast_node_size",
+                         m_broadcast_nodes.size(),
                          "unknown_node_size",
                          m_expected_kad_keys.size(),
                          "public_ip",
@@ -176,19 +178,32 @@ void ElectRoutingTable::GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t si
     }
 }
 
-std::unordered_map<std::string, NodeInfoPtr> ElectRoutingTable::nodes() {
-    std::unique_lock<std::mutex> lock(m_nodes_mutex);
-    return m_nodes;
+std::unordered_map<std::string, NodeInfoPtr> ElectRoutingTable::nodes(bool cover_old_version) {
+    if (cover_old_version) {
+        std::unique_lock<std::mutex> lock(m_broadcast_nodes_mutex);
+        return m_broadcast_nodes;
+    } else {
+        std::unique_lock<std::mutex> lock(m_nodes_mutex);
+        return m_nodes;
+    }
 }
 
-std::unordered_map<std::string, std::size_t> ElectRoutingTable::index_map() {
-    return m_index_map;
+std::unordered_map<std::string, std::size_t> ElectRoutingTable::index_map(bool cover_old_version) {
+    if (cover_old_version) {
+        return m_broadcast_index_map;
+    } else {
+        return m_index_map;
+    }
 }
 
-std::vector<std::string> ElectRoutingTable::get_shuffled_xip2() {
+std::vector<std::string> ElectRoutingTable::get_shuffled_xip2(bool cover_old_version) {
     static std::random_device rd;
     static std::mt19937 g(rd());
-    {
+    if (cover_old_version) {
+        std::unique_lock<std::mutex> lock(m_broadcast_xip2_for_shuffle_mutex);
+        std::shuffle(m_broadcast_xip2_for_shuffle.begin(), m_broadcast_xip2_for_shuffle.end(), g);
+        return m_broadcast_xip2_for_shuffle;
+    } else {
         std::unique_lock<std::mutex> lock(m_xip2_for_shuffle_mutex);
         std::shuffle(m_xip2_for_shuffle.begin(), m_xip2_for_shuffle.end(), g);
         return m_xip2_for_shuffle;
@@ -204,7 +219,11 @@ NodeInfoPtr ElectRoutingTable::GetNode(const std::string & id) {
     if (m_nodes.find(id) != m_nodes.end() && m_nodes.at(id)->public_port) {
         return m_nodes.at(id);
     }
-    xdbg("elect routing table get node failed ,id: %s", id.c_str());
+    xdbg("elect routing table get node failed ,id: %s nodes.size:%zu", id.c_str(),m_nodes.size());
+
+    for(auto const & _p :m_nodes ){
+        xdbg("now have: %s %s %u", _p.first.c_str(), _p.second->public_ip.c_str(), _p.second->public_port);
+    }
 
     return nullptr;
 }
@@ -221,22 +240,42 @@ bool ElectRoutingTable::CloserToTarget(const std::string & id1, const std::strin
 }
 
 // map<election_xip2_str,node_id_root_kad_key>
-void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map) {
-    std::unique_lock<std::mutex> lock(m_nodes_mutex);
-    m_expected_kad_keys = elect_root_kad_keys_map;
+std::map<std::string, base::KadmliaKeyPtr> const & ElectRoutingTable::GetAllNodesRootKeyMap() const noexcept {
+    return m_all_nodes_root_kay_keys;
+}
+
+// map<election_xip2_str,node_id_root_kad_key>
+void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map,
+                                                 std::map<std::string, NodeInfoPtr> const & last_round_nodes_map) {
     std::size_t index = 1;
-    for (auto _p : elect_root_kad_keys_map) {
-        NodeInfoPtr node_ptr;
-        node_ptr.reset(new NodeInfo(_p.first));
-        if (_p.second->Get() == base::GetRootKadmliaKey(global_node_id)->Get()) {
-            m_self_index = index;
-            xdbg("[ElectRoutingTable::SetElectionNodesExpected] Set self index %zu.", m_self_index);
-            m_expected_kad_keys.erase(_p.first);
+    {
+        std::unique_lock<std::mutex> lock(m_nodes_mutex);
+        m_expected_kad_keys = elect_root_kad_keys_map;
+        m_all_nodes_root_kay_keys = elect_root_kad_keys_map;
+        for (auto _p : elect_root_kad_keys_map) {
+            NodeInfoPtr node_ptr;
+            node_ptr.reset(new NodeInfo(_p.first));
+            if (_p.second->Get() == base::GetRootKadmliaKey(global_node_id)->Get()) {
+                m_self_index = index;
+                xdbg("[ElectRoutingTable::SetElectionNodesExpected] Set self index %zu.", m_self_index);
+                m_expected_kad_keys.erase(_p.first);
+            }
+            m_nodes.insert(std::make_pair(_p.first, node_ptr));
+            m_xip2_for_shuffle.push_back(_p.first);
+            m_index_map.insert(std::make_pair(_p.first, index++));
+            xdbg("[ElectRoutingTable::SetElectionNodesExpected] get node %s %s", _p.first.c_str(), _p.second->Get().c_str());
         }
-        m_nodes.insert(std::make_pair(_p.first, node_ptr));
-        m_xip2_for_shuffle.push_back(_p.first);
-        m_index_map.insert(std::make_pair(_p.first, index++));
-        xdbg("[ElectRoutingTable::SetElectionNodesExpected] get node %s %s", _p.first.c_str(), _p.second->Get().c_str());
+    }
+    std::unique_lock<std::mutex> lock_nodes(m_broadcast_nodes_mutex);
+    std::unique_lock<std::mutex> lock_shuffled(m_broadcast_xip2_for_shuffle_mutex);
+    m_broadcast_nodes = m_nodes;
+    m_broadcast_index_map = m_index_map;
+    m_broadcast_xip2_for_shuffle = m_xip2_for_shuffle;
+    for (auto const & _p : last_round_nodes_map) {
+        xdbg("[ElectRoutingTable::SetElectionNodesExpected] get last round node %s %s %u", _p.first.c_str(),_p.second->public_ip.c_str(),_p.second->public_port);
+        m_broadcast_nodes.insert(_p);
+        m_broadcast_index_map.insert(std::make_pair(_p.first, index++));
+        m_broadcast_xip2_for_shuffle.push_back(_p.first);
     }
 }
 
@@ -255,38 +294,55 @@ std::map<std::string, top::base::KadmliaKeyPtr> ElectRoutingTable::GetElectionNo
 }
 
 void ElectRoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes) {
-    xinfo("[ElectRoutingTable::HandleElectionNodesInfoFromRoot] node size:%zu local_service_type:%lld", nodes.size(), get_local_node_info()->service_type().value());
-    std::vector<base::KadmliaKeyPtr> erase_keys;
-    std::unique_lock<std::mutex> lock(m_nodes_mutex);
-    for (auto _p : nodes) {
-        NodeInfoPtr node_ptr = m_nodes[_p.first];
-        // node_ptr.reset(new NodeInfo(_p.first));
-        auto & root_node_info = _p.second;
-        node_ptr->public_ip = root_node_info->public_ip;
-        node_ptr->public_port = root_node_info->public_port;
-        node_ptr->service_type = get_local_node_info()->service_type();
-        node_ptr->xid = root_node_info->xid;
-        node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
-        xdbg("[ElectRoutingTable::HandleElectionNodesInfoFromRoot] %s %s:%d, %lld",
-             node_ptr->node_id.c_str(),
-             node_ptr->public_ip.c_str(),
-             node_ptr->public_port,
-             node_ptr->service_type.value());
-        erase_keys.push_back(base::GetKadmliaKey(node_ptr->node_id));
+    {
+        xinfo("[ElectRoutingTable::HandleElectionNodesInfoFromRoot] node size:%zu local_service_type:%lld", nodes.size(), get_local_node_info()->service_type().value());
+        std::vector<base::KadmliaKeyPtr> erase_keys;
+        std::unique_lock<std::mutex> lock(m_nodes_mutex);
+        for (auto _p : nodes) {
+            NodeInfoPtr node_ptr = m_nodes[_p.first];
+            // node_ptr.reset(new NodeInfo(_p.first));
+            auto & root_node_info = _p.second;
+            node_ptr->public_ip = root_node_info->public_ip;
+            node_ptr->public_port = root_node_info->public_port;
+            node_ptr->service_type = get_local_node_info()->service_type();
+            node_ptr->xid = root_node_info->xid;
+            node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
+            xdbg("[ElectRoutingTable::HandleElectionNodesInfoFromRoot] %s %s:%d, %lld",
+                 node_ptr->node_id.c_str(),
+                 node_ptr->public_ip.c_str(),
+                 node_ptr->public_port,
+                 node_ptr->service_type.value());
+            erase_keys.push_back(base::GetKadmliaKey(node_ptr->node_id));
+        }
+        EraseElectionNodesExpected(erase_keys);
     }
-    EraseElectionNodesExpected(erase_keys);
+    UpdateBroadcastNodeInfo();
 }
 
 void ElectRoutingTable::OnFindNodesFromRootRouting(std::string const & election_xip2, kadmlia::NodeInfoPtr const & node_info) {
-    std::unique_lock<std::mutex> lock(m_nodes_mutex);
-    if (m_nodes.find(election_xip2) != m_nodes.end()) {
-        NodeInfoPtr node_ptr = m_nodes[election_xip2];
-        // node_ptr->local_ip = node_info->local_ip;
-        // node_ptr->local_port = node_info->local_port;
-        node_ptr->public_ip = node_info->public_ip;
-        node_ptr->public_port = node_info->public_port;
-        xdbg("[ElectRoutingTable::OnFindNodesFromRootRouting] get election_xip2: %s %s:%d", election_xip2.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port);
-        m_expected_kad_keys.erase(election_xip2);
+    {
+        std::unique_lock<std::mutex> lock(m_nodes_mutex);
+        if (m_nodes.find(election_xip2) != m_nodes.end()) {
+            NodeInfoPtr node_ptr = m_nodes[election_xip2];
+            // node_ptr->local_ip = node_info->local_ip;
+            // node_ptr->local_port = node_info->local_port;
+            node_ptr->public_ip = node_info->public_ip;
+            node_ptr->public_port = node_info->public_port;
+            xdbg("[ElectRoutingTable::OnFindNodesFromRootRouting] get election_xip2: %s %s:%d", election_xip2.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port);
+            m_expected_kad_keys.erase(election_xip2);
+        }
+    }
+    UpdateBroadcastNodeInfo();
+}
+
+void ElectRoutingTable::UpdateBroadcastNodeInfo() {
+    std::unique_lock<std::mutex> nodes_lock(m_nodes_mutex);
+    std::unique_lock<std::mutex> broadcast_nodes_lock(m_broadcast_nodes_mutex);
+    for (auto const & _p : m_nodes) {
+        auto const & xip = _p.first;
+        auto const & node_info_ptr = _p.second;
+        assert(m_broadcast_nodes.find(xip) != m_broadcast_nodes.end());
+        m_broadcast_nodes[xip] = node_info_ptr;
     }
 }
 

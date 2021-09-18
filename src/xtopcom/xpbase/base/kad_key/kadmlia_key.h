@@ -70,6 +70,9 @@ public:
 
     inline uint8_t slot_id() const { return xip_.slot_id().value(); }
 
+    // use xip2 height as version
+    // inline uint64_t version() const { return xip_.height(); }
+
 private:
     common::xip2_t xip_;
 };

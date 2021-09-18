@@ -45,8 +45,6 @@ public:
 
     void forward_broadcast_message(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &) override { m_counter++; }
 
-    void broadcast_to_all(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &) override { m_counter++; }
-
     void broadcast(xmessage_t const &, xvnode_address_t const &) override { m_counter++; }
 
     common::xnetwork_id_t const & network_id() const noexcept override { return net_id; }

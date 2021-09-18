@@ -124,10 +124,39 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     auto root_routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
 
     std::map<std::string, base::KadmliaKeyPtr> elect_root_kad_key_ptrs;
+    std::set<std::string> new_round_root_xip_set;
     for (auto _node : elect_data) {
-        elect_root_kad_key_ptrs.insert(std::make_pair(_node.m_xip2.to_string(), base::GetRootKadmliaKey(_node.node_id)));
+        auto root_kad_key = base::GetRootKadmliaKey(_node.node_id);
+        elect_root_kad_key_ptrs.insert(std::make_pair(_node.m_xip2.to_string(), root_kad_key));
+        new_round_root_xip_set.insert(root_kad_key->Get());
     }
-    routing_table_ptr->SetElectionNodesExpected(elect_root_kad_key_ptrs);
+
+    std::map<std::string, kadmlia::NodeInfoPtr> last_round_out_nodes_map;
+
+    // lastest election_nodes
+    auto last_round_routing_table_ptr = wrouter::MultiRouting::Instance()->GetLastRoundRoutingTable(service_type);
+    if (last_round_routing_table_ptr) {
+        xdbg("ElectManager::UpdateRoutingTable find last round routing_table,service_type: %s this_round:%s",
+             last_round_routing_table_ptr->get_local_node_info()->service_type().info().c_str(),
+             service_type.info().c_str());
+        auto last_round_nodes_map = last_round_routing_table_ptr->GetAllNodesRootKeyMap();
+        for (auto const & _p : last_round_nodes_map) {
+            auto const & last_election_xip2 = top::get<const std::string>(_p);
+            auto const root_kad_key = top::get<base::KadmliaKeyPtr>(_p);
+            auto const & root_xip = root_kad_key->Get();
+            if (new_round_root_xip_set.find(root_xip) == new_round_root_xip_set.end()) {
+                auto const & node_info = last_round_routing_table_ptr->GetNode(last_election_xip2);
+                // here is possible to be nullptr (ths dst node never connected in this p2p)
+                // but set it anyway, must be sure the index is same in every correct nodes
+                // since the dst node(elected out) wasn't even be online in the whole last round, 
+                // make sure won't core dump while try send packet.
+                // assert(node_info != nullptr);
+                last_round_out_nodes_map.insert({last_election_xip2, last_round_routing_table_ptr->GetNode(last_election_xip2)});
+            }
+        }
+    }
+
+    routing_table_ptr->SetElectionNodesExpected(elect_root_kad_key_ptrs, last_round_out_nodes_map);
     local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());
     local_node_ptr->set_public_port(root_routing->get_local_node_info()->public_port());
 

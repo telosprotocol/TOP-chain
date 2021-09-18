@@ -344,14 +344,6 @@ namespace top
             return _network->broadcast(_node_address,message);
         }
 
-        /**
-         * \brief Forward a broadcast to dst address. dst address must be a cluster address.
-         */
-        void xvnetwork_node_t::forward_broadcast_message(vnetwork::xmessage_t const & message,xvnode_address_t const & dst)
-        {
-            return _network->forward_broadcast_message(_node_address,dst,message);
-        }
-
         std::vector<xvnode_address_t>   xvnetwork_node_t::neighbor_addresses() const
         {
             //printf("xvnetwork_driver_face::neighbor_addresses \n");

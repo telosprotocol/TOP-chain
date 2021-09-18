@@ -4,6 +4,7 @@
 
 #include "xvnode/xvnode_manager.h"
 
+#include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcrypto/xckey.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"

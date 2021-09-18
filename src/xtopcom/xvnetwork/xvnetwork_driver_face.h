@@ -75,30 +75,7 @@ public:
      * @param message The message to send
      * @param transmission_property The transport properties of the message
      */
-    virtual void send_to(xvnode_address_t const & to, xmessage_t const & message, network::xtransmission_property_t const & transmission_property = {}) = 0;
-
-    /**
-     * @brief Broadcast message to vnetwork_driver within the cluster through the underlying module vhost
-     * 
-     * @param message The message to broadcast
-     */ 
-    virtual void broadcast(xmessage_t const & message) = 0;
-
-    /**
-     * @brief Forward a broadcast to dst cluster address through the underlying module vhost
-     * 
-     * @param message The message to broadcast
-     * @param dst The destination to broadcast the message, must be a cluster address.
-     */
-    virtual void forward_broadcast_message(xmessage_t const & message, xvnode_address_t const & dst) = 0;
-
-    /**
-     * @brief 
-     * 
-     * @param dst 
-     * @param message The message to broadcast
-     */
-    virtual void broadcast_to(xvnode_address_t const & dst, xmessage_t const & message) = 0;
+    virtual void send_to(xvnode_address_t const & to, xmessage_t const & message, std::error_code & ec) = 0;
 
     /**
      * @brief 

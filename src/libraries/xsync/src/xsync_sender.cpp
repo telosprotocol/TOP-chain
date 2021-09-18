@@ -79,7 +79,10 @@ void xsync_sender_t::send_frozen_gossip(const std::vector<xgossip_chain_info_ptr
     xsync_dbg("xsync_sender_t send frozen gossip src %s dst %s", self_xip.to_string().c_str(), addr.to_string().c_str());
     //m_vhost->send(msg, self_xip, addr);
     std::error_code ec;
-    m_vhost->broadcast(self_xip, addr.xip2(), msg, ec);
+    m_vhost->broadcast(self_xip, addr, msg, ec);
+    if (ec) {
+        assert(false);
+    }
     xsync_dbg("xsync_sender_t::gossip frozen gossip ec=%d", ec);
 }
 
@@ -154,7 +157,10 @@ void xsync_sender_t::send_frozen_broadcast_chain_state(const std::vector<xchain_
 
     xsync_dbg("xsync_sender_t send frozen_broadcast_chain_state count(%u) src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
     std::error_code ec;
-    m_vhost->broadcast(self_addr, target_addr.xip2(), msg, ec);
+    m_vhost->broadcast(self_addr, target_addr, msg, ec);
+    if (ec) {
+        assert(false);
+    }
     xsync_dbg("xsync_sender_t frozen frozen_broadcast_chain_state ec=%d", ec);
 }
 

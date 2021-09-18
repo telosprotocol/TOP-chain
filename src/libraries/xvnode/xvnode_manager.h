@@ -10,7 +10,6 @@
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
-#include "xnetwork/xnetwork_driver_face.h"
 #include "xrouter/xrouter_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_v2/xtxpool_face.h"

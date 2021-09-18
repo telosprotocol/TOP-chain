@@ -7,7 +7,7 @@
 #include "xbasic/xhash_list.hpp"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xnode_type.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xelection/xcache/xdata_accessor_face.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnetwork/xvnetwork_driver_base.h"
 
@@ -26,6 +26,7 @@ class xtop_vnetwork_driver final
   , public std::enable_shared_from_this<xtop_vnetwork_driver> {
 private:
     observer_ptr<xvhost_face_t> m_vhost;
+    observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
 
     common::xnode_address_t m_address;
     mutable std::mutex m_address_mutex{};
@@ -45,7 +46,10 @@ public:
     xtop_vnetwork_driver & operator=(xtop_vnetwork_driver &&) = default;
     ~xtop_vnetwork_driver() override = default;
 
-    xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost, common::xnode_address_t const & address, common::xelection_round_t const & joined_election_round);
+    xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost,
+                         observer_ptr<election::cache::xdata_accessor_face_t> const & election_data_accessor,
+                         common::xnode_address_t const & address,
+                         common::xelection_round_t const & joined_election_round);
 
     void start() override;
 
@@ -55,13 +59,7 @@ public:
 
     common::xnode_address_t address() const override;
 
-    void send_to(common::xnode_address_t const & to, xmessage_t const & message, network::xtransmission_property_t const & transmission_property = {}) override;
-
-    void broadcast(xmessage_t const & message) override;
-
-    void forward_broadcast_message(xmessage_t const & message, common::xnode_address_t const & dst) override;
-
-    void broadcast_to(common::xnode_address_t const & dst, xmessage_t const & message) override;
+    void send_to(common::xnode_address_t const & to, xmessage_t const & message, std::error_code & ec) override;
 
     void send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override;
     void broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override;

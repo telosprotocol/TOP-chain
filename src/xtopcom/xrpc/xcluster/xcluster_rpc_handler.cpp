@@ -125,7 +125,18 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                    vaddr.to_string().c_str(),
                    msg.hash());
             try {
-                m_cluster_vhost->forward_broadcast_message(msg, vaddr);
+                //m_cluster_vhost->forward_broadcast_message(msg, vaddr);
+                std::error_code ec;
+                m_cluster_vhost->broadcast(vaddr.xip2(), msg, ec);
+                if (ec) {
+                    xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
+                          tx_hash.c_str(),
+                          m_cluster_vhost->address().to_string().c_str(),
+                          vaddr.to_string().c_str(),
+                          msg.hash(),
+                          static_cast<std::uint32_t>(msg.id()));
+                    assert(false);
+                }
             } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
                       tx_hash.c_str(),
@@ -174,14 +185,22 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
     response_msg_ptr->m_signature_address = m_cluster_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
     xdbg_rpc("xcluster_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
-    m_cluster_vhost->send_to(edge_sender, msg);
+    std::error_code ec;
+    m_cluster_vhost->send_to(edge_sender, msg, ec);
+    if (ec) {
+        assert(false);
+    }
 }
 
 void xcluster_rpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode_address_t & edge_sender) {
     xrpc_msg_response_t shard_msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(msg.payload());
     try {
         xkinfo("m_cluster_vhost response:%" PRIx64, msg.hash());
-        m_cluster_vhost->send_to(shard_msg.m_source_address, msg);
+        std::error_code ec;
+        m_cluster_vhost->send_to(shard_msg.m_source_address, msg, ec);
+        if (ec) {
+            assert(false);
+        }
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[global_trace][advance_rpc][send] src %s send msg %" PRIx64 " to dst %s",
               m_cluster_vhost->address().to_string().c_str(),

@@ -37,6 +37,8 @@ xvnetwork_errc_map(int const errc) noexcept {
         return "slot id mismatch";
     case xvnetwork_errc2_t::not_supported:
         return "not supported";
+    case xvnetwork_errc2_t::vnetwork_driver_not_run:
+        return "vnetwork driver not run";
     default:
         return "unknown error";
     }

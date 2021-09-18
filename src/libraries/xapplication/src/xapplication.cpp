@@ -186,7 +186,7 @@ observer_ptr<xbase_timer_driver_t> xtop_application::timer_driver() const noexce
     return make_observer(m_timer_driver.get());
 }
 
-observer_ptr<network::xnetwork_driver_face_t> xtop_application::network_driver(common::xnetwork_id_t const & network_id) const noexcept {
+observer_ptr<elect::xnetwork_driver_face_t> xtop_application::network_driver(common::xnetwork_id_t const & network_id) const noexcept {
     return make_observer(m_elect_main->GetEcVhost(network_id.value()).get());
 }
 

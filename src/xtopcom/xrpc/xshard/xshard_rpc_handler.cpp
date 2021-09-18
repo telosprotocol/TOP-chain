@@ -114,7 +114,11 @@ void xshard_rpc_handler::shard_process_request(const xrpc_msg_request_t & edge_m
             response_msg_ptr->m_signature_address = vnetwork::address_cast<common::xnode_type_t::group>(this->m_shard_vhost->address());
             xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
             xinfo_rpc("xshard_rpc_handler msg recv %" PRIx64 ", send %" PRIx64 ", %s", msghash, msg.hash(), response_msg_ptr->m_message_body.c_str());
-            this->m_shard_vhost->send_to(edge_sender, msg);
+            std::error_code ec;
+            this->m_shard_vhost->send_to(edge_sender, msg, ec);
+            if (ec) {
+                assert(false);
+            }
         }
     });
     try {

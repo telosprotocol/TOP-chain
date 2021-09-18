@@ -30,17 +30,17 @@ using namespace kadmlia;
 namespace elect {
 
 EcVHost::EcVHost(const uint32_t & xnetwork_id, const EcNetcardPtr & ec_netcard, common::xnode_id_t const & node_id)
-  : network::xnetwork_driver_face_t(), xnetwork_id_(xnetwork_id), ec_netcard_(ec_netcard), m_node_id_{node_id} {
+  : elect::xnetwork_driver_face_t(), xnetwork_id_(xnetwork_id), ec_netcard_(ec_netcard), m_node_id_{node_id} {
 }
 
 common::xnode_id_t const & EcVHost::host_node_id() const noexcept {
     return m_node_id_;
 }
 
-network::xnode_t EcVHost::host_node() const noexcept {
-    return {{}, {"", 999}};
-}
-
+// network::xnode_t EcVHost::host_node() const noexcept {
+//     return {{}, {"", 999}};
+// }
+#if 0
 base::KadmliaKeyPtr directly_address(vnetwork::xvnode_address_t const & address) {
     common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.slot_id(), address.group_size(), address.election_round().value()};
     base::KadmliaKeyPtr kad_key_ptr = base::GetKadmliaKey(xip);
@@ -99,7 +99,70 @@ bool EcVHost::SyncMessageWhenStart(const vnetwork::xvnode_address_t & send_addre
     }
     return false;
 }
+#endif
+void EcVHost::send_to(common::xip2_t const & src, common::xip2_t const & dst, xbyte_buffer_t const & byte_message, std::error_code & ec) const {
+    assert((dst.network_id() & common::xbroadcast_id_t::network) != common::xbroadcast_id_t::network);
+    assert((dst.zone_id() & common::xbroadcast_id_t::zone) != common::xbroadcast_id_t::zone);
+    assert((dst.cluster_id() & common::xbroadcast_id_t::cluster) != common::xbroadcast_id_t::cluster);
+    assert((dst.group_id() & common::xbroadcast_id_t::group) != common::xbroadcast_id_t::group);
 
+    assert(dst.zone_id()!= common::xfrozen_zone_id);
+
+    base::KadmliaKeyPtr send_kad_key = base::GetKadmliaKey(src);
+    base::KadmliaKeyPtr recv_kad_key = base::GetKadmliaKey(dst);
+    xinfo("[EcVHost][send] src_xip2:%s dst_xip2:%s src_key:%s recv_key:%s",
+          src.to_string().c_str(),
+          dst.to_string().c_str(),
+          send_kad_key->Get().c_str(),
+          recv_kad_key->Get().c_str());
+    ec_netcard_->send_to(send_kad_key, recv_kad_key, byte_message, ec);
+}
+
+void EcVHost::send_to_through_root(common::xip2_t const & src, common::xnode_id_t const & dst_node_id, xbyte_buffer_t const & byte_message, std::error_code & ec) const {
+    assert(src.zone_id() == common::xfrozen_zone_id);
+
+    auto kroot_rt = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
+    if (!kroot_rt || kroot_rt->nodes_size() == 0) {
+        TOP_WARN("network not joined, send failed, try again ...");
+        return;
+    }
+    base::KadmliaKeyPtr send_kad_key = kroot_rt->get_local_node_info()->kadmlia_key();
+    base::KadmliaKeyPtr recv_kad_key = nullptr;
+    if (dst_node_id.length()) {
+        recv_kad_key = base::GetRootKadmliaKey(dst_node_id.value());
+    } else {
+        auto recv_node = kroot_rt->GetRandomNode();
+        recv_kad_key = base::GetKadmliaKey(recv_node->node_id);
+    }
+    ec_netcard_->send_to(send_kad_key, recv_kad_key, byte_message, ec);
+}
+
+void EcVHost::spread_rumor(common::xip2_t const & src, common::xip2_t const & dst, xbyte_buffer_t const & byte_message, std::error_code & ec) const {
+    assert((dst.network_id() & common::xbroadcast_id_t::network) != common::xbroadcast_id_t::network);
+    assert((dst.zone_id() & common::xbroadcast_id_t::zone) != common::xbroadcast_id_t::zone);
+    assert((dst.cluster_id() & common::xbroadcast_id_t::cluster) != common::xbroadcast_id_t::cluster);
+    assert((dst.group_id() & common::xbroadcast_id_t::group) != common::xbroadcast_id_t::group);
+
+    assert(dst.zone_id()!= common::xfrozen_zone_id);
+
+    base::KadmliaKeyPtr send_kad_key = base::GetKadmliaKey(src);
+    base::KadmliaKeyPtr recv_kad_key = base::GetKadmliaKey(dst);
+    xinfo("[EcVHost][spread_rumor] src_xip2:%s dst_xip2:%s src_key:%s recv_key:%s",
+          src.to_string().c_str(),
+          dst.to_string().c_str(),
+          send_kad_key->Get().c_str(),
+          recv_kad_key->Get().c_str());
+    ec_netcard_->spread_rumor(send_kad_key, recv_kad_key, byte_message, ec);
+}
+
+void EcVHost::broadcast(common::xip2_t const & src, xbyte_buffer_t const & byte_message, std::error_code & ec) const {
+    base::KadmliaKeyPtr send_kad_key = base::GetKadmliaKey(src);
+    base::KadmliaKeyPtr recv_kad_key = base::GetRootKadmliaKey(global_node_id);
+    // base::KadmliaKeyPtr recv_kad_key = base::GetKadmliaKey(dst);
+    xinfo("[EcVHost][broadcast] src_xip2:%s src_key:%s recv_key:%s", src.to_string().c_str(), send_kad_key->Get().c_str(), recv_kad_key->Get().c_str());
+    ec_netcard_->broadcast(send_kad_key, recv_kad_key, byte_message, ec);
+}
+#if 0
 void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const & bytes_message, network::xtransmission_property_t const & transmission_property) const {
     auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
     auto vnetwork_message = top::codec::msgpack_decode<vnetwork::xvnetwork_message_t>(bytes_message);
@@ -137,7 +200,8 @@ void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const &
     }
 
     auto msg = elect::xelect_message_t(bytes_message, vnetwork_message.message_id());
-    ec_netcard_->send(send_kad_key, recv_kad_key, msg, false);
+    assert(false);
+    // ec_netcard_->send(send_kad_key, recv_kad_key, msg, false);
 }
 
 void EcVHost::spread_rumor(xbyte_buffer_t const & rumor) const {
@@ -158,14 +222,16 @@ void EcVHost::spread_rumor(xbyte_buffer_t const & rumor) const {
         auto recv_kad_key = base::GetKadmliaKey(recv_node->node_id);
         TOP_DEBUG("static xip request");
         auto msg = elect::xelect_message_t(rumor, vnetwork_message.message_id());
-        ec_netcard_->send(send_kad_key, recv_kad_key, msg, false);  // using p2p
+        assert(false);
+        // ec_netcard_->send(send_kad_key, recv_kad_key, msg, false);  // using p2p
         return;
     }
 
     auto recv_kad_key = adapt_address(vnetwork_message.receiver());
     auto send_kad_key = adapt_address(vnetwork_message.sender());
     auto msg = elect::xelect_message_t(rumor, vnetwork_message.message_id());
-    ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
+    assert(false);
+    // ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
 }
 
 void EcVHost::forward_broadcast(const common::xsharding_info_t & shardInfo, common::xnode_type_t node_type, xbyte_buffer_t const & byte_msg) const {
@@ -180,7 +246,8 @@ void EcVHost::forward_broadcast(const common::xsharding_info_t & shardInfo, comm
          vnetwork_message.message().id());
 
     auto msg = elect::xelect_message_t(byte_msg, vnetwork_message.message_id());
-    ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
+    assert(false);
+    // ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
 }
 
 void EcVHost::spread_rumor(const common::xsharding_info_t & shardInfo, xbyte_buffer_t const & rumor) const {
@@ -205,14 +272,16 @@ void EcVHost::spread_rumor(const common::xsharding_info_t & shardInfo, xbyte_buf
         auto recv_kad_key = base::GetKadmliaKey(recv_node->node_id);
         TOP_DEBUG("static xip request");
         auto msg = elect::xelect_message_t(rumor, vnetwork_message.message_id());
-        ec_netcard_->send(send_kad_key, recv_kad_key, msg, false);  // using p2p
+        // ec_netcard_->send(send_kad_key, recv_kad_key, msg, false);  // using p2p
+        assert(false);
         return;
     }
 
     auto recv_kad_key = adapt_address(shardInfo);
     auto send_kad_key = adapt_address(vnetwork_message.sender());
     auto msg = elect::xelect_message_t(rumor, vnetwork_message.message_id());
-    ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
+    assert(false);
+    // ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
 }
 
 bool EcVHost::p2p_bootstrap(std::vector<network::xdht_node_t> const & seeds) const {
@@ -236,7 +305,7 @@ network::p2p::xdht_host_face_t const & EcVHost::dht_host() const noexcept {
     static network::p2p::xdht_host_t shost(m_node_id_, nullptr, nullptr);
     return shost;
 }
-
+#endif
 void EcVHost::register_message_ready_notify(network::xnetwork_message_ready_callback_t cb) noexcept {
     assert(cb != nullptr);
     ec_netcard_->register_message_ready_notify(cb, xnetwork_id_);

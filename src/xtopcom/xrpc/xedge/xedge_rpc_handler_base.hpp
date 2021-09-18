@@ -102,7 +102,18 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                    vd->address().to_string().c_str(),
                    dst.to_string().c_str(),
                    msg.hash());
-                vd->forward_broadcast_message(msg, dst);
+                // vd->forward_broadcast_message(msg, dst);
+                std::error_code ec;
+                vd->broadcast(dst.xip2(), msg, ec);
+                if (ec) {
+                    xwarn("[global_trace][edge][forward advance] failed. %s,%s,src %s, dst %s,%" PRIx64,
+                          tx_hash.c_str(),
+                          msg_ptr->m_account.c_str(),
+                          vd->address().to_string().c_str(),
+                          dst.to_string().c_str(),
+                          msg.hash());
+                    assert(false);
+                }
             } else {
                 auto count = 0;
                 auto msghash = msg.hash();
@@ -123,7 +134,11 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                             cluster_addresses.size(),
                             ec.message().c_str(),
                             msg.hash());
-                        vd->send_to(cluster.second.address, msg);
+                        std::error_code ec;
+                        vd->send_to(cluster.second.address, msg, ec);
+                        if (ec) {
+                            assert(false);
+                        }
                     }
                     ++count;
                 }
