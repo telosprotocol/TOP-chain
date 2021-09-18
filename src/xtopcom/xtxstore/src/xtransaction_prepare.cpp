@@ -25,6 +25,7 @@ int32_t xtransaction_prepare_t::parse() {
             break;
 #endif
         case xtransaction_type_run_contract:
+        case xtransaction_type_run_contract_new:
             m_trans_obj = std::make_shared<xtransaction_run_contract>(m_account_ctx, m_trans);
             break;
         case xtransaction_type_transfer:

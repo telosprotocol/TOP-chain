@@ -263,6 +263,10 @@ common::xlogic_time_t xtop_contract_execution_context::time() const {
     return m_param.m_clock;
 }
 
+common::xlogic_time_t xtop_contract_execution_context::timestamp() const {
+    return m_param.m_timestamp;
+}
+
 bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
     assert(!ec);
 
@@ -294,13 +298,15 @@ bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
         default:
             break;
     }
-    if (contract_state()->access_control()->latest_sendtx_nonce() != last_nonce) {
+    if (contract_state()->latest_sendtx_nonce() != last_nonce) {
         ec = error::xerrc_t::nonce_mismatch;
         return false;
     }
 
-    contract_state()->access_control()->latest_sendtx_nonce(nonce);
-    contract_state()->access_control()->latest_sendtx_hash(hash);
+    contract_state()->latest_sendtx_nonce(nonce);
+    contract_state()->latest_sendtx_hash(hash);
+    contract_state()->latest_followup_tx_nonce(nonce);
+    contract_state()->latest_followup_tx_hash(hash);
 
     return true;
 }

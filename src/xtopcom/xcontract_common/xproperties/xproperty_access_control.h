@@ -59,8 +59,8 @@ private:
     state_accessor::xstate_access_control_data_t ac_data_;
     const contract_common::xcontract_execution_param_t m_param;
 
-    uint64_t m_latest_sendtx_nonce;
-    uint256_t m_latest_sendtx_hash;
+    uint64_t m_latest_followup_tx_nonce;
+    uint256_t m_latest_followup_tx_hash;
 
 public:
     xtop_property_access_control(xtop_property_access_control const&) = delete;
@@ -486,10 +486,6 @@ public:
 
     uint64_t blockchain_height() const;
 
-    uint256_t load_latest_sendtx_hash(std::error_code& ec) const;
-    uint64_t  load_latest_sendtx_nonce(std::error_code& ec) const;
-    void update_latest_sendtx_hash(std::error_code& ec);
-    void update_latest_sendtx_nonce(std::error_code& ec);
     uint256_t latest_sendtx_hash(std::error_code& ec) const;
     uint256_t latest_sendtx_hash() const;
     void latest_sendtx_hash(uint256_t hash, std::error_code& ec);
@@ -498,6 +494,16 @@ public:
     uint64_t  latest_sendtx_nonce() const;
     void latest_sendtx_nonce(uint64_t nonce, std::error_code& ec);
     void latest_sendtx_nonce(uint64_t nonce);
+
+    uint256_t latest_followup_tx_hash(std::error_code& ec) const;
+    uint256_t latest_followup_tx_hash() const;
+    void latest_followup_tx_hash(uint256_t hash, std::error_code& ec);
+    void latest_followup_tx_hash(uint256_t hash);
+    uint64_t  latest_followup_tx_nonce(std::error_code& ec) const;
+    uint64_t latest_followup_tx_nonce() const;
+    void latest_followup_tx_nonce(uint64_t nonce, std::error_code& ec);
+    void latest_followup_tx_nonce(uint64_t nonce);
+
     bool verify_sendtx_nonce(data::xcons_transaction_ptr_t const & trans, std::error_code & ec);
 
     void create_time(std::error_code& ec);

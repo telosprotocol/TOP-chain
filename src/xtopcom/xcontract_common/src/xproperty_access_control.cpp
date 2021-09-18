@@ -24,12 +24,8 @@ xtop_property_access_control::xtop_property_access_control(top::observer_ptr<top
                                                            state_accessor::xstate_access_control_data_t ac_data,
                                                            contract_common::xcontract_execution_param_t const & param)
   : bstate_(bstate), canvas_{make_object_ptr<base::xvcanvas_t>()}, ac_data_(ac_data), m_param(param) {
-    std::error_code ec;
-    m_latest_sendtx_hash = load_latest_sendtx_hash(ec);
-    top::error::throw_error(ec);
-    ec.clear();
-    m_latest_sendtx_nonce = load_latest_sendtx_nonce(ec);
-    top::error::throw_error(ec);
+    m_latest_followup_tx_hash = latest_sendtx_hash();
+    m_latest_followup_tx_nonce = latest_sendtx_nonce();
 }
 
 /**
@@ -526,7 +522,7 @@ void xtop_property_access_control::load_access_control_data(state_accessor::xsta
     ac_data_ = data;
 }
 
-uint256_t xtop_property_access_control::load_latest_sendtx_hash(std::error_code & ec) const {
+uint256_t xtop_property_access_control::latest_sendtx_hash(std::error_code & ec) const {
     assert(!ec);
 
     uint256_t hash;
@@ -544,29 +540,18 @@ uint256_t xtop_property_access_control::load_latest_sendtx_hash(std::error_code 
     return uint256_t((uint8_t *)value.c_str());
 }
 
-uint64_t xtop_property_access_control::load_latest_sendtx_nonce(std::error_code & ec) const {
-    assert(!ec);
-
-    uint64_t nonce{0};
-    assert(bstate_ != nullptr);
-    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
-        // ec = error::xerrc_t::property_not_exist;
-        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
-        return nonce;
-    }
-
-    auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
-    if (value.empty())
-        return nonce;
-
-    return base::xstring_utl::touint64(value);
+uint256_t xtop_property_access_control::latest_sendtx_hash() const {
+    std::error_code ec;
+    auto res = latest_sendtx_hash(ec);
+    top::error::throw_error(ec);
+    return res;
 }
 
-void xtop_property_access_control::update_latest_sendtx_hash(std::error_code & ec) {
+void xtop_property_access_control::latest_sendtx_hash(uint256_t hash, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    std::string hash_str(reinterpret_cast<char *>(m_latest_sendtx_hash.data()), m_latest_sendtx_hash.size());
+    std::string hash_str(reinterpret_cast<char *>(hash.data()), hash.size());
 
     if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
         // ec = error::xerrc_t::property_not_exist;
@@ -584,11 +569,42 @@ void xtop_property_access_control::update_latest_sendtx_hash(std::error_code & e
     propobj->insert(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, canvas_.get());
 }
 
-void xtop_property_access_control::update_latest_sendtx_nonce(std::error_code & ec) {
+void xtop_property_access_control::latest_sendtx_hash(uint256_t hash) {
+    std::error_code ec;
+    latest_sendtx_hash(hash, ec);
+    top::error::throw_error(ec);
+}
+
+uint64_t xtop_property_access_control::latest_sendtx_nonce(std::error_code & ec) const {
+    assert(!ec);
+
+    uint64_t nonce{0};
+    assert(bstate_ != nullptr);
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        // ec = error::xerrc_t::property_not_exist;
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
+        return nonce;
+    }
+
+    auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
+    if (value.empty())
+        return nonce;
+
+    return base::xstring_utl::touint64(value);
+}
+
+uint64_t xtop_property_access_control::latest_sendtx_nonce() const {
+    std::error_code ec;
+    auto res = latest_sendtx_nonce(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
+void xtop_property_access_control::latest_sendtx_nonce(uint64_t nonce, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    std::string nonce_str = base::xstring_utl::tostring(m_latest_sendtx_nonce);
+    std::string nonce_str = base::xstring_utl::tostring(nonce);
 
     if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
         // ec = error::xerrc_t::property_not_exist;
@@ -603,48 +619,54 @@ void xtop_property_access_control::update_latest_sendtx_nonce(std::error_code & 
             return;
         }
     }
-    propobj->insert(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, canvas_.get());
-}
-
-uint256_t xtop_property_access_control::latest_sendtx_hash(std::error_code & ec) const {
-    return m_latest_sendtx_hash;
-}
-
-uint256_t xtop_property_access_control::latest_sendtx_hash() const {
-    std::error_code ec;
-    auto res = latest_sendtx_hash(ec);
-    top::error::throw_error(ec);
-    return res;
-}
-
-void xtop_property_access_control::latest_sendtx_hash(uint256_t hash, std::error_code & ec) {
-    m_latest_sendtx_hash = hash;
-}
-
-void xtop_property_access_control::latest_sendtx_hash(uint256_t hash) {
-    std::error_code ec;
-    latest_sendtx_hash(hash, ec);
-    top::error::throw_error(ec);
-}
-
-uint64_t xtop_property_access_control::latest_sendtx_nonce(std::error_code & ec) const {
-    return m_latest_sendtx_nonce;
-}
-
-uint64_t xtop_property_access_control::latest_sendtx_nonce() const {
-    std::error_code ec;
-    auto res = latest_sendtx_nonce(ec);
-    top::error::throw_error(ec);
-    return res;
-}
-
-void xtop_property_access_control::latest_sendtx_nonce(uint64_t nonce, std::error_code & ec) {
-    m_latest_sendtx_nonce = nonce;
+    propobj->insert(data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, nonce_str, canvas_.get());
 }
 
 void xtop_property_access_control::latest_sendtx_nonce(uint64_t nonce) {
     std::error_code ec;
     latest_sendtx_nonce(nonce, ec);
+    top::error::throw_error(ec);
+}
+
+uint256_t xtop_property_access_control::latest_followup_tx_hash(std::error_code & ec) const {
+    return m_latest_followup_tx_hash;
+}
+
+uint256_t xtop_property_access_control::latest_followup_tx_hash() const {
+    std::error_code ec;
+    auto res = latest_followup_tx_hash(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
+void xtop_property_access_control::latest_followup_tx_hash(uint256_t hash, std::error_code & ec) {
+    m_latest_followup_tx_hash = hash;
+}
+
+void xtop_property_access_control::latest_followup_tx_hash(uint256_t hash) {
+    std::error_code ec;
+    latest_followup_tx_hash(hash, ec);
+    top::error::throw_error(ec);
+}
+
+uint64_t xtop_property_access_control::latest_followup_tx_nonce(std::error_code & ec) const {
+    return m_latest_followup_tx_nonce;
+}
+
+uint64_t xtop_property_access_control::latest_followup_tx_nonce() const {
+    std::error_code ec;
+    auto res = latest_followup_tx_nonce(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
+void xtop_property_access_control::latest_followup_tx_nonce(uint64_t nonce, std::error_code & ec) {
+    m_latest_followup_tx_nonce = nonce;
+}
+
+void xtop_property_access_control::latest_followup_tx_nonce(uint64_t nonce) {
+    std::error_code ec;
+    latest_followup_tx_nonce(nonce, ec);
     top::error::throw_error(ec);
 }
 

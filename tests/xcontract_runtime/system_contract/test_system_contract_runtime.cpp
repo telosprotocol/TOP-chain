@@ -235,6 +235,69 @@ TEST_F(test_system_contract_runtime, account_vm) {
     // std::cout << data::to_hex_str(result.transaction_results[1].output.contract_state_snapshot) << std::endl;
 }
 
+TEST_F(test_system_contract_runtime, test_follow_up_delay) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    contract_runtime::system::xtop_system_contract_manager::instance()->initialize(blockstore);
+    contract_runtime::system::xtop_system_contract_manager::instance()->deploy_system_contract<system_contracts::xtransfer_contract_t>(
+        common::xaccount_address_t{sys_contract_zec_reward_addr},
+        xblock_sniff_config_t{},
+        contract_runtime::system::contract_deploy_type_t::rec,
+        common::xnode_type_t::committee,
+        contract_runtime::system::contract_broadcast_policy_t::normal);
+
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+    base::xstream_t param_stream(base::xcontext_t::instance());
+    param_stream << uint64_t(1000);
+    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+    tx->make_tx_run_contract("follow_up_delay", param);
+    tx->set_different_source_target_address(sys_contract_zec_reward_addr, sys_contract_zec_reward_addr);
+    tx->set_fire_and_expire_time(600);
+    tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+    // tx->set_tx_type(xtransaction_type_run_contract_new);
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    cons_tx->set_tx_subtype(enum_transaction_subtype_recv);
+
+    std::vector<xcons_transaction_ptr_t> input_txs;
+    input_txs.emplace_back(cons_tx);
+    auto * system_contract_manager = contract_runtime::system::xsystem_contract_manager_t::instance();
+    xassert(system_contract_manager != nullptr);
+
+    contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
+
+    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, std::string{sys_contract_zec_reward_addr});
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
+    data::xblock_consensus_para_t cs_para;
+    {
+        cs_para.m_clock = 5796740;
+        cs_para.m_total_lock_tgas_token = 0;
+        cs_para.m_proposal_height = 7;
+        cs_para.m_account = "Ta0001@0";
+        cs_para.m_random_seed = base::xstring_utl::base64_decode("ODI3OTg4ODkxOTMzOTU3NDk3OA==");
+    }
+    auto result = vm.execute(input_txs, bstate, cs_para);
+
+    EXPECT_EQ(result.status.ec.value(), 0);
+    EXPECT_EQ(result.transaction_results.size(), 1);
+
+    std::vector<xcons_transaction_ptr_t> follow_up_delay_txs;
+    auto const & r = result.transaction_results[0];
+    for (auto & follow_up : r.output.followup_transaction_data) {
+        if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
+            follow_up_delay_txs.emplace_back(std::move(follow_up.followed_transaction));
+        }
+    }
+    EXPECT_EQ(follow_up_delay_txs.size(), enum_vledger_const::enum_vbucket_has_tables_count);
+    auto nonce = 1;
+    auto amount = 1000;
+    for (auto const & tx : follow_up_delay_txs) {
+        EXPECT_EQ(tx->get_source_addr(), sys_contract_zec_reward_addr);
+        EXPECT_EQ(tx->get_target_addr(), std::string{sys_contract_sharding_reward_claiming_addr} + "@" + std::to_string(nonce - 1));
+        auto tx_nonce = tx->get_tx_nonce();
+        EXPECT_EQ(nonce++, tx_nonce);
+    }
+}
+
 TEST_F(test_system_contract_runtime, test_asset_api_normal) {
     auto transfer_contract = std::make_shared<system_contracts::xtop_transfer_contract>();
 
