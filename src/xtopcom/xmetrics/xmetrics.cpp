@@ -140,6 +140,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
         RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
 
+        RETURN_METRICS_NAME(message_category_recv);
         RETURN_METRICS_NAME(message_category_consensus);
         RETURN_METRICS_NAME(message_category_timer);
         RETURN_METRICS_NAME(message_category_txpool);
