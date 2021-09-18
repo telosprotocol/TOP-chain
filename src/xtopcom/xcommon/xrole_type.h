@@ -54,6 +54,8 @@ enum class xenum_role_type : uint32_t {
 };
 using xrole_type_t = xenum_role_type;
 
+common::xrole_type_t to_mainchain_role_type(common::xregistration_type_t const & registration_type);
+
 XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = "edge";
 XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = "advance";
 XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR = "validator";
