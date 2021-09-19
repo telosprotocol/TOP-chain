@@ -1,11 +1,10 @@
 #include "gtest/gtest.h"
-#include "tests/xblockstore_test/test_blockmock.hpp"
-#include "tests/xvnetwork/xdummy_vnetwork_driver.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xdata/tests/test_blockutl.hpp"
 #include "xrpc/xcluster/xcluster_query_manager.h"
 #include "xrpc/xrpc_init.h"
+
+#include "tests/xvnetwork/xdummy_vnetwork_driver.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::xrpc;
@@ -17,15 +16,9 @@ protected:
         m_vhost = std::make_shared<top::tests::vnetwork::xdummy_vnetwork_driver_t>();
         m_router_ptr = top::make_observer<router::xrouter_t>(new router::xrouter_t);
         m_thread = top::make_observer(base::xiothread_t::create_thread(base::xcontext_t::instance(), 0, -1));
-        auto store = store::xstore_factory::create_store_with_memdb();
-        m_store = make_observer<store::xstore_face_t>(store);
-        auto block_store = xblockstorehub_t::instance().create_block_store(*m_store, m_account);
-        m_block_store = make_observer<base::xvblockstore_t>(block_store);
-        base::xvblock_t * prev_block = (m_block_store->get_genesis_block(m_account).get());
-        test_blockmock_t blockmock(m_store.get());
-        base::xvblock_t * curr_block = blockmock.create_sample_block(prev_block, nullptr, m_account);
-        ASSERT_TRUE(m_block_store->store_block(curr_block));
-        ASSERT_EQ(curr_block->get_height(), 1);
+        mock::xvchain_creator creator;
+        m_store = make_observer<store::xstore_face_t>(creator.get_xstore());
+        m_block_store = make_observer<base::xvblockstore_t>(creator.get_blockstore());
     }
 
     void TearDown() override {}
@@ -81,7 +74,7 @@ TEST_F(test_cluster, methods) {
     } catch (xrpc_error & e) {
         cnt++;
     }
-    EXPECT_EQ(1, cnt);
+    EXPECT_EQ(2, cnt);
 
     // illegal query by tx hash
     json_proc.m_request_json["params"]["tx_hash"] = "0x7ae7bbe2f230f0f116512d0092464e023600da585552280e04640dc8d55cf98a";
@@ -89,15 +82,6 @@ TEST_F(test_cluster, methods) {
         cluster_method_manager->getTransaction(json_proc);
     } catch (xrpc_error & e) {
         EXPECT_EQ(string("account address or transaction hash error/does not exist"), string(e.what()));
-        cnt++;
-    }
-    EXPECT_EQ(2, cnt);
-
-    json_proc.m_request_json["params"]["tx_hash"] = "0x000000";
-    try {
-        cluster_method_manager->getTransaction(json_proc);
-    } catch (xrpc_error & e) {
-        EXPECT_EQ(string("0x000000 length is not correct"), string(e.what()));
         cnt++;
     }
     EXPECT_EQ(3, cnt);

@@ -6,7 +6,6 @@
 #include "xdata/xaction_parse.h"
 #include "xelect/client/xelect_client.h"
 #include "xrpc/xrpc_init.h"
-#include "xstore/test/test_datamock.hpp"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
 using namespace std;

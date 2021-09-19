@@ -5,21 +5,38 @@
 #include "xstore/xstore.h"
 #include "xdb/xdb_factory.h"
 #include "xbase/xcontext.h"
-#include "xunit/test/vconsensus_mock.h"
+#include "xdata/xrootblock.h"
+#include "xutility/xhash.h"
+
+class xhashtest_t : public top::base::xhashplugin_t
+{
+public:
+    xhashtest_t():
+        top::base::xhashplugin_t(-1) //-1 = support every hash types
+    {
+    }
+private:
+    xhashtest_t(const xhashtest_t &);
+    xhashtest_t & operator = (const xhashtest_t &);
+    virtual ~xhashtest_t(){};
+public:
+    virtual const std::string hash(const std::string & input,enum_xhash_type type) override
+    {
+        auto hash = top::utl::xsha2_256_t::digest(input);
+        return std::string(reinterpret_cast<char*>(hash.data()), hash.size());
+    }
+};
+
 
 int main(int argc, char * argv[])
 {
+    new xhashtest_t();
+
     testing::InitGoogleTest(&argc, argv);
-    using namespace top;
-    using top::base::xcontext_t;
-    using namespace top::store;
-    // top::topchain_init(argc, argv);
-    std::shared_ptr<xdb_face_t> rocksdb = xdb_factory_t::create_kvdb("./");
-    xcontext_t::instance().set_global_object(enum_xtop_global_object_store, static_cast<xobject_t*>(rocksdb));
-
-    consensus_service::xunit_service_face* consensus_mock = new top::consensus_service::xconsensus_mock();
-    assert(consensus_mock != nullptr);
-    xcontext_t::instance().set_global_object(enum_xtop_global_object_unit_service, static_cast<xobject_t*>(consensus_mock));
-
+    xinit_log("./xrpc_test.log", true, true);
+    xset_log_level(enum_xlog_level_debug);
+    top::data::xrootblock_para_t para;
+    top::data::xrootblock_t::init(para);
+    XMETRICS_INIT();
     return RUN_ALL_TESTS();
 }

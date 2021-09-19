@@ -1,37 +1,37 @@
-#include "xbasic/xasio_io_context_wrapper.h"
-#include "xvnetwork/xaddress.h"
-#include "xvnetwork/xversion.h"
-#include "xvnetwork/tests/xdummy_vhost.h"
+// #include "xbasic/xasio_io_context_wrapper.h"
+// #include "xvnetwork/xaddress.h"
+// #include "xvnetwork/xversion.h"
+// #include "xvnetwork/tests/xdummy_vhost.h"
 
-#include <gtest/gtest.h>
-#include <unistd.h>
-#include <sstream>
-#include <iostream>
+// #include <gtest/gtest.h>
+// #include <unistd.h>
+// #include <sstream>
+// #include <iostream>
 
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif//ASIO_STANDALONE
-#ifndef USE_STANDALONE_ASIO
-#define USE_STANDALONE_ASIO
-#endif//ASIO_STANDALONE
-#include "xrpc/xrpc_define.h"
-#include "xrpc/xhttp/xhttp_server.h"
-#include "xrpc/xshard/xshard_rpc_handler.h"
-#include "simplewebserver/client_http.hpp"
-#include "xbase/xobject_ptr.h"
-#include "xcommon/xsharding_info.h"
-#include "xvnetwork/xversion.h"
-#include "xvnetwork/xaddress.h"
-#include "xcommon/xnode_id.h"
-#include "vrouter_mock.h"
+// #ifndef ASIO_STANDALONE
+// #define ASIO_STANDALONE
+// #endif//ASIO_STANDALONE
+// #ifndef USE_STANDALONE_ASIO
+// #define USE_STANDALONE_ASIO
+// #endif//ASIO_STANDALONE
+// #include "xrpc/xrpc_define.h"
+// #include "xrpc/xhttp/xhttp_server.h"
+// #include "xrpc/xshard/xshard_rpc_handler.h"
+// #include "simplewebserver/client_http.hpp"
+// #include "xbase/xobject_ptr.h"
+// #include "xcommon/xsharding_info.h"
+// #include "xvnetwork/xversion.h"
+// #include "xvnetwork/xaddress.h"
+// #include "xcommon/xnode_id.h"
+// #include "vrouter_mock.h"
 
-NS_BEG3(top, xrpc, test)
-using namespace std;
-using namespace common;
-using namespace vnetwork;
-using namespace network;
-using vnetwork::tests::xdummy_vhost_t;
-using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
+// NS_BEG3(top, xrpc, test)
+// using namespace std;
+// using namespace common;
+// using namespace vnetwork;
+// using namespace network;
+// using vnetwork::tests::xdummy_vhost_t;
+// using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
 
 // class xmock_vhost : public xdummy_vhost_t {
 //     xvnode_address_t last_address() const override {
@@ -224,4 +224,4 @@ TEST(xrpc_mock_api_test, timeout)
     sleep(2 * TIME_OUT + 1);
     EXPECT_EQ(1, count);
 }*/
-NS_END3
+// NS_END3

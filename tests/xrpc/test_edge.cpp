@@ -4,7 +4,7 @@
 #include "simplewebserver/server_http.hpp"
 #include "simplewebserver/status_code.hpp"
 #include "simplewebserver/client_https.hpp"
-#include "xdata/xtransaction.h"
+#include "xdata/xtransaction_v2.h"
 #include "xdata/xaction_parse.h"
 #include "xelect/client/xelect_client.h"
 
@@ -41,7 +41,7 @@ class test_edge : public testing::Test {
     observer_ptr<xrouter_face_t> m_router_ptr{nullptr};
     std::shared_ptr<xrpc_edge_vhost> m_edge_handler{ nullptr };
     unique_ptr<xpre_request_handler_mgr> m_pre_request_handler_mgr_ptr;
-    unique_ptr<xfilter_manager>                     m_rule_mgr_ptr;
+    unique_ptr<xfilter_manager> m_rule_mgr_ptr;
 
     config::xtop_http_port_configuration::type m_http_port;
     config::xtop_ws_port_configuration::type m_ws_port;
@@ -80,7 +80,7 @@ TEST_F(test_edge, illegal_request) {
         cnt++;
     }
 
-    auto tx = make_object_ptr<data::xtransaction_t>();
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset_out{100};
     data::xaction_asset_out action_asset_out;
     action_asset_out.serialze_to(tx->get_source_action(), asset_out);
@@ -88,8 +88,7 @@ TEST_F(test_edge, illegal_request) {
     tx->get_source_action().set_account_addr("m_source_account");
     tx->get_target_action().set_account_addr("m_target_account");
     xJson::Value tx_json;
-    elect::xelect_client_imp client;
-    client.tx_to_json(tx_json, tx);
+    tx->parse_to_json(tx_json);
     json_proc.m_request_json = tx_json;
     try{
         m_rule_mgr_ptr->filter(json_proc);
@@ -99,7 +98,7 @@ TEST_F(test_edge, illegal_request) {
     EXPECT_EQ(3, cnt);
 
     tx->get_target_action().set_account_addr("");
-    client.tx_to_json(tx_json, tx);
+    tx->parse_to_json(tx_json);
     json_proc.m_request_json = tx_json;
     try{
         m_rule_mgr_ptr->filter(json_proc);
@@ -110,7 +109,7 @@ TEST_F(test_edge, illegal_request) {
 }
 
 TEST_F(test_edge, send_transaction) {
-    auto tx = make_object_ptr<data::xtransaction_t>();
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset_out{100};
     data::xaction_asset_out action_asset_out;
     action_asset_out.serialze_to(tx->get_source_action(), asset_out);
@@ -118,8 +117,7 @@ TEST_F(test_edge, send_transaction) {
     tx->get_source_action().set_account_addr("m_source_account");
     tx->get_target_action().set_account_addr("m_target_account");
     xJson::Value tx_json;
-    elect::xelect_client_imp client;
-    client.tx_to_json(tx_json, tx);
+    tx->parse_to_json(tx_json);
 
     xjson_proc_t json_proc;
     json_proc.m_request_json = tx_json;
@@ -134,7 +132,7 @@ TEST_F(test_edge, send_transaction) {
 }
 
 TEST_F(test_edge, forward_method) {
-    auto tx = make_object_ptr<data::xtransaction_t>();
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset_out{100};
     data::xaction_asset_out action_asset_out;
     action_asset_out.serialze_to(tx->get_source_action(), asset_out);
@@ -142,8 +140,7 @@ TEST_F(test_edge, forward_method) {
     tx->get_source_action().set_account_addr("m_source_account");
     tx->get_target_action().set_account_addr("m_target_account");
     xJson::Value tx_json;
-    elect::xelect_client_imp client;
-    client.tx_to_json(tx_json, tx);
+    tx->parse_to_json(tx_json);
 
     xjson_proc_t json_proc;
     json_proc.m_request_json = tx_json;

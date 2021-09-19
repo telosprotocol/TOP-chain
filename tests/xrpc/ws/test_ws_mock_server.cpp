@@ -1,7 +1,5 @@
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xvnetwork/xaddress.h"
-#include "xvnetwork/xversion.h"
-#include "xvnetwork/tests/xdummy_vhost.h"
 
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -20,17 +18,14 @@
 #include "simplewebsocketserver/client_ws.hpp"
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xsharding_info.h"
-#include "xvnetwork/xversion.h"
 #include "xvnetwork/xaddress.h"
 #include "xcommon/xnode_id.h"
-#include "../vrouter_mock.h"
 
 NS_BEG3(top, xrpc, test)
 using namespace std;
 using namespace common;
 using namespace vnetwork;
 using namespace network;
-using vnetwork::tests::xdummy_vhost_t;
 using WsClient = SimpleWeb::SocketClient<SimpleWeb::WS>;
 
 // class xmock_vhost : public xdummy_vhost_t {
@@ -137,41 +132,41 @@ using WsClient = SimpleWeb::SocketClient<SimpleWeb::WS>;
 //     //cout <<"forward:" << r1->content.rdbuf() << endl; // Alternatively, use the convenience function r1->content.string()
 // }
 
-TEST(test_ws_server_mock, timeout)
-{
-    usleep(100);
-    int16_t count = 0;
+// TEST(test_ws_server_mock, timeout)
+// {
+//     usleep(100);
+//     int16_t count = 0;
 
-    WsClient client("localhost:19530/");
-    client.on_message = [&count](shared_ptr<WsClient::Connection> connection, shared_ptr<WsClient::InMessage> in_message) {
-        cout << "Client: Message received: \"" << in_message->string() << "\"" << endl;
-        ++count;
-        cout << "Client: Sending close connection" << endl;
-        connection->send_close(1000);
-    };
+//     WsClient client("localhost:19530/");
+//     client.on_message = [&count](shared_ptr<WsClient::Connection> connection, shared_ptr<WsClient::InMessage> in_message) {
+//         cout << "Client: Message received: \"" << in_message->string() << "\"" << endl;
+//         ++count;
+//         cout << "Client: Sending close connection" << endl;
+//         connection->send_close(1000);
+//     };
 
-    client.on_open = [](shared_ptr<WsClient::Connection> connection) {
-        cout << "Client: Opened connection" << endl;
-        string json_string = "{\"version\": \"1.0\",\"method\": \"account_balance\",\"id\":1, \"params\":{\"account\":\"T - 1\"}}";
-        string out_message(json_string);
-        cout << "Client: Sending message: \"" << out_message << "\"" << endl;
+//     client.on_open = [](shared_ptr<WsClient::Connection> connection) {
+//         cout << "Client: Opened connection" << endl;
+//         string json_string = "{\"version\": \"1.0\",\"method\": \"account_balance\",\"id\":1, \"params\":{\"account\":\"T - 1\"}}";
+//         string out_message(json_string);
+//         cout << "Client: Sending message: \"" << out_message << "\"" << endl;
 
-        connection->send(out_message);
-    };
+//         connection->send(out_message);
+//     };
 
-    client.on_close = [](shared_ptr<WsClient::Connection> /*connection*/, int status, const string & /*reason*/) {
-        cout << "Client: Closed connection with status code " << status << endl;
-    };
+//     client.on_close = [](shared_ptr<WsClient::Connection> /*connection*/, int status, const string & /*reason*/) {
+//         cout << "Client: Closed connection with status code " << status << endl;
+//     };
 
-    client.on_error = [](shared_ptr<WsClient::Connection> /*connection*/, const SimpleWeb::error_code &ec) {
-        cout << "Client: Error: " << ec << ", error message: " << ec.message() << endl;
-    };
+//     client.on_error = [](shared_ptr<WsClient::Connection> /*connection*/, const SimpleWeb::error_code &ec) {
+//         cout << "Client: Error: " << ec << ", error message: " << ec.message() << endl;
+//     };
 
-    std::thread client_thread([&client] {
-        client.start();
-    });
-    client_thread.detach();
-    sleep(2 * TIME_OUT + 1);
-    EXPECT_EQ(1, count);
-}
+//     std::thread client_thread([&client] {
+//         client.start();
+//     });
+//     client_thread.detach();
+//     sleep(2 * TIME_OUT + 1);
+//     EXPECT_EQ(1, count);
+// }
 NS_END3

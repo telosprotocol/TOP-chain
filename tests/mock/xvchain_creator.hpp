@@ -46,7 +46,7 @@ namespace top
                 base::xvchain_t::instance().clean_all(false);
             }
             store::xstore_face_t* get_xstore() const {return m_store.get();}
-            const xobject_ptr_t<mbus::xmessage_bus_face_t> & get_mbus() const {return m_bus;}
+            const xobject_ptr_t<top::mbus::xmessage_bus_face_t> & get_mbus() const {return m_bus;}
             const std::shared_ptr<db::xdb_face_t> &     get_xdb() const {return m_db;}
 
         private:

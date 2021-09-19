@@ -1,7 +1,5 @@
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xvnetwork/xaddress.h"
-#include "xvnetwork/xversion.h"
-#include "../vhost_network.hpp"
 
 #include <gtest/gtest.h>
 
