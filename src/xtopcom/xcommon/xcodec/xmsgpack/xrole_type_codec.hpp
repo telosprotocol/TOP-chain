@@ -10,3 +10,4 @@
 #include <msgpack.hpp>
 
 MSGPACK_ADD_ENUM(top::common::xrole_type_t)
+MSGPACK_ADD_ENUM(top::common::xregistration_type_t)
