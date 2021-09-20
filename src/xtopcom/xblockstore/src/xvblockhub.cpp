@@ -2510,7 +2510,8 @@ namespace top
             if(NULL == index_ptr)
                 return false;
             xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
-            if(index_ptr->get_block_flags() & base::enum_xvblock_flag_committed
+            if(index_ptr->get_block_level() == base::enum_xvblock_level_table
+                && index_ptr->get_block_flags() & base::enum_xvblock_flag_committed
                 && index_ptr->get_height() != 0)
             {
                 base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();

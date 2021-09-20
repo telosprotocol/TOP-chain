@@ -78,30 +78,6 @@ using xevent_store_block_to_db_ptr_t = xobject_ptr_t<xevent_store_block_to_db_t>
 
 data::xblock_ptr_t extract_block_from(xevent_store_block_to_db_ptr_t const & ev, const int etag = 0) noexcept;
 
-class xevent_store_accountblock_queue_ready_t : public xevent_store_t {
-public:
-    xevent_store_accountblock_queue_ready_t(
-            const std::string& _owner,
-            direction_type dir = to_listener,
-            bool _sync = true) :
-    xevent_store_t(type_accountblock_queue_ready, _owner, dir, _sync) {
-    }
-};
-
-using xevent_store_accountblock_queue_ready_ptr_t = xobject_ptr_t<xevent_store_accountblock_queue_ready_t>;
-
-class xevent_store_version_update_t : public xevent_store_t {
-public:
-    xevent_store_version_update_t(
-            const std::string& _owner,
-            direction_type dir = to_listener,
-            bool _sync = true) :
-    xevent_store_t(type_config_update, _owner, dir, _sync) {
-    }
-};
-
-using xevent_store_version_update_ptr_t = xobject_ptr_t<xevent_store_version_update_t>;
-
 class xevent_store_block_committed_t : public xevent_store_t {
  public:
     xevent_store_block_committed_t(const std::string & _owner, 

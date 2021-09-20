@@ -10,6 +10,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtableblock.h"
 #include "xmbus/xevent_store.h"
+#include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xstore/xstore.h"
 #include "xtxpool_service_v2/xcons_utl.h"
 #include "xtxpool_service_v2/xreceipt_strategy.h"
@@ -56,8 +57,10 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return;
     }
 
-    auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
-        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+    auto event_handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+        mbus::xevent_object_t* _event_obj = dynamic_cast<mbus::xevent_object_t*>(call.get_param1().get_object());
+        xassert(_event_obj != nullptr);
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(_event_obj->event);
         const xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
         base::xvaccount_t _vaccount(block->get_account());
         // TODO(jimmy) load block input for get raw tx nonce
@@ -69,7 +72,9 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         on_block_confirmed(block.get());
         return true;
     };
-    base::xcall_t asyn_call(event_handler);
+
+    base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
+    base::xcall_t asyn_call(event_handler, event_obj.get());
     m_dispatcher->dispatch(asyn_call);
 }
 

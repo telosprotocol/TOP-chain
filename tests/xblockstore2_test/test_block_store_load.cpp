@@ -13,6 +13,7 @@
 #include "xdata/xlightunit.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xmessage_bus.h"
+#include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xmetrics/xmetrics.h"
 
 // #include "test_blockmock.hpp"
@@ -31,13 +32,73 @@ using namespace top::xverifier;
 using namespace top::mock;
 using namespace top::metrics;
 
+class test_event_dispatcher_t
+  : public base::xiobject_t {
+public:
+    test_event_dispatcher_t(base::xcontext_t & _context, int32_t thread_id)
+      : base::xiobject_t(_context, thread_id, base::enum_xobject_type_woker) {
+    }
+
+protected:
+    ~test_event_dispatcher_t() override {
+    }
+};
+
 class test_block_store_load : public testing::Test {
+public:
+
+
+
+    void test_on_db_event(mbus::xevent_ptr_t e) {
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+        ASSERT_NE(block_event, nullptr);
+        ASSERT_EQ(block_event->get_refcount(), 3);    
+    }
+
+    void test_on_db_event1(mbus::xevent_ptr_t e) {
+        auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            mbus::xevent_object_t * event_obj = dynamic_cast<mbus::xevent_object_t *>(call.get_param1().get_object());
+            return true;
+        };
+
+        {
+            base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
+            base::xcall_t asyn_call(event_handler, event_obj.get());
+        }
+    }
+
+    void test_on_db_event2(mbus::xevent_ptr_t e) {
+        auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            xdbg("test_on_db_event2 e refcount %d", e->get_refcount());
+            return true;
+        };
+
+        base::xcall_t asyn_call(event_handler);
+        m_dispatcher->send_call(asyn_call);
+    }
+
+    void test_on_db_event3(mbus::xevent_ptr_t e) {
+        auto event_handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            mbus::xevent_object_t * event_obj = dynamic_cast<mbus::xevent_object_t *>(call.get_param1().get_object());
+            xdbg("test_on_db_event3 e refcount %d", event_obj->event->get_refcount());
+            return true;
+        };
+
+        base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
+        base::xcall_t asyn_call(event_handler, event_obj.get());
+        m_dispatcher->send_call(asyn_call);
+    }    
 protected:
     void SetUp() override {
+        m_thread = make_object_ptr<base::xiothread_t>();
+        m_dispatcher = make_object_ptr<test_event_dispatcher_t>(base::xcontext_t::instance(), m_thread->get_thread_id());    
     }
 
     void TearDown() override {
-    }
+    }  
+
+    xobject_ptr_t<base::xiothread_t> m_thread;
+    xobject_ptr_t<test_event_dispatcher_t> m_dispatcher;
 };
 
 TEST_F(test_block_store_load, store_batch_tables) {
@@ -535,4 +596,150 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     ASSERT_EQ(call_sub, 200-1);
     std::cout << "store_call_2 = " << store_call_2 << std::endl;
     #endif
+}
+
+
+TEST_F(test_block_store_load, commit_block_event_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(10);
+    auto table_blocks = mocktable.get_history_tables();
+
+    for (auto & block : table_blocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    auto bindex = blockstore->load_block_index(mocktable, 3, base::enum_xvblock_flag_committed);
+    ASSERT_NE(bindex, nullptr);
+
+    mbus::xevent_ptr_t _event = creator.get_mbus()->create_event_for_store_committed_block(bindex.get());
+    ASSERT_NE(_event, nullptr);
+    ASSERT_EQ(_event->get_refcount(), 1);
+
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&test_block_store_load::test_on_db_event, this, std::placeholders::_1));
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store,
+            [&](const top::mbus::xevent_ptr_t& e) {
+
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+        ASSERT_NE(block_event, nullptr);
+        ASSERT_EQ(block_event->get_refcount(), 2);
+
+        auto block = mbus::extract_block_from(block_event, 0);
+        ASSERT_NE(block, nullptr);
+    });
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store,
+            [&](const top::mbus::xevent_ptr_t& e) {
+
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+        ASSERT_NE(block_event, nullptr);
+        ASSERT_EQ(block_event->get_refcount(), 2);
+
+        auto block = mbus::extract_block_from(block_event, 0);
+        ASSERT_NE(block, nullptr);
+    });
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store,
+            [&](const top::mbus::xevent_ptr_t& e) {
+
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+        ASSERT_NE(block_event, nullptr);
+        ASSERT_EQ(block_event->get_refcount(), 2);
+
+        auto block = mbus::extract_block_from(block_event, 0);
+        ASSERT_NE(block, nullptr);
+    });
+
+    creator.get_mbus()->push_event(_event);
+
+    ASSERT_EQ(_event->get_refcount(), 1);
+}
+
+TEST_F(test_block_store_load, commit_block_event_2) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(10);
+    auto table_blocks = mocktable.get_history_tables();
+
+    for (auto & block : table_blocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    auto bindex = blockstore->load_block_index(mocktable, 3, base::enum_xvblock_flag_committed);
+    ASSERT_NE(bindex, nullptr);
+
+    mbus::xevent_ptr_t _event = creator.get_mbus()->create_event_for_store_committed_block(bindex.get());
+    ASSERT_NE(_event, nullptr);
+    ASSERT_EQ(_event->get_refcount(), 1);
+
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&test_block_store_load::test_on_db_event2, this, std::placeholders::_1));
+
+    creator.get_mbus()->push_event(_event);
+
+    sleep(2);
+
+    ASSERT_EQ(_event->get_refcount(), 2);  // TODO(jimmy) fail
+}
+
+TEST_F(test_block_store_load, commit_block_event_3) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(10);
+    auto table_blocks = mocktable.get_history_tables();
+
+    for (auto & block : table_blocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    auto bindex = blockstore->load_block_index(mocktable, 3, base::enum_xvblock_flag_committed);
+    ASSERT_NE(bindex, nullptr);
+
+    mbus::xevent_ptr_t _event = creator.get_mbus()->create_event_for_store_committed_block(bindex.get());
+    ASSERT_NE(_event, nullptr);
+    ASSERT_EQ(_event->get_refcount(), 1);
+
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&test_block_store_load::test_on_db_event3, this, std::placeholders::_1));
+
+    creator.get_mbus()->push_event(_event);
+
+    sleep(2);
+
+    ASSERT_EQ(_event->get_refcount(), 1);
+}
+
+TEST_F(test_block_store_load, commit_block_event_4) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(10);
+    auto table_blocks = mocktable.get_history_tables();
+
+    for (auto & block : table_blocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    auto bindex = blockstore->load_block_index(mocktable, 3, base::enum_xvblock_flag_committed);
+    ASSERT_NE(bindex, nullptr);
+
+    mbus::xevent_ptr_t _event = creator.get_mbus()->create_event_for_store_committed_block(bindex.get());
+    ASSERT_NE(_event, nullptr);
+    ASSERT_EQ(_event->get_refcount(), 1);
+
+
+    creator.get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&test_block_store_load::test_on_db_event1, this, std::placeholders::_1));
+
+    creator.get_mbus()->push_event(_event);
+
+    ASSERT_EQ(_event->get_refcount(), 1);
 }
