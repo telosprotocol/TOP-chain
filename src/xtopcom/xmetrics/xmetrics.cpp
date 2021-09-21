@@ -378,7 +378,16 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
         RETURN_METRICS_NAME(statestore_access_from_blockstore);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
-        
+
+        RETURN_METRICS_NAME(statestore_get_unit_state_succ);
+        RETURN_METRICS_NAME(statestore_get_unit_state_from_cache);
+        RETURN_METRICS_NAME(statestore_get_unit_state_match_dbstate);
+        RETURN_METRICS_NAME(statestore_get_unit_state_older_than_dbstate);
+        RETURN_METRICS_NAME(statestore_get_unit_state_fail_unmatch_height);
+        RETURN_METRICS_NAME(statestore_get_unit_state_with_unit_count);
+        RETURN_METRICS_NAME(statestore_get_unit_state_load_unit);
+        RETURN_METRICS_NAME(statestore_get_table_state_succ);
+
         RETURN_METRICS_NAME(state_load_blk_state_suc);
         RETURN_METRICS_NAME(state_load_blk_state_cache_suc);
         RETURN_METRICS_NAME(state_load_blk_state_fail);

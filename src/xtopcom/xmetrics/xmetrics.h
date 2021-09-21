@@ -421,6 +421,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_blkmaker_get_target_tablestate,
     statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
 
+    statestore_get_unit_state_succ,
+    statestore_get_unit_state_from_cache,
+    statestore_get_unit_state_match_dbstate,
+    statestore_get_unit_state_older_than_dbstate,
+    statestore_get_unit_state_fail_unmatch_height,
+    statestore_get_unit_state_with_unit_count,
+    statestore_get_unit_state_load_unit,
+    statestore_get_table_state_succ,
+
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,
     state_load_blk_state_fail,

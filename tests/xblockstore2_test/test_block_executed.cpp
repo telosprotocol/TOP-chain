@@ -232,6 +232,52 @@ TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
 }
 
+
+TEST_F(test_block_executed, get_all_table_state_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 1000;
+    mock::xdatamock_table mocktable(1, 4); 
+    mocktable.genrate_table_chain(max_count);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+
+    for (uint32_t i = 0; i <= max_count; ++i) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
+    }
+
+    for (uint32_t i = 0; i <= max_count; ++i) {
+        auto state = creator.get_xblkstatestore()->get_block_state(tableblocks[i].get());
+        ASSERT_TRUE(state != nullptr);
+        ASSERT_EQ(state->get_block_viewid(), tableblocks[i]->get_viewid());
+    }
+}
+
+TEST_F(test_block_executed, get_all_unit_state_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 100;
+    mock::xdatamock_table mocktable(1, 4); 
+    mocktable.genrate_table_chain(max_count);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+
+    for (uint32_t i = 0; i <= max_count; ++i) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
+    }
+
+    const std::vector<xdatamock_unit> & mock_units = mocktable.get_mock_units();
+
+    for (auto & v : mock_units) {
+        const std::vector<xblock_ptr_t> & unitblocks = v.get_history_units();
+        for (auto & unit : unitblocks) {
+            auto state = creator.get_xblkstatestore()->get_block_state(unit.get());
+            ASSERT_TRUE(state != nullptr);
+            ASSERT_EQ(state->get_block_viewid(), unit->get_viewid());        
+        }
+    }
+}
+
 // // xaccount_cmd_ptr_t create_or_modify_property(xstore_face_t* store, const std::string &address, const std::string& list_name, const std::string& item_value) {
 // //     auto account = store->clone_account(address);
 // //     xaccount_cmd_ptr_t cmd;

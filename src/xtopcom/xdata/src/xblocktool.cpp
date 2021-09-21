@@ -259,25 +259,6 @@ std::string xblocktool_t::make_address_user_contract(const std::string & public_
     return base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_custom_contract, ledger_id, public_key_address);
 }
 
-base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
-    base::xvaccount_t _vaccount(account);
-    // there is mostly two empty units
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_committed_block(_vaccount);
-    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
-        return vblock;
-    }
-
-    uint64_t current_height = vblock->get_height();
-    while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
-        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
-            return prev_vblock;
-        }
-        current_height = prev_vblock->get_height();
-    }
-    return nullptr;
-}
-
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {

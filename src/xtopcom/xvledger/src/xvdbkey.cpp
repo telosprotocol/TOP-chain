@@ -75,6 +75,12 @@ namespace top
             return key_path;
         }
 
+        const std::string  xvdbkey_t::create_block_state_key_connect_state(const xvaccount_t & account)
+        {
+            const std::string key_path = "b/" + account.get_address() + "/s";
+            return key_path;
+        }
+
         const std::string  xvdbkey_t::create_chain_key(const xvaccount_t & account)
         {
             const std::string key_path = "c/" + account.get_xvid_str();
