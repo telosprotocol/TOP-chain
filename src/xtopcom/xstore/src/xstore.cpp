@@ -59,23 +59,12 @@ bool xstore::open() const {
 xaccount_ptr_t xstore::query_account(const std::string &address) const {
     base::xvaccount_t _vaddr(address);
     XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
-    auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(_vaddr);
-    if (_block == nullptr) {
-        xerror("xstore::query_account fail-load latest connectted block. account=%s", address.c_str());
-        return nullptr;
-    }
-
-    if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
-        xwarn("xstore::query_account fail-invalid state for empty genesis block. account=%s", address.c_str());
-        return nullptr;
-    }
-
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_unit_state(_vaddr, metrics::statestore_access_from_store_bstate);
     if (bstate != nullptr) {
         xaccount_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
         return account;
     }
-    xerror("xstore::query_account fail-load state.block=%s", _block->dump().c_str());
+    xwarn("xstore::query_account fail-load state.account=%s", address.c_str());
     return nullptr;
 }
 

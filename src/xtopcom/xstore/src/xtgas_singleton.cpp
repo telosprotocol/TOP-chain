@@ -17,7 +17,7 @@ uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
 
 bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height) {
     base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
-    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_zec_workload_vaddress, metrics::statestore_access_from_store_tgas);
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_unit_state(_zec_workload_vaddress, metrics::statestore_access_from_store_tgas);
     if (bstate == nullptr) {
         xassert(false);
         return false;
