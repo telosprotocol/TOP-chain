@@ -1,38 +1,39 @@
-#include "xbasic/xasio_io_context_wrapper.h"
-#include "xvnetwork/xaddress.h"
-#include "xvnetwork/xversion.h"
-#include "vhost_network.hpp"
+// #include "xbasic/xasio_io_context_wrapper.h"
+// #include "xvnetwork/xaddress.h"
+// #include "xvnetwork/xversion.h"
+// #include "vhost_network.hpp"
 
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 
-#include <sstream>
-#include <iostream>
+// #include <sstream>
+// #include <iostream>
 
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif//ASIO_STANDALONE
-#ifndef USE_STANDALONE_ASIO
-#define USE_STANDALONE_ASIO
-#endif//ASIO_STANDALONE
-#include "xrpc/xrpc_define.h"
-#include "xrpc/xhttp/xhttp_server.h"
-#include "xrpc/xshard/xshard_rpc_handler.h"
-#include "xrpc/xcluster/xcluster_rpc_handler.h"
-#include "simplewebserver/client_http.hpp"
-#include "xrpc/xws/xws_server.h"
+// #ifndef ASIO_STANDALONE
+// #define ASIO_STANDALONE
+// #endif//ASIO_STANDALONE
+// #ifndef USE_STANDALONE_ASIO
+// #define USE_STANDALONE_ASIO
+// #endif//ASIO_STANDALONE
+// #include "xrpc/xrpc_define.h"
+// #include "xrpc/xhttp/xhttp_server.h"
+// #include "xrpc/xshard/xshard_rpc_handler.h"
+// #include "xrpc/xcluster/xcluster_rpc_handler.h"
+// #include "simplewebserver/client_http.hpp"
+// #include "xrpc/xws/xws_server.h"
 
-NS_BEG3(top, xrpc, test)
-using namespace std;
-using namespace vnetwork::tests;
-using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
-#define DEFINE_VERSION_AND_VNET_ID(NUM)         \
-    xversion_t const version ## NUM {           \
-        top::xsimple_id_t<xversion_t>{ NUM }           \
-    };                                          \
-    xvnetwork_id_t const vnetwork_id ## NUM {   \
-        version ## NUM, this->m_network_info          \
-    }
-
+// NS_BEG3(top, xrpc, test)
+// using namespace std;
+// using namespace vnetwork::tests;
+// using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
+/*
+// #define DEFINE_VERSION_AND_VNET_ID(NUM)         \
+//     xversion_t const version ## NUM {           \
+//         top::xsimple_id_t<xversion_t>{ NUM }           \
+//     };                                          \
+//     xvnetwork_id_t const vnetwork_id ## NUM {   \
+//         version ## NUM, this->m_network_info          \
+//     }
+*/
 // template <std::size_t N, std::size_t TimerDriverCount, std::size_t IoContextCount>
 // class xrpc_server_test : public xrpc_vhost_fixture_t<N, TimerDriverCount, IoContextCount>
 // {
@@ -132,7 +133,7 @@ using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
 //     xjson_proc_t m_json_proc;
 // };
 
-static string account_token;
+// static string account_token;
 // using x32_vhost_fixture = xrpc_server_test<7, 2, 2>;
 // TEST_F(x32_vhost_fixture, bootstrap) {
 //     usleep(100);
@@ -409,4 +410,4 @@ TEST(xrpc_server_api_test, exit)
     EXPECT_EQ(0, 0);
     // g_server_api_test.m_http_server_ptr->m_server_thread.detach();
 }*/
-NS_END3
+// NS_END3

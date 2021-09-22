@@ -4,6 +4,7 @@
 #include "tests/xvnetwork/xdummy_vnetwork_driver.h"
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xrpc/xrpc_init.h"
+#include "xdata/xtransaction_cache.h"
 
 using namespace top;
 using namespace top::xrpc;
@@ -32,6 +33,7 @@ public:
     observer_ptr<top::election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
     config::xtop_http_port_configuration::type m_http_port;
     config::xtop_ws_port_configuration::type m_ws_port;
+    std::shared_ptr<data::xtransaction_cache_t> m_transaction_cache;    
 };
 
 // TEST_F(test_rpc, edge) {
@@ -57,7 +59,8 @@ TEST_F(test_rpc, auditor) {
                                                             m_store,
                                                             m_block_store,
                                                             m_elect_main,
-                                                            m_election_cache_data_accessor);
+                                                            m_election_cache_data_accessor,
+                                                            m_transaction_cache);
     m_rpc_services->stop();
 }
 
@@ -71,6 +74,7 @@ TEST_F(test_rpc, validator) {
                                                             m_store,
                                                             m_block_store,
                                                             m_elect_main,
-                                                            m_election_cache_data_accessor);
+                                                            m_election_cache_data_accessor,
+                                                            m_transaction_cache);
     m_rpc_services->stop();
 }

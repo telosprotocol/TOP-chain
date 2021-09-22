@@ -38,7 +38,7 @@ public:
 private:
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t>   m_cluster_vhost;
     observer_ptr<xrouter_face_t>                         m_router_ptr;
-    xtxpool_service_v2::xtxpool_proxy_face_ptr              m_txpool_service;
+    xtxpool_service_v2::xtxpool_proxy_face_ptr           m_txpool_service;
     unique_ptr<xfilter_manager>                          m_rule_mgr_ptr;
     std::shared_ptr<xcluster_query_manager>              m_cluster_query_mgr;
     observer_ptr<top::base::xiothread_t>                 m_thread;

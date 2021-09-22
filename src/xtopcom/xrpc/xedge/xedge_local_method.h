@@ -20,7 +20,6 @@ public:
     xedge_local_method(observer_ptr<elect::ElectMain>, common::xip2_t xip2);
     bool do_local_method(pair<string, string>& version_method, xjson_proc_t &json_proc);
     void sign_transaction_method(xjson_proc_t &json_proc);
-    void account_method(xjson_proc_t &json_proc);
     void import_private_key_method(xjson_proc_t &json_proc);
     void get_private_keys_method(xjson_proc_t &json_proc);
     void get_edge_neighbors_method(xjson_proc_t &json_proc);
