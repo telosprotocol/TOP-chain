@@ -22,8 +22,8 @@ xtop_account_vm::xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_
   : sys_action_runtime_{top::make_unique<contract_runtime::system::xsystem_action_runtime_t>(system_contract_manager)} {
 }
 
-std::vector<xaccount_vm_execution_result_t> xtop_account_vm::execute(std::vector<xaccount_vm_execution_assemble_t> & assemble) {
-    std::vector<xaccount_vm_execution_result_t> result;
+std::vector<xaccount_vm_output_t> xtop_account_vm::execute(std::vector<xaccount_vm_execution_assemble_t> & assemble) {
+    std::vector<xaccount_vm_output_t> result;
     // TODO lon: here can be parallel processing
     for (auto & item : assemble) {
         result.emplace_back(execute(item.txs, item.block_state, item.cs_para));
@@ -31,25 +31,27 @@ std::vector<xaccount_vm_execution_result_t> xtop_account_vm::execute(std::vector
     return result;
 }
 
-xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
+xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
                                                         xobject_ptr_t<base::xvbstate_t> block_state,
                                                         data::xblock_consensus_para_t const & cs_para) {
     xaccount_vm_execution_result_t result;
     const size_t result_size = txs.size();
-    // result.transaction_results.resize(result_size);
     assert(result_size == 1);
+    result.transaction_results.reserve(result_size);
+    
+    const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);
 
     state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
     contract_common::xcontract_execution_param_t param(cs_para);
     contract_common::properties::xproperty_access_control_t ac{make_observer(block_state.get()), ac_data, param};
 
-    auto actions = contract_runtime::xaction_generator_t::generate(txs);
+    auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
     assert(actions.size() == result_size);
 
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
-            auto action_result = execute_action(std::move(actions[i]), ac, param);
+            auto action_result = execute_action(std::move(actions[i]), ac);
             result.transaction_results.emplace_back(action_result);
             assert(result.transaction_results.size() == (i + 1));
             if (action_result.status.ec) {
@@ -70,30 +72,11 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
         result.status.ec = error::xerrc_t::transaction_execution_abort;
     }
 
-    auto last_nonce = ac.latest_sendtx_nonce();
-    auto last_hash = ac.latest_sendtx_hash();
-    for (auto & r : result.transaction_results) {
-        for (auto & follow_up : r.output.followup_transaction_data) {
-            if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
-                assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
-                follow_up.followed_transaction->get_transaction()->set_last_trans_hash_and_nonce(last_hash, last_nonce);
-                follow_up.followed_transaction->get_transaction()->set_digest();
-                follow_up.followed_transaction->get_transaction()->set_digest();
-                last_hash = follow_up.followed_transaction->get_tx_hash_256();
-                last_nonce = follow_up.followed_transaction->get_tx_nonce();
-            }
-        }
-    }
-
-    result.binlog = ac.binlog();
-    result.contract_state_snapshot = ac.fullstate_bin();
-
-    return result;
+    return pack(txs, result, ac);
 }
 
 contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                                  contract_common::properties::xproperty_access_control_t & ac,
-                                                                                  contract_common::xcontract_execution_param_t const & param) {
+                                                                                  contract_common::properties::xproperty_access_control_t & ac) {
     contract_runtime::xtransaction_execution_result_t result;
 
     switch (action->type()) {
@@ -101,7 +84,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     {
         auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
         contract_common::xcontract_state_t contract_state{ cons_action->contract_address(), make_observer(std::addressof(ac)) };
-        result = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(std::move(action), param);
+        result = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(std::move(action));
         break;
     }
 
@@ -133,7 +116,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
         if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (follow_up.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto follow_up_action = contract_runtime::xaction_generator_t::generate(follow_up.followed_transaction);
-                auto follow_up_result = execute_action(std::move(follow_up_action), ac, param);
+                auto follow_up_result = execute_action(std::move(follow_up_action), ac);
                 if (follow_up_result.status.ec) {
                     result.status.ec = follow_up_result.status.ec;
                     // clear up all follow up txs
@@ -168,6 +151,106 @@ void xtop_account_vm::abort(const size_t start_index, const size_t size, xaccoun
         result.transaction_results.emplace_back(abort_result);
         assert(result.transaction_results.size() == (i + 1));
     }
+}
+
+xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                                             xaccount_vm_execution_result_t const & result,
+                                             contract_common::properties::xproperty_access_control_t & ac) {
+    xaccount_vm_output_t output;
+    std::vector<data::xcons_transaction_ptr_t> output_txs(txs);
+    uint32_t send_tx_num{0};
+    uint32_t recv_tx_num{0};
+    uint32_t confirm_tx_num{0};
+
+    auto last_nonce = ac.latest_sendtx_nonce();
+    auto last_hash = ac.latest_sendtx_hash();
+
+    uint32_t last_success_tx_index{0};
+    for (size_t i = 0; i < result.transaction_results.size(); i++) {
+        auto const & r = result.transaction_results[i];
+        auto & tx = output_txs[i];
+        if (r.status.ec) {
+            tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
+            if (tx->is_send_tx() || tx->is_self_tx()) {
+                output.failed_tx_assemble.emplace_back(tx);
+            } else if (tx->is_recv_tx()) {
+                output.success_tx_assemble.emplace_back(tx);
+                last_success_tx_index = i;
+            } else {
+                xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
+                assert(false);
+            }
+        } else {
+            tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
+            output.success_tx_assemble.emplace_back(tx);
+            last_success_tx_index = i;
+            for (auto & follow_up : r.output.followup_transaction_data) {
+                if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
+                    output.success_tx_assemble.emplace_back(follow_up.followed_transaction);
+                } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
+                    assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
+                    follow_up.followed_transaction->get_transaction()->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+                    follow_up.followed_transaction->get_transaction()->set_digest();
+                    follow_up.followed_transaction->get_transaction()->set_digest();
+                    last_hash = follow_up.followed_transaction->get_tx_hash_256();
+                    last_nonce = follow_up.followed_transaction->get_tx_nonce();
+                    output.delay_tx_assemble.emplace_back(follow_up.followed_transaction);
+                } else {
+                    xwarn("[xlightunit_builder_t::build_block] invalid follow up tx type: %d", follow_up.schedule_type);
+                    assert(false);
+                }
+            }
+        }
+    }
+
+    if (output.success_tx_assemble.empty()) {
+        output.status.ec = contract_vm::error::xenum_errc::none_success_tx;
+        return output;
+    }
+
+    for (auto const & tx : output.success_tx_assemble) {
+        if (tx->is_send_tx()) {
+            printf("add send tx\n");
+            send_tx_num++;
+        }
+        if (tx->is_recv_tx()) {
+            printf("add recv tx\n");
+            recv_tx_num++;
+        }
+        if (tx->is_confirm_tx()) {
+            printf("add confirm tx\n");
+            confirm_tx_num++;
+        }
+    }
+
+    // set recvtx total number
+    if (recv_tx_num > 0) {
+        uint64_t old_recv_tx_num = ac.recvtx_num();
+        ac.recvtx_num(old_recv_tx_num + recv_tx_num);
+    }
+
+    // set unconfirm sendtx number
+    uint32_t old_unconfirm_tx_num = ac.unconfirm_sendtx_num();
+    printf("old_unconfirm_num=%d,send_tx_num=%d,recv_tx_num=%d,confirm_tx_num=%d\n",
+            old_unconfirm_tx_num, send_tx_num, recv_tx_num, confirm_tx_num);
+    if (old_unconfirm_tx_num + send_tx_num < confirm_tx_num) {
+        xerror("xaccount_context_t::finish_exec_all_txs fail-unconfirm num unmatch.old_unconfirm_num=%d,send_tx_num=%d,confirm_tx_num=%d",
+            old_unconfirm_tx_num, send_tx_num, confirm_tx_num);
+        output.status.ec = contract_vm::error::xenum_errc::confirm_tx_num_error;
+        return output;
+    }
+
+    uint32_t new_unconfirm_new = old_unconfirm_tx_num + send_tx_num - confirm_tx_num;
+    if (new_unconfirm_new != old_unconfirm_tx_num) {
+        ac.unconfirm_sendtx_num(new_unconfirm_new);
+    }
+
+    output.binlog = result.transaction_results[last_success_tx_index].output.binlog;
+    output.contract_state_snapshot = result.transaction_results[last_success_tx_index].output.contract_state_snapshot;
+    assert(!output.binlog.empty());
+    assert(!output.contract_state_snapshot.empty());
+
+    return output;
 }
 
 NS_END2

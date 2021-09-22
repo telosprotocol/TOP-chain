@@ -183,7 +183,6 @@ std::string xtop_consensus_action<ActionTypeV>::transaction_source_action_data()
     data::xproperty_asset asset_out{0};
     stream >> asset_out.m_token_name;
     stream >> asset_out.m_amount;
-    printf("in action tx asset out %s, %ld\n", asset_out.m_token_name.c_str(), asset_out.m_amount);
 
     return tx->get_transaction()->get_source_action().get_action_param();
 }

@@ -32,8 +32,6 @@ private:
     data::xconsensus_action_stage_t m_stage{data::xconsensus_action_stage_t::invalid};
     xcontract_execution_result_t m_execution_result; // execution result
 
-    xcontract_execution_param_t m_param;
-
 public:
     xtop_contract_execution_context() = default;
     xtop_contract_execution_context(xtop_contract_execution_context const &) = delete;
