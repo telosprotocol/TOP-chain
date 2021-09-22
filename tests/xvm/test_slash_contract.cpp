@@ -196,7 +196,7 @@
 //     m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(sys_contract_sharding_statistic_info_addr, m_store.get());
 //     m_table_slash_account_ctx_ptr->string_create(XPORPERTY_CONTRACT_TIME_KEY);
 
-//     auto const table_time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tableStatistic_report_schedule_interval);
+//     auto const table_time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
 //     auto trx_ptr = on_collect_statistic_info(table_time_interval + 1);
 
 //     xvm_service vs;
@@ -243,7 +243,7 @@
 // }
 
 // TEST_F(test_slash_contract_other, beacon_slash_do_slash) {
-//     auto const table_time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tableStatistic_report_schedule_interval);
+//     auto const table_time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
 //     auto trx_ptr = do_unqualified_node_slash(table_time_interval + 1);
 
 //     xvm_service vs;
