@@ -40,9 +40,9 @@ public:
     xtop_vm_executor_face & operator=(xtop_vm_executor_face &&) = default;
     virtual ~xtop_vm_executor_face() = default;
 
-    virtual xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
-                                                   xobject_ptr_t<base::xvbstate_t> block_state,
-                                                   const data::xblock_consensus_para_t & cs_para) = 0;
+    virtual xaccount_vm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                                         xobject_ptr_t<base::xvbstate_t> block_state,
+                                         data::xblock_consensus_para_t const & cs_para) = 0;
 };
 using xvm_executor_face_t = xtop_vm_executor_face;
 

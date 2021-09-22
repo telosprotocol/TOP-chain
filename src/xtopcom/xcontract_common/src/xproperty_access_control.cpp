@@ -462,6 +462,14 @@ uint64_t xtop_property_access_control::blockchain_height() const {
     return bstate_->get_block_height();
 }
 
+common::xlogic_time_t xtop_property_access_control::time() const {
+    return m_param.m_clock;
+}
+
+common::xlogic_time_t xtop_property_access_control::timestamp() const {
+    return m_param.m_timestamp;
+}
+
 void xtop_property_access_control::create_time(std::error_code& ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
@@ -667,6 +675,112 @@ void xtop_property_access_control::latest_followup_tx_nonce(uint64_t nonce, std:
 void xtop_property_access_control::latest_followup_tx_nonce(uint64_t nonce) {
     std::error_code ec;
     latest_followup_tx_nonce(nonce, ec);
+    top::error::throw_error(ec);
+}
+
+uint64_t xtop_property_access_control::recvtx_num(std::error_code & ec) const {
+    assert(!ec);
+
+    uint64_t num{0};
+    assert(bstate_ != nullptr);
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        // ec = error::xerrc_t::property_not_exist;
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
+        return num;
+    }
+
+    auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_RECVTX_NUM);
+    if (value.empty())
+        return num;
+
+    return base::xstring_utl::touint64(value);
+}
+
+uint64_t xtop_property_access_control::recvtx_num() const {
+    std::error_code ec;
+    auto res = recvtx_num(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
+void xtop_property_access_control::recvtx_num(uint64_t num, std::error_code & ec) {
+    assert(!ec);
+    assert(bstate_ != nullptr);
+
+    std::string nonce_str = base::xstring_utl::tostring(num);
+
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        // ec = error::xerrc_t::property_not_exist;
+        // base::xvpropertyrules_t::is_valid_native_property(key)) {
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
+    }
+    auto propobj = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO);
+    xassert(propobj != nullptr);
+    if (propobj->find(data::XPROPERTY_TX_INFO_RECVTX_NUM)) {
+        auto old_value = propobj->query(data::XPROPERTY_TX_INFO_RECVTX_NUM);
+        if (old_value == nonce_str) {
+            return;
+        }
+    }
+    propobj->insert(data::XPROPERTY_TX_INFO_RECVTX_NUM, nonce_str, canvas_.get());
+}
+
+void xtop_property_access_control::recvtx_num(uint64_t num) {
+    std::error_code ec;
+    recvtx_num(num, ec);
+    top::error::throw_error(ec);
+}
+
+uint64_t xtop_property_access_control::unconfirm_sendtx_num(std::error_code & ec) const {
+    assert(!ec);
+
+    uint64_t num{0};
+    assert(bstate_ != nullptr);
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        // ec = error::xerrc_t::property_not_exist;
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
+        return num;
+    }
+
+    auto value = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO)->query(data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
+    if (value.empty())
+        return num;
+
+    return base::xstring_utl::touint64(value);
+}
+
+uint64_t xtop_property_access_control::unconfirm_sendtx_num() const {
+    std::error_code ec;
+    auto res = unconfirm_sendtx_num(ec);
+    top::error::throw_error(ec);
+    return res;
+}
+
+void xtop_property_access_control::unconfirm_sendtx_num(uint64_t num, std::error_code & ec) {
+    assert(!ec);
+    assert(bstate_ != nullptr);
+
+    std::string nonce_str = base::xstring_utl::tostring(num);
+
+    if (!bstate_->find_property(data::XPROPERTY_TX_INFO)) {
+        // ec = error::xerrc_t::property_not_exist;
+        // base::xvpropertyrules_t::is_valid_native_property(key)) {
+        bstate_->new_string_map_var(data::XPROPERTY_TX_INFO, canvas_.get());
+    }
+    auto propobj = bstate_->load_string_map_var(data::XPROPERTY_TX_INFO);
+    xassert(propobj != nullptr);
+    if (propobj->find(data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM)) {
+        auto old_value = propobj->query(data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
+        if (old_value == nonce_str) {
+            return;
+        }
+    }
+    propobj->insert(data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, nonce_str, canvas_.get());
+}
+
+void xtop_property_access_control::unconfirm_sendtx_num(uint64_t num) {
+    std::error_code ec;
+    unconfirm_sendtx_num(num, ec);
     top::error::throw_error(ec);
 }
 

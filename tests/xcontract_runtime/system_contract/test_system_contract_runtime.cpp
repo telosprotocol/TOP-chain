@@ -189,50 +189,18 @@ TEST_F(test_system_contract_runtime, account_vm) {
 
     auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
+    auto bstate_cmp = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
 
     contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
     auto result = vm.execute(input_txs, bstate, cs_para);
     EXPECT_EQ(result.status.ec.value(), 0);
-    EXPECT_EQ(result.transaction_results.size(), 1);
-
-
-    std::vector<xcons_transaction_ptr_t> output_txs = input_txs;
-    std::vector<xcons_transaction_ptr_t> follow_up_immediate_txs;
-    std::vector<xcons_transaction_ptr_t> follow_up_delay_txs;
-    std::vector<xcons_transaction_ptr_t> pack_txs;
-    for (auto i = 0u; i < result.transaction_results.size(); i++) {
-        auto const & r = result.transaction_results[i];
-        auto & tx = output_txs[i];
-        if (r.status.ec) {
-            tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
-            if (tx->is_send_tx() || tx->is_self_tx()) {
-            } else if (tx->is_recv_tx()) {
-            } else {
-                xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
-            }
-        } else {
-            tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
-            pack_txs.emplace_back(tx);
-            for (auto & follow_up : r.output.followup_transaction_data) {
-                if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
-                    follow_up_immediate_txs.emplace_back(follow_up.followed_transaction);
-                } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
-                    follow_up_delay_txs.emplace_back(follow_up.followed_transaction);
-                } else {
-                    xwarn("[xlightunit_builder_t::build_block] invalid follow up tx type: %d", follow_up.schedule_type);
-                }
-            }
-        }
-    }
-    for (auto const & follow_up : follow_up_immediate_txs) {
-        pack_txs.emplace_back(follow_up);
-    }
-    EXPECT_EQ(follow_up_immediate_txs.size(), 1);
-    EXPECT_EQ(pack_txs.size(), 2);
-    // std::cout << data::to_hex_str(result.transaction_results[0].output.binlog) << std::endl;
-    // std::cout << data::to_hex_str(result.transaction_results[0].output.contract_state_snapshot) << std::endl;
-    // std::cout << data::to_hex_str(result.transaction_results[1].output.binlog) << std::endl;
-    // std::cout << data::to_hex_str(result.transaction_results[1].output.contract_state_snapshot) << std::endl;
+    EXPECT_EQ(result.success_tx_assemble.size(), 2);
+    EXPECT_EQ(result.failed_tx_assemble.size(), 0);
+    EXPECT_EQ(result.delay_tx_assemble.size(), 0);
+    EXPECT_EQ(result.success_tx_assemble[0]->get_source_addr(), account);
+    EXPECT_EQ(result.success_tx_assemble[0]->get_target_addr(), sys_contract_rec_standby_pool_addr);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_source_addr(), sys_contract_rec_standby_pool_addr);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_target_addr(), sys_contract_rec_registration_addr);
 }
 
 TEST_F(test_system_contract_runtime, test_follow_up_delay) {
@@ -278,19 +246,11 @@ TEST_F(test_system_contract_runtime, test_follow_up_delay) {
     auto result = vm.execute(input_txs, bstate, cs_para);
 
     EXPECT_EQ(result.status.ec.value(), 0);
-    EXPECT_EQ(result.transaction_results.size(), 1);
+    EXPECT_EQ(result.delay_tx_assemble.size(), enum_vledger_const::enum_vbucket_has_tables_count);
 
-    std::vector<xcons_transaction_ptr_t> follow_up_delay_txs;
-    auto const & r = result.transaction_results[0];
-    for (auto & follow_up : r.output.followup_transaction_data) {
-        if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
-            follow_up_delay_txs.emplace_back(std::move(follow_up.followed_transaction));
-        }
-    }
-    EXPECT_EQ(follow_up_delay_txs.size(), enum_vledger_const::enum_vbucket_has_tables_count);
     auto nonce = 1;
     auto amount = 1000;
-    for (auto const & tx : follow_up_delay_txs) {
+    for (auto const & tx : result.delay_tx_assemble) {
         EXPECT_EQ(tx->get_source_addr(), sys_contract_zec_reward_addr);
         EXPECT_EQ(tx->get_target_addr(), std::string{sys_contract_sharding_reward_claiming_addr} + "@" + std::to_string(nonce - 1));
         auto tx_nonce = tx->get_tx_nonce();

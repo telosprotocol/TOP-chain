@@ -486,6 +486,9 @@ public:
 
     uint64_t blockchain_height() const;
 
+    common::xlogic_time_t time() const;
+    common::xlogic_time_t timestamp() const;
+
     uint256_t latest_sendtx_hash(std::error_code& ec) const;
     uint256_t latest_sendtx_hash() const;
     void latest_sendtx_hash(uint256_t hash, std::error_code& ec);
@@ -505,6 +508,16 @@ public:
     void latest_followup_tx_nonce(uint64_t nonce);
 
     bool verify_sendtx_nonce(data::xcons_transaction_ptr_t const & trans, std::error_code & ec);
+
+    uint64_t recvtx_num(std::error_code& ec) const;
+    uint64_t recvtx_num() const;
+    void recvtx_num(uint64_t num, std::error_code& ec);
+    void recvtx_num(uint64_t num);
+
+    uint64_t unconfirm_sendtx_num(std::error_code& ec) const;
+    uint64_t unconfirm_sendtx_num() const;
+    void unconfirm_sendtx_num(uint64_t num, std::error_code& ec);
+    void unconfirm_sendtx_num(uint64_t num);
 
     void create_time(std::error_code& ec);
     void create_time();

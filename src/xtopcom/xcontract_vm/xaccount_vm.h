@@ -57,16 +57,18 @@ public:
 
     explicit xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & system_contract_manager);
 
-    std::vector<xaccount_vm_execution_result_t> execute(std::vector<xaccount_vm_execution_assemble_t> & assemble);
+    std::vector<xaccount_vm_output_t> execute(std::vector<xaccount_vm_execution_assemble_t> & assemble);
 
-    xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
-                                           xobject_ptr_t<base::xvbstate_t> block_state,
-                                           const data::xblock_consensus_para_t & cs_para) override;
+    xaccount_vm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                                 xobject_ptr_t<base::xvbstate_t> block_state,
+                                 data::xblock_consensus_para_t const & cs_para) override;
 
 private:
     contract_runtime::xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                     contract_common::properties::xproperty_access_control_t & ac,
-                                                                     const contract_common::xcontract_execution_param_t & param);
+                                                                     contract_common::properties::xproperty_access_control_t & ac);
+    xaccount_vm_output_t pack(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                              xaccount_vm_execution_result_t const & result,
+                              contract_common::properties::xproperty_access_control_t & ac);
     void abort(const size_t start_index, const size_t size, xaccount_vm_execution_result_t & result);
 };
 using xaccount_vm_t = xtop_account_vm;

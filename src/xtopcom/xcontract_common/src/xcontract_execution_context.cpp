@@ -21,7 +21,7 @@ xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr
 xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
                                                                  observer_ptr<xcontract_state_t> s,
                                                                  xcontract_execution_param_t param) noexcept
-  : m_contract_state{s}, m_action{std::move(action)}, m_param{param} {
+  : m_contract_state{s}, m_action{std::move(action)} {
 }
 
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
@@ -260,11 +260,11 @@ data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() 
 }
 
 common::xlogic_time_t xtop_contract_execution_context::time() const {
-    return m_param.m_clock;
+    return contract_state()->access_control()->time();
 }
 
 common::xlogic_time_t xtop_contract_execution_context::timestamp() const {
-    return m_param.m_timestamp;
+    return contract_state()->access_control()->timestamp();
 }
 
 bool xtop_contract_execution_context::verify_action(std::error_code & ec) {

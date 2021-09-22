@@ -22,9 +22,17 @@ using xaccount_vm_execution_status_t = xtop_account_vm_execution_status;
 struct xtop_account_vm_execution_result {
     xaccount_vm_execution_status_t status;
     std::vector<contract_runtime::xtransaction_execution_result_t> transaction_results;
-    std::string binlog;
-    std::string contract_state_snapshot;
 };
 using xaccount_vm_execution_result_t = xtop_account_vm_execution_result;
+
+struct xtop_account_vm_output {
+    xaccount_vm_execution_status_t status;
+    std::string binlog;
+    std::string contract_state_snapshot;
+    std::vector<data::xcons_transaction_ptr_t> success_tx_assemble;
+    std::vector<data::xcons_transaction_ptr_t> failed_tx_assemble;
+    std::vector<data::xcons_transaction_ptr_t> delay_tx_assemble;
+};
+using xaccount_vm_output_t = xtop_account_vm_output;
 
 NS_END2
