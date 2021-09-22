@@ -54,7 +54,7 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     uint64_t lacked_block_height = 0;
     // cache latest block
     if (!load_and_cache_enough_blocks(latest_block, lacked_block_height)) {
-        xwarn("xunit_maker_t::check_latest_state fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
+        xwarn("xtable_maker_t::check_latest_state fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
     }
 
@@ -134,8 +134,16 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     base::xtable_shortid_t last_tableid = 0xFFFF;
     uint64_t last_receipt_id = 0;
 
+    std::map<std::string,bool> unready_accounts;
+
     for (auto & tx : input_table_txs) {
         std::string unit_account = tx->get_account_addr();
+
+        if(unready_accounts.find(unit_account) != unready_accounts.end()) { //found nont ready account
+            xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for account unready,%s,account=%s,tx=%s",
+                cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
+            continue;
+        }
 
         // 1.check unit maker state
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
@@ -146,6 +154,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             // TODO(jimmy) sync
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
+            unready_accounts[unit_account] = false;
             continue;
         }
 
