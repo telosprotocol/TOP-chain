@@ -74,6 +74,11 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_tableblock_backup_finish_succ);
         RETURN_METRICS_NAME(cons_tableblock_leader_finish_fail);
         RETURN_METRICS_NAME(cons_tableblock_backup_finish_fail);
+        RETURN_METRICS_NAME(cons_drand_leader_succ);
+        RETURN_METRICS_NAME(cons_drand_backup_succ);
+        RETURN_METRICS_NAME(cons_tableblock_leader_succ);
+        RETURN_METRICS_NAME(cons_tableblock_backup_succ);
+        RETURN_METRICS_NAME(cons_tableblock_total_succ);
         RETURN_METRICS_NAME(cons_pacemaker_tc_discontinuity);
         RETURN_METRICS_NAME(cons_fail_make_proposal_table_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_consensus_para);
@@ -93,9 +98,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_verify_proposal_tick);
 
         // store
-        RETURN_METRICS_NAME(store_db_read);
-        RETURN_METRICS_NAME(store_db_write);
-        RETURN_METRICS_NAME(store_db_delete);
         RETURN_METRICS_NAME(store_state_read);
         RETURN_METRICS_NAME(store_state_table_write);
         RETURN_METRICS_NAME(store_state_unit_write);
