@@ -601,6 +601,7 @@ private:
         std::map<std::string, tx_ext_t> self;
         std::set<std::string> multi_tx;
         std::vector<tx_ext_t> multi;
+        std::vector<single_table_info_t> all_table_infos;
         json j;
         int empty_table_block_num{0};
         int light_table_block_num{0};
@@ -651,6 +652,8 @@ private:
             if (timestamp < start_timestamp || timestamp > end_timestamp) {
                 continue;
             }
+            uint32_t tx_count = 0;
+
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
@@ -676,6 +679,7 @@ private:
                     if (action.get_org_tx_hash().empty()) {  // not txaction
                         continue;
                     }
+                    tx_count++;
                     data::xlightunit_action_t txaction(action);
                     auto tx_size = block->query_tx_size(txaction.get_tx_hash());
                     auto tx_ptr = block->query_raw_transaction(txaction.get_tx_hash());
@@ -743,6 +747,11 @@ private:
                     }
                 }
             }
+            single_table_info_t table_info;
+            table_info.height = h;
+            table_info.timestamp = timestamp;
+            table_info.txcount = tx_count;
+            all_table_infos.push_back(table_info);
         }
         j["table info"]["table height"] = block_height;
         j["table info"]["total table block num"] = block_height + 1;
@@ -782,6 +791,19 @@ private:
                 vec.push_back(item.second);
             }
         };
+
+        auto set_all_table_infos_j = [](std::vector<single_table_info_t> & vec) -> json{
+            json j;
+            for (auto const & item : vec) {
+                json v;
+                v["table height"] = item.height;
+                v["timestamp"] = item.timestamp;
+                v["txs count"] = item.txcount;
+                j[item.height] = v;
+            }
+            return j;
+        };
+
         auto setj = [](std::vector<tx_ext_t> & vec) -> json{
             json j;
             for (auto const & item : vec) {
@@ -853,6 +875,7 @@ private:
         j["send only detail"] = setj(sendv);
         j["confirmed only detail"] = setj(confirmv);
         j["multi detail"] = setj(multi);
+        j["all table infos"] = set_all_table_infos_j(all_table_infos);
         result_json[account] = j;
         auto t4 = xtime_utl::time_now_ms();
         // std::cout << t2-t1 << " " << t3-t2 << " " << t4-t3 << std::endl;
@@ -982,6 +1005,11 @@ private:
         std::string target{""};
         uint64_t unit_height{0};
         uint8_t phase{0};
+    };
+    struct single_table_info_t {
+        uint64_t height{0};
+        uint64_t timestamp{0};
+        uint32_t txcount{0};        
     };
 
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;

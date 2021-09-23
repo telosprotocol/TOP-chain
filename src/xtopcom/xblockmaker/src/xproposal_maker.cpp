@@ -109,6 +109,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     proposal_block->get_input()->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
+
+    // add metrics of tx counts / table counts ratio
+    XMETRICS_GAUGE(metrics::cons_table_leader_make_unit_count, table_result.m_succ_unit_num);
+    XMETRICS_GAUGE(metrics::cons_table_leader_make_tx_count, proposal_input->get_input_txs().size());
+
     xinfo("xproposal_maker_t::make_proposal succ.proposal_block=%s,units_info={total=%d,fail=%d,succ=%d,empty=%d,light=%d,full=%d},txs_info={txpool=%d,ufm=%d,total=%d,self=%d,send=%d,recv=%d,confirm=%d},proposal_input={size=%zu,txs=%zu,accounts=%zu}", 
         proposal_block->dump().c_str(),
         table_result.m_total_unit_num, table_result.m_fail_unit_num, table_result.m_succ_unit_num, table_result.m_empty_unit_num, table_result.m_light_unit_num, table_result.m_full_unit_num,
@@ -337,9 +342,9 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
 
     // get table batch txs for execute and make block
     auto & tablestate_highqc = table_para.get_tablestate();
-    uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
-    uint16_t confirm_and_recv_txs_max_num = 35;
-    uint16_t confirm_txs_max_num = 30;
+    uint16_t all_txs_max_num = 100;  // TODO(jimmy) config paras
+    uint16_t confirm_and_recv_txs_max_num = 95;
+    uint16_t confirm_txs_max_num = 95;
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), locked_nonce_map, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
     std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
     for (auto & tx : origin_txs) {

@@ -264,6 +264,10 @@ namespace top
         //each xsync_respond_t just only working with one block
         class xsync_respond_t : public xcsmsg_t
         {
+            enum enum_xrespond_flag
+            {
+                enum_xrespond_flag_big_block  = 0x01, //size of block-objct is over 64KB
+            };
         public:
             static enum_consensus_msg_type  get_msg_type() {return enum_consensus_msg_type_sync_resp;}
         public:
@@ -278,7 +282,7 @@ namespace top
             const uint32_t        get_sync_targets()    const {return m_sync_targets;}//refer enum_xsync_requst_target
             const uint32_t        get_sync_cookie()     const {return m_sync_cookie;}
             const std::string&    get_block_object()    const {return m_block_object;}
-            void                  set_block_object(const std::string & object_in){m_block_object = object_in;}
+            void                  set_block_object(const std::string & object_in);
             
             const std::string&    get_input_resource()     const {return m_input_resource;}
             const std::string&    get_output_resource()    const {return m_output_resource;}
@@ -291,7 +295,7 @@ namespace top
             virtual int32_t     do_read(base::xstream_t & stream)  override;
         private:
             uint16_t            m_sync_targets;    //responds targets
-            uint16_t            m_reserved;        //reserved for future
+            uint16_t            m_sync_flags;      //reserved for future
             uint32_t            m_sync_cookie;     //token for sync
             
             std::string         m_block_object;    //must have as proof,= vblock 'serialized data include header and certification

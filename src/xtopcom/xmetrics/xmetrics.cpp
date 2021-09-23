@@ -96,6 +96,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
         RETURN_METRICS_NAME(cons_verify_proposal_tick);
+        RETURN_METRICS_NAME(cons_table_leader_make_tx_count);
+        RETURN_METRICS_NAME(cons_table_leader_make_unit_count);
 
         // store
         RETURN_METRICS_NAME(store_state_read);
