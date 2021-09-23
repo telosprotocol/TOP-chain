@@ -25,16 +25,19 @@ std::int32_t operator>>(top::base::xstream_t & stream, xrole_type_t & role_type)
 std::string to_string(xrole_type_t const role) {
     switch (role) {
     case xrole_type_t::advance:
-        return XNODE_TYPE_ADVANCE;
+        return XMINER_TYPE_ADVANCE;
 
     case xrole_type_t::full_node:
-        return XNODE_TYPE_FULL_NODE;
+        return XMINER_TYPE_FULL_NODE;
 
     case xrole_type_t::validator:
-        return XNODE_TYPE_VALIDATOR;
+        return XMINER_TYPE_VALIDATOR;
+
+    case xrole_type_t::archive:
+        return XMINER_TYPE_ARCHIVE;
 
     case xrole_type_t::edge:
-        return XNODE_TYPE_EDGE;
+        return XMINER_TYPE_EDGE;
 
     default:
         assert(false);
@@ -59,13 +62,15 @@ bool has(xrole_type_t const target, xrole_type_t const input) noexcept {
 common::xrole_type_t to_role_type(std::string const & node_type) {
     common::xrole_type_t role_type = common::xrole_type_t::invalid;
 
-    if (node_type == XNODE_TYPE_EDGE) {
+    if (node_type == XMINER_TYPE_EDGE) {
         role_type = common::xrole_type_t::edge;
-    } else if (node_type == XNODE_TYPE_ADVANCE) {
+    } else if (node_type == XMINER_TYPE_ADVANCE) {
         role_type = common::xrole_type_t::advance;
-    } else if (node_type == XNODE_TYPE_VALIDATOR) {
+    } else if (node_type == XMINER_TYPE_VALIDATOR) {
         role_type = common::xrole_type_t::validator;
-    } else if (node_type == XNODE_TYPE_FULL_NODE) {
+    } else if (node_type == XMINER_TYPE_ARCHIVE) {
+        role_type = common::xrole_type_t::archive;
+    } else if (node_type == XMINER_TYPE_FULL_NODE) {
         role_type = common::xrole_type_t::full_node;
     }
 
