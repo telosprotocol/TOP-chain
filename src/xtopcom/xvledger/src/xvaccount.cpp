@@ -156,7 +156,7 @@ namespace top
         const std::string xblockmeta_t::ddump() const
         {
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%llu,lock=%llu,commit=%llu ,connected=%llu,full=%llu}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height);
+            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%lld,lock=%lld,commit=%lld ,connected=%lld,full=%lld}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height);
             
             return std::string(local_param_buf);
         }
