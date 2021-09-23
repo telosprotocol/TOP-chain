@@ -11,19 +11,7 @@
 
 NS_BEG2(top, common)
 
-common::xregistration_type_t to_registration_type(std::string const & reg_type) {
-    common::xregistration_type_t registration_type = common::xregistration_type_t::invalid;
-    if (reg_type == XREG_TYPE_PRIMARY) {
-        registration_type = common::xregistration_type_t::primary;
-    } else if (reg_type == XREG_TYPE_INTERMEDIATE) {
-        registration_type = common::xregistration_type_t::intermediate;
-    } else if (reg_type == XREG_TYPE_SENIOR) {
-        registration_type = common::xregistration_type_t::senior;
-    }
-    return registration_type;
-}
-
-common::xrole_type_t to_mainchain_role_type(common::xregistration_type_t const & registration_type){
+common::xrole_type_t to_mainchain_role_type(common::xregistration_type_t const & registration_type) {
     switch (registration_type) {
     case common::xregistration_type_t::hardcode:
         XATTRIBUTE_FALLTHROUGH;

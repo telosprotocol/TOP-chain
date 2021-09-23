@@ -68,8 +68,16 @@ public:
         if (m_result.find(value.first) == m_result.end() || m_result[value.first] == value.second) {
             return m_result.insert(std::move(value));
         }
-        m_result.at(value.first) = value.second;
+        m_result.at(value.first) = std::move(value.second);
         return std::make_pair(m_result.find(value.first), true);
+    }
+
+    iterator find(key_type const & key) noexcept {
+        return m_result.find(key);
+    }
+
+    const_iterator find(key_type const & key) const noexcept {
+        return m_result.find(key);
     }
 
     bool empty(key_type const & key) const noexcept {
@@ -130,6 +138,13 @@ public:
 
     size_type erase(KeyT const & key) {
         return m_result.erase(key);
+    }
+
+    bool operator==(xtop_simple_map_result const & other) const noexcept {
+        return m_result == other.m_result;
+    }
+    bool operator!=(xtop_simple_map_result const & other) const noexcept {
+        return !(*this == other);
     }
 };
 

@@ -10,9 +10,6 @@
 #include "xdata/xcodec/xmsgpack/xzec_registration_node_info_codec.hpp"
 #include "xdata/xregistration/xregistration_node_info.h"
 
-#include <string>
-#include <vector>
-
 NS_BEG3(top, data, registration)
 
 using xregistration_chain_result_t = xsimple_map_result_t<common::xnode_id_t, xrec_registration_node_info_t>;
