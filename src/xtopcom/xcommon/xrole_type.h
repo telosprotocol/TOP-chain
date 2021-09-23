@@ -39,10 +39,11 @@ enum class xenum_role_type : uint32_t {
 };
 using xrole_type_t = xenum_role_type;
 
-XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = "edge";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = "advance";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR = "validator";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_FULL_NODE = "full_node";
+XINLINE_CONSTEXPR char const * XMINER_TYPE_EDGE      = "edge";
+XINLINE_CONSTEXPR char const * XMINER_TYPE_ADVANCE   = "advance";
+XINLINE_CONSTEXPR char const * XMINER_TYPE_VALIDATOR = "validator";
+XINLINE_CONSTEXPR char const * XMINER_TYPE_ARCHIVE   = "archive";
+XINLINE_CONSTEXPR char const * XMINER_TYPE_FULL_NODE = "full_node";
 
 std::int32_t
 operator <<(top::base::xstream_t & stream, xrole_type_t const & role_type);
