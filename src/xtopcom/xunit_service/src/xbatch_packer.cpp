@@ -119,6 +119,12 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
         return false;
     }
 
+    if (m_latest_cert_block_viewid != latest_blocks.get_latest_cert_block()->get_viewid()) {
+        xunit_warn("xbatch_packer::start_proposal fail-latest cert block changed,account=%s,expect_viewid=%ld,actual_viewid=%ld",
+            get_account().c_str(), m_latest_cert_block_viewid, latest_blocks.get_latest_cert_block()->get_viewid());
+        return false;
+    }
+
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1);
     proposal_para.set_latest_blocks(latest_blocks);
@@ -179,6 +185,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     xassert(view_ev->get_account() == get_account());
     m_is_leader = false;
     m_leader_packed = false;
+    m_latest_cert_block_viewid = 0;
     xdbg_info("xbatch_packer::on_view_fire account=%s,clock=%ld,viewid=%ld,start_time=%ld", get_account().c_str(), view_ev->get_clock(), view_ev->get_viewid(), m_start_time);
 
     // fix: viewchange on different rounds
@@ -199,15 +206,15 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     XMETRICS_TIME_RECORD("cons_tableblock_view_change_time_consuming");
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
-    base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_view_fire);
-    if (latest_blocks.get_latest_cert_block() == nullptr) {
+    auto latest_cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(*this, metrics::blockstore_access_from_us_on_view_fire);
+    if (latest_cert_block == nullptr) {
         xunit_warn("xbatch_packer::on_view_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
             get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());
         return false;
     }
-    if (m_last_view_clock < latest_blocks.get_latest_cert_block()->get_clock()) {
+    if (m_last_view_clock < latest_cert_block->get_clock()) {
         xunit_warn("xbatch_packer::on_view_fire fail-clock less than cert block,account=%s,viewid=%ld,clock=%ld,prev=%ull",
-            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_clock());
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_cert_block->get_clock());
         return false;
     }
 
@@ -229,18 +236,19 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
-    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, election_epoch, rotate_mode);
+    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_cert_block.get(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
     xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
-            is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_height(), 
-            latest_blocks.get_latest_cert_block()->get_clock(), this, node_account.c_str(),
+            is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_cert_block->get_height(), 
+            latest_cert_block->get_clock(), this, node_account.c_str(),
             xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
     if (!is_leader_node) {
         return true;
     }
 
+    m_latest_cert_block_viewid = latest_cert_block->get_viewid();
     m_is_leader = true;
-    m_leader_packed = start_proposal(latest_blocks);
+    // m_leader_packed = start_proposal(latest_blocks);
     return true;
 }
 

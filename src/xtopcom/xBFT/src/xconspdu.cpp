@@ -386,17 +386,25 @@ namespace top
         xsync_respond_t::xsync_respond_t()
         {
             m_sync_targets = 0;
+            m_sync_flags   = 0;
         }
         
         xsync_respond_t::xsync_respond_t(const uint32_t targets,const uint32_t sync_cookie)
         {
             m_sync_targets      = targets;
             m_sync_cookie       = sync_cookie;
-            m_reserved          = 0;
+            m_sync_flags        = 0;
         }
         
         xsync_respond_t::~xsync_respond_t()
         {
+        }
+    
+        void   xsync_respond_t::set_block_object(const std::string & object_in)
+        {
+            m_block_object = object_in;
+            if(m_block_object.size() >= 65536) //>= 64KB
+                m_sync_flags |= enum_xrespond_flag_big_block;
         }
         
         //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
@@ -404,27 +412,42 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             stream << m_sync_targets;
-            stream << m_reserved;
+            stream << m_sync_flags;
             stream << m_sync_cookie;
             
-            stream.write_short_string(m_block_object);
+            if( (m_sync_flags & enum_xrespond_flag_big_block) == 0) //small block < 64KB
+                stream.write_short_string(m_block_object);
+            else //still write length for compatibility
+                stream.write_short_string(std::string());
+ 
             stream << m_input_resource;
             stream << m_output_resource;
+            
+            if( (m_sync_flags & enum_xrespond_flag_big_block) != 0)  //>= 64KB
+                stream.write_compact_var(m_block_object);
             
             return (stream.size() - begin_size);
         }
         
         int32_t     xsync_respond_t::do_read(base::xstream_t & stream)
         {
+            std::string empty;
             const int32_t begin_size = stream.size();
             
             stream >> m_sync_targets;
-            stream >> m_reserved;
+            stream >> m_sync_flags;
             stream >> m_sync_cookie;
             
-            stream.read_short_string(m_block_object);
+            if( (m_sync_flags & enum_xrespond_flag_big_block) == 0) //small block < 64KB
+                stream.read_short_string(m_block_object);
+            else
+                stream.read_short_string(empty);
+                
             stream >> m_input_resource;
             stream >> m_output_resource;
+            
+            if( (m_sync_flags & enum_xrespond_flag_big_block) != 0)  //>= 64KB
+                stream.read_compact_var(m_block_object);
             
             return (begin_size - stream.size());
         }

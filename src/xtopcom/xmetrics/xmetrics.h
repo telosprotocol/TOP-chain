@@ -110,6 +110,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
     cons_verify_proposal_tick,
+    cons_table_leader_make_tx_count,
+    cons_table_leader_make_unit_count,
 
     // store
     store_state_read,
