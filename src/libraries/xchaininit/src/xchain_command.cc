@@ -437,7 +437,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string miner_type;
     std::string miner_name;
     registerMiner_app->add_option("top_num", registerMiner_amount, "Miner register deposit,unit is TOP.")->required();
-    registerMiner_app->add_option("miner_type", miner_type, "Miner type: edge, validator, advance, full_node.")->required();
+    registerMiner_app->add_option("miner_type", miner_type, "Miner type: edge, validator, advance, archive, full_node.")->required();
     registerMiner_app->add_option("miner_name", miner_name, "Miner nickname. 4-16 characters, supporting letters, numbers or underscores.")->required();
     uint32_t dividend_ratio = 0;
     std::string node_sign_key;
