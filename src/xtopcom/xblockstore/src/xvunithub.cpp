@@ -80,6 +80,14 @@ namespace top
             }
         }
 
+        #define LOAD_ACCOUNT_OBJECT(account_obj,account_vid) \
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
+            if (target_table == nullptr) { \
+                xwarn_err("invalid account=%s",account_vid.get_address().c_str());\
+                return nullptr;\
+            }\
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(account_address);\
+
         #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
             if(is_close())\
             {\
@@ -113,7 +121,6 @@ namespace top
         xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id,base::xvdbstore_t* xvdb_ptr)
             :base::xvblockstore_t(_context,target_thread_id)
         {
-            m_raw_timer  = nullptr;
             m_xvdb_ptr   = nullptr;
 
             m_xvdb_ptr = xvdb_ptr;
@@ -121,16 +128,10 @@ namespace top
 
             m_store_path = blockstore_path;
             xkinfo("xvblockstore_impl::create,store=%s,at thread=%d",m_store_path.c_str(),target_thread_id);
-            m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
-            m_raw_timer->start(enum_account_idle_check_interval, enum_account_idle_check_interval); //check account by every 10 seconds
         }
 
         xvblockstore_impl::~xvblockstore_impl()
         {
-            if(m_raw_timer != nullptr)
-            {
-                m_raw_timer->release_ref();
-            }
             m_xvdb_ptr->release_ref();
             xkinfo("xvblockstore_impl::destroy,store=%s",m_store_path.c_str());
         }
@@ -147,39 +148,31 @@ namespace top
         bool    xvblockstore_impl::on_object_close() //notify the subclass the object is closed
         {
             xkinfo("xvblockstore_impl::on_object_close,store=%s",m_store_path.c_str());
-
-            if(m_raw_timer != nullptr)
-            {
-                m_raw_timer->stop();
-                m_raw_timer->close();
-            }
             return base::xiobject_t::on_object_close();
         }
 
         bool  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj)
         {
-            const xobject_t* exist_block_plugin = target_table->get_account_plugin_unsafe(account_address, base::enum_xvaccount_plugin_blockmgr);//exist_block_plugin has done add_ref by get_account_plugin_unsafe
-            if(exist_block_plugin != NULL)
+            base::xauto_ptr<base::xvaccountobj_t> auto_account_ptr(target_table->get_account(account_address));
+            
+            base::xauto_ptr<base::xvactplugin_t> auto_plugin_ptr(auto_account_ptr->get_plugin( base::enum_xvaccount_plugin_blockmgr));
+            if(auto_plugin_ptr)
             {
-                inout_account_obj.transfer_owner((xblockacct_t*)exist_block_plugin);
-                return true; //pass reference to xauto_ptr that release later
+                auto_plugin_ptr->add_ref(); //pass reference to xauto_ptr that release later
+                inout_account_obj.transfer_owner((xblockacct_t*)auto_plugin_ptr.get());
+                return true;
+            }
+            
+            uint64_t timeout_for_block_plugin = base::enum_plugin_idle_timeout_ms;
+            if(auto_account_ptr->is_contract_address())
+            {
+                timeout_for_block_plugin = (uint64_t)-1; //table object keep plugin forever
             }
 
-            xblockacct_t * new_plugin = new xchainacct_t(account_address,enum_account_idle_timeout_ms,m_store_path,m_xvdb_ptr);//replace by new account address;
+            xblockacct_t * new_plugin = new xchainacct_t(*auto_account_ptr,timeout_for_block_plugin,m_store_path,m_xvdb_ptr);//replace by new account address;
             new_plugin->init();
-
-            const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
-            new_plugin->set_last_access_time(_timenow);
-            //now ready to deliver to monitor thread
-            {
-                std::function<void(void*)> _add_new_plugin_job = [this](void* _account_plugin)->void{
-                    xblockacct_t * _new_obj = (xblockacct_t*)_account_plugin;
-                    m_monitor_expire.insert(std::multimap<uint64_t,xblockacct_t*>::value_type(_new_obj->get_idle_duration() + get_time_now(),_new_obj));
-                };
-                new_plugin->add_ref();//add reference to hold by m_monitor_expire
-                send_call(_add_new_plugin_job,(void*)new_plugin);//send account ptr to store'thread to manage lifecycle
-            }
-            target_table->set_account_plugin(account_address, new_plugin, base::enum_xvaccount_plugin_blockmgr);
+            target_table->set_account_plugin(new_plugin);
+            
             inout_account_obj.transfer_owner(new_plugin);
             return true;
         }
@@ -337,8 +330,9 @@ namespace top
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_executed_block(const base::xvaccount_t & account,const int atag)
         {
+            const uint64_t latest_executed_height = get_latest_executed_block_height(account);
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return load_block_from_index(account_obj.get(),account_obj->load_latest_executed_index(),0,false, atag);
+            return load_block_from_index(account_obj.get(),account_obj->load_index(latest_executed_height,0),0,false, atag);
         }
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_connected_block(const base::xvaccount_t & account,const int atag)
@@ -349,15 +343,17 @@ namespace top
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_genesis_connected_block(const base::xvaccount_t & account,bool ask_full_search,const int atag)//block has connected to genesis
         {
+            const uint64_t latest_genesis_height = get_latest_genesis_connected_block_height(account);
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return load_block_from_index(account_obj.get(),account_obj->load_latest_genesis_connected_index(ask_full_search),0,false, atag);
+            return load_block_from_index(account_obj.get(),account_obj->load_index(latest_genesis_height,0),0,false, atag);
         }
 
         base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search,const int atag) //block has connected to genesis
         {
+            const uint64_t latest_genesis_height = get_latest_genesis_connected_block_height(account);
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             METRICS_TAG(atag, 1);
-            return account_obj->load_latest_genesis_connected_index(ask_full_search);
+            return account_obj->load_index(latest_genesis_height,0);
         }
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_committed_full_block(const base::xvaccount_t & account,const int atag)
@@ -395,24 +391,40 @@ namespace top
             return 0;
         }
 
-        uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag)
+        uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & address,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("invalid account=%s",address.get_address().c_str());
+                return 0;
+            }
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
             METRICS_TAG(atag, 1);
-            return account_obj->get_latest_genesis_connected_block_height();
+            return account_obj->get_sync_meta()._highest_genesis_connect_height;
         }
 
-        uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & account,const int atag)
+        uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & address,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("invalid account=%s",address.get_address().c_str());
+                return 0;
+            }
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
             METRICS_TAG(atag, 1);
-            return account_obj->get_latest_executed_block_height();
+            return account_obj->get_state_meta()._highest_execute_block_height;
         }
 
-        bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag) {
-            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+        bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag)
+        {
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("invalid account=%s",account.get_address().c_str());
+                return false;
+            }
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(account);
             METRICS_TAG(atag, 1);
-            return account_obj->set_latest_executed_info(height,blockhash);
+            return account_obj->set_latest_executed_block(height, blockhash);
         }
 
         //one api to get latest_commit/latest_lock/latest_cert for better performance
@@ -902,101 +914,6 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             METRICS_TAG(atag, 1);
             return account_obj->clean_caches(true,true);
-        }
-
-        //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-        bool                xvblockstore_impl::reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms,const int atag)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            METRICS_TAG(atag, 1);
-            return account_obj->reset_cache_timeout(max_idle_time_ms);
-        }
-
-        bool  xvblockstore_impl::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms)
-        {
-            std::deque<xblockacct_t*> _remonitor_list;
-
-            int   expired_items_count = 0;
-            auto  expire_it = m_monitor_expire.begin();
-            while(expire_it != m_monitor_expire.end())
-            {
-                const int total_active_acounts = (int)m_monitor_expire.size();
-                if(total_active_acounts < enum_max_active_acconts)
-                {
-                    //map or multiplemap are sorted as < operation as default
-                    if(current_time_ms < (int64_t)expire_it->first )
-                        break;
-                    else if(expired_items_count > enum_max_expire_check_count) //not clean too much at each loop
-                        break;
-                }
-
-                xblockacct_t* _test_for_plugin = expire_it->second;
-                if(_test_for_plugin != nullptr)
-                {
-                    bool  fore_close = false;//init as false
-                    if(   (total_active_acounts > enum_max_active_acconts)
-                       && (_test_for_plugin->get_block_level() == base::enum_xvblock_level_unit) )
-                    {
-                        fore_close = true; //only force close unit when hold too many accounts
-                    }
-                    else if(false == _test_for_plugin->is_live(current_time_ms))//idle too long
-                    {
-                        fore_close = true;
-                    }
-
-                    if(fore_close) //force to remove most less-active account while too much caches
-                    {
-                        base::xvtable_t * target_table = base::xvchain_t::instance().get_table(_test_for_plugin->get_xvid());
-                        //always use same lock for same account
-                        std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
-
-                        _test_for_plugin->process_events(); //fired any pending events first
-                        _test_for_plugin->close(); //mark to close first
-                        _test_for_plugin->release_ref(); //now release last reference hold by m_monitor_expire
-
-                        //reset plugin through table that may release resource quickly
-                        target_table->set_account_plugin(_test_for_plugin->get_account(),NULL, base::enum_xvaccount_plugin_blockmgr);
-                    }
-                    else
-                    {
-                        _remonitor_list.push_back(_test_for_plugin);//transfer to list
-                    }
-                }
-                auto old = expire_it; //just copy the old value
-                ++expire_it;
-                m_monitor_expire.erase(old);
-                ++expired_items_count;
-            }
-
-            for(auto it : _remonitor_list)
-            {
-                m_monitor_expire.insert(std::multimap<uint64_t,xblockacct_t*>::value_type(it->get_idle_duration() + current_time_ms,it));
-            }
-            return true;
-        }
-
-        bool  xvblockstore_impl::on_timer_start(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms)   //attached into io-thread
-        {
-            return true;
-        }
-        bool  xvblockstore_impl::on_timer_stop(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms)   //detach means it detach
-        {
-            for(auto it  = m_monitor_expire.begin(); it != m_monitor_expire.end(); ++it)
-            {
-                if(it->second != nullptr)
-                {
-                    it->second->release_ref();
-                }
-            }
-            m_monitor_expire.clear();
-
-            xkinfo("xvblockstore_impl::on_timer_stop,store=%s",m_store_path.c_str());
-            return true;
         }
 
         bool      xvblockstore_impl::on_block_stored(base::xvblock_t* this_block_ptr)
