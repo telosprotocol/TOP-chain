@@ -36,12 +36,14 @@ class xtable_block_para_t {
     void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
+    void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::string &             get_extra_data() const {return m_extra_data;}
     const std::string &             get_property_binlog() const {return m_property_binlog;}
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
+    const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
 
  private:
     std::vector<xblock_ptr_t>        m_account_units;
@@ -49,6 +51,7 @@ class xtable_block_para_t {
     std::string                      m_property_binlog;
     std::string                      m_fullstate_bin;
     int64_t                          m_tgas_balance_change{0};
+    std::map<std::string, std::string>  m_property_hashs;  // need set to table-action for property receipt
 };
 
 class xtable_block_t : public xblock_t {

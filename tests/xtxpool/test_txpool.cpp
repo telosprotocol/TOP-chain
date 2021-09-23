@@ -54,3 +54,15 @@ TEST_F(test_xtxpool, sub_unsub) {
 
     pthread_join(tid, NULL);
 }
+
+TEST_F(test_xtxpool, check_black_hole_addr) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    store::xstore_face_t * xstore = creator.get_xstore();
+    auto para = std::make_shared<xtxpool_resources>(make_observer(xstore), make_observer(blockstore), nullptr, nullptr);
+    xtxpool_t xtxpool(para);
+
+    auto tx_ent = xtxpool.query_tx(black_hole_addr, {});
+    ASSERT_EQ(tx_ent, nullptr);
+}

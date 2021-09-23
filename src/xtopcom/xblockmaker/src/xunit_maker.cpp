@@ -274,8 +274,12 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
 
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & tx : result.m_pack_txs) {
+        uint64_t delay = now - tx->get_push_pool_timestamp();
         xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
-            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp());
+            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), delay);
+        if (unit_para.m_is_leader) {
+            XMETRICS_FLOW_COUNT("txpool_tx_delay_from_push_to_pack_" + tx->get_tx_subtype_str(), delay);
+        }
     }
 
     return proposal_block;
@@ -409,6 +413,7 @@ bool xunit_maker_t::can_make_next_full_block() const {
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
     xassert(current_lightunit_count > 0);
     uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+#if 0    
     if (current_lightunit_count >= max_limit_lightunit_count) {
         if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {
             return true;
@@ -418,6 +423,12 @@ bool xunit_maker_t::can_make_next_full_block() const {
                 get_account().c_str(), get_latest_bstate()->get_block_height(), current_lightunit_count, get_latest_bstate()->get_unconfirm_sendtx_num());
         }
     }
+#else
+    if (current_lightunit_count >= max_limit_lightunit_count) {  // TODO(jimmy)
+        return true;
+    }    
+#endif
+
     return false;
 }
 

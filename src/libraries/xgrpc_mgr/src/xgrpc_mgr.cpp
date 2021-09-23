@@ -13,13 +13,22 @@ NS_BEG2(top, grpcmgr)
 using namespace top::data;
 using namespace top::rpc;
 
+#define grpc_event_queue_size_max (1024)
+
 xgrpc_event_monitor_t::xgrpc_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<base::xiothread_t> const & iothread, xgrpc_mgr_t * grpc_mgr)
-  : xbase_sync_event_monitor_t(mbus, 10000, iothread), m_grpc_mgr(grpc_mgr) {
+  : xbase_sync_event_monitor_t(mbus, grpc_event_queue_size_max, iothread), m_grpc_mgr(grpc_mgr) {
     mbus::xevent_queue_cb_t cb = std::bind(&xgrpc_event_monitor_t::push_event, this, std::placeholders::_1);
     m_reg_holder.add_listener((int)mbus::xevent_major_type_store, cb);
 }
 
+void xgrpc_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
+    XMETRICS_GAUGE(metrics::mailbox_grpc_total, discard ? 0 : 1);
+}
+
 bool xgrpc_event_monitor_t::filter_event(const mbus::xevent_ptr_t & e) {
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_grpc", queue_size);
     return true;
 }
 

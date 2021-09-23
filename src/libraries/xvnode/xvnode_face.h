@@ -26,6 +26,8 @@ public:
     virtual common::xnode_type_t type() const noexcept = 0;
     virtual common::xnode_address_t const & address() const noexcept = 0;
 
+    virtual common::xelection_round_t const & joined_election_round() const noexcept = 0;
+
     virtual void broadcast(common::xip2_t const & broadcast_dst, vnetwork::xmessage_t const & msg, std::error_code & ec) = 0;
     virtual void send_to(common::xip2_t const & unicast_dst, vnetwork::xmessage_t const & msg, std::error_code & ec) = 0;
 

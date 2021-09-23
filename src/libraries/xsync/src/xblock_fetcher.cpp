@@ -14,10 +14,12 @@ NS_BEG2(top, sync)
 
 using namespace mbus;
 
+#define block_fecher_event_queue_size_max (2048)
+
 xblock_fetcher_event_monitor_t::xblock_fetcher_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus, 
         observer_ptr<base::xiothread_t> const & iothread,
         xblock_fetcher_t* block_fetcher):
-xbase_sync_event_monitor_t(mbus, 10000, iothread),
+xbase_sync_event_monitor_t(mbus, block_fecher_event_queue_size_max, iothread),
 m_block_fetcher(block_fetcher) {
 
     mbus::xevent_queue_cb_t cb = std::bind(&xblock_fetcher_event_monitor_t::push_event, this, std::placeholders::_1);
@@ -27,8 +29,18 @@ m_block_fetcher(block_fetcher) {
     m_reg_holder.add_listener((int) mbus::xevent_major_type_blockfetcher, cb);
 }
 
+void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
+    if (e->get_type() == mbus::xevent_major_type_account) {
+        discard = false;
+    }
+    XMETRICS_GAUGE(metrics::mailbox_block_fetcher_total, discard ? 0 : 1);
+}
+
 bool xblock_fetcher_event_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     XMETRICS_COUNTER_INCREMENT("block_fetcher_event_count", 1);
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_block_fetcher", queue_size);
     return true;
 }
 

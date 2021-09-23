@@ -197,7 +197,7 @@ ready_accounts_t xpending_accounts_t::pop_ready_accounts(uint32_t count) {
     auto iter = m_accounts_set.begin();
     while (iter != m_accounts_set.end() && count > 0) {
         std::shared_ptr<xready_account_t> account = std::make_shared<xready_account_t>(iter->get()->get_addr());
-        for (auto tx_ent : iter->get()->get_txs()) {
+        for (auto & tx_ent : iter->get()->get_txs()) {
             account->put_tx(tx_ent->get_tx());
         }
         accounts.push_back(account);
@@ -225,7 +225,7 @@ ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t txs_max_num, c
         if (it_locked_nonce_map != locked_nonce_map.end()) {
             locked_nonce = it_locked_nonce_map->second;
         }
-        for (auto tx_ent : acccount_ent->get_txs()) {
+        for (auto & tx_ent : acccount_ent->get_txs()) {
             if (tx_ent->get_tx()->get_tx_nonce() > locked_nonce) {
                 account->put_tx(tx_ent->get_tx());
                 account_tx_num++;
@@ -253,7 +253,7 @@ ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t txs_max_num, c
     }
 
     // reorder
-    for (auto it_c : c_accounts) {
+    for (auto & it_c : c_accounts) {
         auto iter_s = m_accounts_set.insert(it_c);
         m_account_map[it_c->get_addr()] = iter_s;
     }

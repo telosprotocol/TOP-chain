@@ -24,7 +24,6 @@ NS_BEG2(top, metrics)
 enum E_SIMPLE_METRICS_TAG : size_t {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin+1,
-
     vhost_recv_msg,
     vhost_recv_callback,
     vnode_recv_msg,
@@ -263,6 +262,25 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_recv_tx_cur,
     txpool_confirm_tx_cur,
     txpool_unconfirm_tx_cur,
+    txpool_receipt_id_state_msg_send_num,
+    txpool_recv_tx_first_send_fail,
+    txpool_confirm_tx_first_send_fail,
+    txpool_drop_send_receipt_msg,
+    txpool_drop_receive_receipt_msg,
+    txpool_drop_push_receipt_msg,
+    txpool_drop_pull_recv_receipt_msg,
+    txpool_drop_pull_confirm_receipt_msg_v2,
+    txpool_drop_receipt_id_state_msg,
+    txpool_try_sync_table_block,
+    txpool_receipt_recv_num_by_1_clock,
+    txpool_receipt_recv_num_by_2_clock,
+    txpool_receipt_recv_num_by_3_clock,
+    txpool_receipt_recv_num_by_4_clock,
+    txpool_receipt_recv_num_by_5_clock,
+    txpool_receipt_recv_num_by_6_clock,
+    txpool_receipt_recv_num_7to12_clock,
+    txpool_receipt_recv_num_13to30_clock,
+    txpool_receipt_recv_num_exceed_30_clock,
 
     // blockstore
     blockstore_index_load,
@@ -308,11 +326,14 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool,
     blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
-    blockstore_access_from_txpool_create_confirm_receipt,
-    blockstore_access_from_txpool_sync_status,
-    blockstore_access_from_txpool_recover,
+    // blockstore_access_from_txpool_create_confirm_receipt,
+    // blockstore_access_from_txpool_sync_status,
+    blockstore_access_from_txpool_id_state,
+    // blockstore_access_from_txpool_recover,
     blockstore_access_from_txpool_refresh_table,
-    blockstore_access_from_txpool_end = blockstore_access_from_txpool_refresh_table,
+    blockstore_access_from_txpool_create_receipt,
+    blockstore_access_from_txpool_pull_lacking_receipts,
+    blockstore_access_from_txpool_end = blockstore_access_from_txpool_pull_lacking_receipts,
 
     // blockstore access statestore
     blockstore_access_from_statestore,
@@ -461,6 +482,17 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // rpc
     rpc_edge_tx_request,
     rpc_edge_query_request,
+
+    // mailbox
+    mailbox_grpc_total,
+    mailbox_block_fetcher_total,
+    mailbox_downloader_total,
+    mailbox_xsync_total,
+    mailbox_rpc_auditor_total,
+    mailbox_rpc_validator_total,
+    mailbox_txpool_fast_total,
+    mailbox_txpool_slow_total,
+    mailbox_us_total,
 
     e_simple_total,
 };

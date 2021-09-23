@@ -17,6 +17,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xmemcheck_dbg.h"
+#include "xdata/xmem_trace.h"
 #include "xconfig/xconfig_register.h"
 #include "xloader/xconfig_offchain_loader.h"
 #include "xloader/xconfig_genesis_loader.h"
@@ -90,9 +91,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     setup_options();
 
     //using top::elect::xbeacon_xelect_imp;
-    auto hash_plugin = new xtop_hash_t();
 
     XMETRICS_INIT();
+    MEMTRACE_INIT();
+    auto hash_plugin = new xtop_hash_t();
+
     g_topchain_init_finish_flag = false;
 
     auto& config_center = top::config::xconfig_register_t::get_instance();
@@ -179,8 +182,27 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     xinfo("#####################################################################");
 
     // make block here
+    // uint32_t count = 0;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5*60));
+//         count++;
+
+// #if defined XENABLE_MEMTRACE_DBG
+//         if (count > 12) {
+//             count = 0;
+//             std::map<int,int64_t> type_mem_info;
+//             top::base::xcontext_t::instance().get_object_mem_info(type_mem_info);
+//             for (auto & v : type_mem_info) {
+//                 XMETRICS_COUNTER_SET("xbasemem_size_type_" + std::to_string(v.first), v.second);
+//             }
+//         }
+// #endif
+//         const int64_t total_obj_mem = top::base::xcontext_t::instance().get_total_object_mem_size();
+//         const int64_t total_cache_mem = top::base::xcontext_t::instance().get_total_bytes_mem_size();
+
+//         XMETRICS_COUNTER_SET("xbasemem_size_total_cache", total_cache_mem);
+//         XMETRICS_COUNTER_SET("xbasemem_size_total_objects", total_obj_mem);
+//         xinfo("holding cache mem=%lld vs total_obj_mem=%lld \n",total_cache_mem,total_obj_mem);
     }
     // todo adapter to vnode type
 
@@ -317,7 +339,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     using namespace rpc;
     //using top::elect::xbeacon_xelect_imp;
 
-    auto hash_plugin = new xtop_hash_t();
+    
     std::string chain_db_path;
     std::string log_path;
     std::string bwlist_path;
@@ -344,7 +366,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 
 
     XMETRICS_INIT();
-
+    MEMTRACE_INIT();
+    auto hash_plugin = new xtop_hash_t();
 
     std::cout << "xnode config initializing..."  << std::endl;
     xinfo("xnode config initializing...") ;
@@ -483,8 +506,27 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("================================================");
 
     // make block here
+    // uint32_t count = 0;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5*60));
+//         count++;
+
+// #if defined XENABLE_MEMTRACE_DBG
+//         if (count > 6) {
+//             count = 0;
+//             std::map<int,int64_t> type_mem_info;
+//             top::base::xcontext_t::instance().get_object_mem_info(type_mem_info);
+//             for (auto & v : type_mem_info) {
+//                 XMETRICS_COUNTER_SET("xbasemem_size_type_" + std::to_string(v.first), v.second);
+//             }
+//         }
+// #endif
+//         const int64_t total_obj_mem = top::base::xcontext_t::instance().get_total_object_mem_size();
+//         const int64_t total_cache_mem = top::base::xcontext_t::instance().get_total_bytes_mem_size();
+
+//         XMETRICS_COUNTER_SET("xbasemem_size_total_cache", total_cache_mem);
+//         XMETRICS_COUNTER_SET("xbasemem_size_total_objects", total_obj_mem);
+//         xinfo("holding cache mem=%lld vs total_obj_mem=%lld \n",total_cache_mem,total_obj_mem);
     }
 
     config_center.clear_loaders();

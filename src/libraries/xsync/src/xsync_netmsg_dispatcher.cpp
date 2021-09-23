@@ -104,6 +104,9 @@ void xsync_netmsg_dispatcher_t::dispatch(
 
     uint32_t idx = xtime_utl::get_fast_randomu()%m_thread_count;
 
+    int64_t in, out;
+    int32_t queue_size = m_thread_pool[idx]->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_sync_netmsg_" + std::to_string(idx), queue_size);
     // TODO use semaphore & task queue
     auto ret = m_thread_pool[idx]->send_call(tmp_func);
 

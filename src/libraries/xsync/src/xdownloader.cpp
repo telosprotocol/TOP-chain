@@ -77,10 +77,11 @@ bool xaccount_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer
 }
 
 ////////
+#define downloader_event_queue_size_max (1024)
 
 xevent_monitor_t::xevent_monitor_t(uint32_t idx, observer_ptr<mbus::xmessage_bus_face_t> const &mb, observer_ptr<base::xiothread_t> const & iothread,
     xaccount_timer_t *timer, xdownloader_t* downloader):
-xbase_sync_event_monitor_t(mb, 10000, iothread),
+xbase_sync_event_monitor_t(mb, downloader_event_queue_size_max, iothread),
 m_idx(idx),
 m_timer(timer),
 m_downloader(downloader) {
@@ -91,9 +92,19 @@ m_downloader(downloader) {
     m_reg_holder.add_listener((int) mbus::xevent_major_type_store, cb);
 }
 
+void xevent_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
+    if (e->get_type() == mbus::xevent_major_type_account) {
+        discard = false;
+    }
+    XMETRICS_GAUGE(metrics::mailbox_downloader_total, discard ? 0 : 1);
+}
+
 bool xevent_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     // TODO filter
     XMETRICS_COUNTER_INCREMENT("sync_downloader_event_count", 1);
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_COUNTER_SET("mailbox_downloader", queue_size);
     return true;
 }
 

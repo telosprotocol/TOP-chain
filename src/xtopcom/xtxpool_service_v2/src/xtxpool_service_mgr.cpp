@@ -23,7 +23,8 @@
 
 NS_BEG2(top, xtxpool_service_v2)
 
-#define max_mailbox_num (8192)
+#define fast_thread_mailbox_size_max (2048)
+#define slow_thread_mailbox_size_max (1024)
 
 #define print_txpool_statistic_values_freq (300)  // print txpool statistic values every 5 minites
 
@@ -52,7 +53,8 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return;
     }
 
-    if (m_dispatcher->is_mailbox_over_limit()) {
+    // use slow thread to deal with block event
+    if (m_timer->is_mailbox_over_limit()) {
         xwarn("xtxpool_service_mgr::on_block_to_db_event txpool mailbox limit,drop block=%s,height:%llu", block_event->blk_hash.c_str(), block_event->blk_height);
         return;
     }
@@ -194,11 +196,11 @@ void xtxpool_service_mgr::start() {
     xinfo("xtxpool_service_mgr::start");
     m_bus_listen_id = m_mbus->add_listener(top::mbus::xevent_major_type_store, std::bind(&xtxpool_service_mgr::on_block_to_db_event, this, std::placeholders::_1));
     m_timer = new xtxpool_service_timer_t(top::base::xcontext_t::instance(), m_iothread_timer->get_thread_id(), this);
-    m_timer->create_mailbox(256, max_mailbox_num, max_mailbox_num);
+    m_timer->create_mailbox(256, slow_thread_mailbox_size_max, slow_thread_mailbox_size_max);
     m_timer->start(0, 1000);
 
     m_dispatcher = new xtxpool_service_dispatcher_imp_t(top::base::xcontext_t::instance(), m_iothread_dispatcher->get_thread_id(), this);
-    m_dispatcher->create_mailbox(256, max_mailbox_num, max_mailbox_num);  // create dedicated mailbox for txpool
+    m_dispatcher->create_mailbox(256, fast_thread_mailbox_size_max, fast_thread_mailbox_size_max);  // create dedicated mailbox for txpool
 
     m_para->set_dispatchers(make_observer(m_dispatcher), make_observer(m_timer));
 }
@@ -224,9 +226,12 @@ void xtxpool_service_mgr::on_timer() {
             // only receipt sender need recover unconfirmed txs.
             if (service->is_send_receipt_role()) {
                 pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
-                receipts_recender_service_vec.push_back(service);
             } else {
                 pull_lacking_receipts_service_vec.push_back(service);
+            }
+
+            if (service->is_send_id_state_role()) {
+                receipts_recender_service_vec.push_back(service);
             }
 
             if (is_time_for_refresh_table) {
@@ -242,7 +247,7 @@ void xtxpool_service_mgr::on_timer() {
     }
 
     // because recover might be very time-consuming, recover should not in lock of "m_mutex", or else xtxpool_service_mgr::create may be blocked.
-    for (auto table_boundary : table_boundarys) {
+    for (auto & table_boundary : table_boundarys) {
         base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
         uint32_t fount_table_id = std::get<1>(table_boundary);
         uint32_t back_table_id = std::get<2>(table_boundary);
@@ -255,12 +260,14 @@ void xtxpool_service_mgr::on_timer() {
     }
 
     xcovered_tables_t covered_tables;
-    for (auto service : pull_lacking_receipts_service_vec) {
+    for (auto & service : pull_lacking_receipts_service_vec) {
         service->pull_lacking_receipts(now, covered_tables);
     }
 
-    for (auto service : receipts_recender_service_vec) {
-        service->resend_receipts(now);
+    for (auto & service : receipts_recender_service_vec) {
+        // todo: not resend receipts after a specified clock!!!
+        // service->resend_receipts(now);
+        service->send_receipt_id_state(now);
     }
 
     if ((now % print_txpool_statistic_values_freq) == 0) {
@@ -297,11 +304,14 @@ void xtxpool_service_dispatcher_imp_t::dispatch(base::xcall_t & call) {
 bool xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit() {
     int64_t in, out;
     int32_t queue_size = count_calls(in, out);
-    bool discard = queue_size >= max_mailbox_num;
+    XMETRICS_COUNTER_SET("mailbox_txpool_fast", queue_size);
+    bool discard = queue_size >= fast_thread_mailbox_size_max;
     if (discard) {
+        XMETRICS_GAUGE(metrics::mailbox_txpool_fast_total, 0);
         xwarn("xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
         return true;
     }
+    XMETRICS_GAUGE(metrics::mailbox_txpool_fast_total, 1);
     return false;
 }
 
@@ -312,11 +322,14 @@ void xtxpool_service_timer_t::dispatch(base::xcall_t & call) {
 bool xtxpool_service_timer_t::is_mailbox_over_limit() {
     int64_t in, out;
     int32_t queue_size = count_calls(in, out);
-    bool discard = queue_size >= max_mailbox_num;
+    XMETRICS_COUNTER_SET("mailbox_txpool_slow", queue_size);
+    bool discard = queue_size >= slow_thread_mailbox_size_max;
     if (discard) {
+        XMETRICS_GAUGE(metrics::mailbox_txpool_slow_total, 0);
         xwarn("xtxpool_service_timer_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
         return true;
     }
+    XMETRICS_GAUGE(metrics::mailbox_txpool_slow_total, 1);
     return false;
 }
 

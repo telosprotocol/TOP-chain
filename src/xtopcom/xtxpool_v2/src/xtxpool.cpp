@@ -16,11 +16,31 @@ namespace xtxpool_v2 {
 using data::xcons_transaction_ptr_t;
 
 xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_para(para) {
-    for (int32_t i = 0; i < enum_xtxpool_table_type_max; i++) {
-        for (int32_t j = 0; j < enum_vbucket_has_tables_count; j++) {
-            m_tables[i][j] = nullptr;
-        }
+    for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
+        base::xtable_index_t tableindex(base::enum_chain_zone_consensus_index, i);
+        m_all_table_sids.insert(tableindex.to_table_shortid());
+        m_tables[base::enum_chain_zone_consensus_index].push_back(nullptr);
     }
+    for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
+        base::xtable_index_t tableindex(base::enum_chain_zone_beacon_index, i);
+        m_all_table_sids.insert(tableindex.to_table_shortid());
+        m_tables[base::enum_chain_zone_beacon_index].push_back(nullptr);
+    }
+    for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
+        base::xtable_index_t tableindex(base::enum_chain_zone_zec_index, i);
+        m_all_table_sids.insert(tableindex.to_table_shortid());
+        m_tables[base::enum_chain_zone_zec_index].push_back(nullptr);
+    }
+}
+
+bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
+    if ((zone >= xtxpool_zone_type_max) || (zone == base::enum_chain_zone_consensus_index && subaddr >= enum_vbucket_has_tables_count) ||
+        (zone == base::enum_chain_zone_beacon_index && subaddr >= MAIN_CHAIN_REC_TABLE_USED_NUM) ||
+        (zone == base::enum_chain_zone_zec_index && subaddr >= MAIN_CHAIN_ZEC_TABLE_USED_NUM)) {
+        xwarn("table_zone_subaddr_check zone:%d or subaddr:%d invalidate", zone, subaddr);
+        return false;
+    }
+    return true;
 }
 
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
@@ -47,23 +67,68 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_s
 
 void xtxpool_t::print_statistic_values() const {
     m_statistic.print();
+
+    uint32_t sender_cache_size = 0;
+    uint32_t receiver_cache_size = 0;
+    uint32_t height_record_size = 0;
+    uint32_t table_sender_cache_size = 0;
+    uint32_t table_receiver_cache_size = 0;
+    uint32_t table_height_record_size = 0;
+
+    for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
+        auto table = m_tables[base::enum_chain_zone_consensus_index][i];
+        if (table != nullptr) {
+            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            xinfo(
+                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            sender_cache_size += table_sender_cache_size;
+            receiver_cache_size += table_receiver_cache_size;
+            height_record_size += table_height_record_size;
+        }
+    }
+    for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
+        auto table = m_tables[base::enum_chain_zone_beacon_index][i];
+        if (table != nullptr) {
+            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            xinfo(
+                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            sender_cache_size += table_sender_cache_size;
+            receiver_cache_size += table_receiver_cache_size;
+            height_record_size += table_height_record_size;
+        }
+    }
+    for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
+        auto table = m_tables[base::enum_chain_zone_zec_index][i];
+        if (table != nullptr) {
+            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            xinfo(
+                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            sender_cache_size += table_sender_cache_size;
+            receiver_cache_size += table_receiver_cache_size;
+            height_record_size += table_height_record_size;
+        }
+    }
+
+    XMETRICS_COUNTER_SET("txpool_sender_unconfirm_cache", sender_cache_size);
+    XMETRICS_COUNTER_SET("txpool_receiver_unconfirm_cache", receiver_cache_size);
+    XMETRICS_COUNTER_SET("txpool_height_record_cache", height_record_size);
 }
 
-bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(to_addr);
-    if (table == nullptr) {
-        return false;
-    }
-    return table->is_consensused_recv_receiptid(from_addr, receipt_id);
-}
+// bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
+//     auto table = get_txpool_table_by_addr(to_addr);
+//     if (table == nullptr) {
+//         return false;
+//     }
+//     return table->is_consensused_recv_receiptid(from_addr, receipt_id);
+// }
 
-bool xtxpool_t::is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(from_addr);
-    if (table == nullptr) {
-        return false;
-    }
-    return table->is_consensused_confirm_receiptid(to_addr, receipt_id);
-}
+// bool xtxpool_t::is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
+//     auto table = get_txpool_table_by_addr(from_addr);
+//     if (table == nullptr) {
+//         return false;
+//     }
+//     return table->is_consensused_confirm_receiptid(to_addr, receipt_id);
+// }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
     auto table = get_txpool_table_by_addr(txinfo.get_addr());
@@ -112,9 +177,14 @@ void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t l
 
 void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
     xtxpool_info("xtxpool_t::subscribe_tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
-    xassert(zone < enum_xtxpool_table_type_max);
-    xassert(front_table_id <= back_table_id);
-    xassert(back_table_id < enum_vbucket_has_tables_count);
+    if (front_table_id > back_table_id) {
+        xerror("xtxpool_t::subscribe_tables table id invalidate front_table_id:%d back_table_id%d", front_table_id, back_table_id);
+        return;
+    }
+    if (!table_zone_subaddr_check(zone, back_table_id)) {
+        return;
+    }
+
     std::shared_ptr<xtxpool_shard_info_t> shard = nullptr;
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     for (uint32_t i = 0; i < m_shards[zone].size(); i++) {
@@ -132,20 +202,30 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
         std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, i);
         if (m_tables[zone][i] == nullptr) {
-            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic);
+            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic, &m_all_table_sids);
             add_table_num++;
         } else {
             m_tables[zone][i]->add_shard(shard.get());
         }
     }
-    m_statistic.inc_table_num(add_table_num);
+    if (add_table_num > 0) {
+        m_statistic.inc_table_num(add_table_num);
+        {
+            std::lock_guard<std::mutex> lck(m_peer_table_height_cache_mutex);
+            m_peer_table_height_cache.clear();
+        }
+    }
 }
 
 void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
     xtxpool_info("xtxpool_t::unsubscribe_tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
-    xassert(zone < enum_xtxpool_table_type_max);
-    xassert(front_table_id <= back_table_id);
-    xassert(back_table_id < enum_vbucket_has_tables_count);
+    if (front_table_id > back_table_id) {
+        xerror("xtxpool_t::unsubscribe_tables table id invalidate front_table_id:%d back_table_id%d", front_table_id, back_table_id);
+        return;
+    }
+    if (!table_zone_subaddr_check(zone, back_table_id)) {
+        return;
+    }
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     uint32_t remove_table_num = 0;
     for (auto it = m_shards[zone].begin(); it != m_shards[zone].end(); it++) {
@@ -187,28 +267,21 @@ int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xco
 }
 
 const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) {
-    if (!is_table_subscribed(zone, subaddr)) {
-        return {};
-    }
-    auto table = m_tables[zone][subaddr];
+    auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_resend_txs(now);
+        return table->get_resend_txs(now);
     }
     return {};
 }
 
 void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) {
-    if (!is_table_subscribed(zone, subaddr)) {
-        return;
-    }
-    auto table = m_tables[zone][subaddr];
+    auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {
-        m_tables[zone][subaddr]->refresh_table(refresh_unconfirm_txs);
+        table->refresh_table(refresh_unconfirm_txs);
     }
 }
 
 // void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
-//     xassert(is_table_subscribed(zone, subaddr));
 //     xassert(m_tables[zone][subaddr] != nullptr);
 //     if (m_tables[zone][subaddr] != nullptr) {
 //         m_tables[zone][subaddr]->update_non_ready_accounts();
@@ -222,87 +295,65 @@ void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) 
     if (table == nullptr) {
         return;
     }
+    m_para->get_receiptid_state_cache().update_table_receiptid_state(table_state->get_receiptid_state());
     table->update_table_state(table_state);
 }
 
-xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(from_table_addr);
-    if (table == nullptr) {
-        return nullptr;
-    }
-    return table->get_unconfirmed_tx(to_table_addr, receipt_id);
-}
+// xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
+//     auto table = get_txpool_table_by_addr(from_table_addr);
+//     if (table == nullptr) {
+//         return nullptr;
+//     }
+//     return table->get_unconfirmed_tx(to_table_addr, receipt_id);
+// }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-    if (!is_table_subscribed(zone, subaddr)) {
-        return {};
-    }
-    auto table = m_tables[zone][subaddr];
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {
+    auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(max_num);
+        return table->get_lacking_recv_tx_ids(total_num);
     }
     return {};
 }
 
-const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-    if (!is_table_subscribed(zone, subaddr)) {
-        return {};
-    }
-    auto table = m_tables[zone][subaddr];
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {
+    auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
+        return table->get_lacking_confirm_tx_ids(total_num);
     }
     return {};
 }
+
+// const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+//     auto table = get_txpool_table(zone, subaddr);
+//     if (table != nullptr) {
+//         return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
+//     }
+//     return {};
+// }
 
 bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
-    if (!is_table_subscribed(zone, subaddr)) {
-        return false;
-    }
-    auto table = m_tables[zone][subaddr];
+    auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->need_sync_lacking_receipts();
-    }
-    return false;
-}
-
-bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {
-    xassert(table_id < enum_vbucket_has_tables_count);
-    std::lock_guard<std::mutex> lck(m_mutex[zone]);
-    for (uint32_t i = 0; i < m_shards[zone].size(); i++) {
-        if (m_shards[zone][i]->is_id_contained(zone, table_id)) {
-            return true;
-        }
+        return table->need_sync_lacking_receipts();
     }
     return false;
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::string & address) const {
     auto xid = base::xvaccount_t::get_xid_from_account(address);
-    uint8_t zone = get_vledger_zone_index(xid);
-    uint16_t subaddr = get_vledger_subaddr(xid);
-    xassert(zone < enum_xtxpool_table_type_max);
-    xassert(subaddr < enum_vbucket_has_tables_count);
-    if (is_table_subscribed(zone, subaddr)) {
-        xassert(m_tables[zone][subaddr] != nullptr);
-        return m_tables[zone][subaddr];
-    }
-    xtxpool_warn("xtxpool_t::get_txpool_table_by_addr account:%s,table not found:zone:%d,subaddr:%d", address.c_str(), zone, subaddr);
-    return nullptr;
+    return get_txpool_table(get_vledger_zone_index(xid), get_vledger_subaddr(xid));
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const {
     base::xtable_index_t tableindex = tx->get_tx()->get_self_table_index();
-    uint8_t zone = tableindex.get_zone_index();
-    uint8_t subaddr = tableindex.get_subaddr();
-    xassert(zone < enum_xtxpool_table_type_max);
-    xassert(subaddr <= (enum_vbucket_has_tables_count -1));
-    if (is_table_subscribed(zone, subaddr)) {
-        xassert(m_tables[zone][subaddr] != nullptr);
-        return m_tables[zone][subaddr];
+    return get_txpool_table(tableindex.get_zone_index(), tableindex.get_subaddr());
+}
+
+std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table(uint8_t zone, uint16_t subaddr) const {
+    if (!table_zone_subaddr_check(zone, subaddr)) {
+        return nullptr;
     }
-    xtxpool_warn("xtxpool_t::get_txpool_table_by_addr table not found:zone:%d,subaddr:%d", zone, subaddr);
-    return nullptr;
+    return m_tables[zone][subaddr];
 }
 
 xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
@@ -338,6 +389,34 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     }
     m_txs.push_back(tx);
     return true;
+}
+
+void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+    m_para->get_receiptid_state_cache().update_table_receiptid_state(receiptid_state);
+}
+
+void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,
+                              base::xtable_shortid_t to_table_sid,
+                              std::vector<uint64_t> receiptids,
+                              std::vector<xcons_transaction_ptr_t> & receipts) {
+    base::xtable_index_t table_idx(from_table_sid);
+    auto table = get_txpool_table(table_idx.get_zone_index(), table_idx.get_subaddr());
+    if (table == nullptr) {
+        return;
+    }
+    table->build_recv_tx(to_table_sid, receiptids, receipts);
+}
+
+void xtxpool_t::build_confirm_tx(base::xtable_shortid_t from_table_sid,
+                                 base::xtable_shortid_t to_table_sid,
+                                 std::vector<uint64_t> receiptids,
+                                 std::vector<xcons_transaction_ptr_t> & receipts) {
+    base::xtable_index_t table_idx(to_table_sid);
+    auto table = get_txpool_table(table_idx.get_zone_index(), table_idx.get_subaddr());
+    if (table == nullptr) {
+        return;
+    }
+    table->build_confirm_tx(from_table_sid, receiptids, receipts);
 }
 
 }  // namespace xtxpool_v2

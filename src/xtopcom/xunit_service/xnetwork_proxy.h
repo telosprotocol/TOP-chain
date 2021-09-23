@@ -39,22 +39,18 @@ public:
     // erase networkdriver, call before vnode destroy
     virtual bool erase(const xvip2_t &addr);
 
-    void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) override;
-
+    bool send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) override;
 
 protected:
     // network message callback
     void on_message(top::vnetwork::xvnode_address_t const &sender,
                     top::vnetwork::xvnode_address_t const &receiver,
                     top::vnetwork::xmessage_t const &      message);
-
     bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xstream_t &stream, const std::string & account);
     void send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
                           const data::xcons_transaction_ptr_t & receipt,
                           std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts);
 
-    // private:
-    //     virtual vnetwork::xvnetwork_driver_face_t* find_network(const xvip2_t& xip);
 protected:
     std::map<xvip2_t, std::shared_ptr<vnetwork::xvnetwork_driver_face_t>, xvip2_compare>      m_networks;
     std::map<xvip2_t, std::map<common::xmessage_category_t, xpdu_reactor_ptr>, xvip2_compare> m_reactors;

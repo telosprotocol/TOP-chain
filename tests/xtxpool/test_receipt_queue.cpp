@@ -6,6 +6,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
 #include "xtxpool_v2/xtx_receipt_queue.h"
+#include "xtxpool_v2/xtxpool_para.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xverifier/xverifier_utl.h"
 
@@ -38,11 +39,13 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
     uint256_t last_tx_hash = {};
     xtx_para_t para;
 
-    xreceipt_queue_new_t receipt_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xreceipt_queue_new_t receipt_queue(&table_para, &resource);
 
     uint32_t tx_num = 5;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
@@ -70,7 +73,8 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     xreceiptid_pair_t receiptid_pair(1, 0, 1);
     receiptid_state->add_pair(1, receiptid_pair);
-    receipt_queue.update_receiptid_state(receiptid_state);
+    tx_info_t txinfo(sender, send_txs[0]->get_tx_hash_256(), enum_transaction_subtype_recv);
+    receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, 1, 1);
 
     auto receipts2 = receipt_queue.get_txs(10, 10, receiptid_state, confirm_txs_num);
 
@@ -79,8 +83,8 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     auto find_receipt0 = receipt_queue.find(receiver, recv_txs[0]->get_transaction()->digest());
     ASSERT_EQ(find_receipt0, nullptr);
 
-    tx_info_t txinfo(recv_txs[1]);
-    auto pop_receipt = receipt_queue.pop_tx(txinfo);
+    tx_info_t txinfo1(recv_txs[1]);
+    auto pop_receipt = receipt_queue.pop_tx(txinfo1);
     ASSERT_NE(pop_receipt, nullptr);
 
     auto find_receipt = receipt_queue.find(receiver, recv_txs[1]->get_transaction()->digest());

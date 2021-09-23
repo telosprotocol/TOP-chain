@@ -49,6 +49,7 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
                      delay);
+        XMETRICS_FLOW_COUNT("txpool_tx_delay_from_push_to_confirm_" + tx_ent->get_tx()->get_tx_subtype_str(), delay);
         m_ready_tx_queue.erase(it_ready->second);
         m_ready_tx_map.erase(it_ready);
         m_xtable_info->send_tx_dec(1);
@@ -66,6 +67,7 @@ void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash) {
                      m_xtable_info->get_table_addr().c_str(),
                      (*it_non_ready->second)->get_tx()->dump(true).c_str(),
                      delay);
+        XMETRICS_FLOW_COUNT("txpool_tx_delay_from_push_to_confirm_" + tx_ent->get_tx()->get_tx_subtype_str(), delay);
         m_non_ready_tx_queue.erase(it_non_ready->second);
         m_non_ready_tx_map.erase(it_non_ready);
         m_xtable_info->send_tx_dec(1);
@@ -89,7 +91,7 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_internal_t::find(const uint256_t
 const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_internal_t::get_expired_txs() const {
     std::vector<std::shared_ptr<xtx_entry>> expired_txs;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (auto tx : m_non_ready_tx_queue) {
+    for (auto & tx : m_non_ready_tx_queue) {
         auto ret = xverifier::xtx_verifier::verify_tx_duration_expiration(tx->get_tx()->get_transaction(), now);
         if (ret == 0) {
             break;
@@ -425,7 +427,7 @@ bool xsend_tx_queue_t::is_account_need_update(const std::string & account_addr) 
 
 void xsend_tx_queue_t::clear_expired_txs() {
     auto expired_txs = m_send_tx_queue_internal.get_expired_txs();
-    for (auto tx : expired_txs) {
+    for (auto & tx : expired_txs) {
         tx_info_t txinfo(tx->get_tx());
         pop_tx(txinfo, false);
     }

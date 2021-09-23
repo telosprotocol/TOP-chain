@@ -13,6 +13,7 @@
 #include "xconsevent.h"
 #include "xconspdu.h"
 
+#define max_xbft_mailbox_num (1024)
 
 namespace top
 {

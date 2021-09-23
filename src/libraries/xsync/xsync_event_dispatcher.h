@@ -14,6 +14,8 @@
 
 NS_BEG2(top, sync)
 
+#define xsync_dispatcher_event_queue_size_max (1024)
+
 class xsync_event_dispatcher_t : public mbus::xbase_sync_event_monitor_t {
 public:
     xsync_event_dispatcher_t(
@@ -21,7 +23,7 @@ public:
             std::string vnode_id,
             observer_ptr<mbus::xmessage_bus_face_t> const &mb,
             xsync_handler_t *sync_handler,
-            int32_t max_thread_calls = 10000);
+            int32_t max_thread_calls = xsync_dispatcher_event_queue_size_max);
 
 protected:
     virtual ~xsync_event_dispatcher_t();

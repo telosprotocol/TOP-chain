@@ -46,7 +46,7 @@ public:
     virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;
     virtual bool erase(const xvip2_t & addr) = 0;
-    virtual void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) = 0;
+    virtual bool send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) = 0;
 };
 
 //compare function for table index data map
@@ -194,7 +194,7 @@ public:
 };
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
-const int32_t max_mailbox_num = 8192;
+const int32_t max_mailbox_num = 1024;
 // block dispatcher
 class xcons_dispatcher {
 public:
@@ -220,11 +220,14 @@ protected:
         // TODO(jimmy) for debug
         int64_t in, out;
         int32_t queue_size = picker->count_calls(in, out);
+        XMETRICS_COUNTER_SET("mailbox_us_" + std::to_string(picker->get_thread_id()), queue_size);
         bool discard = queue_size >= max_mailbox_num;
         if (discard) {
+            XMETRICS_GAUGE(metrics::mailbox_us_total, 0);
             xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
             return -1;
         } else {
+            XMETRICS_GAUGE(metrics::mailbox_us_total, 1);
             xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
         }
 

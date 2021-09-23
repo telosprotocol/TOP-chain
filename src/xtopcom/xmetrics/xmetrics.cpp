@@ -240,6 +240,25 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_recv_tx_cur);
         RETURN_METRICS_NAME(txpool_confirm_tx_cur);
         RETURN_METRICS_NAME(txpool_unconfirm_tx_cur);
+        RETURN_METRICS_NAME(txpool_receipt_id_state_msg_send_num);
+        RETURN_METRICS_NAME(txpool_recv_tx_first_send_fail);
+        RETURN_METRICS_NAME(txpool_confirm_tx_first_send_fail);
+        RETURN_METRICS_NAME(txpool_drop_send_receipt_msg);
+        RETURN_METRICS_NAME(txpool_drop_receive_receipt_msg);
+        RETURN_METRICS_NAME(txpool_drop_push_receipt_msg);
+        RETURN_METRICS_NAME(txpool_drop_pull_recv_receipt_msg);
+        RETURN_METRICS_NAME(txpool_drop_pull_confirm_receipt_msg_v2);
+        RETURN_METRICS_NAME(txpool_drop_receipt_id_state_msg);
+        RETURN_METRICS_NAME(txpool_try_sync_table_block);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_1_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_2_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_3_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_4_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_5_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_by_6_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_7to12_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_13to30_clock);
+        RETURN_METRICS_NAME(txpool_receipt_recv_num_exceed_30_clock);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
@@ -280,10 +299,13 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         // txpool access
         RETURN_METRICS_NAME(blockstore_access_from_txpool);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_on_block_event);
-        RETURN_METRICS_NAME(blockstore_access_from_txpool_create_confirm_receipt);
-        RETURN_METRICS_NAME(blockstore_access_from_txpool_sync_status);
-        RETURN_METRICS_NAME(blockstore_access_from_txpool_recover);
+        // RETURN_METRICS_NAME(blockstore_access_from_txpool_create_confirm_receipt);
+        // RETURN_METRICS_NAME(blockstore_access_from_txpool_sync_status);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_id_state);
+        // RETURN_METRICS_NAME(blockstore_access_from_txpool_recover);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_create_receipt);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_pull_lacking_receipts);
 
         // blockstore access statestore
         RETURN_METRICS_NAME(blockstore_access_from_statestore);
@@ -413,7 +435,17 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_sync);
     
         RETURN_METRICS_NAME(rpc_edge_tx_request);
-        RETURN_METRICS_NAME(rpc_edge_query_request);        
+        RETURN_METRICS_NAME(rpc_edge_query_request);
+
+        RETURN_METRICS_NAME(mailbox_grpc_total);
+        RETURN_METRICS_NAME(mailbox_block_fetcher_total);
+        RETURN_METRICS_NAME(mailbox_downloader_total);
+        RETURN_METRICS_NAME(mailbox_xsync_total);
+        RETURN_METRICS_NAME(mailbox_rpc_auditor_total);
+        RETURN_METRICS_NAME(mailbox_rpc_validator_total);
+        RETURN_METRICS_NAME(mailbox_txpool_fast_total);
+        RETURN_METRICS_NAME(mailbox_txpool_slow_total);
+        RETURN_METRICS_NAME(mailbox_us_total);
 
         default: assert(false); return nullptr;
     }

@@ -34,4 +34,8 @@ mbus::xmessage_bus_face_t * xtxpool_resources::get_bus() const {
     return m_bus.get();
 }
 
+xreceiptid_state_cache_t & xtxpool_resources::get_receiptid_state_cache() {
+    return m_receiptid_state_cache;
+}
+
 NS_END2
