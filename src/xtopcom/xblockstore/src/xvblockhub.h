@@ -81,65 +81,16 @@ namespace top
             base::xvbindex_t*       _target_index;
         };
 
-        class xacctmeta_t : public base::xdataobj_t
-        {
-        public:
-            enum {enum_obj_type = base::xdataunit_t::enum_xdata_type_vaccountmeta};
-            xacctmeta_t();
-        protected:
-            virtual ~xacctmeta_t();
-        private:
-            xacctmeta_t(const xacctmeta_t &);
-            xacctmeta_t & operator = (const xacctmeta_t &);
-        public:
-            virtual int32_t   serialize_to_string(std::string & bin_data) override;
-            virtual int32_t   serialize_from_string(const std::string & bin_data) override;
-
-            virtual std::string  dump() const override;
-        private:
-            //not safe for multiple threads
-            virtual int32_t      do_write(base::xstream_t & stream) override; //serialize whole object to binary
-            virtual int32_t      do_read(base::xstream_t & stream) override; //serialize from binary and regeneate content
-
-            //caller respond to cast (void*) to related  interface ptr
-            virtual void*        query_interface(const int32_t _enum_xobject_type_) override;
-        public:
-            static xacctmeta_t* load(const std::string & meta_serialized_data);
-        public:
-            uint64_t  _highest_cert_block_height;    //latest certificated block but not changed to lock/commit status
-            uint64_t  _highest_lock_block_height;    //latest locked block that not allow fork
-            uint64_t  _highest_commit_block_height;  //latest commited block to allow change state of account,like balance.
-            uint64_t  _highest_execute_block_height; //latest executed block that has executed and change state of account
-            uint64_t  _highest_full_block_height;    //latest full-block height for this account
-            uint64_t  _highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
-            std::string _highest_connect_block_hash;
-            std::string _highest_execute_block_hash;
-            //reserved _lowest_genesis_connect_height to trune block
-            uint64_t  _lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
-            uint64_t  _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
-            std::string _highest_genesis_connect_hash;
-            uint64_t _highest_sync_height;           // higest continous block started from highest full table block
-
-            uint16_t  _reserved_u16;      //reserved for future
-            uint8_t   _block_level;       //set per block 'enum_xvblock_level,each account has unique level
-        private:
-            uint8_t   _meta_spec_version; //add version control for compatible case
-        };
-
         //each account has own virtual store
-        class xblockacct_t : public base::xobject_t,public base::xvaccount_t
+        class xblockacct_t : public base::xvactplugin_t,public base::xvaccount_t
         {
         protected:
             enum{enum_max_cached_blocks = 32};
         public:
-            static std::string  get_meta_path(base::xvaccount_t & _account);
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
-            uint64_t            get_latest_genesis_connected_block_height() const { return m_meta->_highest_genesis_connect_height; }
-            uint64_t            get_latest_executed_block_height() const { return m_meta->_highest_execute_block_height; }
-            bool                set_latest_executed_info(uint64_t height,const std::string & blockhash);
         public:
-            xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
+            xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:
             virtual ~xblockacct_t();
         private:
@@ -151,18 +102,16 @@ namespace top
         public://indicated the last block who is connected allway to genesis block
             virtual bool           init();
             virtual bool           close(bool force_async = true) override;
-            virtual bool           is_live(const uint64_t timenow_ms) override;//test whether has been idel status
             virtual std::string    dump() const override;  //just for debug purpose
             const int              get_max_cache_size() const;
             bool                   clean_caches(bool clean_all,bool force_release_unused_block); //clean unsed caches of account to recall memory
             bool                   save_meta();
+            bool                   update_meta();
             base::xvdbstore_t*     get_xdbstore();
+            
+            //inline const std::string&   get_address() const {return m_account_ptr->get_address();}
+            //inline const std::string&   get_account() const {return m_account_ptr->get_account();}
 
-            inline const uint64_t  get_idle_duration()    const {return m_idle_timeout_ms;}
-            inline const uint64_t  get_last_access_time() const {return m_last_access_time_ms;} //UTC ms
-            void                   set_last_access_time(const uint64_t last_access_time);
-            //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-            bool                   reset_cache_timeout(const uint32_t max_idle_time_ms);
             const int              get_cache_size();
             inline int             get_block_level() const {return m_meta->_block_level;}
             inline const std::string &   get_blockstore_path()   const {return m_blockstore_path;};
@@ -189,9 +138,8 @@ namespace top
             base::xvbindex_t*      load_latest_cert_index();        //highest height/view# for any status
             base::xvbindex_t*      load_latest_locked_index();      //block with locked status
             base::xvbindex_t*      load_latest_committed_index();   //block with committed status
-            base::xvbindex_t*      load_latest_executed_index();    //block with executed status
             base::xvbindex_t*      load_latest_connected_index();   //block has connected to the last full
-            base::xvbindex_t*      load_latest_genesis_connected_index(bool ask_full_search);  //block has connected to genesis;
+
             base::xvbindex_t*      load_latest_full_index();        //block has full state,genesis is a full block
             base::xvbindex_t*      load_latest_committed_full_index();  // full block with committed status
 
@@ -217,9 +165,6 @@ namespace top
             bool                   load_block_input(base::xvblock_t* target_block);
             bool                   load_block_output(base::xvblock_t* target_block);
             bool                   load_block_flags(base::xvblock_t* target_block);//update block'flags
-
-            void                   try_execute_all_block(base::xvblock_t * target_block);
-
         public:
             // genesis connected information
             bool        set_genesis_height(const std::string &height);
@@ -288,13 +233,10 @@ namespace top
             bool                delete_value_by_path(const std::string & full_path_as_key);
             bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
         private:
-            uint64_t        m_last_access_time_ms; //UTC ms
-            uint64_t        m_idle_timeout_ms;     //how long(ms) it will change to idle status
-            std::string     m_blockstore_path;
-            std::string     m_last_save_vmeta_bin;
+            std::string         m_blockstore_path;
         protected:
-            xacctmeta_t *   m_meta;
-            base::xvdbstore_t* m_xvdb_ptr;
+            base::xblockmeta_t * m_meta;
+            base::xvdbstore_t  * m_xvdb_ptr;
             std::deque<xblockevent_t> m_events_queue;  //stored event
             std::map<uint64_t,std::map<uint64_t,base::xvbindex_t*> > m_all_blocks;  // < height#, <view#,block*> > sort from lower to higher
         };
@@ -303,7 +245,7 @@ namespace top
         class xchainacct_t : public xblockacct_t
         {
         public:
-            xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
+            xchainacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:
             virtual ~xchainacct_t();
         private:
