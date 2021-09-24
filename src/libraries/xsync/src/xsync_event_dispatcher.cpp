@@ -132,11 +132,12 @@ void xsync_event_dispatcher_t::check_queue_info(int64_t wait_cost, int32_t queue
 }
 
 void xsync_event_dispatcher_t::process_event(const mbus::xevent_ptr_t& e) {
-
+    xinfo("xsync_event_dispatcher_t::process_event begin event:%d", e->get_type());
     XMETRICS_COUNTER_INCREMENT("sync_eventdispatcher_event_count", -1);
 
     XMETRICS_TIME_RECORD("sync_cost_event_process");
     m_sync_handler->on_event(e);
+    xinfo("xsync_event_dispatcher_t::process_event end event:%d", e->get_type());
 }
 
 NS_END2

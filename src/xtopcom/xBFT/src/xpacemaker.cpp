@@ -279,9 +279,9 @@ namespace top
                 std::function<void(void*)> _aysn_update_view = [this,new_view_id,clock_height_from_latest_clock](void*)->void{
                     fire_view(get_account(), new_view_id, clock_height_from_latest_clock, get_thread_id(), get_time_now());
                 };
-                int64_t in, out;
-                int32_t queue_size = count_calls(in, out);
-                XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
+                // int64_t in, out;
+                // int32_t queue_size = count_calls(in, out);
+                // XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
                 send_call(_aysn_update_view,(void*)NULL);
                 return true;
             }

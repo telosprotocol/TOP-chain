@@ -38,6 +38,7 @@ private:
 protected:
     std::string m_vnode_id;
     std::vector<observer_ptr<base::xiothread_t>> m_thread_pool;
+    std::vector<std::string> m_thd_metrics_name;
     uint32_t m_thread_count{0};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};

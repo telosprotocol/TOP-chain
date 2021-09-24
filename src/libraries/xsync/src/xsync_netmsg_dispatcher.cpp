@@ -54,6 +54,10 @@ m_vhost(vhost),
 m_sync_handler(sync_handler),
 m_min_compress_threshold(min_compress_threshold) {
     m_thread_count = thread_pool.size();
+    for (uint32_t i = 0; i < m_thread_count; i++) {
+        std::string metrics_name = "mailbox_sync_netmsg_" + std::to_string(thread_pool[i]->get_thread_id());
+        m_thd_metrics_name.push_back(metrics_name);
+    }
 }
 
 void xsync_netmsg_dispatcher_t::watch(vnetwork::xvnetwork_driver_face_t* driver) {
@@ -106,7 +110,7 @@ void xsync_netmsg_dispatcher_t::dispatch(
 
     int64_t in, out;
     int32_t queue_size = m_thread_pool[idx]->count_calls(in, out);
-    XMETRICS_COUNTER_SET("mailbox_sync_netmsg_" + std::to_string(idx), queue_size);
+    XMETRICS_COUNTER_SET(m_thd_metrics_name[idx], queue_size);
     // TODO use semaphore & task queue
     auto ret = m_thread_pool[idx]->send_call(tmp_func);
 

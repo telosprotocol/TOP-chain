@@ -180,9 +180,9 @@ bool xworkpool_dispatcher::subscribe(const std::vector<base::xtable_index_t> & t
             };
             base::xcall_t asyn_call(async_reset, packer_ptr.get());
             packer->send_call(asyn_call);
-            int64_t in, out;
-            int32_t queue_size = packer->count_calls(in, out);
-            XMETRICS_COUNTER_SET("mailbox_us_" + std::to_string(packer->get_thread_id()), queue_size);
+            // int64_t in, out;
+            // int32_t queue_size = packer->count_calls(in, out);
+            // XMETRICS_COUNTER_SET("mailbox_us_" + std::to_string(packer->get_thread_id()), queue_size);
         }
     }
     return true;

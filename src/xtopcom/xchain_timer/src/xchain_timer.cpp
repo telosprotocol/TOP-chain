@@ -128,9 +128,9 @@ void xchain_timer_t::update_time(common::xlogic_time_t new_time, xlogic_timer_up
 
     base::xcall_t c(func);
     m_timer_thread->send_call(c);
-    int64_t in, out;
-    int32_t queue_size = m_timer_thread->count_calls(in, out);
-    XMETRICS_COUNTER_SET("mailbox_chain_timer", queue_size);
+    // int64_t in, out;
+    // int32_t queue_size = m_timer_thread->count_calls(in, out);
+    // XMETRICS_COUNTER_SET("mailbox_chain_timer", queue_size);
 }
 
 void xchain_timer_t::do_check_logic_time() {

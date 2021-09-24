@@ -1060,9 +1060,9 @@ namespace top
                 fire_consensus_update_event_up(NULL,NULL,get_latest_cert_block());
             };
 
-            int64_t in, out;
-            int32_t queue_size = count_calls(in, out);
-            XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
+            // int64_t in, out;
+            // int32_t queue_size = count_calls(in, out);
+            // XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
             return send_call(_aysn_job,(void*)NULL);
         }
 
@@ -1079,9 +1079,9 @@ namespace top
 
                 _target_proposal_->release_ref(); //release it,paired with above reference
             };
-            int64_t in, out;
-            int32_t queue_size = count_calls(in, out);
-            XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
+            // int64_t in, out;
+            // int32_t queue_size = count_calls(in, out);
+            // XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
             return send_call(_aysn_job,(void*)proposal);//send_call may automatically hold this reference whiling executing,so here is safe to using "this"
         }
 
@@ -1096,9 +1096,9 @@ namespace top
                 fire_proposal_finish_event(err_code,err_detail,_target_proposal_,NULL,NULL,get_latest_cert_block(),NULL);
                 _target_proposal_->release_ref();
             };
-            int64_t in, out;
-            int32_t queue_size = count_calls(in, out);
-            XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
+            // int64_t in, out;
+            // int32_t queue_size = count_calls(in, out);
+            // XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
             return send_call(_aysn_job,(void*)proposal);//send_call may automatically hold this reference whiling executing,so here is safe to using "this"
         }
 

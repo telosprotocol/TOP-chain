@@ -20,7 +20,7 @@ using base::xcontext_t;
 using base::xstream_t;
 using common::xnode_type_t;
 
-#define max_shard_rpc_mailbox_num (1024)
+#define max_shard_rpc_mailbox_num (2048)
 
 // xshard_rpc_handler::xshard_rpc_handler(xvhost_face_t* shard_host)
 xshard_rpc_handler::xshard_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> shard_host,

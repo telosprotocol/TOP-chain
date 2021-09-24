@@ -14,7 +14,7 @@ NS_BEG2(top, sync)
 
 using namespace mbus;
 
-#define block_fecher_event_queue_size_max (2048)
+#define block_fecher_event_queue_size_max (6000)
 
 xblock_fetcher_event_monitor_t::xblock_fetcher_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus, 
         observer_ptr<base::xiothread_t> const & iothread,

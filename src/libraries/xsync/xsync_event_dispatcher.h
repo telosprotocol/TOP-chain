@@ -14,7 +14,7 @@
 
 NS_BEG2(top, sync)
 
-#define xsync_dispatcher_event_queue_size_max (1024)
+#define xsync_dispatcher_event_queue_size_max (6000)
 
 class xsync_event_dispatcher_t : public mbus::xbase_sync_event_monitor_t {
 public:

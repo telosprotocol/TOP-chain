@@ -318,9 +318,9 @@ namespace top
             base::xcall_t asyn_call(_internal_asyn_function2,&job_at_woker_thread,&callback_to_object_thread,(base::xobject_t*)this);
             if(0 == _workers_pool) //at current thread
             {
-                int64_t in, out;
-                int32_t queue_size = count_calls(in, out);
-                XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
+                // int64_t in, out;
+                // int32_t queue_size = count_calls(in, out);
+                // XMETRICS_COUNTER_SET("mailbox_xbft_" + std::to_string(get_thread_id()), queue_size);
                 if(send_call(asyn_call) == enum_xcode_successful)
                     return true;
             }

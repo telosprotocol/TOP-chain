@@ -23,7 +23,7 @@
 
 NS_BEG2(top, xtxpool_service_v2)
 
-#define fast_thread_mailbox_size_max (2048)
+#define fast_thread_mailbox_size_max (8192)
 #define slow_thread_mailbox_size_max (1024)
 
 #define print_txpool_statistic_values_freq (300)  // print txpool statistic values every 5 minites

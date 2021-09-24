@@ -220,7 +220,7 @@ protected:
         // TODO(jimmy) for debug
         int64_t in, out;
         int32_t queue_size = picker->count_calls(in, out);
-        XMETRICS_COUNTER_SET("mailbox_us_" + std::to_string(picker->get_thread_id()), queue_size);
+        // XMETRICS_COUNTER_SET("mailbox_us_" + std::to_string(picker->get_thread_id()), queue_size);
         bool discard = queue_size >= max_mailbox_num;
         if (discard) {
             XMETRICS_GAUGE(metrics::mailbox_us_total, 0);

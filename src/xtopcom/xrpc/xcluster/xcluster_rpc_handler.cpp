@@ -20,7 +20,7 @@ using base::xstream_t;
 using data::xtransaction_ptr_t;
 using data::xtransaction_t;
 
-#define max_cluster_rpc_mailbox_num (1024)
+#define max_cluster_rpc_mailbox_num (2048)
 
 xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> cluster_vhost,
                                            observer_ptr<xrouter_face_t> router_ptr,

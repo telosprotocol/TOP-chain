@@ -37,9 +37,9 @@ bool xtimer_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t
     };
     base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)m_picker);
     ((xconsensus::xcsaccount_t *)m_picker)->send_call(asyn_call);
-    int64_t in, out;
-    int32_t queue_size = m_picker->count_calls(in, out);
-    XMETRICS_COUNTER_SET("mailbox_us_timer", queue_size);
+    // int64_t in, out;
+    // int32_t queue_size = m_picker->count_calls(in, out);
+    // XMETRICS_COUNTER_SET("mailbox_us_timer", queue_size);
     return true;
 }
 
