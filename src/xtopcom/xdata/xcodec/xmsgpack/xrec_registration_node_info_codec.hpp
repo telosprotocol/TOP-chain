@@ -6,7 +6,7 @@
 
 #include "xbasic/xcodec/xmsgpack/xcrypto_key_codec.hpp"
 #include "xcommon/xcodec/xmsgpack/xnode_id_codec.hpp"
-#include "xcommon/xcodec/xmsgpack/xrole_type_codec.hpp"
+#include "xcommon/xcodec/xmsgpack/xregistration_type_codec.hpp"
 #include "xdata/xregistration/xregistration_node_info.h"
 
 NS_BEG1(msgpack)

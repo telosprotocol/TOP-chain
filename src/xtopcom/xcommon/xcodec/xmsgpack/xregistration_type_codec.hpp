@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "xcommon/xrole_type.h"
+#include "xcommon/xregistration_type.h"
 
 #include <msgpack.hpp>
 
-MSGPACK_ADD_ENUM(top::common::xrole_type_t)
+MSGPACK_ADD_ENUM(top::common::xregistration_type_t)
