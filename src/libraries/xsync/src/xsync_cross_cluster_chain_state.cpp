@@ -26,7 +26,7 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
 
     // 10 min
     m_counter++;
-    if (m_counter < 100)
+    if (m_counter < 600)
         return;
     m_counter = 0;
 
