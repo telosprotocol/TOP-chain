@@ -1000,29 +1000,50 @@ namespace top
             return (nullptr != target_block);
         }
 
-        bool xvblockstore_impl::set_genesis_height(const base::xvaccount_t & account, const std::string &height) {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->set_genesis_height(height);
-        }
-
-        const std::string xvblockstore_impl::get_genesis_height(const base::xvaccount_t & account){
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->get_genesis_height();
-        }
-        
-        bool xvblockstore_impl::set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string& span){
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->set_block_span(height, span);
+        bool xvblockstore_impl::set_genesis_height(const base::xvaccount_t & account, const std::string &height)
+        {
+            const std::string key_path = base::xvdbkey_t::create_chain_key(account);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, height))
+            {
+                xerror("xvblockstore_impl::set_genesis_height key %s,fail to writed into db,index dump(%s)",key_path.c_str(), height.c_str());
+                return false;
+            }
+            return true;
         }
         
-        bool xvblockstore_impl::delete_block_span(const base::xvaccount_t & account, const uint64_t height){
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->delete_block_span(height);
-        } 
-        
-        const std::string xvblockstore_impl::get_block_span(const base::xvaccount_t & account, const uint64_t height){
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->get_block_span(height);
+        const std::string xvblockstore_impl::get_genesis_height(const base::xvaccount_t & account)
+        {
+            const std::string key_path = base::xvdbkey_t::create_chain_key(account);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
+        
+        bool xvblockstore_impl::set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string& span)
+        {
+            const std::string key_path = base::xvdbkey_t::create_chain_span_key(account, height);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, span))
+            {
+                xerror("xvblockstore_impl::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), span.c_str());
+                return false;
+            }
+            return true;
+        }
+        
+        bool xvblockstore_impl::delete_block_span(const base::xvaccount_t & account, const uint64_t height)
+        {
+            const std::string key_path = base::xvdbkey_t::create_chain_span_key(account, height);
+            if (!base::xvchain_t::instance().get_xdbstore()->delete_value(key_path))
+            {
+                xerror("xvblockstore_impl::delete_block_span key %s,fail to delete from db",key_path.c_str());
+                return false;
+            }
+            return true;
+        }
+        
+        const std::string xvblockstore_impl::get_block_span(const base::xvaccount_t & account, const uint64_t height)
+        {
+            const std::string key_path = base::xvdbkey_t::create_chain_span_key(account, height);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+        }
+    
     };//end of namespace of vstore
 };//end of namespace of top
