@@ -57,6 +57,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
+
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
@@ -259,7 +260,7 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
 }
 
 int32_t xtop_application::handle_register_node(std::string const & node_addr, std::string const & node_sign) {
-#ifndef XENABLE_MOCK_ZEC_STAKE
+#if !defined(XENABLE_MOCK_ZEC_STAKE)
     // filter seed node
     if (xrootblock_t::is_seed_node(node_addr)) {
         xinfo("[register_node_callback] success, seed node, node_addr: %s", node_addr.c_str());

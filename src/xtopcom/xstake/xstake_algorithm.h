@@ -6,16 +6,16 @@
 
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
+#include "xbasic/uint128_t.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xserialize_face.h"
-#include "xbasic/uint128_t.h"
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xrole_type.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xdata_common.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xdata_common.h"
 #include "xdata/xtableblock.h"
 #include "xstore/xstore_error.h"
 #include "xstore/xstore_face.h"
@@ -84,7 +84,7 @@ const uint64_t REWARD_PRECISION = 1000000;
 #ifdef DEBUG
 constexpr common::xlogic_time_t REDEEM_INTERVAL = 2;  // 72 hours
 #else
-constexpr common::xlogic_time_t REDEEM_INTERVAL = 25920;     // 72 hours
+constexpr common::xlogic_time_t REDEEM_INTERVAL = 25920;  // 72 hours
 #endif
 
 // percent * 10^2 * 10^6,  total_issue_base / 10^2 / 10^6
@@ -110,10 +110,7 @@ typedef __uint128_t top::xstake::uint128_t;
 typedef uint64_t    top::xstake::uint128_t;
 #endif
 */
-//typedef uint128_t top::xstake::uint128_t;
-
-
-
+// typedef uint128_t top::xstake::uint128_t;
 
 struct xreward_node_record final : xserializable_based_on<void> {
     // common::xrole_type_t m_registered_role {common::xrole_type_t::invalid};
@@ -190,6 +187,7 @@ private:
 struct xaccumulated_reward_record final : public xserializable_based_on<void> {
     common::xlogic_time_t last_issuance_time{0};
     top::xstake::uint128_t issued_until_last_year_end{0};
+
 private:
     /**
      * @brief           write to stream
@@ -241,7 +239,8 @@ struct account_stake_t final {
      * @param in_account
      * @param in_stake
      */
-    account_stake_t(std::string const & in_account, uint64_t in_stake) : account{in_account}, stake{in_stake} {}
+    account_stake_t(std::string const & in_account, uint64_t in_stake) : account{in_account}, stake{in_stake} {
+    }
 
     /**
      * @brief less than other's stake
@@ -265,7 +264,9 @@ struct account_stake_t final {
      * @return true
      * @return false
      */
-    bool operator>(account_stake_t const & other) const noexcept { return other < *this; }
+    bool operator>(account_stake_t const & other) const noexcept {
+        return other < *this;
+    }
 
     std::string account;
     uint64_t stake;
@@ -286,7 +287,9 @@ public:
      * @return true
      * @return false
      */
-    bool is_rec_node() const noexcept { return common::has<common::xrole_type_t::advance>(m_registered_role); }
+    bool is_rec_node() const noexcept {
+        return common::has<common::xrole_type_t::advance>(m_registered_role);
+    }
 
     /**
      * @brief check if self is a zec node
@@ -294,7 +297,9 @@ public:
      * @return true
      * @return false
      */
-    bool is_zec_node() const noexcept { return common::has<common::xrole_type_t::advance>(m_registered_role); }
+    bool is_zec_node() const noexcept {
+        return common::has<common::xrole_type_t::advance>(m_registered_role);
+    }
 
     /**
      * @brief check if self is a valid auditor node
@@ -302,24 +307,8 @@ public:
      * @return true
      * @return false
      */
-    bool is_valid_auditor_node() const noexcept { return common::has<common::xrole_type_t::advance>(m_registered_role) && m_vote_amount * TOP_UNIT >= m_account_mortgage; }
-
-    /**
-     * @brief check if self is an auditor node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_auditor_node() const noexcept { return common::has<common::xrole_type_t::advance>(m_registered_role); }
-
-    /**
-     * @brief check if self is an validator node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_validator_node() const noexcept {
-        return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+    bool is_valid_auditor_node() const noexcept {
+        return common::has<common::xrole_type_t::advance>(m_registered_role) && m_vote_amount * TOP_UNIT >= m_account_mortgage;
     }
 
     /**
@@ -334,12 +323,34 @@ public:
     }
 
     /**
+     * @brief check if self is an auditor node
+     *
+     * @return true
+     * @return false
+     */
+    bool is_auditor_node() const noexcept {
+        return common::has<common::xrole_type_t::advance>(m_registered_role);
+    }
+
+    /**
+     * @brief check if self is an validator node
+     *
+     * @return true
+     * @return false
+     */
+    bool is_validator_node() const noexcept {
+        return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+    }
+
+    /**
      * @brief check if self is an archive node
      *
      * @return true
      * @return false
      */
-    bool is_archive_node() const noexcept { return common::has<common::xrole_type_t::archive>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role); }
+    bool is_archive_node() const noexcept {
+        return common::has<common::xrole_type_t::archive>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+    }
 
     /**
      * @brief check if self is an edge node
@@ -347,7 +358,9 @@ public:
      * @return true
      * @return false
      */
-    bool is_edge_node() const noexcept { return common::has<common::xrole_type_t::edge>(m_registered_role); }
+    bool is_edge_node() const noexcept {
+        return common::has<common::xrole_type_t::edge>(m_registered_role);
+    }
 
     /**
      * @brief check if self is an invlid node
@@ -355,7 +368,9 @@ public:
      * @return true
      * @return false
      */
-    bool is_invalid_node() const noexcept { return m_registered_role == common::xrole_type_t::invalid; }
+    bool is_invalid_node() const noexcept {
+        return m_registered_role == common::xrole_type_t::invalid;
+    }
 
     /**
      * @brief check if self is a genesis node
@@ -363,7 +378,9 @@ public:
      * @return true
      * @return false
      */
-    bool is_genesis_node() const noexcept { return m_genesis_node; }
+    bool is_genesis_node() const noexcept {
+        return m_genesis_node;
+    }
 
     /**
      * @brief Get the deposit
@@ -371,7 +388,9 @@ public:
      * @return true
      * @return false
      */
-    uint64_t get_deposit() const noexcept { return m_account_mortgage; }
+    uint64_t get_deposit() const noexcept {
+        return m_account_mortgage;
+    }
 
     /**
      * @brief check if self is a rec node
@@ -463,7 +482,9 @@ public:
      *
      * @return common::xrole_type_t
      */
-    common::xrole_type_t get_role_type() const noexcept { return m_registered_role; }
+    common::xrole_type_t get_role_type() const noexcept {
+        return m_registered_role;
+    }
 
     /**
      * @brief Get auditor stake
@@ -493,6 +514,11 @@ public:
         return stake;
     }
 
+    template <common::xrole_type_t MinerTypeV>
+    bool miner_type_has() const noexcept {
+        return common::has<MinerTypeV>(m_registered_role);
+    }
+
     /**
      * @brief Get required min deposit
      *
@@ -500,25 +526,25 @@ public:
      */
     uint64_t get_required_min_deposit() const noexcept {
         uint64_t min_deposit = 0;
-        if (is_edge_node()) {
+        if (miner_type_has<common::xrole_type_t::edge>()) {
             uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_edge_deposit);
             if (deposit > min_deposit)
                 min_deposit = deposit;
         }
 
-        if (is_validator_node()) {
+        if (miner_type_has<common::xrole_type_t::validator>()) {
             uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_deposit);
             if (deposit > min_deposit)
                 min_deposit = deposit;
         }
 
-        if (is_auditor_node()) {
+        if (miner_type_has<common::xrole_type_t::advance>()) {
             uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_deposit);
             if (deposit > min_deposit)
                 min_deposit = deposit;
         }
 
-        if (is_archive_node()) {
+        if (miner_type_has<common::xrole_type_t::archive>()) {
             uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit);
             if (deposit > min_deposit)
                 min_deposit = deposit;
@@ -618,14 +644,18 @@ public:
      * @param stream
      * @return int32_t
      */
-    int32_t do_write(base::xstream_t & stream) const override {return 0;}
+    int32_t do_write(base::xstream_t & stream) const override {
+        return 0;
+    }
     /**
      * @brief read from stream
      *
      * @param stream
      * @return int32_t
      */
-    int32_t do_read(base::xstream_t & stream) override {return 0;}
+    int32_t do_read(base::xstream_t & stream) override {
+        return 0;
+    }
 };
 using xaccount_registration_info_t = xtop_account_registration_info;
 
@@ -751,6 +781,7 @@ struct reward_detail final : public xserializable_based_on<void> {
     top::xstake::uint128_t m_auditor_reward{0};
     top::xstake::uint128_t m_vote_reward{0};
     top::xstake::uint128_t m_self_reward{0};
+
 private:
     int32_t do_write(base::xstream_t & stream) const override {
         const int32_t begin_pos = stream.size();
@@ -785,7 +816,9 @@ private:
     }
 };
 
-class xissue_detail final : public xenable_to_string_t<xissue_detail>, public xserializable_based_on<void> {
+class xissue_detail final
+  : public xenable_to_string_t<xissue_detail>
+  , public xserializable_based_on<void> {
 public:
     uint64_t onchain_timer_round{0};
     uint64_t m_zec_vote_contract_height{0};
