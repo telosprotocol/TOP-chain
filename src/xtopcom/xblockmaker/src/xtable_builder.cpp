@@ -47,7 +47,7 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<b
             }
         }
 
-        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false);
+        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false,0);
         proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
     }
 

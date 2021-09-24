@@ -161,13 +161,7 @@ void get_block_handle::getRootblockInfo() {
 }
 
 uint64_t get_block_handle::get_timer_height() const {
-    auto vb = m_block_store->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr), metrics::blockstore_access_from_rpc_get_cert_blk);
-    xblock_t * bp = static_cast<xblock_t *>(vb.get());
-    if (bp != nullptr) {
-        return bp->get_height();
-    } else {
-        return 0;
-    }
+    return m_block_store->get_latest_cert_block_height(base::xvaccount_t(sys_contract_beacon_timer_addr), metrics::blockstore_access_from_rpc_get_cert_blk);
 }
 
 void get_block_handle::getCGP() {
