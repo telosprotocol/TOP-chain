@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xsimple_map_result.h"
+#include "xbasic/xsimple_map_result.hpp"
 
 #include <msgpack.hpp>
 

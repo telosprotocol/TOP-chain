@@ -174,6 +174,8 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         sys_contract_zec_registration_addr,
         sys_contract_rec_parachain_registration_addr,
         sys_contract_rec_standby_pool_addr,
+        sys_contract_rec_standby_pool_addr2,
+        sys_contract_zec_standby_pool_addr2,
         sys_contract_sharding_vote_addr,
         sys_contract_rec_tcc_addr,
         sys_contract_sharding_reward_claiming_addr

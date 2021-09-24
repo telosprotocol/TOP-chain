@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xcrypto_key.h"
-#include "xbasic/xsimple_map_result.h"
+#include "xbasic/xsimple_map_result.hpp"
 #include "xcommon/xnode_type.h"
 
 NS_BEG3(top, data, standby)
