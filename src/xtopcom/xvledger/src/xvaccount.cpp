@@ -3,6 +3,7 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <cinttypes>
 #include "../xvaccount.h"
 #include "xbase/xcontext.h"
 #include "xmetrics/xmetrics.h"
@@ -156,7 +157,7 @@ namespace top
         const std::string xblockmeta_t::ddump() const
         {
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%lld,lock=%lld,commit=%lld ,connected=%lld,full=%lld}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height);
+            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 " ,connected=%" PRIu64 ",full=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height);
             
             return std::string(local_param_buf);
         }
