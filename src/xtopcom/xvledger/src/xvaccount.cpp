@@ -228,7 +228,51 @@ namespace top
         {
             return std::string();
         }
+    
+        xindxmeta_t::xindxmeta_t()
+        {
+            m_latest_unit_height = 0;
+            m_latest_unit_viewid = 0;
+            m_latest_tx_nonce    = 0;
+            m_account_flag       = 0;
+        }
         
+        xindxmeta_t::xindxmeta_t(xindxmeta_t && move_obj)
+        {
+            m_latest_unit_height = 0;
+            m_latest_unit_viewid = 0;
+            m_latest_tx_nonce    = 0;
+            m_account_flag       = 0;
+            *this = move_obj;
+        }
+        
+        xindxmeta_t::xindxmeta_t(const xindxmeta_t & obj)
+        {
+            m_latest_unit_height = 0;
+            m_latest_unit_viewid = 0;
+            m_latest_tx_nonce    = 0;
+            m_account_flag       = 0;
+            *this = obj;
+        }
+        
+        xindxmeta_t & xindxmeta_t::operator = (const xindxmeta_t & obj)
+        {
+            m_latest_unit_height = obj.m_latest_unit_height;
+            m_latest_unit_viewid = obj.m_latest_unit_viewid;
+            m_latest_tx_nonce = obj.m_latest_tx_nonce;
+            m_account_flag    = obj.m_account_flag;
+            return *this;
+        }
+        
+        xindxmeta_t::~xindxmeta_t()
+        {
+        }
+        
+        const std::string xindxmeta_t::ddump() const
+        {
+            return std::string();
+        }
+    
         xvactmeta_t*  xvactmeta_t::load(xvaccount_t & _account,const std::string & meta_serialized_data)
         {
             if(meta_serialized_data.empty()) //check first
@@ -342,6 +386,20 @@ namespace top
             return true;
         }
     
+        bool   xvactmeta_t::set_index_meta(const xindxmeta_t & new_meta)
+        {
+            if(  (new_meta.m_latest_unit_height  < m_latest_unit_height)
+               ||(new_meta.m_latest_unit_viewid  < m_latest_unit_viewid)
+               ||(new_meta.m_latest_tx_nonce     < m_latest_tx_nonce) )
+            {
+                xerror("xvactmeta_t::set_index_meta,try overwrited newer_meta(%s) with old_meta( %s)",xindxmeta_t::ddump().c_str(),new_meta.ddump().c_str());
+                return false;
+            }
+            xindxmeta_t::operator=(new_meta);
+            add_modified_count();
+            return true;
+        }
+    
         bool   xvactmeta_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
             if(new_meta._highest_genesis_connect_height < _highest_genesis_connect_height)
@@ -373,6 +431,11 @@ namespace top
         }
     
         xstatemeta_t& xvactmeta_t::get_state_meta()
+        {
+            return *this;
+        }
+    
+        xindxmeta_t&  xvactmeta_t::get_index_meta()
         {
             return *this;
         }
@@ -413,14 +476,21 @@ namespace top
             stream << _reserved_u16;
             stream << _lowest_genesis_connect_height;
             
+            //added since version#2 of _meta_spec_version
+            if(_meta_spec_version >= 2)
+            {
+                stream.write_compact_var(m_latest_unit_height);
+                stream.write_compact_var(m_latest_unit_viewid);
+                stream.write_compact_var(m_latest_tx_nonce);
+                stream.write_compact_var(m_account_flag);
+            }
+            
             return (stream.size() - begin_size);
         }
     
         int32_t   xvactmeta_t::do_read(xstream_t & stream)//serialize from binary and regeneate content
         {
             const int32_t begin_size = stream.size();
-        
-            const uint16_t checksum = _reserved_u16;//copy it
             
             stream >> _highest_cert_block_height;
             stream >> _highest_lock_block_height;
@@ -439,9 +509,12 @@ namespace top
             stream >> _reserved_u16;
             stream >> _lowest_genesis_connect_height;
             
-            if(_meta_spec_version == 2)//at version#2,use it as verify checksum
+            if(_meta_spec_version >= 2)//since version#2
             {
-                xassert(checksum == _reserved_u16);
+                stream.read_compact_var(m_latest_unit_height);
+                stream.read_compact_var(m_latest_unit_viewid);
+                stream.read_compact_var(m_latest_tx_nonce);
+                stream.read_compact_var(m_account_flag);
             }
  
             return (begin_size - stream.size());

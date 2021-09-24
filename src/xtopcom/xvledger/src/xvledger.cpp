@@ -68,6 +68,7 @@ namespace top
               m_ref_table(parent_object)//note:table object never be release/deleted,so here just hold reference
         {
             m_meta_ptr = NULL;
+            m_last_saved_meta_hash = 0;
             m_is_idle = 1;  //init as idled status
             m_is_keep_forever = 0;
             memset(m_plugins,0,sizeof(m_plugins));
@@ -228,6 +229,20 @@ namespace top
             }
             return false;
         }
+    
+        bool  xvaccountobj_t::set_index_meta(const xindxmeta_t & new_meta)
+        {
+            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            xvactmeta_t * meta_ptr = get_meta();
+            if(meta_ptr->set_index_meta(new_meta))
+            {
+                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval) //save at every 64 modification
+                    save_meta();
+                
+                return true;
+            }
+            return false;
+        }
         
         const xblockmeta_t  xvaccountobj_t::get_block_meta()
         {
@@ -239,6 +254,12 @@ namespace top
         {
             std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
             return get_meta()->get_state_meta();
+        }
+    
+        const xindxmeta_t   xvaccountobj_t::get_index_meta()
+        {
+            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            return get_meta()->get_index_meta();
         }
     
         const xsyncmeta_t   xvaccountobj_t::get_sync_meta()
@@ -267,13 +288,14 @@ namespace top
             {
                 xinfo("xvaccountobj_t::meta->get_meta,new_meta(%s)",new_meta_ptr->dump().c_str());
             }
-        
+            m_last_saved_meta_hash = xhash64_t::digest(meta_content);
             return m_meta_ptr;
         }
         
         bool  xvaccountobj_t::save_meta()
         {
             std::string vmeta_bin;
+            uint64_t    new_meta_hash = 0;
             uint32_t    last_modified_count = 0;
             {
                 std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
@@ -281,7 +303,12 @@ namespace top
                 {
                     last_modified_count = m_meta_ptr->get_modified_count();
                     if(last_modified_count > 0)
+                    {
                         m_meta_ptr->serialize_to_string(vmeta_bin);
+                        new_meta_hash = xhash64_t::digest(vmeta_bin);
+                        if(new_meta_hash == m_last_saved_meta_hash)//if nothing changed
+                            return true;
+                    }
                 }
             }
             
@@ -291,6 +318,7 @@ namespace top
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
                     std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+                    m_last_saved_meta_hash = new_meta_hash;
                     if( (m_meta_ptr != NULL) && (m_meta_ptr->get_modified_count() == last_modified_count) )
                         m_meta_ptr->reset_modified_count();//clean acounting
                     

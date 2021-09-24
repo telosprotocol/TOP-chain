@@ -490,7 +490,28 @@ namespace top
             std::string  _highest_execute_block_hash;
         };
     
-        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xsyncmeta_t
+        //for xaccount_index use
+        class xindxmeta_t
+        {
+        public:
+            xindxmeta_t();
+            xindxmeta_t(const xindxmeta_t & obj);
+            ~xindxmeta_t();
+        protected:
+            xindxmeta_t & operator = (const xindxmeta_t & obj);
+        private:
+            xindxmeta_t(xindxmeta_t && move_obj);
+            
+        public://debug purpose
+            const std::string  ddump() const;
+        public:
+            uint64_t        m_latest_unit_height;
+            uint64_t        m_latest_unit_viewid;
+            uint64_t        m_latest_tx_nonce;
+            uint16_t        m_account_flag;  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
+        };
+    
+        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xindxmeta_t,protected xsyncmeta_t
         {
             friend class xvaccountobj_t;
             enum {enum_obj_type = xdataunit_t::enum_xdata_type_vaccountmeta};
@@ -509,11 +530,13 @@ namespace top
         protected: //APIs only open for  xvaccountobj_t object
             bool    set_block_meta(const xblockmeta_t & new_meta);
             bool    set_state_meta(const xstatemeta_t & new_meta);
+            bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
             bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
             
             xblockmeta_t &  get_block_meta();
             xstatemeta_t &  get_state_meta();
+            xindxmeta_t  &  get_index_meta();
             xsyncmeta_t  &  get_sync_meta();
 
         protected:

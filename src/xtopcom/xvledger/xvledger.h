@@ -119,11 +119,12 @@ namespace top
             bool    set_block_meta(const xblockmeta_t & new_meta);
             bool    set_state_meta(const xstatemeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
-            
+            bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
             
             const xblockmeta_t  get_block_meta();
             const xstatemeta_t  get_state_meta();
+            const xindxmeta_t   get_index_meta();
             const xsyncmeta_t   get_sync_meta();
             bool                save_meta();
             
@@ -149,6 +150,7 @@ namespace top
             //note: only support max 8 plugins for one object as considering size and reality
             xvactplugin_t*      m_plugins[enum_xvaccount_plugin_max];
         private:
+            uint64_t            m_last_saved_meta_hash;
             uint64_t            m_idle_start_time_ms; //UTC ms
             uint64_t            m_idle_timeout_ms;     //how long(ms) it will change to idle status
             uint8_t             m_is_idle; //atomic indicate whether is beeing idle status, 1 = true, 0 = false
@@ -186,6 +188,9 @@ namespace top
             
             inline std::recursive_mutex&  get_lock() {return m_lock;}
             inline xvbook_t &             get_book() {return m_ref_book;}
+            
+        public:
+            
             
         private:
             xvaccountobj_t*            create_account_unsafe(const std::string & account_address);
