@@ -55,7 +55,7 @@ public:
     virtual bool is_running() const = 0;
     // virtual bool is_receipt_sender(const base::xtable_index_t & tableid) const = 0;
     virtual bool is_send_receipt_role() const = 0;
-    virtual bool is_send_id_state_role() const = 0;
+    // virtual bool is_send_id_state_role() const = 0;
     virtual bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const = 0;
     virtual void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const = 0;
     virtual void resend_receipts(uint64_t now) = 0;

@@ -29,13 +29,6 @@ m_block_fetcher(block_fetcher) {
     m_reg_holder.add_listener((int) mbus::xevent_major_type_blockfetcher, cb);
 }
 
-void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
-    if (e->get_type() == mbus::xevent_major_type_account) {
-        discard = false;
-    }
-    XMETRICS_GAUGE(metrics::mailbox_block_fetcher_total, discard ? 0 : 1);
-}
-
 bool xblock_fetcher_event_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     XMETRICS_COUNTER_INCREMENT("block_fetcher_event_count", 1);
     int64_t in, out;
@@ -70,6 +63,7 @@ void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_
             }
             break;
     }
+    XMETRICS_GAUGE(metrics::mailbox_block_fetcher_total, discard ? 0 : 1);
 }
 
 /////////

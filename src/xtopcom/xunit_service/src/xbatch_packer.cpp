@@ -460,12 +460,12 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                             "is_leader", is_leader,
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
         
-        if (is_leader) {
-            auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();
-            auto last_height_tag = "cons_table_last_succ_height_" + get_account();
-            XMETRICS_COUNTER_SET( last_viewid_tag , _evt_obj->get_target_proposal()->get_viewid());
-            XMETRICS_COUNTER_SET( last_height_tag , _evt_obj->get_target_proposal()->get_height());
-        }
+        // if (is_leader) {
+        //     auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();
+        //     auto last_height_tag = "cons_table_last_succ_height_" + get_account();
+        //     XMETRICS_COUNTER_SET( last_viewid_tag , _evt_obj->get_target_proposal()->get_viewid());
+        //     XMETRICS_COUNTER_SET( last_height_tag , _evt_obj->get_target_proposal()->get_height());
+        // }
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
         xassert(vblock->is_input_ready(true));
@@ -505,7 +505,6 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
 void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
     // broadcast receipt id state to all shards
     if (commit_block->get_block_class() == base::enum_xvblock_class_full) {
-        // send_receipt_id_state(commit_block);
         return;
     }
 

@@ -78,22 +78,22 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     auto type = node_addr.type();
     if (common::has<common::xnode_type_t::committee>(type)) {
         m_is_send_receipt_role = true;
-        m_is_send_id_state_role = true;
+        // m_is_send_id_state_role = true;
         m_zone_index = base::enum_chain_zone_beacon_index;
         m_node_type = common::xnode_type_t::committee;
     } else if (common::has<common::xnode_type_t::zec>(type)) {
         m_is_send_receipt_role = true;
-        m_is_send_id_state_role = true;
+        // m_is_send_id_state_role = true;
         m_zone_index = base::enum_chain_zone_zec_index;
         m_node_type = common::xnode_type_t::zec;
     } else if (common::has<common::xnode_type_t::auditor>(type)) {
         m_is_send_receipt_role = true;
-        m_is_send_id_state_role = false;
+        // m_is_send_id_state_role = false;
         m_zone_index = base::enum_chain_zone_consensus_index;
         m_node_type = common::xnode_type_t::auditor;
     } else if (common::has<common::xnode_type_t::validator>(type)) {
         m_is_send_receipt_role = false;
-        m_is_send_id_state_role = true;
+        // m_is_send_id_state_role = true;
         m_zone_index = base::enum_chain_zone_consensus_index;
         m_node_type = common::xnode_type_t::validator;
     } else {
@@ -929,7 +929,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
 }
 
 void xtxpool_service::send_receipt_id_state(uint64_t now) {
-    if (m_running && m_is_send_id_state_role) {
+    if (m_running && m_is_send_receipt_role) {
         for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
             if (!xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(now, table_id, m_shard_size, m_node_id)) {
                 continue;

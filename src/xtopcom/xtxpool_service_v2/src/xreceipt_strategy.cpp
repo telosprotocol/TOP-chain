@@ -13,7 +13,7 @@ NS_BEG2(top, xtxpool_service_v2)
 #define receipt_sender_select_num (2)           // select 2 nodes to send receipt at the first time
 #define receipt_pull_msg_sender_select_num (1)  // select 1 node to send recept pull msg
 #define receipt_resender_select_num (1)         // select 1 nodes to resend receipt
-#define receiptid_state_send_interval (128)     // every 128 seconds send receipt id state of a table
+#define receiptid_state_send_interval (64)     // every 128 seconds send receipt id state of a table
 
 bool xreceipt_strategy_t::is_time_for_refresh_table(uint64_t now) {
     return (now % refresh_table_interval) == 0;
