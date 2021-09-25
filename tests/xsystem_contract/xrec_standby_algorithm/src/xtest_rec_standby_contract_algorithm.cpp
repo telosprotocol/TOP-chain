@@ -185,7 +185,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
 #define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record)
 #define EXPECT_HAS(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) != standby_node_info.stake_container.end())
 #define EXPECT_HAS_NOT(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) == standby_node_info.stake_container.end())
-    EXPECT_FALSE(node_info.auditor());
+    EXPECT_FALSE(node_info.can_be_auditor());
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
@@ -195,7 +195,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.m_vote_amount = 1000000000;
     EXPECT_TRUE(update_reg_info(node_info));
 
-    EXPECT_TRUE(node_info.auditor());
+    EXPECT_TRUE(node_info.can_be_auditor());
     // EXPECT_TRUE(rec_standby_on_timer_update);
 
     // EXPECT_HAS(common::xnode_type_t::consensus_auditor);
