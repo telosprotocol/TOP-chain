@@ -321,7 +321,7 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     // db write count statistics
     std::cout << "=============db write count statistics=============" << std::endl;
     #ifdef ENABLE_METRICS
-    std::cout << "store_db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_write) << std::endl;
+    std::cout << "db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::db_write) << std::endl;
     std::cout << "store_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_table_write) << std::endl;
     std::cout << "store_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_unit_write) << std::endl;
     std::cout << "store_block_index_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_other_write) << std::endl;
@@ -342,7 +342,7 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
 
     // db read count statistics
     std::cout << "=============db read count statistics=============" << std::endl;
-    std::cout << "store_db_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_read) << std::endl;
+    std::cout << "db_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::db_read) << std::endl;
     std::cout << "store_block_index_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_read) << std::endl;
     std::cout << "store_block_table_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_table_read) << std::endl;
     std::cout << "store_block_unit_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_unit_read) << std::endl;
@@ -353,7 +353,7 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
 
     // db delete count statistics       
     std::cout << "=============db delete count statistics=============" << std::endl; 
-    std::cout << "store_db_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_delete) << std::endl;
+    std::cout << "db_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::db_delete) << std::endl;
     std::cout << "store_state_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_delete) << std::endl;
 
     // db size statistics
