@@ -496,7 +496,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
 
     auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
     if (!is_belong_to_service(tableid)) {
-        xwarn("[global_trace][xtxpool_service]%s %s zone%d table%d not match this network driver",
+        xerror("[global_trace][xtxpool_service]%s %s zone%d table%d not match this network driver",
                tx->get_digest_hex_str().c_str(),
                tx->get_source_addr().c_str(),
                tableid.get_zone_index(),

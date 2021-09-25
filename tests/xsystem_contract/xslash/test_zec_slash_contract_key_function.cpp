@@ -373,7 +373,7 @@ TEST_F(test_zec_slash_contract, test_summarize_info_internal) {
     EXPECT_EQ(cur_statistic_height, 32);
     EXPECT_FALSE(res2);
 }
-
+#ifdef SLASH_TEST
 TEST_F(test_zec_slash_contract, test_do_unqualified_node_slash_internal_normal) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
@@ -461,9 +461,9 @@ TEST_F(test_zec_slash_contract, test_do_unqualified_node_slash_internal_fail2) {
     EXPECT_FALSE(res);
 
 }
+#endif
 
-
-TEST_F(test_zec_slash_contract, serialize_and_deserialize_bench) {
+TEST_F(test_zec_slash_contract, serialize_and_deserialize_BENCH) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -487,7 +487,7 @@ TEST_F(test_zec_slash_contract, serialize_and_deserialize_bench) {
 
 }
 
-TEST_F(test_zec_slash_contract, process_statistic_data_bench) {
+TEST_F(test_zec_slash_contract, process_statistic_data_BENCH) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -512,7 +512,7 @@ TEST_F(test_zec_slash_contract, process_statistic_data_bench) {
 }
 
 
-TEST_F(test_zec_slash_contract, accumulate_node_info_bench) {
+TEST_F(test_zec_slash_contract, accumulate_node_info_BENCH) {
     xunqualified_node_info_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -545,7 +545,7 @@ TEST_F(test_zec_slash_contract, accumulate_node_info_bench) {
 
 }
 
-TEST_F(test_zec_slash_contract, filter_helper_bench) {
+TEST_F(test_zec_slash_contract, filter_helper_BENCH) {
     xunqualified_node_info_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -578,7 +578,7 @@ TEST_F(test_zec_slash_contract, filter_helper_bench) {
 }
 
 
-TEST_F(test_zec_slash_contract, summarize_info_internal_bench) {
+TEST_F(test_zec_slash_contract, summarize_info_internal_BENCH) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -627,8 +627,8 @@ TEST_F(test_zec_slash_contract, summarize_info_internal_bench) {
 }
 
 
-
-TEST_F(test_zec_slash_contract, do_unqualified_node_slash_internal_bench) {
+#ifdef SLASH_TEST
+TEST_F(test_zec_slash_contract, do_unqualified_node_slash_internal_BENCH) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -666,6 +666,7 @@ TEST_F(test_zec_slash_contract, do_unqualified_node_slash_internal_bench) {
 
     std::cout << "do_unqualified_node_slash_internal average timecost: " << total_time/count << "\n";
 }
+#endif
 
 
 

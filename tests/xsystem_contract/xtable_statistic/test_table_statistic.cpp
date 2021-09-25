@@ -590,7 +590,7 @@ TEST_F(xtest_table_contract_t, test_node_service) {
         EXPECT_EQ(account_str, test_account[i]);
     }
 }
-
+#if 0
 TEST_F(xtest_table_contract_t, test_get_workload_from_data) {
     xstatistics_data_t stat_data;
     xelection_related_statistics_data_t elect_data;
@@ -835,7 +835,6 @@ TEST_F(xtest_table_contract_t, test_upload_data_internal) {
     EXPECT_EQ(map.size(), 0);
 }
 
-#if 0
 TEST_F(xtest_table_contract_t, test_process_workload_data_internal_1r_bench) {
     xstatistics_data_t stat_data;
     xelection_related_statistics_data_t elect_data;

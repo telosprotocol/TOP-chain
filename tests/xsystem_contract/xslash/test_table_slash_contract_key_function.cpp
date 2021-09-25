@@ -189,7 +189,7 @@ xunqualified_node_info_t test_table_slash_contract::process_statistic_data(top::
     return res_node_info;
 }
 
-TEST_F(test_table_slash_contract, collect_slash_statistic_info_bench) {
+TEST_F(test_table_slash_contract, collect_slash_statistic_info_BENCH) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());

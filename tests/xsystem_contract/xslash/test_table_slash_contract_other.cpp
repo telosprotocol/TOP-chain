@@ -30,6 +30,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
+#include "xdata/xtransaction_v2.h"
 
 
 using namespace top;
@@ -49,6 +50,7 @@ public:
         m_store = xstore_factory::create_store_with_memdb();
         top::base::xvchain_t::instance().set_xdbstore(m_store.get());
         m_blockstore.attach(top::store::get_vblockstore());
+        m_blockstore->add_ref();
         auto mbus =  top::make_unique<mbus::xmessage_bus_t>(true, 1000);
         std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
         std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
@@ -82,9 +84,10 @@ public:
         target_stream << tgas;
         destination_action.set_action_param(std::string((char*) target_stream.data(), target_stream.size()));
 
-        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_t>();
+        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
         slash_colletion_trx->set_source_action(source_action);
         slash_colletion_trx->set_target_action(destination_action);
+        slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr);
         return slash_colletion_trx;
     }
 
@@ -99,9 +102,10 @@ public:
         target_stream << timestamp;
         destination_action.set_action_param(std::string((char*) target_stream.data(), target_stream.size()));
 
-        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_t>();
+        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
         slash_colletion_trx->set_source_action(source_action);
         slash_colletion_trx->set_target_action(destination_action);
+        slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr);
         return slash_colletion_trx;
     }
 
