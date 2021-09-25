@@ -27,25 +27,25 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
 
         xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, votes: %llu\n",
              reg_node_info.m_account.c_str(),
-             reg_node_info.is_valid_auditor_node(),
-             reg_node_info.is_validator_node(),
-             reg_node_info.is_archive_node(),
-             reg_node_info.is_edge_node(),
+             reg_node_info.can_be_auditor(),
+             reg_node_info.can_be_validator(),
+             reg_node_info.can_be_archive(),
+             reg_node_info.can_be_edge(),
              reg_node_info.m_vote_amount);
 
         if (reg_node_info.is_invalid_node())
             continue;
 
-        if (reg_node_info.is_valid_auditor_node()) {
+        if (reg_node_info.can_be_auditor()) {
             auditor_num++;
         }
-        if (reg_node_info.is_validator_node()) {
+        if (reg_node_info.can_be_validator()) {
             validator_num++;
         }
-        if (reg_node_info.is_archive_node()) {
+        if (reg_node_info.can_be_archive()) {
             archive_num++;
         }
-        if (reg_node_info.is_edge_node()) {
+        if (reg_node_info.can_be_edge()) {
             edge_num++;
         }
         total_votes += reg_node_info.m_vote_amount;
@@ -171,19 +171,119 @@ int32_t xrefund_info::do_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
-bool xreg_node_info::rec() const noexcept { return is_rec_node(); }
-bool xreg_node_info::zec() const noexcept { return is_zec_node(); }
-bool xreg_node_info::auditor() const noexcept { return is_valid_auditor_node(); }
-bool xreg_node_info::validator() const noexcept { return is_validator_node(); }
-bool xreg_node_info::edge() const noexcept { return is_edge_node(); }
-bool xreg_node_info::archive() const noexcept { return is_valid_archive_node(); }
-bool xreg_node_info::full_node() const noexcept {
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::edge>() {
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_edge_deposit);
+}
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::archive>() {
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit);
+}
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::full_node>() {
+    return 0;
+}
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::advance>() {
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_deposit);
+}
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::validator>() {
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_deposit);
+}
+
+bool xreg_node_info::could_be_rec() const noexcept {
+    return common::has<common::xrole_type_t::advance>(m_registered_role);
+}
+
+bool xreg_node_info::could_be_zec() const noexcept {
+    return common::has<common::xrole_type_t::advance>(m_registered_role);
+}
+
+bool xreg_node_info::could_be_auditor() const noexcept {
+    return common::has<common::xrole_type_t::advance>(m_registered_role);
+}
+
+bool xreg_node_info::could_be_validator() const noexcept {
+    return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+}
+
+bool xreg_node_info::could_be_archive() const noexcept {
+    return common::has<common::xrole_type_t::archive>(m_registered_role);
+}
+
+bool xreg_node_info::could_be_edge() const noexcept {
+    return common::has<common::xrole_type_t::edge>(m_registered_role);
+}
+
+bool xreg_node_info::could_be_full_node() const noexcept {
     return common::has<common::xrole_type_t::full_node>(m_registered_role);
+}
+
+bool xreg_node_info::can_be_rec() const noexcept {
+    return could_be_rec();
+}
+
+bool xreg_node_info::can_be_zec() const noexcept {
+    return could_be_zec();
+}
+
+bool xreg_node_info::can_be_edge() const noexcept {
+    return could_be_edge();
+}
+
+bool xreg_node_info::can_be_archive() const noexcept {
+    return could_be_archive();
+}
+
+bool xreg_node_info::can_be_auditor() const noexcept {
+    return could_be_auditor() && m_vote_amount * TOP_UNIT >= deposit();
+}
+
+bool xreg_node_info::can_be_validator() const noexcept {
+    return could_be_validator();
+}
+
+bool xreg_node_info::can_be_full_node() const noexcept {
+    return could_be_full_node();
+}
+
+uint64_t xreg_node_info::deposit() const noexcept {
+    return m_account_mortgage;
+}
+
+uint64_t xreg_node_info::get_required_min_deposit() const noexcept {
+    uint64_t min_deposit = 0;
+    if (miner_type_has<common::xrole_type_t::edge>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::edge>());
+    }
+
+    if (miner_type_has<common::xrole_type_t::validator>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::validator>());
+    }
+
+    if (miner_type_has<common::xrole_type_t::advance>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::advance>());
+    }
+
+    if (miner_type_has<common::xrole_type_t::archive>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::archive>());
+    }
+
+    if (miner_type_has<common::xrole_type_t::full_node>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::full_node>());
+    }
+
+    return min_deposit;
 }
 
 uint64_t xreg_node_info::rec_stake() const noexcept {
     uint64_t stake = 0;
-    if (is_rec_node()) {
+    if (could_be_rec()) {
         stake = m_account_mortgage / TOP_UNIT + m_vote_amount / 2;
     }
     return stake;
@@ -191,7 +291,7 @@ uint64_t xreg_node_info::rec_stake() const noexcept {
 
 uint64_t xreg_node_info::zec_stake() const noexcept {
     uint64_t stake = 0;
-    if (is_zec_node()) {
+    if (could_be_zec()) {
         stake = m_account_mortgage / TOP_UNIT + m_vote_amount / 2;
     }
     return stake;

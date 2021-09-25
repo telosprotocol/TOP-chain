@@ -414,7 +414,7 @@ TEST_F(test_suite_xcontract_t, registerNode) {
 #ifndef XENABLE_MOCK_ZEC_STAKE
     ASSERT_TRUE(node_info.m_account_mortgage == node_morgage);
 #endif
-    ASSERT_TRUE(node_info.is_auditor_node());
+    ASSERT_TRUE(node_info.could_be_auditor());
 }
 
 TEST_F(test_suite_xcontract_t, setDividendRatio) {
@@ -433,7 +433,7 @@ TEST_F(test_suite_xcontract_t, setDividendRatio) {
 
     ASSERT_TRUE(node_info.m_account.value() == node_account);
     ASSERT_TRUE(node_info.m_support_ratio_numerator == dividend_rate);
-    ASSERT_TRUE(node_info.is_auditor_node());
+    ASSERT_TRUE(node_info.could_be_auditor());
 }
 
 TEST_F(test_suite_xcontract_t, update_batch_stake) {
