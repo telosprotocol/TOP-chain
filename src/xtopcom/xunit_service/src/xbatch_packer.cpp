@@ -427,10 +427,13 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_INCREMENT( fork_tag , 1);
 
+        XMETRICS_GAUGE(metrics::cons_tableblock_total_succ, 0);
         if (is_leader) {
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_fail, 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_leader_succ, 0);
         } else {
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_fail, 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 0);
         }
         // xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
         //     is_leader,
@@ -471,8 +474,10 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
         m_mbus->push_event(ev);
 
+        XMETRICS_GAUGE(metrics::cons_tableblock_total_succ, 1);
         if (is_leader) {
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_leader_succ, 1);
             if (vblock->get_height() > 2) {
                 base::xauto_ptr<base::xvblock_t> commit_block =
                     m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_proposal_finish);
@@ -483,6 +488,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
             }
         } else {
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_succ, 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 1);
         }
     }
     return false;  // throw event up again to let txs-pool or other object start new consensus

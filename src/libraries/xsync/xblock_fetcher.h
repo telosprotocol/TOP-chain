@@ -29,7 +29,7 @@ public:
     bool filter_event(const mbus::xevent_ptr_t& e) override;
     void before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) override;
     void process_event(const mbus::xevent_ptr_t& e) override;
-
+    void before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) override;
 private:
     xblock_fetcher_t* m_block_fetcher{};
 };

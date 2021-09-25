@@ -261,7 +261,6 @@ bool xstore::delete_block_by_path(const std::string & store_path,const std::stri
 }
 
 bool xstore::set_value(const std::string &key, const std::string &value) {
-    XMETRICS_GAUGE(metrics::store_db_write, 1);
 #ifdef DB_KV_STATISTIC    
     xstore_util::metirc_key_value(key, value, true);
 #endif   
@@ -269,7 +268,6 @@ bool xstore::set_value(const std::string &key, const std::string &value) {
 }
 
 bool xstore::delete_value(const std::string &key) {
-    XMETRICS_GAUGE(metrics::store_db_delete, 1);
 #ifdef DB_KV_STATISTIC  
     xstore_util::metirc_key_value(key, get_value(key), false);
 #endif
@@ -277,7 +275,6 @@ bool xstore::delete_value(const std::string &key) {
 }
 
 const std::string xstore::get_value(const std::string &key) const {
-    XMETRICS_GAUGE(metrics::store_db_read, 1);
     std::string value;
 
     bool success = m_db->read(key, value);

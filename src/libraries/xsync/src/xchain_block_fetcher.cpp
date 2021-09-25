@@ -208,18 +208,7 @@ void xchain_block_fetcher_t::import_block(xblock_ptr_t &block) {
     // }
 
     base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
-    bool ret = m_sync_store->store_block(vblock);
-    if (!ret) {
-        base::xauto_ptr<base::xvblock_t> blk = m_sync_store->get_latest_cert_block(m_address);
-        if (blk != nullptr) {
-            if (blk->get_height() >= block->get_height()) {
-                xsync_info("chain_fetcher store data succ(exist cert) %s", blk->dump().c_str());
-            } else {
-                assert(0);
-            }
-        }
-        return;
-    }
+    m_sync_store->store_block(vblock);
 
     // disable broadcast newblockhash to archive neighbors
     // if (m_sync_broadcast != nullptr)

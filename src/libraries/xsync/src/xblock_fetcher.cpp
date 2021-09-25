@@ -49,6 +49,29 @@ void xblock_fetcher_event_monitor_t::process_event(const mbus::xevent_ptr_t& e) 
     m_block_fetcher->process_event(e);
 }
 
+void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_t& e, bool &discard) {
+    switch(e->major_type) {
+        case mbus::xevent_major_type_account:
+            discard = false;
+            break;
+        case mbus::xevent_major_type_blockfetcher:
+            if (e->minor_type == mbus::xevent_blockfetcher_t::newblock) {
+                auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_block_t>(e);
+                std::string address_prefix;
+                uint32_t table_id = 0;
+
+                if (!data::xdatautil::extract_parts(bme->block->get_account(), address_prefix, table_id))
+                    return;
+                if (address_prefix == sys_contract_beacon_table_block_addr) {
+                    discard = false;
+                } else if (address_prefix == sys_contract_zec_table_block_addr) {
+                    discard = false;
+                }
+            }
+            break;
+    }
+}
+
 /////////
 xblock_fetcher_timer_t::xblock_fetcher_timer_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus, base::xcontext_t &_context, int32_t timer_thread_id):
 base::xxtimer_t(_context, timer_thread_id),
