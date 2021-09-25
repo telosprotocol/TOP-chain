@@ -328,6 +328,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_statestore_get_block_state,
     blockstore_access_from_statestore_get_block_index_state,
     blockstore_access_from_statestore_get_connect_state,
+    blockstore_access_from_statestore_load_unit,
     blockstore_access_from_statestore_get_commit_state,
     blockstore_access_from_statestore_end = blockstore_access_from_statestore_get_commit_state,
 

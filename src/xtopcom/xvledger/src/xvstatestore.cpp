@@ -790,7 +790,7 @@ namespace top
                 }
                 
                 // load prev block
-                auto prev_block = xvchain_t::instance().get_xblockstore()->load_block_object(target_account, cur_block->get_height() - 1, cur_block->get_last_block_hash(), false,(int)metrics::statestore_get_unit_state_load_unit);
+                auto prev_block = xvchain_t::instance().get_xblockstore()->load_block_object(target_account, cur_block->get_height() - 1, cur_block->get_last_block_hash(), false,(int)metrics::blockstore_access_from_statestore_load_unit);
                 if (nullptr == prev_block) {
                     xwarn("xvblkstatestore_t::load_unit_latest_blocks_and_base_state fail-load block. account=%s,height=%ld,target_block=%s",
                           target_account.get_account().c_str(), cur_block->get_height() - 1, target_block->dump().c_str());

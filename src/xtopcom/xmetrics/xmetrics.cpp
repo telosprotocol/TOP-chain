@@ -298,6 +298,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_state);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_index_state);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_connect_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_load_unit);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_commit_state);
         
         RETURN_METRICS_NAME(blockstore_access_from_application);
