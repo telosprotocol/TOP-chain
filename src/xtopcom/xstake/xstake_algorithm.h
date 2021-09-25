@@ -272,6 +272,24 @@ struct account_stake_t final {
     uint64_t stake;
 };
 
+template <common::xrole_type_t MinerTypeV>
+uint64_t minimal_deposit_of();
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::edge>();
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::archive>();
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::full_node>();
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::advance>();
+
+template <>
+uint64_t minimal_deposit_of<common::xrole_type_t::validator>();
+
 struct xreg_node_info final : public xserializable_based_on<void> {
 public:
     xreg_node_info() = default;
@@ -279,88 +297,49 @@ public:
     xreg_node_info & operator=(xreg_node_info const &) = default;
     xreg_node_info(xreg_node_info &&) = default;
     xreg_node_info & operator=(xreg_node_info &&) = default;
-    ~xreg_node_info() = default;
+    ~xreg_node_info() override = default;
 
-    /**
-     * @brief check if self is a rec node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_rec_node() const noexcept {
-        return common::has<common::xrole_type_t::advance>(m_registered_role);
-    }
+    /// @brief Check to see if this node could be an rec based on miner type.
+    bool could_be_rec() const noexcept;
 
-    /**
-     * @brief check if self is a zec node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_zec_node() const noexcept {
-        return common::has<common::xrole_type_t::advance>(m_registered_role);
-    }
+    /// @brief Check to see if this node could be a zec based on miner type.
+    bool could_be_zec() const noexcept;
 
-    /**
-     * @brief check if self is a valid auditor node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_valid_auditor_node() const noexcept {
-        return common::has<common::xrole_type_t::advance>(m_registered_role) && m_vote_amount * TOP_UNIT >= m_account_mortgage;
-    }
+    /// @brief Check to see if this node could be an auditor based on miner type.
+    bool could_be_auditor() const noexcept;
 
-    /**
-     * @brief check if self is a valid archive node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_valid_archive_node() const noexcept {
-        return common::has<common::xrole_type_t::archive>(m_registered_role) ||
-               (common::has<common::xrole_type_t::advance>(m_registered_role) && m_vote_amount * TOP_UNIT >= m_account_mortgage);
-    }
+    /// @brief Check to see if this node could be a validator based on miner type.
+    bool could_be_validator() const noexcept;
 
-    /**
-     * @brief check if self is an auditor node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_auditor_node() const noexcept {
-        return common::has<common::xrole_type_t::advance>(m_registered_role);
-    }
+    /// @brief Check to see if this node could be an archive based on miner type.
+    bool could_be_archive() const noexcept;
 
-    /**
-     * @brief check if self is an validator node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_validator_node() const noexcept {
-        return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
-    }
+    /// @brief Check to see if this node could be an edge based on miner type.
+    bool could_be_edge() const noexcept;
 
-    /**
-     * @brief check if self is an archive node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_archive_node() const noexcept {
-        return common::has<common::xrole_type_t::archive>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
-    }
+    /// @brief Check to see if this node could be a full node based on miner type.
+    bool could_be_full_node() const noexcept;
 
-    /**
-     * @brief check if self is an edge node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_edge_node() const noexcept {
-        return common::has<common::xrole_type_t::edge>(m_registered_role);
-    }
+    /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_rec() const noexcept;
+
+    /// @brief Check to see if this node can be a zec based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_zec() const noexcept;
+
+    /// @brief Check to see if this node can be a validator based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_validator() const noexcept;
+
+    /// @brief Check to see if this node can be an auditor based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_auditor() const noexcept;
+
+    /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_archive() const noexcept;
+
+    /// @brief Check to see if this node can be an edge based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_edge() const noexcept;
+
+    /// @brief Check to see if this node can be a full node based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_full_node() const noexcept;
 
     /**
      * @brief check if self is an invlid node
@@ -392,51 +371,7 @@ public:
         return m_account_mortgage;
     }
 
-    /**
-     * @brief check if self is a rec node
-     *
-     * @return true
-     * @return false
-     */
-    bool rec() const noexcept;
-    /**
-     * @brief check if self is a zec node
-     *
-     * @return true
-     * @return false
-     */
-    bool zec() const noexcept;
-    /**
-     * @brief check if self is an auditor node
-     *
-     * @return true
-     * @return false
-     */
-    bool auditor() const noexcept;
-    /**
-     * @brief check if self is a validator node
-     *
-     * @return true
-     * @return false
-     */
-    bool validator() const noexcept;
-    /**
-     * @brief check if self is an edge node
-     *
-     * @return true
-     * @return false
-     */
-    bool edge() const noexcept;
-    /**
-     * @brief check if self is an archive node
-     *
-     * @return true
-     * @return false
-     */
-    bool archive() const noexcept;
-
-    /// @brief Check if self is a full node. Full node is another kind of archive.
-    bool full_node() const noexcept;
+    uint64_t deposit() const noexcept;
 
     /**
      * @brief get rec stake
@@ -493,7 +428,7 @@ public:
      */
     uint64_t get_auditor_stake() const noexcept {
         uint64_t stake = 0;
-        if (is_auditor_node()) {
+        if (could_be_auditor()) {
             stake = (m_account_mortgage / TOP_UNIT + m_vote_amount / 2) * m_auditor_credit_numerator / m_auditor_credit_denominator;
         }
         return stake;
@@ -506,7 +441,7 @@ public:
      */
     uint64_t get_validator_stake() const noexcept {
         uint64_t stake = 0;
-        if (is_validator_node()) {
+        if (could_be_validator()) {
             auto max_validator_stake = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_stake);
             stake = (uint64_t)sqrt((m_account_mortgage / TOP_UNIT + m_vote_amount / 2) * m_validator_credit_numerator / m_validator_credit_denominator);
             stake = stake < max_validator_stake ? stake : max_validator_stake;
@@ -524,33 +459,7 @@ public:
      *
      * @return uint64_t
      */
-    uint64_t get_required_min_deposit() const noexcept {
-        uint64_t min_deposit = 0;
-        if (miner_type_has<common::xrole_type_t::edge>()) {
-            uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_edge_deposit);
-            if (deposit > min_deposit)
-                min_deposit = deposit;
-        }
-
-        if (miner_type_has<common::xrole_type_t::validator>()) {
-            uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_deposit);
-            if (deposit > min_deposit)
-                min_deposit = deposit;
-        }
-
-        if (miner_type_has<common::xrole_type_t::advance>()) {
-            uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_deposit);
-            if (deposit > min_deposit)
-                min_deposit = deposit;
-        }
-
-        if (miner_type_has<common::xrole_type_t::archive>()) {
-            uint64_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit);
-            if (deposit > min_deposit)
-                min_deposit = deposit;
-        }
-        return min_deposit;
-    }
+    uint64_t get_required_min_deposit() const noexcept;
 
     /**
      * @brief deduce credit score
