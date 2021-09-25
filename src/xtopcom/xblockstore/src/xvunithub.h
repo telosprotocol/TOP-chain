@@ -67,9 +67,13 @@ namespace top
             virtual uint64_t get_latest_cert_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_committed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual bool     get_latest_connected_block_info(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag = 0) override;
+            
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual bool     get_latest_executed_block_info(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag = 0) override;
             virtual bool     set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override;
+
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xblock_vector               load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag = 0) override;
@@ -100,6 +104,9 @@ namespace top
             virtual base::xauto_ptr<base::xvbindex_t>  load_block_index(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvbindex_t>  load_block_index(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvbindex_t>  load_block_index(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,const int atag = 0) override;//just return the highest viewid of matched flag
+            
+            virtual base::xauto_ptr<base::xvbindex_t> load_latest_committed_index(const base::xvaccount_t & account,const int atag = 0)  override;//block with committed status
+            virtual base::xauto_ptr<base::xvbindex_t> load_latest_connected_index(const base::xvaccount_t & account,const int atag = 0)  override;
 
         public:
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account

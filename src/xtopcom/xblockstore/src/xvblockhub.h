@@ -91,6 +91,7 @@ namespace top
 
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
+
         public:
             xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:

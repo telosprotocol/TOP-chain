@@ -68,7 +68,6 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     {
         account_index_info.set_sync_height_start(start_sync_height);
         account_index_info.set_sync_num(total_sync_num);
-        return false;
     }
 
 /*  no need load cert block
@@ -86,10 +85,12 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
         }
         return false;
     }
-*/
-    base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
+    */
+   
+    base::xauto_ptr<base::xvbindex_t> _start_block_ptr = m_para->get_vblockstore()->load_latest_committed_index(_account_vaddress);
+
     base::xauto_ptr<base::xvbstate_t> account_bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_account_vaddress,_start_block_ptr->get_height(),_start_block_ptr->get_block_hash(), metrics::statestore_access_from_txpool_get_accountstate);
     if (account_bstate == nullptr) {
         xwarn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
         return false;

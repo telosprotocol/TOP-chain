@@ -500,7 +500,7 @@ namespace top
 
             base::xvinentity_t*         get_primary_entity() const;
             size_t                      get_action_count() const;
-            virtual std::string         dump();
+            virtual std::string         dump() const override;
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
@@ -537,7 +537,7 @@ namespace top
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
             base::xvoutentity_t*        get_primary_entity() const;
-            virtual std::string         dump();
+            virtual std::string         dump() const override;
 
         protected:
             const std::string           get_binlog_hash();
@@ -567,7 +567,7 @@ namespace top
         //note:once reset all flags to 0 ->indicate that block is no-longer valid
         enum enum_xvblock_flag
         {
-            // enum_xvblock_flag_connected         = 0x0100, //block connected all the ways to genesis block or last full-block
+            enum_xvblock_flag_connected         = 0x0100, //block connected all the ways to genesis block or last full-block
             enum_xvblock_flag_stored            = 0x0200, //block has been stored to db/xstore fully
             enum_xvblock_flag_unpacked          = 0x0400, //unpacked container(e.g.tableblock) into multiple unit blocks
             enum_xvblock_flag_confirmed         = 0x0800, //block has delivered receipt to receiver who confirmed and finished
@@ -576,7 +576,7 @@ namespace top
             enum_xvblock_flag_authenticated     = 0x1000, //block has been certificated --block'signature has been verified
             enum_xvblock_flag_locked            = 0x2000, //block has been locked   ---block not allow to fork
             enum_xvblock_flag_committed         = 0x4000, //block has been commited ---block to allow change state of account
-            // enum_xvblock_flag_executed          = 0x8000, //block has been executed ---block has been executed and changed state
+            enum_xvblock_flag_executed          = 0x8000, //block has been executed ---block has been executed and changed state
             enum_xvblock_flags_high4bit_mask    = 0xF000, //mask to retrive high 4bit of block flags
 
             enum_xvblock_flags_mask             = 0xFF00, //mask to get all block flags

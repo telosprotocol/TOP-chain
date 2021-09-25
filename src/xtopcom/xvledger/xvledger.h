@@ -121,6 +121,7 @@ namespace top
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
             bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            bool    get_latest_executed_block(uint64_t & block_height,std::string & block_hash);
             
             const xblockmeta_t  get_block_meta();
             const xstatemeta_t  get_state_meta();

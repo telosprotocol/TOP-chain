@@ -94,7 +94,6 @@ namespace top
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
                 return nullptr;\
             }\
-            XMETRICS_TIMER(metrics::blockstore_tick);\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
                 xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
@@ -109,7 +108,6 @@ namespace top
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
                 return 0;\
             }\
-            XMETRICS_TIMER(metrics::blockstore_tick);\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
                 xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
@@ -166,7 +164,7 @@ namespace top
             uint64_t timeout_for_block_plugin = base::enum_plugin_idle_timeout_ms;
             if(auto_account_ptr->is_contract_address())
             {
-                timeout_for_block_plugin = (uint64_t)-1; //table object keep plugin forever
+                timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
             }
 
             xblockacct_t * new_plugin = new xchainacct_t(*auto_account_ptr,timeout_for_block_plugin,m_store_path,m_xvdb_ptr);//replace by new account address;
@@ -398,6 +396,22 @@ namespace top
             return 0;
         }
 
+        bool    xvblockstore_impl::get_latest_connected_block_info(const base::xvaccount_t & account,uint64_t & block_height,std::string & block_hash,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            // XTODO use load_latest_connected_index for invoke update meta
+            base::xauto_ptr<base::xvbindex_t> _bindex = account_obj->load_latest_connected_index();
+            if (_bindex != nullptr)
+            {
+                block_height = _bindex->get_height();
+                block_hash   = _bindex->get_block_hash();
+                return true;
+            }
+            return false;
+        }
+
+        //genesis info has been moved to xvaccountobj_t who manage them directly
         uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & address,const int atag)
         {
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
@@ -406,10 +420,10 @@ namespace top
                 return 0;
             }
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
-            METRICS_TAG(atag, 1);
             return account_obj->get_sync_meta()._highest_genesis_connect_height;
         }
 
+        //the execution info has been moved to xvaccountobj_t who manage them directly
         uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & address,const int atag)
         {
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
@@ -418,8 +432,19 @@ namespace top
                 return 0;
             }
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
-            METRICS_TAG(atag, 1);
             return account_obj->get_state_meta()._highest_execute_block_height;
+        }
+
+        bool    xvblockstore_impl::get_latest_executed_block_info(const base::xvaccount_t & address,uint64_t & block_height,std::string & block_hash,const int atag)
+        {
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("invalid account=%s",address.get_address().c_str());
+                block_height = 0;
+                return false;
+            }
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
+            return account_obj->get_latest_executed_block(block_height, block_hash);
         }
 
         bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag)
@@ -430,7 +455,6 @@ namespace top
                 return false;
             }
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(account);
-            METRICS_TAG(atag, 1);
             return account_obj->set_latest_executed_block(height, blockhash);
         }
 
@@ -909,7 +933,21 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_index(height,required_block,atag);
         }
-
+    
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_latest_committed_index(const base::xvaccount_t & account,const int atag)//just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->load_latest_committed_index();
+        }
+        
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_latest_connected_index(const base::xvaccount_t & account,const int atag)//just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->load_latest_connected_index();
+        }
+ 
         //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
         bool                xvblockstore_impl::clean_caches(const base::xvaccount_t & account,const int atag)
         {

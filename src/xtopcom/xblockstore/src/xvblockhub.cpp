@@ -204,7 +204,7 @@ namespace top
             //note: place code first but  please enable it later
             #ifdef __ALLOW_TABLE_MORE_CACHE_SIZE__
             if(base::enum_xvblock_level_table == m_meta->_block_level)
-                return (enum_max_cached_blocks << 1);//allow cache to max 64 block
+                return (enum_max_cached_blocks << 2);//allow cache to max 128 block
             #endif
 
             return enum_max_cached_blocks;
@@ -265,19 +265,16 @@ namespace top
                             for(auto it = view_map.begin(); it != view_map.end(); ++it)
                                 it->second->reset_prev_block(NULL);
                         }
+                        
                         //erase the this iterator finally
                         m_all_blocks.erase(old_height_it);
                         #ifdef ENABLE_METRICS
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1 * erase_count);
                         #endif
                     }
-                    else //clean raw block for those reserved index
+                    else if(old_height_it->first >= m_meta->_highest_connect_block_height)
                     {
-                        auto & view_map = old_height_it->second;
-                        for(auto it = view_map.begin(); it != view_map.end(); ++it)
-                        {
-                            it->second->reset_this_block(NULL);
-                        }
+                        break;
                     }
                 }
                 // try to save meta when clean blocks
@@ -297,19 +294,30 @@ namespace top
                         #endif
                         continue;
                     }
-
-                    auto & view_map = old_height_it->second;
-                    for(auto it = view_map.begin(); it != view_map.end(); ++it)
+                    
+                    bool cleaned_one = false;
+                    if(   (old_height_it->first != m_meta->_highest_full_block_height)    //keep latest_full_block
+                       && (old_height_it->first <  m_meta->_highest_commit_block_height)  //keep latest_committed block
+                       && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
+                       && (old_height_it->first != m_meta->_highest_cert_block_height)    //keep latest_cert block
+                       && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block
                     {
-                        if(it->second->get_this_block() != NULL) //clean any block that just reference by index only
+                        auto & view_map = old_height_it->second;
+                        for(auto it = view_map.begin(); it != view_map.end(); ++it)
                         {
-                            if(it->second->get_this_block()->get_refcount() == 1)//no any other hold
+                            if(it->second->get_this_block() != NULL) //clean any block that just reference by index only
                             {
-                                it->second->reset_this_block(NULL);
-                                xdbg_info("xblockacct_t::clean_caches,block=%s",it->second->dump().c_str());
+                                if(it->second->get_this_block()->get_refcount() == 1)//no any other hold
+                                {
+                                    it->second->reset_this_block(NULL);
+                                    cleaned_one = true;
+                                    xdbg_info("xblockacct_t::clean_caches,block=%s",it->second->dump().c_str());
+                                }
                             }
                         }
                     }
+                    if(cleaned_one)
+                        break;
                 }
             }
             return true;

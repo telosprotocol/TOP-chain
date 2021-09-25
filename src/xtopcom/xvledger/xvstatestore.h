@@ -68,7 +68,13 @@ namespace top
 
             bool                      write_connect_state_to_db(const xvaccount_t & target_account, xvbstate_t & target_state,const std::string & target_block_hash);
             xobject_ptr_t<xvbstate_t> read_connect_state_from_db(const xvaccount_t & target_account);
+            
+            xobject_ptr_t<xvbstate_t> load_executed_unit_state(const xvaccount_t & target_account);
+            xobject_ptr_t<xvbstate_t> load_executed_table_state(const xvaccount_t & target_account);
+            
+            xauto_ptr<xvbstate_t>     get_unit_block_state(const xvaccount_t & target_account,const uint64_t  target_block_height,const std::string & target_block_hash,const int etag);
             xauto_ptr<xvbstate_t>     get_unit_block_state(xvblock_t * target_block, const int etag);
+            
             xauto_ptr<xvbstate_t>     get_table_block_state(xvblock_t * target_block, const int etag);
             bool                      load_unit_latest_blocks_and_base_state(const xvaccount_t & target_account, xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
             xobject_ptr_t<xvbstate_t> execute_unit_target_block(const xvaccount_t & target_account, const xobject_ptr_t<xvbstate_t> & db_base_bstate, xvblock_t * target_block);

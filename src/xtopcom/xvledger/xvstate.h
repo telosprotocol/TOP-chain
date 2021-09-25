@@ -152,7 +152,7 @@ namespace top
             // for genesis block build
             xvbstate_t(const xvheader_t& genesis_header,xvexeunit_t * parent_unit = NULL,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             //debug & ut-test only
-            xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit = NULL);
+            xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string block_hash,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit = NULL);
             
         protected:
             xvbstate_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
@@ -171,7 +171,8 @@ namespace top
         public://read-only
             inline const uint64_t       get_block_height()          const {return m_block_height;}
             inline const uint64_t       get_block_viewid()          const {return m_block_viewid;}
- 
+            inline const std::string &  get_block_hash()            const {return m_block_hash;}
+            
             inline const std::string &  get_last_block_hash()       const {return m_last_block_hash;}
             inline const std::string &  get_last_fullblock_hash()   const {return m_last_full_block_hash;}
             inline const uint64_t       get_last_fullblock_height() const {return m_last_full_block_height;}
@@ -200,7 +201,8 @@ namespace top
             //belong to current block
             uint64_t        m_block_height;
             uint64_t        m_block_viewid;
-  
+            std::string     m_block_hash; //note: it might be null for proposal block without authentication
+            
             //point to last block
             std::string     m_last_block_hash;       //point the last block'hash
             std::string     m_last_full_block_hash;  //any block need carry the m_last_full_block_hash

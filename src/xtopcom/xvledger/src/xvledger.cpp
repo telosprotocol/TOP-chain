@@ -216,6 +216,15 @@ namespace top
             return false;
         }
     
+        bool   xvaccountobj_t::get_latest_executed_block(uint64_t & block_height,std::string & block_hash)
+        {
+            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            xvactmeta_t * meta_ptr = get_meta();
+            block_height = meta_ptr->get_state_meta()._highest_execute_block_height;
+            block_hash   = meta_ptr->get_state_meta()._highest_execute_block_hash;
+            return true;
+        }
+    
         bool   xvaccountobj_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
             std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock

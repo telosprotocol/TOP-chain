@@ -277,13 +277,16 @@ namespace top
             }
 
             xobject_ptr_t<xvbstate_t> current_state = nullptr;
-            if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, current_block)) {
-                xerror("xvblkstatestore_t::make_state_from_current_block,fail-load block output for block(%s)",current_block->dump().c_str());
-                return nullptr;
-            }
             // try make state form block self
             if (current_block->get_height() == 0
-                || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_full_state().empty()) ) {
+                || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_full_state().empty()) )
+            {
+                //load output first
+                if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, current_block)) {
+                    xerror("xvblkstatestore_t::make_state_from_current_block,fail-load block output for block(%s)",current_block->dump().c_str());
+                    return nullptr;
+                }
+                
                 current_state = make_object_ptr<xvbstate_t>(*current_block);
                 if (current_block->get_block_class() != enum_xvblock_class_nil) {
                     std::string binlog = current_block->get_block_class() == enum_xvblock_class_light ? current_block->get_binlog() : current_block->get_full_state();
@@ -603,9 +606,17 @@ namespace top
 
         xauto_ptr<xvbstate_t> xvblkstatestore_t::get_block_state(const xvaccount_t & target_account,const uint64_t block_height,const std::string& block_hash, const int etag)
         {
+            if(target_account.is_unit_address())
+                return get_unit_block_state(target_account, block_height, block_hash, etag);
+            
             //step#1: check cached states object per 'account and block'hash
             {
-                //XTODO
+                xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
+                target_bstate = get_lru_cache(enum_xvblock_level_table, block_hash);
+                if (target_bstate != nullptr) {
+                    xdbg("xvblkstatestore_t::get_block_state succ-get from cache table state=%s", target_bstate->dump().c_str());
+                    return target_bstate;
+                }
             }
             base::xauto_ptr<base::xvblock_t> current_block( xvchain_t::instance().get_xblockstore()->load_block_object(target_account,block_height,block_hash,false, (int)metrics::blockstore_access_from_statestore_get_block_state));
             if(!current_block)
@@ -735,6 +746,50 @@ namespace top
             auto_state_ptr.attach(state_ptr);
             return auto_state_ptr;
         }
+    
+        xobject_ptr_t<xvbstate_t>  xvblkstatestore_t::load_executed_unit_state(const xvaccount_t & target_account)
+        {
+            uint64_t latest_executed_height = 0;
+            std::string latest_executed_hash;
+            
+            //check cache first
+            if(xvchain_t::instance().get_xblockstore()->get_latest_executed_block_info(target_account,latest_executed_height,latest_executed_hash))
+            {
+                xobject_ptr_t<xvbstate_t> cached_bstate =  get_lru_cache(base::enum_xvblock_level_unit,latest_executed_hash);
+                if(cached_bstate)
+                    return cached_bstate;
+            }
+            xobject_ptr_t<xvbstate_t> loaded_state = read_connect_state_from_db(target_account);
+            if(loaded_state)
+            {
+                //still cache state object that is valueable
+                if(loaded_state->get_block_hash().empty() == false) //new version of state object
+                    set_lru_cache(enum_xvblock_level_unit, loaded_state->get_block_hash(), loaded_state);
+            }
+            return loaded_state;
+        }
+    
+        xobject_ptr_t<xvbstate_t>  xvblkstatestore_t::load_executed_table_state(const xvaccount_t & target_account)
+        {
+            uint64_t latest_executed_height = 0;
+            std::string latest_executed_hash;
+            
+            //check cache first
+            if(xvchain_t::instance().get_xblockstore()->get_latest_executed_block_info(target_account,latest_executed_height,latest_executed_hash))
+            {
+                xobject_ptr_t<xvbstate_t> cached_bstate =  get_lru_cache(base::enum_xvblock_level_table,latest_executed_hash);
+                if(cached_bstate)
+                    return cached_bstate;
+            }
+            xobject_ptr_t<xvbstate_t> loaded_state = read_connect_state_from_db(target_account);
+            if(loaded_state)
+            {
+                //still cache state object that is valueable
+                if(loaded_state->get_block_hash().empty() == false) //new version of state object
+                    set_lru_cache(enum_xvblock_level_table, loaded_state->get_block_hash(), loaded_state);
+            }
+            return loaded_state;
+        }
 
         bool xvblkstatestore_t::load_unit_latest_blocks_and_base_state(const xvaccount_t & target_account, xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks)
         {
@@ -856,6 +911,67 @@ namespace top
             return target_bstate;
         }
 
+        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_unit_block_state(const xvaccount_t & target_account,const uint64_t  target_block_height,const std::string & target_block_hash,const int etag)
+        {
+            xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
+            xobject_ptr_t<xvbstate_t> db_base_bstate = nullptr;
+            
+            // try load from cache
+            target_bstate = get_lru_cache(enum_xvblock_level_unit, target_block_hash);
+            XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, target_bstate != nullptr ? 1 : 0);
+            XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)etag, target_bstate != nullptr ? 1 : 0);
+            if (target_bstate != nullptr) {
+                xdbg("xvblkstatestore_t::get_unit_block_state_v2 succ-get from cache.block=%s", target_bstate->dump().c_str());
+                return target_bstate;
+            }
+            
+            //check if match latest connected state in cache first,then load from db
+            target_bstate = load_executed_unit_state(target_account);
+            if (target_bstate != nullptr)
+            {
+                //note:new version of state has been cached by load_executed_unit_state
+                if(target_bstate->get_block_hash().empty()) //old version of state object
+                    set_lru_cache(enum_xvblock_level_unit, target_block_hash, target_bstate);
+
+                if (  (target_bstate->get_block_height() == target_block_height)
+                    &&(target_bstate->get_block_hash() == target_block_hash) )
+                {
+                    xdbg("xvblkstatestore_t::get_unit_block_state_v2 succ-get state form db.block=%s",target_bstate->dump().c_str());
+                    
+                    XMETRICS_GAUGE(metrics::statestore_get_unit_state_match_dbstate, 1);
+                    return target_bstate;
+                } else {
+                    XMETRICS_GAUGE(metrics::statestore_get_unit_state_match_dbstate, 0);
+                }
+                
+                if (target_bstate->get_block_height() < target_block_height) {
+                    db_base_bstate = target_bstate;
+                    XMETRICS_GAUGE(metrics::statestore_get_unit_state_older_than_dbstate, 0);
+                } else {
+                    XMETRICS_GAUGE(metrics::statestore_get_unit_state_older_than_dbstate, 1);
+                    xinfo("xvblkstatestore_t::get_unit_block_state_v2,get older state than dbstate.state_height=%ld,block=%s",target_block_height,target_bstate->dump().c_str());
+                }
+            }
+            
+            auto target_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(target_account, target_block_height,target_block_hash,false,(int)etag);
+            if (target_block == nullptr)
+            {
+                xwarn("xvblkstatestore_t::get_unit_block_state_v2 fail-load block of account=%s with height(%lu) and hash(%s)", target_account.get_account().c_str(),target_block_height,xstring_utl::to_hex(target_block_hash).c_str());
+                return nullptr;
+            }
+            
+            // try execute target block state
+            target_bstate = execute_unit_target_block(target_account, db_base_bstate, target_block.get());
+            if (target_bstate != nullptr) {
+                xdbg("xvblkstatestore_t::get_unit_block_state_v2 succ-get state by execute.block=%s",target_block->dump().c_str());
+                set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
+                return target_bstate;
+            }
+            
+            xwarn("xvblkstatestore_t::get_unit_block_state_v2 fail to load state for block=%s", target_block->dump().c_str());
+            return nullptr;
+        }
+    
         xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_unit_block_state(xvblock_t * target_block, const int etag)
         {
             xdbg("xvblkstatestore_t::get_unit_block_state enter.block=%s", target_block->dump().c_str());
@@ -872,18 +988,22 @@ namespace top
                 return target_bstate;
             }
             
-            // check if match latest connected state in db
-            target_bstate = read_connect_state_from_db(target_account);
+            //check if match latest connected state in cache first,then load from db
+            target_bstate = load_executed_unit_state(target_account);
             if (target_bstate != nullptr) {
-                if (target_bstate->get_block_height() == target_block->get_height() && target_bstate->get_block_viewid() == target_block->get_viewid()) {
-                    xdbg("xvblkstatestore_t::get_unit_block_state succ-get state form db.block=%s",target_block->dump().c_str());                   
+                //note:new version of state has been cached by load_executed_unit_state
+                if(target_bstate->get_block_hash().empty()) //old version of state object
                     set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
+
+                if (target_bstate->get_block_height() == target_block->get_height() && target_bstate->get_block_viewid() == target_block->get_viewid()) {
+                    xdbg("xvblkstatestore_t::get_unit_block_state succ-get state form db.block=%s",target_block->dump().c_str());
+                    
                     XMETRICS_GAUGE(metrics::statestore_get_unit_state_match_dbstate, 1);
                     return target_bstate;
                 } else {
                     XMETRICS_GAUGE(metrics::statestore_get_unit_state_match_dbstate, 0);
                 }
-
+                
                 if (target_bstate->get_block_height() < target_block->get_height()) {
                     db_base_bstate = target_bstate;
                     XMETRICS_GAUGE(metrics::statestore_get_unit_state_older_than_dbstate, 0);

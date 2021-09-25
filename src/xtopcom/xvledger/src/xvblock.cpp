@@ -24,7 +24,7 @@ namespace top
         {
             XMETRICS_GAUGE(metrics::dataobject_xvheader, 1);
             m_types     = 0;
-            m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
+            m_versions  = (1 << 16) | (1 << 8);//[8:features][8:major][8:minor][8:patch]
             m_chainid   = 0;
             m_height    = 0;
             m_weight    = 1;
@@ -36,7 +36,7 @@ namespace top
         {
             XMETRICS_GAUGE(metrics::dataobject_xvheader, 1);
             m_types     = 0;
-            m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
+            m_versions  = (1 << 16) | (1 << 8);//[8:features][8:major][8:minor][8:patch]
             m_chainid   = 0;
             m_height    = 0;
             m_weight    = 1;
@@ -1190,12 +1190,12 @@ namespace top
             return total_count;
         }
         
-        std::string xvinput_t::dump()
+        std::string xvinput_t::dump() const
         {
             char local_param_buf[128];
 
-            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,actions=%zu,res=%zu}",
-                    get_entitys().size(),get_action_count(),get_resources_data().size());
+            //xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,actions=%zu,res=%zu}",
+            //        get_entitys().size(),get_action_count(),get_resources_data().size());
             return std::string(local_param_buf);
         }
 
@@ -1283,12 +1283,12 @@ namespace top
             return outentity->get_state_hash();
         }
         
-        std::string xvoutput_t::dump()
+        std::string xvoutput_t::dump() const
         {
             char local_param_buf[128];
             
-            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,res=%zu}",
-                    get_entitys().size(),get_resources_data().size());
+            //xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,res=%zu}",
+            //        get_entitys().size(),get_resources_data().size());
             return std::string(local_param_buf);
         }
  
