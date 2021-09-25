@@ -124,6 +124,7 @@ public:
     xsync_command_execute_result execute_download(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason);
 protected:
     enum_result_code handle_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height);
+    enum_result_code pre_handle_block(std::vector<data::xblock_ptr_t> &blocks, bool is_elect_chain, uint64_t quota_height, std::vector<base::xvblock_t*> &processed_blocks);
 
     xsync_command_execute_result handle_next(uint64_t current_height);
     bool handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr);
