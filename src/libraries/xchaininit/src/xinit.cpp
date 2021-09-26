@@ -184,7 +184,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     // make block here
     // uint32_t count = 0;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(5*60));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 //         count++;
 
 // #if defined XENABLE_MEMTRACE_DBG
@@ -508,7 +508,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     // make block here
     // uint32_t count = 0;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(5*60));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 //         count++;
 
 // #if defined XENABLE_MEMTRACE_DBG
