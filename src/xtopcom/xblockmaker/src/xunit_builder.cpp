@@ -102,55 +102,21 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
         auto result = vm.execute(input_txs, proposal_bstate, cs_para);
 
-        std::vector<xcons_transaction_ptr_t> output_txs = input_txs;
-        std::vector<xcons_transaction_ptr_t> follow_up_immediate_txs;
-        std::vector<xcons_transaction_ptr_t> follow_up_delay_txs;
-        for (auto i = 0u; i < result.transaction_results.size(); i++) {
-            auto const & r = result.transaction_results[i];
-            auto & tx = output_txs[i];
-            if (r.status.ec) {
-                tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
-                if (tx->is_send_tx() || tx->is_self_tx()) {
-                    lightunit_build_para->set_fail_tx(tx);
-                } else if (tx->is_recv_tx()) {
-                    lightunit_build_para->set_pack_tx(tx);
-                } else {
-                    xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
-                }
-            } else {
-                tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
-                lightunit_build_para->set_pack_tx(tx);
-                for (auto & follow_up : r.output.followup_transaction_data) {
-                    if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
-                        follow_up_immediate_txs.emplace_back(follow_up.followed_transaction);
-                    } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
-                        follow_up_delay_txs.emplace_back(follow_up.followed_transaction);
-                    } else {
-                        xwarn("[xlightunit_builder_t::build_block] invalid follow up tx type: %d", follow_up.schedule_type);
-                    }
-                }
-            }
-        }
-        for (auto const & follow_up : follow_up_immediate_txs) {
-            lightunit_build_para->set_pack_tx(follow_up);
-        }
-        // TODO lon: add follow_up_delay_txs to tx pool
-        for (auto const & follow_up : follow_up_delay_txs) {
-
-        }
-        if (lightunit_build_para->get_pack_txs().size() == 0) {
+        lightunit_build_para->set_fail_txs(result.failed_tx_assemble);
+        lightunit_build_para->set_pack_txs(result.success_tx_assemble);
+        if (result.success_tx_assemble.size() == 0) {
             build_para->set_error_code(xblockmaker_error_tx_execute);
             return nullptr;
         }
 
         // lightunit_build_para->set_pack_txs(input_txs);
         xlightunit_block_para_t lightunit_para;
-        lightunit_para.set_input_txs(lightunit_build_para->get_pack_txs());
+        lightunit_para.set_input_txs(result.success_tx_assemble);
         lightunit_para.set_fullstate_bin(result.contract_state_snapshot);
         lightunit_para.set_binlog(result.binlog);
 
         base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
-        alloc_tx_receiptid(lightunit_build_para->get_pack_txs(), receiptid_state);
+        alloc_tx_receiptid(result.success_tx_assemble, receiptid_state);
         base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
         xblock_ptr_t proposal_unit;
         proposal_unit.attach((data::xblock_t *)_proposal_block);
