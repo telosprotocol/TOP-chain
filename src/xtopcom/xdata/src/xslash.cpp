@@ -93,4 +93,21 @@ xaction_node_info_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
+void print_summarize_info(data::xunqualified_node_info_t const & summarize_slash_info) {
+    std::string out = "";
+    for (auto const & item : summarize_slash_info.auditor_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    for (auto const & item : summarize_slash_info.validator_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    xdbg("[print_summarize_info] summarize info: %s", out.c_str());
+}
+
 NS_END2

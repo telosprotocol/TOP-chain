@@ -29,7 +29,7 @@ bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height
     }
     value = propobj->query();
     if (value.empty()) { // property is empty after create
-        xassert(bstate->get_block_height() == 0);
+        // xassert(bstate->get_block_height() == 0);
         return false;
     }
     height = bstate->get_block_height();
