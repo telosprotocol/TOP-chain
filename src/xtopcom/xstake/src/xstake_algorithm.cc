@@ -196,32 +196,87 @@ uint64_t minimal_deposit_of<common::xrole_type_t::validator>() {
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_deposit);
 }
 
+template <>
+bool could_be<common::xnode_type_t::rec>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::zec>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::consensus_auditor>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::auditor>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::consensus_validator>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::validator>(miner_type) || common::has<common::xrole_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::validator>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::validator>(miner_type) || common::has<common::xrole_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::storage_archive>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::archive>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::archive>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::archive>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::storage_full_node>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::full_node>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::full_node>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::full_node>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::edge>(common::xrole_type_t const miner_type) {
+    return common::has<common::xrole_type_t::edge>(miner_type);
+}
+
 bool xreg_node_info::could_be_rec() const noexcept {
-    return common::has<common::xrole_type_t::advance>(m_registered_role);
+    return could_be<common::xnode_type_t::rec>(m_registered_role);
 }
 
 bool xreg_node_info::could_be_zec() const noexcept {
-    return common::has<common::xrole_type_t::advance>(m_registered_role);
+    return could_be<common::xnode_type_t::zec>(m_registered_role);
 }
 
 bool xreg_node_info::could_be_auditor() const noexcept {
-    return common::has<common::xrole_type_t::advance>(m_registered_role);
+    return could_be<common::xnode_type_t::consensus_auditor>(m_registered_role);
 }
 
 bool xreg_node_info::could_be_validator() const noexcept {
-    return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+    return could_be<common::xnode_type_t::consensus_validator>(m_registered_role);
 }
 
 bool xreg_node_info::could_be_archive() const noexcept {
-    return common::has<common::xrole_type_t::archive>(m_registered_role);
+    return could_be<common::xnode_type_t::storage_archive>(m_registered_role);
 }
 
 bool xreg_node_info::could_be_edge() const noexcept {
-    return common::has<common::xrole_type_t::edge>(m_registered_role);
+    return could_be<common::xnode_type_t::edge>(m_registered_role);
 }
 
 bool xreg_node_info::could_be_full_node() const noexcept {
-    return common::has<common::xrole_type_t::full_node>(m_registered_role);
+    return could_be<common::xnode_type_t::storage_full_node>(m_registered_role);
 }
 
 bool xreg_node_info::can_be_rec() const noexcept {
