@@ -13,4 +13,4 @@ endif()
 add_executable(xcontract_runtime_test ${xcontract_runtime_src} ${system_contract_src})
 add_dependencies(xcontract_runtime_test xcontract_vm xcontract_runtime xsystem_contract_runtime xvm  xloader xxbase xblockstore)
 
-target_link_libraries(xcontract_runtime_test PRIVATE xcontract_vm xcontract_runtime xsystem_contract_runtime xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)
+target_link_libraries(xcontract_runtime_test PRIVATE xcontract_vm xcontract_runtime xsystem_contract_runtime xelection_lib xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)
