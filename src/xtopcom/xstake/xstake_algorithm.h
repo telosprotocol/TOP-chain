@@ -290,6 +290,42 @@ uint64_t minimal_deposit_of<common::xrole_type_t::advance>();
 template <>
 uint64_t minimal_deposit_of<common::xrole_type_t::validator>();
 
+template <common::xnode_type_t NodeTypeV>
+bool could_be(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::rec>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::zec>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::consensus_auditor>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::auditor>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::consensus_validator>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::validator>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::storage_archive>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::archive>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::storage_full_node>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::full_node>(common::xrole_type_t const miner_type);
+
+template <>
+bool could_be<common::xnode_type_t::edge>(common::xrole_type_t const miner_type);
+
 struct xreg_node_info final : public xserializable_based_on<void> {
 public:
     xreg_node_info() = default;
