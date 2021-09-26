@@ -11,6 +11,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvcnode.h"
 
 #include <unordered_map>
 #include <vector>
@@ -45,6 +46,7 @@ class xtop_system_contract_manager {
 
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
     base::xvblockstore_t* m_blockstore;
+    base::xvnodesrv_t*    m_nodesvr;
 
 public:
     xtop_system_contract_manager() = default;
@@ -74,6 +76,8 @@ public:
                                 contract_deploy_type_t deploy_type,
                                 common::xnode_type_t broadcast_target,
                                 contract_broadcast_policy_t broadcast_policy);
+
+    base::xvnodesrv_t*  get_node_service() const noexcept;
 
 private:
     void init_system_contract(common::xaccount_address_t const & contract_address);

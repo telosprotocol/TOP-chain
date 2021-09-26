@@ -44,6 +44,10 @@ observer_ptr<system_contracts::xbasic_system_contract_t> xtop_system_contract_ma
     return nullptr;
 }
 
+base::xvnodesrv_t*  xtop_system_contract_manager::get_node_service() const noexcept {
+    return m_nodesvr;
+}
+
 void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address) {
 
     if (m_blockstore->exist_genesis_block(contract_address.value())) {
