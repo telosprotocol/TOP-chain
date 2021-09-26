@@ -25,6 +25,9 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_registration_addr{ "T200024uKnvR
 XINLINE_CONSTEXPR char const * sys_contract_rec_standby_pool_addr2{ "T2000138C1rzRSnPKQH3AeK3NcYLMeZCTkD4dRSTB@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_standby_pool_addr2{ "T200024uEab5cHBkRTUXWueZr8EdWcYVpb8knZSTB@0" };
 
+XINLINE_CONSTEXPR char const * sys_contract_zec_elect_archive_addr{ "T200024u9wrqH2coYSF3UWChidSXntGn4mkPaARCH@0" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_elect_edge_addr{ "T200024uRcpTd6UDXDTaYqGAmJ1h2tJQV4TCeEDGE@0" };
+
 XINLINE_CONSTEXPR char const * sys_contract_rec_registration_addr{ "T2000138NZjvNJjRNG5iEqVKydpqAqoeNjBuFmNbj@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_edge_addr{ "T2000138NpRxYCFQxMHvedTxRpgkb8B7oHt235N2W@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_archive_addr{ "T2000138NXb36GkofBUMqxCAZqdERi63htDVC8Yzt@0" };

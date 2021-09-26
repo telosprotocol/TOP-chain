@@ -5,36 +5,29 @@
 #include "xdata/xelection/xelection_result_property.h"
 
 #include "xconfig/xconfig_register.h"
-#include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
 
 NS_BEG3(top, data, election)
 
 using common::xaccount_address_t;
 std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t const & sys_contract_addr) {
-    std::vector<common::xaccount_address_t> sys_addr{xaccount_address_t{sys_contract_rec_elect_rec_addr},
-                                                     xaccount_address_t{sys_contract_rec_elect_zec_addr},
-                                                     xaccount_address_t{sys_contract_zec_elect_consensus_addr},
-                                                     xaccount_address_t{sys_contract_rec_elect_archive_addr},
-                                                     xaccount_address_t{sys_contract_rec_elect_edge_addr}};
-    assert(std::find(sys_addr.begin(), sys_addr.end(), sys_contract_addr) != sys_addr.end());
-
     std::vector<std::string> property_name;
-    if (sys_contract_addr == sys_addr[0] || sys_contract_addr == sys_addr[1]) {
+    if (sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_rec_addr} || sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_zec_addr}) {
         property_name.push_back(get_property_by_group_id(common::xcommittee_group_id));
 
-    } else if (sys_contract_addr == sys_addr[2]) {
+    } else if (sys_contract_addr == xaccount_address_t{sys_contract_zec_elect_consensus_addr}) {
         auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
         for (auto index = common::xauditor_group_id_value_begin; index <= auditor_group_count; ++index) {
-            property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
+            property_name.push_back(get_property_by_group_id(common::xgroup_id_t{index}));
         }
-    } else if (sys_contract_addr == sys_addr[3]) {
+    } else if (sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_archive_addr} || sys_contract_addr == xaccount_address_t{sys_contract_zec_elect_archive_addr}) {
         auto const archive_group_count = XGET_CONFIG(archive_group_count);
         for (auto index = common::xarchive_group_id_value_begin; index <= archive_group_count; ++index) {
-            property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
+            property_name.push_back(get_property_by_group_id(common::xgroup_id_t{index}));
         }
-    } else if (sys_contract_addr == sys_addr[4]) {
+    } else if (sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_edge_addr} || sys_contract_addr == xaccount_address_t{sys_contract_zec_elect_edge_addr}) {
         property_name.push_back(get_property_by_group_id(common::xdefault_group_id));
     }
     assert(!property_name.empty());
