@@ -490,7 +490,7 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
         deserilize_vote_map_value(v.second, vote_num);
 
 #ifdef DEBUG
-        if(m_timer_height - lock_time >= duration / 6){
+        if(m_timer_height - lock_time >= duration / 60){
 #else
         if(m_timer_height - lock_time >= duration * 24 * 60 * 6){
 #endif
