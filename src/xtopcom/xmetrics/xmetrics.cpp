@@ -298,7 +298,9 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(state_load_blk_state_unit_cache_suc);
 
         RETURN_METRICS_NAME(data_table_unpack_units);
-        RETURN_METRICS_NAME(data_table_unpack_one_unit);        
+        RETURN_METRICS_NAME(data_table_unpack_one_unit);
+
+        RETURN_METRICS_NAME(xevent_major_type_store);
 
         default: assert(false); return nullptr;
     }

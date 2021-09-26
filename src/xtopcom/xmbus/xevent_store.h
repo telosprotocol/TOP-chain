@@ -9,6 +9,7 @@
 #include "xmbus/xevent.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xblock.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, mbus)
 
@@ -34,6 +35,11 @@ public:
     dir,
     _sync),
     owner(_owner) {
+        XMETRICS_GAUGE(metrics::xevent_major_type_store, 1);
+    }
+
+    virtual ~xevent_store_t() {
+        XMETRICS_GAUGE(metrics::xevent_major_type_store, -1);
     }
 
     std::string owner;
