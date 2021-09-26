@@ -7,7 +7,6 @@
 #include "task/task_dispatcher.h"
 #include "topchain_type.h"
 #include "xaction_param.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
@@ -104,23 +103,10 @@ bool api_method_imp::create_account(const user_info & uinfo, std::function<void(
     auto info = new task_info_callback<ResultBase>();
     set_user_info(info, uinfo, CMD_CREATE_ACCOUNT, func);
 
-    // body->params
     top::base::xstream_t stream(top::base::xcontext_t::instance());
     std::string param = stream_params(stream, uinfo.account);
-
-    info->trans_action->set_tx_type(xtransaction_type_create_user_account);
-    info->trans_action->set_last_nonce(0);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(17791961111430638837ULL);
-    info->trans_action->set_deposit(m_deposit);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-    info->trans_action->get_target_action().set_action_type(xaction_type_create_user_account);
-    info->trans_action->get_target_action().set_account_addr(uinfo.account);
-    info->trans_action->get_target_action().set_action_param(param);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", "", uinfo.account, "", param);
+    info->trans_action->construct_tx(xtransaction_type_create_user_account, 100, m_deposit, 0, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -177,12 +163,6 @@ bool api_method_imp::transfer(const user_info & uinfo,
                               const std::string & memo,
                               std::ostringstream & out_str,
                               std::function<void(TransferResult *)> func) {
-    /*
-            if (uinfo.account.empty() ||
-                uinfo.token.empty() ||
-                uinfo.last_hash.empty())
-                return false;
-    */
     auto info = new task_info_callback<TransferResult>();
     set_user_info(info, uinfo, CMD_TRANSFER, func);
 
@@ -196,14 +176,10 @@ bool api_method_imp::transfer(const user_info & uinfo,
     info->trans_action->set_last_nonce(uinfo.nonce);
     info->trans_action->set_fire_timestamp(get_timestamp());
     info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
 
-    info->trans_action->get_source_action().set_action_type(xaction_type_asset_out);
-    info->trans_action->get_source_action().set_account_addr(from);
-    info->trans_action->get_source_action().set_action_param(param);
-    info->trans_action->get_target_action().set_action_type(xaction_type_asset_in);
-    info->trans_action->get_target_action().set_account_addr(to);
-    info->trans_action->get_target_action().set_action_param(param);
+    info->trans_action->set_amount(amount);
+    info->trans_action->set_source_addr(from);
+    info->trans_action->set_target_addr(to);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -226,23 +202,10 @@ bool api_method_imp::stakeGas(const user_info & uinfo,
     auto info = new task_info_callback<TransferResult>();
     set_user_info(info, uinfo, CMD_PLEDGETGAS, func);
 
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_pledge_token_tgas);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(from);
-    info->trans_action->get_source_action().set_action_param("");
-
     xaction_asset_param asset_param(this, "", amount);
     std::string param = asset_param.create();
-    info->trans_action->get_target_action().set_action_type(xaction_type_pledge_token);
-    info->trans_action->get_target_action().set_account_addr(to);
-    info->trans_action->get_target_action().set_action_param(param);
-
+    auto tx_info = top::data::xtx_action_info(from, "", "", to, "", param);
+    info->trans_action->construct_tx(xtransaction_type_pledge_token_tgas, 100, m_deposit, uinfo.nonce, "", tx_info);
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
         return false;
@@ -264,23 +227,10 @@ bool api_method_imp::unStakeGas(const user_info & uinfo,
     auto info = new task_info_callback<TransferResult>();
     set_user_info(info, uinfo, CMD_REDEEMTGAS, func);
 
-    // body->params
     xaction_asset_param asset_param(this, "", amount);
     std::string param = asset_param.create();
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_redeem_token_tgas);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(from);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_redeem_token);
-    info->trans_action->get_target_action().set_account_addr(to);
-    info->trans_action->get_target_action().set_action_param(param);
+    auto tx_info = top::data::xtx_action_info(from, "", "", to, "", param);
+    info->trans_action->construct_tx(xtransaction_type_redeem_token_tgas, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -291,16 +241,6 @@ bool api_method_imp::unStakeGas(const user_info & uinfo,
 
     auto rpc_response = task_dispatcher::get_instance()->get_result();
     out_str << rpc_response;
-    return true;
-}
-
-bool api_method_imp::pledgedisk(const user_info & uinfo, const std::string & from, const std::string & to, uint64_t amount, std::function<void(TransferResult *)> func) {
-    xassert(false);
-    return true;
-}
-
-bool api_method_imp::redeemdisk(const user_info & uinfo, const std::string & from, const std::string & to, uint64_t amount, std::function<void(TransferResult *)> func) {
-    xassert(false);
     return true;
 }
 
@@ -402,23 +342,11 @@ bool api_method_imp::runContract(const user_info & uinfo,
     auto info = new task_info_callback<CallContractResult>();
     set_user_info(info, uinfo, CMD_CALL_CONTRACT, func);
 
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_run_contract);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_asset_out);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
     xaction_asset_param asset_param(this, "", amount);
     info->trans_action->get_source_action().set_action_param(asset_param.create());
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_run_contract);
-    info->trans_action->get_target_action().set_account_addr(contract_account);
-    info->trans_action->get_target_action().set_action_name(contract_func);
     std::string code_stream = serialize(contract_params);
-    info->trans_action->get_target_action().set_action_param(code_stream);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", asset_param.create(), contract_account, contract_func, code_stream);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -452,14 +380,9 @@ bool api_method_imp::getProperty(const user_info & uinfo,
 }
 
 bool api_method_imp::hash_signature(top::data::xtransaction_t * trans_action, const std::array<std::uint8_t, PRI_KEY_LEN> & private_key) {
-    trans_action->set_digest_2();
+    trans_action->set_digest();
     std::string auth_str = xcrypto_util::digest_sign(trans_action->digest(), private_key);
     trans_action->set_authorization(uint_to_str(auth_str.c_str(), auth_str.size()));
-
-    // test sign
-    //        bool br = xcrypto_util::verify_sign(trans_action->digest(),
-    //            auth_str, trans_action->get_source_action().get_account_addr());
-    //        assert(br);
     return true;
 }
 
@@ -498,25 +421,6 @@ std::string api_method_imp::make_account_address(std::array<uint8_t, PRI_KEY_LEN
         assert(0);
     }
     return address;
-}
-
-bool api_method_imp::lock_token(const user_info & uinfo,
-                                uint32_t version,
-                                uint64_t amount,
-                                uint32_t unlock_type,
-                                const std::vector<std::string> & unlock_value,
-                                std::function<void(LockTokenResult *)> func) {
-    xassert(false);  // XTODO not support
-    return true;
-}
-
-bool api_method_imp::unlock_token(const user_info & uinfo,
-                                  uint32_t version,
-                                  const std::string & tx_hash,
-                                  const std::vector<std::string> & signs,
-                                  std::function<void(UnlockTokenResult *)> func) {
-    xassert(false);
-    return true;
 }
 
 std::string api_method_imp::get_sign(const top::uint256_t & hash, std::array<uint8_t, PRI_KEY_LEN> & private_key) {
@@ -785,35 +689,18 @@ bool api_method_imp::registerNode(const user_info & uinfo,
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    std::string target_action_name;
-    std::string param_t;
+    std::string target_action_name = "registerNode";
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
-    target_action_name = "registerNode";
-    param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
+#ifdef XENABLE_MOCK_ZEC_STAKE
+    std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate, uinfo.account);
+#else
+    std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
+#endif
     xaction_asset_param asset_param(this, "", mortgage);
     std::string param = asset_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param);
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -831,31 +718,15 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    std::string target_action_name;
-    std::string param_t;
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "updateNodeType";
+    std::string param_t = stream_params(stream_t, role);
 
-    target_action_name = "updateNodeType";
-    param_t = stream_params(stream_t, role);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -874,35 +745,13 @@ bool api_method_imp::stake_node_deposit(const user_info & uinfo, uint64_t deposi
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
     std::string target_action_name;
-    std::string param_t;
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
-
     target_action_name = "stakeDeposit";
-    // param_t = stream_params(stream_t, role);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
     xaction_asset_param asset_param(this, "", deposit);
     std::string param = asset_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param);
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param("");
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param, top::sys_contract_rec_registration_addr, target_action_name, "");
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -928,16 +777,6 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
     // decrease node deposit
     uint64_t transfer_amount = mortgage;
     if (type == 2) {
@@ -945,19 +784,15 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     }
     xaction_asset_param asset_param(this, "", transfer_amount);
     std::string param = asset_param.create();
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param);
 
     std::string target_action_name;
     std::string param_t;
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     target_action_name = "updateNodeInfo";
     param_t = stream_params(stream_t, name, type, mortgage, rate, role, node_sign_key);
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param(param_t);
+
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -975,36 +810,15 @@ bool api_method_imp::unstake_node_deposit(const user_info & uinfo, uint64_t unst
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    std::string target_action_name;
-    std::string param_t;
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
+    std::string target_action_name = "unstakeDeposit";
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string param_t = stream_params(stream_t, unstake_deposit);
 
-    target_action_name = "unstakeDeposit";
-    param_t = stream_params(stream_t, unstake_deposit);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    // xaction_asset_param asset_param(this, "", deposit);
-    // std::string param = asset_param.create();
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1022,36 +836,15 @@ bool api_method_imp::setNodeName(const user_info & uinfo, const std::string & ni
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    std::string target_action_name;
-    std::string param_t;
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "setNodeName";
+    std::string param_t = stream_params(stream_t, nickname);
 
-    target_action_name = "setNodeName";
-    param_t = stream_params(stream_t, nickname);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    // xaction_asset_param asset_param(this, "", deposit);
-    // std::string param = asset_param.create();
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1069,36 +862,15 @@ bool api_method_imp::updateNodeSignKey(const user_info & uinfo, const std::strin
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    std::string target_action_name;
-    std::string param_t;
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "updateNodeSignKey";
+    std::string param_t = stream_params(stream_t, node_sign_key);
 
-    target_action_name = "updateNodeSignKey";
-    param_t = stream_params(stream_t, node_sign_key);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    // xaction_asset_param asset_param(this, "", deposit);
-    // std::string param = asset_param.create();
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name(target_action_name);
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1116,26 +888,11 @@ bool api_method_imp::unRegisterNode(const user_info & uinfo, std::ostringstream 
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_DEREGISTER, func);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name("unregisterNode");
-    info->trans_action->get_target_action().set_action_param("");
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, "unregisterNode", "");
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1153,26 +910,11 @@ bool api_method_imp::redeemNodeDeposit(const user_info & uinfo, std::ostringstre
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_REDEEM, func);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name("redeemNodeDeposit");
-    info->trans_action->get_target_action().set_action_param("");
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, "redeemNodeDeposit", "");
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1190,29 +932,14 @@ bool api_method_imp::setDividendRatio(const user_info & uinfo, uint32_t dividend
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, dividend_rate);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_registration_addr);
-    info->trans_action->get_target_action().set_action_name("setDividendRatio");
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, "setDividendRatio", param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1230,29 +957,11 @@ bool api_method_imp::stakeVote(const user_info & uinfo, uint64_t mortgage, uint1
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_PLEDGE_VOTE, func);
 
-    uint16_t x_type{xtransaction_type_pledge_token_vote};
-    enum_xaction_type s_type{xaction_type_source_null};
-    enum_xaction_type t_type{xaction_type_pledge_token_vote};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
     xaction_pledge_token_vote_param pledge_vote_param(this, mortgage, lock_duration);
     std::string param = pledge_vote_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(uinfo.account);
-    info->trans_action->get_target_action().set_action_name("");
-    info->trans_action->get_target_action().set_action_param(param);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", "", uinfo.account, "", param);
+    info->trans_action->construct_tx(xtransaction_type_pledge_token_vote, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1269,23 +978,11 @@ bool api_method_imp::stakeVote(const user_info & uinfo, uint64_t mortgage, uint1
 bool api_method_imp::unStakeVote(const user_info & uinfo, uint64_t amount, std::ostringstream & out_str, std::function<void(NodeRegResult *)> func) {
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_REDEEM_VOTE, func);
-
-    // body->params
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_redeem_token_vote);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
     xaction_redeem_token_vote_param asset_param(this, amount);
     std::string param = asset_param.create();
-    info->trans_action->get_target_action().set_action_type(xaction_type_redeem_token_vote);
-    info->trans_action->get_target_action().set_account_addr(uinfo.account);
-    info->trans_action->get_target_action().set_action_param(param);
+
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", "", uinfo.account, "", param);
+    info->trans_action->construct_tx(xtransaction_type_redeem_token_vote, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1306,21 +1003,8 @@ bool api_method_imp::voteNode(const user_info & uinfo, std::map<std::string, int
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, vote_infos);
 
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_vote);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_run_contract);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_sharding_vote_addr);
-    info->trans_action->get_target_action().set_action_name("voteNode");
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", "", top::sys_contract_sharding_vote_addr, "voteNode", param_t);
+    info->trans_action->construct_tx(xtransaction_type_vote, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1341,21 +1025,8 @@ bool api_method_imp::unVoteNode(const user_info & uinfo, std::map<std::string, i
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, vote_infos);
 
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_abolish_vote);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_run_contract);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_sharding_vote_addr);
-    info->trans_action->get_target_action().set_action_name("unvoteNode");
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", "", top::sys_contract_sharding_vote_addr, "unvoteNode", param_t);
+    info->trans_action->construct_tx(xtransaction_type_abolish_vote, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1373,33 +1044,11 @@ bool api_method_imp::claimNodeReward(const user_info & uinfo, std::ostringstream
     auto info = new task_info_callback<ClaimRewardResult>();
     set_user_info(info, uinfo, CMD_CLAIM_NODE_REWARD, func);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    // xaction_asset_param asset_param(this, "", 1000);
-    // std::string param = asset_param.create();
-
-    // info->trans_action->get_source_action().set_action_type(xaction_type_asset_out);
-    // info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    // info->trans_action->get_source_action().set_action_param(param);
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_sharding_reward_claiming_addr);
-    info->trans_action->get_target_action().set_action_name("claimNodeReward");
-    info->trans_action->get_target_action().set_action_param("");
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_sharding_reward_claiming_addr, "claimNodeReward", "");
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1417,33 +1066,11 @@ bool api_method_imp::claimVoterDividend(const user_info & uinfo, std::ostringstr
     auto info = new task_info_callback<ClaimRewardResult>();
     set_user_info(info, uinfo, CMD_CLAIM_REWARD, func);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
 
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    // xaction_asset_param asset_param(this, "", 1000);
-    // std::string param = asset_param.create();
-
-    // info->trans_action->get_source_action().set_action_type(xaction_type_asset_out);
-    // info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    // info->trans_action->get_source_action().set_action_param(param);
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_sharding_reward_claiming_addr);
-    info->trans_action->get_target_action().set_action_name("claimVoterDividend");
-    info->trans_action->get_target_action().set_action_param("");
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_sharding_reward_claiming_addr, "claimVoterDividend", "");
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1454,43 +1081,6 @@ bool api_method_imp::claimVoterDividend(const user_info & uinfo, std::ostringstr
 
     auto rpc_response = task_dispatcher::get_instance()->get_result();
     out_str << rpc_response;
-    return true;
-}
-
-bool api_method_imp::request_issuance(const user_info & uinfo, std::map<std::string, uint64_t> & issuances, std::function<void(IssuanceResult *)> func) {
-    auto info = new task_info_callback<IssuanceResult>();
-    set_user_info(info, uinfo, CMD_ISSURANCE, func);
-
-    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
-    std::string param_t = stream_params(stream_t, issuances);
-
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr("T-x-ucPXFNzeqEGSQUpxVnymM5s4seXSCFMJa");
-    info->trans_action->get_target_action().set_action_name("request_issuance");
-    info->trans_action->get_target_action().set_action_param(param_t);
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
     return true;
 }
 
@@ -1508,26 +1098,11 @@ bool api_method_imp::submitProposal(const user_info & uinfo,
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, target, value, type, effective_timer_height);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
     xaction_asset_param asset_param(this, "", deposit);
     std::string param_s = asset_param.create();
-    info->trans_action->get_source_action().set_action_param(param_s);
 
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_tcc_addr);
-    info->trans_action->get_target_action().set_action_name("submitProposal");
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_tcc_addr, "submitProposal", param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1545,27 +1120,14 @@ bool api_method_imp::withdrawProposal(const user_info & uinfo, const std::string
     auto info = new task_info_callback<WithdrawProposalResult>();
     set_user_info(info, uinfo, CMD_WITHDRAW_PROPOSAL, func);
 
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, proposal_id);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_tcc_addr);
-    info->trans_action->get_target_action().set_action_name("withdrawProposal");
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_tcc_addr, "withdrawProposal", param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1583,27 +1145,14 @@ bool api_method_imp::tccVote(const user_info & uinfo, const std::string & propos
     auto info = new task_info_callback<VoteProposalResult>();
     set_user_info(info, uinfo, CMD_VOTE_PROPOSAL, func);
 
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, proposal_id, option);
 
-    uint16_t x_type{xtransaction_type_run_contract};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_run_contract};
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(top::sys_contract_rec_tcc_addr);
-    info->trans_action->get_target_action().set_action_name("tccVote");
-    info->trans_action->get_target_action().set_action_param(param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_tcc_addr, "tccVote", param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
@@ -1630,7 +1179,11 @@ static void set_user_info(task_info_callback<T> * info,
     info->use_transaction = use_transaction;
     info->host = g_server_host_port;
     info->callback_ = func;
-    info->params["version"] = SDK_VERSION;
+    if (method == CMD_ACCOUNT_TRANSACTION) {
+        info->params["version"] = top::data::RPC_VERSION_V2;
+    } else {
+        info->params["version"] = top::data::RPC_VERSION_V1;
+    }
     info->params["balance"] = uinfo.balance;
     info->method = method;
     info->params["target_account_addr"] = uinfo.account;

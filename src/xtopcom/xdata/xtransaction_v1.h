@@ -49,7 +49,6 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
  public:  // set apis
     virtual void        adjust_target_address(uint32_t table_id) override;
     virtual void        set_digest() override;
-    virtual void        set_digest_2() override;
     virtual void        set_digest(const uint256_t & digest) override {m_transaction_hash = digest;};
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) override;
     virtual int32_t     set_same_source_target_address(const std::string & addr) override;
@@ -65,6 +64,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual int32_t     make_tx_transfer(const data::xproperty_asset & asset) override;
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) override;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) override;
+    virtual void        construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) {};
 
  public:  // get apis
     virtual uint256_t           digest()const override {return m_transaction_hash; }
@@ -80,7 +80,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual xaction_t &         get_target_action() override {return m_target_action;}
     virtual const std::string & get_target_action_name() const override {return m_target_action.get_action_name();}
     virtual const std::string & get_authorization() const override {return m_authorization;}
-    virtual void                parse_to_json(xJson::Value& tx_json) const override;
+    virtual void                parse_to_json(xJson::Value& tx_json, const std::string & version = RPC_VERSION_V2) const override;
     virtual void                construct_from_json(xJson::Value& tx_json) override;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) override;
 

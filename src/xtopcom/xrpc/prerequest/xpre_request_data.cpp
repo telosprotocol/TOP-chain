@@ -28,8 +28,16 @@ void xpre_request_data_t::check_request() {
         if (field_value.empty()) {
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_lack, "miss param " + field + " or " + field + " is not valid"};
         }
-        if (RPC_VERSION == field && RPC_DEFAULT_VERSION != field_value) {
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "version must be 1.0 now"};
+        if (RPC_VERSION == field) {
+            float version = 0;
+            try {
+                version = std::stof(field_value);
+            } catch (...) {
+                throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "version must be 1.0 or newer"};
+            }
+            if (version < 1.0) {
+                throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "version must be 1.0 or newer"};
+            }
         }
     }
     const string& method = get_request_value(RPC_METHOD);

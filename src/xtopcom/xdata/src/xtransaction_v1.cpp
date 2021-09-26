@@ -149,37 +149,6 @@ void xtransaction_v1_t::set_digest() {
     m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
 }
 
-// tmp code 
-void xtransaction_v1_t::set_digest_2() {
-    base::xstream_t stream(base::xcontext_t::instance());
-    const int32_t begin_pos = stream.size();
-    stream << static_cast<uint16_t>(m_transaction_type);
-    stream << m_expire_duration;
-    stream << m_fire_timestamp;
-    stream << m_source_action.get_account_addr();
-    stream << m_target_action.get_account_addr();
-    stream << m_edge_nodeid;
-
-    data::xaction_asset_out sa;
-    int32_t ret = sa.parse(m_source_action);
-    stream << sa.m_asset_out.m_amount;
-    stream << sa.m_asset_out.m_token_name;
-    stream << m_last_trans_nonce;
-    stream << m_deposit;
-    stream << m_premium_price;
-    stream << m_memo;
-    stream << m_ext;
-
-    if(m_transaction_type != xtransaction_type_transfer) {
-        stream << m_source_action.get_action_name();
-        stream << m_source_action.get_action_param();
-        stream << m_target_action.get_action_name();
-        stream << m_target_action.get_action_param();
-    }
-
-    m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
-}
-
 void xtransaction_v1_t::set_len() {
     base::xstream_t stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
@@ -386,46 +355,67 @@ std::string xtransaction_v1_t::dump() const {
     return std::string(local_param_buf);
 }
 
-void xtransaction_v1_t::parse_to_json(xJson::Value& result_json) const {
+void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::string & version) const {
     result_json["tx_structure_version"] = get_tx_version();
     result_json["tx_deposit"] = get_deposit();
-    result_json["to_ledger_id"] = get_to_ledger_id();
-    result_json["from_ledger_id"] = get_from_ledger_id();
     result_json["tx_type"] = get_tx_type();
     result_json["tx_len"] = get_tx_len();
+    result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
     result_json["tx_expire_duration"] = get_expire_duration();
     result_json["send_timestamp"] = static_cast<xJson::UInt64>(get_fire_timestamp());
-    result_json["tx_random_nonce"] = get_random_nonce();
     result_json["premium_price"] = get_premium_price();
     result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(get_last_nonce());
-    result_json["last_tx_hash"] = data::uint64_to_str(get_last_hash());
-    result_json["challenge_proof"] = get_challenge_proof();
     result_json["note"] = get_memo();
-
-    xJson::Value& s_action_json = result_json["sender_action"];
-    s_action_json["action_hash"] = m_source_action.get_action_hash();
-    s_action_json["action_type"] = m_source_action.get_action_type();
-    s_action_json["action_size"] = m_source_action.get_action_size();
-    s_action_json["tx_sender_account_addr"] = m_source_action.get_account_addr();
-    s_action_json["action_name"] = m_source_action.get_action_name();
-    s_action_json["action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
-    s_action_json["action_ext"] = data::uint_to_str(m_source_action.get_action_ext().data(), m_source_action.get_action_ext().size());
-    s_action_json["action_authorization"] = m_source_action.get_action_authorization();
-
-    xJson::Value& t_action_json = result_json["receiver_action"];
-    t_action_json["action_hash"] = m_target_action.get_action_hash();
-    t_action_json["action_type"] = m_target_action.get_action_type();
-    t_action_json["action_size"] = m_target_action.get_action_size();
-    t_action_json["tx_receiver_account_addr"] = m_target_action.get_account_addr();
-    t_action_json["action_name"] = m_target_action.get_action_name();
-    t_action_json["action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
-    t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
-    t_action_json["action_authorization"] = m_target_action.get_action_authorization();
-
     result_json["ext"] = data::uint_to_str(get_ext().data(), get_ext().size());
-    result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
     result_json["authorization"] = get_authorization();
     xdbg("authorization: %s", to_hex_str(get_authorization()).c_str());
+
+    if (version == RPC_VERSION_V2) {
+        result_json["edge_nodeid"] = m_edge_nodeid;
+
+        std::string token_name;
+        uint64_t amount{0};
+        if (get_tx_type() == xtransaction_type_transfer) {
+            base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
+            stream >> token_name;
+            stream >> amount;
+        }
+        result_json["amount"] = static_cast<xJson::UInt64>(amount);
+        result_json["token_name"] = token_name;
+        
+        result_json["sender_account"] = m_source_action.get_account_addr();
+        result_json["sender_action_name"] = m_source_action.get_action_name();
+        result_json["sender_action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
+        result_json["receiver_account"] = m_target_action.get_account_addr();
+        result_json["receiver_action_name"] = m_target_action.get_action_name();
+        result_json["receiver_action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
+    } else {
+        result_json["to_ledger_id"] = get_to_ledger_id();
+        result_json["from_ledger_id"] = get_from_ledger_id();
+        result_json["tx_random_nonce"] = get_random_nonce();
+        result_json["last_tx_hash"] = data::uint64_to_str(get_last_hash());
+        result_json["challenge_proof"] = get_challenge_proof();
+
+        xJson::Value& s_action_json = result_json["sender_action"];
+        s_action_json["action_hash"] = m_source_action.get_action_hash();
+        s_action_json["action_type"] = m_source_action.get_action_type();
+        s_action_json["action_size"] = m_source_action.get_action_size();
+        s_action_json["tx_sender_account_addr"] = m_source_action.get_account_addr();
+        s_action_json["action_name"] = m_source_action.get_action_name();
+        s_action_json["action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
+        s_action_json["action_ext"] = data::uint_to_str(m_source_action.get_action_ext().data(), m_source_action.get_action_ext().size());
+        s_action_json["action_authorization"] = m_source_action.get_action_authorization();
+
+        xJson::Value& t_action_json = result_json["receiver_action"];
+        t_action_json["action_hash"] = m_target_action.get_action_hash();
+        t_action_json["action_type"] = m_target_action.get_action_type();
+        t_action_json["action_size"] = m_target_action.get_action_size();
+        t_action_json["tx_receiver_account_addr"] = m_target_action.get_account_addr();
+        t_action_json["action_name"] = m_target_action.get_action_name();
+        t_action_json["action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
+        t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
+        t_action_json["action_authorization"] = m_target_action.get_action_authorization();
+    }
 }
 
 void xtransaction_v1_t::construct_from_json(xJson::Value& request) {
@@ -503,7 +493,12 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
         data::xaction_asset_out source_action;
         int32_t ret = source_action.parse(get_source_action());
         if (ret != xsuccess) {
-            return ret;
+            // should return error, but old topio won't be able to execute run_contract tx, because of source_action_param mistakenly set to ""
+            if (get_tx_type() == xtransaction_type_run_contract) {
+                xdbg("xtransaction_v1_t::parse empty source action param:%s, tx_hash:%s", get_source_action().get_action_param().c_str(), get_digest_hex_str().c_str());
+            } else {
+                return ret;
+            }
         }
         tx_parse_data.m_asset = source_action.m_asset_out;
     }
