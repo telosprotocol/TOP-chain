@@ -498,7 +498,7 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr, const std::stri
     }
     tx_ptr->parse_to_json(ori_tx_info, version);
     ori_tx_info["authorization"] = uint_to_str(tx_ptr->get_authorization().data(), tx_ptr->get_authorization().size());
-    if (version != RPC_VERSION_V2) {
+    if (version == RPC_VERSION_V1) {
         ori_tx_info["tx_action"]["sender_action"] = ori_tx_info["sender_action"];
         ori_tx_info.removeMember("sender_action");
         ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
