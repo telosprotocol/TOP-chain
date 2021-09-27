@@ -32,30 +32,54 @@
 #include <unordered_map>
 
 NS_BEG2(top, contract_runtime)
-enum class enum_block_sniff_type: uint8_t {
-    invalid,
-    timer,
-    block
+
+enum class enum_sniff_broadcast_type : std::uint32_t {
+    invalid = static_cast<uint32_t>(common::xnode_type_t::invalid),
+    rec = static_cast<uint32_t>(common::xnode_type_t::rec),
+    zec = static_cast<uint32_t>(common::xnode_type_t::zec),
+    storage = static_cast<uint32_t>(common::xnode_type_t::storage),
+    all = static_cast<uint32_t>(common::xnode_type_t::all),
 };
-using xblock_sniff_type_t = enum_block_sniff_type;
+using xsniff_broadcast_type_t = enum_sniff_broadcast_type;
 
-class xtop_block_sniff_config {
-    using data_type = std::unordered_map<common::xaccount_address_t, xblock_sniff_type_t>;
-    data_type m_data;
+enum class enum_sniff_broadcast_policy : uint8_t { invalid, normal, fullunit };
+using xsniff_broadcast_policy_t = enum_sniff_broadcast_policy;
 
-public:
-    xtop_block_sniff_config() = default;
-    xtop_block_sniff_config(xtop_block_sniff_config const &) = default;
-    xtop_block_sniff_config & operator=(xtop_block_sniff_config const &) = default;
-    xtop_block_sniff_config(xtop_block_sniff_config &&) = default;
-    xtop_block_sniff_config & operator=(xtop_block_sniff_config &&) = default;
-    ~xtop_block_sniff_config() = default;
+struct xtop_sniff_broadcast_config {
+    xsniff_broadcast_type_t m_type{xsniff_broadcast_type_t::invalid};
+    xsniff_broadcast_policy_t m_policy{xsniff_broadcast_policy_t::invalid};
 
-    xtop_block_sniff_config(std::initializer_list<std::pair<common::xaccount_address_t const, xblock_sniff_type_t>> init_list);
-    xtop_block_sniff_config & operator=(std::initializer_list<std::pair<common::xaccount_address_t const, xblock_sniff_type_t>> init_list);
-
-    bool contains(common::xaccount_address_t const & address) const noexcept;
+    xtop_sniff_broadcast_config() = default;
+    xtop_sniff_broadcast_config(xsniff_broadcast_type_t type, xsniff_broadcast_policy_t policy) : m_type(type), m_policy(policy) {
+    }
 };
-using xblock_sniff_config_t = xtop_block_sniff_config;
+using xsniff_broadcast_config_t = xtop_sniff_broadcast_config;
+
+struct xtop_sniff_timer_config {
+    uint32_t m_interval{0};
+    std::string m_action{""};
+
+    xtop_sniff_timer_config() = default;
+    xtop_sniff_timer_config(uint32_t interval, std::string action) : m_interval(interval), m_action(action) {
+    }
+};
+using xsniff_timer_config_t = xtop_sniff_timer_config;
+
+struct xtop_sniff_block_config {
+    std::set<common::xaccount_address_t> m_address_set;
+
+    xtop_sniff_block_config() = default;
+    xtop_sniff_block_config(std::set<common::xaccount_address_t> const & set) : m_address_set(set) {
+    }
+};
+using xsniff_block_config_t = xtop_sniff_block_config;
+
+enum class enum_sniff_type: uint32_t {
+    invalid = 0x00000000,
+    broadcast = 0x00000001,
+    timer = 0x00000002,
+    block = 0x00000004,
+};
+using xsniff_type_t = enum_sniff_type;
 
 NS_END2

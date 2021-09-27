@@ -29,6 +29,11 @@ public:
     xvnode_role_proxy();
 };
 
+class xvnode_sniff_proxy : public xdummy_vnode_sniff_proxy {
+public:
+    xvnode_sniff_proxy();
+};
+
 class xvnode_manager_fixture : public testing::Test, public top::vnode::xvnode_manager_t {
 protected:
     observer_ptr<top::vnetwork::xvhost_face_t> vhost_;

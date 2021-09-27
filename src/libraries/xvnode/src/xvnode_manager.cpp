@@ -13,6 +13,7 @@
 #include "xvnode/xvnode.h"
 #include "xvnode/xvnode_factory.h"
 #include "xvnode/xvnode_role_proxy.h"
+#include "xvnode/xvnode_sniff_proxy.h"
 
 #include <algorithm>
 
@@ -48,7 +49,8 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                                           txpool_service_mgr,
                                                           txpool,
                                                           election_cache_data_accessor),
-                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor)
+                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor),
+                       top::make_unique<xvnode_sniff_proxy_t>(mbus)
 
     } {
 }
@@ -56,14 +58,16 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
 xtop_vnode_manager::xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
                                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                        std::unique_ptr<xvnode_factory_face_t> vnode_factory,
-                                       std::unique_ptr<xvnode_role_proxy_face_t> vnode_proxy)
-  : m_logic_timer{logic_timer}, m_vhost{vhost}, m_vnode_factory{std::move(vnode_factory)}, m_vnode_proxy{std::move(vnode_proxy)} {
+                                       std::unique_ptr<xvnode_role_proxy_face_t> vnode_proxy,
+                                       std::unique_ptr<xvnode_sniff_proxy_face_t> sniff_proxy)
+  : m_logic_timer{logic_timer}, m_vhost{vhost}, m_vnode_factory{std::move(vnode_factory)}, m_vnode_proxy{std::move(vnode_proxy)}, m_sniff_proxy{std::move(sniff_proxy)} {
     assert(m_vnode_factory != nullptr);
 }
 
 void xtop_vnode_manager::start() {
     assert(m_logic_timer != nullptr);
     m_logic_timer->watch(chain_timer_watch_name, 1, std::bind(&xtop_vnode_manager::on_timer, this, std::placeholders::_1));
+    m_sniff_proxy->start();
 
     assert(!running());
     running(true);
@@ -75,6 +79,7 @@ void xtop_vnode_manager::stop() {
 
     assert(m_logic_timer != nullptr);
     m_logic_timer->unwatch(chain_timer_watch_name);
+    m_sniff_proxy->stop();
 }
 
 std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_manager::handle_election_data(
@@ -311,6 +316,7 @@ void xtop_vnode_manager::fade_vnodes_with_lock_hold_outside(common::xlogic_time_
             if (!vnode->faded() && vnode->running()) {
                 vnode->fade();
                 m_vnode_proxy->fade(vnode->address());
+                m_sniff_proxy->unreg(vnode->address());
 
                 xwarn("[vnode mgr] vnode (%p) at address %s fades at logic time %" PRIu64 " current logic time %" PRIu64,
                       vnode.get(),
@@ -339,6 +345,7 @@ void xtop_vnode_manager::stop_vnodes_with_lock_hold_outside(common::xlogic_time_
             if (vnode->faded() && vnode->running()) {
                 vnode->stop();
                 m_vnode_proxy->unreg(vnode->address());
+                m_sniff_proxy->unreg(vnode->address());
 
                 xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
                       vnode.get(),

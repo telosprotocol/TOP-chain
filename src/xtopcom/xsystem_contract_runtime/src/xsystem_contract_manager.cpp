@@ -25,9 +25,9 @@ void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) 
 }
 
 void xtop_system_contract_manager::deploy() {
-    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
-    deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::rec, common::xnode_type_t::committee, contract_broadcast_policy_t::normal);
-    deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
+    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
+    deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
+    deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {});
     //deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }
 
@@ -46,6 +46,10 @@ observer_ptr<system_contracts::xbasic_system_contract_t> xtop_system_contract_ma
 
 base::xvnodesrv_t*  xtop_system_contract_manager::get_node_service() const noexcept {
     return m_nodesvr;
+}
+
+std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & xtop_system_contract_manager::deployment_data() const noexcept {
+    return m_system_contract_deployment_data;
 }
 
 void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address) {

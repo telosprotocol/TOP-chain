@@ -18,32 +18,27 @@
 
 NS_BEG3(top, contract_runtime, system)
 
-enum class enum_contract_deploy_type: uint8_t {
-    rec,
-    zec,
-    consensus,
-    table
-};
-using contract_deploy_type_t = enum_contract_deploy_type;
+struct xtop_contract_deployment_data {
+    std::shared_ptr<system_contracts::xbasic_system_contract_t> m_system_contract{nullptr};
+    common::xnode_type_t m_node_type{common::xnode_type_t::invalid};
+    xsniff_type_t m_sniff_type{xsniff_type_t::invalid};
+    xsniff_broadcast_config_t m_broadcast_config{};
+    xsniff_timer_config_t m_timer_config{};
+    xsniff_block_config_t m_block_config{};
 
-enum class enum_contract_broadcast_policy: uint8_t {
-    invalid,
-    normal,
-    fullunit
+    xtop_contract_deployment_data() = default;
+    xtop_contract_deployment_data(std::shared_ptr<system_contracts::xbasic_system_contract_t> contract,
+                                  common::xnode_type_t type,
+                                  xsniff_type_t sniff,
+                                  xsniff_broadcast_config_t broadcast_config,
+                                  xsniff_timer_config_t timer_config,
+                                  xsniff_block_config_t block_config)
+      : m_system_contract(contract), m_node_type(type), m_sniff_type(sniff), m_broadcast_config(broadcast_config), m_timer_config(timer_config), m_block_config(block_config) {
+    }
 };
-using contract_broadcast_policy_t = enum_contract_broadcast_policy;
-
+using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
 class xtop_system_contract_manager {
-    struct xtop_contract_deployment_data {
-        std::shared_ptr<system_contracts::xbasic_system_contract_t> m_system_contract;
-        xblock_sniff_config_t m_sniff_config;
-        contract_deploy_type_t m_deploy_type;
-        common::xnode_type_t m_broadcast_target{ common::xnode_type_t::invalid };
-        contract_broadcast_policy_t m_broadcast_policy{ contract_broadcast_policy_t::invalid };
-    };
-    using xcontract_deployment_data_t = xtop_contract_deployment_data;
-
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
     base::xvblockstore_t* m_blockstore;
     base::xvnodesrv_t*    m_nodesvr;
@@ -68,14 +63,15 @@ public:
     };
     void initialize(base::xvblockstore_t* blockstore);
     void deploy();
-
+    std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & deployment_data() const noexcept;
     observer_ptr<system_contracts::xbasic_system_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
-    template<typename system_contract_type>
-    void deploy_system_contract(common::xaccount_address_t const& address,
-                                xblock_sniff_config_t sniff_config,
-                                contract_deploy_type_t deploy_type,
-                                common::xnode_type_t broadcast_target,
-                                contract_broadcast_policy_t broadcast_policy);
+    template <typename system_contract_type>
+    void deploy_system_contract(common::xaccount_address_t const & address,
+                                common::xnode_type_t node_type,
+                                xsniff_type_t sniff_type,
+                                xsniff_broadcast_config_t broadcast_config,
+                                xsniff_timer_config_t timer_config,
+                                xsniff_block_config_t block_config);
 
     base::xvnodesrv_t*  get_node_service() const noexcept;
 
@@ -87,28 +83,21 @@ private:
 };
 using xsystem_contract_manager_t = xtop_system_contract_manager;
 
-
-template<typename system_contract_type>
-void xtop_system_contract_manager::deploy_system_contract(common::xaccount_address_t const& address,
-                                                            xblock_sniff_config_t sniff_config,
-                                                            contract_deploy_type_t deploy_type,
-                                                            common::xnode_type_t broadcast_target,
-                                                            contract_broadcast_policy_t broadcast_policy = contract_broadcast_policy_t::invalid) {
+template <typename system_contract_type>
+void xtop_system_contract_manager::deploy_system_contract(common::xaccount_address_t const & address,
+                                                          common::xnode_type_t node_type,
+                                                          xsniff_type_t sniff_type,
+                                                          xsniff_broadcast_config_t broadcast_config,
+                                                          xsniff_timer_config_t timer_config,
+                                                          xsniff_block_config_t block_config) {
     // must system contract & not deploy yet
     assert(data::is_sys_contract_address(address));
     assert(!contains(address));
 
-    xcontract_deployment_data_t data;
-    data.m_deploy_type = deploy_type;
-    data.m_broadcast_policy = broadcast_policy;
-    data.m_sniff_config = sniff_config;
-    data.m_broadcast_target = broadcast_target;
+    xcontract_deployment_data_t data{std::make_shared<system_contract_type>(), node_type, sniff_type, broadcast_config, timer_config, block_config};
+    m_system_contract_deployment_data.insert(std::make_pair(address, data));
 
-    data.m_system_contract = std::make_shared<system_contract_type>();
-
-    m_system_contract_deployment_data[address] = data;
-
-    if (contract_deploy_type_t::table == deploy_type) {
+    if (data::is_sys_sharding_contract_address(address)) {
         for ( auto i = 0; i < enum_vbucket_has_tables_count; i++) {
             init_system_contract(common::xaccount_address_t{address.value() + "@" + std::to_string(i)});
         }
