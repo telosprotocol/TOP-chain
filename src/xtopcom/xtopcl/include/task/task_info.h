@@ -1,25 +1,26 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 #include <string>
 #include <map>
 #include <functional>
 #include <memory>
-#include "xdata/xtransaction_v1.h"
 #include <iostream>
+#include "xdata/xtx_factory.h"
 
 namespace xChainSDK {
 
     const char* const ParamAccount = "account_addr";
-    // const char* const ParamBlockOwner = "block_owner";
     const char* const ParamGetBlockType = "type"; // "hash","height","last"
     const char* const ParamBlockHash = "block_hash";
     const char* const ParamBlockHeight = "height";
 
-
     class task_info {
     public:
         task_info() : use_transaction(false) {
-            trans_action = top::make_object_ptr<top::data::xtransaction_v1_t>();
-            trans_action->set_tx_version(2);
+            trans_action = top::data::xtx_factory::create_tx(); 
         }
         virtual ~task_info() {
         //    std::cout << "destory task_info" << std::endl;

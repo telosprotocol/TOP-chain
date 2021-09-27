@@ -3,7 +3,6 @@
 #include "api_method_imp.h"
 #include "base/config_file.h"
 #include "xtopcl/include/web/client_http.hpp"
-#include "task/task_info.h"
 #include "xtopcl/include/xtop/topchain_type.h"
 #include "user_info.h"
 
@@ -138,8 +137,6 @@ public:
     void claim_reward(std::ostringstream & out_str);
 
     int Help(const ParamList & param_list, std::ostringstream & out_str);
-    int Lock(const ParamList & param_list);
-    int Unlock(const ParamList & param_list);
     int KeyStore(const ParamList & param_list);
     int Random(const ParamList & param_list);
     int Authorize(const ParamList & param_list);
@@ -148,8 +145,6 @@ public:
     int transfer(const ParamList & param_list, std::ostringstream & out_str);
     int stakeGas(const ParamList & param_list, std::ostringstream & out_str);
     int unStakeGas(const ParamList & param_list, std::ostringstream & out_str);
-    int PledgeDisk(const ParamList & param_list);
-    int RedeemDisk(const ParamList & param_list);
 
     int getTransaction(const ParamList & param_list, std::ostringstream & out_str);
     int RequestToken(const ParamList & param_list);
@@ -195,7 +190,6 @@ public:
     int voteNode(const ParamList & param_list, std::ostringstream & out_str);
     int claimNodeReward(const ParamList & param_list, std::ostringstream & out_str);
     int claimVoterDividend(const ParamList & param_list, std::ostringstream & out_str);
-    int RequestIssuance(const ParamList & param_list);
     int GenerateKeys(const ParamList & param_list);
     int CheckKeys(const ParamList & param_list);
     int ActivateAccounts(const ParamList & param_list);

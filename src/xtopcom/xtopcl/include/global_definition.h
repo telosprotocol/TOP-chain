@@ -24,7 +24,6 @@
 #   define SERVER_HOST_PORT_WS "206.189.227.204:19085"
 #endif
 
-#define SDK_VERSION "1.0"
 #define SERVER_ERROR "Server Connection Error"
 
 constexpr uint64_t MinDeposit = 1;

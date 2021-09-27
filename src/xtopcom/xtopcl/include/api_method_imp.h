@@ -68,10 +68,6 @@ public:
                     std::ostringstream & out_str,
                     std::function<void(TransferResult *)> func = nullptr);
 
-    bool pledgedisk(const user_info & uinfo, const std::string & from, const std::string & to, uint64_t amount, std::function<void(TransferResult *)> func = nullptr);
-
-    bool redeemdisk(const user_info & uinfo, const std::string & from, const std::string & to, uint64_t amount, std::function<void(TransferResult *)> func = nullptr);
-
     bool getTransaction(const user_info & uinfo,
                         const std::string & account,
                         const std::string & last_hash,
@@ -105,19 +101,6 @@ public:
                             const std::string & child_address,
                             const std::array<std::uint8_t, PRI_KEY_LEN> & child_private_key,
                             std::function<void(CreateSubAccountResult *)> func = nullptr);
-
-    bool lock_token(const user_info & uinfo,
-                    uint32_t version,
-                    uint64_t amount,
-                    uint32_t unlock_type,
-                    const std::vector<std::string> & unlock_value,
-                    std::function<void(LockTokenResult *)> func = nullptr);
-
-    bool unlock_token(const user_info & uinfo,
-                      uint32_t version,
-                      const std::string & tx_hash,
-                      const std::vector<std::string> & signs,
-                      std::function<void(UnlockTokenResult *)> func = nullptr);
 
     bool get_vote(const user_info & uinfo, uint64_t amount, uint64_t validity_period, std::function<void(GetVoteResult *)> func = nullptr);
 
@@ -186,8 +169,6 @@ public:
     bool claimNodeReward(const user_info & uinfo, std::ostringstream & out_str, std::function<void(ClaimRewardResult *)> func = nullptr);
 
     bool claimVoterDividend(const user_info & uinfo, std::ostringstream & out_str, std::function<void(ClaimRewardResult *)> func = nullptr);
-
-    bool request_issuance(const user_info & uinfo, std::map<std::string, uint64_t> & issuances, std::function<void(IssuanceResult *)> func = nullptr);
 
     bool submitProposal(const user_info & uinfo,
                         uint8_t type,
