@@ -18,7 +18,7 @@ class xtop_rec_registration_node_info {
 public:
     common::xregistration_type_t m_registration_type;
     // todo might use more human-readable class to represent `account_mortgage`.(BTW this name might also need alter)
-    uint64_t m_account_mortgage;
+    uint64_t m_account_mortgage{0};
     xpublic_key_t m_public_key;
     bool is_genesis_node{false};
 
@@ -41,9 +41,9 @@ using xzec_registration_credit = top::xproper_fraction_t<uint64_t, double>;
 class xtop_zec_registration_node_info /*: public xrec_registration_node_info_t  */ {
 public:
     xrec_registration_node_info_t m_rec_registration_node_info;
-    common::xrole_type_t m_role_type;
+    common::xrole_type_t m_role_type{common::xrole_type_t::invalid};
     std::string m_nickname;
-    uint64_t m_vote_amount;
+    uint64_t m_vote_amount{0};
 
     xzec_registration_credit m_auditor_credit{0, 1000000};
     xzec_registration_credit m_validator_credit{0, 1000000};

@@ -10,18 +10,18 @@
 
 NS_BEG3(top, data, standby)
 
-class xtop_rec_standby_node_info {
+class xtop_simple_standby_node_info {
 public:
-    uint64_t ec_stake;
+    uint64_t stake;
     xpublic_key_t public_key;
     bool is_genesis_node;
     std::string program_version;
 
-    bool operator==(xtop_rec_standby_node_info const & other) const noexcept;
+    bool operator==(xtop_simple_standby_node_info const & other) const noexcept;
 
-    bool operator!=(xtop_rec_standby_node_info const & other) const noexcept;
+    bool operator!=(xtop_simple_standby_node_info const & other) const noexcept;
 };
-using xrec_standby_node_info_t = xtop_rec_standby_node_info;
+using xsimple_standby_node_info_t = xtop_simple_standby_node_info;
 
 using xzec_standby_stake_container = top::xsimple_map_result_t<common::xnode_type_t, uint64_t>;
 class xtop_zec_standby_node_info {

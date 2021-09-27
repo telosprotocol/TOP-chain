@@ -25,8 +25,8 @@ XINLINE_CONSTEXPR std::size_t xtop_standby_node_info_program_version{ 3 };
 
 // rec:
 template <>
-struct convert<top::data::standby::xrec_standby_node_info_t> final {
-    msgpack::object const & operator()(msgpack::object const & o, top::data::standby::xrec_standby_node_info_t & node_info) const {
+struct convert<top::data::standby::xsimple_standby_node_info_t> final {
+    msgpack::object const & operator()(msgpack::object const & o, top::data::standby::xsimple_standby_node_info_t & node_info) const {
         if (o.type != msgpack::type::ARRAY) {
             throw msgpack::type_error{};
         }
@@ -56,7 +56,7 @@ struct convert<top::data::standby::xrec_standby_node_info_t> final {
         }
 
         case xtop_standby_node_info_stake_index: {
-            node_info.ec_stake = o.via.array.ptr[xtop_standby_node_info_stake_index].as<uint64_t>();
+            node_info.stake = o.via.array.ptr[xtop_standby_node_info_stake_index].as<uint64_t>();
             XATTRIBUTE_FALLTHROUGH;
         }
         }
@@ -66,11 +66,11 @@ struct convert<top::data::standby::xrec_standby_node_info_t> final {
 };
 
 template <>
-struct pack<::top::data::standby::xrec_standby_node_info_t> {
+struct pack<::top::data::standby::xsimple_standby_node_info_t> {
     template <typename StreamT>
-    msgpack::packer<StreamT> & operator()(msgpack::packer<StreamT> & o, top::data::standby::xrec_standby_node_info_t const & node_info) const {
+    msgpack::packer<StreamT> & operator()(msgpack::packer<StreamT> & o, top::data::standby::xsimple_standby_node_info_t const & node_info) const {
         o.pack_array(xtop_standby_node_info_field_count);
-        o.pack(node_info.ec_stake);
+        o.pack(node_info.stake);
         o.pack(node_info.public_key);
         o.pack(node_info.is_genesis_node);
         o.pack(node_info.program_version);
@@ -80,12 +80,12 @@ struct pack<::top::data::standby::xrec_standby_node_info_t> {
 };
 
 template <>
-struct object_with_zone<::top::data::standby::xrec_standby_node_info_t> {
-    void operator()(msgpack::object::with_zone & o, top::data::standby::xrec_standby_node_info_t const & node_info) const {
+struct object_with_zone<::top::data::standby::xsimple_standby_node_info_t> {
+    void operator()(msgpack::object::with_zone & o, top::data::standby::xsimple_standby_node_info_t const & node_info) const {
         o.type = msgpack::type::ARRAY;
         o.via.array.size = xtop_standby_node_info_field_count;
         o.via.array.ptr = static_cast<msgpack::object *>(o.zone.allocate_align(sizeof(::msgpack::object) * o.via.array.size));
-        o.via.array.ptr[xtop_standby_node_info_stake_index] = msgpack::object{node_info.ec_stake, o.zone};
+        o.via.array.ptr[xtop_standby_node_info_stake_index] = msgpack::object{node_info.stake, o.zone};
         o.via.array.ptr[xtop_standby_node_info_public_key_index] = msgpack::object{node_info.public_key, o.zone};
         o.via.array.ptr[xtop_standby_node_info_is_genesis_node] = msgpack::object{node_info.is_genesis_node, o.zone};
         o.via.array.ptr[xtop_standby_node_info_program_version] = msgpack::object{node_info.program_version, o.zone};
