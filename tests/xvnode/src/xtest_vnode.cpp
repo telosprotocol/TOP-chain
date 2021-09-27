@@ -48,6 +48,10 @@ public:
 
     void synchronize() override {
     }
+
+    top::vnode::xvnode_sniff_config_t sniff_config() noexcept override {
+        return top::vnode::xvnode_sniff_config_t{};
+    }
 };
 using xmocked_vnode_t = xtop_mocked_vnode;
 

@@ -7,6 +7,8 @@
 #include "xbasic/xmemory.hpp"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnode/xvnode_role_proxy_face.h"
+#include "xvnode/xvnode_sniff_config.h"
+#include "xvnode/xvnode_sniff_proxy_face.h"
 
 NS_BEG3(top, tests, vnode)
 
@@ -28,6 +30,24 @@ public:
     }
 };
 
+class xdummy_vnode_sniff_proxy : public top::vnode::xvnode_sniff_proxy_face_t {
+public:
+    xdummy_vnode_sniff_proxy(xdummy_vnode_sniff_proxy &&) = default;
+    xdummy_vnode_sniff_proxy & operator=(xdummy_vnode_sniff_proxy &&) = default;
+
+    explicit xdummy_vnode_sniff_proxy() noexcept {
+    }
+    virtual void start() {
+    }
+    virtual void stop() {
+    }
+    virtual void reg(common::xnode_address_t const & address, top::vnode::xvnode_sniff_config_t const & config) {
+    }
+    virtual void unreg(common::xnode_address_t const & address) {
+    }
+};
+
 extern xdummy_vnode_proxy dummy_vnode_proxy;
+extern xdummy_vnode_sniff_proxy dummy_vnode_sniff_proxy;
 
 NS_END3

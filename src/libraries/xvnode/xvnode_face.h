@@ -5,10 +5,11 @@
 #pragma once
 
 #include "xbasic/xrunnable.h"
-#include "xcommon/xrotation_aware.h"
-#include "xcommon/xfadable.h"
 #include "xcommon/xenable_synchronization.h"
+#include "xcommon/xfadable.h"
+#include "xcommon/xrotation_aware.h"
 #include "xvnetwork/xmessage.h"
+#include "xvnode/xvnode_sniff_config.h"
 
 NS_BEG2(top, vnode)
 
@@ -39,7 +40,7 @@ public:
 
     //virtual std::vector<common::xip2_t> associated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const = 0;
     //virtual std::vector<common::xip2_t> nonassociated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const = 0;
-
+    virtual xvnode_sniff_config_t sniff_config() = 0;
 protected:
     xtop_vnode_face() = default;
 };
