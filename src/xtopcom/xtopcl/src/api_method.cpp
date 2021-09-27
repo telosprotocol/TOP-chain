@@ -1498,8 +1498,6 @@ ApiMethod::ApiMethod() {
     regist_method("config", std::bind(&ApiMethod::Config, this, std::placeholders::_1), "Config rpc host.");
     regist_method("create", std::bind(&ApiMethod::CreateChainAccount, this, std::placeholders::_1), "Create an account on chain.");
     regist_method("key", std::bind(&ApiMethod::Key, this, std::placeholders::_1), "Config local account key.");
-    regist_method("lock", std::bind(&ApiMethod::Lock, this, std::placeholders::_1), "Lock Token.");
-    regist_method("unlock", std::bind(&ApiMethod::Unlock, this, std::placeholders::_1), "Unlock Token.");
     regist_method("keystore", std::bind(&ApiMethod::KeyStore, this, std::placeholders::_1), "Key Manager.");
     regist_method("rand", std::bind(&ApiMethod::Random, this, std::placeholders::_1), "Random Number.");
     regist_method("auth", std::bind(&ApiMethod::Authorize, this, std::placeholders::_1), "Authorize.");
@@ -1509,7 +1507,6 @@ ApiMethod::ApiMethod() {
     regist_method("getlist", std::bind(&ApiMethod::GetListProperty, this, std::placeholders::_1), "Get list property.");
     regist_method("cs", std::bind(&ApiMethod::CreateSubAccount, this, std::placeholders::_1), "Create child account.");
 
-    regist_method("issurance", std::bind(&ApiMethod::RequestIssuance, this, std::placeholders::_1), "Request Issuance.");
     regist_method("gk", std::bind(&ApiMethod::GenerateKeys, this, std::placeholders::_1), "Generate Keys");
     regist_method("ck", std::bind(&ApiMethod::CheckKeys, this, std::placeholders::_1), "Check Keys");
     // regist_method("aa", std::bind(&ApiMethod::ActivateAccounts,
@@ -1632,47 +1629,6 @@ int ApiMethod::wallet(const ParamList & param_list, std::ostringstream & out_str
     }
 
     return 0;
-}
-
-int ApiMethod::Lock(const ParamList & param_list) {
-    if (param_list.size() < 5) {
-        std::cout << "lock token params error." << std::endl;
-        return -1;
-    }
-
-    uint32_t version = atoi(param_list[1].c_str());
-    uint64_t amount = atoi(param_list[2].c_str());
-    uint32_t unlock_type = atoi(param_list[3].c_str());
-    uint32_t value_size = atoi(param_list[4].c_str());
-    if (param_list.size() < value_size + 5) {
-        std::cout << "lock token params count error. value_size=" << value_size << std::endl;
-        return -1;
-    }
-    std::vector<std::string> vc_value;
-    for (uint32_t i = 0; i < value_size; ++i) {
-        vc_value.push_back(param_list[5 + i].c_str());
-    }
-
-    bool br = api_method_imp_.lock_token(g_userinfo, version, amount, unlock_type, vc_value);
-    return br ? 0 : -1;
-}
-
-int ApiMethod::Unlock(const ParamList & param_list) {
-    auto sz = param_list.size();
-    if (sz < 4) {
-        std::cout << "lock token params error." << std::endl;
-        return -1;
-    }
-
-    uint32_t version = atoi(param_list[1].c_str());
-    std::string tx_hash = param_list[2];
-    std::vector<std::string> signs;
-    for (size_t i = 3; i < sz; ++i) {
-        signs.push_back(param_list[i]);
-    }
-
-    bool br = api_method_imp_.unlock_token(g_userinfo, version, tx_hash, signs);
-    return br ? 0 : -1;
 }
 
 int ApiMethod::KeyStore(const ParamList & param_list) {
@@ -1874,49 +1830,6 @@ int ApiMethod::unStakeGas(const ParamList & param_list, std::ostringstream & out
 
     auto amount = stoi(param_list[2]);
     bool br = api_method_imp_.unStakeGas(g_userinfo, from, to, amount, out_str);
-    return br ? 0 : -1;
-}
-
-int ApiMethod::PledgeDisk(const ParamList & param_list) {
-    if (param_list.size() > 1 && (COMMAND_HELP_STRING[0] == param_list[1] || COMMAND_HELP_STRING[1] == param_list[1])) {
-        std::cout << "Lock top to get disk limit.\n";
-        std::cout << "\nUSAGE:\n    sendtx buydisk account_addr utop_num\n";
-        std::cout << "\nEXAMPLE:\n    ";
-        std::cout << "sendtx buydisk T00000LQB6umTo6TZs9UjmZEgwpd7Jt3R7hGhYCS 100\n";
-        return -1;
-    }
-    if (param_list.size() < 2)
-        return -1;
-
-    std::string from = g_userinfo.account;
-    std::string to = param_list[1];
-    if (to.empty())
-        return -1;
-
-    auto amount = stoi(param_list[2]);
-    bool br = api_method_imp_.pledgedisk(g_userinfo, from, to, amount);
-    return br ? 0 : -1;
-}
-
-int ApiMethod::RedeemDisk(const ParamList & param_list) {
-    if (param_list.size() > 1 && (COMMAND_HELP_STRING[0] == param_list[1] || COMMAND_HELP_STRING[1] == param_list[1])) {
-        std::cout << "Decrease disk limit to unlock top.\n";
-        std::cout << "\nUSAGE:\n    sendtx selldisk account_addr utop_num\n";
-        std::cout << "\nEXAMPLE:\n    ";
-        std::cout << "sendtx selldisk T00000LQB6umTo6TZs9UjmZEgwpd7Jt3R7hGhYCS 100\n";
-        return -1;
-    }
-
-    if (param_list.size() < 2)
-        return -1;
-
-    std::string from = g_userinfo.account;
-    std::string to = param_list[1];
-    if (to.empty())
-        return -1;
-
-    auto amount = stoi(param_list[2]);
-    bool br = api_method_imp_.redeemdisk(g_userinfo, from, to, amount);
     return br ? 0 : -1;
 }
 
@@ -3365,27 +3278,6 @@ int ApiMethod::claimVoterDividend(const ParamList & param_list, std::ostringstre
     }
 
     bool br = api_method_imp_.claimVoterDividend(g_userinfo, out_str);
-    return br ? 0 : -1;
-}
-
-int ApiMethod::RequestIssuance(const ParamList & param_list) {
-    if (param_list.size() < 4) {
-        LOG("Cmd Request Issuance  (avote) lost params. param_count<4");
-        return -1;
-    }
-
-    std::map<std::string, uint64_t> issurances;
-    std::string count_str = param_list[1];
-    uint32_t count = atoi(count_str.c_str());
-    for (uint32_t i = 0; i < count; ++i) {
-        std::string account = param_list[i * 2 + 2];
-        std::string issurance_str = param_list[i * 2 + 3];
-        uint32_t issurance = atoi(issurance_str.c_str());
-
-        issurances.insert(std::map<std::string, uint64_t>::value_type(account, issurance));
-    }
-
-    bool br = api_method_imp_.request_issuance(g_userinfo, issurances);
     return br ? 0 : -1;
 }
 

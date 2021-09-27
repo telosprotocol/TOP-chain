@@ -491,18 +491,19 @@ xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64
     return jv;
 }
 
-xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr) {
+xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr, const std::string & version) {
     xJson::Value ori_tx_info;
     if (tx_ptr == nullptr) {
         return ori_tx_info;
     }
-    tx_ptr->parse_to_json(ori_tx_info);
+    tx_ptr->parse_to_json(ori_tx_info, version);
     ori_tx_info["authorization"] = uint_to_str(tx_ptr->get_authorization().data(), tx_ptr->get_authorization().size());
-    ori_tx_info["tx_action"]["sender_action"] = ori_tx_info["sender_action"];
-    ori_tx_info["sender_action"].clear();
-    ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
-    ori_tx_info["receiver_action"].clear();
-    ori_tx_info["last_tx_hash"] = static_cast<xJson::UInt64>(tx_ptr->get_last_hash());
+    if (version != RPC_VERSION_V2) {
+        ori_tx_info["tx_action"]["sender_action"] = ori_tx_info["sender_action"];
+        ori_tx_info.removeMember("sender_action");
+        ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
+        ori_tx_info.removeMember("receiver_action");
+    }
     return ori_tx_info;
 }
 
@@ -518,7 +519,7 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
     }
 }
 
-xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr) {
+xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & tx_version) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
     base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
     xJson::Value result_json;
@@ -542,7 +543,7 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
 
         update_tx_state(result_json, cons);
 
-        auto ori_tx_info = parse_tx(tx_ptr.get());
+        auto ori_tx_info = parse_tx(tx_ptr.get(), tx_version);
         result_json["original_tx_info"] = ori_tx_info;
 
         return result_json;
@@ -550,7 +551,7 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         if (cons_tx_ptr == nullptr) {
             throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
         } else {
-            auto ori_tx_info = parse_tx(cons_tx_ptr);
+            auto ori_tx_info = parse_tx(cons_tx_ptr, tx_version);
             result_json["original_tx_info"] = ori_tx_info;
             result_json["tx_consensus_state"] = cons;
             result_json["tx_state"] = "queue";
@@ -687,9 +688,10 @@ xJson::Value get_block_handle::parse_action(const xaction_t & action) {
 
 void get_block_handle::getTransaction() {
     uint256_t hash = top::data::hex_to_uint256(m_js_req["tx_hash"].asString());
+    std::string version = m_js_req["version"].asString();
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
-        m_js_rsp["value"] = parse_tx(hash);
+        m_js_rsp["value"] = parse_tx(hash, nullptr, version);
         base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
         if (tx_store_ptr != nullptr) {
             if (tx_store_ptr->get_raw_tx() != nullptr) {
@@ -698,9 +700,14 @@ void get_block_handle::getTransaction() {
                 xtransaction_ptr_t tx_ptr;
                 tx_ptr.attach(tx);
                 auto jsa = parse_action(tx_ptr->get_source_action());
-                m_js_rsp["value"]["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
                 auto jta = parse_action(tx_ptr->get_target_action());
-                m_js_rsp["value"]["original_tx_info"]["tx_action"]["receiver_action"]["action_param"] = jta;
+                if (version == RPC_VERSION_V2) {
+                    m_js_rsp["value"]["original_tx_info"]["sender_action_param"] = jsa;
+                    m_js_rsp["value"]["original_tx_info"]["receiver_action_param"] = jta;
+                } else {
+                    m_js_rsp["value"]["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
+                    m_js_rsp["value"]["original_tx_info"]["tx_action"]["receiver_action"]["action_param"] = jta;
+                }
             }
         }
     } catch (exception & e) {

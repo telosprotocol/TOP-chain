@@ -113,3 +113,36 @@ TEST_F(test_tx_v2, serialize_by_base_transfer) {
     EXPECT_EQ(tx_r->get_deposit(), min_tx_deposit);
     EXPECT_EQ(tx_r->get_authorization(), authorization);
 }
+
+TEST_F(test_tx_v2, json) {
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+    std::string source_addr = "T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30";
+    std::string source_action_name = "sss";
+    std::string source_action_para = "spspsp";
+    std::string target_addr = "T80000077ae60e9d17e4f59fd614a09eae3d1312b2041a";
+    std::string target_action_name = "ttt";
+    std::string target_action_para = "tptptp";
+    xtx_action_info tx_info(source_addr, source_action_name, source_action_para, target_addr, target_action_name, target_action_para);
+
+    enum_xtransaction_type tx_type = xtransaction_type_run_contract;
+    uint16_t expire = 100;
+    uint32_t deposit = 1000000;
+    uint32_t nonce = 0;
+    std::string memo = "json test";
+
+    tx->construct_tx(tx_type, expire, deposit, nonce, memo, tx_info);
+    tx->set_digest();
+
+    xJson::Value jv;
+    tx->parse_to_json(jv);
+    std::cout << jv.toStyledString() << std::endl;
+
+    xtransaction_ptr_t tx2 = make_object_ptr<xtransaction_v2_t>();
+    tx2->construct_from_json(jv);
+    EXPECT_EQ(tx2->get_source_addr(), source_addr);
+    EXPECT_EQ(tx2->get_source_action().get_action_param(), source_action_para);
+    EXPECT_EQ(tx2->get_tx_type(), tx_type);
+
+    tx2->set_digest();
+    EXPECT_EQ(tx2->get_digest_hex_str(), tx->get_digest_hex_str());
+}

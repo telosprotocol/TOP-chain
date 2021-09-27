@@ -36,10 +36,18 @@ enum enum_xtransaction_type {
     xtransaction_type_max
 };
 
+enum enum_xtransaction_version {
+    xtransaction_version_1 = 0,
+    xtransaction_version_2 = 2
+};
+
 enum enum_xunit_tx_exec_status : uint8_t {
     enum_xunit_tx_exec_status_success   = 1,
     enum_xunit_tx_exec_status_fail      = 2,
 };
+
+const std::string RPC_VERSION_V1{"1.0"};
+const std::string RPC_VERSION_V2{"2.0"};
 
 class xtx_parse_data_t {
 public:
@@ -51,6 +59,22 @@ public:
     std::string                 m_function_para;
     uint64_t                    m_vote_num;
     uint16_t                    m_lock_duration;
+};
+
+class xtx_action_info {
+public:
+    xtx_action_info(const std::string & source_addr, const std::string & source_action_name, const std::string & source_action_para, 
+                    const std::string & target_addr, const std::string & target_action_name, const std::string & target_action_para)
+                  : m_source_addr(source_addr), m_source_action_name(source_action_name), m_source_action_para(source_action_para),
+                    m_target_addr(target_addr), m_target_action_name(target_action_name), m_target_action_para(target_action_para)
+                    {}
+
+    std::string m_source_addr;
+    std::string m_source_action_name;
+    std::string m_source_action_para;
+    std::string m_target_addr;
+    std::string m_target_action_name;
+    std::string m_target_action_para;
 };
 
 class xtransaction_t;
@@ -80,13 +104,13 @@ class xtransaction_t : virtual public base::xrefcount_t {
  public:  // set apis
     virtual void        adjust_target_address(uint32_t table_id) = 0;
     virtual void        set_digest() = 0;
-    virtual void        set_digest_2() = 0;
     virtual void        set_digest(const uint256_t & digest) = 0;
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) = 0;
     virtual int32_t     set_same_source_target_address(const std::string & addr) = 0;
     virtual void        set_last_trans_hash_and_nonce(uint256_t last_hash, uint64_t last_nonce) = 0;
     virtual void        set_fire_and_expire_time(uint16_t const expire_duration) = 0;
  
+    virtual void        set_source_addr(const std::string & addr) {}
     virtual void        set_source_action(const xaction_t & action) = 0;
     virtual void        set_target_action(const xaction_t & action) = 0;
     virtual void        set_authorization(const std::string & authorization) = 0;
@@ -96,6 +120,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual int32_t     make_tx_transfer(const data::xproperty_asset & asset) = 0;
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) = 0;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) = 0;
+    virtual void        construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) = 0;
 
  public:  // get apis
     virtual uint256_t           digest() const = 0;
@@ -111,7 +136,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual xaction_t &         get_target_action() = 0;
     virtual const std::string & get_target_action_name() const = 0;
     virtual const std::string & get_authorization() const = 0;
-    virtual void                parse_to_json(xJson::Value& tx_json) const = 0;
+    virtual void                parse_to_json(xJson::Value& tx_json, const std::string & tx_version = RPC_VERSION_V2) const = 0;
     virtual void                construct_from_json(xJson::Value& tx_json) = 0;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) = 0;
 
@@ -125,26 +150,19 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual uint16_t get_tx_len() const = 0;
     virtual void set_tx_version(uint32_t version) = 0;
     virtual uint32_t get_tx_version() const = 0;
-    // virtual void set_to_ledger_id(uint16_t id) = 0;
-    // virtual uint16_t get_to_ledger_id() const = 0;
-    // virtual void set_from_ledger_id(uint16_t id) = 0;
-    // virtual uint16_t get_from_ledger_id() const = 0;
     virtual void set_deposit(uint32_t deposit) = 0;
     virtual uint32_t get_deposit() const = 0;
     virtual void set_expire_duration(uint16_t duration) = 0;
     virtual uint16_t get_expire_duration() const = 0;
     virtual void set_fire_timestamp(uint64_t timestamp) = 0;
     virtual uint64_t get_fire_timestamp() const = 0;
-    // virtual void set_random_nonce(uint32_t random_nonce) = 0;
-    // virtual uint32_t get_random_nonce() const = 0;
+    virtual void set_amount(uint64_t amount) {}
     virtual void set_premium_price(uint32_t premium_price) = 0;
     virtual uint32_t get_premium_price() const = 0;
     virtual void set_last_nonce(uint64_t last_nonce) = 0;
     virtual uint64_t get_last_nonce() const = 0;
     virtual void set_last_hash(uint64_t last_hash) = 0;
     virtual uint64_t get_last_hash() const = 0;
-    // virtual void set_challenge_proof(const std::string & challenge_proof) = 0;
-    // virtual const std::string & get_challenge_proof() const = 0;
     virtual void set_ext(const std::string & ext) = 0;
     virtual const std::string & get_ext() const = 0;
     virtual void set_memo(const std::string & memo) = 0;
