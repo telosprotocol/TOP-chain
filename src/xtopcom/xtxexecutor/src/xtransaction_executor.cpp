@@ -45,6 +45,13 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
         }
     }
 
+    // just for QA verification， should be deleted for formal commit
+    if (tx->is_confirm_tx()) {
+        if (after_op_records_size == before_op_records_size) {
+            xdbg("wish confirm state no change, tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
+        }
+    }
+
     return xsuccess;
 }
 
