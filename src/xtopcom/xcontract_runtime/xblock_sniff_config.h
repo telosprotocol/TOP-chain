@@ -66,10 +66,13 @@ struct xtop_sniff_timer_config {
 using xsniff_timer_config_t = xtop_sniff_timer_config;
 
 struct xtop_sniff_block_config {
-    std::set<common::xaccount_address_t> m_address_set;
+    common::xaccount_address_t m_sniff_address;
+    common::xaccount_address_t m_action_address;
+    std::string m_action{""};
 
     xtop_sniff_block_config() = default;
-    xtop_sniff_block_config(std::set<common::xaccount_address_t> const & set) : m_address_set(set) {
+    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action)
+      : m_sniff_address(sniff_address), m_action_address(action_address), m_action(action) {
     }
 };
 using xsniff_block_config_t = xtop_sniff_block_config;

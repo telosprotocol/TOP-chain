@@ -210,15 +210,12 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
 
     for (auto const & tx : output.success_tx_assemble) {
         if (tx->is_send_tx()) {
-            printf("add send tx\n");
             send_tx_num++;
         }
         if (tx->is_recv_tx()) {
-            printf("add recv tx\n");
             recv_tx_num++;
         }
         if (tx->is_confirm_tx()) {
-            printf("add confirm tx\n");
             confirm_tx_num++;
         }
     }
@@ -231,8 +228,8 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
 
     // set unconfirm sendtx number
     uint32_t old_unconfirm_tx_num = ac.unconfirm_sendtx_num();
-    printf("old_unconfirm_num=%d,send_tx_num=%d,recv_tx_num=%d,confirm_tx_num=%d\n",
-            old_unconfirm_tx_num, send_tx_num, recv_tx_num, confirm_tx_num);
+    // printf("old_unconfirm_num=%d,send_tx_num=%d,recv_tx_num=%d,confirm_tx_num=%d\n",
+    //         old_unconfirm_tx_num, send_tx_num, recv_tx_num, confirm_tx_num);
     if (old_unconfirm_tx_num + send_tx_num < confirm_tx_num) {
         xerror("xaccount_context_t::finish_exec_all_txs fail-unconfirm num unmatch.old_unconfirm_num=%d,send_tx_num=%d,confirm_tx_num=%d",
             old_unconfirm_tx_num, send_tx_num, confirm_tx_num);
