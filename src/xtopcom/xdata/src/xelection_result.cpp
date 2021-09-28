@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xdata/xelection/xelection_result.h"
 
 NS_BEG3(top, data, election)
@@ -87,3 +87,4 @@ xtop_election_result::erase(key_type const & key) {
 }
 
 NS_END3
+#endif

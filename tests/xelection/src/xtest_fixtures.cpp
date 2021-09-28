@@ -5,7 +5,7 @@
 #include "tests/xelection/xdummy_chain_timer.h"
 #include "tests/xelection/xtest_fixtures.h"
 #include "xbasic/xmemory.hpp"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xelection/xcache/xdata_accessor.h"
 
 using top::common::xbroadcast_id_t;

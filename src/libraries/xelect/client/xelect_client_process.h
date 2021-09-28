@@ -6,7 +6,7 @@
 
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xip.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 
 NS_BEG2(top, elect)

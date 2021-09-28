@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xbasic/xutility.h"
 #include "xdata/xelection/xelection_result_store.h"
 
@@ -100,3 +100,4 @@ xtop_election_result_store::empty() const noexcept {
 }
 
 NS_END3
+#endif

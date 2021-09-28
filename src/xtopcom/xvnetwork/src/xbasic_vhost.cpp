@@ -14,7 +14,7 @@
 #include "xdata/xelection/xelection_group_result.h"
 #include "xdata/xelection/xelection_info_bundle.h"
 #include "xdata/xelection/xelection_result.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xcodec/xmsgpack/xvnetwork_message_codec.hpp"

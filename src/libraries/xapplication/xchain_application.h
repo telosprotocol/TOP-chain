@@ -11,7 +11,7 @@
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xip.h"
 #include "xcommon/xnode_id.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xelect/client/xelect_client_process.h"
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"

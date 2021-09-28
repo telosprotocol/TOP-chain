@@ -6,7 +6,7 @@
 #pragma once
 
 #include "xcommon/xip.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xstake/xstake_algorithm.h"
 

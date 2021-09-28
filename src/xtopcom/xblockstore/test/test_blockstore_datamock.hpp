@@ -16,11 +16,9 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xconfig/xconfig_register.h"
 #include "xcommon/xip.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xelection_result.h"
 #include "xdata/xelection/xelection_result.h"
 

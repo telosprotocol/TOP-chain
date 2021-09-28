@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0 
 #pragma once
 
 #include "xcommon/xnode_type.h"
@@ -82,3 +82,4 @@ public:
 using xelection_network_result_t = xtop_election_network_result;
 
 NS_END3
+#endif

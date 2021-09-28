@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #pragma once
 
 #include "xbasic/xcodec/xmsgpack/xid_codec.hpp"
@@ -74,3 +74,4 @@ struct object_with_zone<top::data::election::xelection_result_store_t>
 NS_END1
 }
 NS_END1
+#endif

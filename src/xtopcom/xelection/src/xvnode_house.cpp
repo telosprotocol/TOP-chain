@@ -9,7 +9,6 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xblock.h"
 #include "xcodec/xmsgpack_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_group_result.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xunit_bstate.h"
