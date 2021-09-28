@@ -40,6 +40,15 @@ bool xdatautil::extract_parts(const std::string& address, std::string& base_addr
     return deserialize_owner_str(address, base_addr, table_id);
 }
 
+std::string xdatautil::base_addr(std::string const& address) {
+    std::string base_addr{""};
+    uint32_t table_id{0};
+
+    extract_parts(address, base_addr, table_id);
+    return base_addr;
+
+}
+
 std::string xdatautil::xip_to_hex(const xvip2_t & xip) {
     char data[33] = {0};
     snprintf(data, 33, "%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);

@@ -7,15 +7,17 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvm/manager/xcontract_address_map.h"
+#include "xvnode/xcomponents/xvnode_fulltableblock/xfulltableblock_process.h"
 
 NS_BEG2(top, vnode)
 
 xtop_vnode_sniff::xtop_vnode_sniff(observer_ptr<store::xstore_face_t> const & store,
+                                   observer_ptr<base::xvnodesrv_t> const& nodesrv,
                                    observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & manager,
                                    observer_ptr<vnetwork::xvnetwork_driver_face_t> const & driver,
                                    observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool)
-  : m_store(store), m_system_contract_manager(manager), m_the_binding_driver(driver), m_txpool_face(txpool) {
-    
+  : m_store(store), m_nodesvr(nodesrv), m_system_contract_manager(manager), m_the_binding_driver(driver), m_txpool_face(txpool) {
+
     sniff_set();
 }
 
@@ -123,13 +125,15 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
 
         // table upload contract sniff sharding table addr
         if ((block_address.find(sys_contract_sharding_table_block_addr) != std::string::npos) && (contract_address.value() == sys_contract_sharding_statistic_info_addr)) {
-            xdbg("[xtop_vnode_sniff::sniff_block] sniff block match, contract: %s, block: %s, height: %lu", contract_address.c_str(), block_address.c_str(), height);
-            return true;
+            xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %" PRIu64, contract_address.c_str(), block_address.c_str(), height);
             auto const full_tableblock = (dynamic_cast<xfull_tableblock_t *>(vblock.get()));
-            auto const fulltable_statisitc_data_str = full_tableblock->get_table_statistics_string();
+            auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
+            auto const statistic_accounts = components::fulltableblock_statistic_accounts(fulltable_statisitc_data, m_nodesvr.get());
+
 
             base::xstream_t stream(base::xcontext_t::instance());
-            stream << fulltable_statisitc_data_str;
+            stream << fulltable_statisitc_data;
+            stream << statistic_accounts;
             stream << height;
             stream << full_tableblock->get_pledge_balance_change_tgas();
             std::string action_params = std::string((char *)stream.data(), stream.size());

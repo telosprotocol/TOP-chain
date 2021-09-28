@@ -46,7 +46,7 @@ private:
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
-    
+
     observer_ptr<data::xdev_params> m_dev_params;
     observer_ptr<data::xuser_params> m_user_params;
 
@@ -58,9 +58,6 @@ private:
     // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
     std::unique_ptr<components::prune_data::xprune_data> m_prune_data;
-
-    observer_ptr<base::xvnodesrv_t> m_nodesvr;
-    // observer_ptr<contract_runtime::system::xsystem_contract_manager_t> m_system_contract_manager;
 
     std::unique_ptr<xtop_vnode_sniff> m_sniff;
 

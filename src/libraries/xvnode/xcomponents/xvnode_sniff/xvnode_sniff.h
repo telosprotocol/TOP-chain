@@ -26,6 +26,7 @@ public:
     ~xtop_vnode_sniff() = default;
 
     xtop_vnode_sniff(observer_ptr<store::xstore_face_t> const & store,
+                     observer_ptr<base::xvnodesrv_t> const& nodesrv,
                      observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & manager,
                      observer_ptr<vnetwork::xvnetwork_driver_face_t> const & driver,
                      observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool);
@@ -46,10 +47,11 @@ public:
 
 private:
     observer_ptr<store::xstore_face_t> m_store;
+    observer_ptr<base::xvnodesrv_t> m_nodesvr;
     observer_ptr<contract_runtime::system::xsystem_contract_manager_t> m_system_contract_manager;
     observer_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
     observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> m_txpool_face;
-    std::map<common::xaccount_address_t, xrole_config_t> m_config_map; 
+    std::map<common::xaccount_address_t, xrole_config_t> m_config_map;
 };
 
 using xvnode_sniff_t = xtop_vnode_sniff;
