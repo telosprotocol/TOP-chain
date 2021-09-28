@@ -141,6 +141,10 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval);
 
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
+#endif
+
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
         for (auto & v : committee_addrs) {
             m_initial_committee.push_back(v);
