@@ -172,6 +172,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
     common::xaccount_address_t const contract_address{ block->get_block_owner() };
     auto const it = m_election_status.find(contract_address);
     if (it == std::end(m_election_status)) {
+        xdbg("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
         return;
     }
 
@@ -179,6 +180,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
 
     auto const local_height = top::get<xinternal_election_status_t>(*it).height;
     if (local_height >= block->get_height()) {
+        xdbg("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
         return;
     }
 
@@ -205,7 +207,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
         using top::data::election::xelection_result_store_t;
         auto const& election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
         if (election_result_store.empty()) {
-            if (!(contract_address == common::xaccount_address_t{ sys_contract_rec_elect_archive_addr } && property == data::election::get_property_by_group_id(common::xfull_node_group_id))) {
+            if (!(contract_address == common::xaccount_address_t{ sys_contract_zec_elect_archive_addr } && property == data::election::get_property_by_group_id(common::xfull_node_group_id))) {
                 if (block->get_height() != 0) {
                     xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
                 } else {
@@ -267,10 +269,10 @@ void xelect_client_process::update_election_status(common::xlogic_time_t const& 
     process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }, current_time, update_zec_interval);
 
     auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / update_divider;
-    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }, current_time, update_edge_interval);
+    process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_edge_addr }, current_time, update_edge_interval);
 
     auto const update_archive_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / update_divider;
-    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }, current_time, update_archive_interval);
+    process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_archive_addr }, current_time, update_archive_interval);
 
     auto const update_consensus_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / update_divider;
     process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }, current_time, update_consensus_interval);

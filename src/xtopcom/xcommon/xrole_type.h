@@ -6,6 +6,7 @@
 
 #include "xbase/xmem.h"
 #include "xcommon/xnode_type.h"
+#include "xcommon/xregistration_type.h"
 
 #include <string>
 #include <vector>
@@ -38,6 +39,8 @@ enum class xenum_role_type : uint32_t {
     full_node = 0x00000010,
 };
 using xrole_type_t = xenum_role_type;
+
+common::xrole_type_t to_mainchain_role_type(common::xregistration_type_t const & registration_type);
 
 XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = "edge";
 XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = "advance";

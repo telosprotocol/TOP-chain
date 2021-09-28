@@ -8,6 +8,7 @@
 #include "xcommon/xip.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xstandby/xstandby_data_struct.h"
 
 NS_BEG3(top, tests, election)
 
@@ -18,8 +19,9 @@ using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
 using top::data::election::xelection_result_t;
-using top::data::election::xstandby_network_result_t;
-using top::data::election::xstandby_node_info_t;
+using top::data::standby::xzec_standby_node_info_t;
+using top::data::standby::xzec_standby_result_t;
+
 
 class xtop_test_election_data_manager_fixture {
 public:
@@ -28,15 +30,16 @@ public:
     XDECLARE_DEFAULTED_DESTRUCTOR(xtop_test_election_data_manager_fixture);
 
     xelection_network_result_t election_network_result;
-    xstandby_network_result_t standby_network_result;
+    xzec_standby_result_t zec_standby_result;
 
-    bool add_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id, xstandby_node_info_t standby_node_info);
 
-    bool delete_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id);
+    bool add_standby_node(common::xnode_id_t node_id, xzec_standby_node_info_t standby_node_info);
+
+    bool delete_standby_node(common::xnode_id_t node_id);
 
     bool add_nodes_to_standby(std::size_t node_count, common::xnode_type_t node_type, std::string node_id_prefix);
 
-    bool dereg_nodes_from_standby(std::size_t node_count, common::xnode_type_t node_type, std::string node_id_prefix);
+    bool dereg_nodes_from_standby(std::size_t node_count, std::string node_id_prefix);
 
     bool add_election_result(common::xnode_type_t node_type, common::xcluster_id_t cid, common::xgroup_id_t gid, xelection_info_bundle_t election_info_bundle);
 

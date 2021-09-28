@@ -11,6 +11,23 @@
 
 NS_BEG2(top, common)
 
+common::xrole_type_t to_mainchain_role_type(common::xregistration_type_t const & registration_type) {
+    switch (registration_type) {
+    case common::xregistration_type_t::hardcode:
+        XATTRIBUTE_FALLTHROUGH;
+    case common::xregistration_type_t::senior:
+        return common::xrole_type_t::advance;
+    case common::xregistration_type_t::intermediate:
+        return common::xrole_type_t::validator;
+    case common::xregistration_type_t::primary:
+        return common::xrole_type_t::edge;
+    case common::xregistration_type_t::invalid:
+        return common::xrole_type_t::invalid;
+    }
+    assert(false);
+    return common::xrole_type_t::invalid;
+}
+
 std::int32_t operator<<(top::base::xstream_t & stream, xrole_type_t const & role_type) {
     return stream << static_cast<std::underlying_type<xrole_type_t>::type>(role_type);
 }

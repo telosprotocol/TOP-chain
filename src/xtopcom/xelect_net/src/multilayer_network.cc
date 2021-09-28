@@ -101,12 +101,6 @@ void MultilayerNetwork::stop() {
 }
 
 bool MultilayerNetwork::Init(const base::Config & config) {
-    std::string db_path;
-    if (!config.Get("db", "path", db_path)) {
-        xerror("get db path from conf failed[%s]", db_path.c_str());
-        return false;
-    }
-
     if (!top::kadmlia::CreateGlobalXid(config)) {
         return false;
     }
@@ -144,11 +138,6 @@ bool MultilayerNetwork::Init(const base::Config & config) {
     xinfo("Init SmallNetNodes for Elect Network");
     wrouter::ServiceNodes::Instance()->Init();
     xinfo("Init ServiceNodes for cache nodes");
-
-    if (InitDb(config) != 0) {
-        xerror("init db failed!");
-        return false;
-    }
 
     if (!ec_netcard_) {
         xerror("ec_netcard creat failed");
@@ -198,11 +187,6 @@ std::shared_ptr<network::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(c
 }
 
 int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config) {
-    if (!edge_config.Set("db", "path", platform_param.db_path)) {
-        xerror("set config failed [db][path][%s]", platform_param.db_path.c_str());
-        return 1;
-    }
-
     if (!edge_config.Set("log", "path", platform_param.log_path)) {
         xerror("set config failed [log][log_path][%s]", platform_param.log_path.c_str());
         return 1;
@@ -210,11 +194,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
 
     if (!edge_config.Set("node", "country", platform_param.country)) {
         xerror("set config failed [node][country][%s]", platform_param.country.c_str());
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "zone_id", platform_param.zone_id)) {
-        xerror("set config failed [node][zone_id][%d]", platform_param.zone_id);
         return 1;
     }
 
@@ -309,91 +288,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
     return 0;
 }
 
-bool MultilayerNetwork::ResetEdgeConfig(top::ArgsParser & args_parser, top::base::Config & edge_config) {
-    std::string node_id;
-    if (args_parser.GetParam("n", node_id) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("node", "node_id", node_id)) {
-            xerror("set config failed [node][node_id][%s]", node_id.c_str());
-            return false;
-        }
-    }
-
-    std::string db_path;
-    if (args_parser.GetParam("d", db_path) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("db", "path", db_path)) {
-            xerror("set config failed [db][path][%s]", db_path.c_str());
-            return false;
-        }
-    }
-    std::string country;
-    args_parser.GetParam("o", country);
-    if (!country.empty()) {
-        if (!edge_config.Set("node", "country", country)) {
-            xwarn("set config failed [node][country][%s]", country.c_str());
-            return false;
-        }
-    }
-
-    int zone_id;
-    if (args_parser.GetParam("z", zone_id) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("node", "zone_id", zone_id)) {
-            xwarn("set config failed [node][zone_id][%u]", zone_id);
-            return false;
-        }
-    }
-
-    std::string local_ip;
-    args_parser.GetParam("a", local_ip);
-    if (!local_ip.empty()) {
-        if (!edge_config.Set("node", "local_ip", local_ip)) {
-            xwarn("set config failed [node][local_ip][%s]", local_ip.c_str());
-            return false;
-        }
-    }
-    uint16_t local_port = 0;
-    if (args_parser.GetParam("P", local_port) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("node", "local_port", local_port)) {
-            xwarn("set config failed [node][local_port][%d]", local_port);
-            return false;
-        }
-    }
-
-    int first_node = 0;
-    if (args_parser.GetParam("f", first_node) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("node", "first_node", first_node)) {
-            xwarn("set config failed [node][first_node][%d]", first_node);
-            return false;
-        }
-    }
-
-    std::string peer;
-    args_parser.GetParam("p", peer);
-    if (!peer.empty()) {
-        if (!edge_config.Set("node", "public_endpoints", peer)) {
-            xwarn("set config failed [node][public_endpoints][%s]", peer.c_str());
-            return false;
-        }
-    }
-
-    int show_cmd = 1;
-    if (args_parser.GetParam("g", show_cmd) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("node", "show_cmd", show_cmd == 1)) {
-            xwarn("set config failed [node][show_cmd][%d]", show_cmd);
-            return false;
-        }
-    }
-
-    std::string log_path;
-    if (args_parser.GetParam("L", log_path) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("log", "path", log_path)) {
-            xwarn("set config failed [log][log_path][%s]", log_path.c_str());
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void MultilayerNetwork::InitWrouter(top::transport::TransportPtr transport, std::shared_ptr<top::transport::MultiThreadHandler> message_handler) {
     wrouter::Wrouter::Instance()->Init(base::xcontext_t::instance(),
                                        // io_thread->get_thread_id(),
@@ -423,14 +317,7 @@ int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> t
 
     // get kroot id
     base::KadmliaKeyPtr kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
-    if (KadKey_GetFromDb(kad_key_ptr, kKadmliaKeyField + "root" + global_node_id) != 0) {
-        if (KadKey_StoreInDb(kad_key_ptr, kKadmliaKeyField + "root" + global_node_id) != 0) {
-            xerror("save root kad key to db failed!");
-            return top::kadmlia::kKadFailed;
-        }
-        xinfo("save root kad key: %s to db success", kad_key_ptr->Get().c_str());
-    }
-    xinfo("get root kad key: %s from db success", kad_key_ptr->Get().c_str());
+    xinfo("[CreateRootManager]get root kad key: %s ", kad_key_ptr->Get().c_str());
 
     if (wrouter::MultiRouting::Instance()->CreateRootRouting(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {
         // if (root_manager_ptr->InitRootRoutingTable(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {
@@ -446,51 +333,6 @@ int MultilayerNetwork::ResetRootRouting(std::shared_ptr<transport::Transport> tr
     kadmlia::GetPublicEndpointsConfig(config, public_endpoints_config);
 
     return CreateRootManager(transport, config, public_endpoints_config);
-}
-int MultilayerNetwork::InitDb(const base::Config & config) {
-    std::string db_path;
-    if (!config.Get("db", "path", db_path)) {
-        xerror("get db path from conf failed[%s]", db_path.c_str());
-        return 1;
-    }
-    assert(!net_db_);
-    net_db_ = db::xdb_factory_t::instance(db_path);
-    if (!net_db_) {
-        xerror("init network layer db:%s failed", db_path.c_str());
-        return 1;
-    }
-
-    xinfo("init network layer db:%s", db_path.c_str());
-    return 0;
-}
-
-int MultilayerNetwork::KadKey_GetFromDb(base::KadmliaKeyPtr & kadkey, const std::string & db_field) {
-    if (!net_db_) {
-        return 1;
-    }
-
-    std::string db_key(kKadmliaKeyDbKey);
-    db_key += db_field;
-    std::string kad_key_str_hex;
-    if (!net_db_->read(db_key, kad_key_str_hex)) {
-        xwarn("read kad_key:%s from db failed", db_key.c_str());
-        return 1;
-    }
-
-    kadkey = base::GetKadmliaKey(HexDecode(kad_key_str_hex));
-    return 0;
-}
-
-int MultilayerNetwork::KadKey_StoreInDb(base::KadmliaKeyPtr & kadkey, const std::string & db_field) {
-    if (!net_db_) {
-        return 1;
-    }
-
-    std::string db_key(kKadmliaKeyDbKey);
-    db_key += db_field;
-    std::string kad_key_str_hex = HexEncode(kadkey->Get());
-    net_db_->write(db_key, kad_key_str_hex);
-    return 0;
 }
 
 std::vector<std::string> MultilayerNetwork::GetServiceNeighbours(const common::xip2_t & xip2) {

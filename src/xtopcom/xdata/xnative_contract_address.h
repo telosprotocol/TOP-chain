@@ -18,6 +18,15 @@ XINLINE_CONSTEXPR char const * genesis_root_addr_main_chain{"T$000132i21FyYZvjTK
 XINLINE_CONSTEXPR char const * sys_contract_beacon_timer_addr{"Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx"};
 XINLINE_CONSTEXPR char const * sys_drand_addr{"Tr00013aFJ3pTJ56d7Nrc3VtwUQPwkXRL1vozEvCh"};
 
+XINLINE_CONSTEXPR char const * sys_contract_rec_parachain_registration_addr{ "T2000138BH4As41pTdHafsTpLZrbAnEKpnPCcPARA@0" };
+XINLINE_CONSTEXPR char const * sys_contract_rec_registration_addr2{ "T2000138G4iWs4BMtHVM7seKSPqA91GDQzT6PRREG@0" };
+XINLINE_CONSTEXPR char const * sys_contract_rec_standby_pool_addr2{ "T2000138C1rzRSnPKQH3AeK3NcYLMeZCTkD4dRSTB@0" };
+
+XINLINE_CONSTEXPR char const * sys_contract_zec_registration_addr{ "T200024uKnvR5aRtKCny1Mx11c3179nwGiQiQZREG@2" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_standby_pool_addr2{ "T200024uEab5cHBkRTUXWueZr8EdWcYVpb8knZSTB@2" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_elect_archive_addr{ "T200024u9wrqH2coYSF3UWChidSXntGn4mkPaARCH@2" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_elect_edge_addr{ "T200024uRcpTd6UDXDTaYqGAmJ1h2tJQV4TCeEDGE@2" };
+
 XINLINE_CONSTEXPR char const * sys_contract_rec_registration_addr{ "T2000138NZjvNJjRNG5iEqVKydpqAqoeNjBuFmNbj@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_edge_addr{ "T2000138NpRxYCFQxMHvedTxRpgkb8B7oHt235N2W@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_archive_addr{ "T2000138NXb36GkofBUMqxCAZqdERi63htDVC8Yzt@0" };

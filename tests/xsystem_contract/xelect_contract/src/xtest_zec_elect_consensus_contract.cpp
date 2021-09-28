@@ -292,7 +292,7 @@ bool xtest_zec_elect_consensus_contract_t::test_elect_auditor_validator(common::
                                                                         common::xlogic_time_t const election_timestamp,
                                                                         common::xlogic_time_t const start_time) {
     return m_zec_elect_consensus.elect_auditor_validator(
-        zid, cid, auditor_group_id, random_seed, election_timestamp, start_time, m_election_association_result_store, standby_network_result, all_election_result_store);
+        zid, cid, auditor_group_id, random_seed, election_timestamp, start_time, m_election_association_result_store, zec_standby_result, all_election_result_store);
 }
 
 bool xtest_zec_elect_consensus_contract_t::test_elect_non_genesis(common::xzone_id_t const & zid,

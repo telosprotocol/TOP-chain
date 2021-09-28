@@ -39,9 +39,10 @@ public:
     common::xrole_type_t                  node_role_type;
 #endif
 private:
-    xuser_params() = default;
+    xuser_params();
 };
 
+#if 0
 class xdev_params {
 public:
     xdev_params()                                = default;
@@ -56,10 +57,10 @@ public:
 
     std::string                           seed_edge_host;
 };
+#endif
 
 class xplatform_params {
 public:
-    xplatform_params()                                = default;
     xplatform_params(xplatform_params const &)             = delete;
     xplatform_params & operator=(xplatform_params const &) = delete;
     xplatform_params(xplatform_params &&)                  = delete;
@@ -80,11 +81,12 @@ public:
     std::string                           url_endpoints {};
     std::set<std::string>                 edge_endpoints {}; // just ip
     bool                                  show_cmd {false};
-    uint32_t                              zone_id {static_cast<uint32_t>(-1)};
-    std::string                           db_path {};
     std::string                           country { "US" };
+private:
+    xplatform_params();
 };
 
+#if 0
 struct xstaticec_params {
     int32_t total_working_advance_nodes {4};  // 3 - 9
     int32_t total_working_consensus_nodes {21};  // 3 - 21
@@ -102,6 +104,7 @@ struct xstaticec_params {
     // init again
     xstaticec_params();
 };
+#endif
 
 }  // namespace data
 }  // namespace top

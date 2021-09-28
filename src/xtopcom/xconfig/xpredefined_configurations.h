@@ -157,6 +157,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size, std::uint16_t, normal, 512, 64, 1022);
 
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_registration_on_timer_interval, xinterval_t, normal, 11, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_parachain_registration_on_timer_interval, xinterval_t, normal, 11, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_standby_pool_update_interval, xinterval_t, normal, 11, 1, std::numeric_limits<xinterval_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_standby_pool_update_interval, xinterval_t, normal, 31, 1, std::numeric_limits<xinterval_t>::max());
@@ -387,7 +389,6 @@ XDECLARE_CONFIGURATION(dht_port, uint16_t, 19083);
 XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
-XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
 XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
@@ -429,7 +430,6 @@ XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79c
 XDECLARE_CONFIGURATION(platform_first_node, bool, false);
 XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
-XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
 #undef XDECLARE_CONFIGURATION
 
