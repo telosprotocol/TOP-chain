@@ -90,14 +90,8 @@ int32_t xtransaction_v2_t::do_uncompact_write_without_hash_signature(base::xstre
     stream << m_target_addr;
     stream << m_edge_nodeid;
 
-    std::string token_name{};
-    uint64_t amount{0};
-    if (m_transaction_type == xtransaction_type_transfer) {
-        token_name = m_token_name;
-        amount = m_amount;
-    }
-    stream << amount;
-    stream << token_name;
+    stream << m_amount;
+    stream << m_token_name;
     stream << m_last_trans_nonce;
     stream << m_deposit;
     stream << m_premium_price;
