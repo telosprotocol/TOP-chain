@@ -38,7 +38,7 @@ private:
     observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
-    xobject_ptr_t<base::xvnodesrv_t> m_nodesvr;
+    observer_ptr<base::xvnodesrv_t> m_nodesvr;
 
 public:
     xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main,
@@ -55,7 +55,7 @@ public:
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
-                       xobject_ptr_t<base::xvnodesrv_t> const & nodesvr);
+                       observer_ptr<base::xvnodesrv_t> const & nodesvr);
 
     xtop_vnode_factory(xtop_vnode_factory &&) = default;
     xtop_vnode_factory & operator=(xtop_vnode_factory &&) = default;

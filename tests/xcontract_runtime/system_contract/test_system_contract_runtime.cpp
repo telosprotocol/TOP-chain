@@ -1,36 +1,31 @@
 
 #define private public
 #define protected public
+#include "tests/mock/xvchain_creator.hpp"
 #include "xbase/xobject_ptr.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xsystem_contract_runtime/xsystem_action_runtime.h"
-#include "xsystem_contracts/xsystem_contract_addresses.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xcontract_state.h"
+#include "xcontract_common/xproperties/xproperty_access_control.h"
+#include "xcontract_runtime/xtop_action_generator.h"
+#include "xcontract_vm/xaccount_vm.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xdata_common.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdb/xdb_face.h"
 #include "xdb/xdb_factory.h"
 #include "xstore/xstore_face.h"
-#include "xsystem_contracts/xtransfer_contract.h"
-#include "xvledger/xvstate.h"
-#include "xvledger/xvledger.h"
-#include "xcontract_runtime/xtop_action_generator.h"
-
-
-#include "tests/mock/xvchain_creator.hpp"
-
-
-#include <gtest/gtest.h>
-#include <memory>
-
-
-#define private public
+#include "xsystem_contract_runtime/xsystem_action_runtime.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
-#include "xcontract_vm/xaccount_vm.h"
+#include "xsystem_contracts/xsystem_contract_addresses.h"
+#include "xsystem_contracts/xtransfer_contract.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvstate.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
-#include "xdata/xdata_common.h"
+
+#include <gtest/gtest.h>
+
+#include <memory>
 
 NS_BEG3(top, tests, contract_runtime)
 

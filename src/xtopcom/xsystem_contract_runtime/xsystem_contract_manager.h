@@ -19,21 +19,21 @@
 NS_BEG3(top, contract_runtime, system)
 
 struct xtop_contract_deployment_data {
-    std::shared_ptr<system_contracts::xbasic_system_contract_t> m_system_contract{nullptr};
-    common::xnode_type_t m_node_type{common::xnode_type_t::invalid};
-    xsniff_type_t m_sniff_type{xsniff_type_t::invalid};
-    xsniff_broadcast_config_t m_broadcast_config{};
-    xsniff_timer_config_t m_timer_config{};
-    xsniff_block_config_t m_block_config{};
+    std::shared_ptr<system_contracts::xbasic_system_contract_t> system_contract{nullptr};
+    common::xnode_type_t node_type{common::xnode_type_t::invalid};
+    xsniff_type_t sniff_type{xsniff_type_t::invalid};
+    xsniff_broadcast_config_t broadcast_config{};
+    xsniff_timer_config_t timer_config{};
+    xsniff_block_config_t block_config{};
 
     xtop_contract_deployment_data() = default;
-    xtop_contract_deployment_data(std::shared_ptr<system_contracts::xbasic_system_contract_t> contract,
-                                  common::xnode_type_t type,
-                                  xsniff_type_t sniff,
-                                  xsniff_broadcast_config_t broadcast_config,
-                                  xsniff_timer_config_t timer_config,
-                                  xsniff_block_config_t block_config)
-      : m_system_contract(contract), m_node_type(type), m_sniff_type(sniff), m_broadcast_config(broadcast_config), m_timer_config(timer_config), m_block_config(block_config) {
+    xtop_contract_deployment_data(std::shared_ptr<system_contracts::xbasic_system_contract_t> contract_,
+                                  common::xnode_type_t node_type_,
+                                  xsniff_type_t sniff_type_,
+                                  xsniff_broadcast_config_t broadcast_config_,
+                                  xsniff_timer_config_t timer_config_,
+                                  xsniff_block_config_t block_config_)
+      : system_contract(contract_), node_type(node_type_), sniff_type(sniff_type_), broadcast_config(broadcast_config_), timer_config(timer_config_), block_config(block_config_) {
     }
 };
 using xcontract_deployment_data_t = xtop_contract_deployment_data;
@@ -95,7 +95,8 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
     assert(!contains(address));
 
     xcontract_deployment_data_t data{std::make_shared<system_contract_type>(), node_type, sniff_type, broadcast_config, timer_config, block_config};
-    m_system_contract_deployment_data.insert(std::make_pair(address, data));
+    auto ret = m_system_contract_deployment_data.insert(std::make_pair(address, data));
+    assert(ret.second == true);
 
     if (data::is_sys_sharding_contract_address(address)) {
         for ( auto i = 0; i < enum_vbucket_has_tables_count; i++) {

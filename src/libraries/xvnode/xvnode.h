@@ -58,6 +58,7 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
     std::unique_ptr<components::prune_data::xprune_data> m_prune_data;
 
+    observer_ptr<base::xvnodesrv_t> m_nodesvr;
     observer_ptr<contract_runtime::system::xsystem_contract_manager_t> m_system_contract_manager;
 
 public:
@@ -82,7 +83,7 @@ public:
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-               xobject_ptr_t<base::xvnodesrv_t> const & nodesvr);
+               observer_ptr<base::xvnodesrv_t> const & nodesvr);
 
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
@@ -104,7 +105,7 @@ public:
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-               xobject_ptr_t<base::xvnodesrv_t> const & nodesvr);
+               observer_ptr<base::xvnodesrv_t> const & nodesvr);
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const noexcept;
 
@@ -113,7 +114,7 @@ public:
     void start() override;
     void fade() override;
     void stop() override;
-    xvnode_sniff_config_t sniff_config();
+    xvnode_sniff_config_t sniff_config() override;
 
 private:
     void new_driver_added();

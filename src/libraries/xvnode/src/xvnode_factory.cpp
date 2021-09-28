@@ -25,7 +25,7 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
                                        observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
-                                       xobject_ptr_t<base::xvnodesrv_t> const & nodesvr)
+                                       observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : m_elect_main{std::move(elect_main)}
   , m_bus{std::move(bus)}
   , m_store{std::move(store)}
