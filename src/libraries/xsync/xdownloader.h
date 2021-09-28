@@ -53,6 +53,7 @@ public:
         observer_ptr<base::xiothread_t> const & iothread,
         xaccount_timer_t *timer,
         xdownloader_t* downloader);
+    void before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) override;
     bool filter_event(const mbus::xevent_ptr_t& e) override;
     void process_event(const mbus::xevent_ptr_t& e) override;
 

@@ -28,7 +28,13 @@ m_block_fetcher(block_fetcher) {
 }
 
 bool xblock_fetcher_event_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
+#ifdef ENABLE_METRICS
     XMETRICS_COUNTER_INCREMENT("block_fetcher_event_count", 1);
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_block_fetcher_cur, queue_size);
+    
+#endif
     return true;
 }
 
@@ -58,6 +64,7 @@ void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_
             }
             break;
     }
+    XMETRICS_GAUGE(metrics::mailbox_block_fetcher_total, discard ? 0 : 1);
 }
 
 /////////

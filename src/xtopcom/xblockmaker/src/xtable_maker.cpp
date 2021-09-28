@@ -36,7 +36,7 @@ int32_t xtable_maker_t::default_check_latest_state() {
 }
 
 void xtable_maker_t::refresh_cache_unit_makers() {
-     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_refresh_cache_unit_makers");
+    XMETRICS_TIMER(metrics::cons_tablemaker_refresh_cache);
     // clear old unit makers, only cache latest makers
     clear_old_unit_makers();
     // clear all pending txs
@@ -44,7 +44,7 @@ void xtable_maker_t::refresh_cache_unit_makers() {
 }
 
 int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_check_latest_state");
+    XMETRICS_TIMER(metrics::cons_tablemaker_check_state_tick);
     if ( m_check_state_success && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
         // already latest state
         return xsuccess;
@@ -143,7 +143,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         tablestate->get_account_index(unit_account, accountindex);
         int32_t ret = unitmaker->check_latest_state(cs_para, accountindex);
         if (ret != xsuccess) {
-            // TODO(jimmy) sync
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
             continue;
@@ -151,6 +152,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
 
         // 2.try to make empty or full unit
         if (unitmaker->can_make_next_full_block()) {
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
             unitmakers[unit_account] = unitmaker;
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for fullunit but make fullunit,%s,account=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
@@ -172,6 +175,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
                 last_receipt_id = tx->is_recv_tx() ? receiptid_pair.get_recvid_max() : receiptid_pair.get_confirmid_max();
             }
             if (cur_receipt_id != last_receipt_id + 1) {
+                XMETRICS_GAUGE(metrics::cons_packtx_fail_receiptid_contious, 1);
+                XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for receiptid not contious. %s last_receipt_id=%ld, tx=%s",
                     cs_para.dump().c_str(), last_receipt_id, tx->dump(true).c_str());
                 continue;
@@ -180,6 +185,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
 
         if (tx->is_send_tx()) {
             if (tablestate->get_unconfirm_tx_num() > table_total_unconfirm_tx_num_max) {
+                XMETRICS_GAUGE(metrics::cons_packtx_fail_total_unconfirm_limit, 1);
+                XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for table total unconfirm tx num too much. %s unconfirm=%d, tx=%s",
                     cs_para.dump().c_str(), tablestate->get_unconfirm_tx_num(), tx->dump(true).c_str());
                 continue;
@@ -189,6 +196,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             base::xreceiptid_pair_t receiptid_pair;
             tablestate->find_receiptid_pair(peer_table_sid, receiptid_pair);
             if (receiptid_pair.get_unconfirm_num() >= table_pair_unconfirm_tx_num_max) {
+                XMETRICS_GAUGE(metrics::cons_packtx_fail_table_unconfirm_limit, 1);
+                XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for table unconfirm tx num too much. %s unconfirm_num=%u, tx=%s",
                     cs_para.dump().c_str(), receiptid_pair.get_unconfirm_num(), tx->dump(true).c_str());
                 continue;
@@ -198,6 +207,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         if (false == unitmaker->push_tx(cs_para, tx)) {
             continue;
         }
+        XMETRICS_GAUGE(metrics::cons_packtx_succ, 1);
 
         // finally, record success tx info for receiptid contious check
         if (tx->is_recv_tx() || tx->is_confirm_tx()) {
@@ -293,7 +303,6 @@ void xtable_maker_t::get_unit_accounts(const xblock_ptr_t & block, std::set<std:
 
 xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     // refresh all cache unit makers
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_light_table");
     refresh_cache_unit_makers();
 
     // try to make non-empty-unit for left unitmakers
@@ -397,16 +406,17 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
 }
 
 xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    XMETRICS_TIMER(metrics::cons_make_lighttable_tick);
     return make_light_table(true, table_para, cs_para, table_result);
 }
 
 xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    XMETRICS_TIMER(metrics::cons_verify_lighttable_tick);
     return make_light_table(false, table_para, cs_para, table_result);
 }
 
 xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
-    // TODO(jimmy)
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_full_table");
+    XMETRICS_TIMER(metrics::cons_make_fulltable_tick);
     std::vector<xblock_ptr_t> blocks_from_last_full;
     if (false == load_table_blocks_from_last_full(get_highest_height_block(), blocks_from_last_full)) {
         xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
@@ -457,6 +467,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
 xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
                                            const data::xblock_consensus_para_t & cs_para,
                                            xtablemaker_result_t & tablemaker_result) {
+    XMETRICS_TIMER(metrics::cons_tablemaker_make_proposal_tick);
     std::lock_guard<std::mutex> l(m_lock);
     // check table maker state
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
@@ -490,7 +501,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 }
 
 int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp");
+    XMETRICS_TIMER(metrics::cons_tablemaker_verify_proposal_tick);
     std::lock_guard<std::mutex> l(m_lock);
 
     // check table maker state
@@ -555,8 +566,6 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_with_local");
-
     const std::vector<base::xventity_t*> & _proposal_table_inentitys = proposal_block->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _local_table_inentitys = local_block->get_input()->get_entitys();
     if (_proposal_table_inentitys.size() != _local_table_inentitys.size()) {

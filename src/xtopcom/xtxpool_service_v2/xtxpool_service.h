@@ -63,6 +63,7 @@ private:
     void send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & pulled_receipt);
     void send_push_receipts(xreceipt_push_t &pushed_receipt, vnetwork::xvnode_address_t const & target);
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
+    void drop_msg(vnetwork::xmessage_t const & message, std::string reason);
 
 private:
     xvip2_t m_xip;
