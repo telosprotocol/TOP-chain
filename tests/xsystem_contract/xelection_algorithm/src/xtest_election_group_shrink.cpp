@@ -48,7 +48,8 @@ void record(data::election::xelection_group_result_t & election_group_result){
 
 #define ELECT(group_range)                                                                                                                                                         \
     random_seed = static_cast<uint64_t>(rng());                                                                                                                                    \
-    m_elect_consensus_group.test_elect(zid, cid, gid, 0, 0, random_seed, group_range, standby_network_result, election_network_result);                                            \
+    simple_standby_result = data::standby::select_standby_nodes(zec_standby_result, node_type);                                                                                    \
+    m_elect_consensus_group.test_elect(zid, cid, gid, 0, 0, random_seed, group_range, simple_standby_result, election_network_result);                                            \
     record(election_network_result.result_of(node_type).result_of(cid).result_of(gid));
 
 TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
@@ -68,6 +69,8 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
     std::mt19937_64 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     auto random_seed = static_cast<uint64_t>(rng());
 
+    data::standby::xsimple_standby_result_t simple_standby_result;
+
     ELECT(group_size_range);
     ELECT(group_size_range);
     ELECT(group_size_range);
@@ -77,7 +80,7 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
 
     std::printf("delete nodes 1-20 :\n");
     for (auto index = 1; index <= 20; ++index) {
-        delete_standby_node(node_type, common::xnode_id_t{node_id_prefix + std::to_string(index)});
+        delete_standby_node(common::xnode_id_t{node_id_prefix + std::to_string(index)});
     }
     ELECT(group_size_range);
     ELECT(group_size_range);

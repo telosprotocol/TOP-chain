@@ -16,8 +16,8 @@ template <typename IntergerT,
           typename std::enable_if<std::is_floating_point<ValueT>::value>::type * = nullptr>
 class xtop_proper_fraction final {
 private:
-    IntergerT m_num;  // numerator
-    IntergerT m_den;  // denominator
+    IntergerT m_num{0};  // numerator
+    IntergerT m_den{1};  // denominator
     /*
         a proper fraction is a fraction that values exists between 0 and 1.
                     num
@@ -28,6 +28,7 @@ public:
     xtop_proper_fraction() {
     }
     xtop_proper_fraction(IntergerT num, IntergerT den) : m_num{num}, m_den{den} {
+        assert(m_den != 0);
         assert(m_num <= m_den);  //"numerator should be less than denominator"
     }
 

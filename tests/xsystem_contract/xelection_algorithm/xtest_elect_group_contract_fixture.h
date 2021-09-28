@@ -52,7 +52,7 @@ public:
                     common::xlogic_time_t const start_time,
                     std::uint64_t const random_seed,
                     xrange_t<top::config::xgroup_size_t> const & group_size_range,
-                    data::election::xstandby_network_result_t const & standby_network_result,
+                    data::standby::xsimple_standby_result_t const & simple_standby_result,
                     data::election::xelection_network_result_t & election_network_result);
 };
 using xtest_elect_consensus_group_algorithm_t = xtop_test_elect_consensus_group_algorithm;
@@ -75,7 +75,7 @@ public:
                     common::xlogic_time_t const election_timestamp,
                     common::xlogic_time_t const start_time,
                     xrange_t<config::xgroup_size_t> const & group_size_range,
-                    data::election::xstandby_network_result_t & standby_network_result,
+                    data::standby::xsimple_standby_result_t const & simple_standby_result,
                     data::election::xelection_network_result_t & election_network_result);
 
     common::xnode_type_t standby_type(common::xzone_id_t const & zid,

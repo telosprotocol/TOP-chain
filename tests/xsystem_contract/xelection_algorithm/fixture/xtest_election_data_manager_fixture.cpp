@@ -6,39 +6,41 @@
 
 NS_BEG3(top, tests, election)
 
-bool xtop_test_election_data_manager_fixture::add_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id, xstandby_node_info_t standby_node_info) {
-    return standby_network_result.result_of(node_type).insert({node_id, standby_node_info}).second;
+bool xtop_test_election_data_manager_fixture::add_standby_node(common::xnode_id_t node_id, xzec_standby_node_info_t standby_node_info) {
+    return zec_standby_result.insert(std::make_pair(node_id,standby_node_info)).second;
 }
 
-bool xtop_test_election_data_manager_fixture::delete_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id) {
-    auto & standby_result = standby_network_result.result_of(node_type);
-    standby_result.erase(node_id);
-    return standby_result.find(node_id) == standby_result.end();
+bool xtop_test_election_data_manager_fixture::delete_standby_node(common::xnode_id_t node_id) {
+    if (zec_standby_result.find(node_id) == zec_standby_result.end())
+        return false;
+    zec_standby_result.erase(node_id);
+    return true;
 }
 
 bool xtop_test_election_data_manager_fixture::add_nodes_to_standby(std::size_t node_count, common::xnode_type_t node_type, std::string node_id_prefix) {
     std::size_t begin_index{1};
-    begin_index += standby_network_result.result_of(node_type).size();
+    begin_index += zec_standby_result.size();
+    // begin_index += standby_network_result.result_of(node_type).size();
     for (std::size_t index = begin_index; index < node_count + begin_index; ++index) {
         common::xnode_id_t node_id{std::string(node_id_prefix + std::to_string(index))};
-        xstandby_node_info_t standby_node_info;
-        standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
+        xzec_standby_node_info_t standby_node_info;
+        standby_node_info.public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
 #if defined XENABLE_TESTS
-        standby_node_info.stake(node_type, index);
+        standby_node_info.stake_container.insert({node_type, index});
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xrole_type_t::validator : common::xrole_type_t::advance;
+        // standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xrole_type_t::validator : common::xrole_type_t::advance;
 #endif
-        if (!add_standby_node(node_type, node_id, standby_node_info))
+        if (!add_standby_node(node_id, standby_node_info))
             return false;
     }
     return true;
 }
 
-bool xtop_test_election_data_manager_fixture::dereg_nodes_from_standby(std::size_t node_count, common::xnode_type_t node_type, std::string node_id_prefix) {
+bool xtop_test_election_data_manager_fixture::dereg_nodes_from_standby(std::size_t node_count, std::string node_id_prefix) {
     for (std::size_t index = 1; index <= node_count; ++index) {
         common::xnode_id_t node_id{std::string(node_id_prefix + std::to_string(index))};
-        if (!delete_standby_node(node_type, node_id)) {
+        if (!delete_standby_node(node_id)) {
             return false;
         }
     }

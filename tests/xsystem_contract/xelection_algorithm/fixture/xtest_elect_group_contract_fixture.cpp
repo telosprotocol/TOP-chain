@@ -17,9 +17,9 @@ bool xtop_test_elect_consensus_group_algorithm::test_elect(common::xzone_id_t co
                                                            common::xlogic_time_t const start_time,
                                                            std::uint64_t const random_seed,
                                                            xrange_t<top::config::xgroup_size_t> const & group_size_range,
-                                                           data::election::xstandby_network_result_t const & standby_network_result,
+                                                           data::standby::xsimple_standby_result_t const & simple_standby_result,
                                                            data::election::xelection_network_result_t & election_network_result) {
-    return elect_group(zid, cid, gid, election_timestamp, start_time, random_seed, group_size_range, standby_network_result, election_network_result);
+    return elect_group(zid, cid, gid, election_timestamp, start_time, random_seed, group_size_range, simple_standby_result, election_network_result);
 }
 
 common::xnode_type_t xtop_test_elect_nonconsensus_group_algorithm::standby_type(common::xzone_id_t const & zid,
@@ -48,9 +48,9 @@ bool xtop_test_elect_nonconsensus_group_algorithm::test_elect(common::xzone_id_t
                                                               common::xlogic_time_t const election_timestamp,
                                                               common::xlogic_time_t const start_time,
                                                               xrange_t<config::xgroup_size_t> const & group_size_range,
-                                                              data::election::xstandby_network_result_t & standby_network_result,
+                                                              data::standby::xsimple_standby_result_t const & simple_standby_result,
                                                               data::election::xelection_network_result_t & election_network_result) {
-    return elect_group(zid, cid, gid, election_timestamp, start_time, group_size_range, standby_network_result, election_network_result);
+    return elect_group(zid, cid, gid, election_timestamp, start_time, group_size_range, simple_standby_result, election_network_result);
 }
 
 void xtop_test_elect_group_contract_fixture::SetUp() {}
