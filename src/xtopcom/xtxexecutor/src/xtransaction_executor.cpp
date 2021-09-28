@@ -56,6 +56,8 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
         return ret;
     }
 
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
     // copy create txs from account context
     std::vector<xcons_transaction_ptr_t> create_txs = account_context->get_create_txs();
     // exec txs created by origin tx secondly, this tx must be a run contract transaction
@@ -70,7 +72,7 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
                 xinfo("xtransaction_executor::exec_tx succ contract create tx. %s,input_tx:%s new_tx:%s",
                     cs_para.dump().c_str(), tx->dump().c_str(), new_tx->dump(true).c_str());
             }
-
+            new_tx->set_push_pool_timestamp(now);
             contract_create_txs.push_back(new_tx);  // return create tx for unit pack
         }
     }

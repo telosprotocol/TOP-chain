@@ -49,6 +49,7 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
                      delay);
+        XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_send, delay);
         m_ready_tx_queue.erase(it_ready->second);
         m_ready_tx_map.erase(it_ready);
         m_xtable_info->send_tx_dec(1);
@@ -66,6 +67,7 @@ void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash) {
                      m_xtable_info->get_table_addr().c_str(),
                      (*it_non_ready->second)->get_tx()->dump(true).c_str(),
                      delay);
+        XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_send, delay);
         m_non_ready_tx_queue.erase(it_non_ready->second);
         m_non_ready_tx_map.erase(it_non_ready);
         m_xtable_info->send_tx_dec(1);
@@ -96,6 +98,10 @@ const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_internal_t::get_exp
         }
         expired_txs.push_back(tx);
     }
+    if (!expired_txs.empty()) {
+        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, expired_txs.size());
+    }
+
     return expired_txs;
 }
 
@@ -312,7 +318,6 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
     clear_expired_txs();
     std::shared_ptr<xtx_entry> to_be_droped_tx = nullptr;
     if (m_send_tx_queue_internal.full()) {
-        XMETRICS_GAUGE(metrics::txpool_push_tx_send_fail_pool_full, 1);
         to_be_droped_tx = m_send_tx_queue_internal.pick_to_be_droped_tx();
         if (to_be_droped_tx == nullptr) {
             return xtxpool_error_queue_reached_upper_limit;

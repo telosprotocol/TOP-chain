@@ -125,6 +125,7 @@ void xcandidate_account_entry::clear_expired_txs(const std::string & table_addr)
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
     int32_t ret = 0;
+    uint32_t delete_num = 0;
     for (auto it = m_txs.begin(); it != m_txs.end();) {
         if (ret == 0) {
             ret = xverifier::xtx_verifier::verify_tx_duration_expiration(it->get()->get_tx()->get_transaction(), now);
@@ -132,9 +133,13 @@ void xcandidate_account_entry::clear_expired_txs(const std::string & table_addr)
         if(ret != 0) {
             xtxpool_info("xcandidate_account_entry::clear_expired_txs table:%s erase tx:%s", table_addr.c_str(), it->get()->get_tx()->dump().c_str());
             it = m_txs.erase(it);
+            delete_num++;
         } else {
             it++;
         }
+    }
+    if (delete_num > 0) {
+        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, delete_num);
     }
 }
 

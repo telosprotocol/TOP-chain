@@ -222,9 +222,11 @@ protected:
         int32_t queue_size = picker->count_calls(in, out);
         bool discard = queue_size >= max_mailbox_num;
         if (discard) {
+            XMETRICS_GAUGE(metrics::mailbox_us_total, 0);
             xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
             return -1;
         } else {
+            XMETRICS_GAUGE(metrics::mailbox_us_total, 1);
             xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
         }
 

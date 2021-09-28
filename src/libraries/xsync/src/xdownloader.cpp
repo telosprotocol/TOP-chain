@@ -91,9 +91,21 @@ m_downloader(downloader) {
     m_reg_holder.add_listener((int) mbus::xevent_major_type_store, cb);
 }
 
+void xevent_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
+    if (e->get_type() == mbus::xevent_major_type_account) {
+        discard = false;
+    }
+    XMETRICS_GAUGE(metrics::mailbox_downloader_total, discard ? 0 : 1);
+}
+
 bool xevent_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     // TODO filter
+#ifdef ENABLE_METRICS
     XMETRICS_COUNTER_INCREMENT("sync_downloader_event_count", 1);
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_downloader_cur, queue_size);
+#endif
     return true;
 }
 

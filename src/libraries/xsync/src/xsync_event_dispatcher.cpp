@@ -71,9 +71,14 @@ bool xsync_event_dispatcher_t::filter_event(const mbus::xevent_ptr_t& e) {
             break;
     }
 
+#ifdef ENABLE_METRICS
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_xsync_cur, queue_size);
+    
     if (ret)
         XMETRICS_COUNTER_INCREMENT("sync_eventdispatcher_event_count", 1);
-
+#endif
     return ret;
 }
 
@@ -82,6 +87,7 @@ void xsync_event_dispatcher_t::before_event_pushed(const mbus::xevent_ptr_t &e, 
     if (e->get_type() == mbus::xevent_major_type_role) {
         discard = false;
     }
+    XMETRICS_GAUGE(metrics::mailbox_xsync_total, discard ? 0 : 1);
 #ifdef DEBUG
     if(discard) {
         XMETRICS_COUNTER_INCREMENT("sync_total_discard", 1);
