@@ -10,6 +10,7 @@
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xdatautil.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xtransaction_v2.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
@@ -48,7 +49,15 @@ bool xtop_system_contract_manager::contains(common::xaccount_address_t const & a
 }
 
 observer_ptr<system_contracts::xbasic_system_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const noexcept {
-    auto const it = m_system_contract_deployment_data.find(address);
+    common::xaccount_address_t contract_address{address};
+    std::string account_str = address.value();
+    if (data::is_sys_sharding_contract_address(address) && account_str.find("@") != std::string::npos) {
+        account_str = data::xdatautil::base_addr(account_str);
+        assert(!account_str.empty());
+        contract_address = common::xaccount_address_t{account_str};
+    }
+
+    auto const it = m_system_contract_deployment_data.find(contract_address);
     if (it != std::end(m_system_contract_deployment_data)) {
         return top::make_observer(top::get<xcontract_deployment_data_t>(*it).m_system_contract.get());
     }

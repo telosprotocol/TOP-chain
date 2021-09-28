@@ -66,7 +66,7 @@ xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block,
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    return proposal_unit;    
+    return proposal_unit;
 }
 
 xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_block,
@@ -86,8 +86,15 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
             new_vm = true;
         }
     }
+    if (input_txs.size() == 1 && input_txs[0]->get_tx_subtype() == enum_transaction_subtype_self) {
+         if (input_txs[0]->get_target_addr() == sys_contract_sharding_statistic_info_addr) {
+            new_vm = true;
+        }
+    }
+
     if (new_vm) {
         for (auto const & tx : input_txs) {
+            xdbg("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
             printf("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
         xassert(!cs_para.get_table_account().empty());
@@ -123,6 +130,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         return proposal_unit;
     } else {
         for (auto const & tx : input_txs) {
+            xdbg("------>old vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
             printf("------>old vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
         txexecutor::xbatch_txs_result_t exec_result;

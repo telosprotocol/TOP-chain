@@ -1,12 +1,12 @@
-#include "xsystem_contract_runtime/xfullblock_process.h"
+#include "xvnode/xcomponents/xvnode_fulltableblock/xfulltableblock_process.h"
 
 #include <iostream>
 
-NS_BEG2(top, contract_runtime)
+NS_BEG3(top, vnode, components)
 using namespace top::data;
 
 
-xfulltableblock_statistic_accounts fulltableblock_statistic_accounts(top::data::xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service) {
+xfulltableblock_statistic_accounts fulltableblock_statistic_accounts(xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service) {
     xfulltableblock_statistic_accounts res;
 
     // process one full tableblock statistic data
@@ -42,27 +42,4 @@ xfulltableblock_statistic_accounts fulltableblock_statistic_accounts(top::data::
     return res;
 }
 
-void  process_fulltableblock(xblock_ptr_t const& block) {
-    auto block_owner = block->get_block_owner();
-    auto block_height = block->get_height();
-    // xdbg("process_fulltable fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
-    base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
-
-    xfull_tableblock_t* full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
-    auto fulltable_statisitc_data = full_tableblock->get_table_statistics();
-    base::xvnodesrv_t * node_service_ptr = contract_runtime::system::xsystem_contract_manager_t::instance()->get_node_service();
-    auto statistic_accounts = fulltableblock_statistic_accounts(fulltable_statisitc_data, node_service_ptr);
-
-    base::xstream_t stream(base::xcontext_t::instance());
-    stream << fulltable_statisitc_data;
-    stream << statistic_accounts;
-    stream << block_height;
-    stream << block->get_pledge_balance_change_tgas();
-    std::string action_params = std::string((char *)stream.data(), stream.size());
-
-
-    // XMETRICS_GAUGE(metrics::xmetircs_tag_t::contract_table_fullblock_event, 1);
-    // on_fulltableblock_event("table_address", "on_collect_statistic_info", action_params, block->get_timestamp(), (uint16_t)table_id);
-}
-
-NS_END2
+NS_END3
