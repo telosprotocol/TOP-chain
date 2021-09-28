@@ -77,6 +77,7 @@ class xevent_store_block_to_db_t : public xevent_store_t {
 using xevent_store_block_to_db_ptr_t = xobject_ptr_t<xevent_store_block_to_db_t>;
 
 data::xblock_ptr_t extract_block_from(xevent_store_block_to_db_ptr_t const & ev, const int etag = 0) noexcept;
+data::xblock_ptr_t extract_block_from(xevent_store_block_to_db_ptr_t const & ev, bool full_load, const int etag = 0) noexcept;
 
 class xevent_store_block_committed_t : public xevent_store_t {
  public:
@@ -102,6 +103,7 @@ class xevent_store_block_committed_t : public xevent_store_t {
 using xevent_store_block_committed_ptr_t = xobject_ptr_t<xevent_store_block_committed_t>;
 
 data::xblock_ptr_t extract_block_from(xevent_store_block_committed_ptr_t const & ev, const int etag = 0) noexcept;
+data::xblock_ptr_t extract_block_from(xevent_store_block_committed_ptr_t const & ev, bool full_load, const int etag) noexcept;
 
 // </editor-fold>
 

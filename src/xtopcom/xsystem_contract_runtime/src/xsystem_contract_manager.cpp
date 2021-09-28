@@ -17,6 +17,7 @@
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
+#include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract_new.h"
 
 NS_BEG3(top, contract_runtime, system)
 
@@ -25,10 +26,21 @@ void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) 
 }
 
 void xtop_system_contract_manager::deploy() {
-    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
-    deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
-    deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {});
-    //deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{}, contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
+    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(
+        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
+    deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(
+        common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
+    deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(
+        common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {});
+    deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
+        common::xaccount_address_t{sys_contract_sharding_statistic_info_addr},
+        common::xnode_type_t::consensus_validator,
+        {xsniff_type_t::block},
+        {},
+        {},
+        {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"});
+    // deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{},
+    // contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }
 
 bool xtop_system_contract_manager::contains(common::xaccount_address_t const & address) const noexcept {
