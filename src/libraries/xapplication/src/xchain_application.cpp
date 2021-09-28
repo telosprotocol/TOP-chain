@@ -79,7 +79,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                               make_observer(m_txpool_service_mgr.get()),
                                                               m_application->txpool(),
                                                               make_observer(m_election_cache_data_accessor),
-                                                              m_application->node_service())} {
+                                                              make_observer(m_application->node_service().get()))} {
                                                               }
 
 void xtop_chain_application::start() {

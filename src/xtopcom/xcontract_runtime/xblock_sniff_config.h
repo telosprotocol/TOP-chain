@@ -42,37 +42,37 @@ enum class enum_sniff_broadcast_type : std::uint32_t {
 };
 using xsniff_broadcast_type_t = enum_sniff_broadcast_type;
 
-enum class enum_sniff_broadcast_policy : uint8_t { invalid, normal, fullunit };
+enum class enum_sniff_broadcast_policy : uint8_t { invalid, full_block, all_block };
 using xsniff_broadcast_policy_t = enum_sniff_broadcast_policy;
 
 struct xtop_sniff_broadcast_config {
-    xsniff_broadcast_type_t m_type{xsniff_broadcast_type_t::invalid};
-    xsniff_broadcast_policy_t m_policy{xsniff_broadcast_policy_t::invalid};
+    xsniff_broadcast_type_t type{xsniff_broadcast_type_t::invalid};
+    xsniff_broadcast_policy_t policy{xsniff_broadcast_policy_t::invalid};
 
     xtop_sniff_broadcast_config() = default;
-    xtop_sniff_broadcast_config(xsniff_broadcast_type_t type, xsniff_broadcast_policy_t policy) : m_type(type), m_policy(policy) {
+    xtop_sniff_broadcast_config(xsniff_broadcast_type_t type_, xsniff_broadcast_policy_t policy_) : type(type_), policy(policy_) {
     }
 };
 using xsniff_broadcast_config_t = xtop_sniff_broadcast_config;
 
 struct xtop_sniff_timer_config {
-    uint32_t m_interval{0};
-    std::string m_action{""};
+    uint32_t interval{0};
+    std::string action{};
 
     xtop_sniff_timer_config() = default;
-    xtop_sniff_timer_config(uint32_t interval, std::string action) : m_interval(interval), m_action(action) {
+    xtop_sniff_timer_config(uint32_t interval_, std::string action_) : interval(interval_), action(std::move(action_)) {
     }
 };
 using xsniff_timer_config_t = xtop_sniff_timer_config;
 
 struct xtop_sniff_block_config {
-    common::xaccount_address_t m_sniff_address;
-    common::xaccount_address_t m_action_address;
-    std::string m_action{""};
+    common::xaccount_address_t sniff_address;
+    common::xaccount_address_t action_address;
+    std::string action{};
 
     xtop_sniff_block_config() = default;
-    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action)
-      : m_sniff_address(sniff_address), m_action_address(action_address), m_action(action) {
+    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address_, common::xaccount_address_t const & action_address_, std::string action_)
+      : sniff_address(sniff_address_), action_address(action_address_), action(std::move(action_)) {
     }
 };
 using xsniff_block_config_t = xtop_sniff_block_config;
