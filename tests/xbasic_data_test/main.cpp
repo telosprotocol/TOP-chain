@@ -36,7 +36,7 @@ int main(int argc, char * argv[]) {
     top::data::xrootblock_t::init(para);
 
     testing::InitGoogleTest(&argc, argv);
-    xinit_log("./xdata_test.log", true, true);
+    xinit_log("./xbasic_data_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
 
     XMETRICS_INIT();
