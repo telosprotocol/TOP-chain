@@ -9,7 +9,7 @@
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xversion.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xelection/xcache/xdata_accessor.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xmessage_filter.h"

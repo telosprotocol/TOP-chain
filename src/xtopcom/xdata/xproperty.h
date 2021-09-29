@@ -67,6 +67,10 @@ XINLINE_CONSTEXPR char const* XPORPERTY_ZEC_CROSS_READING_REC_TIMEOUT_LIMIT = "@
 XINLINE_CONSTEXPR char const * XPROPERTY_BEACON_STANDBY_KEY = "@102";
 XINLINE_CONSTEXPR char const * XPROPERTY_ZEC_STANDBY_KEY = "@202";
 
+// ELECTION
+XINLINE_CONSTEXPR char const * XPROPERTY_EC_ELECTION_KEY = "@103";
+
+
 
 // the corresponding token num of already expired locked vote
 

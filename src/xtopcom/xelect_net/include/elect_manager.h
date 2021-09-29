@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xpbase/base/top_config.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xtransport/transport.h"

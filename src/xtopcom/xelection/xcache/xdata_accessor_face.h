@@ -7,7 +7,7 @@
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xversion.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xdata/xnode_info.h"
 #include "xelection/xcache/xcluster_element.h"
 #include "xelection/xcache/xnode_element.h"

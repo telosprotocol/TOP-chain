@@ -7,8 +7,7 @@
 #include "xdb/xdb_factory.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
-#include "xdata/xelection/xelection_result_store.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_data_struct.h"
 
 #include "xvledger/xvledger.h"
 #include "xvledger/xvblock.h"

@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xbasic/xutility.h"
 #include "xdata/xelection/xelection_network_result.h"
 
@@ -95,3 +95,4 @@ xtop_election_network_result::size() const noexcept {
 }
 
 NS_END3
+#endif

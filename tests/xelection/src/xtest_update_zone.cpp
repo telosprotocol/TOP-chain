@@ -4,7 +4,7 @@
 
 #include "tests/xelection/xdummy_chain_timer.h"
 #include "xbasic/xutility.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xelection/xcache/xdata_accessor.h"
 
 #include <gtest/gtest.h>

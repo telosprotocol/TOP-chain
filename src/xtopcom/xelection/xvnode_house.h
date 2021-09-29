@@ -10,7 +10,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xlru_cache.h"
 #include "xcommon/xnode_id.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, election)

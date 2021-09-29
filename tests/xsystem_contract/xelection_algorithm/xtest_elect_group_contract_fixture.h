@@ -9,7 +9,7 @@
 #include "tests/xsystem_contract/xelection_algorithm/xtest_election_data_manager_fixture.h"
 #include "xbasic/xrange.hpp"
 #include "xcommon/xip.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"

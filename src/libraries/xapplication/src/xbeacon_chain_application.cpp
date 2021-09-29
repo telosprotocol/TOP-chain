@@ -10,9 +10,8 @@
 #include "xbasic/xscope_executer.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xdata/xblocktool.h"
 
 #include <cinttypes>

@@ -1,6 +1,6 @@
 #pragma once
 #define private public
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xelection_data_struct.h"
 #include "xelect_net/include/elect_manager.h"
 #include "xpbase/base/top_config.h"
 #include "xtransport/proto/transport.pb.h"
