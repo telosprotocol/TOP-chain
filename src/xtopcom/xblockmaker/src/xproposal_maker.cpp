@@ -69,17 +69,20 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", proposal_para.dump().c_str(), latest_cert_block->get_height());
         XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         return nullptr;
     }
 
     xtablemaker_para_t table_para(tablestate);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);
+    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xproposal_maker_t::make_proposal fail-leader_set_consensus_para.%s",
             proposal_para.dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_make_proposal_consensus_para, 1);
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         return nullptr;
     }
 
@@ -87,9 +90,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, table_result);
     if (proposal_block == nullptr) {
         if (xblockmaker_error_no_need_make_table != table_result.m_make_block_error_code) {
+            XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
             xwarn("xproposal_maker_t::make_proposal fail-make_proposal.%s error_code=%s",
                 proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
         } else {
+            XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);  // TODO(jimmy) no need make tableblock, improve check performance
             xinfo("xproposal_maker_t::make_proposal no need make table.%s",
                 proposal_para.dump().c_str());
         }
@@ -109,6 +114,10 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     proposal_block->get_input()->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
+
+    // add metrics of tx counts / table counts ratio
+    XMETRICS_GAUGE(metrics::cons_table_leader_make_unit_count, table_result.m_succ_unit_num);
+    XMETRICS_GAUGE(metrics::cons_table_leader_make_tx_count, proposal_input->get_input_txs().size());    
     xinfo("xproposal_maker_t::make_proposal succ.proposal_block=%s,units_info={total=%d,fail=%d,succ=%d,empty=%d,light=%d,full=%d},txs_info={txpool=%d,ufm=%d,total=%d,self=%d,send=%d,recv=%d,confirm=%d},proposal_input={size=%zu,txs=%zu,accounts=%zu}", 
         proposal_block->dump().c_str(),
         table_result.m_total_unit_num, table_result.m_fail_unit_num, table_result.m_succ_unit_num, table_result.m_empty_unit_num, table_result.m_light_unit_num, table_result.m_full_unit_num,
@@ -127,6 +136,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         xwarn("xproposal_maker_t::verify_proposal fail-proposal height less than cert block. proposal=%s,cert=%s",
             proposal_block->dump().c_str(), cert_block->dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_cannot_connect_to_cert;
     }
 
@@ -141,6 +151,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         if (_demand_cert_block == nullptr) {
             xwarn("xproposal_maker_t::verify_proposal fail-find cert block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
             return xblockmaker_error_proposal_cannot_connect_to_cert;
         }
         proposal_prev_block = xblock_t::raw_vblock_to_object_ptr(_demand_cert_block.get());
@@ -153,6 +164,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         if (lock_block == nullptr) {
             xwarn("xproposal_maker_t::verify_proposal fail-find lock block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
             return xblockmaker_error_proposal_cannot_connect_to_cert;
         }
         xblock_ptr_t prev_lock_block = xblock_t::raw_vblock_to_object_ptr(lock_block.get());
@@ -167,11 +179,13 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         if (connect_block == nullptr) {
             xerror("xproposal_maker_t::verify_proposal fail-find connected block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
             return xblockmaker_error_proposal_cannot_connect_to_cert;            
         }
         if (connect_block->get_height() != cs_para.get_latest_locked_block()->get_height() - 1) {
             xwarn("xproposal_maker_t::verify_proposal fail-connect not match commit block. proposal=%s,connect_height=%ld", proposal_block->dump().c_str(), connect_block->get_height());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
             return xblockmaker_error_proposal_cannot_connect_to_cert;            
         }
         xblock_ptr_t prev_commit_block = xblock_t::raw_vblock_to_object_ptr(connect_block.get());
@@ -195,6 +209,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert=%s", cs_para.dump().c_str(), proposal_prev_block->dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_state_get, 1);
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_table_state_clone;
     }
 
@@ -202,6 +217,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_bad_input;
     }
 
@@ -212,6 +228,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
             proposal_block->dump().c_str(), proposal_block->get_cert()->get_drand_height());
         // TODO(jimmy) invoke_sync(account, "tableblock backup sync");  XMETRICS_COUNTER_INCREMENT("txexecutor_cons_invoke_sync", 1);
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_drand_invalid, 1);
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_bad_drand;
     }
 
@@ -220,6 +237,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         xwarn("xproposal_maker_t::verify_proposal fail-backup_set_consensus_para. proposal=%s",
             proposal_block->dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_consensus_para_get, 1);
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_bad_consensus_para;
     }
 
@@ -229,8 +247,10 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     if (verify_ret != xsuccess) {
         xwarn("xproposal_maker_t::verify_proposal fail-verify_proposal. proposal=%s,error_code=%s",
             proposal_block->dump().c_str(), chainbase::xmodule_error_to_str(verify_ret).c_str());
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return verify_ret;
     }
+    XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 1);
     xdbg_info("xproposal_maker_t::verify_proposal succ. proposal=%s,latest_cert_block=%s",
         proposal_block->dump().c_str(), proposal_prev_block->dump().c_str());
     return xsuccess;

@@ -94,22 +94,60 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_tableblock_backup_succ,
     cons_tableblock_total_succ,
     cons_pacemaker_tc_discontinuity,
+
+    cons_table_leader_make_proposal_succ,
     cons_fail_make_proposal_table_state,
     cons_fail_make_proposal_consensus_para,
+    cons_fail_make_proposal_table_check_latest_state,
+    cons_fail_make_proposal_unit_check_state,
+    cons_fail_make_proposal_view_changed,
+
+    cons_table_backup_verify_proposal_succ,
     cons_fail_verify_proposal_blocks_invalid,
     cons_fail_verify_proposal_table_state_get,
     cons_fail_verify_proposal_drand_invalid,
     cons_fail_verify_proposal_consensus_para_get,
     cons_fail_verify_proposal_unit_count,
-    cons_fail_make_proposal_table_check_latest_state,
     cons_fail_verify_proposal_table_check_latest_state,
     cons_fail_verify_proposal_table_with_local,
-    cons_fail_make_proposal_unit_check_state,
-    cons_fail_make_proposal_view_changed,
+
     cons_view_fire_clock_delay,
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
     cons_verify_proposal_tick,
+    cons_make_fulltable_tick,
+    cons_make_lighttable_tick,
+    cons_verify_lighttable_tick,
+    cons_make_unit_tick,
+    cons_unitbuilder_lightunit_tick,
+    cons_unitbuilder_fullunit_tick,
+    cons_unitmaker_check_state_tick,
+    cons_tablebuilder_lighttable_tick,
+    cons_tablebuilder_fulltable_tick,
+    cons_tablemaker_verify_proposal_tick,
+    cons_tablemaker_make_proposal_tick,
+    cons_tablemaker_check_state_tick,
+    cons_tablemaker_refresh_cache,
+
+    cons_table_leader_get_txpool_tx_count,
+    cons_table_leader_get_txpool_sendtx_count,
+    cons_table_leader_get_txpool_recvtx_count,
+    cons_table_leader_get_txpool_confirmtx_count,
+    cons_table_leader_make_tx_count,
+    cons_table_leader_make_unit_count,
+    cons_table_total_process_tx_count,
+    cons_table_total_process_unit_count,
+    cons_sync_on_demand_unit,
+
+    cons_packtx_succ,
+    cons_packtx_fail_unit_check_state,
+    cons_packtx_fail_fullunit_limit,
+    cons_packtx_fail_receiptid_contious,
+    cons_packtx_fail_total_unconfirm_limit,
+    cons_packtx_fail_table_unconfirm_limit,
+    cons_packtx_fail_nonce_contious,
+    cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
+    cons_packtx_fail_load_origintx,
 
     // store
     store_state_read,
@@ -257,7 +295,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_recv_tx_first_send,
     txpool_confirm_tx_first_send,
     txpool_request_origin_tx,
-    txpool_push_tx_send_fail_pool_full,
+    txpool_receipt_tx,
     txpool_pull_recv_tx,
     txpool_pull_confirm_tx,
     txpool_push_tx_from_proposal,
@@ -265,6 +303,33 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_recv_tx_cur,
     txpool_confirm_tx_cur,
     txpool_unconfirm_tx_cur,
+    txpool_recv_tx_first_send_fail,
+    txpool_confirm_tx_first_send_fail,
+    txpool_drop_send_receipt_msg,
+    txpool_drop_receive_receipt_msg,
+    txpool_drop_push_receipt_msg,
+    txpool_drop_pull_recv_receipt_msg,
+    txpool_receipt_recv_num_by_1_clock,
+    txpool_receipt_recv_num_by_2_clock,
+    txpool_receipt_recv_num_by_3_clock,
+    txpool_receipt_recv_num_by_4_clock,
+    txpool_receipt_recv_num_by_5_clock,
+    txpool_receipt_recv_num_by_6_clock,
+    txpool_receipt_recv_num_7to12_clock,
+    txpool_receipt_recv_num_13to30_clock,
+    txpool_receipt_recv_num_exceed_30_clock,
+    txpool_push_fail_queue_limit,
+    txpool_push_fail_repeat,
+    txpool_push_fail_unconfirm_limit,
+    txpool_push_fail_nonce_limit,
+    txpool_push_fail_account_fall_behind,
+    txpool_send_tx_timeout,
+    txpool_tx_delay_from_push_to_pack_send,
+    txpool_tx_delay_from_push_to_pack_recv,
+    txpool_tx_delay_from_push_to_pack_confirm,
+    txpool_tx_delay_from_push_to_commit_send,
+    txpool_tx_delay_from_push_to_commit_recv,
+    txpool_tx_delay_from_push_to_commit_confirm,
 
     // blockstore
     blockstore_index_load,
@@ -423,6 +488,13 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_blkmaker_get_target_tablestate,
     statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
 
+    statestore_get_unit_state_succ,
+    statestore_get_unit_state_from_cache,
+    statestore_get_unit_state_with_unit_count,
+    statestore_get_table_state_succ,
+    statestore_get_table_state_from_cache,
+    statestore_get_table_state_with_table_count,
+
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,
     state_load_blk_state_fail,
@@ -463,11 +535,35 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // rpc
     rpc_edge_tx_request,
     rpc_edge_query_request,
+    rpc_auditor_tx_request,
+    rpc_auditor_query_request,
+    rpc_auditor_forward_request,
+    rpc_validator_tx_request,
     // contract
     contract_table_fullblock_event,
     contract_table_statistic_exec_fullblock,
     contract_table_statistic_report_fullblock,
     contract_zec_slash_summarize_fullblock,
+
+    // mailbox
+    mailbox_grpc_total,
+    mailbox_block_fetcher_total,
+    mailbox_downloader_total,
+    mailbox_xsync_total,
+    mailbox_rpc_auditor_total,
+    mailbox_rpc_validator_total,
+    mailbox_txpool_fast_total,
+    mailbox_txpool_slow_total,
+    mailbox_us_total,
+    mailbox_grpc_cur,
+    mailbox_block_fetcher_cur,
+    mailbox_downloader_cur,
+    mailbox_xsync_cur,
+    mailbox_rpc_auditor_cur,
+    mailbox_rpc_validator_cur,
+    mailbox_txpool_fast_cur,
+    mailbox_txpool_slow_cur,
+    mailbox_us_cur,
 
     e_simple_total,
 };
@@ -567,6 +663,7 @@ public:
     void counter_set(std::string metrics_name, int64_t value);
     void flow_count(std::string metrics_name, int64_t value, time_point timestamp);
     void gauge(E_SIMPLE_METRICS_TAG tag, int64_t value);
+    void gauge_set_value(E_SIMPLE_METRICS_TAG tag, int64_t value);
     int64_t gauge_get_value(E_SIMPLE_METRICS_TAG tag);
     void array_counter_increase(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
     void array_counter_decrease(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
@@ -705,6 +802,7 @@ public:
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
+#define XMETRICS_GAUGE_SET_VALUE(TAG, value) top::metrics::e_metrics::get_instance().gauge_set_value(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
 class simple_metrics_tickcounter {
@@ -753,6 +851,7 @@ private:
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_PACKET_ALARM(metrics_name, ...)
 #define XMETRICS_GAUGE(TAG, value)
+#define XMETRICS_GAUGE_SET_VALUE(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG)
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value)

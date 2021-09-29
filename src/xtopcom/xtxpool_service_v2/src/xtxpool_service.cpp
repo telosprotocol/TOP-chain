@@ -259,6 +259,22 @@ bool xtxpool_service::table_boundary_equal_to(std::shared_ptr<xtxpool_service_fa
     return false;
 }
 
+void xtxpool_service::drop_msg(vnetwork::xmessage_t const & message, std::string reason) {
+    xtxpool_warn("xtxpool_service::drop_msg msg id:%x,hash:%x,resaon:%s", message.id(), message.hash(), reason.c_str());
+    if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt) {
+        XMETRICS_GAUGE(metrics::txpool_drop_send_receipt_msg, 1);
+        XMETRICS_GAUGE(metrics::txpool_receipt_tx, 0);
+    } else if (message.id() == xtxpool_v2::xtxpool_msg_recv_receipt) {
+        XMETRICS_GAUGE(metrics::txpool_drop_receive_receipt_msg, 1);
+        XMETRICS_GAUGE(metrics::txpool_receipt_tx, 0);
+    } else if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
+        XMETRICS_GAUGE(metrics::txpool_drop_push_receipt_msg, 1);
+        XMETRICS_GAUGE(metrics::txpool_receipt_tx, 0);
+    } else if (message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) {
+        XMETRICS_GAUGE(metrics::txpool_drop_pull_recv_receipt_msg, 1);
+    }
+}
+
 void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
     if (!m_running || m_para->get_fast_dispatcher() == nullptr) {
         return;
@@ -271,7 +287,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
     if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt || message.id() == xtxpool_v2::xtxpool_msg_recv_receipt || (message.id() == xtxpool_v2::xtxpool_msg_push_receipt)) {
         if (m_para->get_fast_dispatcher()->is_mailbox_over_limit()) {
-            xwarn("xtxpool_service::on_message_receipt fast txpool mailbox limit,drop receipt");
+            drop_msg(message, "fast_dispacher_mailbox_full");
             return;
         }
 
@@ -296,7 +312,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
         }
     } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt)) {
         if (m_para->get_slow_dispatcher()->is_mailbox_over_limit()) {
-            xwarn("xtxpool_service::on_message_receipt slow txpool mailbox limit,drop receipt");
+            drop_msg(message, "slow_dispacher_mailbox_full");
             return;
         }
 
@@ -334,7 +350,8 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
-    m_para->get_txpool()->push_receipt(tx_ent, false, false);
+    ret = m_para->get_txpool()->push_receipt(tx_ent, false, false);
+    XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
 }
 
 xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {
@@ -424,7 +441,8 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                          m_vnet_driver->address().to_string().c_str());
             m_vnet_driver->broadcast(msg);
             XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
-            m_para->get_txpool()->push_receipt(tx_ent, true, false);
+            auto ret = m_para->get_txpool()->push_receipt(tx_ent, true, false);
+            XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
         } else {
             xtxpool_info("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                          cons_tx->dump().c_str(),
@@ -448,7 +466,8 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                              m_vnet_driver->address().to_string().c_str());
                 m_vnet_driver->broadcast(msg);
                 XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
-                m_para->get_txpool()->push_receipt(tx_ent, true, false);
+                auto ret = m_para->get_txpool()->push_receipt(tx_ent, true, false);
+                XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
             } else {
                 xtxpool_info("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                              cons_tx->dump().c_str(),

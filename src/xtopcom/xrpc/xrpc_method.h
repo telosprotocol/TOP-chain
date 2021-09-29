@@ -11,7 +11,6 @@ constexpr const char * RPC_TOKEN = "identity_token";
 constexpr const char * RPC_ACCOUNT = "account_addr";
 constexpr const char * RPC_METHOD = "method";
 constexpr const char * RPC_VERSION = "version";
-constexpr const char * RPC_DEFAULT_VERSION = "1.0";
 constexpr const char * RPC_PROPERTY_STRING = "string";
 constexpr const char * RPC_PROPERTY_LIST = "list";
 constexpr const char * RPC_PROPERTY_MAP = "map";

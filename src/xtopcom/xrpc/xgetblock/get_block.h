@@ -98,8 +98,8 @@ public:
     uint64_t get_timer_clock() const;
     xJson::Value parse_account(const std::string & account);
     void update_tx_state(xJson::Value & result, const xJson::Value & cons);
-    xJson::Value parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr = nullptr);
-    xJson::Value parse_tx(xtransaction_t * tx_ptr);
+    xJson::Value parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & version);
+    xJson::Value parse_tx(xtransaction_t * tx_ptr, const std::string & version);
     xJson::Value parse_action(const xaction_t & action);
     xJson::Value get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo);
     void getRecs();

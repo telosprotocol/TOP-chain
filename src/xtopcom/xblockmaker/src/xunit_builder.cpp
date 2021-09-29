@@ -43,6 +43,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
+    XMETRICS_TIMER(metrics::cons_unitbuilder_lightunit_tick);
     const std::string & account = prev_block->get_account();
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
     xassert(lightunit_build_para != nullptr);
@@ -92,6 +93,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
+    XMETRICS_TIMER(metrics::cons_unitbuilder_fullunit_tick);
     xfullunit_block_para_t para;
     para.m_property_snapshot = make_binlog(prev_block, prev_bstate);
     para.m_first_unit_height = prev_bstate->get_last_fullblock_height();

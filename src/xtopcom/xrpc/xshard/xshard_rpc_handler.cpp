@@ -51,10 +51,16 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
             msg.m_advance_address = edge_sender;
             msg.m_timer_height = timer_height;
             self->shard_process_request(msg, edge_sender, message.hash());
+            XMETRICS_GAUGE(metrics::rpc_validator_tx_request, 1);
         }
         return true;
     };
-
+#ifdef ENABLE_METRICS
+    int64_t in, out;
+    int32_t queue_size = m_thread->count_calls(in, out);
+#endif
+    XMETRICS_GAUGE(metrics::mailbox_rpc_validator_total, 1);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_rpc_validator_cur, queue_size);
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(edge_sender, message, timer_height);
     base::xcall_t asyn_call(process_request, para.get());
     m_thread->send_call(asyn_call);
@@ -81,7 +87,6 @@ void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg, xjson_
         unit_src->request_transaction_consensus(json_proc.m_tx_ptr);*/
         std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
         xkinfo("[global_trace][shard_rpc][push unit_service]%s,%s", tx_hash.c_str(), json_proc.m_tx_ptr->get_source_addr().c_str());
-        XMETRICS_COUNTER_INCREMENT("rpc_validator_tx_request", 1);
         if (xsuccess != m_txpool_service->request_transaction_consensus(json_proc.m_tx_ptr, false)) {
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};
         }

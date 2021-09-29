@@ -17,7 +17,6 @@ enum enum_xtxpool_error_type {
     xtxpool_error_base = chainbase::enum_xmodule_type::xmodule_type_xtxpool,
     xtxpool_error_queue_reached_upper_limit,
     xtxpool_error_request_tx_repeat,
-    xtxpool_error_account_send_txs_reached_upper_limit,
     xtxpool_error_account_unconfirm_txs_reached_upper_limit,
     xtxpool_error_pending_reached_upper_limit,
     xtxpool_error_pending_account_reached_upper_limit,
@@ -32,7 +31,6 @@ enum enum_xtxpool_error_type {
     xtxpool_error_receipt_invalid,
     xtxpool_error_tx_multi_sign_error,
     xtxpool_error_tx_invalid_type,
-    xtxpool_error_tx_not_same_type,
     xtxpool_error_account_not_in_charge,
     xtxpool_error_account_state_fall_behind,
     xtxpool_error_max,
@@ -44,7 +42,6 @@ inline std::string xtxpool_error_to_string(int32_t code) {
     assert(code > xtxpool_error_base && code < xtxpool_error_max);
     static const char * names[] = {XTXPOOL_TO_STR(xtxpool_error_queue_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_request_tx_repeat),
-                                   XTXPOOL_TO_STR(xtxpool_error_account_send_txs_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_account_unconfirm_txs_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_pending_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_pending_account_reached_upper_limit),
@@ -59,7 +56,6 @@ inline std::string xtxpool_error_to_string(int32_t code) {
                                    XTXPOOL_TO_STR(xtxpool_error_receipt_invalid),
                                    XTXPOOL_TO_STR(xtxpool_error_tx_multi_sign_error),
                                    XTXPOOL_TO_STR(xtxpool_error_tx_invalid_type),
-                                   XTXPOOL_TO_STR(xtxpool_error_tx_not_same_type),
                                    XTXPOOL_TO_STR(xtxpool_error_account_not_in_charge),
                                    XTXPOOL_TO_STR(xtxpool_error_account_state_fall_behind)};
 

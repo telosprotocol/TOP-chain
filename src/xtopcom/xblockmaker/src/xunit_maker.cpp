@@ -51,6 +51,7 @@ void xunit_maker_t::try_sync_lacked_blocks(uint64_t from_height, uint64_t to_hei
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
             get_address(), from_height, sync_num, is_consensus, "account_state_fall_behind");
         get_bus()->push_event(ev);
+        XMETRICS_GAUGE(metrics::cons_sync_on_demand_unit, sync_num);
     }
 }
 
@@ -59,6 +60,7 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         return xsuccess;
     }
 
+    XMETRICS_TIMER(metrics::cons_unitmaker_check_state_tick);
     do {
         // firstly, load connected block, always sync unit from latest connected block
         uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
@@ -110,10 +112,11 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         }
         m_latest_account_index = account_index;
         m_check_state_success = true;
+        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_unit_check_state, 1);
         return xsuccess;
     } while(0);
 
-    XMETRICS_GAUGE(metrics::cons_fail_make_proposal_unit_check_state, 1);
+    XMETRICS_GAUGE(metrics::cons_fail_make_proposal_unit_check_state, 0);
     return xblockmaker_error_latest_unit_blocks_invalid;
 }
 
@@ -149,6 +152,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
                 cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
             return false;
@@ -158,6 +163,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     // recv tx should also limit for fullunit
     if (tx->is_recv_tx()) {
         if (is_match_account_fullunit_recv_tx_limit(current_lightunit_count)) {
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
                 cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
             return false;
@@ -170,6 +177,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         // TODO(jimmy) only load origin tx
         base::xvtransaction_store_ptr_t tx_store = get_blockstore()->query_tx(tx->get_tx_hash(), base::enum_transaction_subtype_send);
         if (tx_store == nullptr || tx_store->get_raw_tx() == nullptr) {
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_load_origintx, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);            
             xwarn("xunit_maker_t::push_tx fail-load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
             return false;
         }
@@ -185,6 +194,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_confirm_tx()) {
         auto latest_nonce = get_latest_bstate()->get_latest_send_trans_number();
         if (tx->get_transaction()->get_tx_nonce() > latest_nonce) {
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for nonce is overstepped. %s latest_nonce=%llu, tx=%s",
                 cs_para.dump().c_str(), latest_nonce, tx->dump(true).c_str());
             return false;
@@ -203,6 +214,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
                 uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();
                 get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce);
             }
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);            
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,bstate=%s,latest_nonce=%ld,tx=%s",
                 cs_para.dump().c_str(), get_latest_bstate()->get_bstate()->dump().c_str(), latest_nonce, tx->dump().c_str());
             return false;
@@ -230,6 +243,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (!m_pending_txs.empty()) {
         data::enum_xtransaction_type first_tx_type = (data::enum_xtransaction_type)m_pending_txs[0]->get_transaction()->get_tx_type();
         if ( (first_tx_type != xtransaction_type_transfer) || ((data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) ) {
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_transfer_limit, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for non-transfer txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());
             return false;
         }
@@ -252,6 +267,7 @@ void xunit_maker_t::clear_tx() {
 }
 
 xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
+    XMETRICS_TIMER(metrics::cons_make_unit_tick);
     xblock_ptr_t proposal_block = make_next_block(unit_para, cs_para, result);
     clear_tx();
     if (proposal_block == nullptr) {
@@ -274,8 +290,18 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
 
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & tx : result.m_pack_txs) {
+        uint64_t delay = now - tx->get_push_pool_timestamp();
         xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
             unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp());
+        if (unit_para.m_is_leader) {
+            if (tx->is_recv_tx()) {
+                XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_pack_recv, delay);
+            } else if (tx->is_confirm_tx()) {
+                XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_pack_confirm, delay);
+            } else {
+                XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_pack_send, delay);
+            }
+        }
     }
 
     return proposal_block;
@@ -307,6 +333,8 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     // firstly should process txs and try to make lightunit
     if (can_make_next_light_block()) {
+        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
+        XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
         base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
         xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
         proposal_unit = m_lightunit_builder->build_block(cert_block,
@@ -328,6 +356,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     // secondly try to make full unit
     if (nullptr == proposal_unit && can_make_next_full_block()) {
+        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
         proposal_unit = m_fullunit_builder->build_block(cert_block,
                                                         get_latest_bstate()->get_bstate(),
                                                         cs_para,
@@ -337,6 +366,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     // thirdly try to make full unit
     if (nullptr == proposal_unit && can_make_next_empty_block()) {
+        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
         proposal_unit = m_emptyunit_builder->build_block(cert_block,
                                                         nullptr,
                                                         cs_para,

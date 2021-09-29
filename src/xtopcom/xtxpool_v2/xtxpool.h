@@ -50,6 +50,7 @@ private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const;
+    void push_fail_record(int32_t err_type);
 
     mutable std::shared_ptr<xtxpool_table_t> m_tables[enum_xtxpool_table_type_max][enum_vbucket_has_tables_count];
     bool m_table_recover_flag_arr[enum_xtxpool_table_type_max][enum_vbucket_has_tables_count];

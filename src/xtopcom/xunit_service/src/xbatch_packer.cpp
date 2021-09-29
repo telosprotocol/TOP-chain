@@ -113,7 +113,8 @@ void xbatch_packer::invoke_sync(const std::string & account, const std::string &
 bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     if (latest_blocks.get_latest_cert_block() == nullptr
         || latest_blocks.get_latest_locked_block() == nullptr
-        || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
+        || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future        
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         xunit_warn("xbatch_packer::start_proposal fail-get latest blocks,account=%s,viewid=%ld,clock=%ld",
             get_account().c_str(), m_last_view_id, m_last_view_clock);
         return false;
@@ -124,6 +125,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         xunit_warn("xbatch_packer::start_proposal fail-view clock less than start.%s,start_time=%ld", proposal_para.dump().c_str(), m_start_time);
         return false;
     }
@@ -136,12 +138,14 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
         return false;
     }
     if (latest_connected_block->get_height() != latest_blocks.get_latest_committed_block()->get_height()) {  // TODO(jimmy) get_latest_blocks return bool future
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         xunit_warn("xbatch_packer::start_proposal fail-latest connect not match committed block,%s,connect_height=%ld",
             proposal_para.dump().c_str(), latest_connected_block->get_height());
         return false;
     }
 
     if (false == m_proposal_maker->can_make_proposal(proposal_para)) {
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         xunit_warn("xbatch_packer::start_proposal fail-cannot make proposal.%s", proposal_para.dump().c_str());
         return false;
     }
@@ -162,9 +166,11 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
         xunit_warn("xbatch_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
             proposal_para.dump().c_str(), proposal_block->get_viewid());
         XMETRICS_GAUGE(metrics::cons_fail_make_proposal_view_changed, 1);
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         return false;
     }
 
+    XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);
     xunit_info("xbatch_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
             proposal_block->dump().c_str(), this, m_para->get_resources()->get_account().c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
     return true;

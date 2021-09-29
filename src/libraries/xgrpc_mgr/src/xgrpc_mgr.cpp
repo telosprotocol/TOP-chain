@@ -19,7 +19,16 @@ xgrpc_event_monitor_t::xgrpc_event_monitor_t(observer_ptr<mbus::xmessage_bus_fac
     m_reg_holder.add_listener((int)mbus::xevent_major_type_store, cb);
 }
 
+void xgrpc_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
+    XMETRICS_GAUGE(metrics::mailbox_grpc_total, discard ? 0 : 1);
+}
+
 bool xgrpc_event_monitor_t::filter_event(const mbus::xevent_ptr_t & e) {
+#ifdef ENABLE_METRICS
+    int64_t in, out;
+    int32_t queue_size = m_observed_thread->count_calls(in, out);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_grpc_cur, queue_size);
+#endif
     return true;
 }
 

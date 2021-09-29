@@ -80,9 +80,10 @@ std::string xcluster_query_manager::tx_exec_status_to_str(uint8_t exec_status) {
 }
 
 void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
-    const string account = json_proc.m_request_json["params"]["account_addr"].asString();
+    const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     const string & tx_hash_str = json_proc.m_request_json["params"]["tx_hash"].asString();
-    xdbg("xcluster_query_manager::getTransaction account: %s, tx hash: %s", account.c_str(), tx_hash_str.c_str());
+    const string & version = json_proc.m_request_json["version"].asString();
+    xdbg("xcluster_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
     uint256_t tx_hash = hex_to_uint256(tx_hash_str);
     std::string strHash((char*)tx_hash.data(), tx_hash.size());
     xtransaction_cache_data_t cache_data;
@@ -95,7 +96,7 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
             // xdbg("json1:%s", cache_data.jv.toStyledString().c_str());
             m_bh.update_tx_state(result_json, cache_data.jv);
 
-            auto ori_tx_info = m_bh.parse_tx(cache_data.tran.get());
+            auto ori_tx_info = m_bh.parse_tx(cache_data.tran.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
             // xdbg("json2:%s", ori_tx_info.toStyledString().c_str());
             json_proc.m_response_json["data"] = result_json;
@@ -114,7 +115,7 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
             tx_ptr = cons_tx_ptr->get_transaction();
         }
     }
-    json_proc.m_response_json["data"] = m_bh.parse_tx(tx_hash, tx_ptr);
+    json_proc.m_response_json["data"] = m_bh.parse_tx(tx_hash, tx_ptr, version);
 }
 
 void xcluster_query_manager::get_transactionlist(xjson_proc_t & json_proc) {

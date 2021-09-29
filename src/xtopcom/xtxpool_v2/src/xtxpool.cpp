@@ -23,12 +23,39 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
     }
 }
 
+void xtxpool_t::push_fail_record(int32_t err_type) {
+#ifdef ENABLE_METRICS
+    switch (err_type)
+    {
+    case xtxpool_error_queue_reached_upper_limit:
+        XMETRICS_GAUGE(metrics::txpool_push_fail_queue_limit, 1);
+        break;
+    case xtxpool_error_request_tx_repeat:
+        XMETRICS_GAUGE(metrics::txpool_push_fail_repeat, 1);
+        break;
+    case xtxpool_error_account_unconfirm_txs_reached_upper_limit:
+        XMETRICS_GAUGE(metrics::txpool_push_fail_unconfirm_limit, 1);
+        break;
+    case xtxpool_error_tx_nonce_out_of_scope:
+        XMETRICS_GAUGE(metrics::txpool_push_fail_nonce_limit, 1);
+        break;
+    case xtxpool_error_account_state_fall_behind:
+        XMETRICS_GAUGE(metrics::txpool_push_fail_account_fall_behind, 1);
+        break;
+    default:
+        break;
+    }
+#endif
+}
+
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
-    return table->push_send_tx(tx);
+    auto ret = table->push_send_tx(tx);
+    push_fail_record(ret);
+    return ret;
 }
 
 int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
@@ -41,6 +68,8 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_s
 
     if (ret == xsuccess) {
         m_statistic.update_receipt_recv_num(tx->get_tx(), is_pulled);
+    } else {
+        push_fail_record(ret);
     }
     return ret;
 }

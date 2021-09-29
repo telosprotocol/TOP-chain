@@ -23,6 +23,7 @@ class xgrpc_mgr_t;
 class xgrpc_event_monitor_t : public mbus::xbase_sync_event_monitor_t {
 public:
     xgrpc_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<base::xiothread_t> const & iothread, xgrpc_mgr_t * block_fetcher);
+    void before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) override;
     bool filter_event(const mbus::xevent_ptr_t & e) override;
     void process_event(const mbus::xevent_ptr_t & e) override;
 

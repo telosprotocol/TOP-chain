@@ -49,16 +49,23 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
             if (msgid == rpc_msg_request) {
                 self->cluster_process_request(msg, edge_sender, message);
+                XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
             } else {
                 self->cluster_process_query_request(msg, edge_sender, message);
+                XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
             }
-            XMETRICS_COUNTER_INCREMENT("rpc_auditor_request", 1);
         } else if (msgid == rpc_msg_response) {
             // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
             self->cluster_process_response(message, edge_sender);
         }
         return true;
     };
+#ifdef ENABLE_METRICS
+    int64_t in, out;
+    int32_t queue_size = m_thread->count_calls(in, out);
+    XMETRICS_GAUGE(metrics::mailbox_rpc_auditor_total, 1);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_rpc_auditor_cur, queue_size);
+#endif
 
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(edge_sender, message);
     base::xcall_t asyn_call(process_request, para.get());
@@ -117,6 +124,7 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                    msg.hash());
             try {
                 m_cluster_vhost->forward_broadcast_message(msg, vaddr);
+                XMETRICS_GAUGE(metrics::rpc_auditor_forward_request, 1);
             } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
                       tx_hash.c_str(),
@@ -161,7 +169,6 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
         response_msg_ptr->m_message_body = error_json.write();
     }
 
-    XMETRICS_COUNTER_INCREMENT("rpc_auditor_query_request", 1);
     response_msg_ptr->m_signature_address = m_cluster_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
     xdbg_rpc("xcluster_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());

@@ -454,6 +454,12 @@ namespace top
                 return nullptr;
             }
 
+            if (target_block->get_block_level() == base::enum_xvblock_level_table) {
+                XMETRICS_GAUGE(metrics::statestore_get_unit_state_with_unit_count, latest_blocks.size());
+            } else if (target_block->get_block_level() == base::enum_xvblock_level_unit) {
+                XMETRICS_GAUGE(metrics::statestore_get_table_state_with_table_count, latest_blocks.size());
+            }
+
             target_bstate = rebuild_bstate(target_account, base_bstate, latest_blocks);
             if (target_bstate == nullptr) {
                 xwarn("xvblkstatestore_t::execute_target_block fail-rebuild_bstate.block=%s",target_block->dump().c_str());
@@ -510,9 +516,12 @@ namespace top
             xobject_ptr_t<xvbstate_t> state = nullptr;
             if (blocklevel == enum_xvblock_level_table) {
                 m_table_state_cache.get(hash, state);
+                XMETRICS_GAUGE(metrics::statestore_get_table_state_from_cache, state != nullptr ? 1 : 0);
             } else if (blocklevel == enum_xvblock_level_unit) {
                 m_unit_state_cache.get(hash, state);
+                XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, state != nullptr ? 1 : 0);
             }
+
             return state;
         }
 
@@ -526,8 +535,17 @@ namespace top
 
         xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state(xvblock_t * target_block, const int etag)
         {
+            if (target_block == nullptr) {
+                xassert(false);
+                return nullptr;
+            }
             xvaccount_t target_account(target_block->get_account());
             auto _bstate = get_block_state_internal(target_account, target_block, etag);
+            if(target_block->get_block_level() == enum_xvblock_level_unit) {
+                XMETRICS_GAUGE(metrics::statestore_get_unit_state_succ, _bstate != nullptr ? 1 : 0);
+            } else if (target_block->get_block_level() == enum_xvblock_level_table) {
+                XMETRICS_GAUGE(metrics::statestore_get_table_state_succ, _bstate != nullptr ? 1 : 0);
+            }
             if (_bstate != nullptr) {
                 return _bstate;
             }
