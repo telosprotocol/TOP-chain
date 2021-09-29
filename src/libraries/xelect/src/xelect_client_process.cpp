@@ -218,6 +218,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
 
         for (auto const& election_result_info : election_result_store) {
             if (top::get<common::xnetwork_id_t const>(election_result_info) != m_network_id) {
+                // todo add callback to xapplication . to start parachain_proxy
                 continue;
             }
 
@@ -265,7 +266,7 @@ void xelect_client_process::update_election_status(common::xlogic_time_t const& 
     process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }, current_time, update_rec_interval);
 
     auto const update_zec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / update_divider;
-    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }, current_time, update_zec_interval);
+    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_ec_addr }, current_time, update_zec_interval);
 
     auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / update_divider;
     process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_edge_addr }, current_time, update_edge_interval);

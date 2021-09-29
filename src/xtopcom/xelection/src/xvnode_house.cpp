@@ -109,7 +109,7 @@ std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) cons
             elect_address = sys_contract_rec_elect_rec_addr;
     } else if (zone_id == 2) {
         if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_zec_addr;
+            elect_address = sys_contract_rec_elect_ec_addr;
     }
 
     return elect_address;
