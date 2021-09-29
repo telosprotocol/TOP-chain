@@ -163,8 +163,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             continue;
         }
 
-        // 2.try to make empty or full unit
-        if (unitmaker->can_make_next_full_block()) {
+        // 2.try to make empty or full unit  TODO(jimmy) fullunit can also pack tx future
+        if (false == tx->is_confirm_tx() && unitmaker->must_make_next_full_block()) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
             set_packtx_metrics(tx, false);
             unitmakers[unit_account] = unitmaker;
