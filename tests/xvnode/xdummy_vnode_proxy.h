@@ -7,7 +7,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnode/xvnode_role_proxy_face.h"
-#include "xvnode/xvnode_sniff_config.h"
 #include "xvnode/xvnode_sniff_proxy_face.h"
 
 NS_BEG3(top, tests, vnode)
