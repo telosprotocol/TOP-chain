@@ -100,10 +100,10 @@ TEST(test_vnetwork_driver, init_null_vhost) {
     top::vnetwork::xvnode_address_t adr{common::xsharding_address_t{common::xnetwork_id_t{1}}};
     top::vnetwork::xvhost_face_t *  nullptr_vhost = nullptr;
     common::xlogic_time_t const     start_time = 1;
-    EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr1 = std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr),
+    EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr1 = std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr, common::xelection_round_t{0}),
                  top::error::xtop_error_t);
     EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr2 =
-                     std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr),
+                     std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr, common::xelection_round_t{0}),
                  top::error::xtop_error_t);
 }
 
@@ -114,7 +114,7 @@ TEST(test_vnetwork_driver, test_m_value) {
                                         std::uint16_t{0},
                                         std::uint64_t{0}};
     std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr =
-        std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(&tests::vnetwork::xdummy_vhost), adr);
+        std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(&tests::vnetwork::xdummy_vhost), adr, common::xelection_round_t{0});
     vnetwork_driver_test_ptr->start();
     int & m_cnt = tests::vnetwork::xdummy_vhost.m_counter;
     m_cnt = 0;

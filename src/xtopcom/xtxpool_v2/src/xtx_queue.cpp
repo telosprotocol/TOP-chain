@@ -91,7 +91,7 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_internal_t::find(const uint256_t
 const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_internal_t::get_expired_txs() const {
     std::vector<std::shared_ptr<xtx_entry>> expired_txs;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (auto tx : m_non_ready_tx_queue) {
+    for (auto & tx : m_non_ready_tx_queue) {
         auto ret = xverifier::xtx_verifier::verify_tx_duration_expiration(tx->get_tx()->get_transaction(), now);
         if (ret == 0) {
             break;
@@ -430,7 +430,7 @@ bool xsend_tx_queue_t::is_account_need_update(const std::string & account_addr) 
 
 void xsend_tx_queue_t::clear_expired_txs() {
     auto expired_txs = m_send_tx_queue_internal.get_expired_txs();
-    for (auto tx : expired_txs) {
+    for (auto & tx : expired_txs) {
         tx_info_t txinfo(tx->get_tx());
         pop_tx(txinfo, false);
     }

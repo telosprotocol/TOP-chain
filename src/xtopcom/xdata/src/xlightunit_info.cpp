@@ -29,6 +29,10 @@ void xtransaction_exec_state_t::set_receipt_id(base::xtable_shortid_t self_table
     set_value(XTX_RECEIPT_ID_PEER_TABLE_ID, peer_tableid);
 }
 
+void xtransaction_exec_state_t::set_sender_confirmed_receipt_id(uint64_t receiptid) {
+    set_value(XTX_SENDER_CONFRIMED_RECEIPT_ID, receiptid);
+}
+
 enum_xunit_tx_exec_status xtransaction_exec_state_t::get_tx_exec_status() const {
     enum_xunit_tx_exec_status status = static_cast<enum_xunit_tx_exec_status>(get_value_uint32(XTX_STATE_TX_EXEC_STATUS));
     return status;

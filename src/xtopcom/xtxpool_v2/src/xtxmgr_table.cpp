@@ -138,7 +138,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     send_tx_queue_to_pending();
     ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_locked_nonce_map());
 
-    for (auto send_txs_account : send_txs_accounts) {
+    for (auto & send_txs_account : send_txs_accounts) {
         auto & account_txs = send_txs_account->get_txs();
         ready_txs.insert(ready_txs.end(), account_txs.begin(), account_txs.end());
     }
@@ -183,9 +183,9 @@ bool xtxmgr_table_t::is_account_need_update(const std::string & account_addr) co
     return m_send_tx_queue.is_account_need_update(account_addr);
 }
 
-void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    m_new_receipt_queue.update_receiptid_state(receiptid_state);
-}
+// void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+//     m_new_receipt_queue.update_receiptid_state(receiptid_state);
+// }
 
 bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
     auto account_addr = tx->get_tx()->get_account_addr();
@@ -200,12 +200,12 @@ bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
     return false;
 }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(uint32_t max_num) const {
-    return m_new_receipt_queue.get_lacking_recv_tx_ids(max_num);
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(uint32_t & total_num) const {
+    return m_new_receipt_queue.get_lacking_recv_tx_ids(total_num);
 }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_confirm_tx_ids(uint32_t max_num) const {
-    return m_new_receipt_queue.get_lacking_confirm_tx_ids(max_num);
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_confirm_tx_ids(uint32_t & total_num) const {
+    return m_new_receipt_queue.get_lacking_confirm_tx_ids(total_num);
 }
 
 void xtxmgr_table_t::clear_expired_txs() {
@@ -213,13 +213,13 @@ void xtxmgr_table_t::clear_expired_txs() {
     m_pending_accounts.clear_expired_txs();
 }
 
-uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
-    return m_new_receipt_queue.get_latest_recv_receipt_id(peer_table_sid);
-}
+// uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+//     return m_new_receipt_queue.get_latest_recv_receipt_id(peer_table_sid);
+// }
 
-uint64_t xtxmgr_table_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
-    return m_new_receipt_queue.get_latest_confirm_receipt_id(peer_table_sid);
-}
+// uint64_t xtxmgr_table_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+//     return m_new_receipt_queue.get_latest_confirm_receipt_id(peer_table_sid);
+// }
 
 bool xtxmgr_table_t::get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const {
     bool ret = m_send_tx_queue.get_account_nonce_cache(account_addr, latest_nonce);
@@ -256,14 +256,13 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
         }
     }
 
-
-    for (auto tx_ent : expired_send_txs) {
+    for (auto & tx_ent : expired_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, true);
     }
     XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, expired_send_txs.size());
 
-    for (auto tx_ent : push_succ_send_txs) {
+    for (auto & tx_ent : push_succ_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, false);
     }

@@ -116,7 +116,7 @@ private:
     XudpSocket* listen_server_;
 };
 
-class XudpSocket : protected base::xudplisten_t, public SocketIntf {
+class XudpSocket : public base::xudplisten_t, public SocketIntf {
 public:
     XudpSocket(
             base::xcontext_t& context,

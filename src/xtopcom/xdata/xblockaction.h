@@ -47,12 +47,36 @@ class xlightunit_action_t : public base::xvaction_t {
     uint64_t                    get_receipt_id() const;
     base::xtable_shortid_t      get_receipt_id_self_tableid()const;
     base::xtable_shortid_t      get_receipt_id_peer_tableid()const;
+    uint64_t                    get_sender_confirmed_receipt_id() const;
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;
 };
 
 using xlightunit_action_ptr_t = std::shared_ptr<xlightunit_action_t>;
+
+
+// tableblock build action
+class xtableblock_action_t : public base::xvaction_t {
+ protected:
+    static XINLINE_CONSTEXPR char const * XPROPERTY_SELF_TABLE_ID           = "0";
+    static XINLINE_CONSTEXPR char const * XPROPERTY_SELF_TABLE_HEIGHT       = "1";
+
+ public:
+    xtableblock_action_t(const base::xvaction_t & _action);
+    xtableblock_action_t(const std::string & target_uri, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height);
+    ~xtableblock_action_t() = default;
+
+ public:
+    base::xtable_shortid_t          get_self_tableid() const;
+    uint64_t                        get_self_table_height() const;
+    std::string                     get_property_hash(const std::string & propname) const;
+
+ private:
+    std::string                 get_action_result_property(const std::string & key) const;
+};
+
+using xtableblock_action_ptr_t = std::shared_ptr<xtableblock_action_t>;
 
 }  // namespace data
 }  // namespace top

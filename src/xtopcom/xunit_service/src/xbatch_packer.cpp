@@ -464,6 +464,13 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                             "proposal_finish_succ", _evt_obj->get_target_proposal()->dump(),
                             "is_leader", is_leader,
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+        
+        if (is_leader) {
+            auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();
+            auto last_height_tag = "cons_table_last_succ_height_" + get_account();
+            XMETRICS_COUNTER_SET( last_viewid_tag , _evt_obj->get_target_proposal()->get_viewid());
+            XMETRICS_COUNTER_SET( last_height_tag , _evt_obj->get_target_proposal()->get_height());
+        }
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
         xassert(vblock->is_input_ready(true));
@@ -501,6 +508,10 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
 }
 
 void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
+    if (commit_block->get_block_class() == base::enum_xvblock_class_full) {
+        return;
+    }
+
     auto network_proxy = m_para->get_resources()->get_network();
     xassert(network_proxy != nullptr);
     if (network_proxy == nullptr) {
@@ -510,6 +521,11 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
 
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
+    if (all_receipts.empty()) {
+        xunit_info("xbatch_packer::make_receipts_and_send no receipt created,commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+        return;
+    }
+
     for (auto & receipt : all_receipts) {
         data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
         all_cons_txs.push_back(constx);

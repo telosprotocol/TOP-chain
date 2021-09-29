@@ -32,7 +32,7 @@ public:
                                common::xlogic_epoch_t const & group_logic_epoch,
                                observer_ptr<top::vnetwork::xvhost_face_t> const & vhost,
                                observer_ptr<top::election::cache::xdata_accessor_face_t> const & data_accessor)
-      : top::vnode::xbasic_vnode_t{ common::xnode_address_t{ group_address, account_election_address, group_logic_epoch }, vhost, data_accessor } {
+      : top::vnode::xbasic_vnode_t{common::xnode_address_t{group_address, account_election_address, group_logic_epoch}, common::xelection_round_t{0}, vhost, data_accessor} {
     }
 
     void start() override {

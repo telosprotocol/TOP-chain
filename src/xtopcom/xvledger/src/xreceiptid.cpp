@@ -94,7 +94,7 @@ xreceiptid_pairs_t::~xreceiptid_pairs_t() {
 
 }
 
-bool xreceiptid_pairs_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
+bool xreceiptid_pairs_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const {
     auto iter = m_all_pairs.find(sid);
     if (iter != m_all_pairs.end()) {
         pair = iter->second;
@@ -168,6 +168,12 @@ xreceiptid_state_t::xreceiptid_state_t() {
     m_modified_binlog = std::make_shared<xreceiptid_pairs_t>();
 }
 
+xreceiptid_state_t::xreceiptid_state_t(xtable_shortid_t tableid, uint64_t height) {
+    m_binlog = std::make_shared<xreceiptid_pairs_t>();
+    m_modified_binlog = std::make_shared<xreceiptid_pairs_t>();
+    set_tableid_and_height(tableid, height);
+}
+
 void xreceiptid_state_t::add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair) {
     m_binlog->add_pair(sid, pair);
 }
@@ -187,6 +193,11 @@ void xreceiptid_state_t::update_unconfirm_tx_num() {
         unconfirm_tx_num += iter.second.get_unconfirm_num();
     }
     m_unconfirm_tx_num = unconfirm_tx_num;
+}
+
+void xreceiptid_state_t::set_tableid_and_height(xtable_shortid_t tableid, uint64_t height) {
+    m_self_tableid = tableid;
+    m_height = height;
 }
 
 bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) {

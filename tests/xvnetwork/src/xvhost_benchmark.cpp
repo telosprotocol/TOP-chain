@@ -178,7 +178,7 @@ std::vector<std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t>> build_vnetw
             std::uint16_t{1},
             std::uint64_t{i % version_count}
         };
-        r.push_back(std::make_shared<top::vnetwork::xvnetwork_driver_t>(vhost, address));
+        r.push_back(std::make_shared<top::vnetwork::xvnetwork_driver_t>(vhost, address, common::xelection_round_t{0}));
     }
 
     return r;

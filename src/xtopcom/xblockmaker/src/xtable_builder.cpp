@@ -15,8 +15,19 @@
 
 NS_BEG2(top, blockmaker)
 
-std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
-                                                           const std::vector<xblock_ptr_t> & units) {
+void make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs) {
+    std::string property_receiptid_bin = data::xtable_bstate_t::get_receiptid_property_bin(bstate);
+    if (!property_receiptid_bin.empty()) {
+        uint256_t hash = utl::xsha2_256_t::digest(property_receiptid_bin);
+        std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
+        property_hashs[data::xtable_bstate_t::get_receiptid_property_name()] = prophash;
+    }
+}
+
+void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
+                                                           const std::vector<xblock_ptr_t> & units,
+                                                           std::string & property_binlog,
+                                                           std::map<std::string, std::string> & property_hashs) {
     xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
 
     data::xtable_bstate_t proposal_tbstate(proposal_bstate.get());
@@ -98,14 +109,14 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<b
     for (auto & v : all_pairs) {
         proposal_tbstate.set_receiptid_pair(v.first, v.second, canvas.get());
     }
-    std::string property_binlog;
+
     canvas->encode(property_binlog);
     xassert(!property_binlog.empty());
 
+    make_table_prove_property_hashs(proposal_bstate.get(), property_hashs);
+
     xdbg("jimmy xlighttable_builder_t::make_light_table_binlog units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu",
         units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
-
-    return property_binlog;
 }
 
 xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev_block,
@@ -120,7 +131,9 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
-    std::string property_binlog = make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units());
+    std::map<std::string, std::string> property_hashs;  // need put in table self action for prove
+    std::string property_binlog;
+    make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs);
     xtable_block_para_t lighttable_para;
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
@@ -129,6 +142,7 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     std::string fullstate_bin;
     proposal_bstate->take_snapshot(fullstate_bin);
     lighttable_para.set_fullstate_bin(fullstate_bin);
+    lighttable_para.set_property_hashs(property_hashs);
 
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_tableblock(lighttable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
@@ -140,15 +154,19 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     return proposal_table;
 }
 
-std::string xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
-                                                const xobject_ptr_t<base::xvbstate_t> & prev_bstate) {
+void xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
+                                                const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                                std::string & property_binlog,
+                                                std::map<std::string, std::string> & property_hashs) {
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_snapshot;
     auto canvas = proposal_bstate->rebase_change_to_snapshot();  // TODO(jimmy)
     canvas->encode(property_snapshot);
-    return property_snapshot;
+    property_binlog = property_snapshot;
+    
+    make_table_prove_property_hashs(proposal_bstate.get(), property_hashs);
 }
 
 
@@ -163,7 +181,10 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
 
     auto & blocks = fulltable_build_para->get_blocks_from_last_full();
     xstatistics_data_t block_statistics = make_block_statistics(blocks);
-    std::string property_binlog = make_binlog(prev_block, prev_bstate);
+
+    std::map<std::string, std::string> property_hashs;
+    std::string property_binlog;
+    make_binlog(prev_block, prev_bstate, property_binlog, property_hashs);
 
     int64_t tgas_balance_change_total = 0;
     for(auto & block : blocks) {
@@ -178,6 +199,7 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     }
 
     xfulltable_block_para_t fulltable_para(property_binlog, block_statistics, tgas_balance_change_total);
+    fulltable_para.set_property_hashs(property_hashs);
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fulltable(fulltable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);

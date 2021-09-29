@@ -44,6 +44,7 @@ namespace top
             std::string                     get_tx_result_property(const std::string & key) const;
             std::string                     get_contract_address() const;
             std::string                     get_caller() const {return m_tx_action.get_caller();}
+            const base::xvaction_t &        get_action() const {return m_tx_action;}
 
         private:
             base::xvaction_t                m_tx_action;
@@ -69,6 +70,8 @@ namespace top
             static std::vector<xfull_txreceipt_t>    create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block);
             static std::vector<xfull_txreceipt_t>    create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block, const std::vector<xvaction_t> & actions);
             static xfull_txreceipt_ptr_t             create_one_txreceipt(xvblock_t* commit_block, xvblock_t* cert_block, const std::string & txhash);
+
+            static xtx_receipt_ptr_t                 create_table_input_primary_action_receipt(xvblock_t* commit_block, xvblock_t* cert_block);
         };
     }  // namespace base
 }  // namespace top

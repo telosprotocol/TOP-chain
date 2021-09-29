@@ -11,6 +11,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xblockaction.h"
 #include "xvledger/xventity.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
@@ -22,7 +23,7 @@ XINLINE_CONSTEXPR char const * BLD_URI_FULL_TABLE       = "b_ft//"; //xvcontract
 XINLINE_CONSTEXPR char const * BLD_URI_FULL_UNIT        = "b_fu//"; //xvcontract_t::create_contract_uri(b_fu, {}, 0)
 XINLINE_CONSTEXPR char const * BLD_URI_ROOT_BLOCK       = "b_rb//"; //xvcontract_t::create_contract_uri(b_rb, {}, 0)
 
-base::xvaction_t make_block_build_action(const std::string & target_uri) {
+base::xvaction_t make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result = {}) {
     std::string caller_addr;  // empty means version0, no caller addr
     // std::string contract_addr;
     // std::string contract_name; // empty means version0, default contract
@@ -32,9 +33,10 @@ base::xvaction_t make_block_build_action(const std::string & target_uri) {
     std::string tx_hash;
 
     base::xvaction_t _tx_action(tx_hash, caller_addr, target_uri, method_name);
-    // base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
-    // _tx_action.copy_result(_action_result);  // no action result
-    xassert(_tx_action.get_method_result() == nullptr);
+    if (!action_result.empty()) {
+        base::xvalue_t _action_result(action_result);
+        _tx_action.copy_result(_action_result);
+    }
     xassert(!_tx_action.get_method_uri().empty());
     return _tx_action;
 }
@@ -186,13 +188,14 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     build_para.set_extra_data(bodypara.get_extra_data()); // only light-table need extra data
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+    base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    build_block_body(bodypara);
+    build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
 
-bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
+bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_LIGHT_TABLE);
+    xtableblock_action_t _action(BLD_URI_LIGHT_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
@@ -406,13 +409,14 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+    base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    build_block_body(bodypara);
+    build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
 
-bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) {
+bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_TABLE);
+    xtableblock_action_t _action(BLD_URI_FULL_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
