@@ -124,6 +124,9 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_sync_on_demand_unit);
 
         RETURN_METRICS_NAME(cons_packtx_succ);
+        RETURN_METRICS_NAME(cons_packtx_sendtx_succ);
+        RETURN_METRICS_NAME(cons_packtx_recvtx_succ);
+        RETURN_METRICS_NAME(cons_packtx_confirmtx_succ);
         RETURN_METRICS_NAME(cons_packtx_fail_unit_check_state);
         RETURN_METRICS_NAME(cons_packtx_fail_fullunit_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_receiptid_contious);
@@ -261,6 +264,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_behind_on_demand_by_hash);
         RETURN_METRICS_NAME(xsync_recv_get_blocks_by_hashes);
         RETURN_METRICS_NAME(xsync_recv_get_blocks_by_hashes_bytes);
+        RETURN_METRICS_NAME(xsync_store_block_units);
+        RETURN_METRICS_NAME(xsync_store_block_tables);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);

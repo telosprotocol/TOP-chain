@@ -126,6 +126,19 @@ bool xtable_maker_t::can_make_next_light_block(xtablemaker_para_t & table_para) 
     return !table_para.get_origin_txs().empty();
 }
 
+void xtable_maker_t::set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const {
+    #ifdef ENABLE_METRICS
+    XMETRICS_GAUGE(metrics::cons_packtx_succ, bsucc ? 1 : 0);
+    if (tx->is_self_tx() || tx->is_send_tx()) {
+        XMETRICS_GAUGE(metrics::cons_packtx_sendtx_succ, bsucc ? 1 : 0);
+    } else if (tx->is_recv_tx()) {
+        XMETRICS_GAUGE(metrics::cons_packtx_recvtx_succ, bsucc ? 1 : 0);
+    } else if (tx->is_confirm_tx()) {
+        XMETRICS_GAUGE(metrics::cons_packtx_confirmtx_succ, bsucc ? 1 : 0);
+    }
+    #endif
+}
+
 bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers) {
     const data::xtablestate_ptr_t & tablestate = table_para.get_tablestate();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
@@ -144,7 +157,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         int32_t ret = unitmaker->check_latest_state(cs_para, accountindex);
         if (ret != xsuccess) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
-            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
+            set_packtx_metrics(tx, false);
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
             continue;
@@ -153,7 +166,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         // 2.try to make empty or full unit
         if (unitmaker->can_make_next_full_block()) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
+            set_packtx_metrics(tx, false);
             unitmakers[unit_account] = unitmaker;
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for fullunit but make fullunit,%s,account=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
@@ -176,7 +189,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             }
             if (cur_receipt_id != last_receipt_id + 1) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_receiptid_contious, 1);
-                XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
+                set_packtx_metrics(tx, false);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for receiptid not contious. %s last_receipt_id=%ld, tx=%s",
                     cs_para.dump().c_str(), last_receipt_id, tx->dump(true).c_str());
                 continue;
@@ -186,7 +199,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         if (tx->is_send_tx()) {
             if (tablestate->get_unconfirm_tx_num() > table_total_unconfirm_tx_num_max) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_total_unconfirm_limit, 1);
-                XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
+                set_packtx_metrics(tx, false);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for table total unconfirm tx num too much. %s unconfirm=%d, tx=%s",
                     cs_para.dump().c_str(), tablestate->get_unconfirm_tx_num(), tx->dump(true).c_str());
                 continue;
@@ -197,7 +210,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             tablestate->find_receiptid_pair(peer_table_sid, receiptid_pair);
             if (receiptid_pair.get_unconfirm_num() >= table_pair_unconfirm_tx_num_max) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_table_unconfirm_limit, 1);
-                XMETRICS_GAUGE(metrics::cons_packtx_succ, 0);
+                set_packtx_metrics(tx, false);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for table unconfirm tx num too much. %s unconfirm_num=%u, tx=%s",
                     cs_para.dump().c_str(), receiptid_pair.get_unconfirm_num(), tx->dump(true).c_str());
                 continue;
@@ -205,9 +218,10 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         }
 
         if (false == unitmaker->push_tx(cs_para, tx)) {
+            set_packtx_metrics(tx, false);
             continue;
         }
-        XMETRICS_GAUGE(metrics::cons_packtx_succ, 1);
+        set_packtx_metrics(tx, true);
 
         // finally, record success tx info for receiptid contious check
         if (tx->is_recv_tx() || tx->is_confirm_tx()) {
