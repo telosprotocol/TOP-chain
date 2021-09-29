@@ -56,6 +56,7 @@ class xtable_maker_t : public xblock_maker_t {
     bool                    create_other_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers);
     void                    clear_all_pending_txs();
     void                    refresh_cache_unit_makers();
+    void                    set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const;
 
  private:
     std::map<std::string, xunit_maker_ptr_t>    m_unit_makers;
