@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xcommon/xlogic_time.h"
-#include "xvnode/xvnode_sniff_config.h"
+#include "xvnode/xcomponents/xvnode_sniff/xvnode_sniff_config.h"
 
 NS_BEG2(top, vnode)
 
