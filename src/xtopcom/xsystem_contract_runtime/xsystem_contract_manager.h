@@ -41,7 +41,6 @@ using xcontract_deployment_data_t = xtop_contract_deployment_data;
 class xtop_system_contract_manager {
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
     base::xvblockstore_t* m_blockstore;
-    base::xvnodesrv_t*    m_nodesvr;
 
 public:
     xtop_system_contract_manager() = default;
@@ -72,8 +71,6 @@ public:
                                 xsniff_broadcast_config_t broadcast_config,
                                 xsniff_timer_config_t timer_config,
                                 xsniff_block_config_t block_config);
-
-    base::xvnodesrv_t*  get_node_service() const noexcept;
 
 private:
     void init_system_contract(common::xaccount_address_t const & contract_address);

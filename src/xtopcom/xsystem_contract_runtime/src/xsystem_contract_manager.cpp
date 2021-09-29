@@ -59,14 +59,10 @@ observer_ptr<system_contracts::xbasic_system_contract_t> xtop_system_contract_ma
 
     auto const it = m_system_contract_deployment_data.find(contract_address);
     if (it != std::end(m_system_contract_deployment_data)) {
-        return top::make_observer(top::get<xcontract_deployment_data_t>(*it).m_system_contract.get());
+        return top::make_observer(top::get<xcontract_deployment_data_t>(*it).system_contract.get());
     }
 
     return nullptr;
-}
-
-base::xvnodesrv_t*  xtop_system_contract_manager::get_node_service() const noexcept {
-    return m_nodesvr;
 }
 
 std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & xtop_system_contract_manager::deployment_data() const noexcept {

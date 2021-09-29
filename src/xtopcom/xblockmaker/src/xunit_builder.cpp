@@ -80,16 +80,26 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
 
+    std::vector<xcons_transaction_ptr_t> tablestatistic_input_txs;
+    for (auto it = input_txs.begin(); it != input_txs.end(); ++it) {
+        auto const tx = *it;
+        xinfo("new xlightunit_builder_t::build_block; alltxs src addr %s, dst addr %s, tx subtype: %s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype_str().c_str());
+         if (tx->get_source_addr() == tx->get_target_addr() && tx->get_target_addr().find(sys_contract_sharding_statistic_info_addr) != std::string::npos) {
+             xinfo("new xlightunit_builder_t::build_block; src addr %s, dst addr %s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str());
+             tablestatistic_input_txs.push_back(tx);
+        }
+    }
+
     bool new_vm{false};
     if (input_txs.size() == 1 && input_txs[0]->get_tx_subtype() == enum_transaction_subtype_recv) {
         if (input_txs[0]->get_target_addr() == sys_contract_rec_standby_pool_addr || input_txs[0]->get_target_addr() == sys_contract_rec_registration_addr) {
             new_vm = true;
         }
     }
-    if (input_txs.size() == 1 && input_txs[0]->get_tx_subtype() == enum_transaction_subtype_self) {
-         if (input_txs[0]->get_target_addr() == sys_contract_sharding_statistic_info_addr) {
-            new_vm = true;
-        }
+    if (!tablestatistic_input_txs.empty()) {
+        xinfo("new xlightunit_builder_t::build_block; size: %u", tablestatistic_input_txs.size());
+        new_vm = true;
+
     }
 
     if (new_vm) {

@@ -125,7 +125,7 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
 
         // table upload contract sniff sharding table addr
         if ((block_address.find(sys_contract_sharding_table_block_addr) != std::string::npos) && (contract_address.value() == sys_contract_sharding_statistic_info_addr)) {
-            xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %" PRIu64, contract_address.c_str(), block_address.c_str(), height);
+            xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
             auto const full_tableblock = (dynamic_cast<xfull_tableblock_t *>(vblock.get()));
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
             auto const statistic_accounts = components::fulltableblock_statistic_accounts(fulltable_statisitc_data, m_nodesvr.get());

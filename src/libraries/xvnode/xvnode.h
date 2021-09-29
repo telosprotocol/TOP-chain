@@ -46,7 +46,6 @@ private:
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
-
     observer_ptr<data::xdev_params> m_dev_params;
     observer_ptr<data::xuser_params> m_user_params;
 
