@@ -140,6 +140,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_sync_on_demand_unit,
 
     cons_packtx_succ,
+    cons_packtx_sendtx_succ,
+    cons_packtx_recvtx_succ,
+    cons_packtx_confirmtx_succ,
     cons_packtx_fail_unit_check_state,
     cons_packtx_fail_fullunit_limit,
     cons_packtx_fail_receiptid_contious,
@@ -285,6 +288,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_behind_on_demand_by_hash,
     xsync_recv_get_blocks_by_hashes,
     xsync_recv_get_blocks_by_hashes_bytes,
+    xsync_store_block_units,
+    xsync_store_block_tables,
 
 
     // txpool

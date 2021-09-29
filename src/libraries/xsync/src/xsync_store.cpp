@@ -17,6 +17,11 @@ m_shadow(shadow) {
 }
 
 bool xsync_store_t::store_block(base::xvblock_t* block) {
+    if (block->get_block_level() == base::enum_xvblock_level_unit) {
+        XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
+    } else if (block->get_block_level() == base::enum_xvblock_level_table) {
+        XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
+    }
     base::xvaccount_t _vaddress(block->get_account());
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
 }
@@ -24,6 +29,11 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
 bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
     if (blocks.empty()) {
         return true;
+    }
+    if (blocks[0]->get_block_level() == base::enum_xvblock_level_unit) {
+        XMETRICS_GAUGE(metrics::xsync_store_block_units, blocks.size());
+    } else if (blocks[0]->get_block_level() == base::enum_xvblock_level_table) {
+        XMETRICS_GAUGE(metrics::xsync_store_block_tables, blocks.size());
     }
     base::xvaccount_t _vaddress(blocks[0]->get_account());
     return m_blockstore->store_blocks(_vaddress, blocks, true);
