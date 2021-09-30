@@ -15,7 +15,8 @@ NS_BEG2(top, vnode)
 xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        common::xsharding_address_t const & sharding_address,
                        common::xslot_id_t const & slot_id,
-                       common::xelection_round_t const & version,
+                       common::xelection_round_t joined_election_round,
+                       common::xelection_round_t election_round,
                        std::uint16_t const group_size,
                        std::uint64_t const associated_blk_height,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -33,9 +34,10 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<xbase_timer_driver_t> const & timer_driver)
   : xbasic_vnode_t{common::xnode_address_t{sharding_address,
                                            common::xaccount_election_address_t{vhost->host_node_id(), slot_id},
-                                           version,
+                                           election_round,
                                            group_size,
                                            associated_blk_height},
+                   joined_election_round,
                    vhost,
                    election_cache_data_accessor}
   , m_elect_main{elect_main}
@@ -51,7 +53,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost,
-        common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, version, group_size, associated_blk_height})}
+        common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
+        joined_election_round)}
   , m_timer_driver{timer_driver}
   , m_tx_prepare_mgr{nullptr} {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
@@ -72,7 +75,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
 
 xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
-                       std::shared_ptr<election::cache::xgroup_element_t> const & group_info,
+                       std::shared_ptr<election::cache::xgroup_element_t> group_info,
                        observer_ptr<router::xrouter_face_t> const & router,
                        observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
@@ -88,6 +91,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   : xtop_vnode{elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
                group_info->node_element(vhost->host_node_id())->slot_id(),
+               group_info->node_element(vhost->host_node_id())->joined_election_round(),
                group_info->election_round(),
                group_info->group_size(),
                group_info->associated_blk_height(),

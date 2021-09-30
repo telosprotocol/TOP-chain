@@ -20,6 +20,8 @@ using base::xcontext_t;
 using base::xstream_t;
 using common::xnode_type_t;
 
+#define max_shard_rpc_mailbox_num (10000)
+
 // xshard_rpc_handler::xshard_rpc_handler(xvhost_face_t* shard_host)
 xshard_rpc_handler::xshard_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> shard_host,
                                        xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
@@ -55,10 +57,13 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
         }
         return true;
     };
-#ifdef ENABLE_METRICS
     int64_t in, out;
     int32_t queue_size = m_thread->count_calls(in, out);
-#endif
+    if (queue_size >= max_shard_rpc_mailbox_num) {
+        xkinfo_rpc("xshard_rpc_handler::on_message shard rpc mailbox is full:%d", queue_size);
+        XMETRICS_GAUGE(metrics::mailbox_rpc_validator_total, 0);
+        return;
+    }
     XMETRICS_GAUGE(metrics::mailbox_rpc_validator_total, 1);
     XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_rpc_validator_cur, queue_size);
     base::xauto_ptr<rpc_message_para_t> para = new rpc_message_para_t(edge_sender, message, timer_height);

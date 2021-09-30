@@ -424,6 +424,16 @@ bool xunit_maker_t::is_match_account_fullunit_recv_tx_limit(uint64_t current_lig
     return false;
 }
 
+bool xunit_maker_t::must_make_next_full_block() const {
+    uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
+    xassert(current_lightunit_count > 0);
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    if (current_lightunit_count >= max_limit_lightunit_count * 2) {
+        return true;
+    }
+    return false;
+}
+
 bool xunit_maker_t::can_make_next_full_block() const {
     // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
     if (is_account_locked()) {
@@ -434,13 +444,16 @@ bool xunit_maker_t::can_make_next_full_block() const {
     xassert(current_lightunit_count > 0);
     uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
     if (current_lightunit_count >= max_limit_lightunit_count) {
-        if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {
+#if 0  // remove unconfirm limit
+        if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {  
             return true;
         }
         if (current_lightunit_count >= max_limit_lightunit_count * 2) {  // TODO(jimmy)
             xwarn("xunit_maker_t::can_make_next_full_block too many lightunit.account=%s,current_height=%ld,lightunit_count=%ld,unconfirm_sendtx_num=%d",
                 get_account().c_str(), get_latest_bstate()->get_block_height(), current_lightunit_count, get_latest_bstate()->get_unconfirm_sendtx_num());
         }
+#endif
+        return true;
     }
     return false;
 }

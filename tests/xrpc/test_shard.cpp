@@ -69,6 +69,11 @@ public:
     std::map<common::xslot_id_t, data::xnode_info_t> parents_info2() const override { return {}; }
 
     std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & version) const override { return {}; }
+
+    common::xelection_round_t const & joined_election_round() const override {
+        static common::xelection_round_t joined_election_round;
+        return joined_election_round;
+    }
 };
 using xdummy_vnetwork_driver_t = xtop_dummy_vnetwork_driver;
 

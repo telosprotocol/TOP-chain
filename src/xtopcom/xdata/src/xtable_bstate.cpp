@@ -144,19 +144,35 @@ bool xtable_bstate_t::find_receiptid_pair(base::xtable_shortid_t sid, base::xrec
 }
 
 void xtable_bstate_t::cache_receiptid() {
-    m_cache_receiptid = std::make_shared<base::xreceiptid_state_t>();
-    if (false == get_bstate()->find_property(XPROPERTY_TABLE_RECEIPTID)) {
-        return;
+    m_cache_receiptid = make_receiptid_from_state(get_bstate().get());
+}
+
+base::xreceiptid_state_ptr_t xtable_bstate_t::make_receiptid_from_state(base::xvbstate_t* bstate) {
+    base::xreceiptid_state_ptr_t receiptid = std::make_shared<base::xreceiptid_state_t>(bstate->get_short_table_id(), bstate->get_block_height());
+    if (false == bstate->find_property(XPROPERTY_TABLE_RECEIPTID)) {
+        return receiptid;
     }
-    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_RECEIPTID);
+    auto propobj = bstate->load_string_map_var(XPROPERTY_TABLE_RECEIPTID);
     auto all_values = propobj->query();
     for (auto & v : all_values) {
         base::xtable_shortid_t sid = (base::xtable_shortid_t)base::xstring_utl::touint32(v.first);
         base::xreceiptid_pair_t pair;
         pair.serialize_from(v.second);
-        m_cache_receiptid->add_pair(sid, pair);
+        receiptid->add_pair(sid, pair);
     }
-    m_cache_receiptid->update_unconfirm_tx_num();  // calc and cache unconfirm tx for get performance
+    receiptid->update_unconfirm_tx_num();  // calc and cache unconfirm tx for get performance
+    return receiptid;
+}
+
+std::string xtable_bstate_t::get_receiptid_property_bin(base::xvbstate_t* bstate) {
+    std::string property_receiptid_bin;
+    if (bstate->find_property(XPROPERTY_TABLE_RECEIPTID)) {
+        auto propobj = bstate->load_property(XPROPERTY_TABLE_RECEIPTID);
+        if (propobj != nullptr) {
+            propobj->serialize_to_string(property_receiptid_bin);
+        }
+    }
+    return property_receiptid_bin;
 }
 
 bool xtable_bstate_t::set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair, base::xvcanvas_t* canvas) {

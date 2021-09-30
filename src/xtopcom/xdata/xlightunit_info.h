@@ -29,6 +29,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID                               = "8";
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID_SELF_TABLE_ID                 = "9";
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID_PEER_TABLE_ID                 = "a";
+    static XINLINE_CONSTEXPR char const * XTX_SENDER_CONFRIMED_RECEIPT_ID              = "b";  // optional. exist when sendtx
 
  public:
     xtransaction_exec_state_t();
@@ -42,6 +43,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_recv_tx_use_send_tx_tgas(uint32_t value) {set_value(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS, value);}
     void        set_tx_exec_status(enum_xunit_tx_exec_status value);
     void        set_receipt_id(base::xtable_shortid_t self_tableid, base::xtable_shortid_t peer_tableid, uint64_t receiptid);
+    void        set_sender_confirmed_receipt_id(uint64_t receiptid);
 
  public:
     uint32_t    get_used_disk()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DISK);}

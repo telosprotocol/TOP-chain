@@ -36,6 +36,7 @@ private:
 
     mutable std::mutex m_message_cache_mutex{};
     xhash_list2_t<std::uint64_t, std::time_t> m_message_cache{10000};
+    common::xelection_round_t m_joined_election_round;
 
 public:
     xtop_vnetwork_driver(xtop_vnetwork_driver const &) = delete;
@@ -44,7 +45,7 @@ public:
     xtop_vnetwork_driver & operator=(xtop_vnetwork_driver &&) = default;
     ~xtop_vnetwork_driver() override = default;
 
-    xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost, common::xnode_address_t const & address);
+    xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost, common::xnode_address_t const & address, common::xelection_round_t const & joined_election_round);
 
     void start() override;
 
@@ -82,6 +83,7 @@ public:
     std::vector<common::xnode_address_t> archive_addresses(common::xenum_node_type node_type) const override;
 
     std::vector<std::uint16_t> table_ids() const override final;
+    common::xelection_round_t const & joined_election_round() const override;
 
 private:
     void on_vhost_message_data_ready(common::xnode_address_t const & src, xmessage_t const & msg, common::xlogic_time_t const msg_time);

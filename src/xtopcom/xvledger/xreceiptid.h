@@ -33,7 +33,6 @@ class xreceiptid_pair_t {
     uint32_t        get_unconfirm_num() const {return m_unconfirm_num;}
 
  public:
-    void            inc_sendid_max() {m_send_id_max++;}
     void            set_sendid_max(uint64_t value);
     void            set_confirmid_max(uint64_t value);
     void            set_recvid_max(uint64_t value);
@@ -58,7 +57,7 @@ class xreceiptid_pairs_t {
     std::string     dump() const;
 
  public:
-    bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     const std::map<xtable_shortid_t, xreceiptid_pair_t> & get_all_pairs() const {return m_all_pairs;}
     size_t          get_size() const{return m_all_pairs.size();}
 
@@ -71,22 +70,30 @@ using xreceiptid_pairs_ptr_t = std::shared_ptr<xreceiptid_pairs_t>;
 class xreceiptid_state_t {
  public:
     xreceiptid_state_t();
+    xreceiptid_state_t(xtable_shortid_t tableid, uint64_t height);
     ~xreceiptid_state_t() {}
 
  public:
     void        add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     bool        find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
-    uint32_t    get_unconfirm_tx_num() const;  // just for debug
     void        update_unconfirm_tx_num();
+    void        set_tableid_and_height(xtable_shortid_t tableid, uint64_t height);
+
+    uint32_t            get_unconfirm_tx_num() const;  // just for debug    
+    xtable_shortid_t    get_self_tableid() const {return m_self_tableid;}
+    uint64_t            get_block_height() const {return m_height;}
 
  public: // just for block build
     void        clear_pair_modified();
     bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
     void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
+    const xreceiptid_pairs_ptr_t & get_all_receiptid_pairs() const {return m_binlog;}
 
  private:
     xreceiptid_pairs_ptr_t  m_binlog{nullptr};
     uint32_t                m_unconfirm_tx_num{0};
+    xtable_shortid_t        m_self_tableid{0};
+    uint64_t                m_height{0};
  private:
     xreceiptid_pairs_ptr_t  m_modified_binlog{nullptr};  // for block maker cache
 };

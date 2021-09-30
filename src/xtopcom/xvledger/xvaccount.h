@@ -188,6 +188,11 @@ namespace top
                 xassert(get_addrtype_from_account(final_account_address) == enum_vaccount_addr_type_native_contract || get_addrtype_from_account(final_account_address) == enum_vaccount_addr_type_block_contract);
                 return final_account_address;
             }
+            static const std::string  make_table_account_address(base::xtable_shortid_t tableid)
+            {
+                xtable_index_t _index(tableid);
+                return make_table_account_address(_index.get_zone_index(), _index.get_subaddr());
+            }            
             static const std::string  make_table_account_address(enum_xchain_zone_index zone_index, uint16_t subaddr)
             {
                 xassert(subaddr < enum_vbucket_has_tables_count);
@@ -398,11 +403,11 @@ namespace top
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
             inline const int            get_table_index()    const {return get_vledger_table_index(m_account_xid);}
             
-            inline const xtable_shortid_t       get_short_table_id()//note: short table_id = [zone_index][book_index][table_index]
+            inline const xtable_shortid_t       get_short_table_id() const//note: short table_id = [zone_index][book_index][table_index]
             {
                   return (xtable_shortid_t)((get_zone_index() << 10) | get_ledger_subaddr());
             }
-            inline const xtable_longid_t       get_long_table_id()//note: long table_id = [chain_id][zone_index][book_index][table_index]
+            inline const xtable_longid_t       get_long_table_id() const//note: long table_id = [chain_id][zone_index][book_index][table_index]
             {
                 return xtable_longid_t((get_ledger_id() << 10) | get_ledger_subaddr());
             }

@@ -21,9 +21,9 @@ protected:
 TEST_F(test_xtxpool_info, txpool_info) {
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
-
-    xtxpool_table_info_t table1("table_test1", &shard, &statistic);
-    xtxpool_table_info_t table2("table_test2", &shard, &statistic);
+    xtable_state_cache_t table_state_cache(nullptr, "table_test1");
+    xtxpool_table_info_t table1("table_test1", &shard, &statistic, &table_state_cache);
+    xtxpool_table_info_t table2("table_test2", &shard, &statistic, &table_state_cache);
 
     
     // table1.send_tx_inc(1);
