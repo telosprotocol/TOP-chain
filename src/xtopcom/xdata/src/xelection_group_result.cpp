@@ -86,7 +86,7 @@ void xtop_election_group_result::timestamp(common::xlogic_time_t const time) noe
     m_timestamp = time;
 }
 
-common::xlogic_time_t xtop_election_group_result::start_time() const noexcept {
+common::xlogic_time_t xtop_election_group_result::start_time() const {
     std::error_code ec;
     auto r = start_time(ec);
     top::error::throw_error(ec);
@@ -102,7 +102,7 @@ common::xlogic_time_t xtop_election_group_result::start_time(std::error_code & e
     return m_start_time;
 }
 
-void xtop_election_group_result::start_time(common::xlogic_time_t const time) noexcept {
+void xtop_election_group_result::start_time(common::xlogic_time_t const time) {
     std::error_code ec;
     start_time(time, ec);
     top::error::throw_error(ec);
