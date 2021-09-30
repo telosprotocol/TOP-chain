@@ -94,14 +94,10 @@ public:
     void
     timestamp(common::xlogic_time_t const time) noexcept;
 
-    common::xlogic_time_t
-    start_time() const noexcept;
-
+    common::xlogic_time_t start_time() const;
     common::xlogic_time_t start_time(std::error_code & ec) const noexcept;
 
-    void
-    start_time(common::xlogic_time_t const time) noexcept;
-
+    void start_time(common::xlogic_time_t const time);
     void start_time(common::xlogic_time_t const time, std::error_code & ec) noexcept;
 
     //std::uint64_t
