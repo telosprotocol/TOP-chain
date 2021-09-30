@@ -156,7 +156,11 @@ do
     store_unit_block)
         CMAKE_EXTRA_OPTIONS+=" -DSTORE_UNIT_BLOCK=ON"
         echo "BUILD WITH store unit block tool"
-    ;;    
+    ;;
+    chain_forked_by_default)
+        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON"
+        echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (all fork points are forked BY DEFAULT)"
+    ;;
     *)
         CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
     ;;

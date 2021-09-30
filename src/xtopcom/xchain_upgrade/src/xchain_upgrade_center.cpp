@@ -11,6 +11,21 @@
 namespace top {
     namespace chain_upgrade {
 
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        xchain_fork_config_t  mainnet_chain_config{
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+        };
+
+        // !!!change!!! fork time for galileo
+        xchain_fork_config_t  testnet_chain_config{
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+        };
+
+        // !!!change!!! fork time for local develop net
+        xchain_fork_config_t default_chain_config {
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+        };
+#else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
         };
@@ -24,6 +39,7 @@ namespace top {
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
         };
+#endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
 
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
             if (top::config::chain_name_mainnet == XGET_CONFIG(chain_name)) {
