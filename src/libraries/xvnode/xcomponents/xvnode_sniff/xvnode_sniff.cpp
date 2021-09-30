@@ -7,7 +7,7 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xvnode/xcomponents/xvnode_fulltableblock/xfulltableblock_process.h"
+#include "xvnode/xcomponents/xvnode_block/xfulltableblock_process.h"
 
 NS_BEG2(top, vnode)
 
@@ -128,7 +128,7 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
             xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
             auto const full_tableblock = (dynamic_cast<xfull_tableblock_t *>(vblock.get()));
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
-            auto const statistic_accounts = components::fulltableblock_statistic_accounts(fulltable_statisitc_data, m_nodesvr.get());
+            auto const statistic_accounts = components::xfulltableblock_process_t::fulltableblock_statistic_accounts(fulltable_statisitc_data, m_nodesvr.get());
 
 
             base::xstream_t stream(base::xcontext_t::instance());

@@ -11,7 +11,7 @@
 #include "xdata/xblock_statistics_data.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstake/xstake_algorithm.h"
-#include "xvnode/xcomponents/xvnode_fulltableblock/xfulltableblock_process.h"
+#include "xvnode/xcomponents/xvnode_block/xfulltableblock_process.h"
 
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract_new.h"
 
@@ -165,7 +165,7 @@ TEST_F(test_runtime_statistic_data, fulltableblock_statistic_accounts) {
     EXPECT_EQ(auditor_account_addrs.size(), auditor_group_nodes.size());
     EXPECT_EQ(validator_account_addrs.size(), validator_group_nodes.size());
 
-    auto statistic_accounts = vnode::components::fulltableblock_statistic_accounts(data, &node_serv);
+    auto statistic_accounts = vnode::components::xfulltableblock_process_t::fulltableblock_statistic_accounts(data, &node_serv);
     print_statistic_accounts_info(statistic_accounts);
 
     for(auto const& round_item: statistic_accounts.accounts_detail) {
@@ -196,7 +196,7 @@ TEST_F(test_runtime_statistic_data, process_statistic_data_for_slash) {
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
     set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
 
-    auto statistic_accounts = vnode::components::fulltableblock_statistic_accounts(data, &node_serv);
+    auto statistic_accounts = vnode::components::xfulltableblock_process_t::fulltableblock_statistic_accounts(data, &node_serv);
 
     auto slash_info = process_statistic_data(data, statistic_accounts);
     EXPECT_EQ(slash_info.auditor_info.size(), auditor_account_addrs.size());
