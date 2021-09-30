@@ -1,7 +1,7 @@
 aux_source_directory(./src xvnode_src)
 aux_source_directory(./xcomponents/xvnode_sniff xvnode_src)
 aux_source_directory(./xcomponents/xvnode_util xvnode_src)
-aux_source_directory(./xcomponents/xvnode_fulltableblock xvnode_src)
+aux_source_directory(./xcomponents/xvnode_block xvnode_src)
 
 add_library(xvnode STATIC ${xvnode_src})
 
