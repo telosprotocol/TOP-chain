@@ -208,12 +208,12 @@ bool could_be<common::xnode_type_t::zec>(common::xrole_type_t const miner_type) 
 
 template <>
 bool could_be<common::xnode_type_t::consensus_auditor>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::advance>(miner_type);
+    return common::has<common::xrole_type_t::advance>(miner_type) || common::has<common::xrole_type_t::archive>(miner_type);
 }
 
 template <>
 bool could_be<common::xnode_type_t::auditor>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::advance>(miner_type);
+    return common::has<common::xrole_type_t::advance>(miner_type) || common::has<common::xrole_type_t::archive>(miner_type);
 }
 
 template <>
