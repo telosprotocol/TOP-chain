@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvnode/xcomponents/xvnode_util/xvnode_util.h"
+#include "xvnode/xcomponents/xutil/xvnode_util.h"
 
 #include "xdata/xtransaction_v2.h"
 #include "xvm/manager/xmessage_ids.h"

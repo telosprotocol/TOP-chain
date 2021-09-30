@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xvnode/xcomponents/xvnode_block/xblock_process_face.h"
+#include "xvnode/xcomponents/xblock_process/xblock_process_face.h"
 
 #include "xdata/xfulltableblock_account_data.h"
 #include "xdata/xfull_tableblock.h"

@@ -9,7 +9,7 @@
 #include "xcommon/xfadable.h"
 #include "xcommon/xrotation_aware.h"
 #include "xvnetwork/xmessage.h"
-#include "xvnode/xcomponents/xvnode_sniff/xvnode_sniff_config.h"
+#include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff_config.h"
 
 NS_BEG2(top, vnode)
 
