@@ -23,6 +23,8 @@ enum class xenum_errc {
     property_not_exist,
 
     binlog_instruction_type_invalid,
+
+    election_data_start_time_invalid,
 };
 using xerrc_t = xenum_errc;
 
@@ -36,11 +38,9 @@ NS_END3
 NS_BEG1(std)
 
 template <>
-struct is_error_code_enum<top::data::error::xerrc_t> : std::true_type {
-};
+struct is_error_code_enum<top::data::error::xerrc_t> : std::true_type {};
 
 template <>
-struct is_error_condition_enum<top::data::error::xerrc_t> : std::true_type {
-};
+struct is_error_condition_enum<top::data::error::xerrc_t> : std::true_type {};
 
 NS_END1
