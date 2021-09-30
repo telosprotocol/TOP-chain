@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xerror/xerror.h"
+
 #include <string>
 NS_BEG3(top, data, error)
 
@@ -21,6 +22,24 @@ static char const * const errc_to_string(int code) {
 
     case xerrc_t::update_state_block_type_mismatch:
         return "update state failed due to mismatch block type";
+
+    case xerrc_t::property_already_exist:
+        return "property already exists";
+
+    case xerrc_t::property_type_invalid:
+        return "property type invalid";
+
+    case xerrc_t::property_hash_mismatch:
+        return "property hash mismatch";
+
+    case xerrc_t::property_not_exist:
+        return "property not exist";
+
+    case xerrc_t::binlog_instruction_type_invalid:
+        return "invalid binlog instruction type";
+
+    case xerrc_t::election_data_start_time_invalid:
+        return "election data start time invalid";
 
     default:
         return "unknown data module error";
