@@ -36,16 +36,11 @@ public:
 
     xvnode_address_t address() const override { return xvnode_address_t(common::build_committee_sharding_address(top::common::xbeacon_network_id)); }
 
-    void send_to(xvnode_address_t const &, xmessage_t const &, network::xtransmission_property_t const &) override {}
-
-    void broadcast(xmessage_t const &) override {}
-
-    void forward_broadcast_message(xmessage_t const &, xvnode_address_t const &) override {}
+    void send_to(xvnode_address_t const & to, xmessage_t const & message, std::error_code & ec) override {}
 
     void send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override {}
-    void broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override {}
 
-    void broadcast_to(xvnode_address_t const & dst, xmessage_t const & message) {}
+    void broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override {}
 
     common::xnode_id_t const & host_node_id() const noexcept override {
         static common::xnode_id_t nid;

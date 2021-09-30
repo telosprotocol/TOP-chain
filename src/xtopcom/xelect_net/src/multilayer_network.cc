@@ -188,13 +188,13 @@ int MultilayerNetwork::RegisterNodeCallback(std::function<int32_t(std::string co
     return 0;
 }
 
-std::shared_ptr<network::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(const uint32_t & xnetwork_id) const noexcept {
+std::shared_ptr<elect::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(const uint32_t & xnetwork_id) const noexcept {
     std::unique_lock<std::mutex> lock(vhost_map_mutex_);
     auto ifind = vhost_map_.find(xnetwork_id);
     if (ifind == vhost_map_.end()) {
         return nullptr;
     }
-    return std::static_pointer_cast<network::xnetwork_driver_face_t>(ifind->second);
+    return std::static_pointer_cast<elect::xnetwork_driver_face_t>(ifind->second);
 }
 
 int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config) {

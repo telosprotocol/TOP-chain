@@ -20,7 +20,7 @@ namespace top {
 
 namespace base {
 class Uint64BloomFilter;
-};
+}
 
 namespace gossip {
 
@@ -45,7 +45,7 @@ public:
         assert(false);
         return;
     }
-    virtual void Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table) {
+    virtual void Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr const & routing_table) {
         assert(false);
         return;
     }

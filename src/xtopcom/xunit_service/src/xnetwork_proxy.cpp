@@ -62,7 +62,12 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
         if (!common::broadcast(to.network_id()) && !common::broadcast(to.zone_id()) && !common::broadcast(to.cluster_id()) && !common::broadcast(to.group_id())) {
             if (common::broadcast(to.slot_id())) {
                 if (common::xauditor_group_id_begin <= to.group_id() && to.group_id() < common::xauditor_group_id_end) {
-                    network->forward_broadcast_message(msg, to);
+                    //network->forward_broadcast_message(msg, to);
+                    std::error_code broadcast_ec;
+                    network->broadcast(to.xip2(), msg, broadcast_ec);
+                    if (broadcast_ec) {
+                        xerror("validator forward to auditor failed. src %s dst %s", network->address().to_string().c_str(), to.to_string().c_str());
+                    }
                     forward = true;
 #ifdef DEBUG
                     xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
@@ -86,7 +91,12 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
             reset_node_id_to_xip2(to);
             set_node_id_to_xip2(to, 0x3FF);
             auto dest_to = xcons_utl::to_address(to, network->address().election_round());
-            network->forward_broadcast_message(msg, dest_to);
+            //network->forward_broadcast_message(msg, dest_to);
+            std::error_code broadcast_ec;
+            network->broadcast(dest_to.xip2(), msg, broadcast_ec);
+            if (broadcast_ec) {
+                xerror("auditor forward to validator failed. src %s dst %s", network->address().to_string().c_str(), dest_to.to_string().c_str());
+            }
 #ifdef DEBUG
             xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
 #endif
@@ -150,7 +160,7 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> xnetwork_proxy::find(xvip2_t 
     return nullptr;
 }
 
-// listen network message, call while vnode fade in
+// listen network message, call while vnode start
 bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t category, const xpdu_reactor_ptr & reactor) {
     // auto addr = reactor->get_ip();
     // auto category = reactor->get_category();
@@ -182,7 +192,7 @@ bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t ca
     }
 }
 
-// unlisten network message, call while vnode fade out
+// unlisten network message, call while vnode outdate (unreg)
 bool xnetwork_proxy::unlisten(const xvip2_t & addr, common::xmessage_category_t category) {
     // auto addr = reactor->get_ip();
     // auto category = reactor->get_category();
@@ -255,7 +265,7 @@ bool xnetwork_proxy::add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t
             xunit_info("[xunitservice] network add %s %p", xcons_utl::xip_to_hex(xip).c_str(), network.get());
             m_networks.insert({xip, network});
         } else {
-            xunit_info("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), &(iter->second));
+            xunit_info("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), (iter->second).get());
         }
     }
     return true;
@@ -271,7 +281,7 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
         // assert(listen_iter == m_reactors.end());
         auto iter = m_networks.find(addr);
         if (iter != m_networks.end()) {
-            xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
+            xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), (iter->second).get());
             m_networks.erase(iter);
             return true;
         }
@@ -281,7 +291,7 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
             common::xip2_t const group_xip2 = common::xip2_t{network_xip}.group_xip2();
             xvip2_t network_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
             if (xcons_utl::xip_equals(addr, network_group_xip)) {
-                xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
+                xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), (iter->second).get());
                 m_networks.erase(iter);
                 return true;
             }
@@ -339,11 +349,28 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
 
         if (net_driver->address().cluster_address() == auditor_cluster_addr) {
             xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
-            net_driver->broadcast(msg);
+            // net_driver->broadcast(msg);
+            std::error_code ec;
+            net_driver->broadcast(net_driver->address().xip2().group_xip2(), msg, ec);
+            if (ec) {
+                xunit_error("xnetwork_proxy::send_receipt_msg broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
+                            receipt->dump().c_str(),
+                            stream.size(),
+                            net_driver->address().to_string().c_str());
+            }
             non_shard_cross_receipts.push_back(receipt);
         } else {
             xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str(), auditor_cluster_addr.to_string().c_str());
-            net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)});
+            //net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)});
+            std::error_code ec;
+            net_driver->broadcast(common::xnode_address_t{auditor_cluster_addr}.xip2(), msg, ec);
+            if (ec) {
+                xunit_error("xnetwork_proxy::send_receipt_msg forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+                            receipt->dump().c_str(),
+                            stream.size(),
+                            net_driver->address().to_string().c_str(),
+                            auditor_cluster_addr.to_string().c_str());
+            }
         }
 
         // auditor cluster is different with validator for consensus table
@@ -356,12 +383,29 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             xassert(validator_cluster_addr != auditor_cluster_addr);
             if (net_driver->address().cluster_address() == validator_cluster_addr) {
                 xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
-                net_driver->broadcast(msg);
-                non_shard_cross_receipts.push_back(receipt);            
+                //net_driver->broadcast(msg);
+                std::error_code ec;
+                net_driver->broadcast(net_driver->address().xip2().group_xip2(), msg, ec);
+                if (ec) {
+                    xunit_error("xnetwork_proxy::send_receipt_msg broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
+                                receipt->dump().c_str(),
+                                stream.size(),
+                                net_driver->address().to_string().c_str());
+                }
+                non_shard_cross_receipts.push_back(receipt);
             } else {
                 xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str(), validator_cluster_addr.to_string().c_str());
-                net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
-            }            
+                //net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
+                std::error_code ec;
+                net_driver->broadcast(common::xnode_address_t{validator_cluster_addr}.xip2(), msg, ec);
+                if (ec) {
+                    xunit_error("xnetwork_proxy::send_receipt_msg forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+                                receipt->dump().c_str(),
+                                stream.size(),
+                                net_driver->address().to_string().c_str(),
+                                validator_cluster_addr.to_string().c_str());
+                }
+            }
         }
     } catch (top::error::xtop_error_t const & eh) {
         xunit_warn("xnetwork_proxy::send_receipt_msg xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());

@@ -23,7 +23,8 @@ enum class xtop_vnetwork_error {
     expired_message,
     invalid_account_address,
     slot_id_mismatch,
-    not_supported
+    not_supported,
+    vnetwork_driver_not_run,
 };
 using xvnetwork_errc2_t = xtop_vnetwork_error;
 

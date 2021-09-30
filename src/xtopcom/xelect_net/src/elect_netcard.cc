@@ -104,93 +104,144 @@ std::vector<network::xnetwork_message_ready_callback_t> EcNetcard::getall_rumor_
     return cb_vec;
 }
 
-int EcNetcard::send(
-        const base::KadmliaKeyPtr& send_kad_key,
-        const base::KadmliaKeyPtr& recv_kad_key,
-        const elect::xelect_message_t& message,
-        bool is_broadcast) const {
-    if (!send_kad_key) {
-        TOP_ERROR("invalid chain src address.");
-        return kVhostSendSrcInvalid;
-    }
-    if (!recv_kad_key) {
-        TOP_ERROR("invalid chain dst address.[%d][%d][%d][%d]",
-                recv_kad_key->xnetwork_id(),
-                recv_kad_key->zone_id(),
-                recv_kad_key->cluster_id(),
-                recv_kad_key->group_id());
-        assert(false);
-        return kVhostSendDstInvalid;
-    }
-
-    xdbg("send data chain_src: [%d][%d][%d][%d][%d]",
-            send_kad_key->xnetwork_id(),
-            send_kad_key->zone_id(),
-            send_kad_key->cluster_id(),
-            send_kad_key->group_id(),
-            recv_kad_key->slot_id());
-
-    xdbg("send data chain_dst: [%d][%d][%d][%d][%d]",
-            recv_kad_key->xnetwork_id(),
-            recv_kad_key->zone_id(),
-            recv_kad_key->cluster_id(),
-            recv_kad_key->group_id(),
-            recv_kad_key->slot_id());
+void EcNetcard::send_to(base::KadmliaKeyPtr const & send_kad_key,
+                        base::KadmliaKeyPtr const & recv_kad_key,
+                        xbyte_buffer_t const & bytes_message,
+                        std::error_code const & ec) const {
+    assert(send_kad_key);
+    assert(recv_kad_key);
+    xdbg("[ec_netcard][send_to] src: [%d][%d][%d][%d][%d]",
+         send_kad_key->xnetwork_id(),
+         send_kad_key->zone_id(),
+         send_kad_key->cluster_id(),
+         send_kad_key->group_id(),
+         send_kad_key->slot_id());
+    xdbg("[ec_netcard][send_to] dst: [%d][%d][%d][%d][%d]",
+         recv_kad_key->xnetwork_id(),
+         recv_kad_key->zone_id(),
+         recv_kad_key->cluster_id(),
+         recv_kad_key->group_id(),
+         recv_kad_key->slot_id());
 
     transport::protobuf::RoutingMessage pbft_message;
-    pbft_message.set_broadcast(is_broadcast);
+    pbft_message.set_broadcast(false);
     pbft_message.set_priority(enum_xpacket_priority_type_routine);
-    pbft_message.set_is_root(false);
     if (recv_kad_key->xnetwork_id() == kRoot) {
         pbft_message.set_is_root(true);
+    } else {
+        pbft_message.set_is_root(false);
     }
+    pbft_message.set_src_node_id(send_kad_key->Get());
+    pbft_message.set_des_node_id(recv_kad_key->Get());
+    pbft_message.set_type(kElectVhostRumorP2PMessage);
+    pbft_message.set_id(CallbackManager::MessageId());
+
+    // !todo elect::protobuf::VhostMessage should be deleted in next version
+    // and use nex line . set data into pbft_message directly
+    // pbft_message.set_data((char *)bytes_message.data(), bytes_message.size());
+    elect::protobuf::VhostMessage vhost_msg;
+    vhost_msg.set_cb_type((uint32_t)0); // not used anyway , set it 0.
+    vhost_msg.set_data((char *)bytes_message.data(), bytes_message.size());
+    std::string vdata = vhost_msg.SerializeAsString();
+    pbft_message.set_data(vdata);
+
+    // point to point
+    if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
+        // error code
+    }
+    return;
+}
+
+void EcNetcard::spread_rumor(base::KadmliaKeyPtr const & send_kad_key,
+                             base::KadmliaKeyPtr const & recv_kad_key,
+                             xbyte_buffer_t const & bytes_message,
+                             std::error_code const & ec) const {
+    assert(send_kad_key);
+    assert(recv_kad_key);
+    xdbg("[ec_netcard][spread_rumor] src: [%d][%d][%d][%d][%d]",
+         send_kad_key->xnetwork_id(),
+         send_kad_key->zone_id(),
+         send_kad_key->cluster_id(),
+         send_kad_key->group_id(),
+         send_kad_key->slot_id());
+    xdbg("[ec_netcard][spread_rumor] dst: [%d][%d][%d][%d][%d]",
+         recv_kad_key->xnetwork_id(),
+         recv_kad_key->zone_id(),
+         recv_kad_key->cluster_id(),
+         recv_kad_key->group_id(),
+         recv_kad_key->slot_id());
+
+    transport::protobuf::RoutingMessage pbft_message;
+    pbft_message.set_broadcast(true);
+    pbft_message.set_priority(enum_xpacket_priority_type_routine);
+    assert(recv_kad_key->xnetwork_id()!=kRoot);
+    pbft_message.set_is_root(false);
 
     pbft_message.set_src_node_id(send_kad_key->Get());
     pbft_message.set_des_node_id(recv_kad_key->Get());
     pbft_message.set_type(kElectVhostRumorGossipMessage);
     pbft_message.set_id(CallbackManager::MessageId());
 
+    // !todo elect::protobuf::VhostMessage should be deleted in next version
+    // and use nex line . set data into pbft_message directly
+    // pbft_message.set_data((char *)bytes_message.data(), bytes_message.size());
     elect::protobuf::VhostMessage vhost_msg;
-    vhost_msg.set_cb_type(static_cast<uint32_t>(message.id()));
-    vhost_msg.set_data((char*)message.payload().data(), message.payload().size());
+    vhost_msg.set_cb_type((uint32_t)0); // not used anyway , set it 0.
+    vhost_msg.set_data((char *)bytes_message.data(), bytes_message.size());
     std::string vdata = vhost_msg.SerializeAsString();
     pbft_message.set_data(vdata);
 
-    uint32_t chain_data_hash = base::xhash32_t::digest(
-            std::string((char*)message.payload().data(), message.payload().size()));
-
-    // XMETRICS_PACKET_INFO("p2p_electvhost_send",
-    //         "local_gid", HexEncode(global_xid->Get()),
-    //         "chain_hash", chain_data_hash,
-    //         "chain_msgid", static_cast<uint64_t>(message.id()),
-    //         "chain_msg_size", message.payload().size(),
-    //         "send_timestamp", GetCurrentTimeMsec(),
-    //         "src_node_id", HexEncode(pbft_message.src_node_id()),
-    //         "dest_node_id", HexEncode(pbft_message.des_node_id()),
-    //         "is_root", pbft_message.is_root(),
-    //         "broadcast", pbft_message.broadcast());
-
-    // point to point
-    if (!pbft_message.has_broadcast() || !pbft_message.broadcast()) {
-        pbft_message.set_type(kElectVhostRumorP2PMessage);
-        pbft_message.set_data(vdata);
-        if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
-            TOP_WARN("chain message point2point failed");
-            return kVHostSendWrouterFailed;
-        }
-        return kVhostSendSuccess;
-    }
-
-    // broadcast to all use gossip-blooomfilter
-    if (pbft_message.is_root()) {
-        return GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, chain_data_hash, static_cast<uint32_t>(message.id()));
-        // return GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, chain_data_hash, static_cast<uint32_t>(message.id()));
-    }
-
-    return GossipDispatchBroadcast(pbft_message, gossip::kGossipDispatcher, chain_data_hash, static_cast<uint32_t>(message.id()));
+    // group broadcast
+    GossipDispatchBroadcast(pbft_message, gossip::kGossipDispatcher);
+    return;
 }
 
-int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
+void EcNetcard::broadcast(base::KadmliaKeyPtr const & send_kad_key,
+                          base::KadmliaKeyPtr const & recv_kad_key,
+                          xbyte_buffer_t const & bytes_message,
+                          std::error_code const & ec) const {
+    assert(send_kad_key);
+    assert(recv_kad_key);
+    xdbg("[ec_netcard][broadcast] src: [%d][%d][%d][%d][%d]",
+         send_kad_key->xnetwork_id(),
+         send_kad_key->zone_id(),
+         send_kad_key->cluster_id(),
+         send_kad_key->group_id(),
+         send_kad_key->slot_id());
+    xdbg("[ec_netcard][broadcast] dst: [%d][%d][%d][%d][%d]",
+         recv_kad_key->xnetwork_id(),
+         recv_kad_key->zone_id(),
+         recv_kad_key->cluster_id(),
+         recv_kad_key->group_id(),
+         recv_kad_key->slot_id());
+
+    transport::protobuf::RoutingMessage pbft_message;
+    pbft_message.set_broadcast(true);
+    pbft_message.set_priority(enum_xpacket_priority_type_routine);
+    assert(recv_kad_key->xnetwork_id() == kRoot);
+    pbft_message.set_is_root(true);
+
+    pbft_message.set_src_node_id(send_kad_key->Get());
+    pbft_message.set_des_node_id(recv_kad_key->Get());
+    pbft_message.set_type(kElectVhostRumorGossipMessage);
+    pbft_message.set_id(CallbackManager::MessageId());
+
+    // !todo elect::protobuf::VhostMessage should be deleted in next version
+    // and use nex line . set data into pbft_message directly
+    // pbft_message.set_data((char *)bytes_message.data(), bytes_message.size());
+    elect::protobuf::VhostMessage vhost_msg;
+    vhost_msg.set_cb_type((uint32_t)0); // not used anyway , set it 0.
+    vhost_msg.set_data((char *)bytes_message.data(), bytes_message.size());
+    std::string vdata = vhost_msg.SerializeAsString();
+    pbft_message.set_data(vdata);
+
+    // root broadcast
+    GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter);
+    //GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS);
+    return;
+}
+
+int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
     std::string header_hash = std::to_string(vhash);
@@ -226,7 +277,7 @@ int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_
     return kVhostSendSuccess;
 }
 
-int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
+int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
@@ -256,7 +307,7 @@ int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft
     return kVhostSendSuccess;
 }
 #if 0
-int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
+int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
@@ -287,7 +338,7 @@ int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbf
     return kVhostSendSuccess;
 }
 #endif
-int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
+int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
@@ -335,7 +386,9 @@ void EcNetcard::HandleRumorMessage(
         return;
     }
 
-    std::string data = message.data(); // point2point or broadcast without header and block
+    elect::protobuf::VhostMessage vhost_msg;
+    xbyte_buffer_t bytes_msg;
+    std::string data = message.data();// point2point or broadcast without header and block
     if (message.has_gossip()) {
         // broadcast  with header and block
         auto gossip = message.gossip();
@@ -349,49 +402,32 @@ void EcNetcard::HandleRumorMessage(
             data = gossip.block();
         }
     }
-
-    xdbg("%s HandleRumorMessage", transport::FormatMsgid(message).c_str());
-    elect::protobuf::VhostMessage vhost_msg;
-    if (!vhost_msg.ParseFromString(data)) {
-        TOP_ERROR("%s elect::protobuf::VhostMessage ParseFromString failed!", transport::FormatMsgid(message).c_str());
-        return;
-    }
-
-    elect::xelect_message_t msg(
-        { vhost_msg.data().c_str(), vhost_msg.data().c_str() + vhost_msg.data().size() },
-            static_cast<common::xmessage_id_t>(vhost_msg.cb_type()));
-
- 
+    
+    
     uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + data);
     message.set_msg_hash(msg_hash);
 
- 
-    // if (IS_RRS_GOSSIP_MESSAGE(message)) {
-    //     XMETRICS_PACKET_INFO("p2pperf_vhostrecv_info",
-    //                          MESSAGE_BASIC_INFO(message),
-    //                          MESSAGE_RRS_FEATURE(message),
-    //                          IS_ROOT_BROADCAST(message),
-    //                          "is_pulled",
-    //                          IS_RRS_PULLED_MESSAGE(message),
-    //                          PACKET_SIZE(packet),
-    //                          NOW_TIME);
-    // } else {
     if (IS_BROADCAST(message)) {
         XMETRICS_PACKET_INFO(
             "p2pbroadcast_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
     }
-    // }
+    if (!vhost_msg.ParseFromString(data)) {
+        // new version / not used vhost_msg.
+        bytes_msg = {data.data(), data.data() + data.size()};
+    } else {
+        // todo need to delete this in next version
+        bytes_msg = {vhost_msg.data().c_str(), vhost_msg.data().c_str() + vhost_msg.data().size()};
+    }
 
     // TODO(smaug) for kRoot message, call all rumor_callback for now
     if (message.is_root()) {
         common::xnode_id_t node_id;
         auto cb_vec = getall_rumor_callback();
-        for (const auto& cb : cb_vec) {
-            cb(node_id, msg.payload());
+        for (auto const & cb : cb_vec) {
+            cb(node_id, bytes_msg);
         }
         return;
     }
-
     auto des_kad_key_ptr = base::GetKadmliaKey(message.des_node_id());
     uint32_t xnetwork_id = des_kad_key_ptr->xnetwork_id();
     auto xnet_cb = get_rumor_callback(xnetwork_id);
@@ -401,8 +437,8 @@ void EcNetcard::HandleRumorMessage(
     }
 
     common::xnode_id_t node_id;
-    xnet_cb(node_id, msg.payload());
-    //TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("end", message);
+    xnet_cb(node_id, bytes_msg);
+    return;
 }
 
 #undef IS_BROADCAST

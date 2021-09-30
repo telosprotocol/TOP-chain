@@ -9,6 +9,7 @@
 #include "xcrypto/xcrypto_util.h"
 #include "xdata/xgenesis_data.h"
 #include <fstream>
+#include <iomanip>
 
 namespace top {
 namespace elect {

@@ -181,10 +181,10 @@ class xcons_service_face {
 public:
     virtual common::xmessage_category_t get_msg_category() = 0;
     virtual bool                        start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
-    virtual bool                        fade(const xvip2_t & xip) = 0;
+    virtual bool                        unreg(const xvip2_t & xip) = 0;
     virtual bool                        destroy(const xvip2_t & xip) = 0;
 };
-
+#if 0
 class xcons_proxy_face {
 public:
     virtual bool    start(const common::xlogic_time_t& start_time) = 0;
@@ -194,6 +194,7 @@ public:
 };
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
+#endif
 const int32_t max_mailbox_num = 8192;
 // block dispatcher
 class xcons_dispatcher {
@@ -209,7 +210,7 @@ public:
     // start
     virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
 
-    virtual bool fade(const xvip2_t & xip) = 0;
+    virtual bool unreg(const xvip2_t & xip) = 0;
 
     virtual bool destroy(const xvip2_t & xip) = 0;
 
@@ -256,7 +257,7 @@ using xcons_dispatcher_builder_ptr = std::shared_ptr<xcons_dispatcher_builder_fa
 class xcons_service_mgr_face {
 public:
     // build block service and hold it external
-    virtual xcons_proxy_face_ptr create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
+    virtual void create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     // destroy useless cons services
     virtual bool destroy(const xvip2_t & xip) = 0;
 
@@ -264,7 +265,7 @@ public:
     virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
 
     // uninit reference data
-    virtual bool fade(const xvip2_t & xip) = 0;
+    virtual bool unreg(const xvip2_t & xip) = 0;
 };
 
 using xcons_service_mgr_ptr = std::shared_ptr<xcons_service_mgr_face>;

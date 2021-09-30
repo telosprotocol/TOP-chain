@@ -35,8 +35,13 @@ inline void SET_INDEX_SENT(std::size_t node_index, uint64_t & s1, uint64_t & s2)
     }
 }
 
-void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table) {
+void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr const & routing_table) {
     CheckDiffNetwork(message);
+
+    base::KadmliaKeyPtr kad_key_ptr = base::GetKadmliaKey(message.des_node_id());
+    base::ServiceType service_type = kad_key_ptr->GetServiceType();
+    bool is_broadcast_height = service_type.IsBroadcastService();
+    xdbg("[GossipDispatcher::Broadcast] is_broadcast_height %s %s %s", kad_key_ptr->Get().c_str(), service_type.info().c_str(), is_broadcast_height ? "true" : "false");
 
     auto gossip_max_hop_num = kGossipDefaultMaxHopNum;
     if (message.gossip().max_hop_num() > 0) {
@@ -47,10 +52,8 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
         return;
     }
 
-    auto kad_key_ptr = base::GetKadmliaKey(message.des_node_id());
-
     std::vector<gossip::DispatchInfos> select_nodes;
-    GenerateDispatchInfos(message, routing_table, select_nodes);
+    GenerateDispatchInfos(message, routing_table, select_nodes, is_broadcast_height);
     if (select_nodes.empty()) {
         xdbg("stop broadcast, select_nodes empty,msg_hash:%u msg_type:%d hop_num:%d", message.msg_hash(), message.type(), message.hop_num());
         return;
@@ -60,8 +63,9 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
 }
 
 void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage & message,
-                                             kadmlia::ElectRoutingTablePtr & routing_table,
-                                             std::vector<DispatchInfos> & select_nodes) {
+                                             kadmlia::ElectRoutingTablePtr const & routing_table,
+                                             std::vector<DispatchInfos> & select_nodes,
+                                             bool is_broadcast_height) {
     uint64_t sit1 = message.gossip().sit1();
     uint64_t sit2 = message.gossip().sit2();
     xdbg("[GossipDispatcher::GenerateDispatchInfos] got % " PRIu64 " % " PRIu64 ":", sit1, sit2);
@@ -73,9 +77,9 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
 
     uint32_t overlap = message.gossip().overlap_rate();
 
-    std::unordered_map<std::string, kadmlia::NodeInfoPtr> const nodes_map = routing_table->nodes();
-    std::unordered_map<std::string, std::size_t> const index_map = routing_table->index_map();
-    std::vector<std::string> const xip2_for_shuffle = routing_table->get_shuffled_xip2();
+    std::unordered_map<std::string, kadmlia::NodeInfoPtr> const nodes_map = routing_table->nodes(is_broadcast_height);
+    std::unordered_map<std::string, std::size_t> const index_map = routing_table->index_map(is_broadcast_height);
+    std::vector<std::string> const xip2_for_shuffle = routing_table->get_shuffled_xip2(is_broadcast_height);
 
     SET_INDEX_SENT(routing_table->get_self_index(), sit1, sit2);
     std::size_t index_i;
@@ -90,11 +94,17 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
             if (select_xip2.size() > kGossipLayerNeighborNum)
                 break;
         } else {
+            // actually won't triggle this line when 
             xwarn("[GossipDispatcher::GenerateDispatchInfos] routing table still uncomplete , missing: %s", xip2_for_shuffle[index_i].c_str());
         }
     }
     for (auto _xip2 : select_xip2) {
-        select_nodes.push_back(DispatchInfos(nodes_map.at(_xip2), sit1, sit2));
+        // nodes might not be online
+        if (nodes_map.at(_xip2) != nullptr) {
+            select_nodes.push_back(DispatchInfos(nodes_map.at(_xip2), sit1, sit2));
+        } else {
+            xwarn("[GossipDispatcher::GenerateDispatchInfos] routing table still uncomplete , missing: %s", _xip2.c_str());
+        }
     }
     if (select_nodes.empty())
         return;

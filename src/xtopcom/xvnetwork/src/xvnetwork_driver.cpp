@@ -14,6 +14,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xmetrics/xmetrics.h"
 #include "xvnetwork/xvnetwork_error.h"
+#include "xvnetwork/xvnetwork_error2.h"
 
 #include <cassert>
 #include <cinttypes>
@@ -27,11 +28,12 @@ static std::once_flag book_ids_once_flag{};
 static constexpr std::size_t book_id_count{enum_vbucket_has_books_count};
 
 xtop_vnetwork_driver::xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost,
+                                           observer_ptr<election::cache::xdata_accessor_face_t> const & election_data_accessor,
                                            common::xnode_address_t const & address,
                                            common::xelection_round_t const & joined_election_round)
-  : m_vhost{vhost}, m_address{address}, m_joined_election_round(joined_election_round) {
+  : m_vhost{vhost}, m_election_cache_data_accessor{election_data_accessor}, m_address{address}, m_joined_election_round(joined_election_round) {
     if (m_vhost == nullptr) {
-        top::error::throw_error({ xvnetwork_errc_t::vhost_empty }, "constructing xvnetwork_driver_t at address " + m_address.to_string());
+        top::error::throw_error({xvnetwork_errc_t::vhost_empty}, "constructing xvnetwork_driver_t at address " + m_address.to_string());
     }
 }
 
@@ -65,48 +67,70 @@ common::xnode_address_t xtop_vnetwork_driver::parent_group_address() const {
     return m_vhost->parent_group_address(m_address);
 }
 
-void xtop_vnetwork_driver::send_to(common::xnode_address_t const & to, xmessage_t const & message, network::xtransmission_property_t const & transmission_property) {
+void xtop_vnetwork_driver::send_to(common::xnode_address_t const & to, xmessage_t const & message, std::error_code & ec) {
+    assert(!ec);
     assert(m_vhost);
     #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vnetwork_driver_send_to" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
     #endif
-    m_vhost->send(message, m_address, to, transmission_property);
+    m_vhost->send_to(m_address, to, message, ec);
 }
 
-void xtop_vnetwork_driver::broadcast(xmessage_t const & message) {
+void xtop_vnetwork_driver::send_to(common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) {
+    assert(!ec);
     assert(m_vhost);
-    #if VHOST_METRICS
-    XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vnetwork_driver_broadcast" +
-                                   std::to_string(static_cast<std::uint32_t>(message.id())),
-                               1);
-    #endif
-    m_vhost->broadcast(message, m_address);
+    if (!running()) {
+        ec = xvnetwork_errc2_t::vnetwork_driver_not_run;
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+
+    if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id()) || common::broadcast(dst.cluster_id()) ||
+        common::broadcast(dst.group_id()) || common::broadcast(dst.slot_id()) || common::broadcast(dst.size()) || common::broadcast(dst.height())) {
+        ec = xvnetwork_errc2_t::invalid_dst_address;
+        xwarn("%s %s. dst address is a broadcast address %s", vnetwork_category2().name(), ec.message().c_str(), dst.to_string().c_str());
+        return;
+    }
+
+    auto dst_node_id = m_election_cache_data_accessor->account_address_from(dst, ec);
+    if (ec) {
+        xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
+        return;
+    }
+
+    auto dst_election_epoch = m_election_cache_data_accessor->election_epoch_from(dst, ec);
+    if (ec) {
+        xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
+        return;
+    }
+
+    common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()},
+                                common::xaccount_election_address_t{dst_node_id, dst.slot_id()},
+                                dst_election_epoch,
+                                dst.size(),
+                                dst.height()};
+    m_vhost->send_to(m_address, to, message, ec);
 }
 
-void xtop_vnetwork_driver::forward_broadcast_message(xmessage_t const & message, common::xnode_address_t const & dst) {
+void xtop_vnetwork_driver::broadcast(common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) {
     assert(m_vhost);
-    #if VHOST_METRICS
-    XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) +
-                                   "_out_vnetwork_driver_forward_broadcast_message" + std::to_string(static_cast<std::uint32_t>(message.id())),
-                               1);
-    #endif
-    m_vhost->forward_broadcast_message(message, m_address, dst);
-}
+    if (!running()) {
+        ec = xvnetwork_errc2_t::vnetwork_driver_not_run;
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
 
-void xtop_vnetwork_driver::broadcast_to(common::xnode_address_t const & dst, xmessage_t const & message) {
-    assert(m_vhost);
-    m_vhost->broadcast_to_all(message, address(), dst);
-}
+    if (!common::broadcast(dst.network_id()) && !common::broadcast(dst.zone_id()) && !common::broadcast(dst.cluster_id()) && !common::broadcast(dst.group_id()) &&
+        !common::broadcast(dst.slot_id()) && !common::broadcast(dst.size()) && !common::broadcast(dst.height())) {
+        ec = xvnetwork_errc2_t::invalid_dst_address;
+        xwarn("%s %s. dst address is not a broadcast address %s", ec.category().name(), ec.message().c_str(), dst.to_string().c_str());
+        return;
+    }
 
-void xtop_vnetwork_driver::send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) {
-    assert(m_vhost);
-    m_vhost->send(m_address, to, message, ec);
-}
-
-void xtop_vnetwork_driver::broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) {
-    assert(m_vhost);
+    common::xnode_address_t to{
+        common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xelection_round_t{}, dst.size(), dst.height()};
     m_vhost->broadcast(m_address, to, message, ec);
 }
 

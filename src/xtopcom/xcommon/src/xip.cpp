@@ -831,6 +831,11 @@ bool broadcast<xslot_id_t>(xslot_id_t const & slot_id) noexcept {
 }
 
 template <>
+bool broadcast<uint16_t>(uint16_t const & group_size) noexcept {
+    return (group_size & xbroadcast_group_size) == xbroadcast_group_size;
+}
+
+template <>
 bool broadcast<uint64_t>(uint64_t const & associated_blk_height) noexcept {
     return (associated_blk_height & xbroadcast_associated_blk_height) == xbroadcast_associated_blk_height;
 }

@@ -9,22 +9,17 @@
 #include <chrono>
 #include <memory>
 
-#include "xnetwork/xnetwork_driver_face.h"
-#include "xnetwork/xnetwork_driver_fwd.h"
 #include "xcommon/xmessage_id.h"
 #include "xbasic/xsimple_message.hpp"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xrunnable.h"
-#include "xnetwork/xmessage_transmission_property.h"
 #include "xnetwork/xnetwork_message_ready_callback.h"
-#include "xnetwork/xnode.h"
-#include "xnetwork/xp2p/xdht_host_face.h"
-#include "xnetwork/xp2p/xdht_host.h"
 #include "xcommon/xsharding_info.h"
 #include "xdata/xdata_common.h"
 
 #include "xpbase/base/top_utils.h"
 #include "xbase/xbase.h"
+#include "xelect_net/include/elect_vhost_face.h"
 #include "xelect_net/include/elect_netcard.h"
 #include "xvnetwork/xaddress.h"
 
@@ -39,11 +34,18 @@ namespace elect {
 
 using xelect_message_t = top::xsimple_message_t<top::common::xmessage_id_t>;
 
-class EcVHost : public std::enable_shared_from_this<EcVHost>, public network::xnetwork_driver_face_t  {
+class EcVHost : public std::enable_shared_from_this<EcVHost>, public elect::xnetwork_driver_face_t  {
 public:
     EcVHost() {}
     EcVHost(const uint32_t& xnetwork_id, const EcNetcardPtr& ec_netcard, common::xnode_id_t const & node_id);
     virtual ~EcVHost() {}
+
+public:
+    void send_to(common::xip2_t const & src, common::xip2_t const & dst, xbyte_buffer_t const & byte_message, std::error_code & ec) const override;
+    void send_to_through_root(common::xip2_t const & src, common::xnode_id_t const & dst_node_id, xbyte_buffer_t const & byte_message, std::error_code & ec) const override;
+    void spread_rumor(common::xip2_t const & src, common::xip2_t const & dst, xbyte_buffer_t const & byte_message, std::error_code & ec) const override;
+    void broadcast(common::xip2_t const & src, xbyte_buffer_t const & byte_message, std::error_code & ec) const override;
+
 public:
     /**
      * @brief Get the host node id
@@ -56,6 +58,7 @@ public:
      * 
      * @return network::xnode_t 
      */
+#if 0
     virtual network::xnode_t host_node() const noexcept;
     /**
      * @brief Send message to specified endpoint with specified transmission property.
@@ -94,6 +97,7 @@ public:
             const common::xsharding_info_t & shardInfo,
             common::xnode_type_t node_type,
             xbyte_buffer_t const & byte_msg) const;
+#endif
     /**
      * @brief Register the data ready notify handler.
      *        Do not register the handler multiple times.
@@ -115,6 +119,7 @@ public:
      * @return true TODO
      * @return false TODO
      */
+#if 0
     virtual bool p2p_bootstrap(std::vector<network::xdht_node_t> const & seeds) const;
     /**
      * @brief not implement yet
@@ -149,6 +154,7 @@ public:
      * @brief start the network driver
      * 
      */
+#endif
     virtual void start() {};
     /**
      * @brief stop the network driver

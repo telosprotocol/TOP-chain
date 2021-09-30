@@ -61,9 +61,9 @@ public:
 
 public:
     void GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size);
-    std::unordered_map<std::string, NodeInfoPtr> nodes();
-    std::unordered_map<std::string, std::size_t> index_map();
-    std::vector<std::string> get_shuffled_xip2();
+    std::unordered_map<std::string, NodeInfoPtr> nodes(bool cover_old_version = false);
+    std::unordered_map<std::string, std::size_t> index_map(bool cover_old_version = false);
+    std::vector<std::string> get_shuffled_xip2(bool cover_old_version = false);
     std::size_t get_self_index();
 
     NodeInfoPtr GetNode(const std::string & id);
@@ -71,8 +71,10 @@ public:
     bool CloserToTarget(const std::string & id1, const std::string & id2, const std::string & target_id);
 
 public:
+    std::map<std::string, base::KadmliaKeyPtr> const & GetAllNodesRootKeyMap() const noexcept;
+
     // map<election_xip2_str,node_id_root_kad_key>
-    void SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map);
+    void SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map, std::map<std::string, NodeInfoPtr> const & last_round_nodes_map);
     void EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys);
     std::map<std::string, base::KadmliaKeyPtr> GetElectionNodesExpected();
 
@@ -84,6 +86,7 @@ public:
 private:
     void PrintRoutingTable();
     void OnHeartbeatFailed(const std::string & ip, uint16_t port);
+    void UpdateBroadcastNodeInfo();
 
 private:
     std::shared_ptr<transport::Transport> transport_ptr_;
@@ -101,9 +104,17 @@ private:
     std::mutex m_nodes_mutex;
     std::unordered_map<std::string, NodeInfoPtr> m_nodes;            // map<election_xip2_str,nodeinfoptr>
     std::map<std::string, base::KadmliaKeyPtr> m_expected_kad_keys;  // map<election_xip2_str,node_id_root_kad_key>
+    std::map<std::string, base::KadmliaKeyPtr> m_all_nodes_root_kay_keys;
     std::unordered_map<std::string, std::size_t> m_index_map;  // map<election_xip2_str,index>
     std::mutex m_xip2_for_shuffle_mutex;
     std::vector<std::string> m_xip2_for_shuffle;               // random shuffled everytime used.
+
+    // for 2 round broadcast
+    std::mutex m_broadcast_nodes_mutex;
+    std::unordered_map<std::string, NodeInfoPtr> m_broadcast_nodes;
+    std::unordered_map<std::string, std::size_t> m_broadcast_index_map;
+    std::mutex m_broadcast_xip2_for_shuffle_mutex;
+    std::vector<std::string> m_broadcast_xip2_for_shuffle;
 };
 
 typedef std::shared_ptr<ElectRoutingTable> ElectRoutingTablePtr;

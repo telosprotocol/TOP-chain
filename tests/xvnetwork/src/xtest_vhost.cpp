@@ -78,12 +78,6 @@ TEST_F(xvhost_fixture_t, func_msg) {
     EXPECT_EQ(m_cnt, 2);
     vhost_test_ptr->send(test_msg, src_v1, empty_dst, transmission_propert);  // empty_dst : broadcast
     EXPECT_EQ(m_cnt, 3);
-    vhost_test_ptr->forward_broadcast_message(test_msg, src_v1, dst_group_address);
-    EXPECT_EQ(m_cnt, 4);
-    vhost_test_ptr->broadcast_to_all(test_msg, src_v1, dst_group_address);
-    EXPECT_EQ(m_cnt, 5);
-    vhost_test_ptr->broadcast_to_all(test_msg, src_v1, dst_group_address);
-    EXPECT_EQ(m_cnt, 6);
 }
 
 TEST_F(xvhost_fixture_t, func_msg_ec) {

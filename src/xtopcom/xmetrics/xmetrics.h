@@ -245,7 +245,18 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_broad_category_unknown,
     message_broad_category_end = message_broad_category_unknown,
 
-    // sync
+    message_category_rumor,
+    message_rumor_category_begin,
+    message_rumor_category_consensus = message_rumor_category_begin,
+    message_rumor_category_timer,
+    message_rumor_category_txpool,
+    message_rumor_category_rpc,
+    message_rumor_category_sync,
+    message_rumor_block_broadcast,
+    message_rumor_category_unknown,
+    message_rumor_category_end = message_rumor_category_unknown,
+
+    // sync 
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,

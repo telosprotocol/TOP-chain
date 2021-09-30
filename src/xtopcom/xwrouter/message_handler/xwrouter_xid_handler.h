@@ -20,8 +20,8 @@ typedef std::shared_ptr<Transport> TransportPtr;
 
 namespace protobuf {
 class RoutingMessage;
-};
-};  // namespace transport
+}
+}  // namespace transport
 
 namespace kadmlia {
 class ElectRoutingTable;
@@ -30,7 +30,7 @@ class RootRoutingTable;
 typedef std::shared_ptr<RootRoutingTable> RootRoutingTablePtr;
 struct NodeInfo;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
-};  // namespace kadmlia
+}  // namespace kadmlia
 
 namespace gossip {
 class GossipInterface;
@@ -59,11 +59,11 @@ private:
 
     base::ServiceType ParserServiceType(const std::string & kad_key);
 
-    bool MulticastPacketCheck(transport::protobuf::RoutingMessage & message);
-    bool GossipPacketCheck(transport::protobuf::RoutingMessage & message);
+    bool RumorPacketCheck(transport::protobuf::RoutingMessage & message);
+    bool BroadcastPacketCheck(transport::protobuf::RoutingMessage & message);
 
-    int32_t SendMulticast(transport::protobuf::RoutingMessage & message);
-    int32_t SendGossip(transport::protobuf::RoutingMessage & message);
+    int32_t SendRumor(transport::protobuf::RoutingMessage & message);
+    int32_t SendBroadcast(transport::protobuf::RoutingMessage & message);
     int32_t SendGeneral(transport::protobuf::RoutingMessage & message);
 
     // judge packet arrive the dest or not

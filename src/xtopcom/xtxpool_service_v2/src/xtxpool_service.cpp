@@ -116,11 +116,11 @@ bool xtxpool_service::start(const xvip2_t & xip) {
           m_cover_front_table_id,
           m_cover_back_table_id,
           m_is_send_receipt_role);
-    m_running = true;
-    return m_running;
+    m_running.store(true, std::memory_order_release);
+    return is_running();
 }
-bool xtxpool_service::fade(const xvip2_t & xip) {
-    xinfo("xtxpool_service::fade node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
+bool xtxpool_service::unreg(const xvip2_t & xip) {
+    xinfo("xtxpool_service::unreg node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -128,15 +128,15 @@ bool xtxpool_service::fade(const xvip2_t & xip) {
           m_cover_front_table_id,
           m_cover_back_table_id,
           m_is_send_receipt_role);
-    xassert(m_running);
+    xassert(is_running());
     m_vnet_driver->unregister_message_ready_notify(xmessage_category_txpool);
-    m_running = false;
+    m_running.store(false, std::memory_order_release);
 
-    return !m_running;
+    return !is_running();
 }
 
 bool xtxpool_service::is_running() const {
-    return m_running;
+    return m_running.load(std::memory_order_acquire);
 }
 
 void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & zone_id,
@@ -150,7 +150,7 @@ void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & 
 }
 
 void xtxpool_service::resend_receipts(uint64_t now) {
-    if (m_running && m_is_send_receipt_role) {
+    if (is_running() && m_is_send_receipt_role) {
         for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
             if (!xreceipt_strategy_t::is_resend_node_for_talbe(now, table_id, m_shard_size, m_node_id)) {
                 continue;
@@ -178,7 +178,7 @@ void xtxpool_service::resend_receipts(uint64_t now) {
 }
 
 void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) {
-    if (!m_running) {
+    if (!is_running()) {
         return;
     }
 
@@ -338,6 +338,9 @@ void xtxpool_service::drop_msg(vnetwork::xmessage_t const & message, std::string
 }
 
 void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
+    if (!is_running()) {
+        return;
+    }
     (void)sender;
 
     XMETRICS_TIME_RECORD("txpool_network_message_dispatch");
@@ -513,7 +516,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
 }
 
 bool xtxpool_service::is_receipt_sender(const base::xtable_index_t & tableid) const {
-    return m_running && m_is_send_receipt_role && is_belong_to_service(tableid);
+    return is_running() && m_is_send_receipt_role && is_belong_to_service(tableid);
 }
 #endif
 
@@ -547,7 +550,15 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                          cons_tx->dump().c_str(),
                          stream.size(),
                          m_vnet_driver->address().to_string().c_str());
-            m_vnet_driver->broadcast(msg);
+            //m_vnet_driver->broadcast(msg);
+            std::error_code ec;
+            m_vnet_driver->broadcast(m_vnet_driver->address().xip2().group_xip2(), msg, ec);
+            if (ec) {
+                xtxpool_error("xtxpool_service::send_receipt_real broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
+                              cons_tx->dump().c_str(),
+                              stream.size(),
+                              m_vnet_driver->address().to_string().c_str());
+            }
             XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
             auto ret = m_para->get_txpool()->push_receipt(tx_ent, true, false);
             XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
@@ -557,7 +568,16 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                          stream.size(),
                          m_vnet_driver->address().to_string().c_str(),
                          auditor_cluster_addr.to_string().c_str());
-            m_vnet_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)});
+            std::error_code ec;
+            m_vnet_driver->broadcast(vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)}.xip2(), msg, ec);
+            if (ec) {
+                xtxpool_warn("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+                             cons_tx->dump().c_str(),
+                             stream.size(),
+                             m_vnet_driver->address().to_string().c_str(),
+                             auditor_cluster_addr.to_string().c_str());
+                assert(false);
+            }
         }
 
         // auditor cluster is different with validator for consensus table
@@ -572,7 +592,15 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                              cons_tx->dump().c_str(),
                              stream.size(),
                              m_vnet_driver->address().to_string().c_str());
-                m_vnet_driver->broadcast(msg);
+                //m_vnet_driver->broadcast(msg);
+                std::error_code ec;
+                m_vnet_driver->broadcast(m_vnet_driver->address().xip2().group_xip2(), msg, ec);
+                if (ec) {
+                    xtxpool_error("xtxpool_service::send_receipt_real broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
+                                  cons_tx->dump().c_str(),
+                                  stream.size(),
+                                  m_vnet_driver->address().to_string().c_str());
+                }
                 XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
                 auto ret = m_para->get_txpool()->push_receipt(tx_ent, true, false);
                 XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
@@ -582,7 +610,17 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                              stream.size(),
                              m_vnet_driver->address().to_string().c_str(),
                              validator_cluster_addr.to_string().c_str());
-                m_vnet_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
+                // m_vnet_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
+                std::error_code ec;
+                m_vnet_driver->broadcast(common::xnode_address_t{std::move(validator_cluster_addr)}.xip2(), msg, ec);
+                if (ec) {
+                    xtxpool_info("xtxpool_service::send_receipt_real forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+                                 cons_tx->dump().c_str(),
+                                 stream.size(),
+                                 m_vnet_driver->address().to_string().c_str(),
+                                 validator_cluster_addr.to_string().c_str());
+                    assert(false);
+                }
             }
         }
     } catch (top::error::xtop_error_t const & eh) {
@@ -594,7 +632,13 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
 
 void xtxpool_service::forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message) {
     try {
-        m_vnet_driver->forward_broadcast_message(message, addr);
+        // m_vnet_driver->forward_broadcast_message(message, addr);
+        std::error_code ec;
+        m_vnet_driver->broadcast(addr.xip2(), message, ec);
+        if (ec) {
+            xwarn("xtxpool_service::forward_broadcast_message failed. ec: %d, ec msg: %s, ec category: %s", ec.value(), ec.message().c_str(), ec.category().name());
+            assert(false);
+        }
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("xtxpool_service::forward_broadcast_message xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
     } catch (const std::exception & eh) {
@@ -607,7 +651,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
          tx->get_source_addr().c_str(),
          tx->get_target_addr().c_str(),
          tx->get_digest_hex_str().c_str());
-    if (!m_running) {
+    if (!is_running()) {
         xwarn(
             "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_digest_hex_str().c_str());
         XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);  // 1-succ 0-fail
@@ -674,20 +718,26 @@ void xtxpool_service::send_push_receipts(xreceipt_push_t & pushed_receipt) {
     pushed_receipt.serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_push_receipt);
 
-    if (pushed_receipt.m_req_node.sharding_address() == m_vnet_driver->address().cluster_address()) {
-        m_vnet_driver->broadcast(msg);
-    } else {
-        m_vnet_driver->forward_broadcast_message(msg, common::xnode_address_t{std::move(pushed_receipt.m_req_node.sharding_address())});
+    std::error_code ec;
+    m_vnet_driver->broadcast(pushed_receipt.m_req_node.xip2().group_xip2(), msg, ec);
+    if (ec) {
+        assert(false);
     }
 }
 
 void xtxpool_service::send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr) {
     auto cluster_addr =
         m_router->sharding_address_from_account(common::xaccount_address_t{target_table_addr}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
-    if (cluster_addr == m_vnet_driver->address().cluster_address()) {
-        m_vnet_driver->broadcast(msg);
-    } else {
-        m_vnet_driver->forward_broadcast_message(msg, common::xnode_address_t{std::move(cluster_addr)});
+    //if (cluster_addr == m_vnet_driver->address().cluster_address()) {
+    //    m_vnet_driver->broadcast(msg);
+    //} else {
+    //    m_vnet_driver->forward_broadcast_message(msg, common::xnode_address_t{std::move(cluster_addr)});
+    //}
+    std::error_code ec;
+    m_vnet_driver->broadcast(common::xnode_address_t{cluster_addr}.xip2(), msg, ec);
+    if (ec) {
+        xwarn("xtxpool_service::send_receipt_sync_msg failed. sender %s, dst %s", m_vnet_driver->address().to_string().c_str(), cluster_addr.to_string().c_str());
+        assert(false);
     }
 }
 
@@ -765,7 +815,13 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
         m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_from_account}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
     if (cluster_addr != m_vnet_driver->address().cluster_address()) {
         xdbg("xtxpool_service::on_message_pull_receipt_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());
-        m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
+        //m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
+        std::error_code ec;
+        m_vnet_driver->broadcast(common::xnode_address_t{std::move(cluster_addr)}.xip2(), message, ec);
+        if (ec) {
+            xwarn("xtxpool_service::on_message_pull_receipt_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());
+            assert(false);
+        }
     } else {
         xinfo("xtxpool_service::on_message_pull_receipt_received pull %s txs.table:%s:%s,receiptid num=%u",
               (is_pull_recv ? "recv" : "confirm"),
@@ -817,7 +873,14 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
     auto cluster_addr =
         m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_to_account}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
     if (cluster_addr != m_vnet_driver->address().cluster_address()) {
-        m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
+        //m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
+        std::error_code ec;
+        m_vnet_driver->broadcast(common::xnode_address_t{cluster_addr}.xip2(), message, ec);
+        if (ec) {
+            xerror("xtxpool_service::on_message_pull_confirm_receipt_received broadcast to %s failed. src %s",
+                   cluster_addr.to_string().c_str(),
+                   m_vnet_driver->address().to_string().c_str());
+        }
     } else {
         xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.table:%s:%s,receipt id hash num=%u",
               pulled_receipt.m_tx_from_account.c_str(),

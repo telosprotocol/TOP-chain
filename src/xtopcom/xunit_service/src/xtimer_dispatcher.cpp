@@ -40,8 +40,8 @@ bool xtimer_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t
     return true;
 }
 
-bool xtimer_dispatcher_t::fade(const xvip2_t & xip) {
-    xunit_info("xtimer_dispatcher_t::fade %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+bool xtimer_dispatcher_t::unreg(const xvip2_t & xip) {
+    xunit_info("xtimer_dispatcher_t::unreg %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     return true;
 }
 

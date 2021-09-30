@@ -19,7 +19,7 @@
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xmbus/xmessage_bus.h"
-#include "xnetwork/xnetwork_driver_face.h"
+#include "xelect_net/include/elect_vhost_face.h"
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
@@ -115,7 +115,7 @@ public:
 
     observer_ptr<xbase_timer_driver_t> timer_driver() const noexcept;
 
-    observer_ptr<network::xnetwork_driver_face_t> network_driver(common::xnetwork_id_t const & network_id) const noexcept;
+    observer_ptr<elect::xnetwork_driver_face_t> network_driver(common::xnetwork_id_t const & network_id) const noexcept;
 
     observer_ptr<time::xchain_time_face_t> logic_timer() const noexcept;
 

@@ -44,8 +44,10 @@ std::shared_ptr<top::vnode::xvnode_face_t> xvnode_factory::create_vnode_at(std::
     }
 }
 
+xvnode_role_proxy::xvnode_role_proxy(){}
+
 xvnode_manager_fixture::xvnode_manager_fixture()
-  : top::vnode::xvnode_manager_t{top::make_observer(&xdummy_chain_timer), top::make_observer(&xdummy_vhost), top::make_unique<xvnode_factory>()}
+  : top::vnode::xvnode_manager_t{top::make_observer(&xdummy_chain_timer), top::make_observer(&xdummy_vhost), top::make_unique<xvnode_factory>(), top::make_unique<xvnode_role_proxy>()}
   , vhost_{top::make_observer(&xdummy_vhost)} {
 }
 
