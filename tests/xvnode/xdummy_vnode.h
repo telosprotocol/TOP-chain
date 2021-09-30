@@ -17,6 +17,7 @@ class xdummy_vnode;
     template <>                                                                                                                                                                     \
     class xdummy_vnode<top::common::xnode_type_t::TYPE> : public top::vnode::xvnode_face_t {                                                                                        \
         top::common::xnode_address_t address_;                                                                                                                                      \
+        top::common::xelection_round_t joined_election_round_;                                                                                                                      \
                                                                                                                                                                                     \
     public:                                                                                                                                                                         \
         xdummy_vnode(xdummy_vnode &&) = default;                                                                                                                                    \
@@ -30,6 +31,10 @@ class xdummy_vnode;
                                                                                                                                                                                     \
         top::common::xnode_address_t const & address() const noexcept override {                                                                                                    \
             return address_;                                                                                                                                                        \
+        }                                                                                                                                                                           \
+                                                                                                                                                                                    \
+        top::common::xelection_round_t const & joined_election_round() const noexcept override {                                                                                    \
+             return joined_election_round_;                                                                                                                                         \
         }                                                                                                                                                                           \
                                                                                                                                                                                     \
         void start() override {                                                                                                                                                     \

@@ -182,6 +182,8 @@ public:
      * @return std::vector<std::uint16_t> 
      */
     virtual std::vector<std::uint16_t> table_ids() const = 0;
+
+    virtual common::xelection_round_t const & joined_election_round() const = 0;
 };
 using xvnetwork_driver_face_t = xtop_vnetwork_driver_face;
 using xvnetwork_driver_face_ptr_t = std::shared_ptr<xvnetwork_driver_face_t>;

@@ -14,10 +14,12 @@ NS_BEG2(top, sync)
 
 using namespace mbus;
 
+#define block_fecher_event_queue_size_max (10000)
+
 xblock_fetcher_event_monitor_t::xblock_fetcher_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus, 
         observer_ptr<base::xiothread_t> const & iothread,
         xblock_fetcher_t* block_fetcher):
-xbase_sync_event_monitor_t(mbus, 10000, iothread),
+xbase_sync_event_monitor_t(mbus, block_fecher_event_queue_size_max, iothread),
 m_block_fetcher(block_fetcher) {
 
     mbus::xevent_queue_cb_t cb = std::bind(&xblock_fetcher_event_monitor_t::push_event, this, std::placeholders::_1);
@@ -33,7 +35,6 @@ bool xblock_fetcher_event_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     int64_t in, out;
     int32_t queue_size = m_observed_thread->count_calls(in, out);
     XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_block_fetcher_cur, queue_size);
-    
 #endif
     return true;
 }

@@ -17,7 +17,7 @@
 namespace top {
 namespace xtxpool_v2 {
 
-enum enum_xtxpool_table_type { enum_xtxpool_table_type_max = 3 };
+#define xtxpool_zone_type_max (3)
 
 class xtxpool_t : public xtxpool_face_t {
 public:
@@ -38,26 +38,38 @@ public:
     void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) override;
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;
     void update_table_state(const data::xtablestate_ptr_t & table_state) override;
-    xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
-    const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
+    // xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
+    void build_recv_tx(base::xtable_shortid_t from_table_sid,
+                       base::xtable_shortid_t to_table_sid,
+                       std::vector<uint64_t> receiptids,
+                       std::vector<xcons_transaction_ptr_t> & receipts) override;
+    void build_confirm_tx(base::xtable_shortid_t from_table_sid,
+                          base::xtable_shortid_t to_table_sid,
+                          std::vector<uint64_t> receiptids,
+                          std::vector<xcons_transaction_ptr_t> & receipts) override;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override;
+    // const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
     void print_statistic_values() const override;
-    bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
-    bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
+    // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
+    // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
+    void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override;
 
 private:
-    bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const;
+    std::shared_ptr<xtxpool_table_t> get_txpool_table(uint8_t zone, uint16_t subaddr) const;
     void push_fail_record(int32_t err_type);
 
-    mutable std::shared_ptr<xtxpool_table_t> m_tables[enum_xtxpool_table_type_max][enum_vbucket_has_tables_count];
-    bool m_table_recover_flag_arr[enum_xtxpool_table_type_max][enum_vbucket_has_tables_count];
-    std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards[enum_xtxpool_table_type_max];
+    mutable std::vector<std::shared_ptr<xtxpool_table_t>> m_tables[xtxpool_zone_type_max];
+    std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards[xtxpool_zone_type_max];
     std::shared_ptr<xtxpool_resources_face> m_para;
-    mutable std::mutex m_mutex[enum_xtxpool_table_type_max];
+    mutable std::mutex m_mutex[xtxpool_zone_type_max];
     xtxpool_statistic_t m_statistic;
+    std::set<base::xtable_shortid_t> m_all_table_sids;
+    std::map<base::xtable_shortid_t, uint64_t> m_peer_table_height_cache;
+    mutable std::mutex m_peer_table_height_cache_mutex;
 };
 
 }  // namespace xtxpool_v2

@@ -24,6 +24,11 @@ class xtable_bstate_t {
     ~xtable_bstate_t();
 
  public:
+    static std::string                      get_receiptid_property_name() {return XPROPERTY_TABLE_RECEIPTID;}
+    static std::string                      get_receiptid_property_bin(base::xvbstate_t* bstate);
+    static base::xreceiptid_state_ptr_t     make_receiptid_from_state(base::xvbstate_t* bstate);
+
+ public:
     std::string             make_snapshot();
     static bool             set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot);
 
@@ -39,7 +44,7 @@ class xtable_bstate_t {
     int32_t                 get_account_size() const;
     bool                    find_receiptid_pair(base::xtable_shortid_t sid, base::xreceiptid_pair_t & pair) const;
     uint32_t                get_unconfirm_tx_num() const {return m_cache_receiptid->get_unconfirm_tx_num();}
-    const base::xreceiptid_state_ptr_t & get_receiptid_state() const {return m_cache_receiptid;}
+    const base::xreceiptid_state_ptr_t & get_receiptid_state() const {return m_cache_receiptid;}    
 
  public:
     bool                    set_account_index(const std::string & account, const base::xaccount_index_t & account_index, base::xvcanvas_t* canvas);

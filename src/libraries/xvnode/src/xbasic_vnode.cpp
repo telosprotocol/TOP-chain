@@ -10,9 +10,13 @@
 NS_BEG2(top, vnode)
 
 xtop_basic_vnode::xtop_basic_vnode(common::xnode_address_t address,
+                                   common::xelection_round_t joined_election_round,
                                    observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept
-  : m_vhost{vhost}, m_election_cache_data_accessor{election_cache_data_accessor}, m_address{std::move(address)} {
+  : m_vhost{vhost}
+  , m_election_cache_data_accessor{election_cache_data_accessor}
+  , m_address{std::move(address)}
+  , m_joined_election_round{std::move(joined_election_round)} {
 }
 
 common::xnode_type_t xtop_basic_vnode::type() const noexcept {
@@ -21,6 +25,10 @@ common::xnode_type_t xtop_basic_vnode::type() const noexcept {
 
 common::xnode_address_t const & xtop_basic_vnode::address() const noexcept {
     return m_address;
+}
+
+common::xelection_round_t const & xtop_basic_vnode::joined_election_round() const noexcept {
+    return m_joined_election_round;
 }
 
 void xtop_basic_vnode::broadcast(common::xip2_t const & broadcast_dst, vnetwork::xmessage_t const & msg, std::error_code & ec) {

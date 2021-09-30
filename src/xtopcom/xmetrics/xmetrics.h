@@ -314,6 +314,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_drop_receive_receipt_msg,
     txpool_drop_push_receipt_msg,
     txpool_drop_pull_recv_receipt_msg,
+    txpool_drop_pull_confirm_receipt_msg_v2,
+    txpool_drop_receipt_id_state_msg,
+    txpool_try_sync_table_block,
     txpool_receipt_recv_num_by_1_clock,
     txpool_receipt_recv_num_by_2_clock,
     txpool_receipt_recv_num_by_3_clock,
@@ -335,6 +338,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_tx_delay_from_push_to_commit_send,
     txpool_tx_delay_from_push_to_commit_recv,
     txpool_tx_delay_from_push_to_commit_confirm,
+    txpool_receipt_id_state_msg_send_num,
 
     // blockstore
     blockstore_index_load,
@@ -380,11 +384,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool,
     blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
-    blockstore_access_from_txpool_create_confirm_receipt,
-    blockstore_access_from_txpool_sync_status,
-    blockstore_access_from_txpool_recover,
+    blockstore_access_from_txpool_id_state,
     blockstore_access_from_txpool_refresh_table,
-    blockstore_access_from_txpool_end = blockstore_access_from_txpool_refresh_table,
+    blockstore_access_from_txpool_create_receipt,
+    blockstore_access_from_txpool_pull_lacking_receipts,
+    blockstore_access_from_txpool_end = blockstore_access_from_txpool_pull_lacking_receipts,
 
     // blockstore access statestore
     blockstore_access_from_statestore,

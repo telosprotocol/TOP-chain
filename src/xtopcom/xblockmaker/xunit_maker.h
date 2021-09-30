@@ -25,6 +25,7 @@ class xunit_maker_t : public xblock_maker_t {
     bool                    can_make_next_block() const;
     bool                    can_make_next_empty_block() const;
     bool                    can_make_next_full_block() const;
+    bool                    must_make_next_full_block() const;
 
  protected:
     xblock_ptr_t            make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);

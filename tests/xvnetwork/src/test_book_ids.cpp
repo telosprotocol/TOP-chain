@@ -75,7 +75,8 @@ TEST(test_table_id, table_id) {
                                                                                            top::common::xgroup_id_t{ static_cast<top::common::xgroup_id_t::value_type>(top::common::xauditor_group_id_value_begin + j) }
                                                                                        },
                                                                                        top::common::xaccount_election_address_t{ top::common::xnode_id_t{ "adv" }, top::common::xslot_id_t{ 0 } }
-                                                                                   });
+                                                                                   },
+                                                                                   top::common::xelection_round_t{0});
             auto tids = vnet_driver->table_ids();
             ASSERT_EQ(enum_vbucket_has_books_count / zone_count / cluster_count / auditor_group_count * 8, tids.size());
         }

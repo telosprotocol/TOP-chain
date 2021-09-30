@@ -77,10 +77,11 @@ bool xaccount_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer
 }
 
 ////////
+#define downloader_event_queue_size_max (10000)
 
 xevent_monitor_t::xevent_monitor_t(uint32_t idx, observer_ptr<mbus::xmessage_bus_face_t> const &mb, observer_ptr<base::xiothread_t> const & iothread,
     xaccount_timer_t *timer, xdownloader_t* downloader):
-xbase_sync_event_monitor_t(mb, 10000, iothread),
+xbase_sync_event_monitor_t(mb, downloader_event_queue_size_max, iothread),
 m_idx(idx),
 m_timer(timer),
 m_downloader(downloader) {
