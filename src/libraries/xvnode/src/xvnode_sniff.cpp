@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvnode/xcomponents/xvnode_sniff/xvnode_sniff.h"
+#include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff.h"
 
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xvnode/xcomponents/xvnode_block/xfulltableblock_process.h"
+#include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 
 NS_BEG2(top, vnode)
 

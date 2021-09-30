@@ -1,4 +1,4 @@
-#include "xvnode/xcomponents/xvnode_block/xfulltableblock_process.h"
+#include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 
 NS_BEG3(top, vnode, components)
 

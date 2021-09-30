@@ -11,7 +11,7 @@
 #include "xdata/xblock_statistics_data.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstake/xstake_algorithm.h"
-#include "xvnode/xcomponents/xvnode_block/xfulltableblock_process.h"
+#include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract_new.h"
 
