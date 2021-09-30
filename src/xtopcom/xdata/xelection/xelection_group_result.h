@@ -46,10 +46,10 @@ public:
     using iterator        = container_t::iterator;
     using const_iterator  = container_t::const_iterator;
 
-    bool 
+    bool
     operator==(xtop_election_group_result const & other) const noexcept;
 
-    bool 
+    bool
     operator!=(xtop_election_group_result const & other) const noexcept;
 
     common::xgroup_id_t const &
@@ -97,8 +97,12 @@ public:
     common::xlogic_time_t
     start_time() const noexcept;
 
+    common::xlogic_time_t start_time(std::error_code & ec) const noexcept;
+
     void
     start_time(common::xlogic_time_t const time) noexcept;
+
+    void start_time(common::xlogic_time_t const time, std::error_code & ec) noexcept;
 
     //std::uint64_t
     //associated_election_blk_height() const noexcept;
