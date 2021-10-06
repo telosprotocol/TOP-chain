@@ -183,7 +183,7 @@ TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     xassert(tableblocks.size() == max_count + 1);
 
     std::string table_addr = mocktable.get_account();
-    blockstore->reset_cache_timeout(mocktable, 100); // idle time change to 100ms
+    // blockstore->reset_cache_timeout(mocktable, 100); // idle time change to 100ms
     std::string meta_path = "0/" + table_addr + "/meta";
     base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
 

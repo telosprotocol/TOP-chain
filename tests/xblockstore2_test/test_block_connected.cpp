@@ -590,7 +590,7 @@ TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
     uint64_t count = 500;
     mock::xdatamock_table mocktable;
     std::string table_addr = mocktable.get_account();
-    blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
+    // blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s TODO(jimmy)
     std::string meta_path = "0/" + table_addr + "/meta";
     base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
 

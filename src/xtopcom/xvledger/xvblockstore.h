@@ -206,9 +206,6 @@ namespace top
         public:
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
             virtual bool                  clean_caches(const xvaccount_t & account,const int atag = 0) = 0;
-            //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-            virtual bool                  reset_cache_timeout(const xvaccount_t & account,const uint32_t max_idle_time_ms,const int atag = 0) = 0;
-
         public:
             //execute_block will move to statestore soon
             //execute block and update state of acccount

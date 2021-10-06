@@ -170,10 +170,6 @@ public:
         return false;
     }
 
-    bool reset_cache_timeout(const base::xvaccount_t &, const uint32_t,const int atag = 0) override {
-        return false;
-    }
-
     base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype,const int atag = 0) override {
         return nullptr;
     }

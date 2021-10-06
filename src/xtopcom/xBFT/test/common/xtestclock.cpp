@@ -23,8 +23,9 @@ namespace top
  
 #ifdef __MAC_PLATFORM__
             const std::string  default_path = std::string("/");
+            xstoredb_t* _persist_db = new xstoredb_t(default_path);
             //m_blockstore = store::get_vblockstore();
-            m_blockstore = store::create_vblockstore();
+            m_blockstore = store::create_vblockstore(_persist_db);
 #else
             m_blockstore = new xunitblockstore_t();
 #endif
