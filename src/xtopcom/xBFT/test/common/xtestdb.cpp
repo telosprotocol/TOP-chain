@@ -135,7 +135,8 @@ namespace top
                 m_meta_store[key] = value;
             }
             else if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
-               || (key.find("71c216d000013404") != std::string::npos) )
+               || (key.find("71c216d000013404") != std::string::npos)
+               || (key.find("71c216d000010404") != std::string::npos) )
             {
                 if(0 == (m_cur_clock_store % 2))
                 {
@@ -172,7 +173,9 @@ namespace top
                 {
                     m_dumy_store[key] = value;
                     if(m_dumy_store.size() >= 128)
+                    {
                         m_dumy_store2.clear();
+                    }
                     if(m_dumy_store.size() >= 256)
                         m_cur_data_store += 1;
                 }
@@ -180,7 +183,9 @@ namespace top
                 {
                     m_dumy_store2[key] = value;
                     if(m_dumy_store2.size() >= 128)
+                    {
                         m_dumy_store.clear();
+                    }
                     if(m_dumy_store2.size() >= 256)
                         m_cur_data_store += 1;
                 }
@@ -191,7 +196,8 @@ namespace top
         bool             xstoredb_t::delete_value(const std::string & key)
         {
             if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
-               || (key.find("71c216d000013404") != std::string::npos) )
+               || (key.find("71c216d000013404") != std::string::npos)
+               || (key.find("71c216d000010404") != std::string::npos) )
             {
                 auto it = m_clock_store.find(key);
                 if(it != m_clock_store.end())
@@ -215,12 +221,16 @@ namespace top
                 if(it != m_dumy_store.end())
                 {
                     m_dumy_store.erase(it);
+                    xdbg("xstoredb_t::delete raw key(%s) at store#1",key.c_str());
                     return true;
                 }
                 
                 auto it2 = m_dumy_store2.find(key);
                 if(it2 != m_dumy_store2.end())
+                {
                     m_dumy_store2.erase(it2);
+                    xdbg("xstoredb_t::delete raw key(%s) at store#1",key.c_str());
+                }
             }
 
             
@@ -228,6 +238,10 @@ namespace top
         }
         const std::string  xstoredb_t::get_value(const std::string & key) const
         {
+            if(key.empty())
+            {
+                return std::string();
+            }
             if(key.find("/meta") != std::string::npos)
             {
                 auto it = m_meta_store.find(key);
@@ -235,7 +249,8 @@ namespace top
                     return it->second;
             }
             else if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
-               || (key.find("71c216d000013404") != std::string::npos) )
+               || (key.find("71c216d000013404") != std::string::npos)
+               || (key.find("71c216d000010404") != std::string::npos) )
             {
                 if(0 == (m_cur_clock_store % 2))//search from store#1 first
                 {

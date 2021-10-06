@@ -20,6 +20,7 @@ xaccount_index_t::~xaccount_index_t() {
 }
 
 xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
+    m_latest_tx_nonce    = left.m_latest_tx_nonce;
     m_latest_unit_height = left.m_latest_unit_height;
     m_latest_unit_viewid = left.m_latest_unit_viewid;
     m_account_flag = left.m_account_flag;
@@ -29,7 +30,9 @@ xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
 xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
                                     bool has_unconfirm_tx,
                                     enum_xblock_consensus_type _cs_type,
-                                    bool is_account_destroy) {
+                                    bool is_account_destroy,
+                                    uint64_t latest_tx_nonce) {
+    m_latest_tx_nonce    = latest_tx_nonce;
     m_latest_unit_height = unit->get_height();
     m_latest_unit_viewid = unit->get_viewid();
     set_latest_unit_class(unit->get_block_class());
@@ -41,6 +44,9 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
     if (is_account_destroy) {
         set_account_index_flag(enum_xaccount_index_flag_account_destroy);
     }
+    if(m_latest_tx_nonce > 0)
+        set_account_index_flag(enum_xaccount_index_flag_carry_nonce);
+    
     XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
 }
 
@@ -49,6 +55,10 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     stream.write_compact_var(m_latest_unit_height);
     stream.write_compact_var(m_latest_unit_viewid);
     stream.write_compact_var(m_account_flag);
+    
+    if((m_account_flag & enum_xaccount_index_flag_carry_nonce) != 0)
+        stream.write_compact_var(m_latest_tx_nonce);
+    
     return (stream.size() - begin_size);
 }
 
@@ -57,6 +67,10 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     stream.read_compact_var(m_latest_unit_height);
     stream.read_compact_var(m_latest_unit_viewid);
     stream.read_compact_var(m_account_flag);
+    
+    if((m_account_flag & enum_xaccount_index_flag_carry_nonce) != 0)
+        stream.read_compact_var(m_latest_tx_nonce);
+    
     return (begin_size - stream.size());
 }
 

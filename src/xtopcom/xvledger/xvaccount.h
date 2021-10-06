@@ -9,6 +9,7 @@
 #include "xbase/xns_macro.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
+#include "xbase/xdata.h"
 
 namespace top
 {
@@ -418,12 +419,166 @@ namespace top
             inline const std::string&   get_address() const {return m_account_addr;}
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
-            
+            bool                        is_unit_address() const;
+            bool                        is_contract_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;
             std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
             std::string                 m_account_addr;
         };
+    
+        //meta data of account
+        class xblockmeta_t
+        {
+        public:
+            xblockmeta_t();
+            xblockmeta_t(const xblockmeta_t & obj);
+            ~xblockmeta_t();
+        protected:
+            xblockmeta_t & operator = (const xblockmeta_t & obj);
+        private:
+            xblockmeta_t(xblockmeta_t && move_obj);
+            
+        public://debug purpose
+            const std::string  ddump() const;
+            
+        public:
+            uint64_t    _highest_cert_block_height;    //latest certificated block but not changed to lock/commit status
+            uint64_t    _highest_lock_block_height;    //latest locked block that not allow fork
+            uint64_t    _highest_commit_block_height;  //latest commited block to allow change state of account,like balance.
+
+            uint64_t    _highest_full_block_height;    //latest full-block height for this account
+            uint64_t    _highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
+            std::string _highest_connect_block_hash;
+            uint8_t     _block_level;       //set per block 'enum_xvblock_level,each account has unique level
+        };
+    
+        class xsyncmeta_t
+        {
+        public:
+            xsyncmeta_t();
+            xsyncmeta_t(const xsyncmeta_t & obj);
+            ~xsyncmeta_t();
+        protected:
+            xsyncmeta_t & operator = (const xsyncmeta_t & obj);
+        private:
+            xsyncmeta_t(xsyncmeta_t && move_obj);
+            
+        public://debug purpose
+            const std::string  ddump() const;
+            
+        public:
+            //reserved _lowest_genesis_connect_height to trune block
+            uint64_t     _lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
+            uint64_t    _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
+            std::string _highest_genesis_connect_hash;
+            uint64_t    _highest_sync_height;           // higest continous block started from highest full table block
+        };
+    
+        class xstatemeta_t
+        {
+        public:
+            xstatemeta_t();
+            xstatemeta_t(const xstatemeta_t & obj);
+            ~xstatemeta_t();
+        protected:
+            xstatemeta_t & operator = (const xstatemeta_t & obj);
+        private:
+            xstatemeta_t(xstatemeta_t && move_obj);
+            
+        public://debug purpose
+            const std::string  ddump() const;
+            
+        public:
+            uint64_t     _highest_execute_block_height; //latest executed block that has executed and change state of account
+            std::string  _highest_execute_block_hash;
+        };
+    
+        //for xaccount_index use
+        class xindxmeta_t
+        {
+        public:
+            xindxmeta_t();
+            xindxmeta_t(const xindxmeta_t & obj);
+            ~xindxmeta_t();
+        protected:
+            xindxmeta_t & operator = (const xindxmeta_t & obj);
+        private:
+            xindxmeta_t(xindxmeta_t && move_obj);
+            
+        public://debug purpose
+            const std::string  ddump() const;
+        public:
+            uint64_t        m_latest_unit_height;
+            uint64_t        m_latest_unit_viewid;
+            uint64_t        m_latest_tx_nonce;
+            uint16_t        m_account_flag;  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
+        };
+    
+        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xindxmeta_t,protected xsyncmeta_t
+        {
+            friend class xvaccountobj_t;
+            enum {enum_obj_type = xdataunit_t::enum_xdata_type_vaccountmeta};
+        public:
+            xvactmeta_t(xvaccount_t & _account);
+            xvactmeta_t(const xvactmeta_t & obj);
+        protected:
+            xvactmeta_t(xvactmeta_t && move);
+            xvactmeta_t & operator = (const xvactmeta_t & obj);
+            virtual ~xvactmeta_t();
+
+        public:
+            static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
+            static const std::string  get_meta_path(xvaccount_t & _account);
+            
+        protected: //APIs only open for  xvaccountobj_t object
+            bool    set_block_meta(const xblockmeta_t & new_meta);
+            bool    set_state_meta(const xstatemeta_t & new_meta);
+            bool    set_index_meta(const xindxmeta_t & new_meta);
+            bool    set_sync_meta(const xsyncmeta_t & new_meta);
+            bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            
+            xblockmeta_t &  get_block_meta();
+            xstatemeta_t &  get_state_meta();
+            xindxmeta_t  &  get_index_meta();
+            xsyncmeta_t  &  get_sync_meta();
+
+        protected:
+            //not safe for multiple threads
+            virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary
+            virtual int32_t   do_read(xstream_t & stream) override; //serialize from binary and regeneate content
+            
+            //caller respond to cast (void*) to related  interface ptr
+            virtual void*     query_interface(const int32_t _enum_xobject_type_) override;
+            virtual std::string  dump() const override;
+        private: //from block meta
+            using xblockmeta_t::_highest_cert_block_height;    //latest certificated block but not changed to lock/commit status
+            using xblockmeta_t::_highest_lock_block_height;    //latest locked block that not allow fork
+            using xblockmeta_t::_highest_commit_block_height;  //latest commited block to allow change state of account,like balance.
+            using xblockmeta_t::_highest_full_block_height;    //latest full-block height for this account
+            using xblockmeta_t::_highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
+            using xblockmeta_t::_highest_connect_block_hash;
+            using xblockmeta_t::_block_level;
+            
+        private: //from sync meta
+            using xsyncmeta_t::_lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
+            using xsyncmeta_t::_highest_genesis_connect_height;//indicated the last block who is connected to genesis block
+            using xsyncmeta_t::_highest_genesis_connect_hash;
+            using xsyncmeta_t::_highest_sync_height;           // higest continous block started from highest full table block
+ 
+        private: //from statemeta
+            using xstatemeta_t::_highest_execute_block_height; //latest executed block that has executed and change state of account
+            using xstatemeta_t::_highest_execute_block_hash;
+
+        private:
+            //#ifdef DEBUG
+            std::string m_account_address;
+            //#endif //debug purpose
+            
+            uint16_t  _reserved_u16;      //reserved for future
+            uint8_t   _meta_spec_version; //add version control for compatible case
+        };
+    
     }//end of namespace of base
 }//end of namespace top

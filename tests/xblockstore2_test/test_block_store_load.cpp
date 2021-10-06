@@ -559,7 +559,7 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     mocktable.genrate_table_chain(200);
     auto table_blocks = mocktable.get_history_tables();
 
-    blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
+    // blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
 
     // store first tableblock
     for (int i = 0; i < 200; i++) {
