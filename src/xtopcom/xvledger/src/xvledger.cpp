@@ -178,7 +178,7 @@ namespace top
              
         bool   xvaccountobj_t::set_block_meta(const xblockmeta_t & new_meta)
         {
-             std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            //  std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
              xvactmeta_t * meta_ptr = get_meta();
              if(meta_ptr->set_block_meta(new_meta))
              {
@@ -246,7 +246,7 @@ namespace top
         
         const xblockmeta_t  xvaccountobj_t::get_block_meta()
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            // std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
             return get_meta()->get_block_meta();
         }
     
@@ -273,6 +273,7 @@ namespace top
             if( (m_meta_ptr != NULL) && (m_meta_ptr->is_close() == false) )
                 return m_meta_ptr;
                    
+            XMETRICS_GAUGE(metrics::store_block_meta_read, 1);
             const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
             const std::string meta_content = xvchain_t::instance().get_xdbstore()->get_value(full_meta_path);
    
@@ -314,6 +315,7 @@ namespace top
             
             if(vmeta_bin.empty() == false)
             {
+                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
                 const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
