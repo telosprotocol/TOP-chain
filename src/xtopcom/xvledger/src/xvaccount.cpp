@@ -353,6 +353,7 @@ namespace top
             xblockmeta_t::operator=(obj);
             xstatemeta_t::operator=(obj);
             xsyncmeta_t::operator=(obj);
+            xindxmeta_t::operator=(obj);
             
             return *this;
         }
@@ -417,7 +418,8 @@ namespace top
         {
             if(height < _highest_execute_block_height)
             {
-                xerror("xvactmeta_t::set_latest_executed_block,try overwrited _highest_execute_block_height(%llu) with old_meta(%llu)",_highest_execute_block_height,height);
+                // TODO(jimmy) it may happen when set executed height from statestore with multi-threads
+                xwarn("xvactmeta_t::set_latest_executed_block,try overwrited _highest_execute_block_height(%llu) with old_meta(%llu)",_highest_execute_block_height,height);
                 return false;
             }
             _highest_execute_block_height = height;
