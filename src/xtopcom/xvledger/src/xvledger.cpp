@@ -96,7 +96,7 @@ namespace top
             }
             
             {
-                std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+                std::lock_guard<std::recursive_mutex> locker(get_table_lock());//using book lock
                 if(m_meta_ptr != NULL)
                 {
                     if(m_meta_ptr->is_close() == false)
@@ -152,7 +152,7 @@ namespace top
                 }
                 
                 {
-                    std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+                    std::lock_guard<std::recursive_mutex> locker(get_table_lock());//using book lock
                     if(m_meta_ptr != NULL)
                     {
                         if(m_meta_ptr->is_close() == false)
@@ -178,11 +178,11 @@ namespace top
              
         bool   xvaccountobj_t::set_block_meta(const xblockmeta_t & new_meta)
         {
-            //  std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+             std::lock_guard<std::recursive_mutex> locker(get_table_lock());
              xvactmeta_t * meta_ptr = get_meta();
              if(meta_ptr->set_block_meta(new_meta))
              {
-                 if(meta_ptr->get_modified_count() > enum_account_save_meta_interval) //save at every 64 modification
+                 if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
                      save_meta();
                  return true;
              }
@@ -191,11 +191,11 @@ namespace top
     
         bool   xvaccountobj_t::set_state_meta(const xstatemeta_t & new_meta)
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_state_meta(new_meta))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval) //save at every 64 modification
+                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
                     save_meta();
                 return true;
             }
@@ -204,11 +204,11 @@ namespace top
     
         bool   xvaccountobj_t::set_latest_executed_block(const uint64_t height, const std::string & blockhash)
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());//using book lock
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_latest_executed_block(height,blockhash))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval) //save at every 64 modification
+                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
                     save_meta();
                 
                 return true;
@@ -218,11 +218,11 @@ namespace top
     
         bool   xvaccountobj_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_sync_meta(new_meta))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval) //save at every 64 modification
+                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
                     save_meta();
                 
                 return true;
@@ -232,11 +232,11 @@ namespace top
     
         bool  xvaccountobj_t::set_index_meta(const xindxmeta_t & new_meta)
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_index_meta(new_meta))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval) //save at every 64 modification
+                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
                     save_meta();
                 
                 return true;
@@ -246,25 +246,25 @@ namespace top
         
         const xblockmeta_t  xvaccountobj_t::get_block_meta()
         {
-            // std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             return get_meta()->get_block_meta();
         }
     
         const xstatemeta_t  xvaccountobj_t::get_state_meta()
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             return get_meta()->get_state_meta();
         }
     
         const xindxmeta_t   xvaccountobj_t::get_index_meta()
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             return get_meta()->get_index_meta();
         }
     
         const xsyncmeta_t   xvaccountobj_t::get_sync_meta()
         {
-            std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             return get_meta()->get_sync_meta();
         }
         
@@ -299,16 +299,23 @@ namespace top
             uint64_t    new_meta_hash = 0;
             uint32_t    last_modified_count = 0;
             {
-                std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
                 if(m_meta_ptr != NULL)
                 {
-                    last_modified_count = m_meta_ptr->get_modified_count();
-                    if(last_modified_count > 0)
+                    std::lock_guard<std::recursive_mutex> locker(get_table_lock());
+                    if(m_meta_ptr != NULL)
                     {
-                        m_meta_ptr->serialize_to_string(vmeta_bin);
-                        new_meta_hash = xhash64_t::digest(vmeta_bin);
-                        if(new_meta_hash == m_last_saved_meta_hash)//if nothing changed
-                            return true;
+                        last_modified_count = m_meta_ptr->get_modified_count();
+                        if(last_modified_count > 0)
+                        {
+                            m_meta_ptr->serialize_to_string(vmeta_bin);
+                            new_meta_hash = xhash64_t::digest(vmeta_bin);
+                            if(new_meta_hash == m_last_saved_meta_hash)//if nothing changed
+                                return true;
+                            
+                            //optimism handle first
+                            m_last_saved_meta_hash = new_meta_hash;
+                            m_meta_ptr->reset_modified_count();
+                        }
                     }
                 }
             }
@@ -319,16 +326,19 @@ namespace top
                 const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
-                    std::lock_guard<std::recursive_mutex> locker(get_book_lock());//using book lock
-                    m_last_saved_meta_hash = new_meta_hash;
-                    if( (m_meta_ptr != NULL) && (m_meta_ptr->get_modified_count() == last_modified_count) )
-                        m_meta_ptr->reset_modified_count();//clean acounting
-                    
                     xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
                     return true;
                 }
-                xerror("xvaccountobj_t::meta->save_meta,fail to write db for account(%s)",get_address().c_str());
-                return false;
+                else //failure handle
+                {
+                    std::lock_guard<std::recursive_mutex> locker(get_table_lock());
+                    m_last_saved_meta_hash = 0;
+                    if(m_meta_ptr != NULL)
+                        m_meta_ptr->add_modified_count();
+
+                    xerror("xvaccountobj_t::meta->save_meta,fail to write db for account(%s)",get_address().c_str());
+                    return false;
+                }
             }
             return true;
         }
