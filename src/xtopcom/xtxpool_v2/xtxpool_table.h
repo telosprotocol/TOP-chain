@@ -97,7 +97,7 @@ public:
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void on_block_confirmed(xblock_t * table_block);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs);
-    void refresh_table();
+    void refresh_table(bool refresh_state_only = false);
     // void update_non_ready_accounts();
     void update_table_state(const data::xtablestate_ptr_t & table_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
@@ -120,7 +120,7 @@ private:
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
-    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
+    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce);
     void update_id_state(const std::vector<update_id_state_para> & para_vec);
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);

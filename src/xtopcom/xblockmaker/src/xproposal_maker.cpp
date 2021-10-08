@@ -497,7 +497,8 @@ void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablest
     base::xvaccount_t _vaddr(addr);
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
-    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, get_blockstore(), "proposal_maker");
+    uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);
+    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, latest_connect_height, get_blockstore(), "proposal_maker");
 }
 
 
