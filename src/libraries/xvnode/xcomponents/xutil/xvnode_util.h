@@ -10,7 +10,7 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
-NS_BEG2(top, vnode)
+NS_BEG4(top, vnode, components, util)
 
 class xtop_vnode_util {
 public:
@@ -32,4 +32,4 @@ public:
 
 using xvnode_util_t = xtop_vnode_util;
 
-NS_END2
+NS_END4

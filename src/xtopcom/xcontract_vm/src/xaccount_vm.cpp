@@ -185,16 +185,17 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             output.success_tx_assemble.emplace_back(tx);
             last_success_tx_index = i;
             for (auto & follow_up : r.output.followup_transaction_data) {
+                auto const & follow_up_tx = follow_up.followed_transaction;
                 if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
-                    output.success_tx_assemble.emplace_back(follow_up.followed_transaction);
+                    output.success_tx_assemble.emplace_back(follow_up_tx);
                 } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
                     assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
-                    follow_up.followed_transaction->get_transaction()->set_last_trans_hash_and_nonce(last_hash, last_nonce);
-                    follow_up.followed_transaction->get_transaction()->set_digest();
-                    follow_up.followed_transaction->get_transaction()->set_digest();
-                    last_hash = follow_up.followed_transaction->get_tx_hash_256();
-                    last_nonce = follow_up.followed_transaction->get_tx_nonce();
-                    output.delay_tx_assemble.emplace_back(follow_up.followed_transaction);
+                    follow_up_tx->get_transaction()->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+                    follow_up_tx->get_transaction()->set_digest();
+                    follow_up_tx->get_transaction()->set_digest();
+                    last_hash = follow_up_tx->get_tx_hash_256();
+                    last_nonce = follow_up_tx->get_tx_nonce();
+                    output.delay_tx_assemble.emplace_back(follow_up_tx);
                 } else {
                     xwarn("[xlightunit_builder_t::build_block] invalid follow up tx type: %d", follow_up.schedule_type);
                     assert(false);
@@ -242,6 +243,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         ac.unconfirm_sendtx_num(new_unconfirm_new);
     }
 
+    output.unconfirm_sendtx_num = new_unconfirm_new;
     output.binlog = result.transaction_results[last_success_tx_index].output.binlog;
     output.contract_state_snapshot = result.transaction_results[last_success_tx_index].output.contract_state_snapshot;
     assert(!output.binlog.empty());

@@ -27,8 +27,9 @@ using xaccount_vm_execution_result_t = xtop_account_vm_execution_result;
 
 struct xtop_account_vm_output {
     xaccount_vm_execution_status_t status;
-    std::string binlog;
-    std::string contract_state_snapshot;
+    std::string binlog{};
+    std::string contract_state_snapshot{};
+    uint32_t unconfirm_sendtx_num{0};
     std::vector<data::xcons_transaction_ptr_t> success_tx_assemble;
     std::vector<data::xcons_transaction_ptr_t> failed_tx_assemble;
     std::vector<data::xcons_transaction_ptr_t> delay_tx_assemble;

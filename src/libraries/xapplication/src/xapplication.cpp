@@ -87,8 +87,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().register_address();
 
-    contract_runtime::system::xtop_system_contract_manager::instance()->initialize(m_blockstore.get());
-    contract_runtime::system::xtop_system_contract_manager::instance()->deploy();
+    contract_runtime::system::xtop_system_contract_manager::instance()->deploy(make_observer(m_blockstore.get()));
 
     // m_sys_contract_mgr->deploy();
 

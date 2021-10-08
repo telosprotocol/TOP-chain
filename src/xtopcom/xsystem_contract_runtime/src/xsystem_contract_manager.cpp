@@ -22,11 +22,11 @@
 
 NS_BEG3(top, contract_runtime, system)
 
-void xtop_system_contract_manager::initialize(base::xvblockstore_t* blockstore) {
+void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> const & blockstore) {
+    if (m_blockstore == nullptr) {
     m_blockstore = blockstore;
 }
 
-void xtop_system_contract_manager::deploy() {
     deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(
         common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(

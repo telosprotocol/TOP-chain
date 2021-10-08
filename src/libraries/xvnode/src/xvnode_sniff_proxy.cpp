@@ -27,7 +27,7 @@ void xtop_vnode_sniff_proxy::stop() {
     m_sniff_config.clear();
 }
 
-void xtop_vnode_sniff_proxy::reg(common::xnode_address_t const & address, xvnode_sniff_config_t const & config) {
+void xtop_vnode_sniff_proxy::reg(common::xnode_address_t const & address, components::sniffing::xvnode_sniff_config_t const & config) {
     m_sniff_config.insert(std::make_pair(address, config));
 }
 
@@ -43,7 +43,7 @@ void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
         assert(vblock != nullptr);
 
         for (auto const & config : m_sniff_config) {
-            auto it = config.second.find(xvnode_sniff_event_type_t::timer);
+            auto it = config.second.find(components::sniffing::xvnode_sniff_event_type_t::timer);
             if (it != config.second.end()) {
                 it->second.function(vblock);
             }
@@ -65,7 +65,7 @@ void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
         xdbg("[xtop_vnode_sniff_proxy::sniff] committed table block to db, block=%s", vblock->dump().c_str());
 
         for (auto const & config : m_sniff_config) {
-            auto it = config.second.find(xvnode_sniff_event_type_t::block);
+            auto it = config.second.find(components::sniffing::xvnode_sniff_event_type_t::block);
             if (it != config.second.end()) {
                 it->second.function(vblock);
             }

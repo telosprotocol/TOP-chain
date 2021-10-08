@@ -9,7 +9,7 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff_config.h"
 
-NS_BEG2(top, vnode)
+NS_BEG4(top, vnode, components, sniffing)
 
 class xtop_vnode_sniff {
 public:
@@ -56,4 +56,4 @@ private:
 
 using xvnode_sniff_t = xtop_vnode_sniff;
 
-NS_END2
+NS_END4
