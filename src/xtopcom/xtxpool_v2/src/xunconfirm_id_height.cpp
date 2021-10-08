@@ -385,6 +385,7 @@ void xunconfirm_id_height::cache_status(uint32_t & sender_cache_size, uint32_t &
 }
 
 void xunconfirm_id_height::refresh(base::xtable_shortid_t self_table_sid, const xreceiptid_state_cache_t & receiptid_state_cache) {
+    std::lock_guard<std::mutex> lck(m_mutex);
     auto table_receiptid_state = receiptid_state_cache.get_table_receiptid_state(self_table_sid);
     if (table_receiptid_state != nullptr) {
         m_sender_unconfirm_id_height.refresh_as_sender(table_receiptid_state);
