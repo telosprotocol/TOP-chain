@@ -58,7 +58,7 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
     std::unique_ptr<components::prune_data::xprune_data> m_prune_data;
 
-    std::unique_ptr<xtop_vnode_sniff> m_sniff;
+    std::unique_ptr<components::sniffing::xvnode_sniff_t> m_sniff;
 
 public:
     xtop_vnode(xtop_vnode const &) = delete;
@@ -113,7 +113,7 @@ public:
     void start() override;
     void fade() override;
     void stop() override;
-    xvnode_sniff_config_t sniff_config() override;
+    components::sniffing::xvnode_sniff_config_t sniff_config() override;
 
 private:
     void new_driver_added();

@@ -40,7 +40,7 @@ public:
     }
     virtual void stop() {
     }
-    virtual void reg(common::xnode_address_t const & address, top::vnode::xvnode_sniff_config_t const & config) {
+    virtual void reg(common::xnode_address_t const & address, top::vnode::components::sniffing::xvnode_sniff_config_t const & config) {
     }
     virtual void unreg(common::xnode_address_t const & address) {
     }

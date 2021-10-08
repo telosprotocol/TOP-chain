@@ -39,9 +39,6 @@ struct xtop_contract_deployment_data {
 using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
 class xtop_system_contract_manager {
-    std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
-    base::xvblockstore_t* m_blockstore;
-
 public:
     xtop_system_contract_manager() = default;
     xtop_system_contract_manager(xtop_system_contract_manager const &) = delete;
@@ -60,10 +57,11 @@ public:
         static xtop_system_contract_manager * inst = new xtop_system_contract_manager();
         return inst;
     };
-    void initialize(base::xvblockstore_t* blockstore);
-    void deploy();
+    void deploy(observer_ptr<base::xvblockstore_t> const & blockstore);
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & deployment_data() const noexcept;
     observer_ptr<system_contracts::xbasic_system_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
+
+private:
     template <typename system_contract_type>
     void deploy_system_contract(common::xaccount_address_t const & address,
                                 common::xnode_type_t node_type,
@@ -72,11 +70,12 @@ public:
                                 xsniff_timer_config_t timer_config,
                                 xsniff_block_config_t block_config);
 
-private:
     void init_system_contract(common::xaccount_address_t const & contract_address);
 
     bool contains(common::xaccount_address_t const & address) const noexcept;
 
+    std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
+    observer_ptr<base::xvblockstore_t> m_blockstore{nullptr};
 };
 using xsystem_contract_manager_t = xtop_system_contract_manager;
 

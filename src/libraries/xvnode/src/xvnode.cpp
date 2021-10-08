@@ -72,7 +72,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
     m_prune_data = make_unique<components::prune_data::xprune_data>();
-    m_sniff = make_unique<xtop_vnode_sniff>(
+    m_sniff = make_unique<components::sniffing::xvnode_sniff_t>(
         store, nodesvr, make_observer(contract_runtime::system::xsystem_contract_manager_t::instance()), make_observer(m_the_binding_driver), make_observer(m_txpool_face));
 }
 
@@ -313,7 +313,7 @@ void xtop_vnode::sync_remove_vnet() {
 //    }
 //}
 
-xvnode_sniff_config_t xtop_vnode::sniff_config() {
+components::sniffing::xvnode_sniff_config_t xtop_vnode::sniff_config() {
     return m_sniff->sniff_config();
 }
 

@@ -19,7 +19,7 @@ public:
 
     void start() override;
     void stop() override;
-    void reg(common::xnode_address_t const & address, xvnode_sniff_config_t const & config) override;
+    void reg(common::xnode_address_t const & address, components::sniffing::xvnode_sniff_config_t const & config) override;
     void unreg(common::xnode_address_t const & address) override;
     void sniff(mbus::xevent_ptr_t const & e);
 
@@ -27,7 +27,7 @@ private:
     observer_ptr<mbus::xmessage_bus_face_t> mbus{nullptr};
     int m_store_event_id{INVALID_EVENT_ID};
     int m_timer_event_id{INVALID_EVENT_ID};
-    std::map<common::xnode_address_t, xvnode_sniff_config_t> m_sniff_config;
+    std::map<common::xnode_address_t, components::sniffing::xvnode_sniff_config_t> m_sniff_config;
 };
 
 using xvnode_sniff_proxy_t = xtop_vnode_sniff_proxy;

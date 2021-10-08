@@ -9,7 +9,7 @@
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 
-NS_BEG2(top, vnode)
+NS_BEG4(top, vnode, components, sniffing)
 
 xtop_vnode_sniff::xtop_vnode_sniff(observer_ptr<store::xstore_face_t> const & store,
                                    observer_ptr<base::xvnodesrv_t> const& nodesrv,
@@ -241,4 +241,4 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & source_address,
             timestamp);
 }
 
-NS_END2
+NS_END4

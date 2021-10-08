@@ -40,7 +40,7 @@ public:
 
     //virtual std::vector<common::xip2_t> associated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const = 0;
     //virtual std::vector<common::xip2_t> nonassociated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const = 0;
-    virtual xvnode_sniff_config_t sniff_config() = 0;
+    virtual components::sniffing::xvnode_sniff_config_t sniff_config() = 0;
 protected:
     xtop_vnode_face() = default;
 };

@@ -78,8 +78,8 @@ class xdummy_vnode;
         std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const &, std::error_code &) const noexcept override {                                               \
             return {};                                                                                                                                                             \
         }                                                                                                                                                                          \
-        top::vnode::xvnode_sniff_config_t sniff_config() noexcept override {                                                                                                       \
-            return top::vnode::xvnode_sniff_config_t{};                                                                                                                            \
+        top::vnode::components::sniffing::xvnode_sniff_config_t sniff_config() noexcept override {                                                                                                       \
+            return top::vnode::components::sniffing::xvnode_sniff_config_t{};                                                                                                                            \
         }                                                                                                                                                                          \
     }
 

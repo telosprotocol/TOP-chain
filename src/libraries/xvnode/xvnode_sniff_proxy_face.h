@@ -20,7 +20,7 @@ public:
 
     virtual void start() = 0;
     virtual void stop() = 0;
-    virtual void reg(common::xnode_address_t const & address, xvnode_sniff_config_t const & config) = 0;
+    virtual void reg(common::xnode_address_t const & address, components::sniffing::xvnode_sniff_config_t const & config) = 0;
     virtual void unreg(common::xnode_address_t const & address) = 0;
 };
 using xvnode_sniff_proxy_face_t = xtop_vnode_sniff_proxy_face;

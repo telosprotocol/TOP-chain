@@ -8,7 +8,7 @@
 #include "xvm/manager/xmessage_ids.h"
 #include "xvnetwork/xmessage.h"
 
-NS_BEG2(top, vnode)
+NS_BEG4(top, vnode, components, util)
 
 void xtop_vnode_util::call(observer_ptr<store::xstore_face_t> store,
                            observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
@@ -104,4 +104,4 @@ void xtop_vnode_util::broadcast(observer_ptr<vnetwork::xvnetwork_driver_face_t> 
     }
 }
 
-NS_END2
+NS_END4

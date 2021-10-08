@@ -5,7 +5,7 @@
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff_config.h"
 
-NS_BEG2(top, vnode)
+NS_BEG4(top, vnode, components, sniffing)
 
 enum class enum_vnode_sniff_event_type: uint8_t {
     invalid,
@@ -29,4 +29,4 @@ struct xtop_vnode_sniff_event_config {
 using xvnode_sniff_event_config_t = xtop_vnode_sniff_event_config;
 using xvnode_sniff_config_t = std::map<xvnode_sniff_event_type_t, xvnode_sniff_event_config_t>;
 
-NS_END2
+NS_END4
