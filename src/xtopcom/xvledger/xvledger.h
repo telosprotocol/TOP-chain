@@ -120,7 +120,11 @@ namespace top
             bool    set_state_meta(const xstatemeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
             bool    set_index_meta(const xindxmeta_t & new_meta);
-            bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            
+            bool            set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            bool            get_latest_executed_block(uint64_t & block_height,std::string & block_hash);
+            bool            set_latest_executed_block_height(const uint64_t height);
+            const uint64_t  get_latest_executed_block_height();
             
             const xblockmeta_t  get_block_meta();
             const xstatemeta_t  get_state_meta();
@@ -137,6 +141,7 @@ namespace top
             virtual bool            is_live(const uint64_t timenow_ms) override;//test whether has been idel status
             virtual bool            close(bool force_async = true) override;
             xvactmeta_t*            get_meta();
+            bool                    save_meta(const std::string & vmeta_bin);
                
             //the returned ptr is not reference safe,use careully
             xvactplugin_t*          get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type);
