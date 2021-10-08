@@ -342,6 +342,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_alarm_confirm_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);
+        RETURN_METRICS_NAME(txpool_sync_on_demand_unit);
 
         // txstore
         RETURN_METRICS_NAME(txstore_request_origin_tx);
