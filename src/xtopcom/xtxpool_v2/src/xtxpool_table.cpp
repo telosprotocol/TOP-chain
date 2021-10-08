@@ -16,9 +16,10 @@
 #include "xverifier/xverifier_errors.h"
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
+#include "xvledger/xvblock_fork.h"
 #include "xvledger/xvblockbuild.h"
-#include "xvledger/xvledger.h"
 #include "xvledger/xvcontract.h"
+#include "xvledger/xvledger.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -233,7 +234,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
 
     std::vector<update_id_state_para> update_id_state_para_vec;
     auto tx_actions = table_block->get_tx_actions();
-    
+
     for (auto & action : tx_actions) {
         if (action.get_org_tx_hash().empty()) {  // not txaction
             continue;
@@ -333,7 +334,7 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
     return xsuccess;
 }
 
-void xtxpool_table_t::refresh_table() {
+void xtxpool_table_t::refresh_table(bool refresh_state_only) {
     auto latest_committed_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(m_xtable_info, metrics::blockstore_access_from_txpool_refresh_table);
     xtxpool_dbg("xtxpool_table_t::refresh_table begin table:%s,commit_height:%llu", m_xtable_info.get_account().c_str(), latest_committed_block->get_height());
 
@@ -349,6 +350,10 @@ void xtxpool_table_t::refresh_table() {
         update_table_state(tablestate);
 
         m_unconfirm_raw_txs.refresh(tablestate->get_receiptid_state());
+    }
+
+    if (refresh_state_only) {
+        return;
     }
 
     {
@@ -391,12 +396,12 @@ void xtxpool_table_t::refresh_table() {
         }
     }
     xtxpool_info("xtxpool_table_t::refresh_table finish table:%s,old_state_height:%llu,new_state_height=%llu,get_lacking_ret=%d,left_end=%ld,right_end=%ld",
-                m_xtable_info.get_account().c_str(),
-                old_state_height,
-                m_table_state_cache.get_state_height(),
-                ret,
-                left_end,
-                right_end);
+                 m_xtable_info.get_account().c_str(),
+                 old_state_height,
+                 m_table_state_cache.get_state_height(),
+                 ret,
+                 left_end,
+                 right_end);
 }
 
 // void xtxpool_table_t::update_non_ready_accounts() {
@@ -529,7 +534,8 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
     return xsuccess;
 }
 
-bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
+bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) {
+    refresh_table(true);
     base::xaccount_index_t account_index;
     bool ret = m_table_state_cache.get_account_index(account_addr, account_index);
     if (!ret) {
@@ -538,7 +544,21 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
     }
     base::xvaccount_t _account_vaddress(account_addr);
 
-    xblocktool_t::check_lacking_unit_and_try_sync(_account_vaddress, account_index, m_para->get_vblockstore(), "txpool");
+    uint64_t latest_connect_height = m_para->get_vblockstore()->get_latest_connected_block_height(_account_vaddress);
+
+    xblocktool_t::check_lacking_unit_and_try_sync(_account_vaddress, account_index, latest_connect_height, m_para->get_vblockstore(), "txpool");
+
+    latest_nonce = account_index.get_latest_tx_nonce();
+    xtxpool_dbg("xtxpool_table_t::get_account_latest_nonce table:%s,height:%llu,account:%s,nonce:%llu",
+                m_xtable_info.get_account().c_str(),
+                m_table_state_cache.get_state_height(),
+                account_addr.c_str(),
+                latest_nonce);
+
+    // for compatibility with old and new version
+    if (latest_nonce != 0 || latest_connect_height == 0) {
+        return true;
+    }
 
     base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
     base::xauto_ptr<base::xvbstate_t> account_bstate =
