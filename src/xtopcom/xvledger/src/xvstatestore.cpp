@@ -298,6 +298,19 @@ namespace top
             }
         }
 
+        void xvblkstatestore_t::set_latest_executed_info(const xvaccount_t & target_account, uint64_t height,const std::string & blockhash)
+        {
+            // TODO(jimmy) no need set executed block hash xvchain_t::instance().get_xblockstore()->set_latest_executed_info(target_account, height, blockhash);
+            xauto_ptr<xvaccountobj_t> account_obj(xvchain_t::instance().get_account(target_account));
+            account_obj->set_latest_executed_block_height(height);
+        }
+        uint64_t xvblkstatestore_t::get_latest_executed_block_height(const xvaccount_t & target_account)
+        {
+            // base::xvchain_t::instance().get_xblockstore()->get_latest_executed_block_height(target_account);
+            xauto_ptr<xvaccountobj_t> account_obj(xvchain_t::instance().get_account(target_account));
+            return account_obj->get_latest_executed_block_height();
+        }
+
         bool xvblkstatestore_t::recover_highest_execute_height(const xvaccount_t & target_account, uint64_t old_execute_height)
         {            
             uint64_t max_check_height = old_execute_height + 1024;  // XTODO 1024 may be too large
@@ -313,7 +326,7 @@ namespace top
                 if (_bstate != nullptr) {
                     xinfo("xvblkstatestore_t::recover_highest_execute_height succ-load bstate.account=%s,old_execute_height=%ld,i=%ld",
                         target_account.get_account().c_str(), old_execute_height, i);
-                    xvchain_t::instance().get_xblockstore()->set_latest_executed_info(target_account, i, _bindex->get_block_hash());
+                    set_latest_executed_info(target_account, i, _bindex->get_block_hash());
                     return true;
                 }
                 xwarn("xvblkstatestore_t::recover_highest_execute_height fail-load bstate.account=%s,old_execute_height=%ld,i=%ld",
@@ -327,7 +340,7 @@ namespace top
         bool xvblkstatestore_t::try_update_execute_height(const xvaccount_t & target_account)
         {            
             // TODO(jimmy) get executed height and commit height together
-            uint64_t old_execute_height = base::xvchain_t::instance().get_xblockstore()->get_latest_executed_block_height(target_account);
+            uint64_t old_execute_height = get_latest_executed_block_height(target_account);
             uint64_t _highest_commit_block_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(target_account);
 
             if (old_execute_height >= _highest_commit_block_height) {
@@ -364,15 +377,12 @@ namespace top
                 }
                 new_execute_height = _block->get_height();
                 new_execute_hash = _block->get_block_hash();
-                // base::xvchain_t::instance().get_xblockstore()->set_latest_executed_info(target_account, new_execute_height, new_execute_hash);
-                // xinfo("xvblkstatestore_t::try_update_execute_height succ-update. account=%s,height=%ld,old_execute_height=%ld,new_execute_height=%ld,commit_height=%ld", 
-                //     target_account.get_account().c_str(), _begin_height, old_execute_height, new_execute_height, _highest_commit_block_height);            
                 _begin_height++;
             }
             while(max_count-- > 0);
 
             if (new_execute_height > old_execute_height) {
-                base::xvchain_t::instance().get_xblockstore()->set_latest_executed_info(target_account, new_execute_height, new_execute_hash);
+                set_latest_executed_info(target_account, new_execute_height, new_execute_hash);
                 xinfo("xvblkstatestore_t::try_update_execute_height succ-update. account=%s,height=%ld,old_execute_height=%ld,new_execute_height=%ld,commit_height=%ld", 
                     target_account.get_account().c_str(), _begin_height, old_execute_height, new_execute_height, _highest_commit_block_height);
                 return true;
@@ -409,7 +419,7 @@ namespace top
                     else
                     {
                         xinfo("xvblkstatestore_t::execute_block succ-execute full-table,block=%s", target_block->dump().c_str());
-                        base::xvchain_t::instance().get_xblockstore()->set_latest_executed_info(target_account, target_block->get_height(), target_block->get_block_hash());
+                        set_latest_executed_info(target_account, target_block->get_height(), target_block->get_block_hash());
                     }
                 }
                 else

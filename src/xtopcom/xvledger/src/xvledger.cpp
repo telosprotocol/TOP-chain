@@ -95,17 +95,14 @@ namespace top
                 }
             }
             
+            if(m_meta_ptr != NULL)
             {
-                std::lock_guard<std::recursive_mutex> locker(get_table_lock());//using book lock
-                if(m_meta_ptr != NULL)
+                if(m_meta_ptr->is_close() == false)
                 {
-                    if(m_meta_ptr->is_close() == false)
-                    {
-                        save_meta();
-                        m_meta_ptr->close();
-                    }
-                    m_meta_ptr->release_ref();
+                    save_meta();
+                    m_meta_ptr->close();
                 }
+                m_meta_ptr->release_ref();
             }
             
             XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, -1);
@@ -151,15 +148,11 @@ namespace top
                     }
                 }
                 
+                if(m_meta_ptr != NULL)
                 {
-                    std::lock_guard<std::recursive_mutex> locker(get_table_lock());//using book lock
-                    if(m_meta_ptr != NULL)
+                    if(m_meta_ptr->is_close() == false)
                     {
-                        if(m_meta_ptr->is_close() == false)
-                        {
-                            save_meta();
-                            m_meta_ptr->close(); //mark as closed status
-                        }
+                        save_meta();
                     }
                 }
             }
@@ -175,18 +168,33 @@ namespace top
         {
             return m_ref_table.get_book().get_lock();
         }
-             
+
         bool   xvaccountobj_t::set_block_meta(const xblockmeta_t & new_meta)
         {
-             std::lock_guard<std::recursive_mutex> locker(get_table_lock());
-             xvactmeta_t * meta_ptr = get_meta();
-             if(meta_ptr->set_block_meta(new_meta))
-             {
-                 if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                     save_meta();
-                 return true;
-             }
-             return false;
+            bool result = false;
+            std::string vmeta_bin;
+            {
+                std::lock_guard<std::recursive_mutex> locker(get_table_lock());
+                xvactmeta_t * meta_ptr = get_meta();
+                result = meta_ptr->set_block_meta(new_meta);
+                if(result)
+                {
+                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                    {
+                        m_meta_ptr->serialize_to_string(vmeta_bin);
+                        const uint64_t new_meta_hash = xhash64_t::digest(vmeta_bin);
+                        if(new_meta_hash == m_last_saved_meta_hash)//if nothing changed
+                            return result;
+                        
+                        //optimism handle first
+                        m_last_saved_meta_hash = new_meta_hash;
+                        m_meta_ptr->reset_modified_count();
+                    }
+                }
+            }
+            save_meta(vmeta_bin);
+            
+            return result;
         }
     
         bool   xvaccountobj_t::set_state_meta(const xstatemeta_t & new_meta)
@@ -195,8 +203,6 @@ namespace top
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_state_meta(new_meta))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    save_meta();
                 return true;
             }
             return false;
@@ -204,27 +210,57 @@ namespace top
     
         bool   xvaccountobj_t::set_latest_executed_block(const uint64_t height, const std::string & blockhash)
         {
-            std::lock_guard<std::recursive_mutex> locker(get_table_lock());//using book lock
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_latest_executed_block(height,blockhash))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    save_meta();
-                
                 return true;
             }
             return false;
         }
     
+        bool   xvaccountobj_t::get_latest_executed_block(uint64_t & block_height,std::string & block_hash)
+        {
+            std::lock_guard<std::recursive_mutex> locker(get_table_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            block_height = meta_ptr->get_state_meta()._highest_execute_block_height;
+            block_hash   = meta_ptr->get_state_meta()._highest_execute_block_hash;
+            
+            if(block_hash.empty())//empty hash,which means invalid one
+                return false;
+            
+            return true;
+        }
+        
+        bool   xvaccountobj_t::set_latest_executed_block_height(const uint64_t height)
+        {
+            if(is_close())
+                return false;
+            
+            //note:meta_ptr never be destroy,it is safe to get it without lock
+            xvactmeta_t * meta_ptr = get_meta();
+            if(height > meta_ptr->get_state_meta()._highest_execute_block_height)
+            {
+                base::xatomic_t::xstore(meta_ptr->get_state_meta()._highest_execute_block_height,height);
+                return true;
+            }
+            return false;
+        }
+        
+        const uint64_t   xvaccountobj_t::get_latest_executed_block_height()
+        {
+            //note:meta_ptr never be destroy,it is safe to get it without lock
+            xvactmeta_t * meta_ptr = get_meta();
+            const uint64_t atom_copy = meta_ptr->get_state_meta()._highest_execute_block_height;
+            return atom_copy;
+        }
+
         bool   xvaccountobj_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
             std::lock_guard<std::recursive_mutex> locker(get_table_lock());
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_sync_meta(new_meta))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    save_meta();
-                
                 return true;
             }
             return false;
@@ -236,9 +272,6 @@ namespace top
             xvactmeta_t * meta_ptr = get_meta();
             if(meta_ptr->set_index_meta(new_meta))
             {
-                if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    save_meta();
-                
                 return true;
             }
             return false;
@@ -291,6 +324,31 @@ namespace top
             }
             m_last_saved_meta_hash = xhash64_t::digest(meta_content);
             return m_meta_ptr;
+        }
+        
+        bool  xvaccountobj_t::save_meta(const std::string & vmeta_bin)
+        {
+            if(vmeta_bin.empty() == false)
+            {
+                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
+                if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
+                {
+                    xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
+                    return true;
+                }
+                else //failure handle
+                {
+                    std::lock_guard<std::recursive_mutex> locker(get_table_lock());
+                    m_last_saved_meta_hash = 0;
+                    if(m_meta_ptr != NULL)
+                        m_meta_ptr->add_modified_count();
+
+                    xerror("xvaccountobj_t::meta->save_meta,fail to write db for account(%s)",get_address().c_str());
+                    return false;
+                }
+            }
+            return true;
         }
         
         bool  xvaccountobj_t::save_meta()
