@@ -46,7 +46,11 @@ class xlighttable_builder_t : public xblock_builder_face_t {
                                             const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para);
-    void                        make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
+    void                        make_light_table_binlog_v1(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
+                                                        const std::vector<xblock_ptr_t> & units,
+                                                        std::string & property_binlog,
+                                                        std::map<std::string, std::string> & property_hashs);
+    void                        make_light_table_binlog_v2(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
                                                         const std::vector<xblock_ptr_t> & units,
                                                         std::string & property_binlog,
                                                         std::map<std::string, std::string> & property_hashs);
