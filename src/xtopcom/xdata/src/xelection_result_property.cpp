@@ -14,7 +14,9 @@ NS_BEG3(top, data, election)
 using common::xaccount_address_t;
 std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t const & sys_contract_addr) {
     std::vector<std::string> property_name;
-    if (sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_rec_addr} || sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_zec_addr}) {
+    if (sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_ec_addr}) {
+        property_name.push_back(data::XPROPERTY_EC_ELECTION_KEY);
+    } else if (sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_rec_addr} || sys_contract_addr == xaccount_address_t{sys_contract_rec_elect_zec_addr}) {
         property_name.push_back(get_property_by_group_id(common::xcommittee_group_id));
 
     } else if (sys_contract_addr == xaccount_address_t{sys_contract_zec_elect_consensus_addr}) {

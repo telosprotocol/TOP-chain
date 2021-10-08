@@ -403,46 +403,46 @@ void xchain_downloader_t::clear() {
     init_committed_event_group();
 }
 
-static void get_elect_info(const xvip2_t & target_group, std::string & elect_address, uint64_t & elect_height) {
-    // TODO use macro
+// static void get_elect_info(const xvip2_t & target_group, std::string & elect_address, uint64_t & elect_height) {
+//     // TODO use macro
 
-    uint8_t zone_id = get_zone_id_from_xip2(target_group);
-    uint8_t cluster_id = get_cluster_id_from_xip2(target_group);
-    uint8_t group_id = get_group_id_from_xip2(target_group);
+//     uint8_t zone_id = get_zone_id_from_xip2(target_group);
+//     uint8_t cluster_id = get_cluster_id_from_xip2(target_group);
+//     uint8_t group_id = get_group_id_from_xip2(target_group);
 
-    if (zone_id == 0) {
-        if (cluster_id == 1) {
-            if (group_id >= 1 && group_id < 127)
-                elect_address = sys_contract_zec_elect_consensus_addr;
-        }
-    } else if (zone_id == 1) {
-        if (cluster_id == 0 && group_id == 0)
-            elect_address = sys_contract_rec_elect_rec_addr;
-    } else if (zone_id == 2) {
-        if (cluster_id == 0 && group_id == 0)
-            elect_address = sys_contract_rec_elect_zec_addr;
-    }
+//     if (zone_id == 0) {
+//         if (cluster_id == 1) {
+//             if (group_id >= 1 && group_id < 127)
+//                 elect_address = sys_contract_zec_elect_consensus_addr;
+//         }
+//     } else if (zone_id == 1) {
+//         if (cluster_id == 0 && group_id == 0)
+//             elect_address = sys_contract_rec_elect_rec_addr;
+//     } else if (zone_id == 2) {
+//         if (cluster_id == 0 && group_id == 0)
+//             elect_address = sys_contract_rec_elect_ec_addr;
+//     }
 
-    elect_height = get_network_height_from_xip2(target_group);
-}
+//     elect_height = get_network_height_from_xip2(target_group);
+// }
 
-dependency_info_t xchain_downloader_t::get_depend_elect_info(const data::xblock_ptr_t & block) {
-    dependency_info_t info;
+// dependency_info_t xchain_downloader_t::get_depend_elect_info(const data::xblock_ptr_t & block) {
+//     dependency_info_t info;
 
-    const xvip2_t & validator_xip = block->get_cert()->get_validator();
-    std::string validator_elect_addr;
-    uint64_t validator_elect_height = 0;
-    get_elect_info(validator_xip, validator_elect_addr, validator_elect_height);
-    info.m_list.push_back(elect_item_t{validator_elect_addr, validator_elect_height});
+//     const xvip2_t & validator_xip = block->get_cert()->get_validator();
+//     std::string validator_elect_addr;
+//     uint64_t validator_elect_height = 0;
+//     get_elect_info(validator_xip, validator_elect_addr, validator_elect_height);
+//     info.m_list.push_back(elect_item_t{validator_elect_addr, validator_elect_height});
 
-    const xvip2_t & auditor_xip = block->get_cert()->get_auditor();
-    std::string auditor_elect_addr;
-    uint64_t auditor_elect_height = 0;
-    get_elect_info(auditor_xip, auditor_elect_addr, auditor_elect_height);
-    info.m_list.push_back(elect_item_t{auditor_elect_addr, auditor_elect_height});
+//     const xvip2_t & auditor_xip = block->get_cert()->get_auditor();
+//     std::string auditor_elect_addr;
+//     uint64_t auditor_elect_height = 0;
+//     get_elect_info(auditor_xip, auditor_elect_addr, auditor_elect_height);
+//     info.m_list.push_back(elect_item_t{auditor_elect_addr, auditor_elect_height});
 
-    return info;
-}
+//     return info;
+// }
 
 xentire_block_request_ptr_t xchain_downloader_t::create_request(uint64_t start_height, uint32_t count) {
     xentire_block_request_ptr_t ptr = std::make_shared<xentire_block_request_t>(

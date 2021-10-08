@@ -150,13 +150,13 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 
 void xtop_beacon_chain_application::load_last_election_data() {
     std::vector<std::string> sys_addr{sys_contract_rec_elect_rec_addr,
-                                      sys_contract_rec_elect_zec_addr,
+                                      sys_contract_rec_elect_ec_addr,
                                       sys_contract_zec_elect_consensus_addr,
                                       sys_contract_zec_elect_archive_addr,
                                       sys_contract_zec_elect_edge_addr};
 
     std::map<std::string, common::xzone_id_t> addr_to_zone_id{{sys_contract_rec_elect_rec_addr, common::xcommittee_zone_id},
-                                                              {sys_contract_rec_elect_zec_addr, common::xzec_zone_id},
+                                                              {sys_contract_rec_elect_ec_addr, common::xzec_zone_id},
                                                               {sys_contract_zec_elect_consensus_addr, common::xdefault_zone_id},
                                                               {sys_contract_zec_elect_archive_addr, common::xarchive_zone_id},
                                                               {sys_contract_zec_elect_edge_addr, common::xedge_zone_id}};
@@ -190,7 +190,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
                 continue;
             }
 
-            if ((addr == sys_contract_rec_elect_rec_addr || addr == sys_contract_rec_elect_zec_addr || addr == sys_contract_zec_elect_consensus_addr) && block_height != 0) {
+            if ((addr == sys_contract_rec_elect_rec_addr || addr == sys_contract_rec_elect_ec_addr || addr == sys_contract_zec_elect_consensus_addr) && block_height != 0) {
                 uint64_t prev_block_height = block_height - 1;
                 auto const & before_last_election_result_store = load_election_data(m_application->blockstore(),
                                                                                    common::xaccount_address_t{ addr },

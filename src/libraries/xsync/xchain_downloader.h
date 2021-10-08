@@ -130,7 +130,7 @@ protected:
     bool handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr);
     void clear();
 
-    dependency_info_t get_depend_elect_info(const data::xblock_ptr_t &block);
+    // dependency_info_t get_depend_elect_info(const data::xblock_ptr_t &block);
     int64_t get_time();
 
     bool check_behind(uint64_t height, const char *elect_address);
