@@ -359,6 +359,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_alarm_confirm_tx_reached_upper_limit,
     txpool_alarm_recv_tx_reached_upper_limit,
     txpool_alarm_send_tx_reached_upper_limit,
+    txpool_sync_on_demand_unit,
 
     // txstore
     txstore_request_origin_tx,
@@ -409,6 +410,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_id_state,
+    blockstore_access_from_txpool_get_nonce,
     blockstore_access_from_txpool_refresh_table,
     blockstore_access_from_txpool_create_receipt,
     blockstore_access_from_txpool_pull_lacking_receipts,
