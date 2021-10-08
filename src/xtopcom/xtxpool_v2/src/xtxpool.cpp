@@ -37,7 +37,7 @@ bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
     if ((zone >= xtxpool_zone_type_max) || (zone == base::enum_chain_zone_consensus_index && subaddr >= enum_vbucket_has_tables_count) ||
         (zone == base::enum_chain_zone_beacon_index && subaddr >= MAIN_CHAIN_REC_TABLE_USED_NUM) ||
         (zone == base::enum_chain_zone_zec_index && subaddr >= MAIN_CHAIN_ZEC_TABLE_USED_NUM)) {
-        xerror("table_zone_subaddr_check zone:%d or subaddr:%d invalidate", zone, subaddr);
+        xwarn("table_zone_subaddr_check zone:%d or subaddr:%d invalidate", zone, subaddr);
         return false;
     }
     return true;
