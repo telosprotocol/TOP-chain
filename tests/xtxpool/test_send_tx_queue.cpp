@@ -24,6 +24,7 @@ protected:
     }
 };
 
+#if 0
 TEST_F(test_send_tx_queue, continuous_txs_basic) {
     std::string table_addr = "table_test";
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
@@ -214,6 +215,7 @@ TEST_F(test_send_tx_queue, uncontinuous_txs_replace) {
     auto pop_tx1 = uncontinuous_txs.pop_by_last_nonce(txs[4]->get_transaction()->get_tx_nonce());
     ASSERT_EQ(pop_tx1->get_tx()->get_transaction()->get_tx_nonce(), tx1->get_transaction()->get_tx_nonce());
 }
+#endif
 
 TEST_F(test_send_tx_queue, send_tx_account_basic) {
     std::string table_addr = "table_test";
@@ -242,21 +244,21 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
         ASSERT_EQ(ret, xsuccess);
     }
 
-    auto get_txs = send_tx_account.get_continuous_txs(3, 3);
-    ASSERT_EQ(get_txs.size(), 0);
+    auto get_txs = send_tx_account.get_continuous_txs(3, 3, 0);
+    ASSERT_EQ(get_txs.size(), 1);
 
-    get_txs = send_tx_account.get_continuous_txs(1, 3);
+    get_txs = send_tx_account.get_continuous_txs(3, 1, 0);
     ASSERT_EQ(get_txs.size(), 1);
 
     std::shared_ptr<xtx_entry> tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 3);
+    get_txs = send_tx_account.get_continuous_txs(3, 3, 0);
     ASSERT_EQ(get_txs.size(), 3);
 
-    get_txs = send_tx_account.get_continuous_txs(4, 3);
-    ASSERT_EQ(get_txs.size(), 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 4, 0);
+    ASSERT_EQ(get_txs.size(), 3);
 
     for (uint32_t i = 7; i < 15; i++) {
         std::shared_ptr<xtx_entry> tx_ent_tmp = std::make_shared<xtx_entry>(txs[i], para);
@@ -266,35 +268,33 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
 
     send_tx_account.update_latest_nonce(txs[4]->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_account.get_continuous_txs(8, 3);
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
     ASSERT_EQ(get_txs.size(), 0);
 
     tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[6], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(8, 3);
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
     ASSERT_EQ(get_txs.size(), 0);
 
     tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[5], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(8, 3);
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
     ASSERT_EQ(get_txs.size(), 3);
 
     send_tx_account.erase(8, false);
-    send_tx_account.refresh();
 
-    get_txs = send_tx_account.get_continuous_txs(8, 3);
-    ASSERT_EQ(get_txs.size(), 0);
-    get_txs = send_tx_account.get_continuous_txs(7, 3);
-    ASSERT_EQ(get_txs.size(), 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    ASSERT_EQ(get_txs.size(), 2);
+    get_txs = send_tx_account.get_continuous_txs(3, 7, txs[4]->get_transaction()->get_tx_nonce());
+    ASSERT_EQ(get_txs.size(), 2);
 
-    ASSERT_EQ(send_tx_account.need_update(), true);
     send_tx_account.update_latest_nonce(txs[7]->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_account.get_continuous_txs(11, 3);
+    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce());
     ASSERT_EQ(get_txs.size(), 3);
 }
 
@@ -338,17 +338,20 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_NE(tx_tmp, nullptr);
 
-    auto get_txs = send_tx_queue.get_txs(100);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    auto get_txs = send_tx_queue.get_txs(100, tablestate);
     ASSERT_EQ(get_txs.size(), 1);
 
-    ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
+    // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 
     send_tx_queue.updata_latest_nonce(tx->get_transaction()->get_source_addr(), tx->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_queue.get_txs(100);
+    get_txs = send_tx_queue.get_txs(100, tablestate);
     ASSERT_EQ(get_txs.size(), 0);
 
-    ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
+    // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
@@ -375,28 +378,32 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
         ASSERT_EQ(0, ret);
     }
 
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     // get txs, should be ordered by nonce
-    auto tx_ents = send_tx_queue.get_txs(txs_num);
-    ASSERT_EQ(tx_ents.size(), 3);
+    auto tx_ents = send_tx_queue.get_txs(txs_num, tablestate);
+    ASSERT_EQ(tx_ents.size(), txs_num);
     for (uint32_t i = 0; i < tx_ents.size(); i++) {
-        ASSERT_EQ(tx_ents[i]->get_tx()->get_transaction()->get_last_nonce(), i);
+        ASSERT_EQ(tx_ents[i]->get_transaction()->get_last_nonce(), i);
     }
 
     // push again
     for (uint32_t i = 0; i < tx_ents.size(); i++) {
-        int32_t ret = send_tx_queue.push_tx(tx_ents[tx_ents.size() - i - 1], 0);
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx_ents[tx_ents.size() - i - 1], para);
+        int32_t ret = send_tx_queue.push_tx(tx_ent, 0);
         ASSERT_EQ(xtxpool_error_tx_nonce_duplicate, ret);
     }
 
     // pop one tx, that will pop txs those nonce are less than the poped tx, and no continuos tx
     tx_info_t txinfo(txs[3]);
     auto tx_tmp = send_tx_queue.pop_tx(txinfo, false);
-    auto tx_ents2 = send_tx_queue.get_txs(txs_num);
-    ASSERT_EQ(tx_ents2.size(), 0);
+    auto tx_ents2 = send_tx_queue.get_txs(txs_num, tablestate);
+    ASSERT_EQ(tx_ents2.size(), 3);
 
     send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->get_source_addr(), txs[3]->get_transaction()->get_tx_nonce());
-    tx_ents2 = send_tx_queue.get_txs(txs_num);
-    ASSERT_EQ(tx_ents2.size(), 3);
+    tx_ents2 = send_tx_queue.get_txs(txs_num, tablestate);
+    ASSERT_EQ(tx_ents2.size(), txs_num - 4);
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
@@ -443,15 +450,18 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
 
-    auto tx_ents = send_tx_queue.get_txs(10);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    auto tx_ents = send_tx_queue.get_txs(10, tablestate);
     ASSERT_EQ(tx_ents.size(), 1);
 
     tx_ent = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
 
-    tx_ents = send_tx_queue.get_txs(10);
-    ASSERT_EQ(tx_ents.size(), 3);
+    tx_ents = send_tx_queue.get_txs(10, tablestate);
+    ASSERT_EQ(tx_ents.size(), 7);
 }
 
 TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {

@@ -223,10 +223,10 @@ void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint
     return m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce);
 }
 
-bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) const {
-    std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    return m_txmgr_table.is_account_need_update(account_addr);
-}
+// bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) const {
+//     std::lock_guard<std::mutex> lck(m_mgr_mutex);
+//     return m_txmgr_table.is_account_need_update(account_addr);
+// }
 
 void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool update_txmgr) {
     std::vector<xtx_id_height_info> tx_id_height_infos;
