@@ -32,6 +32,7 @@
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xdata/xtransaction.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xstate_accessor.h"
 
 #include <cassert>
 #include <type_traits>
@@ -49,6 +50,7 @@ class xtop_contract_state {
 private:
     common::xaccount_address_t m_action_account_address;
     observer_ptr<properties::xproperty_access_control_t> m_ac;
+    observer_ptr<state_accessor::xstate_accessor_t> m_state_accessor;
 
 public:
     xtop_contract_state(xtop_contract_state const &) = delete;
@@ -58,21 +60,52 @@ public:
     ~xtop_contract_state() = default;
 
     explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac);
+    explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<state_accessor::xstate_accessor_t> sa);
 
     common::xaccount_address_t state_account_address() const;
-    observer_ptr<properties::xproperty_access_control_t> const & access_control() const;
 
+    /// @brief Create property.
+    /// @param property_id The property identifier.
+    /// @param ec Log the error code in property creation process.
+    void create_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec);
 
+    /// @brief Create property. If creation failed, xtop_error_t exception will be thrown.
+    /// @param property_id The property identifier.
+    void create_property(state_accessor::properties::xproperty_identifier_t const & property_id);
 
-    std::string src_code(std::error_code & ec) const;
-    std::string src_code() const;
+    /// @brief Check if the property identified by the property ID exists or not.
+    /// @param property_id Property ID.
+    /// @param ec Log the error code in the operation.
+    /// @return 'true' if property exists; otherwise 'false'.
+    bool property_exist(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
+
+    /// @brief Check if the property identified by the property ID exists or not. Throw xtop_error_t exception when error occurs.
+    /// @param property_id property_id Property ID.
+    /// @return 'true' if property exists; otherwise 'false'.
+    bool property_exist(state_accessor::properties::xproperty_identifier_t const & property_id) const;
+
+    /// @brief Get code. If current state is a contract state, returns the contract code.
+    /// @param ec Log the error code.
+    /// @return The bytecode.
     xbyte_buffer_t bin_code(std::error_code & ec) const;
 
-    void deploy_src_code(std::string code, std::error_code & ec);
-    void deploy_src_code(std::string code);
-
+    /// @brief Deploy bytecode.
+    /// @param bin_code The bytecode to be deployed.
+    /// @param ec Log the error code in the deployment logic.
     void deploy_bin_code(xbyte_buffer_t bin_code, std::error_code & ec);
+
+    /// @brief Deploy bytecode. If error occurs, xtop_error_t exception will be thrown.
+    /// @param bin_code The bytecode to be deployed.
     void deploy_bin_code(xbyte_buffer_t bin_code);
+
+    /// @brief Get the balance from the state.
+    /// @param ec Log the error code in the call.
+    /// @return The token object.
+    state_accessor::xtoken_t const & balance(std::string const & symbol, std::error_code & ec) const;
+
+    /// @brief Get the balance from the state. Throw xtop_error_t exception when any error occurs.
+    /// @return The token object.
+    state_accessor::xtoken_t const & balance(std::string const & symbol) const;
 
     std::string binlog(std::error_code & ec) const;
     std::string binlog() const;
@@ -98,8 +131,6 @@ public:
     uint64_t  latest_followup_tx_nonce() const;
     void latest_followup_tx_nonce(uint64_t nonce, std::error_code& ec);
     void latest_followup_tx_nonce(uint64_t nonce);
-
-
 };
 
 NS_END2

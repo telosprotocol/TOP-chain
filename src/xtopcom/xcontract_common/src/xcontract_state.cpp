@@ -14,8 +14,7 @@ NS_BEG2(top, contract_common)
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac) : m_action_account_address{ action_account_addr}, m_ac{ac} {
 }
 
-observer_ptr<properties::xproperty_access_control_t> const& xtop_contract_state::access_control() const {
-    return m_ac;
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<state_accessor::xstate_accessor_t> sa) : m_action_account_address {std::move(action_account_addr)}, m_state_accessor {sa} {
 }
 
 common::xaccount_address_t xtop_contract_state::state_account_address() const {
@@ -28,52 +27,53 @@ common::xaccount_address_t xtop_contract_state::state_account_address() const {
 //    return m_ac->has_property(contract_account(), property_id, ec);
 //}
 //
-//void xtop_contract_state::create_property(properties::xproperty_identifier_t const & property_id) {
-//    std::error_code ec;
-//    create_property(property_id, ec);
-//    throw_error(ec);
-//}
 //
 //bool xtop_contract_state::has_property(properties::xproperty_identifier_t const & property_id) const noexcept {
 //    std::error_code ec;
 //    return m_ac->has_property(contract_account(), property_id, ec);
 //}
 
-std::string xtop_contract_state::src_code(std::error_code & ec) const {
-    state_accessor::properties::xproperty_identifier_t src_property_id{
-        "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
-    return m_ac->src_code(src_property_id, ec);
+void xtop_contract_state::create_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
+    assert(m_state_accessor != nullptr);
+    m_state_accessor->create_property(property_id, ec);
 }
 
-std::string xtop_contract_state::src_code() const {
+void xtop_contract_state::create_property(state_accessor::properties::xproperty_identifier_t const & property_id) {
     std::error_code ec;
-    auto r = src_code(ec);
+    create_property(property_id, ec);
+    top::error::throw_error(ec);
+}
+
+bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
+    assert(m_state_accessor != nullptr);
+    return m_state_accessor->property_exist(property_id, ec);
+}
+
+bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_identifier_t const & property_id) const {
+    std::error_code ec;
+    auto r = property_exist(property_id, ec);
     top::error::throw_error(ec);
     return r;
-}
-
-void xtop_contract_state::deploy_src_code(std::string code, std::error_code & ec) {
-    state_accessor::properties::xproperty_identifier_t src_property_id{
-        "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
-    m_ac->deploy_src_code(src_property_id, std::move(code), ec);
-}
-
-void xtop_contract_state::deploy_src_code(std::string code) {
-    std::error_code ec;
-    deploy_src_code(std::move(code), ec);
-    top::error::throw_error(ec);
 }
 
 void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code, std::error_code & ec) {
     state_accessor::properties::xproperty_identifier_t src_property_id{
         "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
-    m_ac->deploy_bin_code(src_property_id, std::move(code), ec);
+    m_state_accessor->deploy_bin_code(src_property_id, std::move(code), ec);
 }
 
 void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code) {
     std::error_code ec;
     deploy_bin_code(std::move(code), ec);
     top::error::throw_error(ec);
+}
+
+state_accessor::xtoken_t const & xtop_contract_state::balance(std::string const & symbol, std::error_code & ec) const {
+    assert(m_state_accessor != nullptr);
+    state_accessor::properties::xproperty_identifier_t balance_property_id{
+        "balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+
+    return m_state_accessor->balance(balance_property_id, symbol, ec);
 }
 
 std::string xtop_contract_state::binlog(std::error_code & ec) const {

@@ -192,9 +192,15 @@ void xtop_state_accessor::create_property(properties::xproperty_identifier_t con
         break;
 
     case properties::xproperty_type_t::deque:
+        assert(false);
+        break;
+
+    case properties::xproperty_type_t::token:
+        do_create_token_property(property_name, ec);
         break;
 
     default:
+        assert(false);
         break;
     }
 }
@@ -814,9 +820,17 @@ void xtop_state_accessor::do_create_map_property(std::string const & property_na
 CREATE_INT_PROPERTY(int64)
 CREATE_INT_PROPERTY(uint64)
 
+void xtop_state_accessor::do_create_token_property(std::string const & property_name, std::error_code & ec) {
+    assert(!ec);
+    assert(property_name_min_length <= property_name.length() && property_name.length() < property_name_max_length);
+
+    auto const token_property = bstate_->new_token_var(property_name, canvas_.get());
+    if (token_property == nullptr) {
+        ec = error::xerrc_t::create_property_failed;
+        return;
+    }
+}
+
 #undef CREATE_INT_PROPERTY
-
-
-
 }
 }

@@ -19,11 +19,11 @@ xtop_token_property::xtop_token_property(std::string const& prop_name, contract_
 }
 
 void xtop_token_property::create() {
-    m_associated_contract->state()->access_control()->token_prop_create(accessor(), m_id);
+    m_associated_contract->state()->create_property(m_id);
 }
 
 uint64_t xtop_token_property::value() const {
-    return m_associated_contract->state()->access_control()->balance(accessor(), m_id);
+    return m_associated_contract->state()->balance(m_id);
 }
 
 void xtop_token_property::withdraw(std::uint64_t amount) {
