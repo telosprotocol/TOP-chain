@@ -31,6 +31,7 @@ private:
     top::observer_ptr<top::base::xvbstate_t> bstate_;
     top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
     xstate_access_control_data_t ac_data_;
+    std::unordered_map<std::string, xtoken_t> m_tokens;
 
 public:
     xtop_state_accessor(xtop_state_accessor const &) = delete;
@@ -193,11 +194,16 @@ private:
     /// @param ec Log error in the process.
     void do_create_map_property(std::string const & property_name, std::error_code & ec);
 
-    /// @brief Create integer peroperty.
+    /// @brief Create integer property.
     /// @param property_name Property name.
     /// @param ec Log error in the process.
     template <properties::xproperty_type_t PropertyTypeV>
     void do_create_int_property(std::string const & property_name, std::error_code & ec);
+
+    /// @brief Create token property.
+    /// @param property_name The property name.
+    /// @param ec Store the error code in the creation process.
+    void do_create_token_property(std::string const & property_name, std::error_code & ec);
 };
 using xstate_accessor_t = xtop_state_accessor;
 
