@@ -124,7 +124,7 @@ public:
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
 
 private:
-    bool is_account_need_update(const std::string & account_addr) const;
+    // bool is_account_need_update(const std::string & account_addr) const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;

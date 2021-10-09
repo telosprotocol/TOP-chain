@@ -155,18 +155,18 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_EQ(3, ready_txs2.size());
     ASSERT_EQ(tx0->get_digest_hex_str(), ready_txs2[0]->get_digest_hex_str());
     ASSERT_EQ(tx1->get_digest_hex_str(), ready_txs2[1]->get_digest_hex_str());
-    ASSERT_EQ(tx2a->get_digest_hex_str(), ready_txs2[2]->get_digest_hex_str());
+    ASSERT_EQ(tx2b->get_digest_hex_str(), ready_txs2[2]->get_digest_hex_str());
 
     txmgr_table.updata_latest_nonce(tx1->get_account_addr(), tx1->get_transaction()->get_tx_nonce());
 
     auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(1, ready_txs3.size());
-    ASSERT_EQ(tx2a->get_digest_hex_str(), ready_txs3[0]->get_digest_hex_str());
+    ASSERT_EQ(tx2b->get_digest_hex_str(), ready_txs3[0]->get_digest_hex_str());
 
     tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_transaction()->digest());
     ASSERT_NE(tx_q, nullptr);
 
-    txmgr_table.updata_latest_nonce(tx2a->get_account_addr(), tx2a->get_transaction()->get_tx_nonce());
+    txmgr_table.updata_latest_nonce(tx2b->get_account_addr(), tx2b->get_transaction()->get_tx_nonce());
     auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(0, ready_txs4.size());
 
@@ -275,19 +275,13 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
-    ASSERT_EQ(3, ready_txs.size());
+    ASSERT_EQ(10, ready_txs.size());
 
     tx_info_t txinfo1(ready_txs[0]);
     txmgr_table.pop_tx(txinfo1, false);
 
     auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para);
-    ASSERT_EQ(2, ready_txs2.size());
-
-    tx_info_t txinfo2(ready_txs2[0]);
-    txmgr_table.pop_tx(txinfo2, true);
-
-    auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para);
-    ASSERT_EQ(0, ready_txs3.size());
+    ASSERT_EQ(0, ready_txs2.size());
 }
 TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
@@ -367,14 +361,14 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
 
     {
         auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para);
-        ASSERT_EQ(1, ready_txs3.size());
+        ASSERT_EQ(7, ready_txs3.size());
     }
 
     txmgr_table.updata_latest_nonce(txs[0]->get_account_addr(), txs[0]->get_transaction()->get_tx_nonce());
 
     {
         auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para);
-        ASSERT_EQ(3, ready_txs4.size());
+        ASSERT_EQ(6, ready_txs4.size());
         ASSERT_EQ(txs[1]->get_digest_hex_str(), ready_txs4[0]->get_digest_hex_str());
         ASSERT_EQ(txs[2]->get_digest_hex_str(), ready_txs4[1]->get_digest_hex_str());
         ASSERT_EQ(txs[3]->get_digest_hex_str(), ready_txs4[2]->get_digest_hex_str());
@@ -430,7 +424,7 @@ TEST_F(test_txmgr_table, expired_tx) {
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
-    ASSERT_EQ(0, ready_txs.size());
+    ASSERT_EQ(1, ready_txs.size());
 }
 
 TEST_F(test_txmgr_table, repeat_receipt) {
