@@ -119,7 +119,7 @@ public:
     void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
 
 private:
-    bool is_account_need_update(const std::string & account_addr) const;
+    // bool is_account_need_update(const std::string & account_addr) const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
