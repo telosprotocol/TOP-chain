@@ -242,7 +242,9 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     auto & txs_info = build_para->get_txs();
     std::map<std::string, std::string> property_hashs;  // need put in table self action for prove
     std::string property_binlog;
-    if (base::xvblock_fork_t::instance().is_forked(cs_para.get_clock())) {
+
+    base::enum_xvblock_fork_version expect_version = (base::enum_xvblock_fork_version)base::xvblock_fork_t::instance().get_expect_block_version(cs_para.get_clock());
+    if (base::xvblock_fork_t::is_block_match_version(base::enum_xvblock_fork_version_3_0_0, expect_version)) {
         make_light_table_binlog_v2(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs, txs_info);
     } else {
         make_light_table_binlog_v1(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs, txs_info);
