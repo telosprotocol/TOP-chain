@@ -128,6 +128,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
         // lightunit_build_para->set_pack_txs(input_txs);
         xlightunit_block_para_t lightunit_para;
+        lightunit_para.set_account_unconfirm_sendtx_num(result.unconfirm_sendtx_num);
         lightunit_para.set_input_txs(result.success_tx_assemble);
         lightunit_para.set_fullstate_bin(result.contract_state_snapshot);
         lightunit_para.set_binlog(result.binlog);
