@@ -6,6 +6,7 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xcontract_common/xaction_execution_param.h"
+#include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_runtime/xaction_runtime_fwd.h"
 #include "xcontract_runtime/xaction_session_fwd.h"
@@ -72,6 +73,18 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     execution_context->consensus_action_stage(stage);
     if (stage == data::xconsensus_action_stage_t::send) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::source_action);
+        std::map<std::string, xbyte_buffer_t> for_receipt_data;
+        auto const& src_data = execution_context->source_action_data();
+        if (!src_data.empty() && data::enum_xaction_type::xaction_type_asset_out == execution_context->source_action_type()) {
+            data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
+            base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_data.data(), src_data.size());
+            stream >> asset_out.m_token_name;
+            stream >> asset_out.m_amount;
+
+            for_receipt_data[contract_common::RECEITP_DATA_ASSET_OUT] = xbyte_buffer_t{src_data.begin(), src_data.end()};
+            execution_context->receipt_data(for_receipt_data);
+            execution_context->contract_state()->token_withdraw(asset_out.m_amount);
+        }
     } else if (stage == data::xconsensus_action_stage_t::recv || stage == data::xconsensus_action_stage_t::self) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
     } else if (stage == data::xconsensus_action_stage_t::confirm) {
