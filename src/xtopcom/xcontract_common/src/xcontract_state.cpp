@@ -89,6 +89,28 @@ std::string xtop_contract_state::fullstate_bin() const {
     return m_ac->fullstate_bin();
 }
 
+uint64_t xtop_contract_state::token_withdraw(uint64_t amount, std::error_code& ec) const {
+    assert(m_ac);
+
+    state_accessor::properties::xproperty_identifier_t property_id{
+        data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+
+    uint64_t res = 0;
+    try {
+        res = m_ac->withdraw(state_account_address(), property_id, amount);
+    } catch (top::error::xtop_error_t const& err) {
+        ec = err.code();
+    }
+
+    return  res;
+}
+
+uint64_t xtop_contract_state::token_withdraw(uint64_t amount) const {
+    state_accessor::properties::xproperty_identifier_t property_id{
+        data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+    return m_ac->withdraw(state_account_address(), property_id, amount);
+}
+
 uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code& ec) const {
     assert(m_ac);
     return m_ac->latest_sendtx_hash(ec);

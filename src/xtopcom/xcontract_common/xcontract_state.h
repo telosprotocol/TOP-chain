@@ -78,6 +78,9 @@ public:
     std::string binlog() const;
     std::string fullstate_bin() const;
 
+    uint64_t token_withdraw(uint64_t amount, std::error_code& ec) const;
+    uint64_t token_withdraw(uint64_t amount) const;
+
     uint256_t latest_sendtx_hash(std::error_code& ec) const;
     uint256_t latest_sendtx_hash() const;
     void latest_sendtx_hash(uint256_t hash, std::error_code& ec);

@@ -67,14 +67,14 @@ std::string xtop_basic_contract::target_action_data() const {
 state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code& ec) const {
     assert(!ec);
 
-    auto src_data = source_action_data();
-    if (src_data.empty() || data::enum_xaction_type::xaction_type_asset_out != source_action_type()) {
-        ec = error::xerrc_t::src_action_asset_not_exist;
-        return state_accessor::xtoken_t{};
-    }
+
+    auto& receipt_data = m_associated_execution_context->receipt_data();
+    assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
+    auto const src_asset_data = receipt_data[RECEITP_DATA_ASSET_OUT];
+    receipt_data.erase(RECEITP_DATA_ASSET_OUT);
 
     data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_data.data(), src_data.size());
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
     stream >> asset_out.m_token_name;
     stream >> asset_out.m_amount;
 
