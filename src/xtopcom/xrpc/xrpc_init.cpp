@@ -51,7 +51,10 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     }
     case common::xnode_type_t::storage_archive:
     {
-        assert(false);
+        xdbg("arc rpc start");
+        init_rpc_cb_thread();
+        m_arc_handler = std::make_shared<xarc_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, make_observer(m_thread));
+        m_arc_handler->start();
         break;
     }
     case common::xnode_type_t::storage_full_node:
@@ -78,6 +81,9 @@ void xrpc_init::stop() {
     }
     if (m_cluster_handler != nullptr) {
         m_cluster_handler->stop();
+    }
+    if (m_arc_handler != nullptr) {
+        m_arc_handler->stop();
     }
 }
 
