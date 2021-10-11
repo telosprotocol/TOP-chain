@@ -11,23 +11,25 @@ xtop_string_property::xtop_string_property(std::string const & prop_name, contra
 }
 
 void xtop_string_property::create() {
-    m_associated_contract->state()->access_control()->string_prop_create(accessor(), m_id);
+    // m_associated_contract->state()->access_control()->string_prop_create(accessor(), m_id);
 }
 
 void xtop_string_property::update(std::string const & prop_value) {
-    m_associated_contract->state()->access_control()->string_prop_update(accessor(), m_id, prop_value);
+    // m_associated_contract->state()->access_control()->string_prop_update(accessor(), m_id, prop_value);
 }
 
 void xtop_string_property::clear() {
-    m_associated_contract->state()->access_control()->string_prop_clear(accessor(), m_id);
+    // m_associated_contract->state()->access_control()->string_prop_clear(accessor(), m_id);
 }
 
 std::string xtop_string_property::query() const {
-    return m_associated_contract->state()->access_control()->string_prop_query(accessor(), m_id);
+    // return m_associated_contract->state()->access_control()->string_prop_query(accessor(), m_id);
+    return {};
 }
 
 std::string xtop_string_property::query(common::xaccount_address_t const & contract) const {
-    return m_associated_contract->state()->access_control()->string_prop_query(accessor(), contract, m_id);
+    // return m_associated_contract->state()->access_control()->string_prop_query(accessor(), contract, m_id);
+    return {};
 }
 
 NS_END3

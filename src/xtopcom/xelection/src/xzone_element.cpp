@@ -2,14 +2,15 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xelection/xcache/xzone_element.h"
+
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xthreading/xutility.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xelection/xcache/xcluster_element.h"
 #include "xelection/xcache/xnetwork_element.h"
-#include "xelection/xcache/xzone_element.h"
 #include "xelection/xdata_accessor_error.h"
 
 #include <cinttypes>

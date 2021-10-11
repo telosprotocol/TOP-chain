@@ -83,7 +83,9 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
 
             for_receipt_data[contract_common::RECEITP_DATA_ASSET_OUT] = xbyte_buffer_t{src_data.begin(), src_data.end()};
             execution_context->receipt_data(for_receipt_data);
-            execution_context->contract_state()->token_withdraw(asset_out.m_amount);
+            state_accessor::properties::xproperty_identifier_t balance_property_id{
+                data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+            auto token = execution_context->contract_state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, asset_out.m_amount);
         }
     } else if (stage == data::xconsensus_action_stage_t::recv || stage == data::xconsensus_action_stage_t::self) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);

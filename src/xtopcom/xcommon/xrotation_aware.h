@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbase/xlog.h"
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xcommon/xerror/xerror.h"
 #include "xcommon/xlogic_time.h"

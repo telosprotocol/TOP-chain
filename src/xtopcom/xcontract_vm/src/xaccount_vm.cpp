@@ -5,7 +5,7 @@
 #include "xcontract_vm/xaccount_vm.h"
 
 #include "xbase/xlog.h"
-#include "xbasic/xerror/xchain_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xerror/xerror.h"

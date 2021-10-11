@@ -5,7 +5,7 @@
 #include "xvnetwork/xvnetwork_driver.h"
 
 #include "xbase/xlog.h"
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"

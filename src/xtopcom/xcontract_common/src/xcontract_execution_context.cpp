@@ -260,11 +260,11 @@ data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() 
 }
 
 common::xlogic_time_t xtop_contract_execution_context::time() const {
-    return contract_state()->access_control()->time();
+    return contract_state()->time();
 }
 
 common::xlogic_time_t xtop_contract_execution_context::timestamp() const {
-    return contract_state()->access_control()->timestamp();
+    return contract_state()->timestamp();
 }
 
 bool xtop_contract_execution_context::verify_action(std::error_code & ec) {

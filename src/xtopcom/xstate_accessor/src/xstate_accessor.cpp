@@ -10,8 +10,7 @@
 
 #include <cassert>
 
-namespace top {
-namespace state_accessor {
+NS_BEG2(top, state_accessor)
 
 constexpr size_t xtop_state_accessor::property_name_max_length;
 constexpr size_t xtop_state_accessor::property_name_min_length;
@@ -41,11 +40,11 @@ uint64_t xtop_state_accessor::nonce(properties::xproperty_identifier_t const & p
     return nonce_property->get_nonce();
 }
 
-static std::string token_property_name(properties::xproperty_identifier_t const & property_id, std::string const & symbol) {
-    return property_id.full_name() + "_" + symbol;
+static std::string token_property_name(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) {
+    return property_id.full_name() + "_" + symbol.to_string();
 }
 
-xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const & property_id, std::string const & symbol, uint64_t const amount, std::error_code & ec) {
+xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t const amount, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -88,7 +87,7 @@ xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const 
     return xtoken_t{ amount, symbol };
 }
 
-void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & property_id, std::string const & symbol, xtoken_t & amount, std::error_code & ec) {
+void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & property_id, xtoken_t token, std::error_code & ec) {
     assert(!ec);
 
     if (property_id.type() != properties::xproperty_type_t::token) {
@@ -96,7 +95,7 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
         return;
     }
 
-    if (static_cast<base::vtoken_t>(amount.value())) {
+    if (static_cast<base::vtoken_t>(token.amount())) {
         ec = error::xerrc_t::property_value_out_of_range;
         return;
     }
@@ -106,7 +105,7 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
         return;
     }
 
-    auto const & property_name = token_property_name(property_id, symbol);
+    auto const & property_name = token_property_name(property_id, token.symbol());
 
     xobject_ptr_t<base::xtokenvar_t> token_property{ nullptr };
     if (!bstate_->find_property(property_name)) {
@@ -126,16 +125,16 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
     }
 
     auto const balance = token_property->get_balance();
-    auto const new_balance = token_property->deposit(static_cast<base::vtoken_t>(amount.value()), canvas_.get());
+    auto const new_balance = token_property->deposit(static_cast<base::vtoken_t>(token.amount()), canvas_.get());
     if (new_balance < balance) {
         ec = error::xerrc_t::property_value_out_of_range;
         return;
     }
 
-    amount.clear();
+    token.clear();
 }
 
-uint64_t xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, std::string const & symbol, std::error_code & ec) const {
+uint64_t xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const {
     assert(!ec);
 
     if (property_id.type() != properties::xproperty_type_t::token) {
@@ -832,5 +831,5 @@ void xtop_state_accessor::do_create_token_property(std::string const & property_
 }
 
 #undef CREATE_INT_PROPERTY
-}
-}
+
+NS_END2

@@ -21,6 +21,11 @@ xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string
     // }
 }
 
+xtop_typeless_property_identifier::xtop_typeless_property_identifier(xtop_property_identifier const & property_identifier)
+    : xtop_typeless_property_identifier{property_identifier.name(), property_identifier.category()} {
+}
+
+
 std::string xtop_typeless_property_identifier::full_name() const {
     // if (m_fullname.empty()) {
     //     m_fullname = category_character(m_category) + m_name;

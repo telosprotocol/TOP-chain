@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "xbasic/xerror/xerror.h"
-
 #include "xbase/xlog.h"
+
+#include "xbasic/xerror/xerror.h"
 
 #include <cassert>
 #include <string>
@@ -27,7 +27,7 @@ public:
 
     virtual std::string to_string() const = 0;
 
-    std::string to_string(std::error_code & ec) const {
+    virtual std::string to_string(std::error_code & ec) const {
         assert(!ec);
         try {
             return to_string();
@@ -47,7 +47,7 @@ public:
         return 0;
     };
 
-    void from_string(std::string const & s, std::error_code & ec) {
+    virtual void from_string(std::string const & s, std::error_code & ec) {
         assert(!ec);
         try {
             auto ret = from_string(s);
@@ -67,13 +67,23 @@ template <typename T>
 using xenable_to_string_t = xtop_enable_to_string<T>;
 
 template <typename T, typename std::enable_if<std::is_base_of<xenable_to_string_t<T>, T>::value>::type * = nullptr>
-std::string to_string(xenable_to_string_t<T> const & v) {
+std::string to_string(T const & v) {
     return v.to_string();
 }
 
+template <typename T, typename std::enable_if<std::is_same<std::string, T>::value>::type * = nullptr>
+std::string to_string(std::string v) {
+    return v;
+}
+
 template <typename T, typename std::enable_if<std::is_base_of<xenable_to_string_t<T>, T>::value>::type * = nullptr>
-std::string to_string(xenable_to_string_t<T> const & v, std::error_code & ec) {
-    return v.xenable_to_string_t<T>::to_string(ec);
+std::string to_string(T const & v, std::error_code & ec) {
+    return v.to_string(ec);
+}
+
+template <typename T, typename std::enable_if<std::is_same<std::string, T>::value>::type * = nullptr>
+auto to_string(T && v, std::error_code &) -> decltype(std::forward<T>(v)) {
+    return std::forward<T>(v);
 }
 
 template <typename T, typename std::enable_if<std::is_base_of<xenable_to_string_t<T>, T>::value>::type * = nullptr>
@@ -83,11 +93,21 @@ T from_string(std::string const & s) {
     return ret;
 }
 
+template <typename T, typename std::enable_if<std::is_same<std::string, T>::value>::type * = nullptr>
+std::string from_string(std::string s) {
+    return s;
+}
+
 template <typename T, typename std::enable_if<std::is_base_of<xenable_to_string_t<T>, T>::value>::type * = nullptr>
 T from_string(std::string const & s, std::error_code & ec) {
     T ret;
-    ret.xenable_to_string_t<T>::from_string(s, ec);
+    ret.from_string(s, ec);
     return ret;
+}
+
+template <typename T, typename std::enable_if<std::is_same<std::string, T>::value>::type * = nullptr>
+std::string from_string(std::string s, std::error_code &) {
+    return s;
 }
 
 NS_END1

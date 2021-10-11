@@ -30,7 +30,7 @@ xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const&
 
 common::xaccount_address_t xtop_basic_contract::address() const {
     if (m_associated_execution_context) {
-        return m_associated_execution_context->contract_state()->access_control()->address();
+        return m_associated_execution_context->contract_state()->state_account_address();
     } else {
         return m_contract_meta.m_account;
     }
@@ -64,7 +64,7 @@ std::string xtop_basic_contract::target_action_data() const {
     return m_associated_execution_context->target_action_data();
 }
 
-state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code& ec) const {
+state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code & ec) const {
     assert(!ec);
 
 
@@ -84,7 +84,7 @@ state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code& 
 
 uint64_t  xtop_basic_contract::src_action_asset_amount(std::error_code& ec) const {
     auto token = src_action_asset(ec);
-    auto amount = token.value();
+    auto amount = token.amount();
     token.clear();
     return amount;
 }
@@ -93,7 +93,7 @@ std::string xtop_basic_contract::src_action_asset_name(std::error_code& ec) cons
     auto token = src_action_asset(ec);
     auto token_name = token.symbol();
     token.clear();
-    return token_name;
+    return token_name.to_string();
 }
 
 data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {

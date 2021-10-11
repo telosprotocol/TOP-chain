@@ -4,9 +4,6 @@
 
 #pragma once
 
-namespace top {
-namespace state_accessor {
-
 template <>
 properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
 
@@ -38,15 +35,15 @@ void xstate_accessor_t::set_property<properties::xproperty_type_t::string>(prope
 
 template <>
 void xstate_accessor_t::set_property_cell_value<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
-                                                                             properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
-                                                                             properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type const & value,
-                                                                             std::error_code & ec);
+                                                                                   properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
+                                                                                   properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type const & value,
+                                                                                   std::error_code & ec);
 
 template <>
 void xstate_accessor_t::set_property_cell_value<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
-                                                                               properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
-                                                                               properties::xvalue_type_of_t<properties::xproperty_type_t::deque>::type const & value,
-                                                                               std::error_code & ec);
+                                                                                     properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
+                                                                                     properties::xvalue_type_of_t<properties::xproperty_type_t::deque>::type const & value,
+                                                                                     std::error_code & ec);
 
 template <>
 properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type
@@ -75,7 +72,3 @@ void xstate_accessor_t::do_create_int_property<properties::xproperty_type_t::uin
 
 template <>
 void xstate_accessor_t::do_create_int_property<properties::xproperty_type_t::int64>(std::string const & property_name, std::error_code & ec);
-
-
-}
-}

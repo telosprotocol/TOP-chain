@@ -105,7 +105,7 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     // EXPECT_EQ(contract_ctx_->contract_state()->access_control()->balance(common::xaccount_address_t{contract_address}, propety_identifier), 0);
     contract_runtime_->execute(top::make_observer(contract_ctx_.get()));
     // after execution
-    EXPECT_EQ(contract_ctx_->contract_state()->access_control()->balance(common::xaccount_address_t{contract_address}, propety_identifier), amount);
+    // EXPECT_EQ(contract_ctx_->contract_state()->balance(propety_identifier, common::xsymbol_t{"TOP"}));
 
 }
 
@@ -138,7 +138,7 @@ TEST_F(test_system_contract_runtime, init_system_contract) {
     transfer_contract->reset_execution_context(top::make_observer(contract_ctx.get()));
 
     state_accessor::properties::xproperty_identifier_t propety_identifier("balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xenum_property_category::system);
-    transfer_contract->state()->access_control()->property_exist(common::xaccount_address_t{contract_address}, propety_identifier);
+    transfer_contract->state()->property_exist(propety_identifier);
 }
 
 TEST_F(test_system_contract_runtime, account_vm) {
