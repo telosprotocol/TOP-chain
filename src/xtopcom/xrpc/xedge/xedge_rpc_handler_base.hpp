@@ -118,27 +118,20 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
             } else {
                 auto count = 0;
                 auto msghash = msg.hash();
-                std::error_code ec;
-                auto cluster_addresses = m_election_cache_data_accessor->sharding_nodes(group_addr, common::xelection_round_t{}, ec);
-                if (ec) {
-                    xdbg("%s %s", ec.category().name(), ec.message().c_str());
-                    assert(cluster_addresses.empty());
-                }
+                auto cluster_addresses = vd->archive_addresses(common::xnode_type_t::storage_archive);
 
                 for (auto & cluster : cluster_addresses) {
                     if ((msghash % cluster_addresses.size() == count || (msghash + 1) % cluster_addresses.size() == count)) {
-                        xdbg("[global_trace][edge][forward advance]%s,src %s, dst %s, dst cluster %s, cluster size %zu, %s, %" PRIx64,
+                        xdbg("[global_trace][edge][forward advance]%s,src %s, dst %s, cluster size %zu, %" PRIx64,
                             msg_ptr->m_account.c_str(),
                             vd->address().to_string().c_str(),
-                            cluster.second.address.to_string().c_str(),
-                            dst.to_string().c_str(),
+                            cluster.to_string().c_str(),
                             cluster_addresses.size(),
-                            ec.message().c_str(),
                             msg.hash());
                         std::error_code ec;
-                        vd->send_to(cluster.second.address, msg, ec);
+                        vd->send_to(cluster.xip2(), msg, ec);
                         if (ec) {
-                            assert(false);
+                            xdbg("send_to arc fail: %s %s", ec.category().name(), ec.message().c_str());
                         }
                     }
                     ++count;

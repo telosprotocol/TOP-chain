@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "xcluster_rpc_handler.h"
+#include "xarc_rpc_handler.h"
 
 #include "xbase/xcontext.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -22,26 +22,25 @@ using data::xtransaction_t;
 
 #define max_cluster_rpc_mailbox_num (10000)
 
-xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> cluster_vhost,
+xarc_rpc_handler::xarc_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> arc_vhost,
                                            observer_ptr<xrouter_face_t> router_ptr,
                                            xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                                            observer_ptr<store::xstore_face_t> store,
                                            observer_ptr<base::xvblockstore_t> block_store,
-                                           observer_ptr<base::xvtxstore_t> txstore,
                                            observer_ptr<top::base::xiothread_t> thread)
-  : m_cluster_vhost(cluster_vhost)
+  : m_arc_vhost(arc_vhost)
   , m_router_ptr(router_ptr)
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store,txstore, txpool_service))
+  , m_arc_query_mgr(std::make_shared<xarc_query_manager>(store, block_store, txpool_service))
   , m_thread(thread) {
 }
 
-void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
+void xarc_rpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
     XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_cluster_rpc_handler");
     auto msgid = message.id();
 
-    xdbg_rpc("xcluster_rpc_handler on_message,id(%x,%s)", msgid, edge_sender.to_string().c_str());  // address to_string
+    xdbg_rpc("xarc_rpc_handler on_message,id(%x,%s)", msgid, edge_sender.to_string().c_str());  // address to_string
 
     auto process_request = [self = shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         rpc_message_para_t * para = dynamic_cast<rpc_message_para_t *>(call.get_param1().get_object());
@@ -51,11 +50,11 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
         if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
             if (msgid == rpc_msg_request) {
-                self->cluster_process_request(msg, edge_sender, message);
-                XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
-            } else {
-                xwarn("auditor tackle query:%" PRIx64, message.hash());
+                xdbg_rpc("wish arc tx");
                 return true;
+            } else {
+                self->cluster_process_query_request(msg, edge_sender, message);
+                XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
             }
         } else if (msgid == rpc_msg_response) {
             // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
@@ -66,7 +65,7 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
     int64_t in, out;
     int32_t queue_size = m_thread->count_calls(in, out);
     if (queue_size >= max_cluster_rpc_mailbox_num) {
-        xkinfo_rpc("xcluster_rpc_handler::on_message cluster rpc mailbox is full:%d", queue_size);
+        xkinfo_rpc("xarc_rpc_handler::on_message cluster rpc mailbox is full:%d", queue_size);
         XMETRICS_GAUGE(metrics::mailbox_rpc_auditor_total, 0);
         return;
     }
@@ -78,7 +77,7 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
     m_thread->send_call(asyn_call);
 }
 
-void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
+void xarc_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     std::string tx_hash;
     std::string account;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
@@ -93,22 +92,15 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                tx_ptr->get_tx_version(),
                account.c_str(),
                edge_sender.to_string().c_str(),
-               m_cluster_vhost->address().to_string().c_str(),
+               m_arc_vhost->address().to_string().c_str(),
                message.hash());
-
-        uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-        uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
-        if (now < tx_ptr->get_fire_timestamp()) {
-            XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
-        }
-        XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, delay_time_s);
 
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
             xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
                   tx_hash.c_str(),
                   account.c_str(),
                   edge_sender.to_string().c_str(),
-                  m_cluster_vhost->address().to_string().c_str(),
+                  m_arc_vhost->address().to_string().c_str(),
                   message.hash());
             return;
         }
@@ -117,12 +109,12 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         return;
     }
 
-    auto neighbors = m_cluster_vhost->neighbors_info2();
-    auto me_addr = m_cluster_vhost->address();
+    auto neighbors = m_arc_vhost->neighbors_info2();
+    auto me_addr = m_arc_vhost->address();
     size_t count = 0;
     for (auto & item : neighbors) {
         if (me_addr == item.second.address && (message.hash() % neighbors.size() == count || (message.hash() + 1) % neighbors.size() == count)) {
-            xkinfo("m_cluster_vhost send:%s,%" PRIu64, item.second.address.to_string().c_str(), message.hash());
+            xkinfo("m_arc_vhost send:%s,%" PRIu64, item.second.address.to_string().c_str(), message.hash());
 
             xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(edge_msg), rpc_msg_request);
             auto cluster_addr =
@@ -132,27 +124,16 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
             xkinfo("[global_trace][advance_rpc][forward shard]%s,%s,src %s,dst %s,%" PRIx64,
                    tx_hash.c_str(),
                    account.c_str(),
-                   m_cluster_vhost->address().to_string().c_str(),
+                   m_arc_vhost->address().to_string().c_str(),
                    vaddr.to_string().c_str(),
                    msg.hash());
             try {
-                //m_cluster_vhost->forward_broadcast_message(msg, vaddr);
-                std::error_code ec;
-                m_cluster_vhost->broadcast(vaddr.xip2(), msg, ec);
+                m_arc_vhost->forward_broadcast_message(msg, vaddr);
                 XMETRICS_GAUGE(metrics::rpc_auditor_forward_request, 1);
-                if (ec) {
-                    xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
-                          tx_hash.c_str(),
-                          m_cluster_vhost->address().to_string().c_str(),
-                          vaddr.to_string().c_str(),
-                          msg.hash(),
-                          static_cast<std::uint32_t>(msg.id()));
-                    assert(false);
-                }
             } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
                       tx_hash.c_str(),
-                      m_cluster_vhost->address().to_string().c_str(),
+                      m_arc_vhost->address().to_string().c_str(),
                       vaddr.to_string().c_str(),
                       msg.hash(),
                       static_cast<std::uint32_t>(msg.id()));
@@ -162,7 +143,7 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
     }
 }
 
-void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
+void xarc_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     if (edge_msg.m_tx_type != enum_xrpc_tx_type::enum_xrpc_query_type) {
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;
@@ -174,7 +155,7 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
         json_proc.parse_json(edge_msg.m_message_body);
         m_rule_mgr_ptr->filter(json_proc);
 
-        m_cluster_query_mgr->call_method(json_proc);
+        m_arc_query_mgr->call_method(json_proc);
         json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
         json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
         json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
@@ -193,38 +174,30 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
         response_msg_ptr->m_message_body = error_json.write();
     }
 
-    response_msg_ptr->m_signature_address = m_cluster_vhost->address();
+    response_msg_ptr->m_signature_address = m_arc_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
-    xdbg_rpc("xcluster_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
-    std::error_code ec;
-    m_cluster_vhost->send_to(edge_sender, msg, ec);
-    if (ec) {
-        assert(false);
-    }
+    xdbg_rpc("xarc_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
+    m_arc_vhost->send_to(edge_sender, msg);
 }
 
-void xcluster_rpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode_address_t & edge_sender) {
+void xarc_rpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode_address_t & edge_sender) {
     xrpc_msg_response_t shard_msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(msg.payload());
     try {
-        xkinfo("m_cluster_vhost response:%" PRIx64, msg.hash());
-        std::error_code ec;
-        m_cluster_vhost->send_to(shard_msg.m_source_address, msg, ec);
-        if (ec) {
-            assert(false);
-        }
+        xkinfo("m_arc_vhost response:%" PRIx64, msg.hash());
+        m_arc_vhost->send_to(shard_msg.m_source_address, msg);
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[global_trace][advance_rpc][send] src %s send msg %" PRIx64 " to dst %s",
-              m_cluster_vhost->address().to_string().c_str(),
+              m_arc_vhost->address().to_string().c_str(),
               msg.hash(),
               shard_msg.m_source_address.to_string().c_str());
     }
 }
 
-void xcluster_rpc_handler::start() {
-    m_cluster_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xcluster_rpc_handler::on_message, shared_from_this(), _1, _2));
+void xarc_rpc_handler::start() {
+    m_arc_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xarc_rpc_handler::on_message, shared_from_this(), _1, _2));
 }
 
-void xcluster_rpc_handler::stop() {
-    m_cluster_vhost->unregister_message_ready_notify(xmessage_category_rpc);
+void xarc_rpc_handler::stop() {
+    m_arc_vhost->unregister_message_ready_notify(xmessage_category_rpc);
 }
 NS_END2
