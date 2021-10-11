@@ -27,7 +27,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xenable_to_string.h"
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xserializable_based_on.h"
 #include "xcommon/xaddress.h"

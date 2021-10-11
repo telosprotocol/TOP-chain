@@ -16,12 +16,13 @@ NS_BEG3(top, contract_runtime, user)
 
 void xtop_wasm_engine::deploy_contract(xbyte_buffer_t const& code, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
 #if defined(BUILD_RUSTVM)
-     if (!validate_wasm_with_content((uint8_t*)code.data(), code.size())) {
-         std::error_code ec{ error::xenum_errc::enum_wasm_code_invalid };
-         top::error::throw_error(ec, "invalid wasm code");
-     }
+    if (!validate_wasm_with_content((uint8_t*)code.data(), code.size())) {
+        std::error_code ec{ error::xenum_errc::enum_wasm_code_invalid };
+        top::error::throw_error(ec, "invalid wasm code");
+    }
 #endif
-    exe_ctx->contract_state()->deploy_bin_code(code);
+    state_accessor::properties::xproperty_identifier_t bytes_code_property_id{"code", state_accessor::properties::xproperty_type_t::bin_code, state_accessor::properties::xproperty_category_t::user};
+    exe_ctx->contract_state()->deploy_bin_code(bytes_code_property_id, code);
 }
 
 void xtop_wasm_engine::call_contract(std::string const& func_name, std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {

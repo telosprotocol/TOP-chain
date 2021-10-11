@@ -23,7 +23,7 @@ void xtop_transfer_contract::transfer(uint64_t const amount) {
     }
 
     if (at_target_action_stage()) {
-        m_balance.deposit(amount);
+        // m_balance.deposit(amount);
     }
 }
 

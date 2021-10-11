@@ -7,6 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaddress.h"
+#include "xcommon/xsymbol.h"
 #include "xstate_accessor/xaccess_control_data.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
@@ -19,8 +20,7 @@
 #include <system_error>
 #include <type_traits>
 
-namespace top {
-namespace state_accessor {
+NS_BEG2(top, state_accessor)
 
 class xtop_state_accessor {
 public:
@@ -31,7 +31,6 @@ private:
     top::observer_ptr<top::base::xvbstate_t> bstate_;
     top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
     xstate_access_control_data_t ac_data_;
-    std::unordered_map<std::string, xtoken_t> m_tokens;
 
 public:
     xtop_state_accessor(xtop_state_accessor const &) = delete;
@@ -50,21 +49,21 @@ public:
     /// @param amount Amount to withdraw.
     /// @param ec Log the error code in the operation.
     /// @return Amount of token withdrew.
-    xtoken_t withdraw(properties::xproperty_identifier_t const & property_id, std::string const & symbol, uint64_t amount, std::error_code & ec);
+    xtoken_t withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount, std::error_code & ec);
 
     /// @brief Deposit token.
     /// @param property_id Property ID.
     /// @param symbol Token symblol.
     /// @param amount Amount to deposit.
     /// @param ec Log the error code in the operation.
-    void deposit(properties::xproperty_identifier_t const & property_id, std::string const & symbol, xtoken_t & amount, std::error_code & ec);
+    void deposit(properties::xproperty_identifier_t const & property_id, xtoken_t amount, std::error_code & ec);
 
     /// @brief Get balance.
     /// @param property_id Name of balance property.
     /// @param symbol Token symbol.
     /// @param ec Log the error code in the operation.
     /// @return The balance.
-    uint64_t balance(properties::xproperty_identifier_t const & property_id, std::string const & symbol, std::error_code & ec) const;
+    uint64_t balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
 
     /// @brief Create property.
     /// @param property_id Property ID.
@@ -207,7 +206,6 @@ private:
 };
 using xstate_accessor_t = xtop_state_accessor;
 
-}
-}
-
 #include "xstate_accessor/xstate_accessor_impl.h"
+
+NS_END2

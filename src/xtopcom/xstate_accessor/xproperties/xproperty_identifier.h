@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xstate_accessor/xproperties/xproperty_category.h"
 #include "xstate_accessor/xproperties/xproperty_identifier_fwd.h"
@@ -14,6 +14,8 @@
 #include <type_traits>
 
 NS_BEG3(top, state_accessor, properties)
+
+class xtop_property_identifier;
 
 class xtop_typeless_property_identifier {
 private:
@@ -29,7 +31,8 @@ public:
     xtop_typeless_property_identifier & operator=(xtop_typeless_property_identifier &&) = default;
     ~xtop_typeless_property_identifier() = default;
 
-    xtop_typeless_property_identifier(std::string name, xproperty_category_t category) noexcept;
+    explicit xtop_typeless_property_identifier(std::string name, xproperty_category_t category) noexcept;
+    xtop_typeless_property_identifier(xtop_property_identifier const & property_identifier);
 
     /// @brief Get property full name. Full name contains prefix.
     /// @return Property full name.

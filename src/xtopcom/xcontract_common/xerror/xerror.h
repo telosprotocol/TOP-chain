@@ -26,6 +26,7 @@ enum class xenum_errc {
     property_map_key_not_exist,
     account_not_matched,
     token_not_enough,
+    token_symbol_not_matched,
     deploy_code_failed,
     get_binlog_failed,
     state_get_failed,

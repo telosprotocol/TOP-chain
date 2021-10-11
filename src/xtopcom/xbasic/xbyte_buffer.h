@@ -11,6 +11,7 @@
 NS_BEG1(top)
 
 using xbyte_buffer_t = std::vector<xbyte_t>;
+using xbytes_t = xbyte_buffer_t;
 
 xbyte_buffer_t
 random_bytes(std::size_t const size);

@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xutility.h"
+#include "xbasic/xerror/xerror.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xaddress.h"
 #include "xcommon/xaddress_error.h"

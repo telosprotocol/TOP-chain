@@ -6,13 +6,14 @@
 
 #include "xapplication/xapplication.h"
 #include "xapplication/xerror/xerror.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xscope_executer.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
-#include "xdata/xblocktool.h"
 
 #include <cinttypes>
 

@@ -25,6 +25,8 @@ using xtoken_safe_t = xtop_token_safe;
 
 // token object
 class xtop_token_property: public xbasic_property_t {
+    common::xsymbol_t symbol_{"TOP"};
+
 public:
     xtop_token_property(xtop_token_property const&) = delete;
     xtop_token_property& operator=(xtop_token_property const&) = delete;
@@ -32,13 +34,16 @@ public:
     xtop_token_property& operator=(xtop_token_property&&) = default;
     ~xtop_token_property() =  default;
 
-    explicit xtop_token_property(std::string const& prop_name, contract_common::xbasic_contract_t* contract);
+    explicit xtop_token_property(std::string const& prop_name, common::xsymbol_t symbol, contract_common::xbasic_contract_t* contract);
+    explicit xtop_token_property(common::xsymbol_t symbol, contract_common::xbasic_contract_t * contract);
+    explicit xtop_token_property(std::string const & prop_name, contract_common::xbasic_contract_t * contract);
+    explicit xtop_token_property(contract_common::xbasic_contract_t * contract);
 
     void create() override final;
 
-    uint64_t value() const;
-    void withdraw(std::uint64_t amount);
-    void deposit(std::uint64_t amount);
+    uint64_t amount() const;
+    state_accessor::xtoken_t withdraw(std::uint64_t amount);
+    void deposit(state_accessor::xtoken_t tokens);
 };
 using xtoken_property_t = xtop_token_property;
 

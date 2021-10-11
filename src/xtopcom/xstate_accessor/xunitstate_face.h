@@ -33,8 +33,7 @@ public:
     virtual uint64_t nonce() const noexcept;
     virtual xtoken_t withdraw(std::string const & symbol, uint64_t const amount, std::error_code & ec);
     virtual xtoken_t withdraw(uint64_t const amount, std::error_code & ec);
-    virtual void deposit(std::string const & symbol, xtoken_t & amount, std::error_code & ec);
-    virtual void deposit(xtoken_t & amount, std::error_code & ec);
+    virtual void deposit(xtoken_t amount, std::error_code & ec);
 
     virtual void create_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec);
     virtual void clear_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec);

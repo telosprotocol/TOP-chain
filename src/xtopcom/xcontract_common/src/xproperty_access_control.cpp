@@ -4,7 +4,7 @@
 
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xdata/xproperty.h"
 #include "xvledger/xvledger.h"
 

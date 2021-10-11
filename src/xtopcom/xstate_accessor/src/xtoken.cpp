@@ -5,24 +5,23 @@
 
 #include "xstate_accessor/xtoken.h"
 
-#include "xbasic/xerror/xthrow_error.h"
-#include "xstate_accessor/xerror/xerror.h"
+#include "xbasic/xerror/xerror.h"
+#include "xcontract_common/xerror/xerror.h"
 #include "xutility/xhash.h"
 
 #include <cassert>
 #include <memory>
 
-namespace top {
-namespace state_accessor {
+NS_BEG2(top, state_accessor)
 
 xtop_token::xtop_token(xtop_token && other) noexcept : value_{ other.value_ }, symbol_{ std::move(other.symbol_) } {
     other.value_ = 0;
 }
 
-xtop_token::xtop_token(std::string symbol) noexcept : symbol_{ std::move(symbol) } {
+xtop_token::xtop_token(common::xsymbol_t symbol) noexcept : symbol_{ std::move(symbol) } {
 }
 
-xtop_token::xtop_token(std::uint64_t const amount, std::string symbol) noexcept : value_{ amount }, symbol_ { std::move(symbol) } {
+xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) noexcept : value_{ amount }, symbol_ { std::move(symbol) } {
 }
 
 xtop_token::~xtop_token() noexcept {
@@ -57,8 +56,7 @@ bool xtop_token::operator<(xtop_token const & other) const {
     }
 
     if (symbol() != other.symbol()) {
-        std::error_code ec{ error::xerrc_t::invalid_property_type };
-        top::error::throw_error(ec, "xtoken_t::operator<=>(xtoken_t const & other)");
+        top::error::throw_error(error::xerrc_t::token_symbol_not_matched, "xtoken_t::operator<=>(xtoken_t const & other)");
     }
 
     return value_ < other.value_;
@@ -100,11 +98,11 @@ bool xtop_token::invalid() const noexcept {
     return symbol_.empty();
 }
 
-uint64_t xtop_token::value() const noexcept {
+uint64_t xtop_token::amount() const noexcept {
     return value_;
 }
 
-std::string const & xtop_token::symbol() const noexcept {
+common::xsymbol_t const & xtop_token::symbol() const noexcept {
     return symbol_;
 }
 
@@ -113,19 +111,18 @@ void xtop_token::clear() noexcept {
     symbol_.clear();
 }
 
-}
-}
+NS_END2
 
-namespace std {
+NS_BEG1(std)
 
 size_t hash<top::state_accessor::xtoken_t>::operator()(top::state_accessor::xtoken_t const & amount) const noexcept {
     top::utl::xxh64_t xxhash;
-    auto const value = amount.value();
+    auto const value = amount.amount();
 
     xxhash.update(std::addressof(value), sizeof(value));
-    xxhash.update(amount.symbol());
+    xxhash.update(amount.symbol().to_string());
 
     return static_cast<size_t>(xxhash.get_hash());
 }
 
-}
+NS_END1

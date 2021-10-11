@@ -40,6 +40,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::token_not_enough:
         return "token not enough";
 
+    case xerrc_t::token_symbol_not_matched:
+        return "token symbol not matched";
+
     case xerrc_t::deploy_code_failed:
         return "deploy code failed";
 

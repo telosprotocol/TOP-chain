@@ -8,9 +8,7 @@
 #include "xcontract_common/xcontract_face.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
-
 #include "xstate_accessor/xtoken.h"
-
 
 NS_BEG2(top, contract_common)
 
@@ -60,7 +58,7 @@ public:
     std::string target_action_data() const;
     uint64_t  src_action_asset_amount(std::error_code& ec) const;
     std::string src_action_asset_name(std::error_code& ec) const;
-    state_accessor::xtoken_t src_action_asset(std::error_code& ec) const;
+    state_accessor::xtoken_t src_action_asset(std::error_code & ec) const;
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;

@@ -24,7 +24,7 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xutility.h"
 #include "xcontract_runtime/xerror/xerror.h"
 

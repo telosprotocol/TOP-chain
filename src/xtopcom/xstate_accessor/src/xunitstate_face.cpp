@@ -25,14 +25,10 @@ xtoken_t xtop_unit_state_face::withdraw(uint64_t const amount, std::error_code &
     return withdraw("TOP", amount, ec);
 }
 
-void xtop_unit_state_face::deposit(std::string const & symbol, xtoken_t & amount, std::error_code & ec) {
+void xtop_unit_state_face::deposit(xtoken_t amount, std::error_code & ec) {
     assert(!ec);
     assert(state_accessor_ != nullptr);
-    state_accessor_->deposit({ "balance", properties::xproperty_type_t::token, properties::xproperty_category_t::system }, symbol, amount, ec);
-}
-
-void xtop_unit_state_face::deposit(xtoken_t & amount, std::error_code & ec) {
-    deposit("TOP", amount, ec);
+    state_accessor_->deposit({ "balance", properties::xproperty_type_t::token, properties::xproperty_category_t::system }, std::move(amount), ec);
 }
 
 void xtop_unit_state_face::create_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec) {

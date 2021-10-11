@@ -4,7 +4,7 @@
 
 #include "xcontract_common/xcontract_state.h"
 
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xutility.h"
 
 #include <cassert>
@@ -14,24 +14,45 @@ NS_BEG2(top, contract_common)
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac) : m_action_account_address{ action_account_addr}, m_ac{ac} {
 }
 
-xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<state_accessor::xstate_accessor_t> sa) : m_action_account_address {std::move(action_account_addr)}, m_state_accessor {sa} {
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr,
+                                         observer_ptr<state_accessor::xstate_accessor_t> sa,
+                                         xcontract_execution_param_t const & execution_param)
+  : m_action_account_address{std::move(action_account_addr)}, m_state_accessor{sa}, m_param{execution_param} {
 }
 
 common::xaccount_address_t xtop_contract_state::state_account_address() const {
-    return m_ac->address();
+    assert(m_state_accessor != nullptr);
+    return m_state_accessor->account_address();
 }
 
+state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
+                                                       common::xsymbol_t const & symbol,
+                                                       uint64_t amount,
+                                                       std::error_code & ec) {
+    assert(!ec);
+    assert(m_state_accessor != nullptr);
 
-//bool xtop_contract_state::has_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const noexcept {
-//    assert(m_ac != nullptr);
-//    return m_ac->has_property(contract_account(), property_id, ec);
-//}
-//
-//
-//bool xtop_contract_state::has_property(properties::xproperty_identifier_t const & property_id) const noexcept {
-//    std::error_code ec;
-//    return m_ac->has_property(contract_account(), property_id, ec);
-//}
+    return m_state_accessor->withdraw(property_id, symbol, amount, ec);
+}
+
+state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount) {
+    std::error_code ec;
+    auto r = withdraw(property_id, symbol, amount, ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens, std::error_code & ec) {
+    assert(!ec);
+    assert(m_state_accessor != nullptr);
+    m_state_accessor->deposit(property_id, std::move(tokens), ec);
+}
+
+void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens) {
+    std::error_code ec;
+    deposit(property_id, std::move(tokens), ec);
+    top::error::throw_error(ec);
+}
 
 void xtop_contract_state::create_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
     assert(m_state_accessor != nullptr);
@@ -56,24 +77,33 @@ bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_i
     return r;
 }
 
-void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code, std::error_code & ec) {
-    state_accessor::properties::xproperty_identifier_t src_property_id{
-        "src_code", state_accessor::properties::xproperty_type_t::src_code, state_accessor::properties::xproperty_category_t::user};
-    m_state_accessor->deploy_bin_code(src_property_id, std::move(code), ec);
+void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & property_id, xbyte_buffer_t code, std::error_code & ec) {
+    assert(!ec);
+    assert(m_state_accessor != nullptr);
+
+    m_state_accessor->deploy_bin_code(property_id, std::move(code), ec);
 }
 
-void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code) {
+void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & property_id, xbyte_buffer_t code) {
     std::error_code ec;
-    deploy_bin_code(std::move(code), ec);
+    deploy_bin_code(property_id, std::move(code), ec);
     top::error::throw_error(ec);
 }
 
-state_accessor::xtoken_t const & xtop_contract_state::balance(std::string const & symbol, std::error_code & ec) const {
+uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id,
+                                      common::xsymbol_t const & symbol,
+                                      std::error_code & ec) const {
     assert(m_state_accessor != nullptr);
-    state_accessor::properties::xproperty_identifier_t balance_property_id{
-        "balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+    assert(!ec);
 
-    return m_state_accessor->balance(balance_property_id, symbol, ec);
+    return m_state_accessor->balance(property_id, symbol, ec);
+}
+
+uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
+    std::error_code ec;
+    auto r = m_state_accessor->balance(property_id, symbol, ec);
+    top::error::throw_error(ec);
+    return r;
 }
 
 std::string xtop_contract_state::binlog(std::error_code & ec) const {
@@ -89,26 +119,12 @@ std::string xtop_contract_state::fullstate_bin() const {
     return m_ac->fullstate_bin();
 }
 
-uint64_t xtop_contract_state::token_withdraw(uint64_t amount, std::error_code& ec) const {
-    assert(m_ac);
-
-    state_accessor::properties::xproperty_identifier_t property_id{
-        data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-
-    uint64_t res = 0;
-    try {
-        res = m_ac->withdraw(state_account_address(), property_id, amount);
-    } catch (top::error::xtop_error_t const& err) {
-        ec = err.code();
-    }
-
-    return  res;
+common::xlogic_time_t xtop_contract_state::time() const {
+    return m_param.m_clock;
 }
 
-uint64_t xtop_contract_state::token_withdraw(uint64_t amount) const {
-    state_accessor::properties::xproperty_identifier_t property_id{
-        data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-    return m_ac->withdraw(state_account_address(), property_id, amount);
+common::xlogic_time_t xtop_contract_state::timestamp() const {
+    return m_param.m_timestamp;
 }
 
 uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code& ec) const {
@@ -183,9 +199,40 @@ void xtop_contract_state::latest_followup_tx_nonce(uint64_t nonce, std::error_co
     assert(m_ac);
     m_ac->latest_followup_tx_nonce(nonce, ec);
 }
+
 void xtop_contract_state::latest_followup_tx_nonce(uint64_t nonce) {
     assert(m_ac);
     m_ac->latest_followup_tx_nonce(nonce);
 }
 
+template <>
+void xtop_contract_state::set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                                     state_accessor::properties::xkey_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & key,
+                                                                                                     state_accessor::properties::xvalue_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & value,
+                                                                                                     std::error_code & ec) {
+    assert(m_state_accessor != nullptr);
+    assert(!ec);
+    m_state_accessor->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(property_id, key, value, ec);
+}
+
+template <>
+state_accessor::properties::xvalue_type_of_t<state_accessor::properties::xproperty_type_t::map>::type
+xtop_contract_state::get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                                state_accessor::properties::xkey_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & key,
+                                                                                                std::error_code & ec) const {
+    assert(m_state_accessor != nullptr);
+    assert(!ec);
+
+    return m_state_accessor->get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(property_id, key, ec);
+}
+
+template <>
+bool xtop_contract_state::exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                                     state_accessor::properties::xkey_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & key,
+                                                                                                     std::error_code & ec) const {
+    assert(m_state_accessor != nullptr);
+    assert(!ec);
+
+    return m_state_accessor->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(property_id, key, ec);
+}
 NS_END2
