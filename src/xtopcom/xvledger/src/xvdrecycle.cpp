@@ -38,6 +38,15 @@ namespace top
         {
         }
     
+        xstaterecycler_t::xstaterecycler_t()
+            :xvdrecycle_t(enum_vdata_recycle_type_state)
+        {
+        }
+        
+        xstaterecycler_t::~xstaterecycler_t()
+        {
+        }
+    
         xvdrecycle_mgr::xvdrecycle_mgr()
         {
             memset(m_recyclers_obj,0,sizeof(m_recyclers_obj));

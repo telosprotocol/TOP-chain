@@ -5,6 +5,7 @@
 #pragma once
 #include "xbase/xobject.h"
 #include "xvledger/xvbindex.h"
+#include "xvledger/xvstate.h"
  
 namespace top
 {
@@ -60,6 +61,22 @@ namespace top
             virtual bool   recycle(const xvbindex_t * block) = 0;//recyle one block
             virtual bool   recycle(const std::vector<xvbindex_t*> & mblocks) = 0;//recycle multiple blocks
             virtual bool   recycle(const xvaccount_t & account_obj,xblockmeta_t & account_meta) = 0;//recylce possible blocks under account
+        };
+    
+        class xstaterecycler_t : public xvdrecycle_t
+        {
+        protected:
+            xstaterecycler_t();
+            virtual ~xstaterecycler_t();
+        private:
+            xstaterecycler_t(xstaterecycler_t &&);
+            xstaterecycler_t(const xstaterecycler_t &);
+            xstaterecycler_t & operator = (const xstaterecycler_t &);
+            
+        public:
+            virtual bool   recycle(const xvbstate_t * state) = 0;//recyle one block
+            virtual bool   recycle(const std::vector<xvbstate_t*> & mstates) = 0;//recycle multiple blocks
+            virtual bool   recycle(const xvaccount_t & account_obj,xblockmeta_t & account_meta) = 0;//recylce possible states under account
         };
     
         //global plugin to manage for data recycle and garbage collection
