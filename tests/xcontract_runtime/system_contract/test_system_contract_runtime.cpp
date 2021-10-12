@@ -278,12 +278,11 @@ TEST_F(test_system_contract_runtime, test_asset_api_normal) {
     transfer_contract->reset_execution_context(contract_ctx);
 
     std::error_code err;
-    auto amount = transfer_contract->src_action_asset_amount(err);
-    auto token_name = transfer_contract->src_action_asset_name(err);
+    auto token = transfer_contract->src_action_asset(err);
     assert(!err);
 
-    EXPECT_EQ(amount, 100000);
-    EXPECT_EQ(token_name, data::XPROPERTY_ASSET_TOP);
+    EXPECT_EQ(token.amount(), 100000);
+    EXPECT_EQ(token.symbol().to_string(), data::XPROPERTY_ASSET_TOP);
 
 }
 
@@ -308,14 +307,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_fail) {
     transfer_contract->reset_execution_context(contract_ctx);
 
     std::error_code err;
-    auto amount = transfer_contract->src_action_asset_amount(err);
-    assert(err); // have error
-    EXPECT_EQ(err.value(), (int)contract_common::error::xerrc_t::src_action_asset_not_exist);
-    err.clear();
-    auto token_name = transfer_contract->src_action_asset_name(err);
-    assert(err); // have error
-    EXPECT_EQ(err.value(), (int)contract_common::error::xerrc_t::src_action_asset_not_exist);
-
+    ASSERT_DEATH(transfer_contract->src_action_asset(err), "");
 }
 
 

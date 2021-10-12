@@ -61,7 +61,7 @@ void xtop_contract_execution_context::receipt_data(std::map<std::string, xbyte_b
 }
 
 std::map<std::string, xbyte_buffer_t> & xtop_contract_execution_context::receipt_data() noexcept {
-    return m_execution_result.output.receipt_data;
+    return m_receipt_data;
 }
 
 xbyte_buffer_t const & xtop_contract_execution_context::receipt_data(std::string const & key, std::error_code & ec) const noexcept {
@@ -282,7 +282,7 @@ bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
             last_nonce = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_nonce();
             nonce = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->nonce();
             hash = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->hash();
-            
+
             break;
         }
         case data::xtop_action_type_t::user:{
