@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbasic/xhashable.hpp"
-#include "xbasic/xenable_to_string.h"
 
 #include <cstdint>
 #include <functional>
@@ -14,7 +13,6 @@
 NS_BEG2(top, network)
 
 class xtop_endpoint final : public xhashable_t<xtop_endpoint, std::size_t>
-                          , public xenable_to_string_t<xtop_endpoint>
 {
     std::string m_address{};
     std::uint16_t m_port{};
@@ -50,7 +48,7 @@ public:
     hash() const override;
 
     std::string
-    to_string() const override;
+    to_string() const;
 };
 
 using xendpoint_t = xtop_endpoint;

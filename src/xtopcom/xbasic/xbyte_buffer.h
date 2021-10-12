@@ -5,7 +5,10 @@
 #pragma once
 
 #include "xbasic/xbyte.h"
+#include "xbasic/xerror/xerror.h"
 
+#include <string>
+#include <system_error>
 #include <vector>
 
 NS_BEG1(top)
@@ -18,5 +21,61 @@ random_bytes(std::size_t const size);
 
 xbyte_buffer_t
 random_base58_bytes(std::size_t const size);
+
+template <typename T>
+xbytes_t to_bytes(T const & input) {
+    return input.to_bytes();
+}
+
+template <typename T>
+T from_bytes(xbytes_t const & input, std::error_code & ec) {
+    T ret;
+    ret.from_bytes(input, ec);
+    return ret;
+}
+
+template <typename T>
+T from_bytes(xbytes_t const & input) {
+    std::error_code ec;
+    auto ret = top::from_bytes<T>(input, ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
+template <>
+xbytes_t to_bytes<char>(char const & input);
+
+template <>
+xbytes_t to_bytes<int>(int const & input);
+
+template <>
+xbytes_t to_bytes<long>(long const & input);
+
+template <>
+xbytes_t to_bytes<long long>(long long const & input);
+
+template <>
+xbytes_t to_bytes<unsigned char>(unsigned char const & input);
+
+template <>
+xbytes_t to_bytes<unsigned int>(unsigned int const & input);
+
+template <>
+xbytes_t to_bytes<unsigned long>(unsigned long const & input);
+
+template <>
+xbytes_t to_bytes<unsigned long long>(unsigned long long const & input);
+
+template <>
+xbytes_t to_bytes<std::string>(std::string const & input);
+
+template <>
+xbytes_t to_bytes<xbytes_t>(xbytes_t const & input);
+
+template <>
+xbytes_t from_bytes<xbytes_t>(xbytes_t const & input);
+
+template <>
+std::string from_bytes<std::string>(xbytes_t const & input);
 
 NS_END1
