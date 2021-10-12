@@ -388,6 +388,7 @@ namespace top
                 const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
+                    get_meta()->update_meta_process_id();
                     #ifdef DEBUG_XVLEDGER
                     xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
                     #endif

@@ -442,8 +442,9 @@ namespace top
         private:
             xblockmeta_t(xblockmeta_t && move_obj);
             
-        public://debug purpose
-            const std::string  ddump() const;
+        public:
+            bool    operator == (const xblockmeta_t & obj) const;
+            const std::string  ddump() const;//debug purpose
             
         public:
             uint64_t    _lowest_vkey2_block_height;    //since this height,introduce db key of new version(2)
@@ -470,8 +471,9 @@ namespace top
         private:
             xsyncmeta_t(xsyncmeta_t && move_obj);
             
-        public://debug purpose
-            const std::string  ddump() const;
+        public:
+            bool    operator == (const xsyncmeta_t & obj) const;
+            const std::string  ddump() const;//debug purpose
             
         public: //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
             uint64_t    _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
@@ -490,10 +492,12 @@ namespace top
         private:
             xstatemeta_t(xstatemeta_t && move_obj);
             
-        public://debug purpose
-            const std::string  ddump() const;
-            
         public:
+            bool    operator == (const xstatemeta_t & obj) const;
+            const std::string  ddump() const;//debug purpose
+
+        public:
+            uint64_t     _lowest_execute_block_height; //store delete/pruned height for state
             uint64_t     _highest_execute_block_height; //latest executed block that has executed and change state of account
             std::string  _highest_execute_block_hash;
         };
@@ -505,13 +509,16 @@ namespace top
             xindxmeta_t();
             xindxmeta_t(const xindxmeta_t & obj);
             ~xindxmeta_t();
+            
         protected:
             xindxmeta_t & operator = (const xindxmeta_t & obj);
         private:
             xindxmeta_t(xindxmeta_t && move_obj);
             
-        public://debug purpose
-            const std::string  ddump() const;
+        public:
+            bool    operator == (const xindxmeta_t & obj) const;
+            const std::string  ddump() const;//debug purpose
+        
         public:
             uint64_t        m_latest_unit_height;
             uint64_t        m_latest_unit_viewid;
@@ -519,7 +526,7 @@ namespace top
             uint16_t        m_account_flag;  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
         };
     
-        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xindxmeta_t,protected xsyncmeta_t
+        class xvactmeta_t : public xdataobj_t,public xblockmeta_t,public xstatemeta_t,public xindxmeta_t,public xsyncmeta_t
         {
             friend class xvaccountobj_t;
             enum {enum_obj_type = xdataunit_t::enum_xdata_type_vaccountmeta};
@@ -557,6 +564,7 @@ namespace top
             xindxmeta_t  &  get_index_meta();
             xsyncmeta_t  &  get_sync_meta();
             
+            void    update_meta_process_id();
         protected:
             //not safe for multiple threads
             virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary
@@ -582,6 +590,7 @@ namespace top
             using xsyncmeta_t::_highest_sync_height;           // higest continous block started from highest full table block
  
         private: //from statemeta
+            using xstatemeta_t::_lowest_execute_block_height;
             using xstatemeta_t::_highest_execute_block_height; //latest executed block that has executed and change state of account
             using xstatemeta_t::_highest_execute_block_hash;
  

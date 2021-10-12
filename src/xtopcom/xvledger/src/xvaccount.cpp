@@ -156,6 +156,23 @@ namespace top
             _block_level                    = obj._block_level;
             return *this;
         }
+    
+        bool    xblockmeta_t::operator == (const xblockmeta_t & obj) const
+        {
+            if(  (_highest_cert_block_height    != obj._highest_cert_block_height)
+               ||(_highest_lock_block_height    != obj._highest_lock_block_height)
+               ||(_highest_commit_block_height  != obj._highest_commit_block_height)
+               ||(_highest_full_block_height    != obj._highest_full_block_height)
+               ||(_highest_connect_block_height != obj._highest_connect_block_height)
+               ||(_highest_deleted_block_height != obj._highest_deleted_block_height)
+               ||(_lowest_vkey2_block_height    != obj._lowest_vkey2_block_height)
+               ||(_highest_connect_block_hash   != obj._highest_connect_block_hash)
+               ||(_block_level != obj._block_level) )
+            {
+                return false;
+            }
+            return true;
+        }
         
         xblockmeta_t::~xblockmeta_t()
         {
@@ -193,6 +210,17 @@ namespace top
             return *this;
         }
     
+        bool    xsyncmeta_t::operator == (const xsyncmeta_t & obj) const
+        {
+            if(  (_highest_sync_height            != obj._highest_sync_height)
+               ||(_highest_genesis_connect_height != obj._highest_genesis_connect_height)
+               ||(_highest_genesis_connect_hash   != obj._highest_genesis_connect_hash) )
+            {
+                return false;
+            }
+            return true;
+        }
+    
         xsyncmeta_t::~xsyncmeta_t()
         {
         }
@@ -204,26 +232,41 @@ namespace top
     
         xstatemeta_t::xstatemeta_t()
         {
+            _lowest_execute_block_height  = 0;
             _highest_execute_block_height = 0;
         }
     
         xstatemeta_t::xstatemeta_t(xstatemeta_t && move_obj)
         {
+            _lowest_execute_block_height  = 0;
             _highest_execute_block_height = 0;
             *this = move_obj;
         }
         
         xstatemeta_t::xstatemeta_t(const xstatemeta_t & obj)
         {
+            _lowest_execute_block_height  = 0;
             _highest_execute_block_height = 0;
             *this = obj;
         }
     
         xstatemeta_t & xstatemeta_t::operator = (const xstatemeta_t & obj)
         {
+            _lowest_execute_block_height  = obj._lowest_execute_block_height;
             _highest_execute_block_height = obj._highest_execute_block_height;
             _highest_execute_block_hash   = obj._highest_execute_block_hash;
             return *this;
+        }
+    
+        bool    xstatemeta_t::operator == (const xstatemeta_t & obj) const
+        {
+            if(  (_lowest_execute_block_height  != obj._lowest_execute_block_height)
+               ||(_highest_execute_block_height != obj._highest_execute_block_height)
+               ||(_highest_execute_block_hash   != obj._highest_execute_block_hash) )
+            {
+                return false;
+            }
+            return true;
         }
     
         xstatemeta_t::~xstatemeta_t()
@@ -268,6 +311,18 @@ namespace top
             m_latest_tx_nonce = obj.m_latest_tx_nonce;
             m_account_flag    = obj.m_account_flag;
             return *this;
+        }
+    
+        bool    xindxmeta_t::operator == (const xindxmeta_t & obj) const
+        {
+            if(  (m_latest_unit_height != obj.m_latest_unit_height)
+               ||(m_latest_unit_viewid != obj.m_latest_unit_viewid)
+               ||(m_latest_tx_nonce    != obj.m_latest_tx_nonce)
+               ||(m_account_flag       != obj.m_account_flag) )
+            {
+                return false;
+            }
+            return true;
         }
         
         xindxmeta_t::~xindxmeta_t()
@@ -361,6 +416,11 @@ namespace top
             return *this;
         }
     
+        void   xvactmeta_t::update_meta_process_id()
+        {
+            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
+        }
+    
         //APIs only open for  xvaccountobj_t object
         bool   xvactmeta_t::set_block_meta(const xblockmeta_t & new_meta)
         {
@@ -368,24 +428,41 @@ namespace top
                ||(new_meta._highest_lock_block_height    < _highest_lock_block_height)
                ||(new_meta._highest_commit_block_height  < _highest_commit_block_height)
                ||(new_meta._highest_full_block_height    < _highest_full_block_height)
-               ||(new_meta._highest_connect_block_height < _highest_connect_block_height) )
+               ||(new_meta._highest_connect_block_height < _highest_connect_block_height)
+               ||(new_meta._highest_deleted_block_height < _highest_deleted_block_height)
+               ||(new_meta._lowest_vkey2_block_height    < _lowest_vkey2_block_height)  )
             {
                 xerror("xvactmeta_t::set_block_meta,try overwrited newer_meta(%s) with old_meta( %s)",xblockmeta_t::ddump().c_str(),new_meta.ddump().c_str());
                 return false; //try to overwrited newer version
             }
             
+            const uint64_t total_new_heights = new_meta._highest_cert_block_height + new_meta._highest_lock_block_height + new_meta._highest_commit_block_height + new_meta._highest_full_block_height + new_meta._highest_connect_block_height +
+                new_meta._highest_deleted_block_height + new_meta._lowest_vkey2_block_height ;
+            
+            const uint64_t total_old_heights = _highest_cert_block_height  +
+                    _highest_lock_block_height + _highest_commit_block_height +
+                    _highest_full_block_height + _highest_connect_block_height +
+                    _highest_deleted_block_height + _lowest_vkey2_block_height;
+            
             xblockmeta_t::operator=(new_meta);
-            add_modified_count();
+            if(total_new_heights != total_old_heights)//using quick path to determine
+                add_modified_count();
             return true;
         }
     
         bool   xvactmeta_t::set_state_meta(const xstatemeta_t & new_meta)
         {
-            if(new_meta._highest_execute_block_height < _highest_execute_block_height)
+            if(   (new_meta._highest_execute_block_height < _highest_execute_block_height)
+               || (new_meta._lowest_execute_block_height  < _lowest_execute_block_height) )
             {
                 xerror("xvactmeta_t::set_state_meta,try overwrited newer_meta(%s) with old_meta( %s)",xstatemeta_t::ddump().c_str(),new_meta.ddump().c_str());
                 return false;
             }
+            else if(xstatemeta_t::operator==(new_meta))
+            {
+                return true;
+            }
+
             xstatemeta_t::operator=(new_meta);
             add_modified_count();
             return true;
@@ -400,6 +477,11 @@ namespace top
                 xerror("xvactmeta_t::set_index_meta,try overwrited newer_meta(%s) with old_meta( %s)",xindxmeta_t::ddump().c_str(),new_meta.ddump().c_str());
                 return false;
             }
+            else if(xindxmeta_t::operator==(new_meta))
+            {
+                return true;
+            }
+            
             xindxmeta_t::operator=(new_meta);
             add_modified_count();
             return true;
@@ -407,11 +489,17 @@ namespace top
     
         bool   xvactmeta_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
-            if(new_meta._highest_genesis_connect_height < _highest_genesis_connect_height)
+            if(  (new_meta._highest_genesis_connect_height < _highest_genesis_connect_height)
+               ||(new_meta._highest_sync_height            < _highest_sync_height) )
             {
                 xerror("xvactmeta_t::set_sync_meta,try overwrited newer_meta(%s) with old_meta( %s)",xsyncmeta_t::ddump().c_str(),new_meta.ddump().c_str());
                 return false;
             }
+            else if(xsyncmeta_t::operator==(new_meta))
+            {
+                return true;
+            }
+                
             xsyncmeta_t::operator=(new_meta);
             add_modified_count();
             return true;
@@ -425,9 +513,12 @@ namespace top
                 xwarn("xvactmeta_t::set_latest_executed_block,try overwrited _highest_execute_block_height(%llu) with old_meta(%llu)",_highest_execute_block_height,height);
                 return false;
             }
+            
+            if(height != _highest_execute_block_height)
+                add_modified_count();
+                
             _highest_execute_block_height = height;
             _highest_execute_block_hash   = blockhash;
-            add_modified_count();
             return true;
         }
     
@@ -492,7 +583,9 @@ namespace top
         int32_t   xvactmeta_t::do_write(xstream_t & stream)//serialize whole object to binary
         {
             const int32_t begin_size = stream.size();
-  
+            
+            const uint16_t cur_process_id = (uint16_t)base::xvchain_t::instance().get_current_process_id();
+ 
             stream << _highest_cert_block_height;
             stream << _highest_lock_block_height;
             stream << _highest_commit_block_height;
@@ -508,7 +601,7 @@ namespace top
             //from here we introduce version control for meta
             stream << _meta_spec_version;
             stream << _block_level;
-            stream << _meta_process_id;
+            stream << cur_process_id;
             stream << _highest_deleted_block_height;
             
             //keep above unchanged and compatible with old format
@@ -521,6 +614,7 @@ namespace top
                 stream.write_compact_var(m_latest_tx_nonce);
                 stream.write_compact_var(m_account_flag);
                 
+                stream.write_compact_var(_lowest_execute_block_height);
                 stream.write_compact_var(_lowest_vkey2_block_height);
             }
             
@@ -557,6 +651,7 @@ namespace top
                 stream.read_compact_var(m_latest_tx_nonce);
                 stream.read_compact_var(m_account_flag);
                 
+                stream.read_compact_var(_lowest_execute_block_height);
                 stream.read_compact_var(_lowest_vkey2_block_height);
             }
  
