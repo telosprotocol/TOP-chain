@@ -22,6 +22,11 @@ std::string to_string<long long>(long long const & input) {
 }
 
 template <>
+std::string to_string<unsigned int>(unsigned int const & input) {
+    return std::to_string(input);
+}
+
+template <>
 std::string to_string<unsigned long>(unsigned long const & input) {
     return std::to_string(input);
 }
@@ -34,6 +39,11 @@ std::string to_string<unsigned long long>(unsigned long long const & input) {
 template <>
 std::string to_string<std::string>(std::string const & input) {
     return input;
+}
+
+template <>
+std::string to_string<xbytes_t>(xbytes_t const & input) {
+    return {input.begin(), input.end()};
 }
 
 template <>
@@ -74,6 +84,11 @@ double from_string<double>(std::string const & input) {
 template <>
 long double from_string<long double>(std::string const & input) {
     return std::stold(input);
+}
+
+template <>
+xbytes_t from_string<xbytes_t>(std::string const & input) {
+    return {input.begin(), input.end()};
 }
 
 NS_END1

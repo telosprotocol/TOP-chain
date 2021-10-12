@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xerror/xerror.h"
+#include "xbasic/xbyte_buffer.h"
 
 #include <string>
 #include <system_error>
@@ -41,6 +42,9 @@ template <>
 std::string to_string<long long>(long long const & input);
 
 template <>
+std::string to_string<unsigned int>(unsigned int const & input);
+
+template <>
 std::string to_string<unsigned long>(unsigned long const & input);
 
 template <>
@@ -48,6 +52,9 @@ std::string to_string<unsigned long long>(unsigned long long const & input);
 
 template <>
 std::string to_string<std::string>(std::string const & input);
+
+template <>
+std::string to_string<xbytes_t>(xbytes_t const & input);
 
 template <>
 int from_string<int>(std::string const & input);
@@ -72,5 +79,8 @@ double from_string<double>(std::string const & input);
 
 template <>
 long double from_string<long double>(std::string const & input);
+
+template<>
+xbytes_t from_string<xbytes_t>(std::string const & input);
 
 NS_END1

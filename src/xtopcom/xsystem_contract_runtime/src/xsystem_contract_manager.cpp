@@ -88,7 +88,10 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
         make_object_ptr<base::xvbstate_t>(contract_address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     auto property_access_control =
         top::make_unique<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
-    auto contract_state = top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(property_access_control.get()));
+    state_accessor::xstate_accessor_t sa{top::make_observer(bstate.get()), state_accessor::xstate_access_control_data_t{}};
+    // auto contract_state = top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(property_access_control.get()));
+    auto contract_state =
+        top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
 
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = contract_runtime::xaction_generator_t::generate(cons_tx);
@@ -97,10 +100,12 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     auto contract_ctx= top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), make_observer(contract_state.get())); // action will be moved into xcontract_execution_context_t.
     assert(action == nullptr);
     xtransaction_execution_result_t result = contract_obj->execute(top::make_observer(contract_ctx));
+    assert(!result.status.ec);
     xtransaction_result_t consensus_result;
     consensus_result.m_property_binlog = result.output.binlog;
     consensus_result.m_full_state = result.output.contract_state_snapshot;
-    // assert(!result.output.binlog.empty());
+    assert(!result.output.binlog.empty());
+    assert(!result.output.contract_state_snapshot.empty());
 
     base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_address.value(), tx, consensus_result));
     xassert(block);

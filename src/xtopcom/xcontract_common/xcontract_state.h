@@ -62,7 +62,7 @@ public:
     xtop_contract_state & operator=(xtop_contract_state &&) = default;
     ~xtop_contract_state() = default;
 
-    explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac);
+    // explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac);
     explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<state_accessor::xstate_accessor_t> sa, xcontract_execution_param_t const & execution_param);
 
     common::xaccount_address_t state_account_address() const;

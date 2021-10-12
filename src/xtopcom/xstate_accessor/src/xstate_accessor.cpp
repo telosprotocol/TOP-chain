@@ -216,7 +216,7 @@ bool xtop_state_accessor::read_permitted(std::string const & property_full_name)
     return true;
 }
 
-void xstate_accessor_t::clear_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
+void xtop_state_accessor::clear_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -265,7 +265,7 @@ void xstate_accessor_t::clear_property(properties::xproperty_identifier_t const 
     }
 }
 
-size_t xstate_accessor_t::property_size(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
+size_t xtop_state_accessor::property_size(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -388,7 +388,7 @@ uint64_t xtop_state_accessor::state_height() const {
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::int64>::type xtop_state_accessor::get_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -406,7 +406,7 @@ properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accesso
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xtop_state_accessor::get_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -424,7 +424,7 @@ properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xstate_access
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::string>::type xstate_accessor_t::get_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_accessor::get_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -442,7 +442,7 @@ properties::xtype_of_t<properties::xproperty_type_t::string>::type xstate_access
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::map>::type xstate_accessor_t::get_property<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -464,7 +464,7 @@ properties::xtype_of_t<properties::xproperty_type_t::map>::type xstate_accessor_
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::deque>::type xstate_accessor_t::get_property<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::deque>::type xtop_state_accessor::get_property<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -487,7 +487,7 @@ properties::xtype_of_t<properties::xproperty_type_t::deque>::type xstate_accesso
 }
 
 template <>
-void xstate_accessor_t::set_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id,
+void xtop_state_accessor::set_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id,
                                                                           properties::xtype_of_t<properties::xproperty_type_t::int64>::type const & value,
                                                                           std::error_code & ec) {
     assert(!ec);
@@ -512,7 +512,7 @@ void xstate_accessor_t::set_property<properties::xproperty_type_t::int64>(proper
 }
 
 template <>
-void xstate_accessor_t::set_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id,
+void xtop_state_accessor::set_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id,
                                                                            properties::xtype_of_t<properties::xproperty_type_t::uint64>::type const & value,
                                                                            std::error_code & ec) {
     assert(!ec);
@@ -537,7 +537,7 @@ void xstate_accessor_t::set_property<properties::xproperty_type_t::uint64>(prope
 }
 
 template <>
-void xstate_accessor_t::set_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id,
+void xtop_state_accessor::set_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id,
                                                                            properties::xtype_of_t<properties::xproperty_type_t::string>::type const & value,
                                                                            std::error_code & ec) {
     assert(!ec);
@@ -560,7 +560,7 @@ void xstate_accessor_t::set_property<properties::xproperty_type_t::string>(prope
 }
 
 template <>
-void xstate_accessor_t::set_property_cell_value<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
+void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
                                                                                    properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
                                                                                    properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type const & value,
                                                                                    std::error_code & ec) {
@@ -585,7 +585,7 @@ void xstate_accessor_t::set_property_cell_value<properties::xproperty_type_t::ma
 }
 
 template <>
-void xstate_accessor_t::set_property_cell_value<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
+void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
                                                                                      properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
                                                                                      properties::xvalue_type_of_t<properties::xproperty_type_t::deque>::type const & value,
                                                                                      std::error_code & ec) {
@@ -613,7 +613,7 @@ void xstate_accessor_t::set_property_cell_value<properties::xproperty_type_t::de
 
 template <>
 properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type
-xstate_accessor_t::get_property_cell_value<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
+xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
                                                                               properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
                                                                               std::error_code & ec) const {
     assert(!ec);
@@ -641,7 +641,7 @@ xstate_accessor_t::get_property_cell_value<properties::xproperty_type_t::map>(pr
 
 template <>
 properties::xvalue_type_of_t<properties::xproperty_type_t::deque>::type
-xstate_accessor_t::get_property_cell_value<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
+xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
                                                                                 properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
                                                                                 std::error_code & ec) const {
     assert(!ec);
@@ -668,7 +668,7 @@ xstate_accessor_t::get_property_cell_value<properties::xproperty_type_t::deque>(
 }
 
 template <>
-bool xstate_accessor_t::exist_property_cell_key<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
+bool xtop_state_accessor::exist_property_cell_key<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
                                                                                    properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
                                                                                    std::error_code & ec) const {
     assert(!ec);
@@ -693,7 +693,7 @@ bool xstate_accessor_t::exist_property_cell_key<properties::xproperty_type_t::ma
 }
 
 template <>
-bool xstate_accessor_t::exist_property_cell_key<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
+bool xtop_state_accessor::exist_property_cell_key<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
                                                                                      properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
                                                                                      std::error_code & ec) const {
     assert(!ec);
@@ -718,7 +718,7 @@ bool xstate_accessor_t::exist_property_cell_key<properties::xproperty_type_t::de
 }
 
 template <>
-void xstate_accessor_t::remove_property_cell<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, typename properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key, std::error_code & ec) {
+void xtop_state_accessor::remove_property_cell<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, typename properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -745,7 +745,7 @@ void xstate_accessor_t::remove_property_cell<properties::xproperty_type_t::map>(
 }
 
 template <>
-void xstate_accessor_t::remove_property_cell<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id, typename properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key, std::error_code & ec) {
+void xtop_state_accessor::remove_property_cell<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id, typename properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
@@ -782,6 +782,32 @@ void xstate_accessor_t::remove_property_cell<properties::xproperty_type_t::deque
     }
 }
 
+std::string xtop_state_accessor::binlog(std::error_code & ec) const {
+    std::string r;
+    assert(canvas_ != nullptr);
+    if (canvas_->encode(r) < 0) {
+        ec = error::xerrc_t::get_binlog_failed;
+    }
+
+    return r;
+}
+
+std::string xtop_state_accessor::binlog() const {
+    std::error_code ec;
+    auto r = binlog(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+// std::string xtop_state_accessor::fullstate_bin(std::error_code & ec) const;
+
+std::string xtop_state_accessor::fullstate_bin() const {
+    std::string fullstate_bin;
+    bstate_->take_snapshot(fullstate_bin);
+
+    return fullstate_bin;
+}
+
 void xtop_state_accessor::do_create_string_property(std::string const & property_name, std::error_code & ec) {
     assert(!ec);
     assert(property_name_min_length <= property_name.length() && property_name.length() < property_name_max_length);
@@ -806,7 +832,7 @@ void xtop_state_accessor::do_create_map_property(std::string const & property_na
 
 #define CREATE_INT_PROPERTY(INT_TYPE)\
     template <>\
-    void xstate_accessor_t::do_create_int_property<properties::xproperty_type_t::INT_TYPE>(std::string const & property_name, std::error_code & ec) {\
+    void xtop_state_accessor::do_create_int_property<properties::xproperty_type_t::INT_TYPE>(std::string const & property_name, std::error_code & ec) {\
         assert(!ec);\
         assert(property_name_min_length <= property_name.length() && property_name.length() < property_name_max_length);\
         auto const int_property = bstate_->new_##INT_TYPE##_var(property_name, canvas_.get());\
@@ -822,6 +848,8 @@ CREATE_INT_PROPERTY(uint64)
 void xtop_state_accessor::do_create_token_property(std::string const & property_name, std::error_code & ec) {
     assert(!ec);
     assert(property_name_min_length <= property_name.length() && property_name.length() < property_name_max_length);
+
+    assert(false);
 
     auto const token_property = bstate_->new_token_var(property_name, canvas_.get());
     if (token_property == nullptr) {

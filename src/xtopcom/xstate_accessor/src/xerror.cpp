@@ -4,13 +4,10 @@
 
 #include "xstate_accessor/xerror/xerror.h"
 
-namespace top {
-namespace state_accessor {
-namespace error {
+NS_BEG3(top, state_accessor, error)
 
 static char const * errc_to_message(int const errc) noexcept {
-    auto ec = static_cast<error::xerrc_t>(errc);
-    switch (ec) {
+    switch (static_cast<xerrc_t>(errc)) {
     case xerrc_t::ok:
         return "successful";
 
@@ -53,6 +50,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::create_property_failed:
         return "create property failed";
 
+    case xerrc_t::get_binlog_failed:
+        return "get binlog failed.";
+
     case xerrc_t::property_id_conversion_invalid:
         return "property id conversion invalid";
 
@@ -70,7 +70,7 @@ static char const * errc_to_message(int const errc) noexcept {
     }
 }
 
-class xtop_state_category : public std::error_category {
+class xtop_state_category final : public std::error_category {
 public:
     const char * name() const noexcept override {
         return "state";
@@ -83,11 +83,11 @@ public:
 using xstate_category_t = xtop_state_category;
 
 std::error_code make_error_code(xerrc_t errc) noexcept {
-    return std::error_code(static_cast<int>(errc), state_category());
+    return std::error_code{static_cast<int>(errc), state_category()};
 }
 
 std::error_condition make_error_condition(xerrc_t errc) noexcept {
-    return std::error_condition(static_cast<int>(errc), state_category());
+    return std::error_condition{static_cast<int>(errc), state_category()};
 }
 
 std::error_category const & state_category() {
@@ -95,11 +95,9 @@ std::error_category const & state_category() {
     return category;
 }
 
-}
-}
-}
+NS_END3
 
-namespace std {
+NS_BEG1(std)
 
 #if !defined(XCXX14_OR_ABOVE)
 
@@ -109,4 +107,4 @@ size_t hash<top::state_accessor::error::xerrc_t>::operator()(top::state_accessor
 
 #endif
 
-}
+NS_END1

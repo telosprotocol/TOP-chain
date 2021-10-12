@@ -10,6 +10,7 @@
 #include "xcontract_vm/xaccount_vm_execution_result.h"
 #include "xcontract_vm/xvm_executor_face.h"
 #include "xdata/xcons_transaction.h"
+#include "xstate_accessor/xstate_accessor.h"
 #include "xsystem_contract_runtime/xsystem_action_runtime.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 
@@ -65,10 +66,11 @@ public:
 
 private:
     contract_runtime::xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                     contract_common::properties::xproperty_access_control_t & ac);
+                                                                     state_accessor::xstate_accessor_t & ac,
+                                                                     contract_common::xcontract_execution_param_t const & param);
     xaccount_vm_output_t pack(std::vector<data::xcons_transaction_ptr_t> const & txs,
                               xaccount_vm_execution_result_t const & result,
-                              contract_common::properties::xproperty_access_control_t & ac);
+                              state_accessor::xstate_accessor_t & ac);
     void abort(const size_t start_index, const size_t size, xaccount_vm_execution_result_t & result);
 };
 using xaccount_vm_t = xtop_account_vm;

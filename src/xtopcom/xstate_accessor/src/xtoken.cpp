@@ -16,6 +16,7 @@ NS_BEG2(top, state_accessor)
 
 xtop_token::xtop_token(xtop_token && other) noexcept : value_{ other.value_ }, symbol_{ std::move(other.symbol_) } {
     other.value_ = 0;
+    other.symbol_.clear();
 }
 
 xtop_token::xtop_token(common::xsymbol_t symbol) noexcept : symbol_{ std::move(symbol) } {

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbase/xint.h"
 #include "xbasic/xbyte.h"
 #include "xbasic/xerror/xerror.h"
 
@@ -77,5 +78,32 @@ xbytes_t from_bytes<xbytes_t>(xbytes_t const & input);
 
 template <>
 std::string from_bytes<std::string>(xbytes_t const & input);
+
+template <>
+uint256_t from_bytes<uint256_t>(xbytes_t const & input);
+
+template <>
+char from_bytes<char>(xbytes_t const & input);
+
+template <>
+int from_bytes<int>(xbytes_t const & input);
+
+template <>
+long from_bytes<long>(xbytes_t const & input);
+
+template <>
+long long from_bytes<long long>(xbytes_t const & input);
+
+template <>
+unsigned char from_bytes<unsigned char>(xbytes_t const & input);
+
+template <>
+unsigned int from_bytes<unsigned int>(xbytes_t const & input);
+
+template <>
+unsigned long from_bytes<unsigned long>(xbytes_t const & input);
+
+template <>
+unsigned long long from_bytes<unsigned long long>(xbytes_t const & input);
 
 NS_END1

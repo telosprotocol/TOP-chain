@@ -11,8 +11,8 @@
 
 NS_BEG2(top, contract_common)
 
-xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac) : m_action_account_address{ action_account_addr}, m_ac{ac} {
-}
+//xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<properties::xproperty_access_control_t> ac) : m_action_account_address{ action_account_addr}, m_ac{ac} {
+//}
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr,
                                          observer_ptr<state_accessor::xstate_accessor_t> sa,
@@ -72,7 +72,7 @@ bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_i
 
 bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_identifier_t const & property_id) const {
     std::error_code ec;
-    auto r = property_exist(property_id, ec);
+    auto const r = property_exist(property_id, ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -100,23 +100,26 @@ uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_iden
 }
 
 uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
+    assert(m_state_accessor != nullptr);
     std::error_code ec;
-    auto r = m_state_accessor->balance(property_id, symbol, ec);
+    auto const r = m_state_accessor->balance(property_id, symbol, ec);
     top::error::throw_error(ec);
     return r;
 }
 
 std::string xtop_contract_state::binlog(std::error_code & ec) const {
-    assert(m_ac);
-    return m_ac->binlog(ec);
+    assert(m_state_accessor != nullptr);
+    return m_state_accessor->binlog(ec);
 }
 
 std::string xtop_contract_state::binlog() const {
-    return m_ac->binlog();
+    assert(m_state_accessor != nullptr);
+    return m_state_accessor->binlog();
 }
 
 std::string xtop_contract_state::fullstate_bin() const {
-    return m_ac->fullstate_bin();
+    assert(m_state_accessor != nullptr);
+    return m_state_accessor->fullstate_bin();
 }
 
 common::xlogic_time_t xtop_contract_state::time() const {

@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xstring.h"
 
 #include <array>
 #include <limits>
@@ -64,6 +65,46 @@ random_base58_bytes(std::size_t const size) {
 }
 
 template <>
+xbytes_t to_bytes<char>(char const & input) {
+    return xbytes_t(1, static_cast<xbyte_t>(input));
+}
+
+template <>
+xbytes_t to_bytes<int>(int const & input) {
+    return to_bytes(top::to_string(input));
+}
+
+template <>
+xbytes_t to_bytes<long>(long const & input) {
+    return to_bytes(top::to_string(input));
+}
+
+template <>
+xbytes_t to_bytes<long long>(long long const & input) {
+    return to_bytes(top::to_string(input));
+}
+
+template <>
+xbytes_t to_bytes<unsigned char>(unsigned char const & input) {
+    return xbytes_t(1, input);
+}
+
+template <>
+xbytes_t to_bytes<unsigned int>(unsigned int const & input) {
+    return to_bytes(top::to_string(input));
+}
+
+template <>
+xbytes_t to_bytes<unsigned long>(unsigned long const & input) {
+    return to_bytes(top::to_string(input));
+}
+
+template <>
+xbytes_t to_bytes<unsigned long long>(unsigned long long const & input) {
+    return to_bytes(top::to_string(input));
+}
+
+template <>
 xbytes_t to_bytes<std::string>(std::string const & input) {
     return {input.begin(), input.end()};
 }
@@ -81,6 +122,51 @@ xbytes_t from_bytes<xbytes_t>(xbytes_t const & input) {
 template <>
 std::string from_bytes<std::string>(xbytes_t const & input) {
     return {input.begin(), input.end()};
+}
+
+template <>
+uint256_t from_bytes<uint256_t>(xbytes_t const & input) {
+    return uint256_t{const_cast<xbyte_t *>(input.data())};
+}
+
+template <>
+char from_bytes<char>(xbytes_t const & input) {
+    return static_cast<char>(input.front());
+}
+
+template <>
+int from_bytes<int>(xbytes_t const & input) {
+    return top::from_string<int>(from_bytes<std::string>(input));
+}
+
+template <>
+long from_bytes<long>(xbytes_t const & input) {
+    return top::from_string<int>(from_bytes<std::string>(input));
+}
+
+template <>
+long long from_bytes<long long>(xbytes_t const & input) {
+    return top::from_string<int>(from_bytes<std::string>(input));
+}
+
+template <>
+unsigned char from_bytes<unsigned char>(xbytes_t const & input) {
+    return input.front();
+}
+
+template <>
+unsigned int from_bytes<unsigned int>(xbytes_t const & input) {
+    return top::from_string<int>(from_bytes<std::string>(input));
+}
+
+template <>
+unsigned long from_bytes<unsigned long>(xbytes_t const & input) {
+    return top::from_string<int>(from_bytes<std::string>(input));
+}
+
+template <>
+unsigned long long from_bytes<unsigned long long>(xbytes_t const & input) {
+    return top::from_string<int>(from_bytes<std::string>(input));
 }
 
 NS_END1
