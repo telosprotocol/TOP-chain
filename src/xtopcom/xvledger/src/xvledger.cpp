@@ -449,7 +449,7 @@ namespace top
             if(NULL == plugin_ptr)
             {
                 #ifdef DEBUG_XVLEDGER
-                xdbg("xvaccountobj_t::get_plugin,closed plugin_type(%d) for account(%s) ",plugin_type,enum_xvaccount_plugin_max,get_address().c_str());
+                xdbg("xvaccountobj_t::get_plugin,closed plugin_type(%d) for account(%s) ",plugin_type,get_address().c_str());
                 #endif
             }
             
