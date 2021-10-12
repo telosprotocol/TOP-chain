@@ -40,7 +40,7 @@ namespace top
     
         xvdrecycle_mgr::xvdrecycle_mgr()
         {
-            memset(m_recyclers_obj,NULL,sizeof(m_recyclers_obj));
+            memset(m_recyclers_obj,0,sizeof(m_recyclers_obj));
             memset(m_recycler_switch,0,sizeof(m_recycler_switch));//off as default
         }
     
