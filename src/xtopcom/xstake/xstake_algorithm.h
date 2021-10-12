@@ -803,7 +803,7 @@ public:
 
 public:
     std::string to_string() const override;
-    int32_t from_string(std::string const & s) override;
+    void from_string(std::string const & s, std::error_code & ec) override;
     using xenable_to_string_t<xissue_detail>::to_string;
     using xenable_to_string_t<xissue_detail>::from_string;
 

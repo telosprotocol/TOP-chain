@@ -63,5 +63,24 @@ random_base58_bytes(std::size_t const size) {
     return ret;
 }
 
+template <>
+xbytes_t to_bytes<std::string>(std::string const & input) {
+    return {input.begin(), input.end()};
+}
+
+template <>
+xbytes_t to_bytes<xbytes_t>(xbytes_t const & input) {
+    return input;
+}
+
+template <>
+xbytes_t from_bytes<xbytes_t>(xbytes_t const & input) {
+    return input;
+}
+
+template <>
+std::string from_bytes<std::string>(xbytes_t const & input) {
+    return {input.begin(), input.end()};
+}
 
 NS_END1

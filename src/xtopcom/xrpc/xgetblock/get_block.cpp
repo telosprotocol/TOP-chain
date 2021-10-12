@@ -246,7 +246,8 @@ void get_block_handle::getIssuanceDetail() {
         return;
     }
     xstake::xissue_detail issue_detail;
-    if (issue_detail.from_string(xissue_detail_str) <= 0) {
+    std::error_code ec;
+    if (issue_detail.from_string(xissue_detail_str, ec), ec) {
         xwarn("[grpc::getIssuanceDetail] deserialize failed");
     }
 

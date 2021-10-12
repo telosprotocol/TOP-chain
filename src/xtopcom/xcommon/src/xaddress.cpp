@@ -454,6 +454,10 @@ std::string xtop_logical_version::to_string() const {
     return m_election_round.to_string() + "/" + std::to_string(m_group_size) + "/" + std::to_string(m_associated_blk_height);
 }
 
+void xtop_logical_version::from_string(std::string const & /*input*/, std::error_code & /*ec*/) {
+    assert(false);
+}
+
 xtop_node_address::xtop_node_address(xgroup_address_t const & group_address)
     : m_cluster_address{ group_address } {
 }

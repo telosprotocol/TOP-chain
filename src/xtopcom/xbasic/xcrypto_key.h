@@ -24,9 +24,9 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xenable_to_string.h"
 #include "xbasic/xserializable_based_on.h"
 
+#include <cassert>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -49,9 +49,7 @@ template <xcrypto_key_type_t KeyT>
 std::int32_t operator>>(base::xstream_t & stream, xtop_crypto_key<KeyT> & key);
 
 template <xcrypto_key_type_t KeyT>
-class xtop_crypto_key final
-  : public xenable_to_string_t<xtop_crypto_key<KeyT>>
-  , public xserializable_based_on<void> {
+class xtop_crypto_key final : public xserializable_based_on<void> {
 private:
     std::string m_key{};
 
@@ -69,7 +67,7 @@ public:
 
     bool empty() const noexcept { return m_key.empty(); }
 
-    std::string to_string() const override { return m_key; }
+    std::string to_string() const { return m_key; }
 
     bool operator==(xtop_crypto_key const & other) const noexcept { return m_key == other.m_key; }
 

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbase/xmem.h"
-#include "xbasic/xenable_to_string.h"
 #include "xbasic/xhashable.hpp"
 #include "xbasic/xid.hpp"
 #include "xcommon/xip.h"
@@ -21,8 +20,7 @@ NS_BEG2(top, common)
  *        is divided into several zones and each zone is divided into several clusters.
  */
 class xtop_sharding_info final
-  : public xhashable_t<xtop_sharding_info>
-  , public xenable_to_string_t<xtop_sharding_info> {
+  : public xhashable_t<xtop_sharding_info> {
 private:
     xnetwork_id_t m_nid{};
     xzone_id_t m_zid{};
@@ -75,7 +73,7 @@ public:
 
     hash_result_type hash() const override;
 
-    std::string to_string() const override;
+    std::string to_string() const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_sharding_info const & o);
 

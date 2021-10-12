@@ -266,7 +266,8 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
         return;
     }
     xstake::xissue_detail issue_detail;
-    issue_detail.from_string(xissue_detail_str);
+    std::error_code ec;
+    issue_detail.from_string(xissue_detail_str, ec);
     xdbg("[xcluster_query_manager::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
     "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
     "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u, "

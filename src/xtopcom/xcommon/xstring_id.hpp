@@ -4,19 +4,17 @@
 
 #pragma once
 
-#include "xbasic/xenable_to_string.h"
 #include "xbasic/xhashable.hpp"
 #include "xutility/xhash.h"
 
+#include <cassert>
 #include <functional>
-#include <ostream>
 #include <string>
 
 NS_BEG2(top, common)
 
 template <typename IdTagType>
 class xtop_string_id : public xhashable_t<xtop_string_id<IdTagType>>
-                     , public xenable_to_string_t<xtop_string_id<IdTagType>>
 {
 public:
     using hash_result_type = typename xhashable_t<xtop_string_id<IdTagType>>::hash_result_type;
@@ -121,9 +119,9 @@ public:
     }
 
     std::string
-    to_string() const override {
+    to_string() const {
         if (empty()) {
-            return u8"(null)";
+            return "(null)";
         }
 
         return m_id;
