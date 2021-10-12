@@ -82,7 +82,7 @@ namespace top
         };
 
         //each account has own virtual store
-        class xblockacct_t : public base::xvactplugin_t,public base::xvaccount_t
+        class xblockacct_t : public base::xvblockplugin_t,public base::xvaccount_t
         {
         protected:
             enum{enum_max_cached_blocks = 32};
@@ -100,13 +100,10 @@ namespace top
             xblockacct_t & operator = (const xblockacct_t &);
 
         public://indicated the last block who is connected allway to genesis block
-            virtual bool           init();
             virtual bool           close(bool force_async = true) override;
             virtual std::string    dump() const override;  //just for debug purpose
             const int              get_max_cache_size() const;
             bool                   clean_caches(bool clean_all,bool force_release_unused_block); //clean unsed caches of account to recall memory
-            bool                   save_meta();
-            bool                   update_meta();
             base::xvdbstore_t*     get_xdbstore();
             
             //inline const std::string&   get_address() const {return m_account_ptr->get_address();}
@@ -221,6 +218,8 @@ namespace top
             virtual bool        connect_index(base::xvbindex_t* this_block){return false;}
 
         private:
+            virtual bool        init_meta(const base::xvactmeta_t & meta) override;
+            virtual bool        save_data() override;
             void                close_blocks(); //clean all cached blocks
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_revoked(base::xvbindex_t* index_ptr);

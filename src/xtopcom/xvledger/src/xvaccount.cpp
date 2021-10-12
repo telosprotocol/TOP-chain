@@ -5,6 +5,7 @@
 
 #include <cinttypes>
 #include "../xvaccount.h"
+#include "../xvledger.h"
 #include "xbase/xcontext.h"
 #include "xmetrics/xmetrics.h"
 
@@ -24,6 +25,8 @@ namespace top
             m_account_addr  = account_address;
             m_account_xid   = get_xid_from_account(account_address);
             m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
+            
+            m_chain_id_str = xstring_utl::tostring(get_chainid());
         }
         
         xvaccount_t::xvaccount_t(const xvaccount_t & obj)
@@ -120,6 +123,8 @@ namespace top
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
+            _lowest_vkey2_block_height     = 0;
+            _highest_deleted_block_height  = 0;
             _highest_cert_block_height     = 0;
             _highest_lock_block_height     = 0;
             _highest_commit_block_height   = 0;
@@ -140,6 +145,8 @@ namespace top
         
         xblockmeta_t & xblockmeta_t::operator = (const xblockmeta_t & obj)
         {
+            _lowest_vkey2_block_height      = obj._lowest_vkey2_block_height;
+            _highest_deleted_block_height   = obj._highest_deleted_block_height;
             _highest_cert_block_height      = obj._highest_cert_block_height;
             _highest_lock_block_height      = obj._highest_lock_block_height;
             _highest_commit_block_height    = obj._highest_commit_block_height;
@@ -164,7 +171,6 @@ namespace top
     
         xsyncmeta_t::xsyncmeta_t()
         {
-            _lowest_genesis_connect_height  = 0;
             _highest_genesis_connect_height = 0;
             _highest_sync_height            = 0;
         }
@@ -181,7 +187,6 @@ namespace top
     
         xsyncmeta_t & xsyncmeta_t::operator = (const xsyncmeta_t & obj)
         {
-            _lowest_genesis_connect_height  = obj._lowest_genesis_connect_height;
             _highest_genesis_connect_height = obj._highest_genesis_connect_height;
             _highest_genesis_connect_hash   = obj._highest_genesis_connect_hash;
             _highest_sync_height            = obj._highest_sync_height;
@@ -305,11 +310,9 @@ namespace top
         xvactmeta_t::xvactmeta_t(xvaccount_t & _account)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
-            _reserved_u16 = 0;
+            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _meta_spec_version = 2;     //version #2 now
-            
-            if(2 == _reserved_u16) //at version#2,use _reserved_u16 as checksum
-                _reserved_u16 = (uint16_t)(_account.get_xvid() >> 6);//use as checksum
+
             #ifdef DEBUG
             m_account_address = _account.get_address();
             #else
@@ -320,7 +323,7 @@ namespace top
         xvactmeta_t::xvactmeta_t(xvactmeta_t && obj)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
-            _reserved_u16 = 0;
+            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _meta_spec_version = 2;     //version #2 now
             
             *this = obj;
@@ -329,7 +332,7 @@ namespace top
         xvactmeta_t::xvactmeta_t(const xvactmeta_t & obj)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
-            _reserved_u16 = 0;
+            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _meta_spec_version = 2;     //version #2 now
             
             *this = obj;
@@ -346,7 +349,7 @@ namespace top
  
         xvactmeta_t& xvactmeta_t::operator = (const xvactmeta_t & obj)
         {
-            _reserved_u16 = obj._reserved_u16;      //reserved for future
+            _meta_process_id = obj._meta_process_id;      //reserved for future
             _meta_spec_version = obj._meta_spec_version; //add version control for compatible case
             m_account_address = obj.m_account_address;
             
@@ -428,21 +431,50 @@ namespace top
             return true;
         }
     
+        bool   xvactmeta_t::set_latest_deleted_block(const uint64_t height)
+        {
+            if(height <= _highest_deleted_block_height)
+            {
+                if(height < _highest_deleted_block_height)
+                    xwarn("xvactmeta_t::set_latest_deleted_block,try overwrited _highest_deleted_block_height(%llu) with old_meta(%llu)",_highest_deleted_block_height,height);
+                return false;
+            }
+            base::xatomic_t::xstore(_highest_deleted_block_height,height);
+            add_modified_count();
+            return true;
+        }
+    
+        const xblockmeta_t   xvactmeta_t::clone_block_meta() const
+        {
+            return *this;
+        }
         xblockmeta_t& xvactmeta_t::get_block_meta()
         {
             return *this;
         }
     
+        const xstatemeta_t   xvactmeta_t::clone_state_meta() const
+        {
+            return *this;
+        }
         xstatemeta_t& xvactmeta_t::get_state_meta()
         {
             return *this;
         }
-    
+
+        const xindxmeta_t    xvactmeta_t::clone_index_meta() const
+        {
+            return *this;
+        }
         xindxmeta_t&  xvactmeta_t::get_index_meta()
         {
             return *this;
         }
-    
+
+        const xsyncmeta_t   xvactmeta_t::clone_sync_meta()  const
+        {
+            return *this;
+        }
         xsyncmeta_t&  xvactmeta_t::get_sync_meta()
         {
             return *this;
@@ -476,8 +508,10 @@ namespace top
             //from here we introduce version control for meta
             stream << _meta_spec_version;
             stream << _block_level;
-            stream << _reserved_u16;
-            stream << _lowest_genesis_connect_height;
+            stream << _meta_process_id;
+            stream << _highest_deleted_block_height;
+            
+            //keep above unchanged and compatible with old format
             
             //added since version#2 of _meta_spec_version
             if(_meta_spec_version >= 2)
@@ -486,6 +520,8 @@ namespace top
                 stream.write_compact_var(m_latest_unit_viewid);
                 stream.write_compact_var(m_latest_tx_nonce);
                 stream.write_compact_var(m_account_flag);
+                
+                stream.write_compact_var(_lowest_vkey2_block_height);
             }
             
             return (stream.size() - begin_size);
@@ -509,8 +545,10 @@ namespace top
             
             stream >> _meta_spec_version;
             stream >> _block_level;
-            stream >> _reserved_u16;
-            stream >> _lowest_genesis_connect_height;
+            stream >> _meta_process_id;
+            stream >> _highest_deleted_block_height;
+            
+            //keep above unchanged and compatible with old format
             
             if(_meta_spec_version >= 2)//since version#2
             {
@@ -518,6 +556,8 @@ namespace top
                 stream.read_compact_var(m_latest_unit_viewid);
                 stream.read_compact_var(m_latest_tx_nonce);
                 stream.read_compact_var(m_account_flag);
+                
+                stream.read_compact_var(_lowest_vkey2_block_height);
             }
  
             return (begin_size - stream.size());

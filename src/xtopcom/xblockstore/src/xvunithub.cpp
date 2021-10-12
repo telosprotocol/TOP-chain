@@ -71,13 +71,13 @@ namespace top
         //transfer owner to auto_xblockacct_ptr from raw_ptr
         void  auto_xblockacct_ptr::transfer_owner(xblockacct_t * raw_ptr)
         {
-            if(m_raw_ptr != raw_ptr)
-            {
-                xblockacct_t * old_ptr = m_raw_ptr;
-                m_raw_ptr = raw_ptr;
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-            }
+            xblockacct_t * old_ptr = m_raw_ptr;
+            m_raw_ptr = raw_ptr;
+            if(raw_ptr != NULL)
+                raw_ptr->add_ref();
+            
+            if(old_ptr != NULL)
+                old_ptr->release_ref();
         }
 
         #define LOAD_ACCOUNT_OBJECT(account_obj,account_vid) \
@@ -158,7 +158,6 @@ namespace top
             base::xauto_ptr<base::xvactplugin_t> auto_plugin_ptr(auto_account_ptr->get_plugin( base::enum_xvaccount_plugin_blockmgr));
             if(auto_plugin_ptr)
             {
-                auto_plugin_ptr->add_ref(); //pass reference to xauto_ptr that release later
                 inout_account_obj.transfer_owner((xblockacct_t*)auto_plugin_ptr.get());
                 return true;
             }
@@ -166,14 +165,18 @@ namespace top
             uint64_t timeout_for_block_plugin = base::enum_plugin_idle_timeout_ms;
             if(auto_account_ptr->is_contract_address())
             {
-                timeout_for_block_plugin = (uint64_t)-1; //table object keep plugin forever
+                timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
             }
-
-            xblockacct_t * new_plugin = new xchainacct_t(*auto_account_ptr,timeout_for_block_plugin,m_store_path,m_xvdb_ptr);//replace by new account address;
-            new_plugin->init();
-            target_table->set_account_plugin(new_plugin);
             
-            inout_account_obj.transfer_owner(new_plugin);
+            #ifdef __new_plugin_by_lambda__
+            #else
+            xblockacct_t * new_plugin =  new xchainacct_t(*auto_account_ptr,timeout_for_block_plugin,m_store_path,m_xvdb_ptr);//replace by new account address;;
+  
+            base::xauto_ptr<base::xvactplugin_t> final_ptr(auto_account_ptr->get_set_plugin(new_plugin));
+            inout_account_obj.transfer_owner((xblockacct_t*)final_ptr.get());
+            new_plugin->release_ref();
+            #endif
+            
             return true;
         }
 
@@ -328,12 +331,6 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_committed_index(),0,false, atag);
         }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_executed_block(const base::xvaccount_t & account,const int atag)
-        {
-            const uint64_t latest_executed_height = get_latest_executed_block_height(account);
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return load_block_from_index(account_obj.get(),account_obj->load_index(latest_executed_height,0),0,false, atag);
-        }
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_connected_block(const base::xvaccount_t & account,const int atag)
         {
@@ -412,7 +409,7 @@ namespace top
             }
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
             METRICS_TAG(atag, 1);
-            return account_obj->get_state_meta()._highest_execute_block_height;
+            return account_obj->get_latest_executed_block_height();
         }
 
         bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag)

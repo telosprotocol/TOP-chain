@@ -110,7 +110,7 @@ namespace top
         }
 
         xblockacct_t::xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
-            :base::xvactplugin_t(parent_obj,timeout_ms,base::enum_xvaccount_plugin_blockmgr),
+            :base::xvblockplugin_t(parent_obj,timeout_ms),
              xvaccount_t(parent_obj.get_address())
         {
 #ifdef ENABLE_METRICS
@@ -135,8 +135,6 @@ namespace top
             XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, -1);
 #endif
             close_blocks();
-            if(m_meta != NULL)
-                delete m_meta;
         }
 
         std::string xblockacct_t::dump() const  //just for debug purpose
@@ -149,42 +147,29 @@ namespace top
             return std::string(local_param_buf);
         }
 
-        bool  xblockacct_t::init()
+        bool  xblockacct_t::init_meta(const base::xvactmeta_t & meta)
         {
-            if(NULL == m_meta)
-                m_meta = new base::xblockmeta_t(get_account_obj()->get_block_meta());
+            if(base::xvblockplugin_t::init_meta(meta))
+            {
+                m_meta = (base::xblockmeta_t*)get_block_meta();
+                //note:after here, dont delete m_meta that reserved just for code compatibible
+            }
             
-            xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
-                  dump().c_str(),m_blockstore_path.c_str(),
-                  get_obj_id(),m_meta->ddump().c_str());
+            xinfo("xblockacct_t::init_meta,account=%s at blockstore=%s,objectid=% " PRId64 ",this=% " PRId64 ",meta=%s",
+                  dump().c_str(),get_blockstore_path().c_str(),
+                  get_obj_id(),this,m_meta->ddump().c_str());
             return true;
         }
-
-        bool  xblockacct_t::save_meta()
-        {
-            get_account_obj()->set_block_meta(*m_meta);
-            get_account_obj()->save_meta();//force to save one
-            return true;
-        }
-    
-        bool  xblockacct_t::update_meta()
-        {
-            get_account_obj()->set_block_meta(*m_meta);
-            return true;
-        }
-
+ 
         bool  xblockacct_t::close(bool force_async)
         {
             if(is_close() == false)
             {
-                base::xvactplugin_t::close(force_async); //mark close status first
-                xkinfo("xblockacct_t::close,account=%s",dump().c_str());
+                base::xvblockplugin_t::close(force_async); //mark close status first
+                xkinfo("xblockacct_t::close,account=%s,objectid=% " PRId64 " and this=% " PRId64 "ptr",dump().c_str(),get_obj_id(),this);
 
                 //then clean all blocks at memory
                 close_blocks();
-
-                //finally save meta data of account
-                save_meta();
 
                 //TODO, retore following assert check after full_block enable
                 xassert(m_meta->_highest_connect_block_height <= m_meta->_highest_commit_block_height);
@@ -308,6 +293,29 @@ namespace top
                                 it->second->reset_this_block(NULL);
                                 xdbg_info("xblockacct_t::clean_caches,block=%s",it->second->dump().c_str());
                             }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+	bool  xblockacct_t::save_data()//must be protected by table ' lock
+        {
+            if(false == m_all_blocks.empty())
+            {
+                for(auto height_it = m_all_blocks.begin(); height_it != m_all_blocks.end(); ++height_it)//search from lower height
+                {
+                    auto & view_map  = height_it->second;
+                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from lower view#
+                    {
+                        //at entry of quit we need make sure everything is consist
+                        if(view_it->second->check_modified_flag()) //has changed since last store
+                        {
+                            write_index_to_db(view_it->second);//save_block but disable trigger event
+                            #ifdef DEBUG
+                            xdbg_info("xblockacct_t::save_data,block=%s",view_it->second->dump().c_str());
+                            #endif
                         }
                     }
                 }
@@ -813,8 +821,24 @@ namespace top
                     xassert(cert_block->get_last_block_hash() == lock_block->get_block_hash());
                 }
             }
-            xdbg_info("xblockacct_t::load_latest_index_list succ retry. account=%s,cert=%s,lock=%s",
-                      get_account().c_str(), cert_block->dump().c_str(), lock_block->dump().c_str());
+            xdbg_info("xblockacct_t::load_latest_index_list succ retry. account=%s,cert=%s,lock=%s vs meta(%s)",
+                      get_account().c_str(), cert_block->dump().c_str(), lock_block->dump().c_str(),m_meta->ddump().c_str());
+            
+            if(m_meta->_highest_commit_block_height > 0)
+            {
+                xassert(cert_block->get_height() > 0);
+                xassert(lock_block->get_height() > 0);
+                xassert(commit_block->get_height() > 0);
+            }
+            else if(m_meta->_highest_lock_block_height > 0)
+            {
+                xassert(cert_block->get_height() > 0);
+                xassert(lock_block->get_height() > 0);
+            }
+            else if(m_meta->_highest_cert_block_height > 0)
+            {
+                xassert(cert_block->get_height() > 0);
+            }
             return true;
         }
 

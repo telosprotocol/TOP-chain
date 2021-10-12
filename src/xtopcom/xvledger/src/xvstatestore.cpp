@@ -302,7 +302,7 @@ namespace top
         {
             // TODO(jimmy) no need set executed block hash xvchain_t::instance().get_xblockstore()->set_latest_executed_info(target_account, height, blockhash);
             xauto_ptr<xvaccountobj_t> account_obj(xvchain_t::instance().get_account(target_account));
-            account_obj->set_latest_executed_block_height(height);
+            account_obj->set_latest_executed_block(height,blockhash);
         }
         uint64_t xvblkstatestore_t::get_latest_executed_block_height(const xvaccount_t & target_account)
         {
