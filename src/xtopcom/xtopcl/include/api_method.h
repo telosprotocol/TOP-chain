@@ -109,7 +109,7 @@ public:
     void chain_info(std::ostringstream & out_str);
     void deploy_contract(const uint64_t & gas_limit, const std::string & amount, const std::string & path, const std::string & deposit, std::ostringstream & out_str);
     void call_contract(const std::string & amount, const string & addr, const std::string & func, const string & params, const std::string & tx_deposit, std::ostringstream & out_str);
-
+    void block_prune(std::string & prune_enable, std::ostringstream & out_str);
     /*
      * govern
      */
