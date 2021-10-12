@@ -96,7 +96,7 @@ namespace top
             enum_xvblock_type_txs       = 6, //transaction(financial/token) related
             enum_xvblock_type_cmds      = 7, //smart-contract related
             enum_xvblock_type_view      = 8, //view block or timeout block
-            enum_xvblock_type_elction   = 9, //election block from REC/ZEC etc
+            enum_xvblock_type_election  = 9, //election block from REC/ZEC etc
             enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
         };
 
@@ -428,7 +428,7 @@ namespace top
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed
         private:
-            uint64_t            m_nonce;            //each block has random nounce
+            uint64_t            m_nonce;            //each block has random nonce
             uint64_t            m_clock;            //the effective time of this cert from clock cert, note: m_clock is round of global-clock and be 10-seconds since 2019-11-08 05:00:00 UTC(2019-11-08 13:00:00 UTC+8)
             uint32_t            m_expired;          //expired clock'count since m_clock,-1 means valid forever
             uint32_t            m_view_token;       //paried with view#id,random generated token for each view#id and each QC
@@ -747,8 +747,8 @@ namespace top
             xvheader_t*                 m_vheader_ptr;      //note: it must be valid at all time
             xvqcert_t *                 m_vqcert_ptr;       //note: it must be valid at all time
 
-            xvinput_t*                  m_vinput_ptr;       //note: it must be valid at all time,enven a empty input
-            xvoutput_t*                 m_voutput_ptr;      //note: it must be valid at all time,enven a empty output
+            xvinput_t*                  m_vinput_ptr;       //note: it must be valid at all time,even a empty input
+            xvoutput_t*                 m_voutput_ptr;      //note: it must be valid at all time,even a empty output
             xvbstate_t*                 m_vbstate_ptr;      //note: it might be empty. point to current state of this block
             uint64_t                    m_next_next_viewid; //persist store viewid of next and next hqc
 
