@@ -158,7 +158,6 @@ namespace top
             virtual xauto_ptr<xvblock_t>  get_latest_cert_block(const xvaccount_t & account,const int atag = 0)       = 0;//highest view# for any status
             virtual xauto_ptr<xvblock_t>  get_latest_locked_block(const xvaccount_t & account,const int atag = 0)     = 0;//block with locked status
             virtual xauto_ptr<xvblock_t>  get_latest_committed_block(const xvaccount_t & account,const int atag = 0)  = 0;//block with committed status
-            virtual xauto_ptr<xvblock_t>  get_latest_executed_block(const xvaccount_t & account,const int atag = 0)   = 0;//block with executed status
             virtual xauto_ptr<xvblock_t>  get_latest_connected_block(const xvaccount_t & account,const int atag = 0)  = 0;//block connected to genesis or fullblock
             virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account,bool ask_full_search = true,const int atag = 0) = 0; //block has connected to genesis
             virtual xauto_ptr<xvbindex_t> get_latest_genesis_connected_index(const xvaccount_t & account,bool ask_full_search = true,const int atag = 0) = 0; //block has connected to genesis

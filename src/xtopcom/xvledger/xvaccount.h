@@ -399,6 +399,7 @@ namespace top
             inline const int            get_zone_index()  const {return get_vledger_zone_index(m_account_xid);}
             inline const int            get_bucket_index()const {return get_zone_index();}
             inline const int            get_net_id()      const {return get_chainid();}
+            inline const std::string&   get_chainid_str() const {return m_chain_id_str;}
             
             inline const int            get_ledger_subaddr() const {return get_vledger_subaddr(m_account_xid);}
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
@@ -425,6 +426,7 @@ namespace top
         private:
             xvid_t                      m_account_xid;
             std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
+            std::string                 m_chain_id_str; //convert from chain_id to hex string
             std::string                 m_account_addr;
         };
     
@@ -435,7 +437,7 @@ namespace top
             xblockmeta_t();
             xblockmeta_t(const xblockmeta_t & obj);
             ~xblockmeta_t();
-        protected:
+
             xblockmeta_t & operator = (const xblockmeta_t & obj);
         private:
             xblockmeta_t(xblockmeta_t && move_obj);
@@ -444,6 +446,9 @@ namespace top
             const std::string  ddump() const;
             
         public:
+            uint64_t    _lowest_vkey2_block_height;    //since this height,introduce db key of new version(2)
+            uint64_t    _highest_deleted_block_height; //latest block height that has been pruned and deleted
+            
             uint64_t    _highest_cert_block_height;    //latest certificated block but not changed to lock/commit status
             uint64_t    _highest_lock_block_height;    //latest locked block that not allow fork
             uint64_t    _highest_commit_block_height;  //latest commited block to allow change state of account,like balance.
@@ -468,9 +473,7 @@ namespace top
         public://debug purpose
             const std::string  ddump() const;
             
-        public:
-            //reserved _lowest_genesis_connect_height to trune block
-            uint64_t     _lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
+        public: //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
             uint64_t    _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
             std::string _highest_genesis_connect_hash;
             uint64_t    _highest_sync_height;           // higest continous block started from highest full table block
@@ -523,14 +526,23 @@ namespace top
         public:
             xvactmeta_t(xvaccount_t & _account);
             xvactmeta_t(const xvactmeta_t & obj);
+            virtual ~xvactmeta_t();
+            
         protected:
             xvactmeta_t(xvactmeta_t && move);
             xvactmeta_t & operator = (const xvactmeta_t & obj);
-            virtual ~xvactmeta_t();
-
+            
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
             static const std::string  get_meta_path(xvaccount_t & _account);
+            
+            const xblockmeta_t   clone_block_meta() const;
+            const xstatemeta_t   clone_state_meta() const;
+            const xindxmeta_t    clone_index_meta() const;
+            const xsyncmeta_t    clone_sync_meta()  const;
+            
+            const uint16_t  get_meta_process_id() const {return _meta_process_id;}
+            const uint8_t   get_meta_spec_version()const{return _meta_process_id;}
             
         protected: //APIs only open for  xvaccountobj_t object
             bool    set_block_meta(const xblockmeta_t & new_meta);
@@ -538,12 +550,13 @@ namespace top
             bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
             bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
-            
+            bool    set_latest_deleted_block(const uint64_t height);
+                  
             xblockmeta_t &  get_block_meta();
             xstatemeta_t &  get_state_meta();
             xindxmeta_t  &  get_index_meta();
             xsyncmeta_t  &  get_sync_meta();
-
+            
         protected:
             //not safe for multiple threads
             virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary
@@ -553,6 +566,8 @@ namespace top
             virtual void*     query_interface(const int32_t _enum_xobject_type_) override;
             virtual std::string  dump() const override;
         private: //from block meta
+            using xblockmeta_t::_lowest_vkey2_block_height;
+            using xblockmeta_t::_highest_deleted_block_height;
             using xblockmeta_t::_highest_cert_block_height;    //latest certificated block but not changed to lock/commit status
             using xblockmeta_t::_highest_lock_block_height;    //latest locked block that not allow fork
             using xblockmeta_t::_highest_commit_block_height;  //latest commited block to allow change state of account,like balance.
@@ -562,7 +577,6 @@ namespace top
             using xblockmeta_t::_block_level;
             
         private: //from sync meta
-            using xsyncmeta_t::_lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
             using xsyncmeta_t::_highest_genesis_connect_height;//indicated the last block who is connected to genesis block
             using xsyncmeta_t::_highest_genesis_connect_hash;
             using xsyncmeta_t::_highest_sync_height;           // higest continous block started from highest full table block
@@ -570,13 +584,19 @@ namespace top
         private: //from statemeta
             using xstatemeta_t::_highest_execute_block_height; //latest executed block that has executed and change state of account
             using xstatemeta_t::_highest_execute_block_hash;
-
+ 
+        private://from xindxmeta_t
+            using xindxmeta_t::m_latest_unit_height;
+            using xindxmeta_t::m_latest_unit_viewid;
+            using xindxmeta_t::m_latest_tx_nonce;
+            using xindxmeta_t::m_account_flag;
+            
         private:
             //#ifdef DEBUG
             std::string m_account_address;
             //#endif //debug purpose
             
-            uint16_t  _reserved_u16;      //reserved for future
+            uint16_t  _meta_process_id;   //which process produce and save this meta
             uint8_t   _meta_spec_version; //add version control for compatible case
         };
     

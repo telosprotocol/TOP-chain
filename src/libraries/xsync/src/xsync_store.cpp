@@ -171,8 +171,8 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
                 return nullptr;
             }
             if (!_full_block->is_full_state_block()) {
-                base::xauto_ptr<base::xvblock_t> _executed_block = m_blockstore->get_latest_executed_block(account, metrics::blockstore_access_from_sync_get_latest_executed_block);
-                if (_full_block->get_height() <= _executed_block->get_height()) {
+                const uint64_t _executed_block_height = m_blockstore->get_latest_executed_block_height(account, metrics::blockstore_access_from_sync_get_latest_executed_block);
+                if (_full_block->get_height() <= _executed_block_height) {
                     if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get(), metrics::statestore_access_from_sync_query_offchain)) {
                         xwarn("xsync_store_t::get_latest_start_block fail-get off snapshot.block=%s", _full_block->dump().c_str());
                     }
