@@ -67,7 +67,6 @@ std::string xtop_basic_contract::target_action_data() const {
 state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code & ec) const {
     assert(!ec);
 
-
     auto& receipt_data = m_associated_execution_context->receipt_data();
     assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
     auto const src_asset_data = receipt_data[RECEITP_DATA_ASSET_OUT];
@@ -80,20 +79,6 @@ state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code &
 
     if (asset_out.m_token_name.empty()) asset_out.m_token_name = data::XPROPERTY_ASSET_TOP;
     return state_accessor::xtoken_t{asset_out.m_amount, asset_out.m_token_name};
-}
-
-uint64_t  xtop_basic_contract::src_action_asset_amount(std::error_code& ec) const {
-    auto token = src_action_asset(ec);
-    auto amount = token.amount();
-    token.clear();
-    return amount;
-}
-
-std::string xtop_basic_contract::src_action_asset_name(std::error_code& ec) const {
-    auto token = src_action_asset(ec);
-    auto token_name = token.symbol();
-    token.clear();
-    return token_name.to_string();
 }
 
 data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
