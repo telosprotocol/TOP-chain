@@ -38,7 +38,8 @@ class test_system_contract_runtime : public testing::Test {
 protected:
     std::unique_ptr<top::contract_runtime::system::xsystem_contract_manager_t> system_contract_manager_{};
     top::xobject_ptr_t<top::base::xvbstate_t> bstate_{};
-    std::shared_ptr<top::contract_common::properties::xproperty_access_control_t> property_access_control_{};
+    // std::shared_ptr<top::contract_common::properties::xproperty_access_control_t> property_access_control_{};
+    std::shared_ptr<top::state_accessor::xstate_accessor_t> state_accessor_{};
     std::shared_ptr<top::contract_common::xcontract_state_t> contract_state_{};
     std::shared_ptr<top::contract_common::xcontract_execution_context_t> contract_ctx_{};
     std::unique_ptr<top::contract_runtime::system::xsystem_action_runtime_t> contract_runtime_{};
@@ -51,8 +52,10 @@ protected:
 
 void test_system_contract_runtime::SetUp()  {
     bstate_.attach(new top::base::xvbstate_t{contract_address, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
-    property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
-    contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
+    // property_access_control_ = std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
+    state_accessor_ = std::make_shared<top::state_accessor::xstate_accessor_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
+    contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(
+        top::common::xaccount_address_t{contract_address}, top::make_observer(state_accessor_.get()), contract_common::xcontract_execution_param_t{});
     system_contract_manager_ = top::make_unique<top::contract_runtime::system::xsystem_contract_manager_t>();
     contract_runtime_ = top::make_unique<top::contract_runtime::system::xsystem_action_runtime_t>(top::make_observer(system_contract_manager_.get()));
 }
@@ -93,10 +96,11 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(transfer_tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
 
-    property_access_control_ =
-        std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
-    contract_state_ =
-        std::make_shared<top::contract_common::xcontract_state_t>(top::common::xaccount_address_t{contract_address}, top::make_observer(property_access_control_.get()));
+    // property_access_control_ =
+    //     std::make_shared<top::contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
+    state_accessor_ = std::make_shared<top::state_accessor::xstate_accessor_t>(top::make_observer(bstate_.get()), top::state_accessor::xstate_access_control_data_t{});
+    contract_state_ = std::make_shared<top::contract_common::xcontract_state_t>(
+        top::common::xaccount_address_t{contract_address}, top::make_observer(state_accessor_.get()), contract_common::xcontract_execution_param_t{});
 
     contract_ctx_ = std::make_shared<top::contract_common::xcontract_execution_context_t>(std::move(action), contract_state_);
     contract_ctx_->execution_stage(contract_common::xcontract_execution_stage_t{contract_common::xtop_enum_contract_execution_stage::target_action});
@@ -129,8 +133,10 @@ TEST_F(test_system_contract_runtime, init_system_contract) {
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->set_different_source_target_address("T00000LS7SABDaqKaKfNDqbsyXB23F8dndquCeEu", contract_address);
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
-    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
+    // auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
+    auto state_accessor = std::make_shared<state_accessor::xstate_accessor_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(
+        common::xaccount_address_t{contract_address}, top::make_observer(state_accessor.get()), top::contract_common::xcontract_execution_param_t{});
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
     auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(std::move(action), contract_state);
@@ -261,8 +267,10 @@ TEST_F(test_system_contract_runtime, test_asset_api_normal) {
     tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_registration_addr);
 
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
-    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
+    // auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
+    auto state_accessor = std::make_shared<state_accessor::xstate_accessor_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(
+        common::xaccount_address_t{contract_address}, top::make_observer(state_accessor.get()), top::contract_common::xcontract_execution_param_t{});
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
     auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(std::move(action), contract_state);
@@ -289,8 +297,10 @@ TEST_F(test_system_contract_runtime, test_asset_api_fail) {
     tx->set_different_source_target_address("T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks", sys_contract_rec_registration_addr);
 
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_address, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
-    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(common::xaccount_address_t{contract_address}, top::make_observer(property_access_control.get()));
+    // auto property_access_control = std::make_shared<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
+    auto state_accessor = std::make_shared<state_accessor::xstate_accessor_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{});
+    auto contract_state = std::make_shared<contract_common::xcontract_state_t>(
+        common::xaccount_address_t{contract_address}, top::make_observer(state_accessor.get()), top::contract_common::xcontract_execution_param_t{});
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
     auto contract_ctx= std::make_shared<contract_common::xcontract_execution_context_t>(std::move(action), contract_state);

@@ -764,9 +764,7 @@ private:
     }
 };
 
-class xissue_detail final
-  : public xenable_to_string_t<xissue_detail>
-  , public xserializable_based_on<void> {
+class xissue_detail final : public xserializable_based_on<void> {
 public:
     uint64_t onchain_timer_round{0};
     uint64_t m_zec_vote_contract_height{0};
@@ -783,10 +781,8 @@ public:
     std::map<std::string, reward_detail> m_node_rewards;
 
 public:
-    std::string to_string() const override;
-    void from_string(std::string const & s, std::error_code & ec) override;
-    using xenable_to_string_t<xissue_detail>::to_string;
-    using xenable_to_string_t<xissue_detail>::from_string;
+    std::string to_string() const;
+    int32_t from_string(std::string const & s);
 
 private:
     int32_t do_write(base::xstream_t & stream) const override;

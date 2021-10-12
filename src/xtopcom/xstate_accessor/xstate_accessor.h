@@ -178,6 +178,24 @@ public:
     /// @return The state associated chain height.
     uint64_t state_height() const;
 
+    /// @brief Get the state change binlog.
+    /// @param ec Log the error code in getting binlog.
+    /// @return The binlog data stored in string object.
+    std::string binlog(std::error_code & ec) const;
+
+    /// @brief Get the state change binlog. Throws xtop_error_t exception when any error occurs.
+    /// @return The binlog data stored in string object.
+    std::string binlog() const;
+
+    /// @brief Get the fullstate binary data.
+    /// @param ec Log the error code in getting the data.
+    /// @return The full state binary data stored in the string object.
+    std::string fullstate_bin(std::error_code & ec) const;
+
+    /// @brief Get the fullstate binary data. Throws xtop_error_t exception when any error occurs.
+    /// @return The full state binary data stored in the string object.
+    std::string fullstate_bin() const;
+
 private:
     bool read_permitted(properties::xproperty_identifier_t const & property_id) const noexcept;
     bool write_permitted(properties::xproperty_identifier_t const & property_id) const noexcept;

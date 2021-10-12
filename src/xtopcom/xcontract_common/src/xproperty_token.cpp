@@ -10,24 +10,24 @@
 
 NS_BEG3(top, contract_common, properties)
 
- bool xtop_token_safe::transfer_safe_rule(uint64_t amount) noexcept {
-     return amount < MAX_SAFE_TOKEN;
- }
+bool xtop_token_safe::transfer_safe_rule(uint64_t amount) noexcept {
+    return amount < MAX_SAFE_TOKEN;
+}
 
 xtop_token_property::xtop_token_property(std::string const & prop_name, common::xsymbol_t symbol, contract_common::xbasic_contract_t * contract)
-   : xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, symbol_{std::move(symbol)} {
- }
+: xbasic_property_t{prop_name, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, symbol_{std::move(symbol)} {
+}
 
  xtop_token_property::xtop_token_property(std::string const& prop_name, contract_common::xbasic_contract_t* contract)
     : xbasic_property_t{ prop_name, state_accessor::properties::xproperty_type_t::token, make_observer(contract) } {
 }
 
 xtop_token_property::xtop_token_property(common::xsymbol_t symbol, contract_common::xbasic_contract_t * contract)
-  : xbasic_property_t{"b", state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, symbol_{std::move(symbol)} {
+  : xbasic_property_t{data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, symbol_{std::move(symbol)} {
 }
 
 xtop_token_property::xtop_token_property(contract_common::xbasic_contract_t * contract)
-    : xbasic_property_t{ "b", state_accessor::properties::xproperty_type_t::token, make_observer(contract) } {
+  : xbasic_property_t{data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, make_observer(contract)} {
 }
 
 void xtop_token_property::create() {

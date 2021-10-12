@@ -43,7 +43,8 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
 
     state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
     contract_common::xcontract_execution_param_t param(cs_para);
-    contract_common::properties::xproperty_access_control_t ac{make_observer(block_state.get()), ac_data, param};
+    // state_accessor::xstate_accessor_t ac{make_observer(block_state.get()), ac_data, param};
+    state_accessor::xstate_accessor_t sa{make_observer(block_state.get()), ac_data};
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
     assert(actions.size() == result_size);
@@ -51,7 +52,7 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
-            auto action_result = execute_action(std::move(actions[i]), ac);
+            auto action_result = execute_action(std::move(actions[i]), sa, param);
             result.transaction_results.emplace_back(action_result);
             assert(result.transaction_results.size() == (i + 1));
             if (action_result.status.ec) {
@@ -72,17 +73,18 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
         result.status.ec = error::xerrc_t::transaction_execution_abort;
     }
 
-    return pack(txs, result, ac);
+    return pack(txs, result, sa);
 }
 
 contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                                  contract_common::properties::xproperty_access_control_t & ac) {
+                                                                                  state_accessor::xstate_accessor_t & sa,
+                                                                                  contract_common::xcontract_execution_param_t const & param) {
     contract_runtime::xtransaction_execution_result_t result;
 
     switch (action->type()) {
     case data::xtop_action_type_t::system: {
         auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
-        contract_common::xcontract_state_t contract_state{cons_action->contract_address(), make_observer(std::addressof(ac))};
+        contract_common::xcontract_state_t contract_state{cons_action->contract_address(), make_observer(std::addressof(sa)), param};
         result = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(std::move(action));
         break;
     }
@@ -112,7 +114,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
         if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (follow_up.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto follow_up_action = contract_runtime::xaction_generator_t::generate(follow_up.followed_transaction);
-                auto follow_up_result = execute_action(std::move(follow_up_action), ac);
+                auto follow_up_result = execute_action(std::move(follow_up_action), sa, param);
                 if (follow_up_result.status.ec) {
                     result.status.ec = follow_up_result.status.ec;
                     // clear up all follow up txs
@@ -154,15 +156,22 @@ void xtop_account_vm::abort(const size_t start_index, const size_t size, xaccoun
 
 xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_ptr_t> const & txs,
                                            xaccount_vm_execution_result_t const & result,
-                                           contract_common::properties::xproperty_access_control_t & ac) {
+                                           state_accessor::xstate_accessor_t & sa) {
     xaccount_vm_output_t output;
     std::vector<data::xcons_transaction_ptr_t> output_txs(txs);
     uint32_t send_tx_num{0};
     uint32_t recv_tx_num{0};
     uint32_t confirm_tx_num{0};
 
-    auto last_nonce = ac.latest_sendtx_nonce();
-    auto last_hash = ac.latest_sendtx_hash();
+    using namespace state_accessor::properties;
+    std::error_code ec;
+    auto last_nonce = top::from_bytes<uint64_t>(sa.get_property_cell_value<xproperty_type_t::map>(
+        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, ec));
+    top::error::throw_error(ec);
+
+    auto last_hash = top::from_bytes<uint256_t>(sa.get_property_cell_value<xproperty_type_t::map>(
+        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, ec));
+    top::error::throw_error(ec);
 
     // uint32_t last_success_tx_index{0};
     for (size_t i = 0; i < result.transaction_results.size(); i++) {
@@ -222,12 +231,19 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
 
     // set recvtx total number
     if (recv_tx_num > 0) {
-        uint64_t old_recv_tx_num = ac.recvtx_num();
-        ac.recvtx_num(old_recv_tx_num + recv_tx_num);
+        uint64_t old_recv_tx_num = top::from_bytes<uint64_t>(sa.get_property_cell_value<xproperty_type_t::map>(
+            xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, ec));
+        top::error::throw_error(ec);
+
+        // sa.recvtx_num(old_recv_tx_num + recv_tx_num);
+        sa.set_property_cell_value<xproperty_type_t::map>(
+            xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, to_bytes(old_recv_tx_num + recv_tx_num), ec);
+        top::error::throw_error(ec);
     }
 
     // set unconfirm sendtx number
-    uint32_t old_unconfirm_tx_num = ac.unconfirm_sendtx_num();
+    uint32_t old_unconfirm_tx_num = from_bytes<uint32_t>(sa.get_property_cell_value<xproperty_type_t::map>(
+        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, ec));
     if (old_unconfirm_tx_num + send_tx_num < confirm_tx_num) {
         xerror("xaccount_context_t::finish_exec_all_txs fail-unconfirm num unmatch.old_unconfirm_num=%d,send_tx_num=%d,confirm_tx_num=%d",
                old_unconfirm_tx_num,
@@ -239,14 +255,17 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
 
     uint32_t new_unconfirm_new = old_unconfirm_tx_num + send_tx_num - confirm_tx_num;
     if (new_unconfirm_new != old_unconfirm_tx_num) {
-        ac.unconfirm_sendtx_num(new_unconfirm_new);
+        // ac.unconfirm_sendtx_num(new_unconfirm_new);
+        sa.set_property_cell_value<xproperty_type_t::map>(
+            xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, top::to_bytes(new_unconfirm_new), ec);
+        top::error::throw_error(ec);
     }
 
     output.unconfirm_sendtx_num = new_unconfirm_new;
     // output.binlog = result.transaction_results[last_success_tx_index].output.binlog;
     // output.contract_state_snapshot = result.transaction_results[last_success_tx_index].output.contract_state_snapshot;
-    output.binlog = ac.binlog();
-    output.contract_state_snapshot = ac.fullstate_bin();
+    // output.binlog = sa.binlog();
+    // output.contract_state_snapshot = ac.fullstate_bin();
     assert(!output.binlog.empty());
     assert(!output.contract_state_snapshot.empty());
 
