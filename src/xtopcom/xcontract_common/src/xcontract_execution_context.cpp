@@ -44,15 +44,15 @@ void xtop_contract_execution_context::consensus_action_stage(data::xconsensus_ac
     m_stage = stage;
 }
 
-xcontract_execution_result_t xtop_contract_execution_context::execution_result() const noexcept {
+xcontract_execution_result_t const & xtop_contract_execution_context::execution_result() const noexcept {
     return m_execution_result;
 }
 
-void xtop_contract_execution_context::add_followup_transaction(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type) {
+void xtop_contract_execution_context::add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type) {
     m_execution_result.output.followup_transaction_data.emplace_back(std::move(tx), type);
 }
 
-std::vector<xfollowup_transaction_datum_t> xtop_contract_execution_context::followup_transaction() {
+std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_context::followup_transaction() const noexcept {
     return m_execution_result.output.followup_transaction_data;
 }
 

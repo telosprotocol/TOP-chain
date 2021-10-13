@@ -61,7 +61,7 @@ public:
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;
 
-    std::vector<xfollowup_transaction_datum_t> followup_transaction();
+    std::vector<xfollowup_transaction_datum_t> followup_transaction() const;
 
 protected:
     bool at_source_action_stage() const noexcept override final;

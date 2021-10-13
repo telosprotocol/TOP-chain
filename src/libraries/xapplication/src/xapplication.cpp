@@ -92,8 +92,6 @@ void xtop_application::start() {
 
     contract_runtime::system::xtop_system_contract_manager::instance()->deploy(make_observer(m_blockstore.get()));
 
-    // m_sys_contract_mgr->deploy();
-
     chain_data::xchain_data_processor_t::release();
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));

@@ -22,23 +22,19 @@
 NS_BEG3(top, contract_runtime, system)
 
 void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> const & blockstore) {
-    if (m_blockstore == nullptr) {
-        m_blockstore = blockstore;
-    }
-
     deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(
-        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
+        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, blockstore);
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(
-        common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
+        common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, blockstore);
     // deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(
-    //     common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {});
+    //     common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {}, blockstore);
     // deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
     //     common::xaccount_address_t{sys_contract_sharding_statistic_info_addr},
     //     common::xnode_type_t::consensus_validator,
     //     {xsniff_type_t::block},
     //     {},
     //     {},
-    //     {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"});
+    //     {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"}, blockstore);
     // deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{},
     // contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }
@@ -68,9 +64,8 @@ std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> cons
     return m_system_contract_deployment_data;
 }
 
-void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address) {
-
-    if (m_blockstore->exist_genesis_block(contract_address.value())) {
+void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address, observer_ptr<base::xvblockstore_t> const & blockstore) {
+    if (blockstore->exist_genesis_block(contract_address.value())) {
         xdbg("xtop_system_contract_manager::init_contract_chain contract account %s genesis block exist", contract_address.c_str());
         return;
     }
@@ -107,7 +102,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     xassert(block);
 
     base::xvaccount_t _vaddr(block->get_account());
-    auto ret = m_blockstore->store_block(_vaddr, block.get());
+    auto ret = blockstore->store_block(_vaddr, block.get());
     if (!ret) {
         xerror("xtop_system_contract_manager::init_contract_chain %s genesis block fail", contract_address.c_str());
         return;

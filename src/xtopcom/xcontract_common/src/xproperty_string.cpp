@@ -15,10 +15,8 @@ void xtop_string_property::create() {
 }
 
 void xtop_string_property::update(std::string const & prop_value) {
-    std::error_code ec;
     m_associated_contract->state()->set_property<state_accessor::properties::xproperty_type_t::string>(
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), prop_value, ec);
-    top::error::throw_error(ec);
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), prop_value);
 }
 
 void xtop_string_property::clear() {
@@ -28,11 +26,8 @@ void xtop_string_property::clear() {
 }
 
 std::string xtop_string_property::query() const {
-    std::error_code ec;
-    auto r = m_associated_contract->state()->get_property<state_accessor::properties::xproperty_type_t::string>(
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), ec);
-    top::error::throw_error(ec);
-    return r;
+    return m_associated_contract->state()->get_property<state_accessor::properties::xproperty_type_t::string>(
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
 }
 
 // std::string xtop_string_property::query(common::xaccount_address_t const & contract) const {

@@ -165,7 +165,7 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
     m_associated_execution_context->add_followup_transaction(std::move(cons_tx), type);
 }
 
-std::vector<xfollowup_transaction_datum_t> xtop_basic_contract::followup_transaction() {
+std::vector<xfollowup_transaction_datum_t> xtop_basic_contract::followup_transaction() const {
     return m_associated_execution_context->followup_transaction();
 }
 

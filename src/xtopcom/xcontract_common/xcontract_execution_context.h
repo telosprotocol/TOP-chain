@@ -24,7 +24,6 @@ NS_BEG2(top, contract_common)
 class xtop_contract_execution_context {
 private:
     observer_ptr<xcontract_state_t> m_contract_state{};
-    // xobject_ptr_t<data::xtransaction_t> m_tx;
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
     std::map<std::string, xbyte_buffer_t> m_receipt_data; // input receipt
 
@@ -40,7 +39,6 @@ public:
     xtop_contract_execution_context & operator=(xtop_contract_execution_context &&) = default;
     ~xtop_contract_execution_context() = default;
 
-    // xtop_contract_execution_context(xobject_ptr_t<data::xtransaction_t> tx, observer_ptr<xcontract_state_t> s) noexcept;
     xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept;
     xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
 
@@ -49,9 +47,9 @@ public:
     void execution_stage(xcontract_execution_stage_t const stage) noexcept;
     data::xconsensus_action_stage_t consensus_action_stage() const noexcept;
     void consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept;
-    xcontract_execution_result_t execution_result() const noexcept;
-    void add_followup_transaction(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
-    std::vector<xfollowup_transaction_datum_t> followup_transaction();
+    xcontract_execution_result_t const & execution_result() const noexcept;
+    void add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type);
+    std::vector<xfollowup_transaction_datum_t> const & followup_transaction() const noexcept;
 
     void receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data);
     std::map<std::string, xbyte_buffer_t> & receipt_data() noexcept;
