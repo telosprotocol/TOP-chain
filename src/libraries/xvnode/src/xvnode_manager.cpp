@@ -262,7 +262,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
 
 #if defined(ENABLE_METRICS)
         if (time % 6 == 0) {    // dump per one minute
-            std::unordered_map<common::xnode_type_t, size_t> metrics_vnode_status;
+            std::unordered_map<common::xnode_type_t, int32_t> metrics_vnode_status;
             metrics_vnode_status[common::xnode_type_t::storage_archive] = 0;
             metrics_vnode_status[common::xnode_type_t::storage_full_node] = 0;
             metrics_vnode_status[common::xnode_type_t::edge] = 0;
@@ -282,29 +282,32 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                 auto const vnode_real_part_type = common::real_part_type(vnode->type());
                 switch (vnode_real_part_type) {
                 case common::xnode_type_t::rec:
-                    metrics_vnode_status[vnode_real_part_type] = 6;
+                    metrics_vnode_status[vnode_real_part_type] = -1;
                     break;
 
                 case common::xnode_type_t::zec:
-                    metrics_vnode_status[vnode_real_part_type] = 5;
+                    metrics_vnode_status[vnode_real_part_type] = -2;
                     break;
 
                 case common::xnode_type_t::consensus_auditor:
-                    metrics_vnode_status[vnode_real_part_type] = 4;
+                    // 1 , 2 
+                    metrics_vnode_status[vnode_real_part_type] = static_cast<int32_t>(vnode->address().group_id().value());
                     break;
 
                 case common::xnode_type_t::consensus_validator:
-                    metrics_vnode_status[vnode_real_part_type] = 3;
+                    // 3 , 4 , 5 , 6
+                    metrics_vnode_status[vnode_real_part_type] = static_cast<int32_t>(vnode->address().group_id().value() - common::xvalidator_group_id_value_begin + 3);
                     break;
 
                 case common::xnode_type_t::storage_archive:
                     XATTRIBUTE_FALLTHROUGH;
                 case common::xnode_type_t::storage_full_node:
-                    metrics_vnode_status[vnode_real_part_type] = 2;
+                    metrics_vnode_status[vnode_real_part_type] = -3;
                     break;
 
                 default:
-                    metrics_vnode_status[vnode_real_part_type] = 1;
+                    //edge
+                    metrics_vnode_status[vnode_real_part_type] = -4;
                     break;
                 }
             }
