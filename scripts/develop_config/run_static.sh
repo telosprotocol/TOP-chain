@@ -155,6 +155,8 @@ sleep 0.5
 sleep 0.5
 ./xtopchain ./config/config.edge.json &
 sleep 0.5
+./xtopchain ./config/config.arc1.json &
+sleep 0.5
 
-sleep 120
+sleep 150
 ps -ef |grep xtopchain | grep -v grep | awk -F ' ' '{print $2}' | xargs kill -SIGUSR1
