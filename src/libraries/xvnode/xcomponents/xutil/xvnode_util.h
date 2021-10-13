@@ -8,7 +8,7 @@
 #include "xcommon/xaddress.h"
 #include "xstore/xstore_face.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
-#include "xvnetwork/xvnetwork_driver_face.h"
+#include "xvnode/xvnode_face.h"
 
 NS_BEG4(top, vnode, components, util)
 
@@ -27,7 +27,7 @@ public:
                      std::string const & action_name,
                      std::string const & action_params,
                      uint64_t timestamp);
-    static void broadcast(observer_ptr<vnetwork::xvnetwork_driver_face_t> const & driver, xblock_ptr_t const & block_ptr, common::xnode_type_t types);
+    static void broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, xblock_ptr_t const & block_ptr, common::xnode_type_t types);
 };
 
 using xvnode_util_t = xtop_vnode_util;

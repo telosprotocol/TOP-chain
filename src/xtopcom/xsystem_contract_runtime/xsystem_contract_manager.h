@@ -38,6 +38,9 @@ struct xtop_contract_deployment_data {
 using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
 class xtop_system_contract_manager {
+private:
+    std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
+
 public:
     xtop_system_contract_manager() = default;
     xtop_system_contract_manager(xtop_system_contract_manager const &) = delete;
@@ -45,7 +48,6 @@ public:
     xtop_system_contract_manager(xtop_system_contract_manager &&) = default;
     xtop_system_contract_manager & operator=(xtop_system_contract_manager &&) = default;
     ~xtop_system_contract_manager() = default;
-
 
     /**
      * @brief get an instance
@@ -67,14 +69,12 @@ private:
                                 xsniff_type_t sniff_type,
                                 xsniff_broadcast_config_t broadcast_config,
                                 xsniff_timer_config_t timer_config,
-                                xsniff_block_config_t block_config);
+                                xsniff_block_config_t block_config,
+                                observer_ptr<base::xvblockstore_t> const & blockstore);
 
-    void init_system_contract(common::xaccount_address_t const & contract_address);
+    void init_system_contract(common::xaccount_address_t const & contract_address, observer_ptr<base::xvblockstore_t> const & blockstore);
 
     bool contains(common::xaccount_address_t const & address) const noexcept;
-
-    std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
-    observer_ptr<base::xvblockstore_t> m_blockstore{nullptr};
 };
 using xsystem_contract_manager_t = xtop_system_contract_manager;
 
@@ -84,7 +84,8 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
                                                           xsniff_type_t sniff_type,
                                                           xsniff_broadcast_config_t broadcast_config,
                                                           xsniff_timer_config_t timer_config,
-                                                          xsniff_block_config_t block_config) {
+                                                          xsniff_block_config_t block_config,
+                                                          observer_ptr<base::xvblockstore_t> const & blockstore) {
     // must system contract & not deploy yet
     assert(data::is_sys_contract_address(address));
     assert(!contains(address));
@@ -95,10 +96,10 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
 
     if (data::is_sys_sharding_contract_address(address)) {
         for ( auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-            init_system_contract(common::xaccount_address_t{address.value() + "@" + std::to_string(i)});
+            init_system_contract(common::xaccount_address_t{address.value() + "@" + std::to_string(i)}, blockstore);
         }
     } else {
-        init_system_contract(address);
+        init_system_contract(address, blockstore);
     }
 
 }

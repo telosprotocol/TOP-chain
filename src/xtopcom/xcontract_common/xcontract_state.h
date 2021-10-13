@@ -97,23 +97,6 @@ public:
     /// @return 'true' if property exists; otherwise 'false'.
     bool property_exist(state_accessor::properties::xproperty_identifier_t const & property_id) const;
 
-    /// @brief Get property.
-    /// @param property_id Property ID.
-    /// @param ec Log the error code in the operation.
-    /// @return Property value.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                      std::error_code & ec) const;
-
-    /// @brief Set property.
-    /// @param property_id Property ID.
-    /// @param value Value to be set.
-    /// @param ec Log the error code in the operation.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    void set_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                      typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type const & value,
-                      std::error_code & ec);
-
     /// @brief Clear property. This operation liks STL container's clear() API.
     /// @param property_id Property ID.
     /// @param ec Log the error code in the operation.

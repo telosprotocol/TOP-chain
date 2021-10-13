@@ -72,8 +72,9 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
 
     uint64_t init_value = 0;
     // system_contract_manager_->initialize(blockstore);
-    system_contract_manager_->m_blockstore = make_observer(blockstore);
-    system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {});
+    // system_contract_manager_->m_blockstore = make_observer(blockstore);
+    system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(
+        common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {}, make_observer(blockstore));
 
     auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address);
     bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
@@ -117,8 +118,9 @@ TEST_F(test_system_contract_runtime, deploy_system_contract) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     // system_contract_manager_->initialize(blockstore);
-    system_contract_manager_->m_blockstore = make_observer(blockstore);
-    system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {});
+    // system_contract_manager_->m_blockstore = make_observer(blockstore);
+    system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(
+        common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {}, make_observer(blockstore));
 
     auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address);
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
@@ -209,9 +211,9 @@ TEST_F(test_system_contract_runtime, test_follow_up_delay) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     // contract_runtime::system::xtop_system_contract_manager::instance()->initialize(blockstore);
-    contract_runtime::system::xtop_system_contract_manager::instance()->m_blockstore = make_observer(blockstore);
+    // contract_runtime::system::xtop_system_contract_manager::instance()->m_blockstore = make_observer(blockstore);
     contract_runtime::system::xtop_system_contract_manager::instance()->deploy_system_contract<system_contracts::xtransfer_contract_t>(
-        common::xaccount_address_t{sys_contract_zec_reward_addr}, {}, {}, {}, {}, {});
+        common::xaccount_address_t{sys_contract_zec_reward_addr}, {}, {}, {}, {}, {}, make_observer(blockstore));
 
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
     base::xstream_t param_stream(base::xcontext_t::instance());
