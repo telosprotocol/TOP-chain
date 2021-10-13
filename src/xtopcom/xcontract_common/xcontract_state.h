@@ -182,6 +182,56 @@ public:
         return r;
     }
 
+    /// @brief Set property.
+    /// @param property_id Property ID.
+    /// @param value Value to be set.
+    /// @param ec Log the error code in the operation.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    void set_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                      typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type const & value,
+                      std::error_code & ec) {
+        assert(m_state_accessor != nullptr);
+        assert(!ec);
+
+        m_state_accessor->set_property<PropertyTypeV>(property_id, value, ec);
+    }
+
+    /// @brief Set property.
+    /// @param property_id Property ID.
+    /// @param value Value to be set.
+    /// @param ec Log the error code in the operation.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    void set_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                      typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type const & value) {
+        std::error_code ec;
+        set_property<PropertyTypeV>(property_id, value, ec);
+        top::error::throw_error(ec);
+    }
+
+    /// @brief Get property.
+    /// @param property_id Property ID.
+    /// @param ec Log the error code in the operation.
+    /// @return Property value.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                      std::error_code & ec) const {
+        assert(m_state_accessor != nullptr);
+        assert(!ec);
+        return m_state_accessor->get_property<PropertyTypeV>(property_id, ec);
+    }
+
+    /// @brief Get property.
+    /// @param property_id Property ID.
+    /// @param ec Log the error code in the operation.
+    /// @return Property value.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id) const {
+        std::error_code ec;
+        auto r = get_property<PropertyTypeV>(property_id, ec);
+        top::error::throw_error(ec);
+        return r;
+    }
+
     /// @brief Get code. If current state is a contract state, returns the contract code.
     /// @param ec Log the error code.
     /// @return The bytecode.

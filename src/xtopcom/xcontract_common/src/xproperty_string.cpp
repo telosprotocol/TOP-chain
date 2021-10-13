@@ -11,11 +11,12 @@ xtop_string_property::xtop_string_property(std::string const & prop_name, contra
 }
 
 void xtop_string_property::create() {
-    // m_associated_contract->state()->access_control()->string_prop_create(accessor(), m_id);
+    m_associated_contract->state()->create_property(m_id);
 }
 
 void xtop_string_property::update(std::string const & prop_value) {
-    // m_associated_contract->state()->access_control()->string_prop_update(accessor(), m_id, prop_value);
+    m_associated_contract->state()->set_property<state_accessor::properties::xproperty_type_t::string>(
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), prop_value);
 }
 
 void xtop_string_property::clear() {
@@ -23,7 +24,8 @@ void xtop_string_property::clear() {
 }
 
 std::string xtop_string_property::query() const {
-    // return m_associated_contract->state()->access_control()->string_prop_query(accessor(), m_id);
+    return m_associated_contract->state()->get_property<state_accessor::properties::xproperty_type_t::string>(
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
     return {};
 }
 
