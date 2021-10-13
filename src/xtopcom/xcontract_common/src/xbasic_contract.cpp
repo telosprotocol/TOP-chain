@@ -68,14 +68,18 @@ state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code &
     assert(!ec);
 
     auto& receipt_data = m_associated_execution_context->receipt_data();
-    assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
-    auto const src_asset_data = receipt_data[RECEITP_DATA_ASSET_OUT];
-    receipt_data.erase(RECEITP_DATA_ASSET_OUT);
-
     data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
-    stream >> asset_out.m_token_name;
-    stream >> asset_out.m_amount;
+    // assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
+    if (receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end()) {
+        auto const src_asset_data = receipt_data[RECEITP_DATA_ASSET_OUT];
+        receipt_data.erase(RECEITP_DATA_ASSET_OUT);
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
+        stream >> asset_out.m_token_name;
+        stream >> asset_out.m_amount;
+    } else {
+        asset_out.m_amount = 0;
+        asset_out.m_token_name = "";
+    }
 
     if (asset_out.m_token_name.empty()) asset_out.m_token_name = data::XPROPERTY_ASSET_TOP;
     return state_accessor::xtoken_t{asset_out.m_amount, asset_out.m_token_name};
@@ -199,11 +203,11 @@ void xtop_basic_contract::write_receipt_data(std::string const & key, xbyte_buff
 }
 
 common::xlogic_time_t xtop_basic_contract::time() const {
-    return m_associated_execution_context->time();
+    return m_associated_execution_context->contract_state()->time();
 }
 
 common::xlogic_time_t xtop_basic_contract::timestamp() const {
-    return m_associated_execution_context->timestamp();
+    return m_associated_execution_context->contract_state()->timestamp();
 }
 
 NS_END2

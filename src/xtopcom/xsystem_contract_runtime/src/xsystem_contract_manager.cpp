@@ -6,7 +6,6 @@
 
 #include "xbasic/xutility.h"
 #include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xblocktool.h"
@@ -24,22 +23,22 @@ NS_BEG3(top, contract_runtime, system)
 
 void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> const & blockstore) {
     if (m_blockstore == nullptr) {
-    m_blockstore = blockstore;
-}
+        m_blockstore = blockstore;
+    }
 
     deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(
         common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(
         common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {});
-    deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(
-        common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {});
-    deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
-        common::xaccount_address_t{sys_contract_sharding_statistic_info_addr},
-        common::xnode_type_t::consensus_validator,
-        {xsniff_type_t::block},
-        {},
-        {},
-        {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"});
+    // deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(
+    //     common::xaccount_address_t{sys_contract_zec_reward_addr}, common::xnode_type_t::zec, {xsniff_type_t::timer}, {}, {uint32_t(6), "on_timer"}, {});
+    // deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
+    //     common::xaccount_address_t{sys_contract_sharding_statistic_info_addr},
+    //     common::xnode_type_t::consensus_validator,
+    //     {xsniff_type_t::block},
+    //     {},
+    //     {},
+    //     {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"});
     // deploy_system_contract<system_contracts::xtop_transfer_contract>(common::xaccount_address_t{system_contracts::transfer_address}, xblock_sniff_config_t{},
     // contract_deploy_type_t::zec, common::xnode_type_t::zec, contract_broadcast_policy_t::normal);
 }
@@ -86,10 +85,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
 
     xobject_ptr_t<base::xvbstate_t> bstate =
         make_object_ptr<base::xvbstate_t>(contract_address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto property_access_control =
-        top::make_unique<contract_common::properties::xproperty_access_control_t>(top::make_observer(bstate.get()), top::state_accessor::xstate_access_control_data_t{}, contract_common::xcontract_execution_param_t{});
     state_accessor::xstate_accessor_t sa{top::make_observer(bstate.get()), state_accessor::xstate_access_control_data_t{}};
-    // auto contract_state = top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(property_access_control.get()));
     auto contract_state =
         top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
 

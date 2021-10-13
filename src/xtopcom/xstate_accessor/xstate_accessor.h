@@ -137,16 +137,17 @@ public:
     /// @return Property size.
     size_t property_size(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
 
+    /// @brief Check if the property identified by the property ID exists or not.
+    /// @param property_id Property ID.
+    /// @param ec Log the error code in the operation.
+    /// @return 'true' if property exists; otherwise 'false'.
+    bool property_exist(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
+
     /// @brief Get byte-code.
     /// @param property_id Property ID.
     /// @param ec Log the error code in the operation.
     /// @return Byte-code.
     xbyte_buffer_t bin_code(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
-
-    /// @brief Get byte-code. Throw exception when error occurs.
-    /// @param property_id Property ID.
-    /// @return Byte-code.
-    xbyte_buffer_t bin_code(properties::xproperty_identifier_t const & property_id) const;
 
     /// @brief Deploy byte-code.
     /// @param property_id
@@ -154,47 +155,30 @@ public:
     /// @param ec Log the error code in the operation.
     void deploy_bin_code(properties::xproperty_identifier_t const & property_id, xbyte_buffer_t const & bin_code, std::error_code & ec);
 
-    /// @brief Deploy byte-code. Throw exception when error occurs.
-    /// @param property_id Property ID.
-    /// @param bin_code Byte-code.
-    void deploy_bin_code(properties::xproperty_identifier_t const & property_id, xbyte_buffer_t const & bin_code);
-
-    /// @brief Check if the property identified by the property ID exists or not.
-    /// @param property_id Property ID.
-    /// @param ec Log the error code in the operation.
-    /// @return 'true' if property exists; otherwise 'false'.
-    bool property_exist(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
-
-    /// @brief Check if the property identified by the property ID exists or not. Throw exception when error occurs.
-    /// @param property_id property_id Property ID.
-    /// @return 'true' if property exists; otherwise 'false'.
-    bool property_exist(properties::xproperty_identifier_t const & property_id) const;
-
-    /// @brief Get state associated account address.
-    /// @return The state associated account address.
-    common::xaccount_address_t account_address() const;
-
-    /// @brief Get the state associated chain height.
-    /// @return The state associated chain height.
-    uint64_t state_height() const;
-
     /// @brief Get the state change binlog.
     /// @param ec Log the error code in getting binlog.
     /// @return The binlog data stored in string object.
     std::string binlog(std::error_code & ec) const;
-
-    /// @brief Get the state change binlog. Throws xtop_error_t exception when any error occurs.
-    /// @return The binlog data stored in string object.
-    std::string binlog() const;
 
     /// @brief Get the fullstate binary data.
     /// @param ec Log the error code in getting the data.
     /// @return The full state binary data stored in the string object.
     std::string fullstate_bin(std::error_code & ec) const;
 
-    /// @brief Get the fullstate binary data. Throws xtop_error_t exception when any error occurs.
-    /// @return The full state binary data stored in the string object.
-    std::string fullstate_bin() const;
+    /// @brief Get state associated account address.
+    /// @return The state associated account address.
+    common::xaccount_address_t account_address() const;
+
+    /// @brief Get the state associated chain height.
+    /// @param address Address to check.
+    /// @return The state associated chain height.
+    uint64_t state_height(common::xaccount_address_t const & address) const;
+
+    /// @brief Check if block object exists or not.
+    /// @param address Address to check.
+    /// @param height block height to check.
+    /// @return 'true' if block object exists; otherwise 'false'.
+    bool block_exist(common::xaccount_address_t const & address, uint64_t height) const;
 
 private:
     bool read_permitted(properties::xproperty_identifier_t const & property_id) const noexcept;

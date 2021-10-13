@@ -7,6 +7,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xstate_accessor/xerror/xerror.h"
+#include "xvledger/xvledger.h"
 
 #include <cassert>
 
@@ -41,7 +42,8 @@ uint64_t xtop_state_accessor::nonce(properties::xproperty_identifier_t const & p
 }
 
 static std::string token_property_name(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) {
-    return property_id.full_name() + "_" + symbol.to_string();
+    // return property_id.full_name() + "_" + symbol.to_string();
+    return property_id.full_name();
 }
 
 xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t const amount, std::error_code & ec) {
@@ -321,13 +323,6 @@ xbyte_buffer_t xtop_state_accessor::bin_code(properties::xproperty_identifier_t 
     return { std::begin(bin_code), std::end(bin_code) };
 }
 
-xbyte_buffer_t xtop_state_accessor::bin_code(properties::xproperty_identifier_t const & property_id) const {
-    std::error_code ec;
-    auto bin_code = this->bin_code(property_id, ec);
-    top::error::throw_error(ec);
-    return bin_code;
-}
-
 void xtop_state_accessor::deploy_bin_code(properties::xproperty_identifier_t const & property_id, xbyte_buffer_t const & bin_code, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
@@ -354,12 +349,6 @@ void xtop_state_accessor::deploy_bin_code(properties::xproperty_identifier_t con
     }
 }
 
-void xtop_state_accessor::deploy_bin_code(properties::xproperty_identifier_t const & property_id, xbyte_buffer_t const & bin_code) {
-    std::error_code ec;
-    deploy_bin_code(property_id, bin_code, ec);
-    top::error::throw_error(ec);
-}
-
 bool xtop_state_accessor::property_exist(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
     if (read_permitted(property_id)) {
@@ -370,21 +359,28 @@ bool xtop_state_accessor::property_exist(properties::xproperty_identifier_t cons
     }
 }
 
-bool xtop_state_accessor::property_exist(properties::xproperty_identifier_t const & property_id) const {
-    std::error_code ec;
-    auto ret = property_exist(property_id, ec);
-    top::error::throw_error(ec);
-    return ret;
-}
-
 common::xaccount_address_t xtop_state_accessor::account_address() const {
     assert(bstate_ != nullptr);
     return common::xaccount_address_t{ bstate_->get_address() };
 }
 
-uint64_t xtop_state_accessor::state_height() const {
+uint64_t xtop_state_accessor::state_height(common::xaccount_address_t const & address) const {
     assert(bstate_ != nullptr);
+    if (address.empty()) {
     return bstate_->get_block_height();
+    } else {
+        return base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(base::xvaccount_t(address.to_string()));
+    }
+}
+
+bool xtop_state_accessor::block_exist(common::xaccount_address_t const & address, uint64_t height) const {
+    base::xauto_ptr<base::xvblock_t> _block =
+        base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t(address.to_string()), height, base::enum_xvblock_flag_committed, false);
+    if (_block == nullptr) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 template <>
@@ -567,7 +563,7 @@ void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::
     assert(!ec);
     assert(bstate_ != nullptr);
     assert(canvas_ != nullptr);
-
+#if 0
     assert(!properties::system_property(property_id));
 
     auto const & property_name = property_id.full_name();
@@ -582,6 +578,18 @@ void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::
         ec = error::xerrc_t::update_property_failed;
         return;
     }
+#else
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
+        bstate_->new_string_map_var(property_name, canvas_.get());
+    }
+    auto map_property = bstate_->load_string_map_var(property_name);
+    xassert(map_property != nullptr);
+    if (!map_property->insert(key, { std::begin(value), std::end(value) }, canvas_.get())) {
+        ec = error::xerrc_t::update_property_failed;
+        return;
+    }
+#endif
 }
 
 template <>
@@ -619,7 +627,8 @@ xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::map>(
     assert(!ec);
     assert(bstate_ != nullptr);
     assert(canvas_ != nullptr);
-
+    // TODO: fix system_property
+#if 0
     assert(!properties::system_property(property_id));
 
     auto const & property_name = property_id.full_name();
@@ -637,6 +646,22 @@ xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::map>(
 
     auto string = map_property->query(key);
     return { std::begin(string), std::end(string) };
+#else
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
+        bstate_->new_string_map_var(property_name, canvas_.get());
+    }
+
+    auto map_property = bstate_->load_string_map_var(property_name);
+    assert(map_property != nullptr);
+
+    auto string = bstate_->load_string_map_var(property_name)->query(key);
+    if (string.empty()) {
+        return {};
+    }
+
+    return {std::begin(string), std::end(string)};
+#endif
 }
 
 template <>
@@ -792,16 +817,8 @@ std::string xtop_state_accessor::binlog(std::error_code & ec) const {
     return r;
 }
 
-std::string xtop_state_accessor::binlog() const {
-    std::error_code ec;
-    auto r = binlog(ec);
-    top::error::throw_error(ec);
-    return r;
-}
-
-// std::string xtop_state_accessor::fullstate_bin(std::error_code & ec) const;
-
-std::string xtop_state_accessor::fullstate_bin() const {
+std::string xtop_state_accessor::fullstate_bin(std::error_code & ec) const {
+    assert(!ec);
     std::string fullstate_bin;
     bstate_->take_snapshot(fullstate_bin);
 

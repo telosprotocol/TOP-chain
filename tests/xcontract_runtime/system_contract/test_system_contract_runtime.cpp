@@ -5,7 +5,6 @@
 #include "xbase/xobject_ptr.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_vm/xaccount_vm.h"
 #include "xdata/xblocktool.h"
