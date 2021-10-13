@@ -1,9 +1,7 @@
 #pragma once
 
-#include "xsystem_contract_runtime/xsystem_contract_manager.h"
-#include "xtxpool_service_v2/xtxpool_service_face.h"
-#include "xvnetwork/xvnetwork_driver_face.h"
-#include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff_config.h"
+#include "xbase/xobject_ptr.h"
+#include "xvledger/xvblock.h"
 
 NS_BEG4(top, vnode, components, sniffing)
 

@@ -2,21 +2,6 @@
 
 NS_BEG3(top, vnode, components)
 
-xvblock_class_t xfulltableblock_process_t::block_class(xobject_ptr_t<base::xvblock_t> const & vblock) {
-    return vblock->get_block_class();
-}
-
-xvblock_level_t xfulltableblock_process_t::block_level(xobject_ptr_t<base::xvblock_t> const & vblock) {
-    return vblock->get_block_level();
-}
-
-void  xfulltableblock_process_t::process_block(xobject_ptr_t<base::xvblock_t> const & vblock) {
-    assert(vblock->get_block_class() == xvblock_class_t::enum_xvblock_class_full &&
-            vblock->get_block_level() == xvblock_level_t::enum_xvblock_level_table);
-
-    return;
-}
-
 data::xfulltableblock_statistic_accounts xfulltableblock_process_t::fulltableblock_statistic_accounts(data::xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service) {
     using namespace top::data;
 
