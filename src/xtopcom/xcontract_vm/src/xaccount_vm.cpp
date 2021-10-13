@@ -43,7 +43,6 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
 
     state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
     contract_common::xcontract_execution_param_t param(cs_para);
-    // state_accessor::xstate_accessor_t ac{make_observer(block_state.get()), ac_data, param};
     state_accessor::xstate_accessor_t sa{make_observer(block_state.get()), ac_data};
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
@@ -109,35 +108,36 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
     }
 
-    auto followup_transaction_data = result.output.followup_transaction_data;
-    for (auto & follow_up : followup_transaction_data) {
-        if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
-            if (follow_up.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
-                auto follow_up_action = contract_runtime::xaction_generator_t::generate(follow_up.followed_transaction);
-                auto follow_up_result = execute_action(std::move(follow_up_action), sa, param);
-                if (follow_up_result.status.ec) {
-                    result.status.ec = follow_up_result.status.ec;
+    for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
+        auto & followup_tx = result.output.followup_transaction_data[i];
+        if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
+            if (followup_tx.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
+                auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);
+                auto followup_result = execute_action(std::move(followup_action), sa, param);
+                if (followup_result.status.ec) {
+                    result.status.ec = followup_result.status.ec;
                     // clear up all follow up txs
                     result.output.followup_transaction_data.clear();
                     break;
                 }
-                follow_up.execute_type = contract_common::xfollowup_transaction_execute_type_t::success;
-                result.output.binlog = follow_up_result.output.binlog;
-                result.output.contract_state_snapshot = follow_up_result.output.contract_state_snapshot;
-                for (auto & double_follow_up : follow_up_result.output.followup_transaction_data) {
+                // move follow up state upto tx result
+                result.output.binlog = followup_result.output.binlog;
+                result.output.contract_state_snapshot = followup_result.output.contract_state_snapshot;
+                followup_tx.execute_type = contract_common::xfollowup_transaction_execute_type_t::success;
+                for (auto & double_follow_up : followup_result.output.followup_transaction_data) {
                     result.output.followup_transaction_data.emplace_back(std::move(double_follow_up));
                     // not support double follow up now
                     assert(false);
                 }
-            } else if (follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::success) {
+            } else if (followup_tx.execute_type == contract_common::xfollowup_transaction_execute_type_t::success) {
             } else {
-                xerror("[xtop_account_vm::execute_action] error follow up tx execute type: %d", follow_up.execute_type);
+                xerror("[xtop_account_vm::execute_action] error follow up tx execute type: %d", followup_tx.execute_type);
                 assert(false);
             }
-        } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
-            assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
+        } else if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
+            assert(followup_tx.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
         } else {
-            xerror("[xtop_account_vm::execute_action] error follow up tx schedule type: %d", follow_up.schedule_type);
+            xerror("[xtop_account_vm::execute_action] error follow up tx schedule type: %d", followup_tx.schedule_type);
             assert(false);
         }
     }
@@ -165,15 +165,17 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
 
     using namespace state_accessor::properties;
     std::error_code ec;
-    auto last_nonce = top::from_bytes<uint64_t>(sa.get_property_cell_value<xproperty_type_t::map>(
-        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, ec));
+    auto last_nonce_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
+        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, ec);
     top::error::throw_error(ec);
+    auto last_nonce = last_nonce_bytes.empty() ? 0 : top::from_bytes<uint64_t>(last_nonce_bytes);
 
-    auto last_hash = top::from_bytes<uint256_t>(sa.get_property_cell_value<xproperty_type_t::map>(
-        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, ec));
+    auto last_hash_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
+        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, ec);
     top::error::throw_error(ec);
+    auto last_hash = last_hash_bytes.empty() ? uint256_t{} : top::from_bytes<uint256_t>(last_hash_bytes);
 
-    // uint32_t last_success_tx_index{0};
+    uint32_t last_success_tx_index{0};
     for (size_t i = 0; i < result.transaction_results.size(); i++) {
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
@@ -183,7 +185,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 output.failed_tx_assemble.emplace_back(tx);
             } else if (tx->is_recv_tx()) {
                 output.success_tx_assemble.emplace_back(tx);
-                // last_success_tx_index = i;
+                last_success_tx_index = i;
             } else {
                 xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
                 assert(false);
@@ -191,7 +193,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         } else {
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
             output.success_tx_assemble.emplace_back(tx);
-            // last_success_tx_index = i;
+            last_success_tx_index = i;
             for (auto & follow_up : r.output.followup_transaction_data) {
                 auto const & follow_up_tx = follow_up.followed_transaction;
                 if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
@@ -217,55 +219,8 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         return output;
     }
 
-    for (auto const & tx : output.success_tx_assemble) {
-        if (tx->is_send_tx()) {
-            send_tx_num++;
-        }
-        if (tx->is_recv_tx()) {
-            recv_tx_num++;
-        }
-        if (tx->is_confirm_tx()) {
-            confirm_tx_num++;
-        }
-    }
-
-    // set recvtx total number
-    if (recv_tx_num > 0) {
-        uint64_t old_recv_tx_num = top::from_bytes<uint64_t>(sa.get_property_cell_value<xproperty_type_t::map>(
-            xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, ec));
-        top::error::throw_error(ec);
-
-        // sa.recvtx_num(old_recv_tx_num + recv_tx_num);
-        sa.set_property_cell_value<xproperty_type_t::map>(
-            xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, to_bytes(old_recv_tx_num + recv_tx_num), ec);
-        top::error::throw_error(ec);
-    }
-
-    // set unconfirm sendtx number
-    uint32_t old_unconfirm_tx_num = from_bytes<uint32_t>(sa.get_property_cell_value<xproperty_type_t::map>(
-        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, ec));
-    if (old_unconfirm_tx_num + send_tx_num < confirm_tx_num) {
-        xerror("xaccount_context_t::finish_exec_all_txs fail-unconfirm num unmatch.old_unconfirm_num=%d,send_tx_num=%d,confirm_tx_num=%d",
-               old_unconfirm_tx_num,
-               send_tx_num,
-               confirm_tx_num);
-        output.status.ec = contract_vm::error::xenum_errc::confirm_tx_num_error;
-        return output;
-    }
-
-    uint32_t new_unconfirm_new = old_unconfirm_tx_num + send_tx_num - confirm_tx_num;
-    if (new_unconfirm_new != old_unconfirm_tx_num) {
-        // ac.unconfirm_sendtx_num(new_unconfirm_new);
-        sa.set_property_cell_value<xproperty_type_t::map>(
-            xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, top::to_bytes(new_unconfirm_new), ec);
-        top::error::throw_error(ec);
-    }
-
-    output.unconfirm_sendtx_num = new_unconfirm_new;
-    // output.binlog = result.transaction_results[last_success_tx_index].output.binlog;
-    // output.contract_state_snapshot = result.transaction_results[last_success_tx_index].output.contract_state_snapshot;
-    // output.binlog = sa.binlog();
-    // output.contract_state_snapshot = ac.fullstate_bin();
+    output.binlog = result.transaction_results[last_success_tx_index].output.binlog;
+    output.contract_state_snapshot = result.transaction_results[last_success_tx_index].output.contract_state_snapshot;
     assert(!output.binlog.empty());
     assert(!output.contract_state_snapshot.empty());
 

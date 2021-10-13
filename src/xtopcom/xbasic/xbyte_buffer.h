@@ -74,6 +74,9 @@ template <>
 xbytes_t to_bytes<xbytes_t>(xbytes_t const & input);
 
 template <>
+xbytes_t to_bytes<uint256_t>(uint256_t const & input);
+
+template <>
 xbytes_t from_bytes<xbytes_t>(xbytes_t const & input);
 
 template <>

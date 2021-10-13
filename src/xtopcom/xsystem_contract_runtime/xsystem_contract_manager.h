@@ -6,7 +6,6 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaddress.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_runtime/xblock_sniff_config.h"
 #include "xdata/xgenesis_data.h"
 #include "xsystem_contracts/xbasic_system_contract.h"

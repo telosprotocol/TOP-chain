@@ -3,7 +3,6 @@
 #include "xvledger/xvstate.h"
 #include "xbase/xobject_ptr.h"
 #include "xcontract_runtime/xuser/xuser_action_runtime.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
 //#include "xcontract_common/xproeprties/"
 
 #include <gtest/gtest.h>

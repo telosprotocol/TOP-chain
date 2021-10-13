@@ -259,14 +259,6 @@ data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() 
     return ret;
 }
 
-common::xlogic_time_t xtop_contract_execution_context::time() const {
-    return contract_state()->time();
-}
-
-common::xlogic_time_t xtop_contract_execution_context::timestamp() const {
-    return contract_state()->timestamp();
-}
-
 bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
     assert(!ec);
 
@@ -298,13 +290,18 @@ bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
         default:
             break;
     }
-    if (contract_state()->latest_sendtx_nonce() != last_nonce) {
+
+    auto state_nonce = contract_state()->latest_sendtx_nonce(ec);
+    top::error::throw_error(ec);
+    if (state_nonce != last_nonce) {
         ec = error::xerrc_t::nonce_mismatch;
         return false;
     }
 
-    contract_state()->latest_sendtx_nonce(nonce);
-    contract_state()->latest_sendtx_hash(hash);
+    contract_state()->latest_sendtx_nonce(nonce, ec);
+    top::error::throw_error(ec);
+    contract_state()->latest_sendtx_hash(hash, ec);
+    top::error::throw_error(ec);
     contract_state()->latest_followup_tx_nonce(nonce);
     contract_state()->latest_followup_tx_hash(hash);
 

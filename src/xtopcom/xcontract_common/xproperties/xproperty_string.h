@@ -25,9 +25,8 @@ public:
     void create() override final;
     void update(std::string const & prop_value);
     void clear();
-
     std::string query() const;
-    std::string query(common::xaccount_address_t const & contract) const;
+    // std::string query(common::xaccount_address_t const & contract) const;
 };
 
 using xstring_property_t = xtop_string_property;

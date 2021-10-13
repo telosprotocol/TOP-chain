@@ -61,6 +61,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     if (false == execution_context->verify_action(ec)) {
         assert(ec);
         result.status.ec = ec;
+        return result;
     }
 
     assert(m_associated_runtime != nullptr);
@@ -73,10 +74,25 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     execution_context->consensus_action_stage(stage);
     if (stage == data::xconsensus_action_stage_t::send) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::source_action);
-    } else if (stage == data::xconsensus_action_stage_t::recv || stage == data::xconsensus_action_stage_t::self) {
+        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num(ec);
+        top::error::throw_error(ec);
+        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1, ec);
+        top::error::throw_error(ec);
+    } else if (stage == data::xconsensus_action_stage_t::recv) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
+        uint64_t old_recv_tx_num = execution_context->contract_state()->recvtx_num(ec);
+        top::error::throw_error(ec);
+        execution_context->contract_state()->recvtx_num(old_recv_tx_num + 1, ec);
+        top::error::throw_error(ec);
     } else if (stage == data::xconsensus_action_stage_t::confirm) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::confirm_action);
+        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num(ec);
+        top::error::throw_error(ec);
+        assert(old_unconfirm_tx_num > 0);
+        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1, ec);
+        top::error::throw_error(ec);
+    } else if (stage == data::xconsensus_action_stage_t::self) {
+        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
     } else {
         assert(false);
     }

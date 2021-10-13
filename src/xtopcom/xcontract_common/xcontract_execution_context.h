@@ -72,9 +72,6 @@ public:
     std::string target_action_data() const;
     data::xconsensus_action_stage_t action_stage() const;
 
-    common::xlogic_time_t time() const;
-    common::xlogic_time_t timestamp() const;
-
     bool verify_action(std::error_code & ec);
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;

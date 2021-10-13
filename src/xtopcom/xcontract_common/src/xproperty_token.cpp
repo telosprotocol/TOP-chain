@@ -6,6 +6,7 @@
 
 #include "xcontract_common/xerror/xerror.h"
 #include "xstate_accessor/xproperties/xproperty_type.h"
+#include "xcontract_common/xproperties/xproperty_access_control.h"
 
 
 NS_BEG3(top, contract_common, properties)
