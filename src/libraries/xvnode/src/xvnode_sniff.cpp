@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -65,7 +65,7 @@ void xtop_vnode_sniff::sniff_set() {
 #endif
 }
 
-xvnode_sniff_config_t xtop_vnode_sniff::sniff_config() {
+xvnode_sniff_config_t xtop_vnode_sniff::sniff_config() const {
     xvnode_sniff_config_t config;
     for (auto const & data_pair : m_config_map) {
         auto const & data = data_pair.second;
@@ -85,11 +85,11 @@ xvnode_sniff_config_t xtop_vnode_sniff::sniff_config() {
     return config;
 }
 
-bool xtop_vnode_sniff::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock) {
+bool xtop_vnode_sniff::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     return true;
 }
 
-bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) {
+bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     assert(common::xaccount_address_t{vblock->get_account()} == common::xaccount_address_t{sys_contract_beacon_timer_addr});
     auto const height = vblock->get_height();
     for (auto & role_data_pair : m_config_map) {
@@ -113,7 +113,7 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
     return true;
 }
 
-bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) {
+bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     auto const & block_address = vblock->get_account();
     auto const height = vblock->get_height();
     for (auto & role_data_pair : m_config_map) {
@@ -191,7 +191,7 @@ bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & ad
     }
 }
 
-void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) {
+void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
     xproperty_asset asset_out{0};
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
 
@@ -216,10 +216,10 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::str
 }
 
 void xtop_vnode_sniff::call(common::xaccount_address_t const & source_address,
-                      common::xaccount_address_t const & target_address,
-                      std::string const & action_name,
-                      std::string const & action_params,
-                      uint64_t timestamp) {
+                            common::xaccount_address_t const & target_address,
+                            std::string const & action_name,
+                            std::string const & action_params,
+                            uint64_t timestamp) const {
     auto tx = make_object_ptr<xtransaction_v2_t>();
     tx->make_tx_run_contract(action_name, action_params);
     tx->set_different_source_target_address(source_address.value(), target_address.value());

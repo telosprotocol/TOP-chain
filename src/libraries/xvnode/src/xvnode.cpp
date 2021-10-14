@@ -313,7 +313,7 @@ void xtop_vnode::sync_remove_vnet() {
 //    }
 //}
 
-components::sniffing::xvnode_sniff_config_t xtop_vnode::sniff_config() {
+components::sniffing::xvnode_sniff_config_t xtop_vnode::sniff_config() const {
     return m_sniff->sniff_config();
 }
 

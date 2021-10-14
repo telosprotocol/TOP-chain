@@ -8,6 +8,7 @@
 #include "xcontract_common/xcontract_face.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
+#include "xcontract_common/xproperties/xproperty_token.h"
 #include "xstate_accessor/xtoken.h"
 
 NS_BEG2(top, contract_common)
@@ -33,6 +34,8 @@ protected:
     observer_ptr<xcontract_execution_context_t> m_associated_execution_context{nullptr};
     xcontract_metadata_t m_contract_meta;
 
+    properties::xtoken_property_t m_balance{this};
+
 protected:
     xtop_basic_contract() = default;
 
@@ -46,6 +49,13 @@ public:
     common::xaccount_address_t address() const override final;
     common::xaccount_address_t sender() const override final;
     common::xaccount_address_t recver() const override final;
+
+    uint64_t balance() const override;
+    state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
+    void deposit(state_accessor::xtoken_t token) override;
+
+    observer_ptr<xcontract_state_t> contract_state() const noexcept;
+
     void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) override final;
 
     observer_ptr<xcontract_state_t> state() const noexcept;

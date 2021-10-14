@@ -7,6 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaddress.h"
+#include "xcommon/xsymbol.h"
 #include "xcontract_common/xcontract_execution_context.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xfollowup_transaction_datum.h"
@@ -29,7 +30,13 @@ public:
     virtual common::xaccount_address_t recver() const = 0;
     virtual common::xaccount_address_t address() const = 0;
 
+    virtual uint64_t balance() const = 0;
+    virtual state_accessor::xtoken_t withdraw(std::uint64_t amount) = 0;
+    virtual void deposit(state_accessor::xtoken_t token) = 0;
+
     virtual void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) = 0;
+
+    virtual observer_ptr<xcontract_state_t> contract_state() const noexcept = 0;
 
 protected:
     xtop_contract_face() = default;

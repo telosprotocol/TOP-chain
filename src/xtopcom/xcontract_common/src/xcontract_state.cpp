@@ -269,59 +269,16 @@ bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, u
     return m_state_accessor->block_exist(user, height);
 }
 
-template <>
-state_accessor::properties::xvalue_type_of_t<state_accessor::properties::xproperty_type_t::string>::type
-xtop_contract_state::get_property<state_accessor::properties::xproperty_type_t::string>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                        std::error_code & ec) const {
-    assert(!ec);
-    assert(m_state_accessor != nullptr);
-    return m_state_accessor->get_property<state_accessor::properties::xproperty_type_t::string>(property_id, ec);
-}
-
-template <>
-void xtop_contract_state::set_property<state_accessor::properties::xproperty_type_t::string>(
-    state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-    state_accessor::properties::xtype_of_t<state_accessor::properties::xproperty_type_t::string>::type const & value,
-    std::error_code & ec) {
-    assert(!ec);
-    assert(m_state_accessor != nullptr);
-    m_state_accessor->set_property<state_accessor::properties::xproperty_type_t::string>(property_id, value, ec);
-}
-
 void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
     assert(!ec);
     assert(m_state_accessor != nullptr);
     m_state_accessor->clear_property(property_id, ec);
 }
 
-template <>
-void xtop_contract_state::set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                                     state_accessor::properties::xkey_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & key,
-                                                                                                     state_accessor::properties::xvalue_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & value,
-                                                                                                     std::error_code & ec) {
-    assert(m_state_accessor != nullptr);
-    assert(!ec);
-    m_state_accessor->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(property_id, key, value, ec);
+void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id) {
+    std::error_code ec;
+    clear_property(property_id, ec);
+    top::error::throw_error(ec);
 }
 
-template <>
-state_accessor::properties::xvalue_type_of_t<state_accessor::properties::xproperty_type_t::map>::type
-xtop_contract_state::get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                                state_accessor::properties::xkey_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & key,
-                                                                                                std::error_code & ec) const {
-    assert(m_state_accessor != nullptr);
-    assert(!ec);
-
-    return m_state_accessor->get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(property_id, key, ec);
-}
-
-template <>
-bool xtop_contract_state::exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                                     state_accessor::properties::xkey_type_of_t<state_accessor::properties::xproperty_type_t::map>::type const & key,
-                                                                                                     std::error_code & ec) const {
-    assert(m_state_accessor != nullptr);
-    assert(!ec);
-
-    return m_state_accessor->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(property_id, key, ec);
-}
 NS_END2

@@ -5,7 +5,7 @@
 #include "xcontract_common/xproperties/xbasic_property.h"
 
 #include "xbasic/xutility.h"
-#include "xcontract_common/xbasic_contract.h"
+#include "xcontract_common/xcontract_face.h"
 
 NS_BEG3(top, contract_common, properties)
 
@@ -47,7 +47,7 @@ static state_accessor::properties::xproperty_category_t lookup_property_category
     return property_category;
 }
 
-xtop_basic_property::xtop_basic_property(std::string const & name, state_accessor::properties::xproperty_type_t type, observer_ptr<xbasic_contract_t> associated_contract) noexcept
+xtop_basic_property::xtop_basic_property(std::string const & name, state_accessor::properties::xproperty_type_t type, observer_ptr<xcontract_face_t> associated_contract) noexcept
     : m_associated_contract{ associated_contract }
     , m_id{ name, type, lookup_property_category(name, type) }
     , m_owner{ associated_contract->address() } {
@@ -65,7 +65,7 @@ common::xaccount_address_t xtop_basic_property::owner() const {
 }
 
 common::xaccount_address_t xtop_basic_property::accessor() const {
-    return m_associated_contract->state()->state_account_address();
+    return m_associated_contract->contract_state()->state_account_address();
 }
 
 NS_END3
