@@ -6,6 +6,7 @@
 
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xmetrics/xmetrics.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xvledger/xvledger.h"
 
@@ -364,6 +365,18 @@ common::xaccount_address_t xtop_state_accessor::account_address() const {
     return common::xaccount_address_t{ bstate_->get_address() };
 }
 
+xobject_ptr_t<base::xvbstate_t> xtop_state_accessor::state(common::xaccount_address_t const & address, std::error_code & ec) const {
+    base::xvaccount_t _vaddr(address.to_string());
+    base::xauto_ptr<base::xvbstate_t> address_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr, metrics::statestore_access_from_store_bstate);
+    if (address_bstate == nullptr) {
+        xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.c_str());
+        ec = error::xenum_errc::load_account_state_failed;
+        return nullptr;
+    }
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.c_str(), address_bstate->get_block_height());
+    return address_bstate;
+}
+
 uint64_t xtop_state_accessor::state_height(common::xaccount_address_t const & address) const {
     assert(bstate_ != nullptr);
     if (address.empty()) {
@@ -478,6 +491,54 @@ properties::xtype_of_t<properties::xproperty_type_t::deque>::type xtop_state_acc
     ret.resize(deque.size());
     for (auto i = 0u; i < deque.size(); ++i) {
         ret[i] = { std::begin(deque[i]), std::end(deque[i]) };
+    }
+    return ret;
+}
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_accessor::get_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & address, std::error_code & ec) const {
+    assert(!ec);
+    auto const & address_state = state(address, ec);
+    if (ec) {
+        return {};
+    }
+
+    assert(address_state != nullptr);
+    auto const & peroperty_name = property_id.full_name();
+    auto string_property = address_state->load_string_var(peroperty_name);
+    if (string_property == nullptr) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+        }
+
+        return {};
+    }
+
+    return string_property->query();
+}
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & address, std::error_code & ec) const {
+    assert(!ec);
+    auto const & address_state = state(address, ec);
+    if (ec) {
+        return {};
+    }
+
+    assert(address_state != nullptr);
+    auto const & peroperty_name = property_id.full_name();
+    auto map_property = address_state->load_string_map_var(peroperty_name);
+    if (map_property == nullptr) {
+        assert(!properties::system_property(property_id));
+
+        ec = error::xerrc_t::property_not_exist;
+        return {};
+    }
+
+    auto map = map_property->query();
+    properties::xtype_of_t<properties::xproperty_type_t::map>::type ret;
+    for (auto & pair : map) {
+        ret.insert({ std::move(pair.first), {std::begin(pair.second), std::end(pair.second)} });
     }
     return ret;
 }
@@ -817,8 +878,17 @@ std::string xtop_state_accessor::binlog(std::error_code & ec) const {
     return r;
 }
 
+size_t xtop_state_accessor::binlog_size(std::error_code & ec) const {
+    assert(!ec);
+    assert(canvas_ != nullptr);
+
+    size_t r;
+    return canvas_.get()->get_op_records_size();
+}
+
 std::string xtop_state_accessor::fullstate_bin(std::error_code & ec) const {
     assert(!ec);
+    assert(bstate_ != nullptr);
     std::string fullstate_bin;
     bstate_->take_snapshot(fullstate_bin);
 

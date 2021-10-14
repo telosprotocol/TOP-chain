@@ -36,9 +36,11 @@ std::string xtop_string_property::value() const {
         static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
 }
 
-// std::string xtop_string_property::query(common::xaccount_address_t const & contract) const {
-//     // return m_associated_contract->state()->access_control()->string_prop_query(accessor(), contract, m_id);
-//     return {};
-// }
+std::string xtop_string_property::value(common::xaccount_address_t const & contract) const {
+    assert(m_associated_contract != nullptr);
+    assert(m_associated_contract->contract_state() != nullptr);
+    return m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::string>(
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), contract);
+}
 
 NS_END3
