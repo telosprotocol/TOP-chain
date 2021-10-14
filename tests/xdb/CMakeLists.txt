@@ -21,3 +21,8 @@ elseif (XDB_TYPE STREQUAL "LEVELDB")
     )
 
 endif()
+
+
+if(XDB_TYPE STREQUAL "ROCKSDB")
+    add_subdirectory(merge_demo)
+endif()

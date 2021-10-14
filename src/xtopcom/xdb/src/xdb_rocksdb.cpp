@@ -205,6 +205,8 @@ xdb::xdb_impl::xdb_impl(const std::string& name) {
     m_options.compression_opts.enabled = true;
     m_options.bottommost_compression = rocksdb::kZSTD;
 
+    // m_options.merge_operator.reset(new );
+
     rocksdb::BlockBasedTableOptions table_options;
     table_options.enable_index_compression = false;
 #ifdef DB_CACHE
