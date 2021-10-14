@@ -102,26 +102,31 @@ public:
     /// @param ec Log the error code in the operation.
     void clear_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec);
 
+    /// @brief Clear property. This operation liks STL container's clear() API. Throws xtop_error_t exception when any error occurs.
+    /// @param property_id Property ID.
+    void clear_property(state_accessor::properties::xproperty_identifier_t const & property_id);
+
     /// @brief Update property cell value. Only map and deque are supported.
     /// @param proprty_id Property ID.
     /// @param key Cell position key.
     /// @param value Cell's new value.
     /// @param ec Log the error code in the operation.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV,
-              typename std::enable_if<PropertyTypeV == state_accessor::properties::xproperty_type_t::map ||
-                                      PropertyTypeV == state_accessor::properties::xproperty_type_t::deque>::type * = nullptr>
-    void set_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & proprty_id,
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    void set_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
                                  typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
                                  typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type const & value,
-                                 std::error_code & ec);
+                                 std::error_code & ec) {
+        assert(!ec);
+        assert(m_state_accessor != nullptr);
+
+        m_state_accessor->set_property_cell_value<PropertyTypeV>(property_id, key, value, ec);
+    }
 
     /// @brief Update property cell value. Only map and deque are supported. Throws xtop_error_t exception if any error occurs.
     /// @param proprty_id Property ID.
     /// @param key Cell position key.
     /// @param value Cell's new value.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV,
-              typename std::enable_if<PropertyTypeV == state_accessor::properties::xproperty_type_t::map ||
-                                      PropertyTypeV == state_accessor::properties::xproperty_type_t::deque>::type * = nullptr>
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
     void set_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
                                  typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
                                  typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type const & value) {
@@ -135,22 +140,25 @@ public:
     /// @param key Cell position key.
     /// @param ec Log the error code in the operation.
     /// @return Cell value.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV,
-              typename std::enable_if<PropertyTypeV == state_accessor::properties::xproperty_type_t::map ||
-                                      PropertyTypeV == state_accessor::properties::xproperty_type_t::deque>::type * = nullptr>
-    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type get_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                                       typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
-                                                                                                       std::error_code & ec) const;
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type
+    get_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                            typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
+                            std::error_code & ec) const {
+        assert(!ec);
+        assert(m_state_accessor != nullptr);
+
+        return m_state_accessor->get_property_cell_value<PropertyTypeV>(property_id, key, ec);
+    }
 
     /// @brief Get property cell value. Only map and deque are supported. Throws xtop_error_t exception when any error occurs.
     /// @param property_id Property ID.
     /// @param key Cell position key.
     /// @return Cell value.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV,
-              typename std::enable_if<PropertyTypeV == state_accessor::properties::xproperty_type_t::map ||
-                                      PropertyTypeV == state_accessor::properties::xproperty_type_t::deque>::type * = nullptr>
-    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type get_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                                       typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type
+    get_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                            typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
         std::error_code ec;
         auto r = get_property_cell_value<PropertyTypeV>(property_id, key, ec);
         top::error::throw_error(ec);
@@ -162,20 +170,21 @@ public:
     /// @param key Cell position key.
     /// @param ec Log the error code in the operation.
     /// @return exist or not.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV,
-              typename std::enable_if<PropertyTypeV == state_accessor::properties::xproperty_type_t::map ||
-                                      PropertyTypeV == state_accessor::properties::xproperty_type_t::deque>::type * = nullptr>
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
     bool exist_property_cell_key(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
                                  typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
-                                 std::error_code & ec) const;
+                                 std::error_code & ec) const {
+        assert(!ec);
+        assert(m_state_accessor != nullptr);
+
+        return m_state_accessor->exist_property_cell_key<PropertyTypeV>(property_id, key, ec);
+    }
 
     /// @brief Check if property cell key exist. Only map and deque are supported. Throws xtop_error_t exception if any error occurs.
     /// @param property_id Property ID.
     /// @param key Cell position key.
     /// @return exist or not.
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV,
-              typename std::enable_if<PropertyTypeV == state_accessor::properties::xproperty_type_t::map ||
-                                      PropertyTypeV == state_accessor::properties::xproperty_type_t::deque>::type * = nullptr>
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
     bool exist_property_cell_key(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
                                  typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
         std::error_code ec;
@@ -215,8 +224,8 @@ public:
     /// @param ec Log the error code in the operation.
     /// @return Property value.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                                      std::error_code & ec) const {
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type
+    get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
         assert(m_state_accessor != nullptr);
         assert(!ec);
         return m_state_accessor->get_property<PropertyTypeV>(property_id, ec);
@@ -227,7 +236,8 @@ public:
     /// @param ec Log the error code in the operation.
     /// @return Property value.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id) const {
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type
+    get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id) const {
         std::error_code ec;
         auto r = get_property<PropertyTypeV>(property_id, ec);
         top::error::throw_error(ec);
@@ -354,7 +364,5 @@ public:
     void unconfirm_sendtx_num(uint64_t num, std::error_code & ec);
 };
 using xcontract_state_t = xtop_contract_state;
-
-#include "xcontract_common/xcontract_state_impl.h"
 
 NS_END2

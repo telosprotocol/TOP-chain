@@ -19,10 +19,13 @@ xtop_token::xtop_token(xtop_token && other) noexcept : value_{ other.value_ }, s
     other.symbol_.clear();
 }
 
-xtop_token::xtop_token(common::xsymbol_t symbol) noexcept : symbol_{ std::move(symbol) } {
+xtop_token::xtop_token(common::xsymbol_t symbol) : symbol_{ std::move(symbol) } {
 }
 
-xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) noexcept : value_{ amount }, symbol_ { std::move(symbol) } {
+xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) : value_{ amount }, symbol_ { std::move(symbol) } {
+}
+
+xtop_token::xtop_token(std::uint64_t const amount) : value_{amount} {
 }
 
 xtop_token::~xtop_token() noexcept {

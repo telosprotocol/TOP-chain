@@ -4,6 +4,7 @@
 
 #include "xcontract_common/xbasic_contract.h"
 
+#include "xbasic/xutility.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_v2.h"
@@ -17,17 +18,6 @@ xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const&
     : m_type(type), m_account(account) {
 }
 
-//xtop_basic_contract::xtop_basic_contract(observer_ptr<contract_common::xcontract_execution_context_t> const & exec_context)
-//    : m_associated_execution_context(exec_context)
-//    , m_state(exec_context->contract_state())
-//    , m_contract_meta(exec_context->contract_address()) {
-//}
-
-//xcontract_execution_result_t xtop_basic_contract::execute(observer_ptr<xcontract_execution_context_t> exe_ctx) {
-//    // just do nothing
-//    return exe_ctx->execution_result();
-//}
-
 common::xaccount_address_t xtop_basic_contract::address() const {
     if (m_associated_execution_context) {
         return m_associated_execution_context->contract_state()->state_account_address();
@@ -38,6 +28,23 @@ common::xaccount_address_t xtop_basic_contract::address() const {
 
 xcontract_type_t xtop_basic_contract::type() const {
     return m_contract_meta.m_type;
+}
+
+uint64_t xtop_basic_contract::balance() const {
+    return m_balance.amount();
+}
+
+state_accessor::xtoken_t xtop_basic_contract::withdraw(std::uint64_t amount) {
+    return m_balance.withdraw(amount);
+}
+
+void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
+    assert(m_balance.symbol() == token.symbol());
+    m_balance.deposit(std::move(token));
+}
+
+observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noexcept {
+    return m_associated_execution_context->contract_state();
 }
 
 data::enum_xaction_type xtop_basic_contract::action_type() const {

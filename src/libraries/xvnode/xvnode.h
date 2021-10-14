@@ -111,7 +111,7 @@ public:
     void start() override;
     void fade() override;
     void stop() override;
-    components::sniffing::xvnode_sniff_config_t sniff_config() override;
+    components::sniffing::xvnode_sniff_config_t sniff_config() const override;
 
 private:
     void new_driver_added();

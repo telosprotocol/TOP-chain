@@ -5,8 +5,7 @@
 #pragma once
 
 #include "xcontract_common/xproperties/xbasic_property.h"
-#include "xcontract_common/xbasic_contract.h"
-#include "xcontract_common/xcontract_state.h"
+#include "xcontract_common/xcontract_face.h"
 
 #include <string>
 
@@ -20,12 +19,12 @@ public:
     xtop_string_property& operator=(xtop_string_property&&) = default;
     ~xtop_string_property() = default;
 
-    explicit xtop_string_property(std::string const & prop_name, contract_common::xbasic_contract_t * contract);
+    explicit xtop_string_property(std::string const & name, xcontract_face_t * contract);
 
     void create() override final;
-    void update(std::string const & prop_value);
+    void set(std::string const & value);
     void clear();
-    std::string query() const;
+    std::string value() const;
     // std::string query(common::xaccount_address_t const & contract) const;
 };
 

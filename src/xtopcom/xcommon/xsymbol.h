@@ -58,6 +58,8 @@ private:
 };
 using xsymbol_t = xtop_symbol;
 
+extern xsymbol_t const SYMBOL_TOP_TOKEN;
+
 NS_END2
 
 NS_BEG1(std)

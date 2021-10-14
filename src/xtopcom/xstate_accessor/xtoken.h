@@ -21,7 +21,7 @@ using xtoken_type_t = xenum_token_type;
 
 class xtop_token {
     uint64_t value_{ 0 };
-    common::xsymbol_t symbol_{};
+    common::xsymbol_t symbol_{common::SYMBOL_TOP_TOKEN};
 
 public:
     xtop_token() = default;
@@ -30,10 +30,11 @@ public:
     xtop_token & operator=(xtop_token &&) = delete;
 
     xtop_token(xtop_token && other) noexcept;
-    explicit xtop_token(common::xsymbol_t symbol) noexcept;
-    ~xtop_token() noexcept;
+    explicit xtop_token(common::xsymbol_t symbol);
+    explicit xtop_token(std::uint64_t const amount, common::xsymbol_t symbol);
+    explicit xtop_token(std::uint64_t amount);
 
-    explicit xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) noexcept;
+    ~xtop_token() noexcept;
 
 public:
 
