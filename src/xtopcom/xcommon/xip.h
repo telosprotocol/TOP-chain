@@ -43,6 +43,7 @@ XINLINE_CONSTEXPR xzone_id_t::value_type xbroadcast_zone_id_value{0x7F};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xbroadcast_cluster_id_value{0x7F};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xbroadcast_group_id_value{0xFF};
 XINLINE_CONSTEXPR xslot_id_t::value_type xbroadcast_slot_id_value{0x03FF};
+XINLINE_CONSTEXPR uint16_t xbroadcast_group_size{0x03FF};
 XINLINE_CONSTEXPR uint64_t xbroadcast_associated_blk_height{0x3FFFFFFFFFFFFF};
 
 XINLINE_CONSTEXPR xnetwork_id_t::value_type xmax_network_id_value{xbroadcast_network_id_value - 1};
@@ -639,6 +640,9 @@ bool broadcast<xgroup_id_t>(xgroup_id_t const & group_id) noexcept;
 
 template <>
 bool broadcast<xslot_id_t>(xslot_id_t const & slot_id) noexcept;
+
+template <>
+bool broadcast<uint16_t>(uint16_t const & group_size) noexcept;
 
 template <>
 bool broadcast<uint64_t>(uint64_t const & associated_blk_height) noexcept;

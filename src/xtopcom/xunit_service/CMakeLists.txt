@@ -14,6 +14,8 @@ target_link_libraries(xunit_service PRIVATE
     xconfig
     xdata
     xelection
+    xblockmaker
+    xtxexecutor
     xBFT
     xstore
     xcommon
@@ -21,7 +23,7 @@ target_link_libraries(xunit_service PRIVATE
 )
 
 if (XENABLE_CODE_COVERAGE)
-target_link_libraries(xunit_service PRIVATE xchain_upgrade xconfig xdata xelection xBFT xstore xcommon gcov)
+target_link_libraries(xunit_service PRIVATE xchain_upgrade xconfig xdata xelection xblockmaker xtxexecutor xBFT xstore xcommon gcov)
 endif()
 
 # if (BUILD_METRICS)

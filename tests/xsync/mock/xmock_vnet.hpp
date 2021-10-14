@@ -102,11 +102,6 @@ public:
         m_vhost->broadcast(message, m_address);
     }
 
-    void
-    forward_broadcast_message(xmessage_t const & message, xvnode_address_t const & dst) override {
-        m_vhost->forward_broadcast_message(message, m_address, dst);
-    }
-
     common::xnode_id_t const &
     host_node_id() const noexcept override {
         return m_node_id;

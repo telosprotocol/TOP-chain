@@ -50,7 +50,7 @@ private:
 class xtxpool_service_face : public xrequest_tx_receiver_face {
 public:
     virtual bool start(const xvip2_t & xip) = 0;
-    virtual bool fade(const xvip2_t & xip) = 0;
+    virtual bool unreg(const xvip2_t & xip) = 0;
     virtual void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) = 0;
     virtual bool is_running() const = 0;
     // virtual bool is_receipt_sender(const base::xtable_index_t & tableid) const = 0;
@@ -65,7 +65,7 @@ public:
 class xtxpool_proxy_face : public xrequest_tx_receiver_face {
 public:
     virtual bool start() = 0;
-    virtual bool fade() = 0;
+    virtual bool unreg() = 0;
 };
 
 using xtxpool_proxy_face_ptr = std::shared_ptr<xtxpool_proxy_face>;
@@ -78,7 +78,7 @@ public:
     // init reference data
     virtual bool start(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) = 0;
     // uninit reference data
-    virtual bool fade(const xvip2_t & xip) = 0;
+    virtual bool unreg(const xvip2_t & xip) = 0;
     virtual xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const = 0;
     virtual void start() = 0;
     virtual void stop() = 0;

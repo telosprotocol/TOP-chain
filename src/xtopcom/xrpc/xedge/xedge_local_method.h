@@ -9,7 +9,7 @@
 #include "xutility/xhash.h"
 #include "xcrypto/xckey.h"
 #include "xelect_net/include/elect_main.h"
-
+#include "xbasic/xmemory.hpp"
 NS_BEG2(top, xrpc)
 
 template<class T>

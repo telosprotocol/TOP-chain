@@ -25,10 +25,10 @@ public:
 
     bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xvblock_t *block) override;
 
-    // listen network message, call while vnode fade in
+    // listen network message, call while vnode start
     bool listen(const xvip2_t &xip, common::xmessage_category_t category, const xpdu_reactor_ptr &reactor) override;
 
-    // unlisten network message, call while vnode fade out
+    // unlisten network message, call while vnode outdate (unreg)
     bool unlisten(const xvip2_t &xip, common::xmessage_category_t category) override;
 
     // add networkdriver, call while new vnode build

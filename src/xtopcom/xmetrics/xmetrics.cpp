@@ -221,6 +221,15 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_broad_block_broadcast);
         RETURN_METRICS_NAME(message_broad_category_unknown);
 
+        RETURN_METRICS_NAME(message_category_rumor);
+        RETURN_METRICS_NAME(message_rumor_category_consensus);
+        RETURN_METRICS_NAME(message_rumor_category_timer);
+        RETURN_METRICS_NAME(message_rumor_category_txpool);
+        RETURN_METRICS_NAME(message_rumor_category_rpc);
+        RETURN_METRICS_NAME(message_rumor_category_sync);
+        RETURN_METRICS_NAME(message_rumor_block_broadcast);
+        RETURN_METRICS_NAME(message_rumor_category_unknown);
+
         // sync 
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
@@ -698,8 +707,6 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     if (tag >= e_simple_total || tag <= e_simple_begin ) {
         return;
     }
-    // todo: remove for send & broadcast support vhost
-    xassert(tag < message_category_send || tag > message_broad_category_end);
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
 }
@@ -753,7 +760,8 @@ xsimple_merics_category g_cates[] = {
     {blockstore_access_from_rpc, blockstore_access_from_rpc_begin, blockstore_access_from_rpc_end},
     {message_category_recv, message_category_begin, message_category_end},
     {message_category_send, message_send_category_begin, message_send_category_end},
-    {message_category_broad, message_broad_category_begin, message_broad_category_end}
+    {message_category_broad, message_broad_category_begin, message_broad_category_end},
+    {message_category_rumor, message_rumor_category_begin, message_rumor_category_end}
 };
 
 bool is_category(E_SIMPLE_METRICS_TAG tag) {

@@ -52,7 +52,7 @@ private:
 
     bool m_sync_started{false};
 
-    std::shared_ptr<xunit_service::xcons_proxy_face> m_cons_face;
+    // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
 
     observer_ptr<top::xbase_timer_driver_t> m_timer_driver;
@@ -76,7 +76,7 @@ public:
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-               observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+            //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
@@ -97,7 +97,7 @@ public:
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-               observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+            //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,

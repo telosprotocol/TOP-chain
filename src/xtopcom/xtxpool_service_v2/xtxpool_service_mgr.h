@@ -35,7 +35,7 @@ public:
     xtxpool_proxy_face_ptr create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver, const observer_ptr<router::xrouter_face_t> & router) override;
     bool destroy(const xvip2_t & xip) override;
     bool start(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
-    bool fade(const xvip2_t & xip) override;
+    bool unreg(const xvip2_t & xip) override;
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override;
     void start() override;
     void stop() override;

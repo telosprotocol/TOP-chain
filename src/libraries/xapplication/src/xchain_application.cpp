@@ -5,7 +5,8 @@
 #include "xapplication/xchain_application.h"
 
 #include "xapplication/xapplication.h"
-#include "xapplication/xcons_mgr_builder.h"
+// #include "xapplication/xcons_mgr_builder.h"
+#include "xtxpool_service_v2/xtxpool_service_mgr.h"
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
 #include "xdata/xchain_param.h"
@@ -48,15 +49,15 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
   , m_sync_obj{top::make_unique<sync::xsync_object_t>(application->message_bus(), application->store(), make_observer(m_vhost), blockstore, nodesvr_ptr, cert_ptr,
                                                                                         sync_thread, sync_account_thread_pool, sync_handler_thread_pool)}
   , m_grpc_mgr{top::make_unique<grpcmgr::xgrpc_mgr_t>(m_application->message_bus(), grpc_thread)}
-  , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
-                                        m_application->store(),
-                                        m_application->blockstore(),
-                                        m_application->txpool(),
-                                        m_application->logic_timer(),
-                                        m_application->cert_serivce(),
-                                        make_observer(m_election_cache_data_accessor),
-                                        m_application->message_bus(),
-                                        m_application->router())}
+//   , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
+//                                         m_application->store(),
+//                                         m_application->blockstore(),
+//                                         m_application->txpool(),
+//                                         m_application->logic_timer(),
+//                                         m_application->cert_serivce(),
+//                                         make_observer(m_election_cache_data_accessor),
+//                                         m_application->message_bus(),
+//                                         m_application->router())}
   , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
                                                                                                         make_observer(m_application->blockstore().get()),
                                                                                                         m_application->txpool(),
@@ -69,10 +70,11 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                               make_observer(m_application->blockstore().get()),
                                                               m_application->logic_timer(),
                                                               m_application->router(),
+                                                              m_application->cert_serivce(),
                                                               make_observer(m_vhost),
                                                               make_observer(m_sync_obj),
                                                               make_observer(m_grpc_mgr),
-                                                              make_observer(m_cons_mgr),
+                                                            //   make_observer(m_cons_mgr),
                                                               make_observer(m_txpool_service_mgr.get()),
                                                               m_application->txpool(),
                                                               make_observer(m_election_cache_data_accessor),
@@ -142,7 +144,7 @@ void xtop_chain_application::on_election_data_updated(data::election::xelection_
             m_application->elect_manager()->OnElectQuit(xip);
         }
         for (const auto & xip : outdated_xips_pair.second) {
-            m_cons_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
+            // m_cons_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
             m_txpool_service_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
         }
         if (zid != common::xfrozen_zone_id) {

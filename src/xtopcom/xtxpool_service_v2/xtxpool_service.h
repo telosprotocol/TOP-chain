@@ -41,7 +41,7 @@ public:
 
 public:
     bool start(const xvip2_t & xip) override;
-    bool fade(const xvip2_t & xip) override;
+    bool unreg(const xvip2_t & xip) override;
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool is_running() const override;
     // bool is_receipt_sender(const base::xtable_index_t & tableid) const override;
@@ -94,7 +94,7 @@ private:
     common::xnode_type_t m_node_type;
     uint16_t m_node_id;
     uint16_t m_shard_size;
-    volatile bool m_running{false};
+    std::atomic<bool> m_running{false};
     std::string m_vnetwork_str;
     std::unordered_map<uint16_t, table_info> m_table_info_cache;
 };

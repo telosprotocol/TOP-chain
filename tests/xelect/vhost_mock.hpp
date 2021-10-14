@@ -74,29 +74,6 @@ class vhost_mock : public vnetwork::tests::xdummy_vhost_t {
     }
 
     /**
-     * \brief Send message to all nodes with src & dst specified.
-              The receiver itself makes the decision if the dst doesn't match
-              its address.
-     * \param message The message to be broadcasted.
-     * \param src The send address of the message.
-     * \param dst The receive address of the message.  Usually the boradcast
-     *            message should be sent to the address representing the whole
-     *            network.  But the reality is the new joining node which doesn't
-     *            have the ability to get the virtual network topology info.  It
-     *            needs to broadcast the join message to the REC cluster.  Only
-     *            REC nodes will handle this message.
-     */
-    virtual
-    void
-    broadcast_to_all(xmessage_t const & message,
-                     xvnode_address_t const & src,
-                     xvnode_address_t const & dst) {
-        for (auto item = m_cb_map.begin(); item != m_cb_map.end(); item++) {
-             item->second(src, message, 0);
-        }
-    }
-
-    /**
      * \brief Broadcast the message to the network that holds the src.
      * \param message The message to be broadcast.
      * \param src The src address of the broadcast message.

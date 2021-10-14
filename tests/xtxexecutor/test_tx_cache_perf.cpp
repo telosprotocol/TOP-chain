@@ -113,7 +113,7 @@ void cache_test_func() {
     ends=clock();
     std::cout<<"delete time2:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;    
 }
-TEST_F(test_tx_cache_perf, test_cache_thread) {
+TEST_F(test_tx_cache_perf, test_cache_thread_BENCH) {
     //g_transaction_cache = std::make_shared<data::xtransaction_cache_t>();
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
     tx->set_deposit(100000);

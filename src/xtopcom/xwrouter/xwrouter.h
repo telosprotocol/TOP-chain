@@ -21,8 +21,8 @@ typedef std::shared_ptr<Transport> TransportPtr;
 
 namespace protobuf {
 class RoutingMessage;
-};
-};  // namespace transport
+}
+}  // namespace transport
 
 namespace wrouter {
 

@@ -26,6 +26,7 @@ class MultiRouting {
 public:
     static MultiRouting * Instance();
 
+    kadmlia::ElectRoutingTablePtr GetLastRoundRoutingTable(base::ServiceType const & service_type);
     kadmlia::ElectRoutingTablePtr GetElectRoutingTable(base::ServiceType const & service_type);
     kadmlia::RootRoutingTablePtr GetRootRoutingTable();
     void AddElectRoutingTable(base::ServiceType service_type, kadmlia::ElectRoutingTablePtr routing_table);

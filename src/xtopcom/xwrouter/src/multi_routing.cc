@@ -263,6 +263,16 @@ void MultiRouting::HandleCacheElectNodesResponse(transport::protobuf::RoutingMes
     CallbackManager::Instance()->Callback(message.id(), message, packet);
 }
 
+kadmlia::ElectRoutingTablePtr MultiRouting::GetLastRoundRoutingTable(base::ServiceType const & service_type) {
+    std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {
+        if (service_type.IsNewer(riter->first, 1)) {
+            return riter->second;
+        }
+    }
+    return nullptr;
+}
+
 kadmlia::ElectRoutingTablePtr MultiRouting::GetElectRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
     for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {

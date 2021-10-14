@@ -89,40 +89,8 @@ public:
                       xvnode_address_t const & dst,
                       network::xtransmission_property_t const & transmission_property = {}) = 0;
 
-    // virtual
-    // void
-    // send(xmessage_t const & message,
-    //     xvnode_address_t const & src,
-    //     xvnode_address_t const & dst,
-    //     network::xtransmission_property_t const & transmission_property = {},
-    //     std::error_code & ec) = 0;
-
-    /**
-     * @brief Send message to all nodes with src & dst specified.
-              The receiver itself makes the decision if the dst doesn't match
-              its address.
-     * @param message The message to be broadcasted.
-     * @param src The send address of the message.
-     * @param dst The receive address of the message.  Usually the boradcast
-     *            message should be sent to the address representing the whole
-     *            network.  But the reality is the new joining node which doesn't
-     *            have the ability to get the virtual network topology info.  It
-     *            needs to broadcast the join message to the REC cluster.  Only
-     *            REC nodes will handle this message.
-     */
-    virtual void broadcast_to_all(xmessage_t const & message, xvnode_address_t const & src, xvnode_address_t const & dst) = 0;
-
-    /**
-     * @brief Broadcast the message to the network that holds the src.
-     * @param message The message to be broadcast.
-     * @param src The src address of the broadcast message.
-     */
-    virtual void broadcast(xmessage_t const & message, xvnode_address_t const & src) = 0;
-
-    virtual void forward_broadcast_message(xmessage_t const & message, xvnode_address_t const & src, xvnode_address_t const & dst) = 0;
-
-    virtual void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
-    virtual void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
+    // virtual void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
+    // virtual void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
 
     virtual void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
     virtual void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;

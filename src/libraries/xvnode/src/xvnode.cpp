@@ -27,7 +27,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-                       observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+                    //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
@@ -52,7 +52,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_dev_params{make_observer(std::addressof(data::xdev_params::get_instance()))}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
-        m_vhost,
+        m_vhost, m_election_cache_data_accessor,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
         joined_election_round)}
   , m_timer_driver{timer_driver}
@@ -60,14 +60,14 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen) {
-        m_cons_face = cons_mgr->create(m_the_binding_driver);
+        // m_cons_face = cons_mgr->create(m_the_binding_driver);
         m_txpool_face = txpool_service_mgr->create(m_the_binding_driver, m_router);
 
-        xwarn("[virtual node] vnode %p create at address %s cons_proxy:%p txproxy:%p",
-              this,
-              m_the_binding_driver->address().to_string().c_str(),
-              m_cons_face.get(),
-              m_txpool_face.get());
+        // xwarn("[virtual node] vnode %p create at address %s cons_proxy:%p txproxy:%p",
+        //       this,
+        //       m_the_binding_driver->address().to_string().c_str(),
+        //       m_cons_face.get(),
+        //       m_txpool_face.get());
     } else {
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
@@ -83,7 +83,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-                       observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+                    //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
@@ -103,7 +103,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                logic_timer,
                sync_obj,
                grpc_mgr,
-               cons_mgr,
+            //    cons_mgr,
                txpool_service_mgr,
                txpool,
                election_cache_data_accessor,
@@ -137,9 +137,9 @@ void xtop_vnode::start() {
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
         common::has<common::xnode_type_t::storage_full_node>(vnetwork_driver()->type()));
-    if (m_cons_face != nullptr) {
-        m_cons_face->start(this->start_time());
-    }
+    // if (m_cons_face != nullptr) {
+    //     m_cons_face->start(this->start_time());
+    // }
     if (m_txpool_face != nullptr) {
         m_txpool_face->start();
     }
@@ -149,24 +149,28 @@ void xtop_vnode::start() {
 }
 
 void xtop_vnode::fade() {
+    assert(running());
+    assert(!faded());
     assert(m_the_binding_driver != nullptr);
     assert(m_the_binding_driver->running());
 
     update_contract_manager(true);
 
     sync_remove_vnet();
-    if (m_cons_face != nullptr) {
-        m_cons_face->fade();
-    }
-    if (m_txpool_face != nullptr) {
-        m_txpool_face->fade();
-    }
+    // if (m_cons_face != nullptr) {
+    //     m_cons_face->fade();
+    // }
     m_faded.store(true, std::memory_order_release);
 }
 
 void xtop_vnode::stop() {
+    assert(running());
+    assert(faded());
     // any component can stop should
     // control multi-times stop
+    if (m_txpool_face != nullptr) {
+        m_txpool_face->unreg();
+    }
     m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
     m_the_binding_driver->stop();
