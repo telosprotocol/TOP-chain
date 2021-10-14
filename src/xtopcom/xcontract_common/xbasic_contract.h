@@ -70,7 +70,8 @@ public:
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;
-
+    uint64_t state_height(common::xaccount_address_t const & address = common::xaccount_address_t{}) const;
+    bool block_exist(common::xaccount_address_t const & address, uint64_t height) const;
     std::vector<xfollowup_transaction_datum_t> followup_transaction() const;
 
 protected:

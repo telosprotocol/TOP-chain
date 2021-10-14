@@ -36,7 +36,6 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
                                               data::xblock_consensus_para_t const & cs_para) {
     xaccount_vm_execution_result_t result;
     const size_t result_size = txs.size();
-    assert(result_size == 1);
     result.transaction_results.reserve(result_size);
 
     const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);

@@ -86,6 +86,18 @@ bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_i
     return r;
 }
 
+void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
+    assert(!ec);
+    assert(m_state_accessor != nullptr);
+    m_state_accessor->clear_property(property_id, ec);
+}
+
+void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id) {
+    std::error_code ec;
+    clear_property(property_id, ec);
+    top::error::throw_error(ec);
+}
+
 void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & property_id, xbyte_buffer_t code, std::error_code & ec) {
     assert(!ec);
     assert(m_state_accessor != nullptr);
@@ -109,9 +121,8 @@ uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_iden
 }
 
 uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
-    assert(m_state_accessor != nullptr);
     std::error_code ec;
-    auto const r = m_state_accessor->balance(property_id, symbol, ec);
+    auto const r = balance(property_id, symbol, ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -123,9 +134,21 @@ std::string xtop_contract_state::binlog(std::error_code & ec) const {
 }
 
 std::string xtop_contract_state::binlog() const {
-    assert(m_state_accessor != nullptr);
     std::error_code ec;
     auto r = binlog(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+size_t xtop_contract_state::binlog_size(std::error_code & ec) const {
+    assert(m_state_accessor != nullptr);
+    assert(!ec);
+    return m_state_accessor->binlog_size(ec);
+}
+
+size_t xtop_contract_state::binlog_size() const {
+    std::error_code ec;
+    auto r = binlog_size(ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -137,7 +160,6 @@ std::string xtop_contract_state::fullstate_bin(std::error_code & ec) const {
 }
 
 std::string xtop_contract_state::fullstate_bin() const {
-    assert(m_state_accessor != nullptr);
     std::error_code ec;
     auto r = fullstate_bin(ec);
     top::error::throw_error(ec);
@@ -267,18 +289,6 @@ void xtop_contract_state::create_time(std::error_code& ec) {
 bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, uint64_t height) const {
     assert(m_state_accessor != nullptr);
     return m_state_accessor->block_exist(user, height);
-}
-
-void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) {
-    assert(!ec);
-    assert(m_state_accessor != nullptr);
-    m_state_accessor->clear_property(property_id, ec);
-}
-
-void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id) {
-    std::error_code ec;
-    clear_property(property_id, ec);
-    top::error::throw_error(ec);
 }
 
 NS_END2

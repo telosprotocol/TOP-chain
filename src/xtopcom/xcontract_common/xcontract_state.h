@@ -36,8 +36,8 @@
 #endif
 
 #include <cassert>
-#include <type_traits>
 #include <system_error>
+#include <type_traits>
 
 NS_BEG2(top, contract_common)
 
@@ -60,7 +60,9 @@ public:
     xtop_contract_state & operator=(xtop_contract_state &&) = default;
     ~xtop_contract_state() = default;
 
-    explicit xtop_contract_state(common::xaccount_address_t action_account_addr, observer_ptr<state_accessor::xstate_accessor_t> sa, xcontract_execution_param_t const & execution_param);
+    explicit xtop_contract_state(common::xaccount_address_t action_account_addr,
+                                 observer_ptr<state_accessor::xstate_accessor_t> sa,
+                                 xcontract_execution_param_t const & execution_param);
 
     /// @brief Get state account address.
     /// @return State account address.
@@ -69,7 +71,7 @@ public:
     /// @brief Get state height.
     /// @param address Address to check. Check state address if default empty address.
     /// @return State height.
-    uint64_t state_height(common::xaccount_address_t const & address = common::xaccount_address_t{}) const;
+    uint64_t state_height(common::xaccount_address_t const & address) const;
 
     /// @brief Check if block object exists or not.
     /// @param address Address to check.
@@ -82,7 +84,7 @@ public:
     /// @param ec Log the error code in property creation process.
     void create_property(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec);
 
-    /// @brief Create property. If creation failed, xtop_error_t exception will be thrown.
+    /// @brief Create property. Throw xtop_error_t exception when error occurs.
     /// @param property_id The property identifier.
     void create_property(state_accessor::properties::xproperty_identifier_t const & property_id);
 
@@ -141,10 +143,10 @@ public:
     /// @param ec Log the error code in the operation.
     /// @return Cell value.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type
-    get_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                            typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
-                            std::error_code & ec) const {
+    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type get_property_cell_value(
+        state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+        typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key,
+        std::error_code & ec) const {
         assert(!ec);
         assert(m_state_accessor != nullptr);
 
@@ -156,9 +158,9 @@ public:
     /// @param key Cell position key.
     /// @return Cell value.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type
-    get_property_cell_value(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                            typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
+    typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type get_property_cell_value(
+        state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+        typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
         std::error_code ec;
         auto r = get_property_cell_value<PropertyTypeV>(property_id, key, ec);
         top::error::throw_error(ec);
@@ -201,16 +203,14 @@ public:
     void set_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
                       typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type const & value,
                       std::error_code & ec) {
-        assert(m_state_accessor != nullptr);
         assert(!ec);
-
+        assert(m_state_accessor != nullptr);
         m_state_accessor->set_property<PropertyTypeV>(property_id, value, ec);
     }
 
-    /// @brief Set property.
+    /// @brief Set property. Throw xtop_error_t exception when error occurs.
     /// @param property_id Property ID.
     /// @param value Value to be set.
-    /// @param ec Log the error code in the operation.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
     void set_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
                       typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type const & value) {
@@ -224,22 +224,47 @@ public:
     /// @param ec Log the error code in the operation.
     /// @return Property value.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type
-    get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                      std::error_code & ec) const {
         assert(m_state_accessor != nullptr);
         assert(!ec);
         return m_state_accessor->get_property<PropertyTypeV>(property_id, ec);
     }
 
-    /// @brief Get property.
+    /// @brief Get property. Throw xtop_error_t exception when error occurs.
     /// @param property_id Property ID.
+    /// @return Property value.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id) const {
+        std::error_code ec;
+        auto r = get_property<PropertyTypeV>(property_id, ec);
+        top::error::throw_error(ec);
+        return r;
+    }
+
+    /// @brief Get property of specific address.
+    /// @param property_id Property ID.
+    /// @param address Address to get.
     /// @param ec Log the error code in the operation.
     /// @return Property value.
     template <state_accessor::properties::xproperty_type_t PropertyTypeV>
-    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type
-    get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id) const {
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                      common::xaccount_address_t const & address,
+                                                                                      std::error_code & ec) const {
+        assert(!ec);
+        assert(m_state_accessor != nullptr);
+        return m_state_accessor->get_property<PropertyTypeV>(property_id, address, ec);
+    }
+
+    /// @brief Get property of specific address. Throw xtop_error_t exception when error occurs.
+    /// @param property_id Property ID.
+    /// @param address Address to get.
+    /// @return Property value.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                                      common::xaccount_address_t const & address) const {
         std::error_code ec;
-        auto r = get_property<PropertyTypeV>(property_id, ec);
+        auto r = get_property<PropertyTypeV>(property_id, address, ec);
         top::error::throw_error(ec);
         return r;
     }
@@ -275,6 +300,15 @@ public:
     /// @return The bincode of canvas.
     std::string binlog() const;
 
+    /// @brief Get the size of state change binlog.
+    /// @param ec Log the error code in getting binlog.
+    /// @return The binlog data size.
+    size_t binlog_size(std::error_code & ec) const;
+
+    /// @brief Get the size of state change binlog.
+    /// @return The binlog data size.
+    size_t binlog_size() const;
+
     /// @brief Get full state bin of state. If error occurs, xtop_error_t exception will be thrown.
     /// @param ec Log the error code in the deployment logic.
     /// @return The bincode of state.
@@ -289,9 +323,7 @@ public:
     /// @param symbol Simbol of the token.
     /// @param ec Log the error code in the call.
     /// @return The token amount.
-    uint64_t balance(state_accessor::properties::xproperty_identifier_t const & property_id,
-                     common::xsymbol_t const & symbol,
-                     std::error_code & ec) const;
+    uint64_t balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
 
     /// @brief Get the balance from the state. Throw xtop_error_t exception when any error occurs.
     /// @param property_id Property ID.
@@ -324,10 +356,8 @@ public:
     /// @param property_id Property ID.
     /// @param symbol Simbol of the token.
     /// @return The token object.
-    state_accessor::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
-                                      common::xsymbol_t const & symbol,
-                                      uint64_t amount);
-    
+    state_accessor::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount);
+
     /// @brief Get the consensus time height from param.
     /// @return Time height.
     common::xlogic_time_t time() const;
@@ -336,8 +366,7 @@ public:
     /// @return Timestamp.
     common::xlogic_time_t timestamp() const;
 
-
-    /* ----------special bstate process interface ---------- */ 
+    /* ----------special bstate process interface ---------- */
 private:
     uint64_t m_latest_followup_tx_nonce{0};
     uint256_t m_latest_followup_tx_hash{};

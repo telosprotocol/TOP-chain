@@ -25,7 +25,7 @@ public:
     void set(std::string const & value);
     void clear();
     std::string value() const;
-    // std::string query(common::xaccount_address_t const & contract) const;
+    std::string value(common::xaccount_address_t const & contract) const;
 };
 
 using xstring_property_t = xtop_string_property;

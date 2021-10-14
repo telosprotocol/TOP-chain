@@ -77,6 +77,13 @@ public:
     template <properties::xproperty_type_t PropertyTypeV>
     typename properties::xtype_of_t<PropertyTypeV>::type get_property(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
 
+    /// @brief Get property of other address.
+    /// @param property_id Property ID.
+    /// @param ec Log the error code in the operation.
+    /// @return Property value.
+    template <properties::xproperty_type_t PropertyTypeV>
+    typename properties::xtype_of_t<PropertyTypeV>::type get_property(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & address, std::error_code & ec) const;
+
     /// @brief Set property.
     /// @param property_id Property ID.
     /// @param value Value to be set.
@@ -160,6 +167,11 @@ public:
     /// @return The binlog data stored in string object.
     std::string binlog(std::error_code & ec) const;
 
+    /// @brief Get the size of state change binlog.
+    /// @param ec Log the error code in getting binlog.
+    /// @return The binlog data size.
+    size_t binlog_size(std::error_code & ec) const;
+
     /// @brief Get the fullstate binary data.
     /// @param ec Log the error code in getting the data.
     /// @return The full state binary data stored in the string object.
@@ -170,7 +182,7 @@ public:
     common::xaccount_address_t account_address() const;
 
     /// @brief Get the state associated chain height.
-    /// @param address Address to check.
+    /// @param address Address to get.
     /// @return The state associated chain height.
     uint64_t state_height(common::xaccount_address_t const & address) const;
 
@@ -205,6 +217,12 @@ private:
     /// @param property_name The property name.
     /// @param ec Store the error code in the creation process.
     void do_create_token_property(std::string const & property_name, std::error_code & ec);
+
+    /// @brief Get the state of specific address.
+    /// @param address Address to get.
+    /// @param ec Log the error code in getting the data.
+    /// @return The state of address.
+    xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & address, std::error_code & ec) const;
 };
 using xstate_accessor_t = xtop_state_accessor;
 

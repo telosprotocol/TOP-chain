@@ -39,9 +39,10 @@ using xaction_session_t = xtop_action_session<ActionT>;
 
 NS_END2
 
+#include "xbasic/xscope_executer.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_runtime.h"
-#include "xbasic/xscope_executer.h"
+#include "xcontract_runtime/xerror/xerror.h"
 #include "xdata/xconsensus_action.h"
 
 NS_BEG2(top, contract_runtime)
@@ -96,9 +97,19 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     } else {
         assert(false);
     }
+
+    auto start_bin_size = observed_exectx->contract_state()->binlog_size();
     result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;
+    }
+    auto end_bin_size = observed_exectx->contract_state()->binlog_size();
+
+    if (stage == data::xconsensus_action_stage_t::send || stage == data::xconsensus_action_stage_t::self) {
+        if (start_bin_size == end_bin_size) {
+            // not a fatal error
+            // result.status.ec = error::xenum_errc::enum_bin_code_not_changed;
+        }
     }
 
     return result;

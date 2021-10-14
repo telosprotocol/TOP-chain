@@ -58,6 +58,7 @@ enum class xenum_errc {
 
     // wasm user contract
     enum_wasm_code_invalid,
+    enum_bin_code_not_changed,
 
     unknown_error,
 };

@@ -18,7 +18,6 @@ enum class xenum_errc {
     invalid_contract_type,
     transaction_execution_abort,
     none_success_tx,
-    confirm_tx_num_error,
 
     unknown_error,
 };
