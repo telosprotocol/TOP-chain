@@ -76,8 +76,7 @@ public:
     void add_role(const vnetwork::xvnode_address_t& self_xip, 
                   const std::vector<vnetwork::xvnode_address_t>& neighbours,
                   const std::vector<vnetwork::xvnode_address_t>& parents, 
-                  const std::vector<vnetwork::xvnode_address_t>& archives, 
-                  const std::vector<vnetwork::xvnode_address_t>& edge_archives,
+                  const std::shared_ptr<vnetwork::xvnetwork_driver_face_t>& network_driver,
                   const std::set<uint16_t> &table_ids);
 
     /**
@@ -134,9 +133,9 @@ protected:
 protected:
     std::string m_vnode_id;
     mutable std::mutex m_lock;
-    xip_vector_ptr m_archive_xips{};
-    xip_vector_ptr m_edge_archive_xips{};
     std::unordered_map<vnetwork::xvnode_address_t, xrole_xips_t> m_map;
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_vnetwork_driver;
+    vnetwork::xvnode_address_t m_self_xip;
 };
 
 NS_END2

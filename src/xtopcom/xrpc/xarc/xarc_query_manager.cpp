@@ -94,7 +94,7 @@ void xarc_query_manager::getTransaction(xjson_proc_t & json_proc) {
             xJson::Value result_json;
             result_json["tx_consensus_state"] = cache_data.jv;
             // xdbg("json1:%s", cache_data.jv.toStyledString().c_str());
-            m_bh.update_tx_state(result_json, cache_data.jv);
+            m_bh.update_tx_state(result_json, cache_data.jv, version);
 
             auto ori_tx_info = m_bh.parse_tx(cache_data.tran.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
