@@ -74,6 +74,8 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     auto stage = execution_context->action_stage();
     execution_context->consensus_action_stage(stage);
     if (stage == data::xconsensus_action_stage_t::send) {
+        auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
+        if (!cons_action->receipt_data().empty()) execution_context->receipt_data(cons_action->receipt_data());
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::source_action);
         uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num(ec);
         top::error::throw_error(ec);
