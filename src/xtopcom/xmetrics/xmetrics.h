@@ -350,6 +350,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_tx_delay_from_push_to_commit_recv,
     txpool_tx_delay_from_push_to_commit_confirm,
     txpool_receipt_id_state_msg_send_num,
+    txpool_sync_on_demand_unit,
 
     // blockstore
     blockstore_index_load,
@@ -396,6 +397,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_id_state,
+    blockstore_access_from_txpool_get_nonce,
     blockstore_access_from_txpool_refresh_table,
     blockstore_access_from_txpool_create_receipt,
     blockstore_access_from_txpool_pull_lacking_receipts,

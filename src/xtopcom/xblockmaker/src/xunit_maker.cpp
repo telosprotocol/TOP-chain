@@ -55,7 +55,7 @@ void xunit_maker_t::try_sync_lacked_blocks(uint64_t from_height, uint64_t to_hei
     }
 }
 
-int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & cs_para,const base::xaccount_index_t & account_index) {
+int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & cs_para,const base::xaccount_index_t & account_index, const xunit_block_cache & unit_block_cache) {
     if (m_check_state_success && m_latest_account_index == account_index) {
         return xsuccess;
     }
@@ -66,22 +66,29 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
         uint64_t start_sync_height = latest_connect_height + 1;
 
-        // find the latest cert block which matching account_index
-        auto _latest_cert_block = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
-        if (_latest_cert_block == nullptr) {
-            xwarn("xunit_maker_t::check_latest_state fail-load unit cert block.%s, account=%s,index=%s,missing_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), account_index.get_latest_unit_height());
-            try_sync_lacked_blocks(start_sync_height, account_index.get_latest_unit_height(), "missing_unit_cert", true);
-            break;
+        xblock_ptr_t latest_block = nullptr;
+        std::map<uint64_t, data::xblock_ptr_t> latest_blocks = unit_block_cache.get_unit_blocks(get_address());
+        if (latest_blocks.empty()) {
+            // find the latest cert block which matching account_index
+            auto _latest_cert_block = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
+            if (_latest_cert_block == nullptr) {
+                xwarn("xunit_maker_t::check_latest_state fail-load unit cert block.%s, account=%s,index=%s,missing_height=%ld",
+                    cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), account_index.get_latest_unit_height());
+                try_sync_lacked_blocks(start_sync_height, account_index.get_latest_unit_height(), "missing_unit_cert", true);
+                break;
+            }
+            latest_block = xblock_t::raw_vblock_to_object_ptr(_latest_cert_block.get());
+            latest_blocks[latest_block->get_height()] = latest_block;
+        } else {
+            latest_block = latest_blocks.rbegin()->second;
         }
-        xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(_latest_cert_block.get());
 
         // reinit unit maker
         m_check_state_success = false;
         uint64_t lacked_block_height = 0;
         // cache latest block
-        if (!load_and_cache_enough_blocks(latest_block, lacked_block_height)) {
-            xwarn("xunit_maker_t::check_latest_state fail-load unit block.%s, account=%s,,index=%s,missing_height=%ld",
+        if (!load_and_cache_enough_blocks(latest_blocks, lacked_block_height)) {
+            xwarn("xunit_maker_t::check_latest_state fail-load unit block.%s, account=%s,index=%s,missing_height=%ld",
                 cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_block_height);
             try_sync_lacked_blocks(start_sync_height, lacked_block_height, "missing_unit_lock_commit", true);
             break;
@@ -95,7 +102,7 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
             try_sync_lacked_blocks(start_sync_height, lacked_block_height, "connect_unit_behind", true);
             break;
         }
-        if (!update_account_state(latest_block, lacked_block_height)) {
+        if (!update_account_state(latest_blocks, lacked_block_height)) {
             xassert(lacked_block_height > 0);
             if (lacked_block_height > 0) {
                 try_sync_lacked_blocks(start_sync_height, lacked_block_height, "update_account_state", true);
@@ -380,20 +387,20 @@ bool xunit_maker_t::can_make_next_block() const {
 
 bool xunit_maker_t::can_make_next_empty_block() const {
     // TODO(jimmy)
-    const xblock_ptr_t & current_block = get_highest_height_block();
-    if (current_block->get_height() == 0) {
-        return false;
-    }
-    if (current_block->get_block_class() == base::enum_xvblock_class_light) {
-        return true;
-    }
-    xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
-    if (prev_block == nullptr) {
-        return false;
-    }
-    if (prev_block->get_block_class() == base::enum_xvblock_class_light) {
-        return true;
-    }
+    // const xblock_ptr_t & current_block = get_highest_height_block();
+    // if (current_block->get_height() == 0) {
+    //     return false;
+    // }
+    // if (current_block->get_block_class() == base::enum_xvblock_class_light) {
+    //     return true;
+    // }
+    // xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
+    // if (prev_block == nullptr) {
+    //     return false;
+    // }
+    // if (prev_block->get_block_class() == base::enum_xvblock_class_light) {
+    //     return true;
+    // }
     return false;
 }
 

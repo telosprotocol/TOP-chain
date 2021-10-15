@@ -19,6 +19,8 @@ m_shadow(shadow) {
 bool xsync_store_t::store_block(base::xvblock_t* block) {
     if (block->get_block_level() == base::enum_xvblock_level_unit) {
         XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
+        block->set_block_flag(base::enum_xvblock_flag_committed);
+        block->set_block_flag(base::enum_xvblock_flag_locked);
     } else if (block->get_block_level() == base::enum_xvblock_level_table) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }

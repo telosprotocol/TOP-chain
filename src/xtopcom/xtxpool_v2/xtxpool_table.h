@@ -125,8 +125,8 @@ private:
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
-    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
-    bool get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
+    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce);
+    bool get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info, uint64_t & nonce);
     void update_id_state(const std::vector<update_id_state_para> & para_vec);
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);

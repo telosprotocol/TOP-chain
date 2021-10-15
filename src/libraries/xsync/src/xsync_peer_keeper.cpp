@@ -142,8 +142,7 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         info.address = address;
         if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
             base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-            if (!block->is_full_state_block()) {
+            if (latest_start_block == nullptr || !latest_start_block->is_full_state_block()) {
                 info.start_height = 0;
                 info.end_height = 0;
             } else {

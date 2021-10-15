@@ -323,6 +323,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_commit_recv);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_commit_confirm);
         RETURN_METRICS_NAME(txpool_receipt_id_state_msg_send_num);
+        RETURN_METRICS_NAME(txpool_sync_on_demand_unit);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
@@ -364,6 +365,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_txpool);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_on_block_event);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_id_state);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_get_nonce);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_create_receipt);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_pull_lacking_receipts);
