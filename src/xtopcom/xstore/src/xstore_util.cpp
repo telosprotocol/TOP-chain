@@ -10,22 +10,22 @@
 
 using namespace top::metrics;
 
-std::map<std::string, xmetircs_tag_t> key_start = {
-    {"t/", xmetircs_tag_t::db_key_tx},
-    {"i/", xmetircs_tag_t::db_key_block_index},
-    {"b/", xmetircs_tag_t::db_key_block}
+std::map<std::string, xmetrics_tag_t> key_start = {
+    {"t/", xmetrics_tag_t::db_key_tx},
+    {"i/", xmetrics_tag_t::db_key_block_index},
+    {"b/", xmetrics_tag_t::db_key_block}
 };
 
-std::map<std::string, xmetircs_tag_t> key_end = {
-    {"/h", xmetircs_tag_t::db_key_block_object},
-    {"/i", xmetircs_tag_t::db_key_block_input},
-    {"/ir", xmetircs_tag_t::db_key_block_input_resource},
-    {"/o", xmetircs_tag_t::db_key_block_output},
-    {"/or", xmetircs_tag_t::db_key_block_output_resource},
-    {"/s", xmetircs_tag_t::db_key_block_state},
+std::map<std::string, xmetrics_tag_t> key_end = {
+    {"/h", xmetrics_tag_t::db_key_block_object},
+    {"/i", xmetrics_tag_t::db_key_block_input},
+    {"/ir", xmetrics_tag_t::db_key_block_input_resource},
+    {"/o", xmetrics_tag_t::db_key_block_output},
+    {"/or", xmetrics_tag_t::db_key_block_output_resource},
+    {"/s", xmetrics_tag_t::db_key_block_state},
 };
 
-void xstore_util::metirc_key_value(std::string const& key, std::string const& value, bool add_or_minus) {
+void xstore_util::metrics_key_value(std::string const& key, std::string const& value, bool add_or_minus) {
 #ifdef DB_KV_STATISTIC
     xassert(key.size() > 3);
 
@@ -37,7 +37,7 @@ void xstore_util::metirc_key_value(std::string const& key, std::string const& va
            } else {
                XMETRICS_GAUGE(start_item.second, -value.size());
            }
-           if (start_item.second == xmetircs_tag_t::db_key_block) {
+           if (start_item.second == xmetrics_tag_t::db_key_block) {
                for (auto const& end_item: key_end) {
                    if (endwith(key, end_item.first)) {
                        if (add_or_minus) {
