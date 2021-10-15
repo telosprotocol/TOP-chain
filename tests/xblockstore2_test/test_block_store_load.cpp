@@ -573,6 +573,7 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
 
     sleep(1*16+5); // wait for meta save to db. table has 16 times than unit
 
+    // sleep(100);
     db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
     #ifdef ENABLE_METRICS
     auto store_call_1 = XMETRICS_GAUGE_GET_VALUE(metrics::store_block_call);
@@ -597,7 +598,6 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     std::cout << "store_call_2 = " << store_call_2 << std::endl;
     #endif
 }
-
 
 TEST_F(test_block_store_load, commit_block_event_1) {
     mock::xvchain_creator creator;

@@ -46,10 +46,6 @@ public:
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t> get_latest_executed_block(base::xvaccount_t const &,const int atag = 0)  override {
-        return nullptr;
-    }
-
     base::xauto_ptr<base::xvblock_t> get_latest_connected_block(base::xvaccount_t const &,const int atag = 0) override {
         return nullptr;
     }

@@ -648,7 +648,7 @@ namespace top
         {
             if(is_close()) //object not avaiable
             {
-                xerror("xvaccountobj_t::try_close_plugin,closed account(%s)",get_address().c_str());
+                xwarn("xvaccountobj_t::try_close_plugin,closed account(%s)",get_address().c_str()); // TODO(jimmy)
                 return true;
             }
             if((int)plugin_type >= enum_xvaccount_plugin_max)
