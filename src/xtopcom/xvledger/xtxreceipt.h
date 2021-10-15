@@ -52,6 +52,7 @@ namespace top
 
         private:
             base::xvaction_t                m_tx_action;
+            receipt_data_t          m_receipt_data;
             xobject_ptr_t<xprove_cert_t>    m_tx_action_prove{nullptr};
         };
 
@@ -65,7 +66,6 @@ namespace top
             const std::string &         get_tx_org_bin() const {return m_tx_org_bin;}
         private:
             xtx_receipt_ptr_t       m_tx_receipt{nullptr};
-            receipt_data_t          m_receipt_data;
             std::string             m_tx_org_bin;
         };
         using xfull_txreceipt_ptr_t = std::shared_ptr<xfull_txreceipt_t>;
