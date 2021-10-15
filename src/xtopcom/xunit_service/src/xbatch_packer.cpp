@@ -487,7 +487,25 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
     }
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
+bool  xbatch_packer::on_replicate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms)  //call from lower layer to higher layer(parent)
+{
+    xcsaccount_t::on_replicate_finish(event, from_child, cur_thread_id, timenow_ms);
 
+    xconsensus::xreplicate_finish * _evt_obj = (xconsensus::xreplicate_finish*)&event;
+    auto xip = get_xip2_addr();
+    bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_block()->get_cert()->get_validator())
+                  || xcons_utl::xip_equals(xip, _evt_obj->get_target_block()->get_cert()->get_auditor());    
+    if(_evt_obj->get_error_code() == xconsensus::enum_xconsensus_code_successful)
+    {
+        base::xvblock_t *vblock = _evt_obj->get_target_block();
+        xassert(vblock->is_input_ready(true));
+        xassert(vblock->is_output_ready(true));
+        vblock->add_ref();
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
+        m_mbus->push_event(ev);
+    }
+    return true; //stop handle anymore
+}
 bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     xcsaccount_t::on_consensus_commit(event, from_child, cur_thread_id, timenow_ms);
     xconsensus::xconsensus_commit * _evt_obj = (xconsensus::xconsensus_commit *)&event;

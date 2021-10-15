@@ -128,7 +128,8 @@ void xarc_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_m
                    vaddr.to_string().c_str(),
                    msg.hash());
             try {
-                m_arc_vhost->forward_broadcast_message(msg, vaddr);
+                std::error_code ec;
+                m_arc_vhost->broadcast(vaddr.xip2(), msg, ec);
                 XMETRICS_GAUGE(metrics::rpc_auditor_forward_request, 1);
             } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
@@ -177,14 +178,17 @@ void xarc_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & 
     response_msg_ptr->m_signature_address = m_arc_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
     xdbg_rpc("xarc_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
-    m_arc_vhost->send_to(edge_sender, msg);
+    std::error_code ec;
+    m_arc_vhost->send_to(edge_sender, msg, ec);
+
 }
 
 void xarc_rpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode_address_t & edge_sender) {
     xrpc_msg_response_t shard_msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(msg.payload());
     try {
         xkinfo("m_arc_vhost response:%" PRIx64, msg.hash());
-        m_arc_vhost->send_to(shard_msg.m_source_address, msg);
+        std::error_code ec;
+        m_arc_vhost->send_to(shard_msg.m_source_address, msg, ec);
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[global_trace][advance_rpc][send] src %s send msg %" PRIx64 " to dst %s",
               m_arc_vhost->address().to_string().c_str(),

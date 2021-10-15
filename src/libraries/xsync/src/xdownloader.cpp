@@ -169,6 +169,9 @@ std::string xdownloader_t::get_address_by_event(const mbus::xevent_ptr_t &e) {
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
             return bme->blocks[0]->get_account();
+        } else if (e->minor_type == mbus::xevent_sync_executor_t::archive_blocks) {
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
+            return bme->blocks[0]->get_account();
         } else if (e->minor_type == mbus::xevent_sync_executor_t::chain_snapshot) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_chain_snaphsot_t>(e);
             return bme->m_tbl_account_addr;
@@ -220,6 +223,8 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
             XMETRICS_TIME_RECORD("sync_cost_response_blocks_event");
             chain_downloader = on_response_event(idx, e);
+        } else if (e->minor_type == mbus::xevent_sync_executor_t::archive_blocks) {
+            chain_downloader = on_archive_blocks(idx, e);
         } else if (e->minor_type == mbus::xevent_sync_executor_t::chain_snapshot) {
             chain_downloader = on_chain_snapshot_response_event(idx, e);
         }
@@ -303,6 +308,25 @@ xchain_downloader_face_ptr_t xdownloader_t::on_response_event(uint32_t idx, cons
         vnetwork::xvnode_address_t &from_addr = bme->from_address;
 
         chain_downloader->on_response(blocks, self_addr, from_addr);
+    }
+
+    return chain_downloader;
+}
+xchain_downloader_face_ptr_t xdownloader_t::on_archive_blocks(uint32_t idx, const mbus::xevent_ptr_t &e) {
+    //xsync_dbg("downloader on_response_event");
+
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
+
+    const std::string &address = bme->blocks[0]->get_account();
+
+    xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, address);
+    if (chain_downloader != nullptr) {
+
+        std::vector<data::xblock_ptr_t> &blocks = bme->blocks;
+        vnetwork::xvnode_address_t &self_addr = bme->self_address;
+        vnetwork::xvnode_address_t &from_addr = bme->from_address;
+
+        chain_downloader->on_archive_blocks(blocks, self_addr, from_addr);
     }
 
     return chain_downloader;

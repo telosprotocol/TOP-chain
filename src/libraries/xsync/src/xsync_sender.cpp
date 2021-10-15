@@ -104,6 +104,11 @@ void xsync_sender_t::send_blocks(xsync_msg_err_code_t code, const std::string &a
     send_message(body, xmessage_id_sync_blocks, "blocks", self_addr, target_addr);
 }
 
+void xsync_sender_t::send_archive_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
+    auto body = make_object_ptr<xsync_message_blocks_t>(address, blocks);
+    send_message(body, xmessage_id_sync_archive_blocks, "archive_blocks", self_addr, target_addr);
+}
+
 void xsync_sender_t::send_get_on_demand_blocks(const std::string &address,
             uint64_t start_height, uint32_t count, bool is_consensus,
             const vnetwork::xvnode_address_t &self_addr,
@@ -246,6 +251,27 @@ void xsync_sender_t::send_get_on_demand_by_hash_blocks(const std::string &addres
 
     auto body = make_object_ptr<xsync_message_get_on_demand_by_hash_blocks_t>(address, hash);
     send_message(body, xmessage_id_sync_get_on_demand_by_hash_blocks, "get_on_demand_by_hash_blocks", self_addr, target_addr);
+}
+
+void xsync_sender_t::send_archive_height(const xchain_state_info_t& info,
+    const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
+    auto body = make_object_ptr<xchain_state_info_t>(info);
+    send_message(body, xmessage_id_sync_archive_height, "archive_height", self_addr, target_addr);
+    xsync_dbg("xsync_sender_t send_archive_height: %s, %llu, src %s dst %s", info.address.c_str(), info.end_height, self_addr.to_string().c_str(), target_addr.to_string().c_str());
+}
+
+void xsync_sender_t::send_query_archive_height(const xsync_query_height_t& info,
+    const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
+    auto body = make_object_ptr<xsync_query_height_t>(info);
+    send_message(body, xmessage_id_sync_query_archive_height, "query_archive_height", self_addr, target_addr);
+    xsync_dbg("xsync_sender_t send_query_archive_height: %s, src %s dst %s", info.address.c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+}
+
+void xsync_sender_t::send_archive_height_list(const std::vector<xchain_state_info_t>& info_list,
+    const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
+    auto body = make_object_ptr<xsync_message_chain_state_info_t>(info_list);
+    send_message(body, xmessage_id_sync_archive_height_list, "archive_height_list", self_addr, target_addr);
+    xsync_dbg("xsync_sender_t send_archive_height_list: %d, src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
 
 bool xsync_sender_t::send_message(

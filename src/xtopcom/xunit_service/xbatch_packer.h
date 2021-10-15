@@ -50,6 +50,7 @@ public:
     virtual bool reset_xip_addr(const xvip2_t & new_addr);
     virtual bool set_fade_xip_addr(const xvip2_t & new_addr);
     virtual bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
+    virtual bool on_replicate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
     virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     virtual bool set_start_time(const common::xlogic_time_t& start_time);
 protected:
