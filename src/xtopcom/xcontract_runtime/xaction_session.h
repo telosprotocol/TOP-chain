@@ -56,6 +56,8 @@ xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t
 template <typename ActionT>
 xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action) {
     xtransaction_execution_result_t result;
+    auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
+    auto const receipt_data = cons_action->receipt_data();
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), m_contract_state)};
 
     std::error_code ec;
