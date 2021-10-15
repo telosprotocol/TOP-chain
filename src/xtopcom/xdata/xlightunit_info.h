@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "xbasic/xbyte_buffer.h"
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
 #include "xvledger/xdataobj_base.hpp"
@@ -30,6 +31,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID_SELF_TABLE_ID                 = "9";
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID_PEER_TABLE_ID                 = "a";
     static XINLINE_CONSTEXPR char const * XTX_SENDER_CONFRIMED_RECEIPT_ID              = "b";  // optional. exist when sendtx
+    static XINLINE_CONSTEXPR char const * XTX_RECEIPT_DATA                             = "c";
 
  public:
     xtransaction_exec_state_t();
@@ -44,6 +46,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_tx_exec_status(enum_xunit_tx_exec_status value);
     void        set_receipt_id(base::xtable_shortid_t self_tableid, base::xtable_shortid_t peer_tableid, uint64_t receiptid);
     void        set_sender_confirmed_receipt_id(uint64_t receiptid);
+    void        set_receipt_data(xreceipt_data_t data);
 
  public:
     uint32_t    get_used_disk()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DISK);}
@@ -55,6 +58,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     uint64_t    get_receipt_id()const {return get_value_uint64(XTX_RECEIPT_ID);}
     base::xtable_shortid_t    get_receipt_id_self_tableid()const {return get_value_uint16(XTX_RECEIPT_ID_SELF_TABLE_ID);}
     base::xtable_shortid_t    get_receipt_id_peer_tableid()const {return get_value_uint16(XTX_RECEIPT_ID_PEER_TABLE_ID);}
+    xreceipt_data_t           get_receipt_data() const;
 };
 
 class xlightunit_tx_info_t : public xlightunit_action_t {
