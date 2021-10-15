@@ -61,7 +61,7 @@ void xtop_contract_execution_context::receipt_data(std::map<std::string, xbyte_b
 }
 
 std::map<std::string, xbyte_buffer_t> & xtop_contract_execution_context::receipt_data() noexcept {
-    return m_receipt_data;
+    return m_execution_result.output.receipt_data;
 }
 
 xbyte_buffer_t const & xtop_contract_execution_context::receipt_data(std::string const & key, std::error_code & ec) const noexcept {

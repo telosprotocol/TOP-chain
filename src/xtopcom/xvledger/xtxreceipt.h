@@ -17,7 +17,6 @@ namespace top
 {
     namespace base
     {
-        using receipt_data_t = std::map<std::string, xbyte_buffer_t>;
         class xtxreceipt_build_t;
         class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt> {
             friend class xtxreceipt_build_t;
@@ -47,12 +46,9 @@ namespace top
             std::string                     get_contract_address() const;
             std::string                     get_caller() const {return m_tx_action.get_caller();}
             const base::xvaction_t &        get_action() const {return m_tx_action;}
-            void                            set_receipt_data(receipt_data_t data){ m_receipt_data = data; }
-            receipt_data_t                  get_receipt_data() { return m_receipt_data; }
 
         private:
             base::xvaction_t                m_tx_action;
-            receipt_data_t          m_receipt_data;
             xobject_ptr_t<xprove_cert_t>    m_tx_action_prove{nullptr};
         };
 

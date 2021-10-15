@@ -45,12 +45,14 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     state_accessor::xstate_accessor_t sa{make_observer(block_state.get()), ac_data};
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
+    xdbg("wens_test, xtop_account_vm::execute, action size : %zu\n", actions.size());
     assert(actions.size() == result_size);
 
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
             auto action_result = execute_action(std::move(actions[i]), sa, param);
+            xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu\n", action_result.output.receipt_data.size());
             result.transaction_results.emplace_back(action_result);
             assert(result.transaction_results.size() == (i + 1));
             if (action_result.status.ec) {
@@ -179,7 +181,8 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
         if (r.status.ec) {
-            printf("wens_test, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+            xdbg("wens_test, fail, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+            xdbg("wens_test, fail, eccode: %d, msg: %s", r.status.ec.value(), r.status.ec.message().c_str());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
             if (tx->is_send_tx() || tx->is_self_tx()) {
                 output.failed_tx_assemble.emplace_back(tx);
@@ -191,7 +194,14 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 assert(false);
             }
         } else {
-            if (!r.output.receipt_data.empty()) tx->set_receipt_data(r.output.receipt_data);
+            xdbg("wens_test, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+            xdbg("wens_test, eccode: %d, msg: %s", ec.value(), ec.message().c_str());
+            if (!r.output.receipt_data.empty()) {
+                auto const& receipt_data = r.output.receipt_data.at(contract_common::RECEITP_DATA_ASSET_OUT);
+                xdbg("wens_test,set receipt data, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+                xdbg("wens_test,set receipt data, %s\n", std::string{receipt_data.begin(), receipt_data.end()}.c_str());
+                tx->set_receipt_data(r.output.receipt_data);
+            }
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
             output.success_tx_assemble.emplace_back(tx);
             last_success_tx_index = i;

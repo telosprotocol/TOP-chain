@@ -33,6 +33,24 @@ void xtransaction_exec_state_t::set_sender_confirmed_receipt_id(uint64_t receipt
     set_value(XTX_SENDER_CONFRIMED_RECEIPT_ID, receiptid);
 }
 
+void xtransaction_exec_state_t::set_receipt_data(xreceipt_data_t data) {
+    if (!data.empty()) {
+        base::xstream_t stream(base::xcontext_t::instance());
+        MAP_SERIALIZE_SIMPLE(stream, data);
+        set_value(XTX_RECEIPT_DATA, std::string{(char*)stream.data(), (uint32_t)stream.size()});
+    }
+}
+
+xreceipt_data_t  xtransaction_exec_state_t::get_receipt_data() const {
+    auto const& res = get_value(XTX_RECEIPT_DATA);
+    if (res.empty()) return xreceipt_data_t{};
+
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)res.data(), (int32_t)res.size());
+    xreceipt_data_t data;
+    MAP_DESERIALIZE_SIMPLE(stream, data);
+    return data;
+}
+
 enum_xunit_tx_exec_status xtransaction_exec_state_t::get_tx_exec_status() const {
     enum_xunit_tx_exec_status status = static_cast<enum_xunit_tx_exec_status>(get_value_uint32(XTX_STATE_TX_EXEC_STATUS));
     return status;

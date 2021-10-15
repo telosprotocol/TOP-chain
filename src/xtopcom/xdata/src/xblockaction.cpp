@@ -63,6 +63,18 @@ uint64_t xlightunit_action_t::get_receipt_id() const {
     }
     return 0;
 }
+
+xreceipt_data_t   xlightunit_action_t::get_receipt_data() const {
+    std::stirng value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_DATA);
+    if (value.empty()) return xreceipt_data_t{};
+
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)value.data(), (int32_t)value.size());
+    xreceipt_data_t data;
+    MAP_DESERIALIZE_SIMPLE(stream, data);
+    return data;
+
+}
+
 base::xtable_shortid_t xlightunit_action_t::get_receipt_id_self_tableid()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);
     if (!value.empty()) {
