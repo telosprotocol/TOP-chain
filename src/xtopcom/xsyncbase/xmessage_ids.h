@@ -9,12 +9,7 @@ XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_blocks, 0x2);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_push_newblock, 0x3);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_gossip, 0x5);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_frozen_gossip, 0x6);
-#if 0
-// discard
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_latest_block_info, 0x7);
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_latest_blocks, 0x8);
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_latest_blocks, 0x9);
-#endif
+
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_on_demand_blocks, 0xa);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_on_demand_blocks, 0xb);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_broadcast_chain_state, 0xc);
@@ -34,5 +29,10 @@ XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_on_demand_by_hash_bl
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_on_demand_by_hash_blocks, 0x20);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_on_demand_blocks_with_proof, 0x21);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_on_demand_blocks_with_proof, 0x22);
+
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_height, 0x21);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_blocks, 0x22);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_query_archive_height, 0x23);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_height_list, 0x24);
 
 NS_END2

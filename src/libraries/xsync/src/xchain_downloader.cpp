@@ -142,7 +142,74 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         }
     }
 }
+enum_result_code xchain_downloader_t::handle_archive_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
+    if (is_elect_chain) {
+        if (!check_auth(m_certauth, block)) {
+            xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
+            return enum_result_code::auth_failed;
+        }
+    }
 
+    auto vbindex = m_sync_store->load_block_object(block->get_block_owner(), block->get_height(), false, block->get_viewid());
+    if (vbindex == nullptr) {
+    //XTODO,need doublecheck whether allow set flag of authenticated without verify signature
+        xsync_dbg("xchain_downloader_t::handle_block, store_block: %s,%d", block->get_account().c_str(), block->get_height());
+        block->set_block_flag(enum_xvblock_flag_authenticated);
+        
+        base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
+        bool ret = m_sync_store->store_block(vblock);
+        if (!ret) {
+            return enum_result_code::failed;
+        }
+    } else {
+    }
+
+    return enum_result_code::success;
+}
+void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
+    uint32_t count = blocks.size();
+    if (count == 0) {
+        return;
+    }
+
+    xsync_info("chain_downloader on_archive_blocks, %s count(%u) %s",
+        m_address.c_str(), count, from_addr.to_string().c_str());
+
+    bool is_elect_chain = false;
+    std::string account_prefix;
+    uint32_t table_id = 0;
+    data::xdatautil::extract_parts(m_address, account_prefix, table_id);
+
+    if (account_prefix==sys_contract_beacon_table_block_addr || account_prefix==sys_contract_zec_table_block_addr) {
+        is_elect_chain = true;
+    }
+
+    if (!is_elect_chain){
+        xblock_ptr_t &block = blocks[count-1];
+        if (!check_auth(m_certauth, block)) {
+            xsync_info("chain_downloader on_archive_blocks(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
+            return;
+        }
+    }
+
+    auto next_block = blocks[blocks.size() - 1];
+ 
+    for (uint32_t i = 0; i < count; i++) {
+        xblock_ptr_t &block = blocks[i];
+        enum_result_code ret = handle_archive_block(block, is_elect_chain, next_block->get_height());
+
+        if (ret == enum_result_code::success) {
+            xsync_dbg("chain_downloader on_archive_blocks(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
+                m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_last_block_hash()).c_str());
+        } else if (ret == enum_result_code::failed) {
+            xsync_warn("chain_downloader on_archive_blocks(failed) reason %d, block is: %s", ret, block->dump().c_str());
+        }
+    }
+
+    xsync_info("chain_downloader on_archive_blocks(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+        m_address.c_str(), next_block->get_height(), next_block->get_viewid(), to_hex_str(next_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+
+}
 void xchain_downloader_t::on_chain_snapshot_response(
         const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
     xsync_on_snapshot_response_command_t command(chain_snapshot, height, self_addr, from_addr);
@@ -254,6 +321,7 @@ enum_result_code xchain_downloader_t::pre_handle_block(
 enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
     if (is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
+            xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
             return enum_result_code::auth_failed;
         }
     }
@@ -262,6 +330,7 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_
     auto vbindex = m_sync_store->load_block_object(block->get_block_owner(), block->get_height(), false, block->get_viewid());
     if (vbindex == nullptr) {
     //XTODO,need doublecheck whether allow set flag of authenticated without verify signature
+        xsync_dbg("xchain_downloader_t::handle_block, store_block: %s,%d", block->get_account().c_str(), block->get_height());
         block->set_block_flag(enum_xvblock_flag_authenticated);
         
         base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
@@ -271,6 +340,7 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_
             return enum_result_code::failed;
         }
     } else {
+        xsync_dbg("xchain_downloader_t::handle_block, update: %s,%d", block->get_account().c_str(), block->get_height());
         if (vbindex->check_block_flag(enum_xvblock_flag_committed)) {
             m_sync_store->get_shadow()->on_chain_event(block->get_block_owner(), block->get_height());
         } else {
