@@ -12,16 +12,54 @@
 #include "rocksdb/table.h"
 #include "rocksdb/convenience.h"
 #include "rocksdb/filter_policy.h"
+#include "rocksdb/merge_operator.h"
 #include "rocksdb/utilities/transaction_db.h"
 #include "rocksdb/utilities/optimistic_transaction_db.h"
 
 #include "xbase/xlog.h"
+#include "xbase/xdata.h"
+#include "xbase/xcontext.h"
 #include "xdb/xdb.h"
 #include "xmetrics/xmetrics.h"
 
 using std::string;
 
 namespace top { namespace db {
+
+class xdb_rocksdb_merge_operator : public rocksdb::AssociativeMergeOperator{
+public:
+    virtual bool Merge(const rocksdb::Slice & key,
+                       const rocksdb::Slice * existing_value,
+                       const rocksdb::Slice & value,
+                       std::string * new_value,
+                       rocksdb::Logger * logger) const override {
+        
+        base::xauto_ptr<base::xstrmap_t> exist = new base::xstrmap_t();
+
+        if(existing_value){
+            base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)existing_value->data(), (uint32_t)existing_value->size());
+            exist->serialize_from(stream);
+        }
+
+        base::xauto_ptr<base::xstrmap_t> income = new base::xstrmap_t();
+        base::xstream_t stream(base::xcontext_t::instance(),(uint8_t *)value.data(),(uint32_t)value.size());
+        income->serialize_from(stream);
+
+        // merge map income -> exist
+        exist->merge(*(income.get()));
+
+        // merge in rocksdb
+        exist->serialize_to_string(*new_value);
+
+        return true;
+    }
+
+    virtual const char * Name() const override {
+        return "xdb_rocksdb_merge_operator";
+    }
+};
+
+
 
 class xdb_rocksdb_transaction_t : public xdb_transaction_t {
 public:
@@ -145,6 +183,7 @@ class xdb::xdb_impl final{
     bool write(const std::string& key, const std::string& value);
     bool write(const std::string& key, const char* data, size_t size);
     bool write(const std::map<std::string, std::string>& batches);
+    bool merge(const std::string & key, const std::string & value) const;
     bool erase(const std::string& key);
     bool erase(const std::vector<std::string>& keys);
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys);
@@ -192,6 +231,7 @@ bool xdb::xdb_impl::close() {
 xdb::xdb_impl::xdb_impl(const std::string& name) {
     m_db_name = name;
     m_options.create_if_missing = true;
+    m_options.merge_operator.reset(new xdb_rocksdb_merge_operator);
 
     m_options.compression = rocksdb::kLZ4Compression;
     m_options.level_compaction_dynamic_level_bytes = true;
@@ -205,7 +245,6 @@ xdb::xdb_impl::xdb_impl(const std::string& name) {
     m_options.compression_opts.enabled = true;
     m_options.bottommost_compression = rocksdb::kZSTD;
 
-    // m_options.merge_operator.reset(new );
 
     rocksdb::BlockBasedTableOptions table_options;
     table_options.enable_index_compression = false;
@@ -217,6 +256,8 @@ xdb::xdb_impl::xdb_impl(const std::string& name) {
     table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, false));
 
     m_cf_opt.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+
+    m_cf_opt.merge_operator.reset(new xdb_rocksdb_merge_operator);
 
     m_cf_opt.compression = m_options.compression;
     m_cf_opt.bottommost_compression = m_options.bottommost_compression;
@@ -280,6 +321,12 @@ bool xdb::xdb_impl::write(const std::map<std::string, std::string>& batches) {
         batch.Put(m_handles[0], entry.first, entry.second);
     }
     rocksdb::Status s = m_db->Write(rocksdb::WriteOptions(), &batch);
+    handle_error(s);
+    return s.ok();
+}
+
+bool xdb::xdb_impl::merge(const std::string & key, const std::string & value) const {
+    rocksdb::Status s = m_db->Merge(rocksdb::WriteOptions(), key, value);
     handle_error(s);
     return s.ok();
 }
@@ -391,6 +438,13 @@ bool xdb::write(const std::map<std::string, std::string>& batches) {
     XMETRICS_GAUGE(metrics::db_write, ret ? 1 : 0);
     return ret;
 }
+
+bool xdb::merge(const std::string & key, const std::string & value) const {
+    XMETRICS_TIMER(metrics::db_write_tick);
+    auto ret = m_db_impl->merge(key, value);
+    XMETRICS_GAUGE(metrics::db_write, ret ? 1 : 0);
+    return ret;
+};
 
 bool xdb::erase(const std::string& key) {
     XMETRICS_TIMER(metrics::db_delete_tick);

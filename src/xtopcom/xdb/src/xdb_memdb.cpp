@@ -83,6 +83,12 @@ bool xdb_mem_t::write(const std::map<std::string, std::string>& batches) {
     return true;
 }
 
+bool xdb_mem_t::merge(const std::string & key, const std::string & value) const {
+    // todo add impl
+    xassert(false);
+    return true;
+}
+
 bool xdb_mem_t::erase(const std::string& key) {
     std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_values.find(key);

@@ -120,7 +120,7 @@ TEST(test, test_rockdb_merge_multi_thread_safe) {
     Options options;
     options.merge_operator.reset(new UInt64AddOperator);
     options.create_if_missing = true;
-    auto status = rocksdb::DB::Open(options, "/tmp/test_rocksdb", &dbp);
+    auto status = rocksdb::DB::Open(options, "/tmp/test_merge_demo", &dbp);
     assert(status.ok());
     std::shared_ptr<DB> db(dbp);
     RocksCounters counters(db);

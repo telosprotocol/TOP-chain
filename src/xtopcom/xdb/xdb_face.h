@@ -43,6 +43,7 @@ class xdb_face_t {
     virtual bool write(const std::string& key, const std::string& value) = 0;
     virtual bool write(const std::string& key, const char* data, size_t size) = 0;
     virtual bool write(const std::map<std::string, std::string>& batches) = 0;
+    virtual bool merge(const std::string & key, const std::string & value) const = 0;
     virtual bool erase(const std::string& key) = 0;
     virtual bool erase(const std::vector<std::string>& keys) = 0;
     virtual bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) = 0;
