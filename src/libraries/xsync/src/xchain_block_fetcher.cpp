@@ -80,16 +80,17 @@ void xchain_block_fetcher_t::on_timer() {
 }
 
 void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address) {
+    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(m_address, enum_chain_sync_policy_full);
+    xsync_info("chain_fetcher on_newblock %s,height=%lu,viewid=%lu,hash=%s,%llu",
+        m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str(), latest_end_block_height);
 
-    xsync_info("chain_fetcher on_newblock %s,height=%lu,viewid=%lu,hash=%s,",
-        m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str());
-
-    // auth
-
-    // TODO check auth
     insert_block(block);
-
     add_blocks();
+
+    xchain_state_info_t info;
+    info.address = m_address;
+    info.end_height = latest_end_block_height;
+    m_sync_sender->send_archive_height(info, network_self, from_address);
 }
 
 // push_newblockhash and broadcast_newblockhash

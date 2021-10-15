@@ -284,6 +284,12 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_store_block_tables);
         RETURN_METRICS_NAME(xsync_unit_proof_sync_req_send);
         RETURN_METRICS_NAME(xsync_unit_proof_sync_req_recv);
+        RETURN_METRICS_NAME(xsync_recv_archive_height);
+        RETURN_METRICS_NAME(xsync_archive_height_blocks);
+        RETURN_METRICS_NAME(xsync_recv_archive_blocks);
+        RETURN_METRICS_NAME(xsync_recv_archive_blocks_size);
+        RETURN_METRICS_NAME(xsync_recv_query_archive_height);
+        RETURN_METRICS_NAME(xsync_recv_archive_height_list);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
