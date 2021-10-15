@@ -114,13 +114,6 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_
 }
 
 void xtop_vnode::synchronize() {
-    if (m_sync_started)
-        return;
-
-    sync_add_vnet();
-
-    m_sync_started = true;
-
     m_the_binding_driver->start();
 
     xinfo("[virtual node] vnode (%p) start synchronizing at address %s", this, m_the_binding_driver->address().to_string().c_str());
@@ -133,6 +126,8 @@ void xtop_vnode::start() {
     assert(m_router != nullptr);
     assert(m_logic_timer != nullptr);
     assert(m_vhost != nullptr);
+
+    sync_add_vnet();
 
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
@@ -176,7 +171,6 @@ void xtop_vnode::stop() {
     }
     m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
-    m_the_binding_driver->stop();
     driver_removed();
     update_contract_manager(true);
 
@@ -284,8 +278,6 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    assert(!m_sync_started);
-
     m_sync_obj->add_vnet(vnetwork_driver());
 
     xinfo("vnode (%p) at address %s starts synchronizing", this, address().to_string().c_str());

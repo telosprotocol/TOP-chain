@@ -17,6 +17,7 @@ public:
         none,
         blocks,
         chain_snapshot,
+        archive_blocks,
     };
 
     xevent_sync_executor_t(_minor_type_ mt = none,
@@ -76,4 +77,23 @@ public:
 };
 using xevent_sync_response_blocks_ptr_t = xobject_ptr_t<xevent_sync_response_blocks_t>;
 
+class xevent_sync_archive_blocks_t : public xevent_sync_executor_t {
+public:
+
+    xevent_sync_archive_blocks_t(
+            const std::vector<data::xblock_ptr_t> &_blocks,
+            const vnetwork::xvnode_address_t& _self_address,
+            const vnetwork::xvnode_address_t& _from_address,
+            direction_type dir = to_listener,
+            bool _sync = true) :
+    xevent_sync_executor_t(xevent_sync_executor_t::archive_blocks, dir, _sync),
+    blocks(_blocks),
+    self_address(_self_address),
+    from_address(_from_address) {
+    }
+
+    std::vector<data::xblock_ptr_t> blocks;
+    vnetwork::xvnode_address_t self_address;
+    vnetwork::xvnode_address_t from_address;
+};
 NS_END2
