@@ -7,6 +7,7 @@
 #include <string>
 
 #include "xbasic/xversion.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xprovecert.h"
 #include "xvledger/xmerkle.hpp"
@@ -16,6 +17,7 @@ namespace top
 {
     namespace base
     {
+        using receipt_data_t = std::map<std::string, xbyte_buffer_t>;
         class xtxreceipt_build_t;
         class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt> {
             friend class xtxreceipt_build_t;
@@ -45,6 +47,8 @@ namespace top
             std::string                     get_contract_address() const;
             std::string                     get_caller() const {return m_tx_action.get_caller();}
             const base::xvaction_t &        get_action() const {return m_tx_action;}
+            void                            set_receipt_data(receipt_data_t data){ m_receipt_data = data; }
+            receipt_data_t                  get_receipt_data() { return m_receipt_data; }
 
         private:
             base::xvaction_t                m_tx_action;
@@ -61,6 +65,7 @@ namespace top
             const std::string &         get_tx_org_bin() const {return m_tx_org_bin;}
         private:
             xtx_receipt_ptr_t       m_tx_receipt{nullptr};
+            receipt_data_t          m_receipt_data;
             std::string             m_tx_org_bin;
         };
         using xfull_txreceipt_ptr_t = std::shared_ptr<xfull_txreceipt_t>;

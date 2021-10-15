@@ -54,6 +54,7 @@ public:
     }
 
     void update(KeyT const & key, ValueT const & value) {
+        printf("wens_test, the key : %s, value: %zu\n", top::to_string(key).c_str(), top::to_bytes(value).size());
         m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value));
     }

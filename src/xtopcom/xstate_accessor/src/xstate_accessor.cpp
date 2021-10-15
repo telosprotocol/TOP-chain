@@ -645,6 +645,7 @@ void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::
         bstate_->new_string_map_var(property_name, canvas_.get());
     }
     auto map_property = bstate_->load_string_map_var(property_name);
+    printf("wens_test, the key : %s\n", key.c_str());
     xassert(map_property != nullptr);
     if (!map_property->insert(key, { std::begin(value), std::end(value) }, canvas_.get())) {
         ec = error::xerrc_t::update_property_failed;

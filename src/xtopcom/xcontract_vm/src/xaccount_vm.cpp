@@ -179,6 +179,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
         if (r.status.ec) {
+            printf("wens_test, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
             if (tx->is_send_tx() || tx->is_self_tx()) {
                 output.failed_tx_assemble.emplace_back(tx);
@@ -190,6 +191,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 assert(false);
             }
         } else {
+            if (!r.output.receipt_data.empty()) tx->set_receipt_data(r.output.receipt_data);
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
             output.success_tx_assemble.emplace_back(tx);
             last_success_tx_index = i;
