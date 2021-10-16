@@ -182,10 +182,15 @@ namespace top
                 result = meta_ptr->set_block_meta(new_meta);
                 if(result)
                 {
-                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                    const uint32_t modified_count = meta_ptr->get_modified_count();
+                    if (modified_count > 0)
                     {
-                        m_meta_ptr->serialize_to_string(vmeta_bin);
-                        m_meta_ptr->reset_modified_count();
+                        if(modified_count > enum_account_save_meta_interval
+                        ||(is_unit_address() == false))  // TODO(jimmy) always save meta for table and contract now
+                        {
+                            m_meta_ptr->serialize_to_string(vmeta_bin);
+                            m_meta_ptr->reset_modified_count();
+                        }
                     }
                 }
             }
