@@ -14,23 +14,37 @@
 
 NS_BEG2(top, state_accessor)
 
-xtop_token::xtop_token(xtop_token && other) noexcept : value_{ other.value_ }, symbol_{ std::move(other.symbol_) } {
-    other.value_ = 0;
-    other.symbol_.clear();
+xtop_token::xtop_token(xtop_token && other) noexcept : amount_{ other.amount_ }, symbol_{ std::move(other.symbol_) } {
+    other.amount_ = 0;
 }
+
+xtop_token & xtop_token::operator=(xtop_token && other) {
+    if (amount_ != 0) {
+        top::error::throw_error(error::xerrc_t::token_not_used);
+    }
+
+    assert(amount_ == 0);
+
+    amount_ = other.amount_;
+    symbol_ = std::move(other.symbol_);
+
+    other.amount_ = 0;
+
+    return *this;
+}
+
 
 xtop_token::xtop_token(common::xsymbol_t symbol) : symbol_{ std::move(symbol) } {
 }
 
-xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) : value_{ amount }, symbol_ { std::move(symbol) } {
+xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) : amount_{ amount }, symbol_ { std::move(symbol) } {
 }
 
-xtop_token::xtop_token(std::uint64_t const amount) : value_{amount} {
+xtop_token::xtop_token(std::uint64_t const amount) : amount_{amount} {
 }
 
 xtop_token::~xtop_token() noexcept {
-    assert(value_ == 0);
-    assert(symbol_.empty());
+    assert(amount_ == 0);
 }
 
 bool xtop_token::operator==(xtop_token const & other) const noexcept {
@@ -43,7 +57,7 @@ bool xtop_token::operator==(xtop_token const & other) const noexcept {
         return true;
     }
 
-    return value_ == other.value_;
+    return amount_ == other.amount_;
 }
 
 bool xtop_token::operator!=(xtop_token const & other) const noexcept {
@@ -63,7 +77,7 @@ bool xtop_token::operator<(xtop_token const & other) const {
         top::error::throw_error(error::xerrc_t::token_symbol_not_matched, "xtoken_t::operator<=>(xtoken_t const & other)");
     }
 
-    return value_ < other.value_;
+    return amount_ < other.amount_;
 }
 
 bool xtop_token::operator>(xtop_token const & other) const {
@@ -92,8 +106,8 @@ xtop_token & xtop_token::operator+=(xtop_token & other) noexcept {
         return *this;
     }
 
-    value_ += other.value_;
-    other.value_ = 0;
+    amount_ += other.amount_;
+    other.amount_ = 0;
 
     return *this;
 }
@@ -103,7 +117,7 @@ bool xtop_token::invalid() const noexcept {
 }
 
 uint64_t xtop_token::amount() const noexcept {
-    return value_;
+    return amount_;
 }
 
 common::xsymbol_t const & xtop_token::symbol() const noexcept {
@@ -111,7 +125,7 @@ common::xsymbol_t const & xtop_token::symbol() const noexcept {
 }
 
 void xtop_token::clear() noexcept {
-    value_ = 0;
+    amount_ = 0;
     symbol_.clear();
 }
 

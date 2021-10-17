@@ -30,6 +30,8 @@ public:
     virtual common::xaccount_address_t recver() const = 0;
     virtual common::xaccount_address_t address() const = 0;
 
+    virtual void register_property(properties::xbasic_property_t * property) = 0;
+
     virtual uint64_t balance() const = 0;
     virtual state_accessor::xtoken_t withdraw(std::uint64_t amount) = 0;
     virtual void deposit(state_accessor::xtoken_t token) = 0;

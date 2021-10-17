@@ -8,10 +8,28 @@
 
 NS_BEG3(top, common, error)
 
-static char const * errc_to_string(xerrc const errc) noexcept {
+static char const * errc_to_string(xerrc_t const errc) noexcept {
     switch (errc) {
-    case xerrc::invalid_rotation_status:
+    case xerrc_t::invalid_rotation_status:
         return "invalid rotation status";
+
+    case xerrc_t::invalid_account_address:
+        return "invalid account address";
+
+    case xerrc_t::invalid_account_base_address:
+        return "invalid account base address";
+
+    case xerrc_t::invalid_account_index:
+        return "invalid account index";
+
+    case xerrc_t::invalid_table_id:
+        return "invalid table id";
+
+    case xerrc_t::invalid_ledger_id:
+        return "invalid ledger id";
+
+    case xerrc_t::invalid_account_type:
+        return "invalid account type";
 
     default:
         assert(false);
@@ -19,11 +37,11 @@ static char const * errc_to_string(xerrc const errc) noexcept {
     }
 }
 
-std::error_code make_error_code(xerrc const errc) noexcept {
+std::error_code make_error_code(xerrc_t const errc) noexcept {
     return std::error_code{static_cast<int>(errc), common_category() };
 }
 
-std::error_condition make_error_condition(xerrc const errc) noexcept {
+std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition{ static_cast<int>(errc), common_category() };
 }
 
@@ -34,7 +52,7 @@ public:
     }
 
     std::string message(int errc) const override {
-        auto const ec = static_cast<xerrc>(errc);
+        auto const ec = static_cast<xerrc_t>(errc);
         return errc_to_string(ec);
     }
 };
@@ -51,7 +69,7 @@ NS_BEG1(std)
 
 #if !defined(XCXX14_OR_ABOVE)
 
-size_t hash<top::common::error::xerrc>::operator()(top::common::error::xerrc const errc) const noexcept {
+size_t hash<top::common::error::xerrc_t>::operator()(top::common::error::xerrc_t const errc) const noexcept {
     return static_cast<size_t>(static_cast<int>(errc));
 }
 

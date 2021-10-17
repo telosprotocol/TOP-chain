@@ -31,7 +31,7 @@ protected:
                         observer_ptr<xcontract_face_t> associated_contract) noexcept;
 
 public:
-    virtual void create();
+    void initialize();
     state_accessor::properties::xproperty_identifier_t const & identifier() const;
     common::xaccount_address_t owner() const;
     common::xaccount_address_t accessor() const;

@@ -9,6 +9,7 @@
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xproperties/xproperty_token.h"
+#include "xcontract_common/xproperties/xproperty_initializer.h"
 #include "xstate_accessor/xtoken.h"
 
 NS_BEG2(top, contract_common)
@@ -31,6 +32,7 @@ struct xtop_contract_metadata {
 
 class xtop_basic_contract : public xcontract_face_t {
 protected:
+    properties::xproperty_initializer_t m_property_initializer;
     observer_ptr<xcontract_execution_context_t> m_associated_execution_context{nullptr};
     xcontract_metadata_t m_contract_meta;
 
@@ -49,6 +51,8 @@ public:
     common::xaccount_address_t address() const override final;
     common::xaccount_address_t sender() const override final;
     common::xaccount_address_t recver() const override final;
+
+    void register_property(properties::xbasic_property_t * property) override final;
 
     uint64_t balance() const override;
     state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
@@ -75,6 +79,8 @@ public:
     std::vector<xfollowup_transaction_datum_t> followup_transaction() const;
 
 protected:
+    observer_ptr<properties::xproperty_initializer_t const> property_initializer() const noexcept;
+
     bool at_source_action_stage() const noexcept override final;
     bool at_target_action_stage() const noexcept override final;
     bool at_confirm_action_stage() const noexcept override final;

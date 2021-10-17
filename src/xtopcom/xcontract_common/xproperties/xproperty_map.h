@@ -26,10 +26,6 @@ public:
         : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::map , make_observer(contract)} {
     }
 
-    void create() final {
-        m_associated_contract->contract_state()->create_property(m_id);
-    }
-
     void add(KeyT const & key, ValueT const & value, std::error_code & ec) {
         m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value), ec);
@@ -48,17 +44,18 @@ public:
         // m_associated_contract->state()->access_control()->map_prop_erase<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
     }
 
-    void update(KeyT const & key, ValueT const & value, std::error_code & ec) {
+    void set(KeyT const & key, ValueT const & value, std::error_code & ec) {
         m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value), ec);
     }
 
-    void update(KeyT const & key, ValueT const & value) {
+    void set(KeyT const & key, ValueT const & value) {
+        printf("wens_test, the key : %s, value: %zu\n", top::to_string(key).c_str(), top::to_bytes(value).size());
         m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value));
     }
 
-    void reset(std::map<KeyT, ValueT> const& prop_value) {
+    void set(std::map<KeyT, ValueT> const& value) {
         // m_associated_contract->state()->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, prop_value);
     }
 

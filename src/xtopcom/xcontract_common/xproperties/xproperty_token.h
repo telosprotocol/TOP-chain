@@ -42,8 +42,6 @@ public:
     explicit xtop_token_property(std::string const & name, contract_common::xcontract_face_t * contract);
     explicit xtop_token_property(contract_common::xcontract_face_t * contract);
 
-    void create() override final;
-
     uint64_t amount() const;
     state_accessor::xtoken_t withdraw(std::uint64_t amount);
     void deposit(state_accessor::xtoken_t tokens);

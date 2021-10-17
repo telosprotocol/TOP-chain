@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xvledger/xvcnode.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"

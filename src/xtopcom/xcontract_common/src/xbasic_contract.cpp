@@ -30,6 +30,10 @@ xcontract_type_t xtop_basic_contract::type() const {
     return m_contract_meta.m_type;
 }
 
+void xtop_basic_contract::register_property(properties::xbasic_property_t * property) {
+    m_property_initializer.register_property(make_observer(property));
+}
+
 uint64_t xtop_basic_contract::balance() const {
     return m_balance.amount();
 }
@@ -44,6 +48,7 @@ void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
 }
 
 observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noexcept {
+    assert(m_associated_execution_context != nullptr);
     return m_associated_execution_context->contract_state();
 }
 
@@ -178,6 +183,10 @@ std::vector<xfollowup_transaction_datum_t> xtop_basic_contract::followup_transac
 
 void xtop_basic_contract::reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) {
     m_associated_execution_context = exe_ctx;
+}
+
+observer_ptr<properties::xproperty_initializer_t const> xtop_basic_contract::property_initializer() const noexcept {
+    return make_observer(std::addressof(m_property_initializer));
 }
 
 bool xtop_basic_contract::at_source_action_stage() const noexcept {

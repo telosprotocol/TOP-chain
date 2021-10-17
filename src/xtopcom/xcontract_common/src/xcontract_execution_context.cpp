@@ -19,11 +19,11 @@ xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr
   : m_contract_state{s}, m_action{std::move(action)} {
 }
 
-xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                 observer_ptr<xcontract_state_t> s,
-                                                                 xcontract_execution_param_t param) noexcept
-  : m_contract_state{s}, m_action{std::move(action)} {
-}
+//xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
+//                                                                 observer_ptr<xcontract_state_t> s,
+//                                                                 xcontract_execution_param_t param) noexcept
+//  : m_contract_state{s}, m_action{std::move(action)} {
+//}
 
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
     return m_contract_state;

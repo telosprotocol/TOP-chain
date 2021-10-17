@@ -17,24 +17,19 @@ bool xtop_token_safe::transfer_safe_rule(uint64_t amount) noexcept {
 }
 
 xtop_token_property::xtop_token_property(std::string const & name, common::xsymbol_t symbol, contract_common::xcontract_face_t * contract)
-    : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, m_symbol{std::move(symbol)} {
+  : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, m_symbol{std::move(symbol)} {
 }
 
  xtop_token_property::xtop_token_property(std::string const& name, contract_common::xcontract_face_t* contract)
-    : xbasic_property_t{ name, state_accessor::properties::xproperty_type_t::token, make_observer(contract) } {
+  : xtop_token_property{name, common::SYMBOL_TOP_TOKEN, contract} {
 }
 
 xtop_token_property::xtop_token_property(common::xsymbol_t symbol, contract_common::xcontract_face_t * contract)
-    : xbasic_property_t{data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, m_symbol{std::move(symbol)} {
+  : xtop_token_property{data::XPROPERTY_BALANCE_AVAILABLE, std::move(symbol), contract} {
 }
 
 xtop_token_property::xtop_token_property(contract_common::xcontract_face_t * contract)
-    : xbasic_property_t{data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, make_observer(contract)} {
-}
-
-void xtop_token_property::create() {
-    assert(m_associated_contract != nullptr);
-    m_associated_contract->contract_state()->create_property(m_id);
+  : xtop_token_property{data::XPROPERTY_BALANCE_AVAILABLE, common::SYMBOL_TOP_TOKEN, contract} {
 }
 
 uint64_t xtop_token_property::amount() const {

@@ -4,32 +4,10 @@
 
 #pragma once
 
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wpedantic"
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wpedantic"
-#elif defined(_MSC_VER)
-#    pragma warning(push, 0)
-#endif
-
-#include "xvledger/xvblock.h"
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-#    pragma warning(pop)
-#endif
-
-#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 
-#include <functional>
-#include <initializer_list>
-#include <unordered_map>
+#include <cstdint>
+#include <string>
 
 NS_BEG2(top, contract_runtime)
 
@@ -50,8 +28,13 @@ struct xtop_sniff_broadcast_config {
     xsniff_broadcast_policy_t policy{xsniff_broadcast_policy_t::invalid};
 
     xtop_sniff_broadcast_config() = default;
-    xtop_sniff_broadcast_config(xsniff_broadcast_type_t type_, xsniff_broadcast_policy_t policy_) : type(type_), policy(policy_) {
-    }
+    xtop_sniff_broadcast_config(xtop_sniff_broadcast_config const &) = default;
+    xtop_sniff_broadcast_config & operator=(xtop_sniff_broadcast_config const &) = default;
+    xtop_sniff_broadcast_config(xtop_sniff_broadcast_config &&) = default;
+    xtop_sniff_broadcast_config & operator=(xtop_sniff_broadcast_config &&) = default;
+    ~xtop_sniff_broadcast_config() = default;
+
+    xtop_sniff_broadcast_config(xsniff_broadcast_type_t type, xsniff_broadcast_policy_t policy);
 };
 using xsniff_broadcast_config_t = xtop_sniff_broadcast_config;
 
@@ -60,8 +43,13 @@ struct xtop_sniff_timer_config {
     std::string action{};
 
     xtop_sniff_timer_config() = default;
-    xtop_sniff_timer_config(uint32_t interval_, std::string action_) : interval(interval_), action(std::move(action_)) {
-    }
+    xtop_sniff_timer_config(xtop_sniff_timer_config const &) = default;
+    xtop_sniff_timer_config & operator=(xtop_sniff_timer_config const &) = default;
+    xtop_sniff_timer_config(xtop_sniff_timer_config &&) = default;
+    xtop_sniff_timer_config & operator=(xtop_sniff_timer_config &&) = default;
+    ~xtop_sniff_timer_config() = default;
+
+    xtop_sniff_timer_config(uint32_t interval, std::string action);
 };
 using xsniff_timer_config_t = xtop_sniff_timer_config;
 
@@ -71,9 +59,13 @@ struct xtop_sniff_block_config {
     std::string action{};
 
     xtop_sniff_block_config() = default;
-    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address_, common::xaccount_address_t const & action_address_, std::string action_)
-      : sniff_address(sniff_address_), action_address(action_address_), action(std::move(action_)) {
-    }
+    xtop_sniff_block_config(xtop_sniff_block_config const &) = default;
+    xtop_sniff_block_config & operator=(xtop_sniff_block_config const &) = default;
+    xtop_sniff_block_config(xtop_sniff_block_config &&) = default;
+    xtop_sniff_block_config & operator=(xtop_sniff_block_config &&) = default;
+    ~xtop_sniff_block_config() = default;
+
+    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action);
 };
 using xsniff_block_config_t = xtop_sniff_block_config;
 

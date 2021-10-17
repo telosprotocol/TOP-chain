@@ -10,12 +10,6 @@ xtop_string_property::xtop_string_property(std::string const & name, xcontract_f
     : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::string, make_observer(contract)} {
 }
 
-void xtop_string_property::create() {
-    assert(m_associated_contract != nullptr);
-    assert(m_associated_contract->contract_state() != nullptr);
-    m_associated_contract->contract_state()->create_property(m_id);
-}
-
 void xtop_string_property::set(std::string const & value) {
     assert(m_associated_contract != nullptr);
     assert(m_associated_contract->contract_state() != nullptr);
