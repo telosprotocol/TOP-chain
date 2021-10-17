@@ -949,7 +949,13 @@ namespace top
                         }
                         //close_plugin may try hold lock and check is_live agian ,and if so may close
                         if(_test_for_plugin->get_account_obj()->try_close_plugin(current_time_ms,_test_for_plugin->get_plugin_type()))
+                        {
+                            //force to save meta once one plugin is offline
+                            _test_for_plugin->get_account_obj()->save_meta();
+
+                            xinfo("xvtable_t::timer,closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
                             _test_for_plugin->release_ref();//destroy it finally
+                        }
                         else
                             _remonitor_list.push_back(_test_for_plugin);//transfer to list
                     }
