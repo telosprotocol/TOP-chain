@@ -23,7 +23,6 @@ NS_BEG3(top, contract_common, properties)
                                                                                                                                                                                    \
         explicit xtop_##INT_TYPE##_property(std::string const & name, xcontract_face_t *);                                                                                         \
                                                                                                                                                                                    \
-        void create() final;                                                                                                                                                       \
         void set(INT_TYPE##_t value);                                                                                                                                              \
         void clear();                                                                                                                                                              \
         INT_TYPE##_t value() const;                                                                                                                                                \

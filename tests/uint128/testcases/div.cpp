@@ -38,4 +38,6 @@ TEST(External, divide){
     EXPECT_EQ(u16 /= val, (uint16_t) 0x163ULL);
     EXPECT_EQ(u32 /= val, (uint32_t) 0x163356bULL);
     EXPECT_EQ(u64 /= val, (uint64_t) 0x163356b88ac0de0ULL);
+    EXPECT_EQ(static_cast<uint64_t>(top::xstake::uint128_t{1571897839} / uint64_t{1000000}), uint64_t{1571});
+    EXPECT_TRUE(static_cast<uint64_t>(top::xstake::uint128_t{1571897839} / uint64_t{1000000}) > 0);
 }

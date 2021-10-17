@@ -17,6 +17,12 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::token_insufficient:
         return "token insufficient";
 
+    case xerrc_t::token_not_used:
+        return "token not used";
+
+    case xerrc_t::load_account_state_failed:
+        return "load account state failed";
+
     case xerrc_t::token_symbol_not_matched:
         return "token symbol not matched";
 

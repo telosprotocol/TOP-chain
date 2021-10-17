@@ -53,8 +53,8 @@ void xtop_vnode_sniff::sniff_set() {
     for (auto const & data_pair : m_config_map) {
         xdbg("address: %s, driver type: %d", data_pair.first.c_str(), m_the_binding_driver->type());
         auto const & data = data_pair.second;
-        xdbg("contract: %p, node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s",
-             &data.role_data.system_contract,
+        xdbg("contract, node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s",
+             // &data.role_data.system_contract,
              data.role_data.node_type,
              data.role_data.sniff_type,
              data.role_data.broadcast_config.type,

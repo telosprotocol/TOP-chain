@@ -11,10 +11,6 @@ NS_BEG3(top, contract_common, properties)
         : xbasic_property_t {name, state_accessor::properties::xproperty_type_t::INT_TYPE, make_observer(contract)} {                                                           \
     }                                                                                                                                                                           \
                                                                                                                                                                                 \
-    void xtop_##INT_TYPE##_property::create() {                                                                                                                                 \
-        m_associated_contract->contract_state()->create_property(m_id);                                                                                                         \
-    }                                                                                                                                                                           \
-                                                                                                                                                                                \
     void xtop_##INT_TYPE##_property::set(INT_TYPE##_t const value) {                                                                                                            \
         m_associated_contract->contract_state()->set_property<state_accessor::properties::xproperty_type_t::INT_TYPE>(                                                          \
         static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), value);                                                                                 \

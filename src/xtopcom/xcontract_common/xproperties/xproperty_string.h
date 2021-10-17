@@ -21,7 +21,6 @@ public:
 
     explicit xtop_string_property(std::string const & name, xcontract_face_t * contract);
 
-    void create() override final;
     void set(std::string const & value);
     void clear();
     std::string value() const;

@@ -39,8 +39,7 @@ public:
     xtop_contract_execution_context & operator=(xtop_contract_execution_context &&) = default;
     ~xtop_contract_execution_context() = default;
 
-    xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s, xcontract_execution_param_t param) noexcept;
-    xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
+    explicit xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
     xcontract_execution_stage_t execution_stage() const noexcept;

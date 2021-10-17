@@ -51,9 +51,15 @@ xtop_basic_property::xtop_basic_property(std::string const & name, state_accesso
     : m_associated_contract{ associated_contract }
     , m_id{ name, type, lookup_property_category(name, type) }
     , m_owner{ associated_contract->address() } {
+    assert(m_associated_contract != nullptr);
+    m_associated_contract->register_property(this);
 }
 
-void xtop_basic_property::create() {
+void xtop_basic_property::initialize() {
+    assert(m_associated_contract != nullptr);
+    if (m_id.category() != state_accessor::properties::xproperty_category_t::system) {
+        m_associated_contract->contract_state()->create_property(m_id);
+    }
 }
 
 state_accessor::properties::xproperty_identifier_t const & xtop_basic_property::identifier() const {

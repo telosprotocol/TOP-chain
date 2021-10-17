@@ -50,7 +50,7 @@ common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xele
         common::xnode_address_t address{
             common::xcluster_address_t{
                 common::xnetwork_id_t{network_id_value}, common::xzone_id_t{zone_id_value}, common::xcluster_id_t{cluster_id_value}, common::xgroup_id_t{group_id_value}},
-            common::xaccount_election_address_t{common::xnode_id_t{"node_test"}, slot_id},
+            common::xaccount_election_address_t{common::xnode_id_t{"T00000TOPSpecialAccountForTestingOnlyTOP"}, slot_id},
             version,
             shard_size,
             associated_blk_height};
