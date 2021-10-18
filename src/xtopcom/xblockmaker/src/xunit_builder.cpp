@@ -109,15 +109,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     if (new_vm) {
         for (auto const & tx : input_txs) {
-            xdbg("------>new vm, 1: %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            if (tx->get_target_addr() == sys_contract_rec_registration_addr && tx->get_tx_subtype() == enum_transaction_subtype::enum_transaction_subtype_recv) {
-                auto const& lightuint_tx_actions = prev_block->get_lighttable_tx_actions();
-                xdbg("------>new vm, lightunit tx actions: %zu\n",  lightuint_tx_actions.size());
-                for (auto const& tx: lightuint_tx_actions) {
-                    xdbg("------>new vm, lightunit tx actions receipt data size: %zu\n",  tx->get_receipt_data().size());
-                }
-                xdbg("------>new vm, 1: %zu\n",  tx->get_receipt_data().size());
-            }
+            xdbg("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
             printf("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
         xassert(!cs_para.get_table_account().empty());
@@ -141,10 +133,6 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
         // lightunit_build_para->set_pack_txs(input_txs);
         xlightunit_block_para_t lightunit_para;
-        for (auto const& tx: result.success_tx_assemble) {
-            xdbg("------>new vm, 2: %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            xdbg("------>new vm, 2: %zu\n",  tx->get_receipt_data().size());
-        }
         lightunit_para.set_input_txs(result.success_tx_assemble);
         lightunit_para.set_fullstate_bin(result.contract_state_snapshot);
         lightunit_para.set_binlog(result.binlog);

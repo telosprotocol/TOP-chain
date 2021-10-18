@@ -96,7 +96,7 @@ public:
 
     std::map<KeyT, ValueT> value() {
         // return m_associated_contract->state()->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id);
-        assert(false);
+        // assert(false);
         return {};
     }
 

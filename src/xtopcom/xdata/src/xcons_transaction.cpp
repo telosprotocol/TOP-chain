@@ -258,6 +258,22 @@ uint64_t xcons_transaction_t::get_last_action_receipt_id() const {
     }
     return 0;
 }
+
+data::xreceipt_data_t   xcons_transaction_t::get_last_action_receipt_data() const {
+    if (m_receipt != nullptr) {
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_DATA);
+        if (value.empty()) {
+            return data::xreceipt_data_t{};
+        }
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)value.data(), (int32_t)value.size());
+        xreceipt_data_t data;
+        MAP_DESERIALIZE_SIMPLE(stream, data);
+        return data;
+    }
+
+    return data::xreceipt_data_t{};
+}
+
 uint64_t xcons_transaction_t::get_last_action_sender_confirmed_receipt_id() const {
     if (m_receipt != nullptr) {
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_SENDER_CONFRIMED_RECEIPT_ID);

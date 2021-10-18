@@ -51,9 +51,10 @@ public:
     void add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type);
     std::vector<xfollowup_transaction_datum_t> const & followup_transaction() const noexcept;
 
-    void receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data);
-    std::map<std::string, xbyte_buffer_t> & receipt_data() noexcept;
-    xbyte_buffer_t const & receipt_data(std::string const & key, std::error_code & ec) const noexcept;
+    void input_receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data);
+    std::map<std::string, xbyte_buffer_t> & input_receipt_data() noexcept;
+    std::map<std::string, xbyte_buffer_t> & output_receipt_data() noexcept;
+    xbyte_buffer_t const & input_receipt_data(std::string const & key, std::error_code & ec) const noexcept;
 
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;

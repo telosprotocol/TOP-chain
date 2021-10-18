@@ -178,7 +178,7 @@ template <xtop_action_type_t ActionTypeV>
 std::map<std::string, xbyte_buffer_t> xtop_consensus_action<ActionTypeV>::receipt_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
-    return tx->get_receipt_data();
+    return tx->get_last_action_receipt_data();
 }
 
 
