@@ -5,14 +5,15 @@
 #pragma once
 
 #include "xbase/xcontext.h"
-#include "xbase/xint.h"
 #include "xbase/xdata.h"
-#include "xvledger/xdataobj_base.hpp"
+#include "xbase/xint.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xserializable_based_on.h"
-#include "xbase/xobject_ptr.h"
-#include "xcommon/xrole_type.h"
 #include "xcommon/xaddress.h"
+#include "xcommon/xrole_type.h"
+#include "xdata/xdata_common.h"
+#include "xvledger/xdataobj_base.hpp"
 
 #include <cstdint>
 #include <functional>
