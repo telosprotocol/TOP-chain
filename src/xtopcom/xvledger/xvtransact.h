@@ -48,8 +48,9 @@ namespace top
 
         public:
             bool            is_self_tx() const {return m_is_self_tx;}
+            const std::string &     get_send_addr() const {return m_send_addr;}
             uint64_t        get_send_unit_height() const {return m_send_unit_height;}
-            const std::string &     get_recv_unit_addr() const {return m_recv_unit_addr;}
+            const std::string &     get_recv_addr() const {return m_recv_addr;}
             const std::string &     get_recv_unit_hash() const {return m_recv_unit_hash;}
             uint64_t        get_recv_unit_height() const {return m_recv_unit_height;}
             uint64_t        get_confirm_unit_height() const {return m_confirm_unit_height;}
@@ -58,9 +59,10 @@ namespace top
         public:
             xdataunit_t*        m_raw_tx{nullptr};
             bool                m_is_self_tx{false};
+            std::string         m_send_addr;
             uint64_t            m_send_unit_height{0};
             std::string         m_send_unit_hash;
-            std::string         m_recv_unit_addr;
+            std::string         m_recv_addr;
             uint64_t            m_recv_unit_height{0};
             std::string         m_recv_unit_hash;
             uint64_t            m_confirm_unit_height{0};

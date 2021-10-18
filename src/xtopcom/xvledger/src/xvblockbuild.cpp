@@ -553,7 +553,7 @@ namespace top
         }
 
         xauto_ptr<xvinput_t> xvblockmaker_t::make_input() {
-            xassert(get_input_entity() != nullptr);
+            // xassert(get_input_entity() != nullptr);
             // basic block only has one entity
             std::vector<xventity_t*> _entities;
             _entities.emplace_back(get_input_entity());
@@ -644,11 +644,11 @@ namespace top
 
             if (_class != enum_xvblock_class_nil) {
                 // all non-nilblock has actions and input/output root
-                if (target_block->get_input()->get_action_count() == 0) {
+                if (target_block->get_block_level() != enum_xvblock_level_unit && target_block->get_input()->get_action_count() == 0) {
                     xassert(false);
                     return false;
                 }
-                if (target_block->get_input_root_hash().empty()) {
+                if (target_block->get_block_level() != enum_xvblock_level_unit && target_block->get_input_root_hash().empty()) {
                     xassert(false);
                     return false;
                 }
@@ -721,7 +721,7 @@ namespace top
                 return nullptr;
             }
             if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-                if (false == build_input()) {
+                if (get_header()->get_block_level() != base::enum_xvblock_level_unit && false == build_input()) {
                     xassert(false);
                     return nullptr;
                 }

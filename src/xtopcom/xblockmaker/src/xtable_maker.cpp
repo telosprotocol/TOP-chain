@@ -315,6 +315,24 @@ void xtable_maker_t::get_unit_accounts(const xblock_ptr_t & block, std::set<std:
     }
 }
 
+base::xvaction_t make_action(const xcons_transaction_ptr_t & tx) {
+    std::string caller_addr;  // empty means version0, no caller addr
+    std::string contract_addr = tx->get_account_addr();
+    std::string contract_name; // empty means version0, default contract
+    uint32_t    contract_version = 0;
+    std::string target_uri = base::xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
+    std::string method_name = xtransaction_t::transaction_type_to_string(tx->get_tx_type());
+    if (tx->is_recv_tx()) {  // set origin tx source addr for recv tx, confirm tx need know source addr without origin tx
+        caller_addr = tx->get_source_addr();
+    }
+
+    base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
+    base::xvaction_t _tx_action(tx->get_tx_hash(), caller_addr, target_uri, method_name);
+    _tx_action.set_org_tx_action_id(tx->get_tx_subtype());
+    _tx_action.copy_result(_action_result);
+    return _tx_action;
+}
+
 xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     // refresh all cache unit makers
     refresh_cache_unit_makers();
@@ -356,6 +374,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
 
     int64_t tgas_balance_change = 0;
     std::vector<xblock_ptr_t> batch_units;
+    std::vector<xlightunit_tx_info_ptr_t> txs_info;
     // try to make unit for unitmakers
     for (auto & v : unitmakers) {
         xunit_maker_ptr_t & unitmaker = v.second;
@@ -378,6 +397,15 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         if (proposal_unit->get_block_class() == base::enum_xvblock_class_full || proposal_unit->get_block_class() == base::enum_xvblock_class_nil) {
             table_para.get_proposal()->set_other_account(proposal_unit->get_account());
         }
+
+        std::vector<base::xvaction_t> input_actions;
+        xdbg("wish result tx size: %zu", unit_result.m_pack_txs.size());
+        for (auto & tx : unit_result.m_pack_txs) {
+            base::xvaction_t _action = make_action(tx);
+            input_actions.push_back(_action);
+            xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
+            txs_info.push_back(txinfo);
+        }
     }
 
     // backup should check if origin txs is changed
@@ -397,7 +425,8 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     }
 
     base::xreceiptid_check_t receiptid_check;
-    xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
+    xblock_t::txs_to_receiptids(txs_info, receiptid_check);
+    xdbg("wish txs size: %zu", txs_info.size());
     if (false == receiptid_check.check_contious(table_para.get_tablestate()->get_receiptid_state())) {
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
         xerror("xtable_maker_t::make_light_table fail check receiptid contious.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
@@ -413,7 +442,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     }
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     cs_para.set_parent_height(0);
-    xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
+    xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources(), txs_info);
     build_para->set_tgas_balance_change(tgas_balance_change);
     xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     return proposal_block;

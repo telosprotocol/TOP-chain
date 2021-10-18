@@ -40,6 +40,10 @@ void * xfull_tableblock_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
+void xfull_tableblock_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
+    root["statistics"] = get_table_statistics().to_json_object<xJson::Value>();
+}
+
 xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
     std::string resource_str = get_input()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());

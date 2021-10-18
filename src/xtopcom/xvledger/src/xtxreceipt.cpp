@@ -8,6 +8,7 @@
 #include "xvledger/xvcontract.h"
 #include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
+#include "xdata/xdatautil.h"
 
 namespace top
 {
@@ -149,6 +150,7 @@ namespace top
                 xtx_receipt_ptr_t _receipt_ptr;
                 _receipt_ptr.attach(_receipt);
                 std::string orgtx_bin = commit_block->get_input()->query_resource(action.get_org_tx_hash());
+                xdbg("wish tx_hash:%s, orgtx:%s", data::to_hex_str(action.get_org_tx_hash()).c_str(), data::to_hex_str(orgtx_bin).c_str());
                 xfull_txreceipt_t full_txreceipt(_receipt_ptr, orgtx_bin);  // orgtx_bin may be empty
                 txreceipts.push_back(full_txreceipt);
             }

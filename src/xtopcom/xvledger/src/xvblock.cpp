@@ -1344,12 +1344,12 @@ namespace top
         {
             if(_vheader.get_block_class() != enum_xvblock_class_nil)
             {
-                if( (NULL == _vinput) || (NULL == _voutput) )
+                if( (_vheader.get_block_level() != enum_xvblock_level_unit && NULL == _vinput) || (NULL == _voutput) )
                     return false;
             }
             else
             {
-                if( (NULL != _vinput) || (NULL != _voutput) )
+                if( (_vheader.get_block_level() != enum_xvblock_level_unit && NULL != _vinput) || (NULL != _voutput) )
                     return false;
             }
             
@@ -1361,35 +1361,39 @@ namespace top
             {
                 //input check
                 {
-                    //makeup hash for input & output
-                    if(_vinput->get_resources_hash().empty() == false)
+                    if (_vinput != nullptr && _vheader.get_block_level() != enum_xvblock_level_unit)
                     {
-                        if(_vinput->get_resources_hash() != _vcert.hash(_vinput->get_resources_data()))
+                        //makeup hash for input & output
+                        if(_vinput->get_resources_hash().empty() == false)
                         {
-                            xassert(0);
-                            return false;
+                            if(_vinput->get_resources_hash() != _vcert.hash(_vinput->get_resources_data()))
+                            {
+                                xassert(0);
+                                return false;
+                            }
                         }
-                    }
-                    else
-                    {
-                        _vinput->set_resources_hash(_vcert.hash(_vinput->get_resources_data()));
-                    }
-                    //generate root of merkle for input & output if have
-                    if(_vcert.get_input_root_hash().empty() == false)
-                    {
-                        if(_vcert.get_input_root_hash() != _vinput->get_root_hash())
+                        else
                         {
-                            xassert(0);
-                            return false;
+                            _vinput->set_resources_hash(_vcert.hash(_vinput->get_resources_data()));
                         }
+                        //generate root of merkle for input & output if have
+                        if(_vcert.get_input_root_hash().empty() == false)
+                        {
+                            if(_vcert.get_input_root_hash() != _vinput->get_root_hash())
+                            {
+                                xassert(0);
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            _vcert.set_input_root_hash(_vinput->get_root_hash());
+                        }
+                        
+                        //now input & output are completely ready,ready to set input&output hash into header
+                        _vinput->serialize_to_string(vinput_bin);
                     }
-                    else
-                    {
-                        _vcert.set_input_root_hash(_vinput->get_root_hash());
-                    }
-                    
-                    //now input & output are completely ready,ready to set input&output hash into header
-                    _vinput->serialize_to_string(vinput_bin);
+
                 }
            
                 //output check
@@ -2263,7 +2267,8 @@ namespace top
             if(get_block_class() != enum_xvblock_class_nil)
             {
                 std::string vinput_bin;
-                get_input()->serialize_to_string(vinput_bin);
+                if (get_block_level() != enum_xvblock_level_unit)
+                    get_input()->serialize_to_string(vinput_bin);
                 std::string voutput_bin;
                 get_output()->serialize_to_string(voutput_bin);
                 
@@ -2372,9 +2377,12 @@ namespace top
             if(get_block_class() != enum_xvblock_class_nil)
             {
                 stream.read_compact_var(vinput_bin);
-                xassert(vinput_bin.empty() == false);
-                if(vinput_bin.empty())
-                    return enum_xerror_code_bad_block;
+                if (get_block_level() != enum_xvblock_level_unit)
+                {
+                    xassert(vinput_bin.empty() == false);
+                    if(vinput_bin.empty())
+                        return enum_xerror_code_bad_block;
+                }
                 
                 stream.read_compact_var(voutput_bin);
                 xassert(voutput_bin.empty() == false);

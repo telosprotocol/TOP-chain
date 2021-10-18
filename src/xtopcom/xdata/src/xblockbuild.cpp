@@ -80,21 +80,21 @@ base::xvaction_t xlightunit_build_t::make_action(const xcons_transaction_ptr_t &
 bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) {
     // #1 set input entitys and resources
     std::vector<base::xvaction_t> input_actions;
-    for (auto & tx : para.get_input_txs()) {
-        base::xvaction_t _action = make_action(tx);
-        input_actions.push_back(_action);
-    }
+    // for (auto & tx : para.get_input_txs()) {
+    //     base::xvaction_t _action = make_action(tx);
+    //     input_actions.push_back(_action);
+    // }
     set_input_entity(input_actions);
 
-    for (auto & tx : para.get_input_txs()) {
-        // confirm tx no need take origintx
-        if (tx->is_self_tx() || tx->is_send_tx()) {
-            std::string origintx_bin;
-            tx->get_transaction()->serialize_to_string(origintx_bin);
-            std::string origintx_hash = tx->get_tx_hash();
-            set_input_resource(origintx_hash, origintx_bin);
-        }
-    }
+    // for (auto & tx : para.get_input_txs()) {
+    //     // confirm tx no need take origintx
+    //     if (tx->is_self_tx() || tx->is_send_tx()) {
+    //         std::string origintx_bin;
+    //         tx->get_transaction()->serialize_to_string(origintx_bin);
+    //         std::string origintx_hash = tx->get_tx_hash();
+    //         set_input_resource(origintx_hash, origintx_bin);
+    //     }
+    // }
     // #2 set output entitys and resources
     set_output_full_state(para.get_fullstate_bin());
     set_output_binlog(para.get_property_binlog());
@@ -196,7 +196,24 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
     xtableblock_action_t _action(BLD_URI_LIGHT_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
-    set_input_entity(_action);
+    std::vector<base::xvaction_t> input_actions;
+    input_actions.push_back(_action);
+    for(auto & tx : para.get_txs()) {
+        input_actions.push_back(*tx.get());
+        tx->get_raw_tx();
+    }
+    set_input_entity(input_actions);
+
+    for (auto & tx : para.get_txs()) {
+        // confirm tx no need take origintx
+        if (tx->is_self_tx() || tx->is_send_tx()) {
+            std::string origintx_bin;
+            tx->get_raw_tx()->serialize_to_string(origintx_bin);
+            std::string origintx_hash = tx->get_tx_hash();
+            set_input_resource(origintx_hash, origintx_bin);
+            xdbg("wish tx_hash:%s, orgtx:%s", to_hex_str(origintx_hash).c_str(), to_hex_str(origintx_bin).c_str());
+        }
+    }
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
     for (auto & v : para.get_account_units()) {

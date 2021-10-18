@@ -74,6 +74,7 @@ class xblock_t : public base::xvblock_t {
  public:
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
+    static void  txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & txs_info, base::xreceiptid_check_t & receiptid_check);
     static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
     static std::string dump_header(base::xvheader_t* header);
     static void  register_object(base::xcontext_t & _context);
@@ -96,6 +97,7 @@ public:
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
+    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) {};
 
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}

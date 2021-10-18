@@ -149,6 +149,25 @@ xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblo
     return object_ptr;
 }
 
+void  xblock_t::txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & txs_info, base::xreceiptid_check_t & receiptid_check) {
+    for (auto & tx : txs_info) {
+            xdbg("wish tx hash:%s, type:%s", tx->get_tx_hex_hash().c_str(), tx->get_tx_subtype_str().c_str());
+        if (tx->is_send_tx()) {
+            uint64_t sendid = tx->get_receipt_id();
+            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+            receiptid_check.set_sendid(tableid, sendid);
+        } else if (tx->is_recv_tx()) {
+            uint64_t recvid = tx->get_receipt_id();
+            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+            receiptid_check.set_recvid(tableid, recvid);
+        } else if (tx->is_confirm_tx()) {
+            uint64_t confirmid = tx->get_receipt_id();
+            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+            receiptid_check.set_confirmid(tableid, confirmid);
+        }
+    }
+}
+
 void  xblock_t::batch_units_to_receiptids(const std::vector<xblock_ptr_t> & units, base::xreceiptid_check_t & receiptid_check) {
     for (auto & unit : units) {
         const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
