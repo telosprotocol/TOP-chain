@@ -2,10 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
 #include "xdata/xblockaction.h"
+
 #include "xdata/xdata_common.h"
 #include "xdata/xlightunit_info.h"
+
+#include <string>
 
 namespace top { namespace data {
 
