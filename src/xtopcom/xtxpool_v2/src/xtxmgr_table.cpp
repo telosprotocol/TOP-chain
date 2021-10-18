@@ -132,11 +132,11 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     // because there is no need for queue and pending to maintain same data structure for manage receipts.
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
-    std::vector<xcons_transaction_ptr_t> ready_txs =
-        m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_receiptid_state_highqc(), confirm_tx_num);
+    std::vector<xcons_transaction_ptr_t> ready_txs = m_new_receipt_queue.get_txs(
+        pack_para.get_confirm_and_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_table_state_highqc()->get_receiptid_state(), confirm_tx_num);
     recv_tx_num = ready_txs.size() - confirm_tx_num;
     send_tx_queue_to_pending();
-    ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_locked_nonce_map());
+    ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_table_state_highqc());
 
     for (auto & send_txs_account : send_txs_accounts) {
         auto & account_txs = send_txs_account->get_txs();
