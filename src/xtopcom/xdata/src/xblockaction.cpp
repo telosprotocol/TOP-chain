@@ -4,6 +4,7 @@
 
 #include <string>
 #include "xdata/xblockaction.h"
+#include "xdata/xdata_common.h"
 #include "xdata/xlightunit_info.h"
 
 namespace top { namespace data {
@@ -65,7 +66,7 @@ uint64_t xlightunit_action_t::get_receipt_id() const {
 }
 
 xreceipt_data_t   xlightunit_action_t::get_receipt_data() const {
-    std::stirng value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_DATA);
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_DATA);
     if (value.empty()) return xreceipt_data_t{};
 
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)value.data(), (int32_t)value.size());

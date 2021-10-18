@@ -118,7 +118,7 @@ void xbatch_packer::invoke_sync(const std::string & account, const std::string &
 bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t min_tx_num) {
     if (latest_blocks.get_latest_cert_block() == nullptr
         || latest_blocks.get_latest_locked_block() == nullptr
-        || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future        
+        || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
         XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         xunit_warn("xbatch_packer::start_proposal fail-get latest blocks,account=%s,viewid=%ld,clock=%ld",
             get_account().c_str(), m_last_view_id, m_last_view_clock);
@@ -280,7 +280,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
     xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
-            is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_height(), 
+            is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_height(),
             latest_blocks.get_latest_cert_block()->get_clock(), this, node_account.c_str(),
             xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
     XMETRICS_GAUGE(metrics::cons_view_fire_is_leader, is_leader_node ? 1 : 0);

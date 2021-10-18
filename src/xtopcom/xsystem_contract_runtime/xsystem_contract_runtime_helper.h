@@ -111,7 +111,7 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
             result.output.binlog = state()->binlog();                                                                                                                              \
             result.output.contract_state_snapshot = state()->fullstate_bin();                                                                                                      \
             result.output.followup_transaction_data = followup_transaction();                                                                                                      \
-            result.output.receipt_data =  exe_ctx->receipt_data();                                                                                                                 \
+            result.output.receipt_data =  exe_ctx->output_receipt_data();                                                                                                                 \
         } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
             result.status.ec = eh.code();                                                                                                                                          \
             result.status.extra_msg = eh.what();                                                                                                                                   \

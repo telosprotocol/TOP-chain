@@ -85,7 +85,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     } else if (stage == data::xconsensus_action_stage_t::recv) {
         if (!receipt_data.empty()) {
             xdbg("wens_test, recv stage set receipt data");
-            execution_context->receipt_data(cons_action->receipt_data());
+            execution_context->input_receipt_data(cons_action->receipt_data());
         }
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
         uint64_t old_recv_tx_num = execution_context->contract_state()->recvtx_num(ec);

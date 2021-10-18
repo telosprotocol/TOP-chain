@@ -77,7 +77,7 @@ TEST_F(test_contract_framework_api, test_asset_out) {
 
 
     observer_ptr<xcontract_execution_context_t> ctx{new xcontract_execution_context_t};
-    ctx->receipt_data(for_receipt_data);
+    ctx->input_receipt_data(for_receipt_data);
     contract_handle.contract_execution_context(ctx);
 
     std::error_code ec;

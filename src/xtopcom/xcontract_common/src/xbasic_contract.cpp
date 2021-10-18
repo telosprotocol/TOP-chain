@@ -74,11 +74,11 @@ std::string xtop_basic_contract::target_action_data() const {
 state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code & ec) const {
     assert(!ec);
 
-    auto& receipt_data = m_associated_execution_context->receipt_data();
+    auto& receipt_data = m_associated_execution_context->input_receipt_data();
     data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
     // assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
     if (receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end()) {
-        auto const src_asset_data = receipt_data[RECEITP_DATA_ASSET_OUT];
+        auto const src_asset_data = receipt_data.at(RECEITP_DATA_ASSET_OUT);
         receipt_data.erase(RECEITP_DATA_ASSET_OUT);
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
         stream >> asset_out.m_token_name;
@@ -196,10 +196,10 @@ bool xtop_basic_contract::at_confirm_action_stage() const noexcept {
 }
 
 xbyte_buffer_t const & xtop_basic_contract::receipt_data(std::string const & key, std::error_code & ec) const {
-    return m_associated_execution_context->receipt_data(key, ec);
+    return m_associated_execution_context->input_receipt_data(key, ec);
 }
 void xtop_basic_contract::write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) {
-    auto& receipt_data = m_associated_execution_context->receipt_data();
+    auto& receipt_data = m_associated_execution_context->output_receipt_data();
     auto const it = receipt_data.find(key);
     if (it != std::end(receipt_data)) {
         ec = error::xerrc_t::receipt_data_already_exist;
