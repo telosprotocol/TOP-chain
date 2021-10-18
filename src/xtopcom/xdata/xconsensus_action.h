@@ -46,6 +46,15 @@ public:
     data::enum_xtransaction_type transaction_type() const;
     data::enum_xaction_type transaction_source_action_type() const;
     data::enum_xaction_type transaction_target_action_type() const;
+    uint32_t size() const;
+    uint32_t deposit() const;
+    std::string digest_hex() const;
+    uint32_t used_tgas() const;
+    uint32_t used_disk() const;
+    uint32_t last_action_send_tx_lock_tgas() const;
+    uint32_t last_action_used_deposit() const;
+    uint32_t last_action_recv_tx_use_send_tx_tgas() const;
+    enum_xunit_tx_exec_status last_action_exec_status() const;
 };
 
 NS_END2
@@ -227,5 +236,79 @@ data::enum_xaction_type xtop_consensus_action<ActionTypeV>::transaction_target_a
 
     return tx->get_transaction()->get_target_action().get_action_type();
 }
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::size() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_tx_len();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::deposit() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_deposit();
+}
+
+template <xtop_action_type_t ActionTypeV>
+std::string xtop_consensus_action<ActionTypeV>::digest_hex() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_digest_hex_str();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::used_tgas() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_current_used_tgas();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::used_disk() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_current_used_disk();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::last_action_send_tx_lock_tgas() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_send_tx_lock_tgas();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::last_action_used_deposit() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_used_deposit();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::last_action_recv_tx_use_send_tx_tgas() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_recv_tx_use_send_tx_tgas();
+}
+
+template <xtop_action_type_t ActionTypeV>
+enum_xunit_tx_exec_status xtop_consensus_action<ActionTypeV>::last_action_exec_status() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_exec_status();
+}
+
+
 
 NS_END2

@@ -4,17 +4,17 @@
 
 #pragma once
 
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xaction_execution_param.h"
-#include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xcontract_execution_stage.h"
 #include "xcontract_common/xcontract_execution_result.h"
-#include "xdata/xtransaction.h"
-#include "xdata/xtop_action.h"
+#include "xcontract_common/xcontract_execution_stage.h"
+#include "xcontract_common/xcontract_state.h"
 #include "xdata/xconsensus_action.h"
+#include "xdata/xtop_action.h"
+#include "xdata/xtransaction.h"
 
 #include <map>
 #include <string>
@@ -71,7 +71,33 @@ public:
     std::string target_action_data() const;
     data::xconsensus_action_stage_t action_stage() const;
 
+    uint32_t size() const;
+    uint32_t deposit() const;
+    uint32_t used_tgas() const;
+    uint32_t used_disk() const;
+    std::string digest_hex() const;
+    uint32_t last_action_send_tx_lock_tgas() const;
+    uint32_t last_action_used_deposit() const;
+    uint32_t last_action_recv_tx_use_send_tx_tgas() const;
+    data::enum_xunit_tx_exec_status last_action_exec_status() const;
+
     bool verify_action(std::error_code & ec);
+    void execute_default_source_action(contract_common::xcontract_execution_fee_t & fee_change);
+    void execute_default_target_action(contract_common::xcontract_execution_fee_t & fee_change);
+    void execute_default_confirm_action(contract_common::xcontract_execution_fee_t & fee_change);
+
+private:
+    void update_tgas_disk_sender(bool is_contract, contract_common::xcontract_execution_fee_t & fee_change, std::error_code & ec);
+    void calc_resource(uint32_t & tgas, uint32_t deposit, uint32_t & used_deposit, std::error_code & ec);
+    void calc_used_tgas(uint32_t deposit, uint32_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const;
+    void incr_used_tgas(uint64_t num, std::error_code & ec);
+    uint64_t calc_available_tgas() const;
+    uint64_t calc_total_tgas() const;
+    uint64_t calc_free_tgas() const;
+    uint64_t calc_decayed_tgas() const;
+    uint64_t calc_token_price() const;
+    uint32_t calc_cost_tgas(bool is_contract) const;
+    uint32_t calc_cost_disk(bool is_contract) const;
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;
 

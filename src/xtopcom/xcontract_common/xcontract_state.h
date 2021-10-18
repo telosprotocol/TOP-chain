@@ -366,6 +366,10 @@ public:
     /// @return Timestamp.
     common::xlogic_time_t timestamp() const;
 
+    /// @brief Get total lock tgas of system.
+    /// @return Total tgas.
+    uint64_t system_lock_tgas() const;
+
     /* ----------special bstate process interface ---------- */
 private:
     uint64_t m_latest_followup_tx_nonce{0};
@@ -391,6 +395,30 @@ public:
 
     uint64_t unconfirm_sendtx_num(std::error_code & ec) const;
     void unconfirm_sendtx_num(uint64_t num, std::error_code & ec);
+
+    uint64_t lock_tgas(std::error_code & ec) const;
+    uint64_t lock_tgas() const;
+    void lock_tgas(uint64_t amount, std::error_code & ec);
+    void lock_tgas(uint64_t amount);
+
+    uint64_t used_tgas(std::error_code & ec) const;
+    uint64_t used_tgas() const;
+    void used_tgas(uint64_t amount, std::error_code & ec);
+    void used_tgas(uint64_t amount);
+
+    uint64_t disk(std::error_code & ec) const;
+    uint64_t disk() const;
+    void disk(uint64_t amount, std::error_code & ec);
+    void disk(uint64_t amount);
+
+    uint64_t last_tx_hour(std::error_code & ec) const;
+    uint64_t last_tx_hour() const;
+    void last_tx_hour(uint64_t hour, std::error_code & ec);
+    void last_tx_hour(uint64_t hour);
+
+    /* ----------account context interface ---------- */
+    void transfer_internal(std::string from, std::string to, uint64_t amount, std::error_code & ec) {}
+    void transfer_internal(std::string from, std::string to, uint64_t amount) {}
 };
 using xcontract_state_t = xtop_contract_state;
 
