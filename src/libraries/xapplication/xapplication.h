@@ -24,6 +24,7 @@
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_v2/xtxpool_face.h"
+#include "xtxstore/xtxstore_face.h"
 
 #include <cstdint>
 #include <memory>
@@ -81,6 +82,7 @@ private:
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    xobject_ptr_t<base::xvtxstore_t> m_txstore;
     xobject_ptr_t<time::xchain_time_face_t> m_logic_timer;
     xobject_ptr_t<base::xiothread_t> m_grpc_thread{};
     xobject_ptr_t<base::xiothread_t> m_sync_thread{};

@@ -38,6 +38,7 @@ class xstore final: public xstore_face_t {
 
  public://key-value manage
     virtual bool                set_value(const std::string & key, const std::string& value) override;
+    virtual bool                merge_value(const std::string & key, const std::string & value) override;
     virtual bool                delete_value(const std::string & key) override;
     virtual const std::string   get_value(const std::string & key) const override;
     virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search

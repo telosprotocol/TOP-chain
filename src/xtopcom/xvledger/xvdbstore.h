@@ -36,6 +36,7 @@ namespace top
         public://key-value manage
             virtual const std::string get_value(const std::string & key) const = 0;
             virtual bool              set_value(const std::string & key, const std::string& value) = 0;
+            virtual bool              merge_value(const std::string & key, const std::string & value) = 0;
             virtual bool              delete_value(const std::string & key) = 0;
             virtual bool              find_values(const std::string & key,std::vector<std::string> & values) = 0;//support wild search
             //delete all keys are follow by wild_key_path,usally for delete keys at same height of same account

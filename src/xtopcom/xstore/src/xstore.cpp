@@ -267,6 +267,13 @@ bool xstore::set_value(const std::string &key, const std::string &value) {
     return m_db->write(key, value);
 }
 
+bool xstore::merge_value(const std::string & key,const std::string &value){
+#ifdef DB_KV_STATISTIC
+    xstore_util::metrics_key_value(key, value, true);
+#endif
+    return m_db->merge(key, value);
+}
+
 bool xstore::delete_value(const std::string &key) {
 #ifdef DB_KV_STATISTIC  
     xstore_util::metrics_key_value(key, get_value(key), false);
