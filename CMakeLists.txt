@@ -370,6 +370,10 @@ if (XBUILD_GALILEO)
     add_definitions(-DXBUILD_GALILEO)
 endif()
 
+if (XBUILD_BOUNTY)
+    add_definitions(-DXBUILD_BOUNTY)
+endif()
+
 if (BUILD_RUSTVM)
     add_definitions(-DBUILD_RUSTVM)
 endif()
