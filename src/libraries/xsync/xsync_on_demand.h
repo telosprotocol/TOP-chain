@@ -35,7 +35,7 @@ public:
     void on_response_event(const std::string account);
     void handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks, 
+    void handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks, const std::string& unit_proof_str,
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);

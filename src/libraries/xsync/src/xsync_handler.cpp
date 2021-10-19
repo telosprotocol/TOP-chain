@@ -450,8 +450,9 @@ void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode
     std::vector<xblock_ptr_t> &blocks = ptr->blocks;
     if (blocks.size() == 0)
         return;
+    std::string unit_proof_str = ptr->unit_proof_str;
 
-    m_sync_on_demand->handle_blocks_response(blocks, from_address, network_self);
+    m_sync_on_demand->handle_blocks_response(blocks, unit_proof_str, from_address, network_self);
 }
 
 void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
