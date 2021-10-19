@@ -350,6 +350,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_tx_delay_from_push_to_commit_recv,
     txpool_tx_delay_from_push_to_commit_confirm,
     txpool_receipt_id_state_msg_send_num,
+    txpool_alarm_confirm_tx_reached_upper_limit,
+    txpool_alarm_recv_tx_reached_upper_limit,
+    txpool_alarm_send_tx_reached_upper_limit,
 
     // blockstore
     blockstore_index_load,
