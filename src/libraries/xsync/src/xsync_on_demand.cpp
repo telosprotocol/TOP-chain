@@ -9,6 +9,7 @@
 #include "xsync/xsync_util.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"
+#include "xvledger/xvblockstore.h"
 
 NS_BEG2(top, sync)
 
@@ -32,6 +33,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     uint32_t count = bme->count;
     bool is_consensus = bme->is_consensus;
     const std::string &reason = bme->reason;
+    bool unit_proof = bme->unit_proof;
 
     if (count == 0)
         return;
@@ -66,7 +68,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     context["consensus"] = std::to_string(is_consensus);
     bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count - 1), context);
     if (permit) {
-        m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
+        m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, unit_proof, self_addr, target_addr);
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         xsync_info("xsync_on_demand_t::on_behind_event is not permit because of overflow or during downloading, account: %s",
@@ -75,7 +77,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     }
 }
 
-void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
+void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks, const std::string& unit_proof_str,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
 
     xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks(on_demand) %s, %s, count %d",
@@ -93,6 +95,27 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     if (ret != 0) {
         xsync_warn("xsync_on_demand_t::on_response_event check the source of message failed %s,ret=%d", account.c_str(), ret);
         return;
+    }
+    // nathan todo
+    if (!unit_proof_str.empty()) {
+        base::xvaccount_t unit_account(account);
+        base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
+        base::xunit_proof_t unit_proof_tmp;
+        unit_proof_tmp.serialize_from(stream2);
+
+        auto unit_block = blocks.back();
+        if (unit_block->get_height() != unit_proof_tmp.get_height()){
+            xsync_warn("unit proof check height fail");
+            return;
+        }
+        if (unit_block->get_viewid() != unit_proof_tmp.get_viewid()) {
+            xsync_warn("unit proof check view id fail");
+            return;
+        }
+        if (!unit_proof_tmp.verify_unit_block(unit_block)) {
+            xsync_warn("unit proof verify fail");
+            return;
+        }
     }
 
     if (!store_blocks(blocks)) {
@@ -124,7 +147,7 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     bool is_consensus = std::stoi(context["consensus"]);
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
-        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
+        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, false, network_self, to_address);
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         m_download_tracer.expire(account);
@@ -140,6 +163,7 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     uint64_t end_height = 0;
     uint32_t heights = block.count;
     bool is_consensus = block.is_consensus;
+    bool unit_proof = block.unit_proof;
 
     if (heights == 0)
         return;
@@ -174,8 +198,37 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
         xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(),
             blocks.front()->get_height(), blocks.back()->get_height());
     }
+    std::string unit_proof_str;
+    if (unit_proof) {
+        base::xvaccount_t unit_account(address);
+        unit_proof_str = m_sync_store->get_unit_proof(unit_account);
+        if(unit_proof_str.empty()){
+            xsync_warn("get_unit_proof fail");
+            return;
+        }
+        auto unit_block = m_sync_store->load_block_object(unit_account, start_height + heights - 1);
+        if (unit_block == nullptr) {
+            xsync_warn("load_block_object fail.");
+            return;
+        }
+        base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
+        base::xunit_proof_t unit_proof_tmp;
+        unit_proof_tmp.serialize_from(stream2);
+        if (unit_block->get_height() != unit_proof_tmp.get_height()){
+            xsync_warn("unit proof check height fail");
+            return;
+        }
+        if (unit_block->get_viewid() != unit_proof_tmp.get_viewid()) {
+            xsync_warn("unit proof check view id fail");
+            return;
+        }
+        if (!unit_proof_tmp.verify_unit_block(unit_block)) {
+            xsync_warn("unit proof verify fail");
+            return;
+        }
+    }
 
-    m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_blocks, "on_demand_blocks", network_self, to_address);
+    m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_blocks, "on_demand_blocks", network_self, to_address, unit_proof_str);
 }
 
 void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta,
@@ -249,7 +302,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
         m_download_tracer.refresh(account);
-        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
+        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, false, network_self, to_address);
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         on_response_event(account);

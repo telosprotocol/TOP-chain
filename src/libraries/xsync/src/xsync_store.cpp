@@ -224,7 +224,9 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
     }
     return blocks;
 }
-
+base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height) {
+    return m_blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+}
 bool xsync_store_t::set_genesis_height(const base::xvaccount_t &account, const std::string &height) {
     return m_blockstore->set_genesis_height(account, height);
 }
@@ -248,5 +250,7 @@ const std::string xsync_store_t::get_block_span(const base::xvaccount_t &account
 xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
-
+const std::string xsync_store_t::get_unit_proof(const base::xvaccount_t & account) {
+    return m_blockstore->get_unit_proof(account);
+}
 NS_END2
