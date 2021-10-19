@@ -18,6 +18,10 @@
 #   define SEED_URL "http://galileo.edge.topnetwork.org"
 #   define SERVER_HOST_PORT_HTTP "206.189.201.14:19081"
 #   define SERVER_HOST_PORT_WS "206.189.201.14:19085"
+#elif defined(XBUILD_BOUNTY)
+#   define SEED_URL "http://bounty.edge.topnetwork.org"
+#   define SERVER_HOST_PORT_HTTP "161.35.98.159:19081"
+#   define SERVER_HOST_PORT_WS "161.35.98.159:19085"
 #else
 #   define SEED_URL "http://mainnet.edge.topnetwork.org/"
 #   define SERVER_HOST_PORT_HTTP "206.189.227.204:19081"
