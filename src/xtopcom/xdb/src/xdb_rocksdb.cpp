@@ -26,23 +26,22 @@ using std::string;
 
 namespace top { namespace db {
 
-class xdb_rocksdb_merge_operator : public rocksdb::AssociativeMergeOperator{
+class xdb_rocksdb_merge_operator : public rocksdb::AssociativeMergeOperator {
 public:
     virtual bool Merge(const rocksdb::Slice & key,
                        const rocksdb::Slice * existing_value,
                        const rocksdb::Slice & value,
                        std::string * new_value,
                        rocksdb::Logger * logger) const override {
-        
         base::xauto_ptr<base::xstrmap_t> exist = new base::xstrmap_t();
 
-        if(existing_value){
+        if (existing_value) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)existing_value->data(), (uint32_t)existing_value->size());
             exist->serialize_from(stream);
         }
 
         base::xauto_ptr<base::xstrmap_t> income = new base::xstrmap_t();
-        base::xstream_t stream(base::xcontext_t::instance(),(uint8_t *)value.data(),(uint32_t)value.size());
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.data(), (uint32_t)value.size());
         income->serialize_from(stream);
 
         // merge map income -> exist
@@ -58,8 +57,6 @@ public:
         return "xdb_rocksdb_merge_operator";
     }
 };
-
-
 
 class xdb_rocksdb_transaction_t : public xdb_transaction_t {
 public:
@@ -441,6 +438,7 @@ bool xdb::write(const std::map<std::string, std::string>& batches) {
 
 bool xdb::merge(const std::string & key, const std::string & value) const {
     XMETRICS_TIMER(metrics::db_write_tick);
+    XMETRICS_GAUGE(metrics::db_write_size, value.size());
     auto ret = m_db_impl->merge(key, value);
     XMETRICS_GAUGE(metrics::db_write, ret ? 1 : 0);
     return ret;
