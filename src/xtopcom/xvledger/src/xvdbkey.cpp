@@ -87,5 +87,10 @@ namespace top
             return key_path;
         }
 
+        const std::string  xvdbkey_t::create_unit_proof_key(const xvaccount_t & account) {
+            const std::string key_path = "p/" + account.get_xvid_str();
+            return key_path;
+        }
+
     }//end of namespace of base
 }//end of namespace top

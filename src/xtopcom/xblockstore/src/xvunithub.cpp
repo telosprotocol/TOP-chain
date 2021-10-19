@@ -7,6 +7,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xvunithub.h"
+#include "xvledger/xunit_proof.h"
 
 #include "xmetrics/xmetrics.h"
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
@@ -1062,6 +1063,12 @@ namespace top
                         return false;
                     }
 
+                    auto cert_blocks = load_block_object(*index_ptr, index_ptr->get_height() + 2);
+                    if (cert_blocks.get_vector().empty()) {
+                        xerror("xvblockstore_impl::store_units_to_db,fail-load cert tableblock.index=%s,cert height=%llu",index_ptr->dump().c_str(), index_ptr->get_height() + 2);
+                        return false;
+                    }
+
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
 
@@ -1084,6 +1091,26 @@ namespace top
                             {
                                 xdbg("xvblockstore_impl::store_units_to_db,stored unit-block=%s",unit_block->dump().c_str());                                
                             }
+                            // store corresponding table proof for latest commit unit block
+                            base::xunit_proof_t unit_proof(unit_block->get_height(), unit_block->get_viewid(), cert_blocks.get_vector().at(0)->get_cert());
+                            // xassert(unit_proof.verify_unit_block(unit_block));
+                            base::xstream_t stream(base::xcontext_t::instance());
+                            unit_proof.serialize_to(stream);
+                            if (!set_unit_proof(unit_account, std::string((const char *)stream.data(), stream.size()))) {
+                                xerror("xvblockstore_impl::store_units_to_db account %s,fail to writed into db,block=%s",unit_account.get_address().c_str(), unit_block->dump().c_str());
+                                return false;
+                            }
+
+                            // todo(nathan):for test only, should delete!!!!!
+                            // auto unit_proof_str = get_unit_proof(unit_account);
+                            // xassert(!unit_proof_str.empty());
+                            // base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
+                            // base::xunit_proof_t unit_proof_tmp;
+                            // unit_proof_tmp.serialize_from(stream2);
+                            // xassert(unit_proof_tmp.get_height() == unit_proof.get_height());
+                            // xassert(unit_proof_tmp.get_viewid() == unit_proof.get_viewid());
+                            // xassert(unit_proof_tmp.verify_unit_block(unit_block));
+                            // xdbg("xvblockstore_impl::store_units_to_db unit proof verify succ,unit:%s", unit_block->dump().c_str());
                         }
 
                         //update to block'flag acccording table_extract_all_unit_successful
@@ -1176,6 +1203,16 @@ namespace top
         const std::string xvblockstore_impl::get_block_span(const base::xvaccount_t & account, const uint64_t height){
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->get_block_span(height);
+        }
+
+        bool xvblockstore_impl::set_unit_proof(const base::xvaccount_t & account, const std::string& unit_proof){
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->set_unit_proof(unit_proof);
+        }
+        
+        const std::string xvblockstore_impl::get_unit_proof(const base::xvaccount_t & account){
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->get_unit_proof();
         }
     };//end of namespace of vstore
 };//end of namespace of top

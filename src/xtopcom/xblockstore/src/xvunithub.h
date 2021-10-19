@@ -135,6 +135,9 @@ namespace top
             virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) override;
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override;
 
+            virtual bool        set_unit_proof(const base::xvaccount_t & account, const std::string &unit_proof) override;
+            virtual const std::string get_unit_proof(const base::xvaccount_t & account) override;
+
             bool                         store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
             bool                         on_block_committed(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
         protected:

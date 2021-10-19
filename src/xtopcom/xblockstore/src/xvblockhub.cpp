@@ -3038,5 +3038,20 @@ namespace top
             }
             return true;
         }
+
+        bool        xblockacct_t::set_unit_proof(const std::string& unit_proof){
+            const std::string key_path = base::xvdbkey_t::create_unit_proof_key(*this);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, unit_proof)) {
+                xerror("xblockacct_t::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
+                return false;
+            }
+
+            return true;
+        }
+
+        const std::string xblockacct_t::get_unit_proof(){
+            const std::string key_path = base::xvdbkey_t::create_unit_proof_key(*this);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+        }
     };//end of namespace of vstore
 };//end of namespace of top
