@@ -587,7 +587,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     e_simple_total,
 };
-using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
+using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;
 
 enum E_ARRAY_COUNTER_TAG : size_t {
     e_array_counter_begin = 0,

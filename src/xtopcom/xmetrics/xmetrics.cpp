@@ -7,7 +7,7 @@
 NS_BEG2(top, metrics)
 
 #define RETURN_METRICS_NAME(TAG) case TAG: return #TAG
-char const * matrics_name(xmetircs_tag_t const tag) noexcept {
+char const * matrics_name(xmetrics_tag_t const tag) noexcept {
     switch (tag) {
         RETURN_METRICS_NAME(e_simple_begin);
         RETURN_METRICS_NAME(blockstore_cache_block_total);
@@ -569,7 +569,7 @@ void e_metrics::start() {
     XMETRICS_CONFIG_GET("queue_procss_behind_sleep_time", m_queue_procss_behind_sleep_time);
 
     for (size_t index = e_simple_begin; index < e_simple_total; index++) {
-        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
+        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetrics_tag_t>(index)), 0);
     }
 
     for (size_t index = e_array_counter_begin; index < e_array_counter_total; index++) {

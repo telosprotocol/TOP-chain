@@ -8,7 +8,7 @@
 
 class xstore_util {
 public:
-    static void metirc_key_value(std::string const& key, std::string const& value, bool add_or_minus = true);
+    static void metrics_key_value(std::string const& key, std::string const& value, bool add_or_minus = true);
 private:
     static bool endwith(std::string const& str, std::string const& suffix);
 };
