@@ -28,14 +28,6 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
 }
 
-bool xsync_store_t::set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof) {
-    if (!m_blockstore->set_unit_proof(account, unit_proof)) {
-        xerror("xsync_store_t::store_unit_proof account %s,fail to writed into db,unit_proof=%s",account.get_address().c_str(), unit_proof.c_str());
-        return false;
-    }
-    return true;
-}
-
 bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
     if (blocks.empty()) {
         return true;
@@ -258,7 +250,17 @@ const std::string xsync_store_t::get_block_span(const base::xvaccount_t &account
 xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
+
+bool xsync_store_t::set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof) {
+    if (!m_blockstore->set_unit_proof(account, unit_proof)) {
+        xerror("xsync_store_t::store_unit_proof account %s,fail to writed into db,unit_proof=%s",account.get_address().c_str(), unit_proof.c_str());
+        return false;
+    }
+    return true;
+}
+
 const std::string xsync_store_t::get_unit_proof(const base::xvaccount_t & account) {
     return m_blockstore->get_unit_proof(account);
 }
+
 NS_END2
