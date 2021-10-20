@@ -56,9 +56,11 @@ public:
 
     uint64_t balance() const override;
     state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
+    // state_accessor::xtoken_t state_withdraw(std::uint64_t amount) override;
     void deposit(state_accessor::xtoken_t token) override;
 
-    observer_ptr<xcontract_state_t> contract_state() const noexcept;
+    observer_ptr<xcontract_state_t> contract_state() const noexcept override;
+    void source_action_general_func() noexcept override;
 
     void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) override final;
 
@@ -81,9 +83,9 @@ public:
 protected:
     observer_ptr<properties::xproperty_initializer_t const> property_initializer() const noexcept;
 
-    bool at_source_action_stage() const noexcept override final;
-    bool at_target_action_stage() const noexcept override final;
-    bool at_confirm_action_stage() const noexcept override final;
+    // bool at_source_action_stage() const noexcept override final;
+    // bool at_target_action_stage() const noexcept override final;
+    // bool at_confirm_action_stage() const noexcept override final;
 
     xbyte_buffer_t const & receipt_data(std::string const & key, std::error_code & ec) const override final;
     void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) override final;

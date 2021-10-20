@@ -39,13 +39,14 @@ public:
     virtual void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) = 0;
 
     virtual observer_ptr<xcontract_state_t> contract_state() const noexcept = 0;
+    virtual void source_action_general_func() noexcept = 0;
 
 protected:
     xtop_contract_face() = default;
 
-    virtual bool at_source_action_stage() const noexcept = 0;
-    virtual bool at_target_action_stage() const noexcept = 0;
-    virtual bool at_confirm_action_stage() const noexcept = 0;
+    // virtual bool at_source_action_stage() const noexcept = 0;
+    // virtual bool at_target_action_stage() const noexcept = 0;
+    // virtual bool at_confirm_action_stage() const noexcept = 0;
 
     virtual xbyte_buffer_t const & receipt_data(std::string const & key, std::error_code & ec) const = 0;
     virtual void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) = 0;

@@ -27,6 +27,7 @@
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xutility.h"
 #include "xcontract_runtime/xerror/xerror.h"
+#include "xdata/xconsensus_action_stage.h"
 
 #include <cstdint>
 #include <string>
@@ -105,7 +106,7 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         if (action_name != api_name) {                                                                                                                                             \
             break;                                                                                                                                                                 \
         }                                                                                                                                                                          \
-        top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
+                                                                                                                                                                                   \
         try {                                                                                                                                                                      \
             if (action_name == "setup") {                                                                                                                                          \
                 this->property_initializer()->initialize();                                                                                                                        \
@@ -131,10 +132,20 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
 ///        'CONTRACT' is from 'BEGIN_CONTRACT_APIs'
 #define DECLARE_API(func) CALL_CONTRACT_API(func)
 
+/// @brief Macro for declaring sender only(source action only) contract API 'func'
+///        'CONTRACT' is from 'BEGIN_CONTRACT_APIs'
+#define DECLARE_SENDER_ONLY_API(func)                                                                                                                                              \
+    if ( data::xconsensus_action_stage_t::send != exe_ctx->consensus_action_stage() ) {                                                                                            \
+        result.status.ec = make_error_code(top::contract_runtime::error::xerrc_t::enum_vm_not_src_action_error);                                                                   \
+        return result;                                                                                                                                                             \
+    }                                                                                                                                                                              \
+    DECLARE_API(func)                                                                                                                                                              \
+
 /// @brief  contract begin & end macro
 #define BEGIN_CONTRACT_API()                                                                                                                                                       \
     top::contract_common::xcontract_execution_result_t execute(observer_ptr<top::contract_common::xcontract_execution_context_t> exe_ctx) override {                               \
         this->reset_execution_context(exe_ctx);                                                                                                                                    \
+        top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
         auto const & action_name = exe_ctx->action_name();                                                                                                                         \
         auto const & action_data = exe_ctx->action_data();                                                                                                                         \
         std::unique_ptr<base::xstream_t> stream_ptr;                                                                                                                               \

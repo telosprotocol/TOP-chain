@@ -62,6 +62,8 @@ public:
     data::enum_xtransaction_type transaction_type() const noexcept;
 
     std::string action_name() const;
+    std::string source_action_name() const;
+    std::string target_action_name() const;
     data::enum_xaction_type action_type() const;
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
