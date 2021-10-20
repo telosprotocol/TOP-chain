@@ -33,39 +33,4 @@ bool xcons_utl::is_broadcast_address(const xvip2_t & addr) {
     return xip_equals(broadcast_ip, addr);
 }
 
-common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xelection_round_t const & version) {
-    // auto network_version_value = static_cast<common::xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
-    auto network_id_value = static_cast<common::xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2));
-    auto zone_id_value = static_cast<common::xzone_id_t::value_type>(get_zone_id_from_xip2(xip2));
-    auto cluster_id_value = static_cast<common::xcluster_id_t::value_type>(get_cluster_id_from_xip2(xip2));
-    auto group_id_value = static_cast<common::xgroup_id_t::value_type>(get_group_id_from_xip2(xip2));
-    auto slot_id_value = static_cast<common::xslot_id_t::value_type>(get_node_id_from_xip2(xip2));
-    auto shard_size = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(xip2));
-    auto associated_blk_height = static_cast<std::uint64_t>(get_network_height_from_xip2(xip2));
-
-    // assert(common::xnetwork_version_t{network_version_value} == version);  // NOLINT
-
-    common::xslot_id_t slot_id{slot_id_value};
-    if (!broadcast(slot_id)) {
-        common::xnode_address_t address{
-            common::xcluster_address_t{
-                common::xnetwork_id_t{network_id_value}, common::xzone_id_t{zone_id_value}, common::xcluster_id_t{cluster_id_value}, common::xgroup_id_t{group_id_value}},
-            common::xaccount_election_address_t{common::xnode_id_t{"T00000TOPSpecialAccountForTestingOnlyTOP"}, slot_id},
-            version,
-            shard_size,
-            associated_blk_height};
-        return address;
-    } else {
-        common::xnode_address_t address{
-            common::xcluster_address_t{
-                common::xnetwork_id_t{network_id_value}, common::xzone_id_t{zone_id_value}, common::xcluster_id_t{cluster_id_value}, common::xgroup_id_t{group_id_value}},
-            version,
-            shard_size,
-            associated_blk_height};
-        return address;
-    }
-
-    // auto type_value = static_cast<common::xnode_type_t>(get_xip2_type_from_xip2_ex(xip));
-}
-
 NS_END2

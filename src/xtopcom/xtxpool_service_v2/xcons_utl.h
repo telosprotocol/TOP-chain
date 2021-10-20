@@ -32,7 +32,6 @@ public:
     static xvip2_t                 to_xip2(const common::xnode_address_t & address, bool bwith_version = true);
     static xvip2_t                 erase_version(const xvip2_t & xip);
     static bool                    xip_equals(const xvip2_t & left, const xvip2_t & right);
-    static common::xnode_address_t to_address(const xvip2_t & xip, common::xelection_round_t const & version);
     static bool                    is_broadcast_address(const xvip2_t & addr);
 };
 XDEFINE_MSG_ID(xmessage_category_txpool, xReceipt_msg, 0x00000000);
