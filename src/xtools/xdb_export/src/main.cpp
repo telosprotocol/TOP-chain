@@ -235,7 +235,7 @@ public:
             std::cout << "===> " << filename << " generated success!" << std::endl; 
         };
         mkdir("all_table_tx_info", 0750);
-        uint32_t thread_num = 4;
+        uint32_t thread_num = 3;
         if (address_vec.size() < thread_num) {
             query_and_make_file(this, address_vec[0]);
         } else {

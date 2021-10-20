@@ -351,6 +351,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_tx_delay_from_push_to_commit_confirm,
     txpool_receipt_id_state_msg_send_num,
     txpool_sync_on_demand_unit,
+    txpool_alarm_confirm_tx_reached_upper_limit,
+    txpool_alarm_recv_tx_reached_upper_limit,
+    txpool_alarm_send_tx_reached_upper_limit,
 
     // blockstore
     blockstore_index_load,
@@ -589,7 +592,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     e_simple_total,
 };
-using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
+using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;
 
 enum E_ARRAY_COUNTER_TAG : size_t {
     e_array_counter_begin = 0,
