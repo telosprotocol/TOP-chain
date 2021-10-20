@@ -51,8 +51,7 @@ public:
         std::size_t index;
         for (index = 0; index < m_user_option_location; ++index) {
             common::xnode_type_t define_type = top::get<common::xnode_type_t>(m_node_type_strategy[index]);
-            if ((static_cast<std::underlying_type<common::xnode_type_t>::type>(define_type) & static_cast<std::underlying_type<common::xnode_type_t>::type>(c_node_type)) ==
-                (static_cast<std::underlying_type<common::xnode_type_t>::type>(define_type))) {
+            if ((define_type & c_node_type) == define_type) {
                 result = top::get<bool>(m_node_type_strategy[index]);
             }
         }
@@ -61,8 +60,7 @@ public:
         }
         for (; index < m_user_option_location; ++index) {
             common::xnode_type_t define_type = top::get<common::xnode_type_t>(m_node_type_strategy[index]);
-            if ((static_cast<std::underlying_type<common::xnode_type_t>::type>(define_type) & static_cast<std::underlying_type<common::xnode_type_t>::type>(c_node_type)) ==
-                (static_cast<std::underlying_type<common::xnode_type_t>::type>(define_type))) {
+            if ((define_type & c_node_type) == define_type) {
                 result = top::get<bool>(m_node_type_strategy[index]);
             }
         }
@@ -87,6 +85,14 @@ S inner_define_startegy_impl(S & s, U u, V v, Args... rest) {
 
 xbool_strategy_t define_bool_strategy(bool dft);
 
+/**
+ * define_bool_strategy:
+ * usage:
+ * define_bool_strategy(defaultly_value, <node_type, (bool)strategy> or <user_option_ptr, std::_Placeholder<1>>... )
+ * you can define `pairs` strategies as much as you want.
+ * there will affect one by one and determined the final result.
+ * e.g. define_bool_strategy(false, xnode_type_t::consensus, true, some_user_option_ptr, std::placeholders::_1, archive, false)
+ **/
 template <class U, class V, class... Args>
 xbool_strategy_t define_bool_strategy(bool dft, U u, V v, Args... rest) {
     xbool_strategy_t s{dft};

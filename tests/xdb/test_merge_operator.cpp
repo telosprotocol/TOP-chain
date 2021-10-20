@@ -1,7 +1,5 @@
+#ifdef ENABLE_METRICS
 #define METRICS_UNIT_TEST
-#ifndef ENABLE_METRICS
-#    define ENABLE_METRICS
-#endif
 #define private public
 #include "gtest/gtest.h"
 #include "xbase/xcontext.h"
@@ -212,6 +210,30 @@ std::vector<std::pair<std::string, std::string>> generate_rand_merge_data(std::s
     return res;
 }
 
+std::vector<std::pair<std::string, std::string>> generate_rand_set_3_data(std::size_t num) {
+    std::vector<std::pair<std::string, std::string>> res;
+    std::ifstream read_file;
+    read_file.open("./txhashlist.log");
+    read_file.seekg(0, std::ios_base::beg);
+    std::string key = "";
+    for (std::size_t index = 0; index < num; ++index) {
+        static std::string perfix[3] = {"send", "recv", "confirm"};
+        static int value_size[3] = {80, 80, 40};
+        read_file >> key;
+        for (auto _i = 0; _i < 3; _i++) {
+            // base::xauto_ptr<base::xstrmap_t> data = new base::xstrmap_t();
+            // data->set(perfix[_i], rand_str(value_size[_i]));
+            // std::string data_str;
+            // data->serialize_to_string(data_str);
+            res.push_back({key, perfix[_i]+rand_str(value_size[_i])});
+        }
+        key = "";
+    }
+    read_file.close();
+    assert(res.size() == num * 3);
+    return res;
+}
+
 std::vector<std::string> get_txhash_list(std::size_t num) {
     std::vector<std::string> res;
     std::ifstream read_file;
@@ -374,4 +396,59 @@ TEST_F(test_merge_operator, only_set_data_for_merge_BENCH) {
     }
 }
 
+
+TEST_F(test_merge_operator, set_3_BENCH) {
+    for (std::size_t index = 0; index < 100; ++index) {
+        XMETRICS_COUNTER_INCREMENT("test_count_metrics1", static_cast<uint64_t>((100 + rand()) % 10000));
+    }
+    auto st1 = std::chrono::system_clock::now().time_since_epoch().count();
+
+    std::size_t cnt = 100000;
+    checkhashlist(cnt);
+    auto data = generate_rand_set_3_data(cnt);
+
+    auto st2 = std::chrono::system_clock::now().time_since_epoch().count();
+    std::cout << "generate_rand_data finished use: " << st2 - st1 << std::endl;
+    for(std::size_t index = 0;index<cnt;++index){
+        std::string value = "";
+        for(std::size_t _ = 0;_<3;++_){
+            auto const & _p = data[index*3+_];
+            value +=_p.second;
+            m_db->write(_p.first,value);
+        }
+    }
+    auto st3 = std::chrono::system_clock::now().time_since_epoch().count();
+    std::cout << "set data(size: " << data.size() << ") finished use: " << st3 - st2 << std::endl;
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    for (std::size_t index = 0; index < 100; ++index) {
+        XMETRICS_COUNTER_INCREMENT("test_count_metrics1", static_cast<uint64_t>((100 + rand()) % 10000));
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    auto hashlist = get_txhash_list(cnt);
+
+    auto st4 = std::chrono::system_clock::now().time_since_epoch().count();
+    for (std::size_t index = 0; index < hashlist.size(); index++) {
+        std::string _;
+        m_db->read(hashlist[index], _);
+    }
+    auto st5 = std::chrono::system_clock::now().time_since_epoch().count();
+    std::cout << "read data(size: " << hashlist.size() << ") finished use: " << st5 - st4 << std::endl;
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    for (std::size_t index = 0; index < 100; ++index) {
+        XMETRICS_COUNTER_INCREMENT("test_count_metrics1", static_cast<uint64_t>((100 + rand()) % 10000));
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    for (std::size_t index = 0; index < 100; ++index) {
+        XMETRICS_COUNTER_INCREMENT("test_count_metrics1", static_cast<uint64_t>((100 + rand()) % 10000));
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+}
+
+
+
 }  // namespace top
+
+#endif
