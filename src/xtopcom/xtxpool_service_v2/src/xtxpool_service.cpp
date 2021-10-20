@@ -65,18 +65,20 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     m_vnet_driver = vnet_driver;
     m_vnetwork_str = vnet_driver->address().to_string();
 
+    assert(vnet_driver->address().xip2() == xip);
+
     xinfo("xtxpool_service::set_params node:%s,joined election round:%llu,cur election round:%llu",
           m_vnetwork_str.c_str(),
           m_vnet_driver->joined_election_round().value(),
           m_vnet_driver->address().election_round().value());
 
-    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
+    // common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
 
     m_node_id = static_cast<std::uint16_t>(get_node_id_from_xip2(m_xip));
     m_shard_size = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(m_xip));
     xassert(m_node_id < m_shard_size);
 
-    auto type = node_addr.type();
+    auto type = vnet_driver->type();
     if (common::has<common::xnode_type_t::committee>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_beacon_index;
