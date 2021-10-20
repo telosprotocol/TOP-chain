@@ -110,8 +110,12 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     if (new_vm) {
         for (auto const & tx : input_txs) {
             xdbg("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+            assert(!tx->get_transaction()->get_source_action().get_action_param().empty());
+            xdbg("------>new vm, %s, %zu, %s\n", tx->get_transaction()->get_source_action().get_action_name().c_str(), tx->get_transaction()->get_source_action().get_action_param().size(),
+                                                 tx->get_transaction()->get_source_action().get_action_param().c_str());
             printf("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
+
         xassert(!cs_para.get_table_account().empty());
         xassert(!cs_para.get_random_seed().empty());
         xassert(cs_para.get_table_proposal_height() > 0);

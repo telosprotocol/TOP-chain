@@ -6,6 +6,7 @@
 
 #include "xbasic/xutility.h"
 #include "xcontract_common/xcontract_state.h"
+#include "xcontract_common/xcontract_execution_context.h"
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xblocktool.h"

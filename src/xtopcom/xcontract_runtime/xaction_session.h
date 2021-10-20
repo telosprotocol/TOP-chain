@@ -105,6 +105,19 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
         assert(false);
     }
 
+    xdbg("sender: %s, rever: %s, state addr: %s", execution_context->sender().c_str(), execution_context->recver().c_str(), execution_context->contract_state()->state_account_address().c_str());
+    auto const& src_name = execution_context->action_name();
+    auto const& src_data = execution_context->action_data();
+    xdbg("source action name: %s, src action data size: %zu", src_name.c_str(), src_data.size());
+    if (!src_data.empty()) {
+        xdbg("wens_test, src_data not empty");
+        data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_data.data(), src_data.size());
+        stream >> asset_out.m_token_name;
+        stream >> asset_out.m_amount;
+        xdbg("source action name: %s, token_name: %s, token amount: %d", src_name.c_str(), asset_out.m_token_name.c_str(), (int32_t)asset_out.m_amount);
+    }
+
     auto start_bin_size = observed_exectx->contract_state()->binlog_size();
     result = m_associated_runtime->execute(observed_exectx);
     xdbg("wens_test, xtop_action_session<ActionT>::execute_action, receipt data, size : %zu\n", result.output.receipt_data.size());
