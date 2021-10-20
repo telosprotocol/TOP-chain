@@ -8,6 +8,7 @@
 #include "xbase/xthread.h"
 #include "xvunithub.h"
 #include "xvledger/xunit_proof.h"
+#include "xdata/xgenesis_data.h"
 
 #include "xmetrics/xmetrics.h"
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
@@ -1081,6 +1082,15 @@ namespace top
                         {
                             base::xvaccount_t  unit_account(unit_block->get_account());
 
+                            // // todo(nathan): not store unit for test
+                            // if (!data::is_sys_contract_address(common::xaccount_address_t{unit_account.get_account()})) {
+                            //     uint64_t rand_num = rand();
+                            //     if (rand_num % 8 == 0) {
+                            //         xwarn("nathan test drop unit=%s", unit_block->dump().c_str());
+                            //         return true;
+                            //     }  
+                            // }
+
                             unit_block->set_block_flag(base::enum_xvblock_flag_committed);
                             unit_block->set_block_flag(base::enum_xvblock_flag_locked);
                             if(false == store_block(unit_account,unit_block.get())) // TODO(jimmy) repeat store should return true
@@ -1107,8 +1117,8 @@ namespace top
                             // base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
                             // base::xunit_proof_t unit_proof_tmp;
                             // unit_proof_tmp.serialize_from(stream2);
-                            // xassert(unit_proof_tmp.get_height() == unit_proof.get_height());
-                            // xassert(unit_proof_tmp.get_viewid() == unit_proof.get_viewid());
+                            // xassert(unit_block->get_height() == unit_proof_tmp.get_height());
+                            // xassert(unit_block->get_viewid() == unit_proof_tmp.get_viewid());
                             // xassert(unit_proof_tmp.verify_unit_block(unit_block));
                             // xdbg("xvblockstore_impl::store_units_to_db unit proof verify succ,unit:%s", unit_block->dump().c_str());
                         }

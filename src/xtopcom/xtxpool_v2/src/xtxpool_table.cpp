@@ -52,7 +52,7 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
 
     uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_account_vaddress,(int)metrics::blockstore_access_from_txpool_get_nonce);
     if (latest_connect_height == 0) {
-        xerror("xtxpool_table_t::get_account_basic_info fail-get_latest_connected_block_info. account=%s,index=%s,", _account_vaddress.get_account().c_str(), account_index.dump().c_str());
+        xwarn("xtxpool_table_t::get_account_basic_info fail-get_latest_connected_block_info. account=%s,index=%s,", _account_vaddress.get_account().c_str(), account_index.dump().c_str());
         return true;
     }
     if(latest_commited_height > latest_connect_height ) //missed some commited blocks
@@ -441,7 +441,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
                 // try sync table block
                 mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block");
+                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block", false);
                 m_para->get_bus()->push_event(ev);
                 xtxpool_warn("xtxpool_table_t::refresh_table load table block fail:table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), sync_from_height, height);
                 XMETRICS_GAUGE(metrics::txpool_try_sync_table_block, 1);
@@ -649,7 +649,7 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
     bool result = get_account_basic_info(account_addr, account_basic_info, latest_nonce);
     if (account_basic_info.get_sync_num() > 0) {
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
+            account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind", true);
         m_para->get_bus()->push_event(ev);
         xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s state fall behind,try sync unit from:%llu,count:%u",
                         account_addr.c_str(),

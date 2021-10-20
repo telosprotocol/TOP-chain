@@ -73,7 +73,8 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    xtablemaker_para_t table_para(tablestate);
+    xtablestate_ptr_t tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
+    xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
@@ -102,7 +103,9 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     }
 
     // only invoke sync when make proposal successfully, avoiding too much call
-    sys_contract_sync(tablestate);
+    if (proposal_para.get_latest_committed_block()->get_height() > 0) {
+        sys_contract_sync(tablestate_commit);
+    }
 
     // need full cert block
     //get_blockstore()->load_block_input(*m_table_maker.get(), latest_cert_block.get());
@@ -213,7 +216,8 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         return xblockmaker_error_proposal_table_state_clone;
     }
 
-    xtablemaker_para_t table_para(tablestate);
+    xtablestate_ptr_t tablestate_commit = get_target_tablestate(cs_para.get_latest_committed_block().get());
+    xtablemaker_para_t table_para(tablestate, tablestate_commit);
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
@@ -342,13 +346,12 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     // std::map<std::string, uint64_t> locked_nonce_map;
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
-        auto tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
-        if (nullptr == tablestate_commit) {
+        if (nullptr == table_para.get_commit_tablestate()) {
             xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s,committed_block=%s",
                 proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
             return false;
         }
-        get_txpool()->update_table_state(tablestate_commit);
+        get_txpool()->update_table_state(table_para.get_commit_tablestate());
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
@@ -500,32 +503,16 @@ void xproposal_maker_t::sys_contract_sync(const xtablestate_ptr_t & tablestate) 
 
 void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablestate, const std::string & addr) const {
     base::xvaccount_t _vaddr(addr);
-    auto cert_block =  base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_vaddr);
-    if (cert_block == nullptr) {
-        xassert(false);
-        return;
-    }
-
-    bool is_need_sync = false;
+    uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
-    if (cert_block->get_height() < accountindex.get_latest_unit_height()) {
-        is_need_sync = true;
-    } else {
-        base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(cert_block.get(),metrics::statestore_access_from_blkmaker_get_target_tablestate);
-        if (bstate == nullptr) {
-            is_need_sync = true;
-        }
-    }
-
-    if (is_need_sync) {
-        uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
+    if (latest_connect_height < accountindex.get_latest_unit_height()) {
         uint64_t from_height = latest_connect_height + 1;
         uint32_t sync_num = (uint32_t)(accountindex.get_latest_unit_height() + 1 - from_height);
-        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu,cert_height=%ld", 
-            addr.c_str(), from_height, accountindex.get_latest_unit_height(), cert_block->get_height());
+        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu", 
+            addr.c_str(), from_height, accountindex.get_latest_unit_height());
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            addr, from_height, sync_num, true, "proposal_maker_check");
+            addr, from_height, sync_num, true, "proposal_maker_check", true);
         base::xvchain_t::instance().get_xevmbus()->push_event(ev);
     }
 }

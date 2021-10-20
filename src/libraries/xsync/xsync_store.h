@@ -48,6 +48,7 @@ public:
     virtual bool delete_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual const std::string get_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual xsync_store_shadow_t* get_shadow() =  0;
+    virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof) = 0;
     virtual const std::string get_unit_proof(const base::xvaccount_t & account) = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
@@ -108,7 +109,8 @@ public:
     virtual xsync_store_shadow_t* get_shadow() override;
     uint32_t add_listener(int major_type, mbus::xevent_queue_cb_t cb) override;
     void remove_listener(int major_type, uint32_t id) override;
-    const std::string get_unit_proof(const base::xvaccount_t & account);
+    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof) override;
+    const std::string get_unit_proof(const base::xvaccount_t & account) override;
 private:
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};

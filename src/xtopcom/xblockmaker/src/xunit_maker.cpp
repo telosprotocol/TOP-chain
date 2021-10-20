@@ -44,18 +44,18 @@ xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & acco
     return nullptr;
 }
 
-void xunit_maker_t::try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus) {
-    xinfo("xunit_maker_t::try_sync_lacked_blocks check_latest_state %s, account=%s,try sync unit from:%llu,end:%llu", reason.c_str(), get_account().c_str(), from_height, to_height);
+void xunit_maker_t::try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus, bool need_proof) {
+    xinfo("xunit_maker_t::try_sync_lacked_blocks check_latest_state %s, account=%s,try sync unit from:%llu,end:%llu,proof:%d", reason.c_str(), get_account().c_str(), from_height, to_height, need_proof);
     if (to_height >= from_height) {
         uint32_t sync_num = (uint32_t)(to_height + 1 - from_height);
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            get_address(), from_height, sync_num, is_consensus, "account_state_fall_behind");
+            get_address(), from_height, sync_num, is_consensus, "account_state_fall_behind", need_proof);
         get_bus()->push_event(ev);
         XMETRICS_GAUGE(metrics::cons_sync_on_demand_unit, sync_num);
     }
 }
 
-int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & cs_para,const base::xaccount_index_t & account_index, const xunit_block_cache & unit_block_cache) {
+int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & cs_para, const base::xaccount_index_t & commit_account_index, const base::xaccount_index_t & account_index, const xunit_block_cache & unit_block_cache) {
     if (m_check_state_success && m_latest_account_index == account_index) {
         return xsuccess;
     }
@@ -66,18 +66,25 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
         uint64_t start_sync_height = latest_connect_height + 1;
 
+        if (latest_connect_height != commit_account_index.get_latest_unit_height()) {
+            xwarn("xunit_maker_t::check_latest_state fail-connect block fall behind .%s, account=%s,commit index=%s,connect_height=%ld",
+                cs_para.dump().c_str(), get_account().c_str(), commit_account_index.dump().c_str(), latest_connect_height);
+            try_sync_lacked_blocks(start_sync_height, commit_account_index.get_latest_unit_height(), "connect_unit_behind", true, true);
+            break;
+        }
+
         xblock_ptr_t latest_block = nullptr;
         std::map<uint64_t, data::xblock_ptr_t> latest_blocks = unit_block_cache.get_unit_blocks(get_address());
         if (latest_blocks.empty()) {
-            // find the latest cert block which matching account_index
-            auto _latest_cert_block = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
-            if (_latest_cert_block == nullptr) {
-                xwarn("xunit_maker_t::check_latest_state fail-load unit cert block.%s, account=%s,index=%s,missing_height=%ld",
-                    cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), account_index.get_latest_unit_height());
-                try_sync_lacked_blocks(start_sync_height, account_index.get_latest_unit_height(), "missing_unit_cert", true);
+            // find the latest commit block which matching account_index
+            auto _latest_commit_block = get_blockstore()->load_block_object(*this, commit_account_index.get_latest_unit_height(), commit_account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
+            if (_latest_commit_block == nullptr) {
+                xwarn("xunit_maker_t::check_latest_state fail-load unit commit block.%s, account=%s,index=%s,missing_height=%ld",
+                    cs_para.dump().c_str(), get_account().c_str(), commit_account_index.dump().c_str(), commit_account_index.get_latest_unit_height());
+                try_sync_lacked_blocks(start_sync_height, commit_account_index.get_latest_unit_height(), "missing_unit_commit", true, true);
                 break;
             }
-            latest_block = xblock_t::raw_vblock_to_object_ptr(_latest_cert_block.get());
+            latest_block = xblock_t::raw_vblock_to_object_ptr(_latest_commit_block.get());
             latest_blocks[latest_block->get_height()] = latest_block;
         } else {
             latest_block = latest_blocks.rbegin()->second;
@@ -90,22 +97,22 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         if (!load_and_cache_enough_blocks(latest_blocks, lacked_block_height)) {
             xwarn("xunit_maker_t::check_latest_state fail-load unit block.%s, account=%s,index=%s,missing_height=%ld",
                 cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_block_height);
-            try_sync_lacked_blocks(start_sync_height, lacked_block_height, "missing_unit_lock_commit", true);
+            try_sync_lacked_blocks(start_sync_height, lacked_block_height, "missing_unit_lock_commit", true, false);
             break;
         }
 
         // TODO(jimmy) move to statestore load connectted block before make unit state
-        if (latest_connect_height+ 4 < latest_block->get_height()) {  // allow connected height update more slowly
-            lacked_block_height = latest_block->get_height() - 1;
-            xwarn("xblock_maker_t::update_account_state fail-connect block behind too much. %s, account=%s,index=%s,connect_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), latest_connect_height);
-            try_sync_lacked_blocks(start_sync_height, lacked_block_height, "connect_unit_behind", true);
-            break;
-        }
+        // if (latest_connect_height+ 4 < latest_block->get_height()) {  // allow connected height update more slowly
+        //     lacked_block_height = latest_block->get_height() - 1;
+        //     xwarn("xblock_maker_t::update_account_state fail-connect block behind too much. %s, account=%s,index=%s,connect_height=%ld",
+        //         cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), latest_connect_height);
+        //     try_sync_lacked_blocks(start_sync_height, lacked_block_height, "connect_unit_behind", true);
+        //     break;
+        // }
         if (!update_account_state(latest_blocks, lacked_block_height)) {
             xassert(lacked_block_height > 0);
             if (lacked_block_height > 0) {
-                try_sync_lacked_blocks(start_sync_height, lacked_block_height, "update_account_state", true);
+                try_sync_lacked_blocks(start_sync_height, lacked_block_height, "update_account_state", true, false);
             }
             xwarn("xunit_maker_t::check_latest_state fail-make unit state.%s,account=%s,index=%s,missing_height=%ld",
                 cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_block_height);

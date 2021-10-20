@@ -100,22 +100,19 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     if (!unit_proof_str.empty()) {
         base::xvaccount_t unit_account(account);
         base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
-        base::xunit_proof_t unit_proof_tmp;
-        unit_proof_tmp.serialize_from(stream2);
+        base::xunit_proof_t unit_proof;
+        unit_proof.serialize_from(stream2);
 
         auto unit_block = blocks.back();
-        if (unit_block->get_height() != unit_proof_tmp.get_height()){
-            xsync_warn("unit proof check height fail");
+        if (unit_block->get_height() != unit_proof.get_height() || unit_block->get_viewid() != unit_proof.get_viewid() || !unit_proof.verify_unit_block(unit_block)){
+            xsync_warn("xsync_on_demand_t::handle_blocks_response unit proof check fail,unit:%s,proof h:%llu,v:%llu", unit_block->dump().c_str(), unit_proof.get_height(), unit_proof.get_viewid());
             return;
         }
-        if (unit_block->get_viewid() != unit_proof_tmp.get_viewid()) {
-            xsync_warn("unit proof check view id fail");
+        if (!m_sync_store->set_unit_proof(unit_account, unit_proof_str)) {
+            xsync_error("xsync_on_demand_t::handle_blocks_response account %s,fail to writed into db,block=%s",unit_account.get_address().c_str(), unit_block->dump().c_str());
             return;
         }
-        if (!unit_proof_tmp.verify_unit_block(unit_block)) {
-            xsync_warn("unit proof verify fail");
-            return;
-        }
+        xsync_dbg("xsync_on_demand_t::handle_blocks_response sync unit proof succ,unit:%s,proof h:%llu,v:%llu", unit_block->dump().c_str(), unit_proof.get_height(), unit_proof.get_viewid());
     }
 
     if (!store_blocks(blocks)) {
@@ -168,8 +165,8 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     if (heights == 0)
         return;
 
-    xsync_dbg("xsync_on_demand_t::handle_blocks_request receive request of account %s, start_height %llu, count %u",
-        address.c_str(), start_height, heights);
+    xsync_dbg("xsync_on_demand_t::handle_blocks_request receive request of account %s, start_height %llu, count %u,unit_proof:%d",
+        address.c_str(), start_height, heights, unit_proof);
 
     std::vector<data::xblock_ptr_t> blocks;
 
