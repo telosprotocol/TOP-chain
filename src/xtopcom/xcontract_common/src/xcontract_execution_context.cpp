@@ -132,14 +132,41 @@ data::enum_xtransaction_type xtop_contract_execution_context::transaction_type()
 }
 
 std::string xtop_contract_execution_context::action_name() const {
+    if (data::xconsensus_action_stage_t::send == consensus_action_stage()) {
+        return source_action_name();
+    } else if (data::xconsensus_action_stage_t::recv == consensus_action_stage()) {
+        return target_action_name();
+    }
+
+    return std::string{};
+}
+
+std::string xtop_contract_execution_context::source_action_name() const {
     std::string ret;
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->action_name();
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->source_action_name();
             break;
         }
         case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->action_name();
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->source_action_name();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
+std::string xtop_contract_execution_context::target_action_name() const {
+    std::string ret;
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->target_action_name();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->target_action_name();
             break;
         }
         default:
@@ -197,20 +224,14 @@ data::enum_xaction_type xtop_contract_execution_context::target_action_type() co
 }
 
 xbyte_buffer_t xtop_contract_execution_context::action_data() const {
-    xbyte_buffer_t ret;
-    switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->action_data();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->action_data();
-            break;
-        }
-        default:
-            break;
+    std::string ret;
+    if (data::xconsensus_action_stage_t::send == consensus_action_stage()) {
+        ret = source_action_data();
+    } else if (data::xconsensus_action_stage_t::recv == consensus_action_stage()) {
+        ret = target_action_data();
     }
-    return ret;
+
+    return xbyte_buffer_t{ret.data(), ret.data() + ret.size()};
 }
 
 std::string xtop_contract_execution_context::source_action_data() const {
