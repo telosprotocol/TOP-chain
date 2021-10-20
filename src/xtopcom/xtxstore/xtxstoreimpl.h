@@ -2,6 +2,8 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xcommon/xnode_type.h"
+#include "xcommon/xstrategy.hpp"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvtxindex.h"
@@ -34,6 +36,17 @@ public:  // write interface
     bool store_txs(base::xvblock_t * block_ptr, bool store_raw_tx_bin) override;
     bool store_tx_bin(const std::string & raw_tx_hash, const std::string & raw_tx_bin) override;
     bool store_tx_obj(const std::string & raw_tx_hash, base::xdataunit_t * raw_tx_obj) override;
+
+public:
+    void update_node_type(uint32_t combined_node_type) noexcept override;
+
+private:
+    bool strategy_permission() const noexcept;
+
+private:
+    mutable std::mutex m_node_type_mutex{};
+    common::xnode_type_t m_combined_node_type;
+    common::xbool_strategy_t m_strategy;
 };
 
 NS_END2

@@ -127,6 +127,8 @@ public:
 
     observer_ptr<base::xvblockstore_t> blockstore() const noexcept;
 
+    observer_ptr<base::xvtxstore_t> txstore() const noexcept;
+
     observer_ptr<router::xrouter_face_t> router() const noexcept;
 
     observer_ptr<base::xiothread_t> thread(std::size_t const index) const noexcept;

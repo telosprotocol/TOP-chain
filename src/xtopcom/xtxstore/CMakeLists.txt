@@ -7,9 +7,9 @@ aux_source_directory(./src src_dir)
 
 add_library(xtxstore STATIC ${src_dir})
 
-add_dependencies(xtxstore xxbase xstore)
+add_dependencies(xtxstore xxbase xstore xcommon)
 
-target_link_libraries(xtxstore PRIVATE xxbase xstore)
+target_link_libraries(xtxstore PRIVATE xxbase xstore xcommon)
 
 if (BUILD_METRICS)
     target_link_libraries(xtxstore PRIVATE xmetrics)

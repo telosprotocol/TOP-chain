@@ -35,7 +35,10 @@ namespace top
             virtual xauto_ptr<xvtxindex_t>  load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type);
             virtual const std::string       load_tx_bin(const std::string & raw_tx_hash);
             virtual xauto_ptr<xdataunit_t>  load_tx_obj(const std::string & raw_tx_hash);
-            
+
+        public:
+            virtual void update_node_type(uint32_t combined_node_type);
+
         public: //write interface
             virtual bool                store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin);
             virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin);

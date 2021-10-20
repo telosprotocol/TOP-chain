@@ -216,6 +216,10 @@ observer_ptr<base::xvblockstore_t> xtop_application::blockstore() const noexcept
     return make_observer(m_blockstore.get());
 }
 
+observer_ptr<base::xvtxstore_t> xtop_application::txstore() const noexcept {
+    return make_observer(m_txstore.get());
+}
+
 observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
     return make_observer(m_router.get());
 }

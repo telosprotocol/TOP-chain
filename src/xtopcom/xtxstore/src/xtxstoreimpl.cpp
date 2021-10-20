@@ -8,7 +8,8 @@
 
 NS_BEG2(top, txstore)
 
-xtxstoreimpl::xtxstoreimpl() : base::xvtxstore_t() {
+// xtxstoreimpl::xtxstoreimpl() : base::xvtxstore_t(), m_strategy{common::define_bool_strategy(true)} {
+xtxstoreimpl::xtxstoreimpl() : base::xvtxstore_t(), m_strategy{common::define_bool_strategy(true, common::xnode_type_t::consensus, false)} {
 }
 
 xtxstoreimpl::~xtxstoreimpl() {
@@ -65,6 +66,10 @@ base::xauto_ptr<base::xdataunit_t> xtxstoreimpl::load_tx_obj(const std::string &
 }
 
 bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr, bool store_raw_tx_bin) {
+    if(!strategy_permission()){
+        return false;
+    }
+
     xassert(block_ptr != NULL);
     if (NULL == block_ptr)
         return false;
@@ -178,6 +183,20 @@ bool xtxstoreimpl::store_tx_obj(const std::string & raw_tx_hash, base::xdataunit
     // replace by new one
     XMETRICS_GAUGE(metrics::store_tx_origin, 1);
     return base::xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key, raw_tx_bin);
+}
+
+void xtxstoreimpl::update_node_type(uint32_t combined_node_type) noexcept {
+    XLOCK_GUARD(m_node_type_mutex) {
+        m_combined_node_type = static_cast<common::xnode_type_t>(combined_node_type);
+        xdbg("xtxstoreimpl::update_node_type update to %s", common::to_string(m_combined_node_type).c_str());
+    }
+}
+
+bool xtxstoreimpl::strategy_permission() const noexcept {
+    XLOCK_GUARD(m_node_type_mutex){
+        return m_strategy.if_open(m_combined_node_type);
+    }
+    return false;
 }
 
 NS_END2
