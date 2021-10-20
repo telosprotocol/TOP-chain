@@ -176,21 +176,7 @@ std::string xtop_consensus_action<ActionTypeV>::action_name() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    std::string res;
-
-    switch (stage())
-    {
-    case xconsensus_action_stage_t::send:
-        res = source_action_name();
-        break;
-    case xconsensus_action_stage_t::recv:
-        res = target_action_name();
-        break;
-    default:
-        break;
-    }
-
-    return res;
+    return tx->get_transaction()->get_target_action().get_action_name();
 }
 
 template <xtop_action_type_t ActionTypeV>
@@ -214,21 +200,7 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::action_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    xbyte_buffer_t res;
-
-    switch (stage())
-    {
-    case xconsensus_action_stage_t::send:
-        res = source_action_data();
-        break;
-    case xconsensus_action_stage_t::recv:
-        res = target_action_data();
-        break;
-    default:
-        break;
-    }
-
-    return res;
+    return { std::begin(tx->get_transaction()->get_target_action().get_action_param()), std::end(tx->get_transaction()->get_target_action().get_action_param()) };
 }
 
 template <xtop_action_type_t ActionTypeV>
