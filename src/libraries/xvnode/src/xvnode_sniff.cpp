@@ -150,7 +150,7 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
             }
             auto const & table_address = contract::xcontract_address_map_t::calc_cluster_address(contract_address, table_id);
 
-            XMETRICS_GAUGE(metrics::xmetircs_tag_t::contract_table_fullblock_event, 1);
+            XMETRICS_GAUGE(metrics::xmetrics_tag_t::contract_table_fullblock_event, 1);
             call(table_address, config.block_config.action, action_params, vblock->get_cert()->get_gmtime());
         }
     }
