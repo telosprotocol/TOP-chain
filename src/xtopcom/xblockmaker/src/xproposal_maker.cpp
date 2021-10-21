@@ -74,9 +74,9 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     }
 
     xtablestate_ptr_t tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
-    xtablemaker_para_t table_para(tablestate, tablestate_commit);
+    xtablemaker_para_t table_para(tablestate);
     // get batch txs
-    update_txpool_txs(proposal_para, table_para);
+    update_txpool_txs(proposal_para, table_para, tablestate_commit);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
@@ -216,8 +216,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         return xblockmaker_error_proposal_table_state_clone;
     }
 
-    xtablestate_ptr_t tablestate_commit = get_target_tablestate(cs_para.get_latest_committed_block().get());
-    xtablemaker_para_t table_para(tablestate, tablestate_commit);
+    xtablemaker_para_t table_para(tablestate);
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
@@ -342,16 +341,16 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
     return true;
 }
 
-bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
+bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para, xtablestate_ptr_t tablestate_commit) {
     // std::map<std::string, uint64_t> locked_nonce_map;
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
-        if (nullptr == table_para.get_commit_tablestate()) {
+        if (nullptr == tablestate_commit) {
             xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s,committed_block=%s",
                 proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
             return false;
         }
-        get_txpool()->update_table_state(table_para.get_commit_tablestate());
+        get_txpool()->update_table_state(tablestate_commit);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);

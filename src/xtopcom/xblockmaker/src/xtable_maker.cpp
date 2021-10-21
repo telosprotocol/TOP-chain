@@ -146,7 +146,6 @@ void xtable_maker_t::set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool
 
 bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers) {
     const data::xtablestate_ptr_t & tablestate = table_para.get_tablestate();
-    const data::xtablestate_ptr_t & commit_tablestate = table_para.get_commit_tablestate();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
 
     base::enum_transaction_subtype last_tx_subtype = base::enum_transaction_subtype_invalid;
@@ -160,10 +159,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        base::xaccount_index_t commit_accountindex;
-        commit_tablestate->get_account_index(unit_account, commit_accountindex);
 
-        int32_t ret = unitmaker->check_latest_state(cs_para, commit_accountindex, accountindex, m_unit_block_cache);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
         if (ret != xsuccess) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
             set_packtx_metrics(tx, false);
@@ -256,7 +253,6 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
 
 bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers) {
     const data::xtablestate_ptr_t & tablestate = table_para.get_tablestate();
-    const data::xtablestate_ptr_t & commit_tablestate = table_para.get_commit_tablestate();
     std::set<std::string> empty_unit_accounts;
     uint32_t max_lighttable_count = 2;  // TODO(jimmy) all empty and full unit account come from tow latest light-table
     uint32_t filter_table_count = 0;
@@ -278,9 +274,7 @@ bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & tabl
 
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        base::xaccount_index_t commit_accountindex;
-        commit_tablestate->get_account_index(unit_account, commit_accountindex);
-        int32_t ret = unitmaker->check_latest_state(cs_para, commit_accountindex, accountindex, m_unit_block_cache);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
         if (ret != xsuccess) {
             // empty unit maker must create success
             xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",
@@ -296,7 +290,6 @@ bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & tabl
 
 bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers) {
     const data::xtablestate_ptr_t & tablestate = table_para.get_tablestate();
-    const data::xtablestate_ptr_t & commit_tablestate = table_para.get_commit_tablestate();
     const std::vector<std::string> & other_accounts = table_para.get_other_accounts();
 
     for (auto & unit_account : other_accounts) {
@@ -304,9 +297,7 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
 
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        base::xaccount_index_t commit_accountindex;
-        commit_tablestate->get_account_index(unit_account, commit_accountindex);
-        int32_t ret = unitmaker->check_latest_state(cs_para, commit_accountindex, accountindex, m_unit_block_cache);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
         if (ret != xsuccess) {
             // other unit maker must create success
             xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",

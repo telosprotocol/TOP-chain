@@ -132,8 +132,7 @@ class xtablemaker_para_t {
     xtablemaker_para_t() {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
-    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate, const data::xtablestate_ptr_t & commit_tablestate)
-    : m_tablestate(tablestate), m_commit_tablestate(commit_tablestate) {
+    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate) : m_tablestate(tablestate) {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
     xtablemaker_para_t(const std::vector<xcons_transaction_ptr_t> & origin_txs)
@@ -166,7 +165,6 @@ class xtablemaker_para_t {
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
     const data::xtablestate_ptr_t &                 get_tablestate() const {return m_tablestate;}
-    const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
     const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
 
  private:
