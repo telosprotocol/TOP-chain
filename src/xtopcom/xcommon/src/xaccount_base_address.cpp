@@ -59,6 +59,12 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         break;
     }
 
+    if (m_account_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
+        if (base_address.length() != 46) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address);
+        }
+    }
+
     if (prefix.at(1) != '0' || prefix.at(2) != '0' || prefix.at(3) != '0') {
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
     }
