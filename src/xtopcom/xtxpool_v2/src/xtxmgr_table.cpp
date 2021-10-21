@@ -233,6 +233,7 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> send_txs = m_send_tx_queue.get_txs(send_txs_num_pop_from_queue_max);
+    std::set<std::string> m_expired_tx_accounts;
     uint32_t send_txs_pos = 0;
     uint32_t send_txs_pos_max = 0;
     int32_t ret = 0;
@@ -246,6 +247,11 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
             ret = xverifier::xtx_verifier::verify_tx_duration_expiration(send_txs[send_txs_pos]->get_tx()->get_transaction(), now);
             if (ret) {
                 expired_send_txs.push_back(send_txs[send_txs_pos]);
+                m_expired_tx_accounts.insert(send_txs[send_txs_pos]->get_tx()->get_source_addr());
+                continue;
+            }
+            auto iter = m_expired_tx_accounts.find(send_txs[send_txs_pos]->get_tx()->get_source_addr());
+            if (iter != m_expired_tx_accounts.end()) {
                 continue;
             }
             ret = m_pending_accounts.push_tx(send_txs[send_txs_pos]);
