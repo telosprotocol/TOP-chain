@@ -81,6 +81,22 @@ void xtop_contract_execution_context::system_contract(xcontract_object_cb_t cb) 
     m_system_contract = cb;
 }
 
+data::xaction_consensus_exec_status xtop_contract_execution_context::action_consensus_result() const noexcept {
+    data::xaction_consensus_exec_status ret;
+    switch (m_action->type()) {
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->action_consensus_result();
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
+    }
+
+    return ret;
+}
+
 common::xaccount_address_t xtop_contract_execution_context::sender() const {
     common::xaccount_address_t ret;
     switch (m_action->type()) {

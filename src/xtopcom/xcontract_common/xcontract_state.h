@@ -199,6 +199,36 @@ public:
         return r;
     }
 
+
+    /// @brief Remove property cell at the position key. Only map and deque are supported.
+    /// @param property_id Property ID.
+    /// @param key Cell position key.
+    /// @param ec Log the error code in the operation.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    void remove_property_cell(state_accessor::properties::xtypeless_property_identifier_t const& property_id,
+                              typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const& key,
+                              std::error_code& ec) const {
+        assert(!ec);
+        assert(m_state_accessor != nullptr);
+
+        m_state_accessor->remove_property_cell<PropertyTypeV>(property_id, key, ec);
+    }
+
+
+
+    /// @brief Remove property cell at the position key. Only map and deque are supported.
+    /// @param property_id Property ID.
+    /// @param key Cell position key.
+    /// @param ec Log the error code in the operation.
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV>
+    void remove_property_cell(state_accessor::properties::xtypeless_property_identifier_t const& property_id,
+                              typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const& key) const {
+        std::error_code ec;
+        this->remove_property_cell<PropertyTypeV>(property_id, key, ec);
+        top::error::throw_error(ec);
+    }
+
+
     /// @brief Set property.
     /// @param property_id Property ID.
     /// @param value Value to be set.

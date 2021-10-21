@@ -64,6 +64,7 @@ void xtop_basic_contract::source_action_general_func() noexcept {
         std::error_code ec;
         write_receipt_data(contract_common::RECEITP_DATA_ASSET_OUT, xbyte_buffer_t{src_data.begin(), src_data.end()}, ec);
         assert(!ec);
+        top::error::throw_error(ec);
     }
 }
 

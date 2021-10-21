@@ -18,6 +18,7 @@
 
 NS_BEG2(top, data)
 
+using xaction_consensus_exec_status = data::enum_xunit_tx_exec_status;
 template <xtop_action_type_t ActionTypeV>
 class xtop_consensus_action : public xtop_action_t<ActionTypeV> {
 public:
@@ -45,6 +46,7 @@ public:
     xbyte_buffer_t source_action_data() const;
     xbyte_buffer_t target_action_data() const;
     std::map<std::string, xbyte_buffer_t> receipt_data() const;
+    xaction_consensus_exec_status action_consensus_result() const;
     std::string transaction_source_action_data() const;
     std::string transaction_target_action_data() const;
     data::enum_xtransaction_type transaction_type() const;
@@ -226,6 +228,12 @@ std::map<std::string, xbyte_buffer_t> xtop_consensus_action<ActionTypeV>::receip
     return tx->get_last_action_receipt_data();
 }
 
+template <xtop_action_type_t ActionTypeV>
+xaction_consensus_exec_status xtop_consensus_action<ActionTypeV>::action_consensus_result() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+    return tx->get_last_action_exec_status();
+}
 
 template <xtop_action_type_t ActionTypeV>
 std::string xtop_consensus_action<ActionTypeV>::transaction_source_action_data() const {

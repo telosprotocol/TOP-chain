@@ -29,7 +29,7 @@ enum class xenum_errc {
     enum_vm_no_func_find,
     enum_vm_exception,
     enum_vm_action_error,
-    enum_vm_not_src_action_error,
+    enum_vm_not_correct_action_stage_error,
 
     enum_lua_abi_input_error,
     enum_lua_abi_input_name_or_type_error,
