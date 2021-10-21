@@ -70,7 +70,7 @@ public:
 
     void deploy(observer_ptr<base::xvblockstore_t> const & blockstore);
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & deployment_data() const noexcept;
-    observer_ptr<system_contracts::xbasic_system_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
+    observer_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
 
 private:
     template <typename system_contract_type>

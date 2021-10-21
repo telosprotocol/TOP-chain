@@ -55,27 +55,38 @@ xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t
 
 template <typename ActionT>
 xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action) {
-    xtransaction_execution_result_t result;
+    assert(m_associated_runtime != nullptr);
+    assert(action != nullptr);
+
     auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
     auto const receipt_data = cons_action->receipt_data();
     xdbg("wens_test, receipt data, size : %zu\n", receipt_data.size());
+
+    xtransaction_execution_result_t result;
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), m_contract_state)};
 
+    xscope_executer_t reset_action{ [&execution_context] {
+        execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
+    } };
+
+    auto const stage = execution_context->action_stage();
+    execution_context->consensus_action_stage(stage);
+    if (stage == data::xenum_consensus_action_stage::send || stage == data::xenum_consensus_action_stage::confirm || stage == data::xenum_consensus_action_stage::self) {
+        execution_context->contract_state(execution_context->sender());
+    } else if (stage == data::xenum_consensus_action_stage::recv) {
+        execution_context->contract_state(execution_context->recver());
+    } else {
+        assert(false);
+    }
+    auto observed_exectx = top::make_observer(execution_context.get());
+
     std::error_code ec;
-    if (false == execution_context->verify_action(ec)) {
+    if (false == observed_exectx->verify_action(ec)) {
         assert(ec);
         result.status.ec = ec;
         return result;
     }
 
-    assert(m_associated_runtime != nullptr);
-    auto observed_exectx = top::make_observer(execution_context.get());
-
-    xscope_executer_t reset_action{ [&execution_context] {
-        execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
-    } };
-    auto stage = execution_context->action_stage();
-    execution_context->consensus_action_stage(stage);
     if (stage == data::xconsensus_action_stage_t::send) {
         execution_context->execution_stage(contract_common::xcontract_execution_stage_t::source_action);
         uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num(ec);

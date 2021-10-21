@@ -10,23 +10,16 @@
 
 NS_BEG2(top, contract_common)
 
-//xtop_contract_execution_context::xtop_contract_execution_context(xobject_ptr_t<data::xtransaction_t> tx, observer_ptr<xcontract_state_t> s) noexcept
-//  : m_contract_state{s}, m_tx{std::move(tx)} {
-//}
-
-xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                 observer_ptr<xcontract_state_t> s) noexcept
+xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept
   : m_contract_state{s}, m_action{std::move(action)} {
 }
 
-//xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
-//                                                                 observer_ptr<xcontract_state_t> s,
-//                                                                 xcontract_execution_param_t param) noexcept
-//  : m_contract_state{s}, m_action{std::move(action)} {
-//}
-
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
     return m_contract_state;
+}
+
+void xtop_contract_execution_context::contract_state(common::xaccount_address_t const & address) noexcept {
+    contract_state()->set_state(address);
 }
 
 xcontract_execution_stage_t xtop_contract_execution_context::execution_stage() const noexcept {
@@ -78,6 +71,14 @@ xbyte_buffer_t const & xtop_contract_execution_context::input_receipt_data(std::
 
     ec = error::xerrc_t::receipt_data_not_found;
     return empty;
+}
+
+observer_ptr<xbasic_contract_t> xtop_contract_execution_context::system_contract(common::xaccount_address_t const & address) const noexcept {
+    return m_system_contract(address);
+}
+
+void xtop_contract_execution_context::system_contract(xcontract_object_cb_t cb) noexcept {
+    m_system_contract = cb;
 }
 
 common::xaccount_address_t xtop_contract_execution_context::sender() const {

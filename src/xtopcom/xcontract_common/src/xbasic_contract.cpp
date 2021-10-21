@@ -137,7 +137,6 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
 
     tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
     tx->set_different_source_target_address(address().value(), target_addr.value());
-    // tx->set_tx_type(data::enum_xtransaction_type::xtransaction_type_run_contract_new);
     data::xcons_transaction_ptr_t cons_tx;
     if (type == xfollowup_transaction_schedule_type_t::immediately) {
         // delay type need process nonce final
@@ -155,6 +154,49 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
 
     xassert(cons_tx->is_self_tx() || cons_tx->is_send_tx());
     m_associated_execution_context->add_followup_transaction(std::move(cons_tx), type);
+}
+
+void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_addr,
+                                           std::string const & method_name,
+                                           std::string const & method_params,
+                                           xfollowup_transaction_schedule_type_t type) {
+    bool valid{false};
+    // address type check
+    auto const & source_addr = address();
+    if ((data::is_beacon_contract_address(source_addr) && data::is_beacon_contract_address(target_addr)) ||
+        (data::is_zec_contract_address(source_addr) && data::is_zec_contract_address(target_addr)) ||
+        (data::is_sys_sharding_contract_address(source_addr) && data::is_sys_sharding_contract_address(target_addr))) {
+        if (data::account_map_to_table_id(source_addr).get_subaddr() == data::account_map_to_table_id(source_addr).get_subaddr()) {
+            valid = true;
+        }
+    }
+    if (!valid) {
+        call(target_addr, method_name, method_params, type);
+        return;
+    }
+    // only target action
+    data::xcons_transaction_ptr_t cons_tx;
+    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
+    tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
+    tx->set_different_source_target_address(address().value(), target_addr.value());
+    cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
+    std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
+    // exec
+    auto obj = m_associated_execution_context->system_contract(target_addr);
+    auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
+    m_associated_execution_context->contract_state(target_addr);
+    m_associated_execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
+    if (source_addr == target_addr) {
+        m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::self);
+    } else {
+        m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::recv);
+    }
+    
+    auto result = obj->execute(top::make_observer(ctx));
+    // TODO: follow up of result
+    assert(!result.status.ec);
+    // switch address back
+    m_associated_execution_context->contract_state(source_addr);
 }
 
 void xtop_basic_contract::transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec) {

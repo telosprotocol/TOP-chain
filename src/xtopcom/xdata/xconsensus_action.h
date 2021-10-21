@@ -232,12 +232,6 @@ std::string xtop_consensus_action<ActionTypeV>::transaction_source_action_data()
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    auto temp = tx->get_transaction()->get_source_action().get_action_param();
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)temp.data(), temp.size());
-    data::xproperty_asset asset_out{0};
-    stream >> asset_out.m_token_name;
-    stream >> asset_out.m_amount;
-
     return tx->get_transaction()->get_source_action().get_action_param();
 }
 

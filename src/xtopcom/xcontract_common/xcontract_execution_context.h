@@ -31,6 +31,9 @@ private:
     data::xconsensus_action_stage_t m_stage{data::xconsensus_action_stage_t::invalid};
     xcontract_execution_result_t m_execution_result; // execution result
 
+    using xcontract_object_cb_t = std::function<observer_ptr<xbasic_contract_t>(common::xaccount_address_t const & address)>;
+    xcontract_object_cb_t m_system_contract;
+
 public:
     xtop_contract_execution_context() = default;
     xtop_contract_execution_context(xtop_contract_execution_context const &) = delete;
@@ -42,10 +45,13 @@ public:
     explicit xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
+    void contract_state(common::xaccount_address_t const & address) noexcept;
     xcontract_execution_stage_t execution_stage() const noexcept;
     void execution_stage(xcontract_execution_stage_t const stage) noexcept;
     data::xconsensus_action_stage_t consensus_action_stage() const noexcept;
     void consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept;
+    observer_ptr<xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
+    void system_contract(xcontract_object_cb_t cb) noexcept;
     xcontract_execution_result_t const & execution_result() const noexcept;
     void add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type);
     std::vector<xfollowup_transaction_datum_t> const & followup_transaction() const noexcept;

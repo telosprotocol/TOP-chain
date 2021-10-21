@@ -93,6 +93,10 @@ protected:
               std::string const & method_name,
               std::string const & method_params,
               xfollowup_transaction_schedule_type_t type) override;
+    void sync_call(common::xaccount_address_t const & target_addr,
+                   std::string const & method_name,
+                   std::string const & method_params,
+                   xfollowup_transaction_schedule_type_t type = xfollowup_transaction_schedule_type_t::invalid);
     void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec);
 };
 
