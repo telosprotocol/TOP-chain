@@ -5,19 +5,70 @@
 #pragma once
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::int64>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const;
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::uint64>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const;
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::string>::type xstate_accessor_t::get_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+properties::xtype_of_t<properties::xproperty_type_t::bytes>::type xstate_accessor_t::get_property<properties::xproperty_type_t::bytes>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const;
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::map>::type xstate_accessor_t::get_property<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+properties::xtype_of_t<properties::xproperty_type_t::string>::type xstate_accessor_t::get_property<properties::xproperty_type_t::string>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const;
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::deque>::type xstate_accessor_t::get_property<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+properties::xtype_of_t<properties::xproperty_type_t::map>::type xstate_accessor_t::get_property<properties::xproperty_type_t::map>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::deque>::type xstate_accessor_t::get_property<properties::xproperty_type_t::deque>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::int64>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::uint64>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::bytes>::type xstate_accessor_t::get_property<properties::xproperty_type_t::bytes>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::string>::type xstate_accessor_t::get_property<properties::xproperty_type_t::string>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::map>::type xstate_accessor_t::get_property<properties::xproperty_type_t::map>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const;
+
+template <>
+properties::xtype_of_t<properties::xproperty_type_t::deque>::type xstate_accessor_t::get_property<properties::xproperty_type_t::deque>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const;
 
 template <>
 void xstate_accessor_t::set_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id,
@@ -26,6 +77,11 @@ void xstate_accessor_t::set_property<properties::xproperty_type_t::int64>(proper
 template <>
 void xstate_accessor_t::set_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id,
                                                                            properties::xtype_of_t<properties::xproperty_type_t::uint64>::type const & value,
+                                                                           std::error_code & ec);
+
+template <>
+void xstate_accessor_t::set_property<properties::xproperty_type_t::bytes>(properties::xtypeless_property_identifier_t const & property_id,
+                                                                           properties::xtype_of_t<properties::xproperty_type_t::bytes>::type const & value,
                                                                            std::error_code & ec);
 
 template <>

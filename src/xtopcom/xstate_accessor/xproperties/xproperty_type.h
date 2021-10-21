@@ -160,7 +160,7 @@ struct xtop_value_type_of<xproperty_type_t::uint64> {
 
 template <>
 struct xtop_type_of<xproperty_type_t::map> {
-    using type = std::map<std::string, xbyte_buffer_t>;
+    using type = std::map<std::string, xbytes_t>;
 };
 
 template <>
@@ -200,7 +200,7 @@ struct xtop_value_type_of<xproperty_type_t::string> {
 
 template <>
 struct xtop_type_of<xproperty_type_t::bytes> {
-    using type = xbyte_buffer_t;
+    using type = xbytes_t;
 };
 
 template <>

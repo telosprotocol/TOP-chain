@@ -8,7 +8,7 @@
 #include "xcontract_common/xcontract_face.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xproperties/xproperty_token.h"
+#include "xcontract_common/xproperties/xproperty_type.h"
 #include "xcontract_common/xproperties/xproperty_initializer.h"
 #include "xstate_accessor/xtoken.h"
 
@@ -33,7 +33,9 @@ struct xtop_contract_metadata {
 class xtop_basic_contract : public xcontract_face_t {
 protected:
     properties::xproperty_initializer_t m_property_initializer;
+    std::unique_ptr<xcontract_state_t> m_contract_state_owned_{};
     observer_ptr<xcontract_execution_context_t> m_associated_execution_context{nullptr};
+    observer_ptr<xcontract_state_t> m_contract_state;
     xcontract_metadata_t m_contract_meta;
 
     properties::xtoken_property_t m_balance{this};
@@ -82,6 +84,11 @@ public:
 protected:
     observer_ptr<properties::xproperty_initializer_t const> property_initializer() const noexcept;
 
+    template <state_accessor::properties::xproperty_type_t PropertyTypeV, typename ... Ts>
+    properties::xproperty_type_of_t<PropertyTypeV, Ts...> get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                                                       common::xaccount_address_t const & account_address,
+                                                                       std::error_code & ec) const;
+
     xbyte_buffer_t const & receipt_data(std::string const & key, std::error_code & ec) const override final;
     void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) override final;
     void call(common::xaccount_address_t const & target_addr,
@@ -94,5 +101,21 @@ protected:
                    xfollowup_transaction_schedule_type_t type = xfollowup_transaction_schedule_type_t::invalid);
     void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec);
 };
+
+template <>
+properties::xproperty_type_of_t<state_accessor::properties::xproperty_type_t::bytes> xtop_basic_contract::get_property(
+    state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & account_address,
+    std::error_code & ec) const {
+    assert(!ec);
+    assert(m_associated_execution_context != nullptr);
+    assert(m_associated_execution_context->contract_state() != nullptr);
+    auto status_of_other_account = xcontract_state_t::build_from(account_address, ec);
+    if (ec) {
+        return {};
+    }
+
+    properties::xproperty_type_of_t<state_accessor::properties::xproperty_type_t::bytes> property_object{};
+}
 
 NS_END2

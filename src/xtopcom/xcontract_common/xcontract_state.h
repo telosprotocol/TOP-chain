@@ -50,8 +50,9 @@ using xproperty_name_type_t = xtop_enum_property_name_type;
 class xtop_contract_state {
 private:
     common::xaccount_address_t m_action_account_address;
+    std::unique_ptr<state_accessor::xstate_accessor_t> m_state_accessor_owned_{nullptr};
     observer_ptr<state_accessor::xstate_accessor_t> m_state_accessor;
-    xcontract_execution_param_t const m_param;
+    xcontract_execution_param_t const m_param{};
 
 public:
     xtop_contract_state(xtop_contract_state const &) = delete;
@@ -64,9 +65,12 @@ public:
                                  observer_ptr<state_accessor::xstate_accessor_t> sa,
                                  xcontract_execution_param_t const & execution_param);
 
-    /// @brief Set previous state and canvas.
-    /// @param address State address.
-    void set_state(common::xaccount_address_t const & address);
+private:
+    explicit xtop_contract_state(common::xaccount_address_t const & account_address);
+
+public:
+    static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address);
+    static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address, std::error_code & ec);
 
     /// @brief Get state account address.
     /// @return State account address.
