@@ -5,8 +5,8 @@
 #include "xdata/xlightunit.h"
 #include "xtxpool_v2/xtxmgr_table.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xverifier/xverifier_utl.h"
 #include "xtxpool_v2/xtxpool_para.h"
+#include "xverifier/xverifier_utl.h"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -459,3 +459,40 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     bool is_repeat = txmgr_table.is_repeat_tx(tx_ent);
     ASSERT_EQ(is_repeat, true);
 }
+
+TEST_F(test_txmgr_table, expired_tx2) {
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_statistic_t statistic;
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
+    uint256_t last_tx_hash = {};
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    xtx_para_t para;
+
+    xcons_transaction_ptr_t tx1 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now - 300, last_tx_hash, 0);
+    std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(tx1, para);
+
+    xcons_transaction_ptr_t tx2 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 1, now, tx1->get_transaction()->digest(), 0);
+    std::shared_ptr<xtx_entry> tx_ent2 = std::make_shared<xtx_entry>(tx2, para);
+
+    int32_t ret = txmgr_table.push_send_tx(tx_ent1, 0);
+    ASSERT_EQ(0, ret);
+    ret = txmgr_table.push_send_tx(tx_ent2, 0);
+    ASSERT_EQ(0, ret);
+
+    auto q_tx = txmgr_table.query_tx(tx1->get_account_addr(), tx1->get_transaction()->digest());
+    ASSERT_NE(q_tx, nullptr);
+    q_tx = txmgr_table.query_tx(tx2->get_account_addr(), tx2->get_transaction()->digest());
+    ASSERT_NE(q_tx, nullptr);
+
+    sleep(1);
+    base::xreceiptid_state_ptr_t receiptid_state_highqc = std::make_shared<base::xreceiptid_state_t>();
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, receiptid_state_highqc, {}, 40, 35, 30);
+
+    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
+    ASSERT_EQ(0, ready_txs.size());
+}
+
