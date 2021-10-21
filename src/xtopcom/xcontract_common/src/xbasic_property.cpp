@@ -48,11 +48,17 @@ static state_accessor::properties::xproperty_category_t lookup_property_category
 }
 
 xtop_basic_property::xtop_basic_property(std::string const & name, state_accessor::properties::xproperty_type_t type, observer_ptr<xcontract_face_t> associated_contract) noexcept
-    : m_associated_contract{ associated_contract }
-    , m_id{ name, type, lookup_property_category(name, type) }
-    , m_owner{ associated_contract->address() } {
+  : m_associated_contract{associated_contract}
+  , m_id{ name, type, lookup_property_category(name, type) }
+  , m_owner{ associated_contract->address() } {
     assert(m_associated_contract != nullptr);
     m_associated_contract->register_property(this);
+}
+
+xtop_basic_property::xtop_basic_property(std::string const & name, state_accessor::properties::xproperty_type_t type, std::unique_ptr<xcontract_state_t> state_owned)
+  : m_state_owned{std::move(state_owned)}
+  , m_id{name, type, lookup_property_category(name, type)}
+  , m_owner{m_state_owned->state_account_address()} {
 }
 
 void xtop_basic_property::initialize() {
@@ -71,6 +77,7 @@ common::xaccount_address_t xtop_basic_property::owner() const {
 }
 
 common::xaccount_address_t xtop_basic_property::accessor() const {
+    assert(m_associated_contract != nullptr);
     return m_associated_contract->contract_state()->state_account_address();
 }
 

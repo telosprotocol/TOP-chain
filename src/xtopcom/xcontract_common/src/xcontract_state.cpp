@@ -28,6 +28,27 @@ void xtop_contract_state::set_state(common::xaccount_address_t const & address) 
     top::error::throw_error(ec);
 }
 
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
+  : m_action_account_address{account_address}
+  , m_state_accessor_owned_{state_accessor::xstate_accessor_t::build_from(account_address)}, m_state_accessor{make_observer(m_state_accessor_owned_.get())} {
+}
+
+std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address) {
+    return top::make_unique<xtop_contract_state>(address);
+}
+
+std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address, std::error_code & ec) {
+    assert(!ec);
+
+    try {
+        return top::make_unique<xtop_contract_state>(address);
+    } catch (top::error::xtop_error_t const & eh) {
+        ec = eh.code();
+    }
+
+    return {};
+}
+
 common::xaccount_address_t xtop_contract_state::state_account_address() const {
     assert(m_state_accessor != nullptr);
     return m_state_accessor->account_address();

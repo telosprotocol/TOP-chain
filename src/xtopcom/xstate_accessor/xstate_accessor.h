@@ -30,9 +30,11 @@ public:
 private:
     std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> bstate_pack_;
     std::map<common::xaccount_address_t, xobject_ptr_t<base::xvcanvas_t>> canvas_pack_;
+    top::xobject_ptr_t<top::base::xvbstate_t> bstate_owned_{nullptr};
+
     top::observer_ptr<top::base::xvbstate_t> bstate_;
     top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
-    xstate_access_control_data_t ac_data_;
+    xstate_access_control_data_t ac_data_{};
 
 public:
     xtop_state_accessor(xtop_state_accessor const &) = delete;
@@ -44,10 +46,12 @@ public:
     xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
     xtop_state_accessor(std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> const & bstate_pack, xstate_access_control_data_t ac_data);
 
-    /// @brief Set previous state and canvas.
-    /// @param address State address.
-    /// @param ec Log the error code in the operation.
-    void set_state(common::xaccount_address_t const & address, std::error_code & ec);
+private:
+    explicit xtop_state_accessor(common::xaccount_address_t const & account_address);
+
+public:
+    static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address);
+    static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address, std::error_code & ec);
 
     /// @brief Withdraw token.
     /// @param property_id Property ID.
@@ -91,10 +95,13 @@ public:
 
     /// @brief Get property of other address.
     /// @param property_id Property ID.
+    /// @param address The account address which has the specified property.
     /// @param ec Log the error code in the operation.
     /// @return Property value.
     template <properties::xproperty_type_t PropertyTypeV>
-    typename properties::xtype_of_t<PropertyTypeV>::type get_property(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & address, std::error_code & ec) const;
+    typename properties::xtype_of_t<PropertyTypeV>::type get_property(properties::xtypeless_property_identifier_t const & property_id,
+                                                                      common::xaccount_address_t const & address,
+                                                                      std::error_code & ec) const;
 
     /// @brief Set property.
     /// @param property_id Property ID.
@@ -218,6 +225,11 @@ private:
     bool read_permitted(properties::xproperty_identifier_t const & property_id) const noexcept;
     bool write_permitted(properties::xproperty_identifier_t const & property_id) const noexcept;
     bool read_permitted(std::string const & property_full_name) const noexcept;
+
+    /// @brief Create bytes property.
+    /// @param property_name Property name.
+    /// @param ec Log error in the process.
+    void do_create_bytes_property(std::string const & property_name, std::error_code & ec);
 
     /// @brief Create string property.
     /// @param property_name Property name.
