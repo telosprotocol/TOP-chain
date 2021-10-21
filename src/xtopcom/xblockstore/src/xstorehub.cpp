@@ -8,6 +8,7 @@
 #include "xvledger/xvledger.h"
 #include "xblockstore_face.h"
 #include "xvunithub.h"
+#include "xvblockpruner.h"
 
 namespace top
 {
@@ -76,6 +77,25 @@ namespace top
         {
             static xblockstorehub_impl _static_blockstore_hub;
             return _static_blockstore_hub.create_block_store(xvdb_ptr);
+        }
+    
+        bool  install_block_recycler(base::xvdbstore_t* xvdb_ptr)
+        {
+            if(base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler() != NULL)
+                return true; //has been installed
+            
+            if(NULL == xvdb_ptr)
+                xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
+            
+            xassert(xvdb_ptr != NULL); //xvdb_ptr must be valid
+            base::xblockrecycler_t* recycler = new xvblockprune_impl(*xvdb_ptr);
+            //recycler will be transfered to xrecyclemgr who manage lifecycle
+            return base::xvchain_t::instance().get_xrecyclemgr()->set_block_recycler(*recycler);
+        }
+    
+        bool enable_block_recycler()
+        {
+            return base::xvchain_t::instance().get_xrecyclemgr()->turn_on_recycler(base::enum_vdata_recycle_type_block);
         }
 
     };//end of namespace of vstore

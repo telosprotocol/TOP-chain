@@ -134,8 +134,6 @@ namespace top
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
             virtual bool                clean_caches(const base::xvaccount_t & account) override;
             
-            //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-            virtual bool                reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms) override;
         public://batch process api
             virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account) override;
             virtual bool                store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks) override;
