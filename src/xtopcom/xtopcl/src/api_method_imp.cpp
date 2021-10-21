@@ -706,10 +706,9 @@ bool api_method_imp::registerNode(const user_info & uinfo,
 #else
     std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
 #endif
-    std::string source_action_name = "src_action_registerNode";
+    std::string source_action_name = "source_withdraw";
     xaction_asset_param asset_param(this, "", mortgage);
     std::string param = asset_param.create();
-    std::cout << "src_action_registerNode param: " << param.size() << "\n";
     auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 

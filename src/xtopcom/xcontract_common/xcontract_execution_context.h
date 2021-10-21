@@ -21,6 +21,7 @@
 
 NS_BEG2(top, contract_common)
 
+
 class xtop_contract_execution_context {
 private:
     observer_ptr<xcontract_state_t> m_contract_state{};
@@ -60,6 +61,7 @@ public:
     std::map<std::string, xbyte_buffer_t> & input_receipt_data() noexcept;
     std::map<std::string, xbyte_buffer_t> & output_receipt_data() noexcept;
     xbyte_buffer_t const & input_receipt_data(std::string const & key, std::error_code & ec) const noexcept;
+    data::xaction_consensus_exec_status action_consensus_result() const noexcept;
 
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;
