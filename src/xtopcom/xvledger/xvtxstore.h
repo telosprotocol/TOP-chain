@@ -8,6 +8,15 @@
 #include "xvblock.h"
 #include "xvtxindex.h"
 
+namespace top {
+namespace data {
+// fwd
+class xtransaction_cache_data_t;
+class xtransaction_t;
+using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
+}  // namespace data
+}  // namespace top
+
 namespace top
 {
     namespace base
@@ -35,11 +44,19 @@ namespace top
             virtual xauto_ptr<xvtxindex_t>  load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type);
             virtual const std::string       load_tx_bin(const std::string & raw_tx_hash);
             virtual xauto_ptr<xdataunit_t>  load_tx_obj(const std::string & raw_tx_hash);
-            
+
+        public:
+            virtual void update_node_type(uint32_t combined_node_type);
+
         public: //write interface
             virtual bool                store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin);
             virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin);
             virtual bool                store_tx_obj(const std::string & raw_tx_hash,xdataunit_t * raw_tx_obj);
+        
+        public: // tx cache interface
+            virtual bool tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) = 0;
+            virtual bool tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data) = 0;
+
         protected:
 //            using xobject_t::add_ref;
 //            using xobject_t::release_ref;

@@ -27,6 +27,7 @@ public:
                          xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                          observer_ptr<store::xstore_face_t>              store,
                          observer_ptr<base::xvblockstore_t>              block_store,
+                         observer_ptr<base::xvtxstore_t>                 txstore,
                          observer_ptr<top::base::xiothread_t>            thread);
     void on_message(const xvnode_address_t & edge_sender, xmessage_t const & message);
     void cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message);

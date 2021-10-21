@@ -23,14 +23,14 @@ xhttp_server::xhttp_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                            bool archive_flag,
                            observer_ptr<store::xstore_face_t> store,
                            observer_ptr<base::xvblockstore_t> block_store,
+                           observer_ptr<base::xvtxstore_t> txstore,
                            observer_ptr<elect::ElectMain> elect_main,
-                           observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                           observer_ptr<data::xtransaction_cache_t> const & transaction_cache) {
+                           observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
 #if defined XDISABLE_RATELIMIT
     m_enable_ratelimit = false;
 #endif
     if (m_rpc_service == nullptr) {
-        m_rpc_service = top::make_unique<xrpc_service<xedge_http_method>>(edge_vhost, xip2, archive_flag, store, block_store, elect_main, election_cache_data_accessor, transaction_cache);
+        m_rpc_service = top::make_unique<xrpc_service<xedge_http_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
     } else {
         m_rpc_service->reset_edge_method_mgr(edge_vhost, xip2);
     }

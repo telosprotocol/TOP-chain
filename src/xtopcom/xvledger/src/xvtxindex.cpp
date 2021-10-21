@@ -112,6 +112,17 @@ namespace top
             XMETRICS_GAUGE(metrics::dataobject_xvtxindex, -1);
         }
 
+        void xvtxindex_t::set_tx_hash(std::string const & tx_hash)
+        {
+            xassert(m_tx_hash == "");
+            m_tx_hash = tx_hash;
+        }
+        // void xvtxindex_t::set_tx_phase_type(enum_transaction_subtype tx_phase_type)
+        // {
+        //     xassert(m_tx_phase_type == enum_transaction_subtype_invalid);
+        //     m_tx_phase_type = tx_phase_type;
+        // }
+
         int32_t xvtxindex_t::do_write(base::xstream_t & stream)
         {
             const int32_t begin_size = stream.size();
@@ -119,7 +130,7 @@ namespace top
             stream.write_compact_var(m_block_addr);
             stream.write_compact_var(m_block_height);
             stream.write_compact_var(m_block_hash);
-            stream.write_compact_var(m_tx_hash);
+            stream.write_compact_var(std::string{""});
 
             stream << m_tx_phase_type;
             stream << m_block_flags;
@@ -136,7 +147,8 @@ namespace top
             stream.read_compact_var(m_block_addr);
             stream.read_compact_var(m_block_height);
             stream.read_compact_var(m_block_hash);
-            stream.read_compact_var(m_tx_hash);
+            std::string _str{""};
+            stream.read_compact_var(_str);
 
             stream >> m_tx_phase_type;
             stream >> m_block_flags;

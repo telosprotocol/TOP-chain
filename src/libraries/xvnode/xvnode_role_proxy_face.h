@@ -22,9 +22,9 @@ public:
 
 
     virtual void create(vnetwork::xvnetwork_driver_face_ptr_t const & vnetwork) = 0;
-    virtual void change(common::xnode_address_t address, common::xlogic_time_t start_time) = 0;
-    virtual void unreg(common::xnode_address_t address) = 0;
-    virtual void destroy(xvip2_t xip2) = 0;
+    virtual void change(common::xnode_address_t const & address, common::xlogic_time_t start_time) = 0;
+    virtual void unreg(common::xnode_address_t const & address) = 0;
+    virtual void destroy(common::xnode_address_t const & address) = 0;
 };
 using xvnode_role_proxy_face_t = xtop_vnode_role_proxy_face;
 

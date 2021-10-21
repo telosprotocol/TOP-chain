@@ -61,6 +61,7 @@ public:
                        observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
                        observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
+                       observer_ptr<base::xvtxstore_t> const & txstore,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<router::xrouter_face_t> const & router,
                        xobject_ptr_t<base::xvcertauth_t> const & certauth,
@@ -70,8 +71,7 @@ public:
                     //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                       observer_ptr<xbase_timer_driver_t> const & timer_driver);
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,

@@ -50,6 +50,7 @@ namespace top
         //caller need to cast (void*) to related ptr
         void*   xvtxstore_t::query_interface(const int32_t _enum_xobject_type_)
         {
+            xassert(false);
             if(_enum_xobject_type_ == enum_xobject_type_vtxstore)
                 return this;
 
@@ -58,6 +59,7 @@ namespace top
 
         bool  xvtxstore_t::store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin)
         {
+            xassert(false);
             xassert(raw_tx_hash.empty() == false);
             xassert(raw_tx_bin.empty() == false);
             if(raw_tx_hash.empty() || raw_tx_bin.empty())
@@ -75,6 +77,7 @@ namespace top
 
         const std::string xvtxstore_t::load_tx_bin(const std::string & raw_tx_hash)
         {
+            xassert(false);
             xassert(raw_tx_hash.empty() == false);
             if(raw_tx_hash.empty())
                 return std::string();
@@ -86,6 +89,7 @@ namespace top
 
         bool   xvtxstore_t::store_tx_obj(const std::string & raw_tx_hash,xdataunit_t * raw_tx_obj)
         {
+            xassert(false);
             xassert(raw_tx_hash.empty() == false);
             if( raw_tx_hash.empty() || (raw_tx_obj == NULL) ) {
                 xdbg("xvtxstore_t::store_tx_obj, null tx hash or tx obj %s",base::xstring_utl::to_hex(raw_tx_hash).c_str());
@@ -109,6 +113,7 @@ namespace top
 
         xauto_ptr<xdataunit_t>  xvtxstore_t::load_tx_obj(const std::string & raw_tx_hash)
         {
+            xassert(false);
             const std::string raw_tx_bin = load_tx_bin(raw_tx_hash);
             if(raw_tx_bin.empty())
             {
@@ -120,6 +125,7 @@ namespace top
 
         bool     xvtxstore_t::store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin)
         {
+            xassert(false);
             xassert(block_ptr != NULL);
             if(NULL == block_ptr)
                 return false;
@@ -208,6 +214,7 @@ namespace top
 
         xauto_ptr<xvtxindex_t> xvtxstore_t::load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type)
         {
+            xassert(false);
             base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(type);
             const std::string tx_idx_key = xvdbkey_t::create_tx_index_key(raw_tx_hash, txindex_type);
             const std::string tx_idx_bin = base::xvchain_t::instance().get_xdbstore()->get_value(tx_idx_key);
@@ -223,6 +230,10 @@ namespace top
                 return nullptr;
             }
             return txindex;
+        }
+
+        void xvtxstore_t::update_node_type(uint32_t combined_node_type) {
+            xassert(false);
         }
 
         //----------------------------------------xvblockstore_t----------------------------------------//

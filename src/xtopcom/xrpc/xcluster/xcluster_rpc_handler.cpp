@@ -27,12 +27,13 @@ xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face
                                            xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                                            observer_ptr<store::xstore_face_t> store,
                                            observer_ptr<base::xvblockstore_t> block_store,
+                                           observer_ptr<base::xvtxstore_t> txstore,
                                            observer_ptr<top::base::xiothread_t> thread)
   : m_cluster_vhost(cluster_vhost)
   , m_router_ptr(router_ptr)
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, txpool_service))
+  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store,txstore, txpool_service))
   , m_thread(thread) {
 }
 

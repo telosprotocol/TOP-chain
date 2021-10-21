@@ -8,7 +8,7 @@
 #include "xchain_timer/xchain_timer.h"
 #include "xloader/xconfig_onchain_loader.h"
 //#include "test_xtxexecutor_util.hpp"
-#include "xtxexecutor/xtransaction_prepare_mgr.h"
+#include "xtxstore/xtransaction_prepare_mgr.h"
 #include "xbasic/xtimer_driver_fwd.h"
 #include "xdata/xtransaction_cache.h"
 

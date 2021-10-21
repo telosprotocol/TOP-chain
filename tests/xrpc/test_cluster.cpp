@@ -19,6 +19,7 @@ protected:
         mock::xvchain_creator creator;
         m_store = make_observer<store::xstore_face_t>(creator.get_xstore());
         m_block_store = make_observer<base::xvblockstore_t>(creator.get_blockstore());
+        m_txstore = make_observer<base::xvtxstore_t>(creator.get_txstore());
     }
 
     void TearDown() override {}
@@ -29,13 +30,14 @@ public:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_unit_service;
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
+    observer_ptr<base::xvtxstore_t> m_txstore;
     std::string m_account{"T00000LdD549VCMVVzS2m2RCgkT9errUXdSjJZbF"};
     std::string m_null_account{"T00000LdD549VCMVVzS2m2RCgkT9errUXdSjJZbb"};
     observer_ptr<top::base::xiothread_t> m_thread;
 };
 
 TEST_F(test_cluster, basic) {
-    auto m_cluster_handler = std::make_shared<xcluster_rpc_handler>(m_vhost, m_router_ptr, nullptr, nullptr, nullptr, m_thread);
+    auto m_cluster_handler = std::make_shared<xcluster_rpc_handler>(m_vhost, m_router_ptr, nullptr, nullptr, nullptr, nullptr, m_thread);
     xvnode_address_t edge_sender;
     xmessage_t message;
     m_cluster_handler->on_message(edge_sender, message);
@@ -59,7 +61,7 @@ TEST_F(test_cluster, methods) {
     // illegal account query
     xjson_proc_t json_proc;
     json_proc.m_request_json["params"]["account_addr"] = "account_addr";
-    auto cluster_method_manager = std::make_shared<xcluster_query_manager>(m_store, m_block_store, m_unit_service);
+    auto cluster_method_manager = std::make_shared<xcluster_query_manager>(m_store, m_block_store, m_txstore, m_unit_service);
     try {
         cluster_method_manager->getAccount(json_proc);
     } catch (xrpc_error & e) {
