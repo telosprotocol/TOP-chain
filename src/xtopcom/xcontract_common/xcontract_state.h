@@ -425,10 +425,14 @@ public:
     void latest_followup_tx_nonce(uint64_t nonce);
 
     uint64_t recvtx_num(std::error_code & ec) const;
+    uint64_t recvtx_num() const;
     void recvtx_num(uint64_t num, std::error_code & ec);
+    void recvtx_num(uint64_t num);
 
     uint64_t unconfirm_sendtx_num(std::error_code & ec) const;
+    uint64_t unconfirm_sendtx_num() const;
     void unconfirm_sendtx_num(uint64_t num, std::error_code & ec);
+    void unconfirm_sendtx_num(uint64_t num);
 
     uint64_t lock_tgas(std::error_code & ec) const;
     uint64_t lock_tgas() const;

@@ -103,7 +103,7 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
         top::common::xaccount_address_t{contract_address}, top::make_observer(state_accessor_.get()), contract_common::xcontract_execution_param_t{});
 
     contract_ctx_ = std::make_shared<top::contract_common::xcontract_execution_context_t>(std::move(action), contract_state_);
-    contract_ctx_->execution_stage(contract_common::xcontract_execution_stage_t{contract_common::xtop_enum_contract_execution_stage::target_action});
+    // contract_ctx_->execution_stage(contract_common::xcontract_execution_stage_t{contract_common::xtop_enum_contract_execution_stage::target_action});
 
     // before execution
     // EXPECT_EQ(contract_ctx_->contract_state()->access_control()->balance(common::xaccount_address_t{contract_address}, propety_identifier), 0);

@@ -260,6 +260,13 @@ uint64_t xtop_contract_state::recvtx_num(std::error_code & ec) const {
     }
 }
 
+uint64_t xtop_contract_state::recvtx_num() const {
+    std::error_code ec;
+    auto const r = recvtx_num(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
 void xtop_contract_state::recvtx_num(uint64_t num, std::error_code & ec) {
     assert(!ec);
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
@@ -267,6 +274,12 @@ void xtop_contract_state::recvtx_num(uint64_t num, std::error_code & ec) {
         data::XPROPERTY_TX_INFO_RECVTX_NUM,
         top::to_bytes<uint64_t>(num),
         ec);
+}
+
+void xtop_contract_state::recvtx_num(uint64_t num) {
+    std::error_code ec;
+    recvtx_num(num, ec);
+    top::error::throw_error(ec);
 }
 
 uint64_t xtop_contract_state::unconfirm_sendtx_num(std::error_code & ec) const {
@@ -283,6 +296,13 @@ uint64_t xtop_contract_state::unconfirm_sendtx_num(std::error_code & ec) const {
     }
 }
 
+uint64_t xtop_contract_state::unconfirm_sendtx_num() const {
+    std::error_code ec;
+    auto const r = unconfirm_sendtx_num(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
 void xtop_contract_state::unconfirm_sendtx_num(uint64_t num, std::error_code & ec) {
     assert(!ec);
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
@@ -290,6 +310,12 @@ void xtop_contract_state::unconfirm_sendtx_num(uint64_t num, std::error_code & e
         data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,
         top::to_bytes<uint64_t>(num),
         ec);
+}
+
+void xtop_contract_state::unconfirm_sendtx_num(uint64_t num) {
+    std::error_code ec;
+    unconfirm_sendtx_num(num, ec);
+    top::error::throw_error(ec);
 }
 
 uint64_t xtop_contract_state::used_tgas(std::error_code & ec) const {

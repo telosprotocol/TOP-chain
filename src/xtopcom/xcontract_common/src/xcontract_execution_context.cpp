@@ -10,24 +10,13 @@
 
 NS_BEG2(top, contract_common)
 
-xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept
+xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
+                                                                 observer_ptr<xcontract_state_t> s) noexcept
   : m_contract_state{s}, m_action{std::move(action)} {
 }
 
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
     return m_contract_state;
-}
-
-void xtop_contract_execution_context::contract_state(common::xaccount_address_t const & address) noexcept {
-    contract_state()->set_state(address);
-}
-
-xcontract_execution_stage_t xtop_contract_execution_context::execution_stage() const noexcept {
-    return m_execution_stage;
-}
-
-void xtop_contract_execution_context::execution_stage(xcontract_execution_stage_t const stage) noexcept {
-    m_execution_stage = stage;
 }
 
 data::xconsensus_action_stage_t xtop_contract_execution_context::consensus_action_stage() const noexcept {

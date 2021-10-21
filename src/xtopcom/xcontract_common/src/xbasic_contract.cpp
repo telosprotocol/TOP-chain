@@ -42,12 +42,6 @@ state_accessor::xtoken_t xtop_basic_contract::withdraw(std::uint64_t amount) {
     return m_balance.withdraw(amount);
 }
 
-// state_accessor::xtoken_t state_withdraw(std::uint64_t amount) {
-//     state_accessor::properties::xproperty_identifier_t balance_property_id{
-//                 data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-//     return state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, asset_out.m_amount);
-// }
-
 void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
     assert(m_balance.symbol() == token.symbol());
     m_balance.deposit(std::move(token));
@@ -246,21 +240,6 @@ void xtop_basic_contract::reset_execution_context(observer_ptr<xcontract_executi
 observer_ptr<properties::xproperty_initializer_t const> xtop_basic_contract::property_initializer() const noexcept {
     return make_observer(std::addressof(m_property_initializer));
 }
-
-// bool xtop_basic_contract::at_source_action_stage() const noexcept {
-//     assert(m_associated_execution_context != nullptr);
-//     return m_associated_execution_context->execution_stage() == xcontract_execution_stage_t::source_action;
-// }
-
-// bool xtop_basic_contract::at_target_action_stage() const noexcept {
-//     assert(m_associated_execution_context != nullptr);
-//     return m_associated_execution_context->execution_stage() == xcontract_execution_stage_t::target_action;
-// }
-
-// bool xtop_basic_contract::at_confirm_action_stage() const noexcept {
-//     assert(m_associated_execution_context != nullptr);
-//     return m_associated_execution_context->execution_stage() == xcontract_execution_stage_t::confirm_action;
-// }
 
 xbyte_buffer_t const & xtop_basic_contract::receipt_data(std::string const & key, std::error_code & ec) const {
     return m_associated_execution_context->input_receipt_data(key, ec);

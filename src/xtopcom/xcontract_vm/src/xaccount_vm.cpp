@@ -90,14 +90,14 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     state_accessor::xstate_accessor_t sa{make_observer(block_state.get()), ac_data};
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
-    xdbg("wens_test, xtop_account_vm::execute, action size : %zu\n", actions.size());
+    xdbg("wens_test, xtop_account_vm::execute, action size : %zu", actions.size());
     assert(actions.size() == result_size);
 
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
             auto action_result = execute_action(std::move(actions[i]), sa, param);
-            xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu\n", action_result.output.receipt_data.size());
+            xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu", action_result.output.receipt_data.size());
             if (action_result.status.ec) {
                 result.transaction_results.emplace_back(action_result);
                 abort(i + 1, result_size, result);

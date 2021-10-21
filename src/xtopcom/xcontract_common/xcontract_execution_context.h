@@ -10,7 +10,6 @@
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xaction_execution_param.h"
 #include "xcontract_common/xcontract_execution_result.h"
-#include "xcontract_common/xcontract_execution_stage.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xdata/xconsensus_action.h"
 #include "xdata/xtop_action.h"
@@ -28,7 +27,6 @@ private:
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
     std::map<std::string, xbyte_buffer_t> m_receipt_data; // input receipt
 
-    xcontract_execution_stage_t m_execution_stage{xcontract_execution_stage_t::invalid};
     data::xconsensus_action_stage_t m_stage{data::xconsensus_action_stage_t::invalid};
     xcontract_execution_result_t m_execution_result; // execution result
 
@@ -46,9 +44,6 @@ public:
     explicit xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
-    void contract_state(common::xaccount_address_t const & address) noexcept;
-    xcontract_execution_stage_t execution_stage() const noexcept;
-    void execution_stage(xcontract_execution_stage_t const stage) noexcept;
     data::xconsensus_action_stage_t consensus_action_stage() const noexcept;
     void consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept;
     observer_ptr<xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;

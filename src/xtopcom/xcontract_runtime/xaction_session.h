@@ -87,33 +87,50 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
         return result;
     }
 
-    if (stage == data::xconsensus_action_stage_t::send) {
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::source_action);
-        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num(ec);
-        top::error::throw_error(ec);
-        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1, ec);
-        top::error::throw_error(ec);
-    } else if (stage == data::xconsensus_action_stage_t::recv) {
+    assert(m_associated_runtime != nullptr);
+    auto observed_exectx = top::make_observer(execution_context.get());
+
+    xscope_executer_t reset_action{ [&execution_context] {
+        execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
+    } };
+    execution_context->consensus_action_stage(execution_context->action_stage());
+    switch (execution_context->consensus_action_stage()) {
+    case data::xconsensus_action_stage_t::send: {
+        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num();
+        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1);
+
+        break;
+    }
+
+    case data::xconsensus_action_stage_t::recv: {
         if (!receipt_data.empty()) {
             xdbg("wens_test, recv stage set receipt data");
             execution_context->input_receipt_data(cons_action->receipt_data());
         }
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
-        uint64_t old_recv_tx_num = execution_context->contract_state()->recvtx_num(ec);
-        top::error::throw_error(ec);
-        execution_context->contract_state()->recvtx_num(old_recv_tx_num + 1, ec);
-        top::error::throw_error(ec);
-    } else if (stage == data::xconsensus_action_stage_t::confirm) {
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::confirm_action);
-        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num(ec);
-        top::error::throw_error(ec);
+        uint64_t old_recv_tx_num = execution_context->contract_state()->recvtx_num();
+        execution_context->contract_state()->recvtx_num(old_recv_tx_num + 1);
+
+        break;
+    }
+
+    case data::xconsensus_action_stage_t::confirm: {
+        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num();
         assert(old_unconfirm_tx_num > 0);
-        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1, ec);
-        top::error::throw_error(ec);
-    } else if (stage == data::xconsensus_action_stage_t::self) {
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
-    } else {
+        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1);
+
+        break;
+    }
+
+    case data::xconsensus_action_stage_t::self: {
         assert(false);
+        break;
+    }
+
+    default: {
+        assert(false);
+        break;
+    }
+
     }
 
     xdbg("sender: %s, rever: %s, state addr: %s", execution_context->sender().c_str(), execution_context->recver().c_str(), execution_context->contract_state()->state_account_address().c_str());
@@ -137,7 +154,8 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     }
     auto end_bin_size = observed_exectx->contract_state()->binlog_size();
 
-    if (stage == data::xconsensus_action_stage_t::send || stage == data::xconsensus_action_stage_t::self) {
+    if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::send ||
+        execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
         if (start_bin_size == end_bin_size) {
             // not a fatal error
             // result.status.ec = error::xenum_errc::enum_bin_code_not_changed;
