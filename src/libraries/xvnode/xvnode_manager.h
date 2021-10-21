@@ -61,6 +61,7 @@ public:
                        observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
                        observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
+                       observer_ptr<base::xvtxstore_t> const & txstore,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<router::xrouter_face_t> const & router,
                        xobject_ptr_t<base::xvcertauth_t> const & certauth,
