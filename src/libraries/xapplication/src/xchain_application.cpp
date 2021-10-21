@@ -68,6 +68,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                               m_application->message_bus(),
                                                               m_application->store(),
                                                               make_observer(m_application->blockstore().get()),
+                                                              m_application->txstore(),
                                                               m_application->logic_timer(),
                                                               m_application->router(),
                                                               m_application->cert_serivce(),

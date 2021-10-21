@@ -68,7 +68,7 @@ namespace top
             xassert(m_send_unit_height == 0 && m_send_unit_hash.empty());
             m_send_unit_height = txindex->get_block_height();
             m_send_unit_hash = txindex->get_block_hash();
-            m_is_self_tx = txindex->get_tx_phase_type() == enum_transaction_subtype_self;
+            m_is_self_tx = txindex->is_self_tx();
             //set_raw_tx(txindex->get_raw_tx());
         }
         void xvtransaction_store_t::set_recv_unit_info(const xvtxindex_ptr & txindex) {

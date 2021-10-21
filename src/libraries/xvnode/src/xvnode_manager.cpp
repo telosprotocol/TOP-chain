@@ -24,6 +24,7 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                        observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
                                        observer_ptr<store::xstore_face_t> const & store,
                                        observer_ptr<base::xvblockstore_t> const & block_store,
+                                       observer_ptr<base::xvtxstore_t> const & txstore,
                                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                                        observer_ptr<router::xrouter_face_t> const & router,
                                        xobject_ptr_t<base::xvcertauth_t> const & certauth,
@@ -50,7 +51,7 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                                           txpool,
                                                           election_cache_data_accessor,
                                                           timer_driver),
-                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, logic_timer, router, certauth, txpool, election_cache_data_accessor)
+                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor)
 
     } {
 }
@@ -178,8 +179,10 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
         if (vnode_outdated) {
             xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
 
+            m_vnode_proxy->destroy(common::xnode_address_t{cluster_address});
+            // m_vnode_proxy->destroy({xip.raw_low_part(), xip.raw_high_part()});
+
             common::xip2_t xip{cluster_address.network_id(), cluster_address.zone_id(), cluster_address.cluster_id(), cluster_address.group_id()};
-            m_vnode_proxy->destroy({xip.raw_low_part(), xip.raw_high_part()});
 
             logical_outdated_xips.push_back(std::move(xip));
         }

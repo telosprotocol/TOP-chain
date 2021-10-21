@@ -1213,8 +1213,8 @@ namespace top
             xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
             set_xstatestore(default_state_store());
             
-            xauto_ptr<xvtxstore_t> default_txs_store(new xvtxstore_t());
-            set_xtxstore(default_txs_store());
+            // xauto_ptr<xvtxstore_t> default_txs_store(new xvtxstore_t());
+            // set_xtxstore(default_txs_store());
             
             xauto_ptr<xvcontractstore_t> default_contract_store(new xvcontractstore_t());
             set_xcontractstore(default_contract_store());

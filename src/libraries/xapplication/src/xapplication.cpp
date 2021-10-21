@@ -56,7 +56,9 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
-    
+    m_txstore = xobject_ptr_t<base::xvtxstore_t>(txstore::create_txstore());
+    base::xvchain_t::instance().set_xtxstore(m_txstore.get());
+
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
 #ifdef MOCK_CA
     m_cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
@@ -213,6 +215,10 @@ observer_ptr<store::xstore_face_t> xtop_application::store() const noexcept {
 
 observer_ptr<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
     return make_observer(m_blockstore.get());
+}
+
+observer_ptr<base::xvtxstore_t> xtop_application::txstore() const noexcept {
+    return make_observer(m_txstore.get());
 }
 
 observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {

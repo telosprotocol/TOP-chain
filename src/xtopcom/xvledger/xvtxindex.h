@@ -71,8 +71,8 @@ namespace top
             inline const uint64_t              get_block_height()   const {return m_block_height;}
             inline const int                   get_block_flags()    const {return (((int)m_block_flags) << 8);}
 
-            inline const std::string &         get_tx_hash()        const {return m_tx_hash;}
-            inline enum_transaction_subtype    get_tx_phase_type()  const {return (enum_transaction_subtype)m_tx_phase_type;}
+            inline const std::string &         get_tx_hash()        const {xassert(m_tx_hash!="");return m_tx_hash;}
+            inline enum_transaction_subtype    get_tx_phase_type()  const {xassert(m_tx_phase_type!=0);return (enum_transaction_subtype)m_tx_phase_type;}
             inline bool                        is_self_tx() const {return m_tx_phase_type == enum_transaction_subtype_self;}
 
             inline xdataunit_t*                get_tx_obj()         const {return m_raw_tx_obj;}

@@ -4,6 +4,7 @@
 #include "xdb/xdb_factory.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvledger.h"
@@ -27,6 +28,9 @@ namespace top
 
                 base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
                 base::xvchain_t::instance().set_xblockstore(blockstore);
+
+                base::xvtxstore_t * txstore = txstore::create_txstore();
+                base::xvchain_t::instance().set_xtxstore(txstore);
             }
 
             void create_blockstore_with_xstore() {

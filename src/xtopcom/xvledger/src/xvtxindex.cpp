@@ -119,9 +119,9 @@ namespace top
             stream.write_compact_var(m_block_addr);
             stream.write_compact_var(m_block_height);
             stream.write_compact_var(m_block_hash);
-            stream.write_compact_var(m_tx_hash);
+            stream.write_compact_var(std::string{""});
 
-            stream << m_tx_phase_type;
+            stream << 0;
             stream << m_block_flags;
 #ifdef  LONG_CONFIRM_CHECK
             stream.write_compact_var(m_block_clock);
@@ -136,9 +136,11 @@ namespace top
             stream.read_compact_var(m_block_addr);
             stream.read_compact_var(m_block_height);
             stream.read_compact_var(m_block_hash);
-            stream.read_compact_var(m_tx_hash);
+            std::string _str{""};
+            uint8_t _u8 = 0;
+            stream.read_compact_var(_str);
 
-            stream >> m_tx_phase_type;
+            stream >> _u8;
             stream >> m_block_flags;
 #ifdef  LONG_CONFIRM_CHECK
             stream.read_compact_var(m_block_clock);
