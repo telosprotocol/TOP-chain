@@ -41,7 +41,7 @@ bool xtop_system_contract_manager::contains(common::xaccount_address_t const & a
     return m_system_contract_deployment_data.find(address) != std::end(m_system_contract_deployment_data);
 }
 
-observer_ptr<system_contracts::xbasic_system_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const noexcept {
+observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const noexcept {
     common::xaccount_address_t contract_address{address};
     std::string account_str = address.value();
     if (data::is_sys_sharding_contract_address(address) && account_str.find("@") != std::string::npos) {

@@ -22,13 +22,58 @@ xtop_account_vm::xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_
   : sys_action_runtime_{top::make_unique<contract_runtime::system::xsystem_action_runtime_t>(system_contract_manager)} {
 }
 
-std::vector<xaccount_vm_output_t> xtop_account_vm::execute(std::vector<xaccount_vm_execution_assemble_t> & assemble) {
-    std::vector<xaccount_vm_output_t> result;
-    // TODO lon: here can be parallel processing
-    for (auto & item : assemble) {
-        result.emplace_back(execute(item.txs, item.block_state, item.cs_para));
+xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
+                                              std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> state_pack,
+                                              data::xblock_consensus_para_t const & cs_para) {
+    assert(txs.size() > 0);
+    assert(state_pack.size() > 0);
+    const size_t result_size = txs.size();
+    const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);
+    const contract_common::xcontract_execution_param_t param(cs_para);
+    
+    xaccount_vm_execution_result_t result;
+    result.transaction_results.reserve(result_size);
+
+    state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
+    state_accessor::xstate_accessor_t sa{state_pack, ac_data};
+
+    auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
+    xdbg("wens_test, xtop_account_vm::execute, action size : %zu\n", actions.size());
+
+    size_t i = 0;
+    try {
+        for (i = 0; i < result_size; i++) {
+            auto action_result = execute_action(std::move(actions[i]), sa, param);
+            xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu\n", action_result.output.receipt_data.size());
+            if (action_result.status.ec) {
+                result.transaction_results.emplace_back(action_result);
+                assert(result.transaction_results.size() == (i + 1));
+                abort(i + 1, result_size, result);
+                result.status.ec = action_result.status.ec;
+                i = result_size;
+                break;
+            } else {
+                std::error_code ec;
+                result.binlog_pack = sa.binlog_pack(ec);
+                top::error::throw_error(ec);
+                result.bincode_pack = sa.fullstate_bin_pack(ec);
+                top::error::throw_error(ec);
+                result.transaction_results.emplace_back(action_result);
+                assert(result.transaction_results.size() == (i + 1));
+            }
+        }
+    } catch (top::error::xtop_error_t & eh) {
+        xerror("account_vm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());
+    } catch (std::exception const & eh) {
+        xerror("account_vm: caught exception: %s", eh.what());
     }
-    return result;
+    // exception
+    if (i < result_size) {
+        abort(i, result_size, result);
+        result.status.ec = error::xerrc_t::transaction_execution_abort;
+    }
+
+    return pack(txs, result, sa);
 }
 
 xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
@@ -53,13 +98,19 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
         for (i = 0; i < result_size; i++) {
             auto action_result = execute_action(std::move(actions[i]), sa, param);
             xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu\n", action_result.output.receipt_data.size());
-            result.transaction_results.emplace_back(action_result);
-            assert(result.transaction_results.size() == (i + 1));
             if (action_result.status.ec) {
+                result.transaction_results.emplace_back(action_result);
                 abort(i + 1, result_size, result);
                 result.status.ec = action_result.status.ec;
                 i = result_size;
                 break;
+            } else {
+                std::error_code ec;
+                result.binlog = sa.binlog(ec);
+                top::error::throw_error(ec);
+                result.bincode = sa.fullstate_bin(ec);
+                top::error::throw_error(ec);
+                result.transaction_results.emplace_back(action_result);
             }
         }
     } catch (top::error::xtop_error_t & eh) {
@@ -160,9 +211,6 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                                            state_accessor::xstate_accessor_t & sa) {
     xaccount_vm_output_t output;
     std::vector<data::xcons_transaction_ptr_t> output_txs(txs);
-    uint32_t send_tx_num{0};
-    uint32_t recv_tx_num{0};
-    uint32_t confirm_tx_num{0};
 
     using namespace state_accessor::properties;
     std::error_code ec;
@@ -176,7 +224,6 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
     top::error::throw_error(ec);
     auto last_hash = last_hash_bytes.empty() ? uint256_t{} : top::from_bytes<uint256_t>(last_hash_bytes);
 
-    uint32_t last_success_tx_index{0};
     for (size_t i = 0; i < result.transaction_results.size(); i++) {
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
@@ -188,7 +235,6 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 output.failed_tx_assemble.emplace_back(tx);
             } else if (tx->is_recv_tx()) {
                 output.success_tx_assemble.emplace_back(tx);
-                last_success_tx_index = i;
             } else {
                 xwarn("[xlightunit_builder_t::build_block] invalid tx type: %d", tx->get_tx_type());
                 assert(false);
@@ -204,10 +250,11 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             }
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
             output.success_tx_assemble.emplace_back(tx);
-            last_success_tx_index = i;
             for (auto & follow_up : r.output.followup_transaction_data) {
                 auto const & follow_up_tx = follow_up.followed_transaction;
                 if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
+                    // follow up tx of success tx is success
+                    follow_up_tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
                     output.success_tx_assemble.emplace_back(follow_up_tx);
                 } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
                     assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
@@ -230,10 +277,18 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         return output;
     }
 
-    output.binlog = result.transaction_results[last_success_tx_index].output.binlog;
-    output.contract_state_snapshot = result.transaction_results[last_success_tx_index].output.contract_state_snapshot;
-    assert(!output.binlog.empty());
-    assert(!output.contract_state_snapshot.empty());
+    output.binlog = result.binlog;
+    output.contract_state_snapshot = result.bincode;
+    output.binlog_pack = result.binlog_pack;
+    output.bincode_pack = result.bincode_pack;
+    // assert(!output.binlog_pack.empty());
+    // for (auto const & pair : output.binlog_pack) {
+    //     assert(!pair.second.empty());
+    // }
+    // assert(!output.bincode_pack.empty());
+    // for (auto const & pair : output.bincode_pack) {
+    //     assert(!pair.second.empty());
+    // }
 
     return output;
 }
