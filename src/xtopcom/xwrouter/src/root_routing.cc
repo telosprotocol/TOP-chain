@@ -189,7 +189,7 @@ bool RootRouting::FindNodesFromOthers(base::ServiceType const & service_type,
                                       base::KadmliaKeyPtr const & root_kad_key) {
     xdbg("[RootRouting::FindNodesFromOthers] service_type:%s election_xip2:%s kad_key:%s", service_type.info().c_str(), election_xip2.c_str(), root_kad_key->Get().c_str());
     if (node_id_map_.find(root_kad_key->Get()) != node_id_map_.end()) {
-        xdbg("[RootRouting::FindNodesFromOthers] actually has this node check first.");
+        xwarn("[RootRouting::FindNodesFromOthers] actually has this node check first.");
         return false;
     }
     transport::protobuf::RoutingMessage message;

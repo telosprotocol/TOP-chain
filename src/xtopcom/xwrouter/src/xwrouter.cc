@@ -94,8 +94,8 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
             "stop send msg because hop to live is max: %d [%s] des[%s] "
             "message_type[%d]",
             kHopToLive,
-            HexSubstr(message.src_node_id()).c_str(),
-            HexSubstr(message.des_node_id()).c_str(),
+            (message.src_node_id()).c_str(),
+            (message.des_node_id()).c_str(),
             message.type());
         return enum_xerror_code_fail;
     }
