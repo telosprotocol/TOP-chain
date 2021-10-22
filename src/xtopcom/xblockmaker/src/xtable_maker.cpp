@@ -151,22 +151,34 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     base::enum_transaction_subtype last_tx_subtype = base::enum_transaction_subtype_invalid;
     base::xtable_shortid_t last_tableid = 0xFFFF;
     uint64_t last_receipt_id = 0;
+    std::map<std::string, bool> account_check_state_ret;
 
     for (auto & tx : input_table_txs) {
         std::string unit_account = tx->get_account_addr();
+        bool need_check_state = true;
+        auto iter = account_check_state_ret.find(unit_account);
+        if (iter != account_check_state_ret.end()) {
+            if (iter->second == true) {
+                need_check_state = false;
+            } else {
+                continue;
+            }
+        }
 
         // 1.check unit maker state
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
-        base::xaccount_index_t accountindex;
-        tablestate->get_account_index(unit_account, accountindex);
-
-        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
-        if (ret != xsuccess) {
-            XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
-            set_packtx_metrics(tx, false);
-            xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
-                cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
-            continue;
+        if (need_check_state) {
+            base::xaccount_index_t accountindex;
+            tablestate->get_account_index(unit_account, accountindex);
+            int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
+            account_check_state_ret[unit_account] = (ret != xsuccess) ? false : true;
+            if (ret != xsuccess) {
+                XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
+                set_packtx_metrics(tx, false);
+                xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
+                    cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
+                continue;
+            }
         }
 
         // 2.try to make empty or full unit  TODO(jimmy) fullunit can also pack tx future
