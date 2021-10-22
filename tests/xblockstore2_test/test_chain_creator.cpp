@@ -93,7 +93,4 @@ TEST_F(test_chain_creator, test_3_BENCH) {
 
     base::xauto_ptr<xvblock_t> genesis_block1 = blockstore->get_genesis_block(account);
     EXPECT_EQ(genesis_block1->get_height(), 0);
-
-    base::xauto_ptr<xvblock_t> genesis_block2 = blockstore->get_latest_genesis_connected_block(account);
-    EXPECT_EQ(genesis_block2->get_height(), 0);
 }

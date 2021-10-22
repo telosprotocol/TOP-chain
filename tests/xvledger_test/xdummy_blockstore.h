@@ -46,10 +46,6 @@ public:
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t> get_latest_executed_block(base::xvaccount_t const &,const int atag = 0)  override {
-        return nullptr;
-    }
-
     base::xauto_ptr<base::xvblock_t> get_latest_connected_block(base::xvaccount_t const &,const int atag = 0) override {
         return nullptr;
     }
@@ -167,10 +163,6 @@ public:
     }
 
     bool clean_caches(const base::xvaccount_t & account,const int atag = 0) override {
-        return false;
-    }
-
-    bool reset_cache_timeout(const base::xvaccount_t &, const uint32_t,const int atag = 0) override {
         return false;
     }
 

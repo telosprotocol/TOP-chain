@@ -71,10 +71,6 @@ TEST_F(test_block_connected, block_connect_discrete) {
     base::xauto_ptr<xvblock_t> connected_block = blockstore->get_latest_connected_block(address);
     ASSERT_TRUE(connected_block != nullptr);
     EXPECT_EQ(connected_block->get_height(), count - 2);
-
-    base::xauto_ptr<xvblock_t> executed_block = blockstore->get_latest_executed_block(address);
-    ASSERT_TRUE(executed_block != nullptr);
-    ASSERT_EQ(executed_block->get_height(), count - 2);
 }
 
 TEST_F(test_block_connected, block_connect_discrete_1) {
@@ -98,10 +94,6 @@ TEST_F(test_block_connected, block_connect_discrete_1) {
     }
 
     {
-        auto genesis_connected_block = blockstore->get_latest_genesis_connected_block(account);
-        ASSERT_TRUE(genesis_connected_block != nullptr);
-        EXPECT_EQ(genesis_connected_block->get_height(), genesis_continous_height - 2);
-
         auto connected_block = blockstore->get_latest_connected_block(account);
         ASSERT_TRUE(connected_block != nullptr);
         EXPECT_EQ(connected_block->get_height(), genesis_continous_height - 2);
@@ -132,10 +124,6 @@ TEST_F(test_block_connected, block_connect_discrete_1) {
         auto latest_committed_full_block = blockstore->get_latest_committed_full_block(account);
         ASSERT_TRUE(latest_committed_full_block != nullptr);
         EXPECT_EQ(latest_committed_full_block->get_height(), full_height);
-
-        auto genesis_connected_block = blockstore->get_latest_genesis_connected_block(account);
-        ASSERT_TRUE(genesis_connected_block != nullptr);
-        EXPECT_EQ(genesis_connected_block->get_height(), genesis_continous_height - 2);
 
         auto connected_block = blockstore->get_latest_connected_block(account);
         ASSERT_TRUE(connected_block != nullptr);
@@ -168,7 +156,6 @@ TEST_F(test_block_connected, store_block_in_unorder_1) {
     ASSERT_EQ(blockstore->get_latest_locked_block(address)->get_height(), 8);
     ASSERT_EQ(blockstore->get_latest_committed_block(address)->get_height(), 7);
     ASSERT_EQ(blockstore->get_latest_connected_block(address)->get_height(), 2);
-    ASSERT_EQ(blockstore->get_latest_executed_block(address)->get_height(), 2);
 
     ASSERT_TRUE(blockstore->store_block(account, tables[5].get()));
     ASSERT_EQ(blockstore->get_latest_committed_block(address)->get_height(), 7);
@@ -207,14 +194,12 @@ TEST_F(test_block_connected, store_block_in_unorder_2) {
     ASSERT_EQ(blockstore->get_latest_locked_block(address)->get_height(), 8);
     ASSERT_EQ(blockstore->get_latest_committed_block(address)->get_height(), 7);
     ASSERT_EQ(blockstore->get_latest_connected_block(address)->get_height(), 1);
-    ASSERT_EQ(blockstore->get_latest_executed_block(address)->get_height(), 1);
 
     ASSERT_TRUE(blockstore->store_block(account, tables[4].get()));
     ASSERT_EQ(blockstore->get_latest_connected_block(address)->get_height(), 3);
 
     ASSERT_TRUE(blockstore->store_block(account, tables[6].get()));
     ASSERT_EQ(blockstore->get_latest_connected_block(address)->get_height(), 7);
-    ASSERT_EQ(blockstore->get_latest_executed_block(address)->get_height(), 7);
     ASSERT_EQ(blockstore->get_latest_committed_block(address)->get_height(), 7);
     ASSERT_EQ(blockstore->get_latest_locked_block(address)->get_height(), 8);
     ASSERT_EQ(blockstore->get_latest_cert_block(address)->get_height(), 9);
@@ -582,7 +567,7 @@ TEST_F(test_block_connected, store_block_disorder_highqc_1) {
     }
 }
 #endif
-
+#if 0  // TODO(jimmy) xacctmeta_t is deleted
 TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();    
@@ -590,7 +575,7 @@ TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
     uint64_t count = 500;
     mock::xdatamock_table mocktable;
     std::string table_addr = mocktable.get_account();
-    blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
+    // blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s TODO(jimmy)
     std::string meta_path = "0/" + table_addr + "/meta";
     base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
 
@@ -653,3 +638,4 @@ TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
     xassert(connect_block2->get_height() == connect_block->get_height());
     xassert(connect_block2->get_block_hash() == connect_block->get_block_hash());
 }
+#endif

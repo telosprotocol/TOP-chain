@@ -792,7 +792,10 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // syncStatus
     auto syncstatus_app = chain_app->add_subcommand("syncStatus", "Get block sync status of the node.");
     syncstatus_app->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
-
+    std::string prune_enable("off");
+    auto block_prune_app = chain_app->add_subcommand("autoPruneData", "Set auto prune data.");
+    block_prune_app->callback(std::bind(&ApiMethod::block_prune, &topcl.api, std::ref(prune_enable), std::ref(out_str)));
+    block_prune_app->add_option("on|off", prune_enable, "auto prune data on or off.")->required();
     /*
      * resource
      */

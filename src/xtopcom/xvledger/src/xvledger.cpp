@@ -8,16 +8,30 @@
 #include "xbase/xthread.h"
 #include "xmetrics/xmetrics.h"
 
+#ifdef DEBUG
+    #define DEBUG_XVLEDGER
+#endif
+
 namespace top
 {
     namespace base
     {
         xvaccountobj_t::xvaccountobj_t(xvtable_t & parent_object,const std::string & account_address)
-             :xobject_t(enum_xobject_type_vaccount),
+             : xiobject_t(*parent_object.get_context(),parent_object.get_thread_id(),  enum_xobject_type_vaccount),
               xvaccount_t(account_address),
               m_ref_table(parent_object)//note:table object never be release/deleted,so here just hold reference
         {
+            m_meta_ptr = NULL;
+            m_is_idle = 1;  //init as idled status
+            m_is_closing = 0; //init as running
+            m_is_keep_forever = 0;
             memset(m_plugins,0,sizeof(m_plugins));
+            m_idle_start_time_ms  = get_time_now();
+            m_idle_timeout_ms     = enum_account_idle_timeout_ms;
+            
+            if(is_unit_address() == false) //keep contract/table account forever at memory
+                m_is_keep_forever  = 1;
+            
             xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
             XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, 1);
         }
@@ -27,11 +41,111 @@ namespace top
             xinfo("xvaccountobj_t::destroy,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
             for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
             {
-                xobject_t* old_ptr = m_plugins[i];
+                xvactplugin_t* old_ptr = m_plugins[i];
                 if(old_ptr != NULL)//catch exception case if have
+                {
+                    old_ptr->close(false);
                     old_ptr->release_ref();
+                }
             }
+            
+            if(m_meta_ptr != NULL)
+            {
+                m_meta_ptr->close();
+                m_meta_ptr->release_ref();
+            }
+            
             XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, -1);
+        }
+        
+        const uint64_t  xvaccountobj_t::get_idle_duration() const
+        {
+            return m_idle_timeout_ms;
+        }
+    
+        //status-change  :  live <-> idle -> closed
+        bool xvaccountobj_t::is_live(const uint64_t timenow_ms)
+        {
+            if(is_closing() || is_close()) //be closed
+                return false;
+            
+            if(m_is_keep_forever != 0) //table/book keep forever
+                return true;
+            
+            if(   (is_idle() == false)//still active
+               || (get_refcount() > 2) ) //more holder except table(hold 2 reference)
+            {
+                return true;
+            }
+
+            const uint64_t idle_start_time_ms = m_idle_start_time_ms;
+            if( timenow_ms > (idle_start_time_ms + m_idle_timeout_ms) )
+                return false;//time to close it since idle too long
+    
+            return true;//still watching
+        }
+        
+        //return status of currently,return true when it is idled
+        bool  xvaccountobj_t::update_idle_status()
+        {
+            for(int i = enum_xvaccount_plugin_start; i <= enum_xvaccount_plugin_end; ++i)
+            {
+                xvactplugin_t* item = m_plugins[i];
+                if( (item != nullptr) && (item->is_close() == false) && (item->is_closing() == false) )
+                {
+                    if(m_is_idle != 0)
+                    {
+                        xassert(0 == m_is_idle);
+                        m_is_idle = 0;
+                    }
+                    return false; //indicate non-idle
+                }
+            }
+            
+            if(m_is_idle != 1)
+            {
+                m_is_idle = 1; //enter idling status
+                m_idle_start_time_ms = get_time_now();
+                
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::update_idle_status,enter idle status for account(%s)",get_address().c_str());
+                #endif
+            }
+            return true;
+        }
+        
+        bool xvaccountobj_t::stop() //convert to closing status if possible
+        {
+            if(is_close())
+                return false;
+            
+            #ifdef DEBUG_XVLEDGER
+            xinfo("xvaccountobj_t::stop,acccount(%s)",get_address().c_str());
+            #endif
+            if(is_closing() == false)
+            {
+                m_is_closing = 1; //mark closing first
+                
+                for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
+                {
+                    xvactplugin_t* old_ptr = m_plugins[i];
+                    if(old_ptr != NULL)//catch exception case if have
+                    {
+                        old_ptr->stop();//mark first to prevent reuse it anymore
+                        
+                        const xblockmeta_t* blockmeta = old_ptr->get_block_meta();
+                        if(blockmeta != NULL) //block meta need update in-time(synchronization) as it 'lazy mode
+                        {
+                            get_meta()->set_block_meta(*blockmeta);
+                            //note:dont enable log at release since it sensitive for spinlock
+                            #ifdef DEBUG_XVLEDGER
+                            xdbg_info("xvaccountobj_t::stop,upate meta=%s",blockmeta->ddump().c_str());
+                            #endif
+                        }
+                    }
+                }
+            }
+            return true;
         }
     
         bool xvaccountobj_t::close(bool force_async)
@@ -39,110 +153,564 @@ namespace top
             xinfo("xvaccountobj_t::close,acccount(%s)",get_address().c_str());
             if(is_close() == false)
             {
-                xobject_t::close(true); //force at async mode
+                xobject_t::close(false); //force mark close flag
                 
-                //clean it fromt table first,since base::on_object_close may clean up parent node information
-                // TODO(jimmy) m_ref_table.close_account(get_address());
+                for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
+                {
+                    xvactplugin_t* old_ptr = m_plugins[i];
+                    if(old_ptr != NULL)//catch exception case if have
+                    {
+                        old_ptr->close(force_async);//true means that plugin do async job for some heavy process
+                    }
+                }
+            }
+            return true;
+        }
+ 
+        std::recursive_mutex&   xvaccountobj_t::get_table_lock()
+        {
+            return m_ref_table.get_lock();
+        }
+       
+        bool   xvaccountobj_t::set_block_meta(const xblockmeta_t & new_meta)
+        {
+            bool result = false;
+            std::string vmeta_bin;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                xvactmeta_t * meta_ptr = get_meta();
+                result = meta_ptr->set_block_meta(new_meta);
+                if(result)
+                {
+                    const uint32_t modified_count = meta_ptr->get_modified_count();
+                    if (modified_count > 0)
+                    {
+                        if(modified_count > enum_account_save_meta_interval
+                        ||(is_unit_address() == false))  // TODO(jimmy) always save meta for table and contract now
+                        {
+                            m_meta_ptr->serialize_to_string(vmeta_bin);
+                            m_meta_ptr->reset_modified_count();
+                        }
+                    }
+                }
+            }
+            //note:dont enable log too much since it sensitive for spinlock
+            #ifdef DEBUG_XVLEDGER
+            xdbg_info("xvaccountobj_t::set_block_meta,meta=%s",new_meta.ddump().c_str());
+            #endif
+            
+            save_meta(vmeta_bin);
+            return result;
+        }
+        
+        bool   xvaccountobj_t::set_state_meta(const xstatemeta_t & new_meta)
+        {
+            bool result = false;
+            std::string vmeta_bin;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                xvactmeta_t * meta_ptr = get_meta();
+                result = meta_ptr->set_state_meta(new_meta);
+                if(result)
+                {
+                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                    {
+                        m_meta_ptr->serialize_to_string(vmeta_bin);
+                        m_meta_ptr->reset_modified_count();
+                    }
+                }
+            }
+            save_meta(vmeta_bin);
+            return result;
+        }
+        
+        bool  xvaccountobj_t::set_index_meta(const xindxmeta_t & new_meta)
+        {
+            bool result = false;
+            std::string vmeta_bin;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                xvactmeta_t * meta_ptr = get_meta();
+                result = meta_ptr->set_index_meta(new_meta);
+                if(result)
+                {
+                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                    {
+                        m_meta_ptr->serialize_to_string(vmeta_bin);
+                        m_meta_ptr->reset_modified_count();
+                    }
+                }
+            }
+            save_meta(vmeta_bin);
+            return result;
+        }
+    
+        bool   xvaccountobj_t::set_sync_meta(const xsyncmeta_t & new_meta)
+        {
+            bool result = false;
+            std::string vmeta_bin;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                xvactmeta_t * meta_ptr = get_meta();
+                result = meta_ptr->set_sync_meta(new_meta);
+                if(result)
+                {
+                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                    {
+                        m_meta_ptr->serialize_to_string(vmeta_bin);
+                        m_meta_ptr->reset_modified_count();
+                    }
+                }
+            }
+            save_meta(vmeta_bin);
+            return result;
+        }
+        
+        const xblockmeta_t  xvaccountobj_t::get_block_meta()
+        {
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            return get_meta()->get_block_meta();
+        }
+        
+        const xstatemeta_t  xvaccountobj_t::get_state_meta()
+        {
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            return get_meta()->get_state_meta();
+        }
+        
+        const xindxmeta_t   xvaccountobj_t::get_index_meta()
+        {
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            return get_meta()->get_index_meta();
+        }
+        
+        const xsyncmeta_t   xvaccountobj_t::get_sync_meta()
+        {
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            return get_meta()->get_sync_meta();
+        }
+    
+        const xvactmeta_t    xvaccountobj_t::get_full_meta()
+        {
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            return *get_meta();
+        }
+    
+        bool   xvaccountobj_t::set_latest_executed_block(const uint64_t height, const std::string & blockhash)
+        {
+            bool result = false;
+            std::string vmeta_bin;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                xvactmeta_t * meta_ptr = get_meta();
+                result = meta_ptr->set_latest_executed_block(height,blockhash);
+                if(result)
+                {
+                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                    {
+                        m_meta_ptr->serialize_to_string(vmeta_bin);
+                        m_meta_ptr->reset_modified_count();
+                    }
+                }
+            }
+            save_meta(vmeta_bin);
+            return result;
+        }
+    
+        bool   xvaccountobj_t::get_latest_executed_block(uint64_t & block_height,std::string & block_hash)
+        {
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            block_height = meta_ptr->get_state_meta()._highest_execute_block_height;
+            block_hash   = meta_ptr->get_state_meta()._highest_execute_block_hash;
+            return true;
+        }
+        
+        const uint64_t   xvaccountobj_t::get_latest_executed_block_height()
+        {
+            //note:meta_ptr never be destroy,it is safe to get it without lock
+            xvactmeta_t * meta_ptr = get_meta();
+            const uint64_t atom_copy = base::xatomic_t::xload( meta_ptr->get_state_meta()._highest_execute_block_height);
+            return atom_copy;
+        }
+    
+        bool   xvaccountobj_t::set_latest_deleted_block_height(const uint64_t height)
+        {
+            if(is_close())
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            if(height > meta_ptr->get_block_meta()._highest_deleted_block_height)
+            {
+                base::xatomic_t::xstore(meta_ptr->get_block_meta()._highest_deleted_block_height,height);
+                meta_ptr->add_modified_count();
+                return true;
+            }
+            return false;
+        }
+    
+        const uint64_t  xvaccountobj_t::get_latest_deleted_block_height()
+        {
+            //note:meta_ptr never be destroy,it is safe to get it without lock
+            xvactmeta_t * meta_ptr = get_meta();
+            const uint64_t atom_copy = base::xatomic_t::xload( meta_ptr->get_block_meta()._highest_deleted_block_height);
+            return atom_copy;
+        }
+    
+        xvactmeta_t*  xvaccountobj_t::get_meta()
+        {
+            if( (m_meta_ptr != NULL) && (m_meta_ptr->is_close() == false) )
+                return m_meta_ptr;
+                   
+            XMETRICS_GAUGE(metrics::store_block_meta_read, 1);
+            const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
+            const std::string meta_content = xvchain_t::instance().get_xdbstore()->get_value(full_meta_path);
+   
+            xvactmeta_t* new_meta_ptr = xvactmeta_t::load(*this,meta_content);
+            xvactmeta_t * old_ptr = base::xatomic_t::xexchange(m_meta_ptr, new_meta_ptr);
+            if(old_ptr != NULL)
+            {
+                old_ptr->close(); //close first
+                
+                xwarn("xvaccountobj_t::meta->get_meta,new_meta(%s) vs old_meta(%s)",new_meta_ptr->dump().c_str(),old_ptr->dump().c_str());
+                old_ptr->release_ref();//then release
+            }
+            else
+            {
+                #ifdef DEBUG_XVLEDGER
+                xinfo("xvaccountobj_t::meta->get_meta,new_meta(%s)",new_meta_ptr->dump().c_str());
+                #endif
+            }
+            return m_meta_ptr;
+        }
+        
+        bool  xvaccountobj_t::save_meta(const std::string & vmeta_bin)
+        {
+            if(vmeta_bin.empty() == false)
+            {
+                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
+                if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
+                {
+                    get_meta()->update_meta_process_id();
+                    #ifdef DEBUG_XVLEDGER
+                    xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
+                    #endif
+                    return true;
+                }
+                else //failure handle
+                {
+                    if(m_meta_ptr != NULL)
+                        m_meta_ptr->add_modified_count(true);//XTODO,may add enum_account_save_meta_interval
+
+                    xerror("xvaccountobj_t::meta->save_meta,fail to write db for account(%s)",get_address().c_str());
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        bool  xvaccountobj_t::save_meta()
+        {
+            std::string vmeta_bin;
+            if(m_meta_ptr != NULL)
+            {
+                const uint32_t last_modified_count = m_meta_ptr->get_modified_count();
+                if(last_modified_count > 0)
+                {
+                    xauto_lock<xspinlock_t> locker(get_spin_lock());
+                    m_meta_ptr->serialize_to_string(vmeta_bin);
+                    m_meta_ptr->reset_modified_count();//optimisic prediction
+                }
+            }
+            
+            if(vmeta_bin.empty() == false)
+            {
+                return save_meta(vmeta_bin);
             }
             return true;
         }
     
-        std::recursive_mutex&  xvaccountobj_t::get_lock()
-        {
-            return m_ref_table.get_lock();
-        }
-    
-        xobject_t*    xvaccountobj_t::get_plugin(enum_xvaccount_plugin_type plugin_type)
-        {
-            std::lock_guard<std::recursive_mutex> locker(get_lock());
-            return get_plugin_unsafe(plugin_type);
-        }
-    
-        //locked by table or account self in advance
-        xobject_t*    xvaccountobj_t::get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type)
+        xauto_ptr<xvactplugin_t> xvaccountobj_t::get_plugin(enum_xvaccount_plugin_type plugin_type)
         {
             if(is_close()) //object not avaiable
             {
                 xerror("xvaccountobj_t::get_plugin,closed account(%s)",get_address().c_str());
                 return nullptr;
             }
+            
+            xvactplugin_t * plugin_ptr = NULL;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                plugin_ptr = get_plugin_unsafe(plugin_type);
+                if(plugin_ptr != NULL)
+                {
+                    plugin_ptr->add_ref();//note:add reference for xauto_ptr
+                    
+                    const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
+                    plugin_ptr->set_last_access_time(_timenow);
+                }
+            }
+            if(NULL == plugin_ptr)
+            {
+                #ifdef DEBUG_XVLEDGER
+                xdbg("xvaccountobj_t::get_plugin,closed plugin_type(%d) for account(%s) ",plugin_type,get_address().c_str());
+                #endif
+            }
+            
+            return plugin_ptr;
+        }
+
+        //locked by table or account self in advance
+        xvactplugin_t*    xvaccountobj_t::get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type)
+        {
             if((int)plugin_type >= enum_xvaccount_plugin_max)
             {
                 xerror("xvaccountobj_t::get_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d)",plugin_type,enum_xvaccount_plugin_max);
                 return nullptr;
             }
-                
-            xobject_t* plugin_ptr = m_plugins[plugin_type];
+
+            xvactplugin_t* plugin_ptr = xatomic_t::xload(m_plugins[plugin_type]);
             if(plugin_ptr != nullptr)
             {
-                if(plugin_ptr->is_close() == false)
+                if( (plugin_ptr->is_close() == false) && (plugin_ptr->is_closing() == false) )
                 {
-                    plugin_ptr->add_ref();//note:add reference before return, caller need release it
                     return plugin_ptr;
                 }
-                xatomic_t::xreset(m_plugins[plugin_type]);
-                plugin_ptr->release_ref();//release reference of the closed plugin
             }
             return nullptr;//converted to xauto_ptr automatically
         }
-    
-        //return to indicate setup successful or not
-        bool  xvaccountobj_t::set_plugin(xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type)
+
+        //locked by table or account self in advance
+        bool  xvaccountobj_t::set_plugin_unsafe(xvactplugin_t * new_plugin_obj,xvactplugin_t*& old_plugin_obj)
         {
-            std::lock_guard<std::recursive_mutex> locker(get_lock());
-            return set_plugin_unsafe(plugin_obj,plugin_type);
+            if(nullptr == new_plugin_obj) //valid check
+            {
+                xassert(0);
+                return false;
+            }
+         
+            new_plugin_obj->add_ref();//hold reference for m_plugins[type]
+            const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
+            new_plugin_obj->set_last_access_time(_timenow);
+            
+            //replace existing one by new ptr
+            old_plugin_obj = xatomic_t::xexchange(m_plugins[new_plugin_obj->get_plugin_type()],new_plugin_obj);
+            if(old_plugin_obj == new_plugin_obj) //same one
+            {
+                old_plugin_obj->release_ref();
+                old_plugin_obj = NULL;//note:must reset to null
+                return true;//nothing changed
+            }
+            else if(NULL != old_plugin_obj)//successful
+            {
+                xdbgassert(old_plugin_obj->is_closing());
+                xdbgassert(old_plugin_obj->is_close());
+                old_plugin_obj->stop();//mark closing flag first
+                //caller need release it
+            }
+            const uint8_t old_status = m_is_idle;
+            m_is_idle = 0; //actived
+            if(old_status != 0)
+            {
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::set_plugin_unsafe,reenter active status for account(%s)",get_address().c_str());
+                #endif
+            }
+            //send to monitoring thread
+            m_ref_table.monitor_plugin(new_plugin_obj);
+            return true;
+        }
+        
+        xauto_ptr<xvactplugin_t>  xvaccountobj_t::get_set_plugin(xvactplugin_t * new_plugin_obj)
+        {
+            if(nullptr == new_plugin_obj) //valid check
+            {
+                xassert(0);
+                return nullptr;
+            }
+            if(new_plugin_obj->get_plugin_type() >= enum_xvaccount_plugin_max)
+            {
+                xerror("xvaccountobj_t::get_set_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d)",new_plugin_obj->get_plugin_type(),enum_xvaccount_plugin_max);
+                return nullptr;
+            }
+            if(new_plugin_obj->is_close() || new_plugin_obj->is_closing() )
+            {
+                xerror("xvaccountobj_t::get_set_plugin,a closed/idled plugin(%s)",new_plugin_obj->dump().c_str());
+                return get_plugin(new_plugin_obj->get_plugin_type());
+            }
+            if(is_close()) //object not avaiable
+            {
+                xerror("xvaccountobj_t::get_set_plugin,closed account(%s)",get_address().c_str());
+                return nullptr;
+            }
+            
+            xvactplugin_t*  old_plugin_obj = NULL;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                //pre-fetch existing one
+                {
+                    xvactplugin_t * existing_ptr = get_plugin_unsafe(new_plugin_obj->get_plugin_type());
+                    if(existing_ptr != NULL)
+                    {
+                        existing_ptr->add_ref();
+                        const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
+                        existing_ptr->set_last_access_time(_timenow);
+                        
+                        return existing_ptr; //not allow overwrited existing working plugin
+                    }
+                }
+                new_plugin_obj->init_meta(*get_meta());
+                //now accupy slot and monitor it
+                set_plugin_unsafe(new_plugin_obj,old_plugin_obj);
+            }
+
+            //do close outside of spin-lock, because it might re-enter
+            if(old_plugin_obj != NULL)
+            {
+                xdbgassert(old_plugin_obj->is_closing());
+                xdbgassert(old_plugin_obj->is_close());
+                
+                old_plugin_obj->close(false);//force closed existing one
+                old_plugin_obj->release_ref();//quickly release reference
+            }
+            
+            //add reference to auto_ptr
+            new_plugin_obj->add_ref();
+            return new_plugin_obj;
         }
     
-        //locked by table or account self in advance
-        bool  xvaccountobj_t::set_plugin_unsafe(xobject_t * new_plugin_obj,enum_xvaccount_plugin_type plugin_type)
+        xauto_ptr<xvactplugin_t> xvaccountobj_t::get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&)> & lambda)
         {
             if(is_close()) //object not avaiable
             {
-                if(new_plugin_obj != nullptr)
-                    xerror("xvaccountobj_t::set_plugin,closed account(%s)",get_address().c_str());
-                return false;
+                xerror("xvaccountobj_t::get_set_plugin,closed account(%s)",get_address().c_str());
+                return nullptr;
             }
-
-            if(new_plugin_obj != nullptr) //setup
+            
+            xvactplugin_t*  old_plugin_obj = NULL;
+            xvactplugin_t * new_plugin_ptr = NULL;
             {
-                if(plugin_type >= enum_xvaccount_plugin_max)
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                //pre-fetch existing one
                 {
-                    xerror("xvaccountobj_t::set_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d)",plugin_type,enum_xvaccount_plugin_max);
-                    return false;
+                    xvactplugin_t * existing_ptr = get_plugin_unsafe(plugin_type);
+                    if(existing_ptr != NULL)
+                    {
+                        existing_ptr->add_ref();//note:add reference for xauto_ptr
+                        const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
+                        existing_ptr->set_last_access_time(_timenow);
+                        
+                        return existing_ptr;
+                    }
                 }
                 
-                xobject_t* existing_plugin_ptr = xatomic_t::xload(m_plugins[plugin_type]);
-                if(existing_plugin_ptr == new_plugin_obj) //same one
-                    return true;
+                //new plugin instance
+                new_plugin_ptr = lambda(*this);//note:ownership transfer to auto_ptr when return
+                new_plugin_ptr->init_meta(*get_meta());
                 
-                //xassert(nullptr == existing_plugin_ptr);
-                if(existing_plugin_ptr != nullptr)
+                //exception check
+                if(NULL == new_plugin_ptr)
                 {
-                    if(existing_plugin_ptr->is_close() == false)
-                        return false;//not allow to replace by different ptr
+                    xassert(new_plugin_ptr != NULL);
+                    return nullptr;
                 }
+                if(new_plugin_ptr->is_close() || new_plugin_ptr->is_closing() )
+                {
+                    xerror("xvaccountobj_t::get_set_plugin,a closed/idled plugin(%s)",new_plugin_ptr->dump().c_str());
+                    new_plugin_ptr->release_ref();
+                    return nullptr;
+                }
+                if(  (new_plugin_ptr->get_plugin_type() >= enum_xvaccount_plugin_max)
+                   ||(new_plugin_ptr->get_plugin_type() != plugin_type) )
+                {
+                    xerror("xvaccountobj_t::get_set_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d),vs ask_plugin_type(%d)",new_plugin_ptr->get_plugin_type(),enum_xvaccount_plugin_max,plugin_type);
+                    
+                    new_plugin_ptr->release_ref();
+                    return nullptr;
+                }
+                
+                //finally accupy slot and monitor it
+                set_plugin_unsafe(new_plugin_ptr,old_plugin_obj);//may hold additional reference
             }
-            //replace existing one by new ptr
-            if(NULL != new_plugin_obj)
-                new_plugin_obj->add_ref();
             
-            xobject_t* old_ptr = xatomic_t::xexchange(m_plugins[plugin_type],new_plugin_obj);
-            if(NULL != old_ptr)//successful
-                old_ptr->release_ref();//quickly releasedd it
-            
-            if(nullptr == new_plugin_obj) //check whether it is ok to close account object
+            //do close outside of spin-lock, because it might re-enter
+            if(old_plugin_obj != NULL)//it must alread closed
             {
-                for(int i = enum_xvaccount_plugin_start; i <= enum_xvaccount_plugin_end; ++i)
-                {
-                    xobject_t* item = m_plugins[i];
-                    if( (item != nullptr) && (item->is_close() == false) )
-                        return true; //indicate setup successful
-                }
-                //close this account after every plugin are reset
-                close(true);//force to close it
+                xdbgassert(old_plugin_obj->is_closing());
+                xdbgassert(old_plugin_obj->is_close());
+                
+                old_plugin_obj->close(false);//force closed existing one
+                old_plugin_obj->release_ref();//quickly release reference
             }
-            //indicate setup successful
-            return true;
+            //note: new_plugin_ptr has been added referene as lambda(*this)
+            return new_plugin_ptr;
+        }
+ 
+        //note:try_reset_plugin may try hold lock and check is_live agian ,and if so then close
+        bool  xvaccountobj_t::try_close_plugin(const uint64_t timenow_ms,enum_xvaccount_plugin_type plugin_type)
+        {
+            if(is_close()) //object not avaiable
+            {
+                xwarn("xvaccountobj_t::try_close_plugin,closed account(%s)",get_address().c_str()); // TODO(jimmy)
+                return true;
+            }
+            if((int)plugin_type >= enum_xvaccount_plugin_max)
+            {
+                xerror("xvaccountobj_t::try_close_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d)",plugin_type,enum_xvaccount_plugin_max);
+                return true;
+            }
+            
+            bool do_close = false;
+            xvactplugin_t* target_plugin_obj = NULL;
+            {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
+                target_plugin_obj = xatomic_t::xload(m_plugins[plugin_type]);
+                if(target_plugin_obj != NULL)
+                {
+                    if(target_plugin_obj->is_live(timenow_ms) == false)
+                    {
+                        //once get here ,it guarentee nobody hold plugin object ptr except xvaccountobj_t and xvtable
+                        
+                        //step #1: mark target idle first,to avoid reuse it
+                        target_plugin_obj->stop();//idle is a pre-status before closed
+                        
+                        //step #2: remove from plugins slot,now ownership transfered to target_plugin_obj
+                        xatomic_t::xstore(m_plugins[plugin_type],(xvactplugin_t*)NULL);
+                        
+                        //step #3: update meta of block
+                        //note: it safe to directly fetch block meta since right now no other accessing blockstore
+                        const xblockmeta_t* blockmeta = target_plugin_obj->get_block_meta();
+                        if(blockmeta != NULL) //block meta need update in-time(synchronization) as it 'lazy mode
+                        {
+                            get_meta()->set_block_meta(*blockmeta);
+                            
+                            //note:dont enable log at release since it sensitive for spinlock
+                            #ifdef DEBUG_XVLEDGER
+                            xdbg_info("xvaccountobj_t::try_close_plugin,meta=%s",blockmeta->ddump().c_str());
+                            #endif
+                        }
+                        
+                        //step #4: update status of account
+                        update_idle_status();
+                        
+                        //step #5: save unsaved data to db if need
+                        target_plugin_obj->save_data();//note: that might have i/o related op
+                        
+                        //step #6: trigger close by setting flag
+                        do_close = true;
+                    }
+                }
+            }
+            if(do_close)
+            {
+                //do close outside of spin-lock, because it might re-enter
+                //and close is a heavy job
+                target_plugin_obj->close(false);
+                target_plugin_obj->release_ref();//release it finally
+            }
+            return do_close;
         }
     
         bool  xvaccountobj_t::handle_event(const xvevent_t & ev)
@@ -153,8 +721,10 @@ namespace top
     
         //---------------------------------------------xvtable_t---------------------------------------------//
         xvtable_t::xvtable_t(xvbook_t & parent_object,const int32_t thread_id,const uint8_t table_index)
-            :xionode_t(parent_object, thread_id,enum_xobject_type_vtable)
+            :xionode_t(parent_object, thread_id,enum_xobject_type_vtable),
+             m_ref_book(parent_object)
         {
+            m_reserved_4byte = 0;
             m_table_index = table_index;
             m_table_combine_addr = parent_object.get_book_combine_addr() | table_index;
             xkinfo("xvtable_t::xvbook_t,table_index(%d) with full_addr(%d)",m_table_index,m_table_combine_addr);
@@ -168,12 +738,12 @@ namespace top
     
         bool   xvtable_t::clean_all(bool force_clean)
         {
-            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
             if(force_clean)
             {
                 for(auto it : m_accounts)
                 {
-                    it.second->close(); //force close first
+                    it.second->close(false); //force close first
                     it.second->release_ref();
                 }
                 m_accounts.clear();
@@ -193,138 +763,231 @@ namespace top
             }
             return true;
         }
-        
-    #ifdef DEBUG //debug only purpose
-        int32_t   xvtable_t::add_ref()
+ 
+        void    xvtable_t::monitor_plugin(xvactplugin_t * plugin_obj)
         {
-            return xionode_t::add_ref();
+            //push to monitor queue
+            {
+                std::function<void(void*)> _add_new_plugin_job = [this](void* _raw_ptr)->void{
+                    xvactplugin_t * _new_obj = (xvactplugin_t*)_raw_ptr;
+                    //transfer ownership of _new_obj to m_monitor_accounts now,so no-need release manually
+                    m_monitor_plugins.insert(std::multimap<uint64_t,xvactplugin_t*>::value_type(_new_obj->get_idle_duration() + get_time_now(),_new_obj));
+                };
+                plugin_obj->add_ref();//add reference for _add_new_account_job
+                post_call(_add_new_plugin_job,(void*)plugin_obj);//send account ptr to store'thread to manage lifecycle
+            }
         }
-        int32_t   xvtable_t::release_ref()
+    
+        void    xvtable_t::monitor_account(xvaccountobj_t * account_obj)
         {
-            return xionode_t::release_ref();
+            //push to monitor queue
+            {
+                std::function<void(void*)> _add_new_account_job = [this](void* _account_ptr)->void{
+                    xvaccountobj_t * _new_obj = (xvaccountobj_t*)_account_ptr;
+                    //transfer ownership of _new_obj to m_monitor_accounts now,so no-need release manually
+                    m_monitor_accounts.insert(std::multimap<uint64_t,xvaccountobj_t*>::value_type(_new_obj->get_idle_duration() + get_time_now(),_new_obj));
+                };
+                account_obj->add_ref();//add reference for _add_new_account_job
+                post_call(_add_new_account_job,(void*)account_obj);//send account ptr to store'thread to manage lifecycle
+            }
         }
-    #endif
+    
+        xvaccountobj_t* xvtable_t::find_account_unsafe(const std::string & account_address)
+        {
+            auto it = m_accounts.find(account_address);
+            if(it != m_accounts.end())
+            {
+                return it->second;
+            }
+            return NULL;
+        }
+    
+        xvaccountobj_t*     xvtable_t::create_account_unsafe(const std::string & account_address)
+        {
+            xvaccountobj_t * new_account_obj = new xvaccountobj_t(*this,account_address);
+            return new_account_obj;
+        }
     
         xauto_ptr<xvaccountobj_t>   xvtable_t::get_account(const std::string & account_address)
         {
-            return get_account_unsafe(account_address);
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvaccountobj_t * account_ptr = get_account_unsafe(account_address);
+            account_ptr->add_ref(); //add reference to pair xauto_ptr
+            
+            return account_ptr;
         }
         
         xvaccountobj_t*   xvtable_t::get_account_unsafe(const std::string & account_address)
         {
-            std::lock_guard<std::recursive_mutex> locker(m_lock);
             auto & exist_account_ptr = m_accounts[account_address];
-            if( (exist_account_ptr != NULL) && (exist_account_ptr->is_close() == false) ) //valid account object
+            if(   (exist_account_ptr != NULL)
+               && (exist_account_ptr->is_close() == false)
+               && (exist_account_ptr->is_closing() == false)
+            ) //valid account object
             {
-                exist_account_ptr->add_ref();
                 return exist_account_ptr;
             }
-            
+
             xvaccountobj_t * old_account_obj = exist_account_ptr; //backup first
-            xvaccountobj_t * new_account_obj = new xvaccountobj_t(*this,account_address);
-            exist_account_ptr = new_account_obj;
+            xvaccountobj_t * new_account_obj = create_account_unsafe(account_address);
+            exist_account_ptr = new_account_obj;//overwrite the referenced exist_account_ptr
             if(old_account_obj != NULL)//it must has been closed
             {
-                old_account_obj->close();
-                old_account_obj->release_ref();
+                old_account_obj->close(false);//force makr as closed
+                old_account_obj->release_ref();//release it
             }
-            
-            new_account_obj->add_ref(); //add reference for xauto_ptr
+            //push to monitor queue
+            monitor_account(new_account_obj);
             return new_account_obj;
         }
-    
-        xauto_ptr<xobject_t>  xvtable_t::get_account_plugin(const std::string & account_address,enum_xvaccount_plugin_type plugin_type)
+            
+        bool xvtable_t::try_close_account(const int64_t current_time_ms,const std::string & account_address)
         {
-            std::lock_guard<std::recursive_mutex> locker(m_lock);
-            auto & exist_account_ptr = m_accounts[account_address];
-            if( (exist_account_ptr != NULL) && (exist_account_ptr->is_close() == false) ) //valid account object
-                return exist_account_ptr->get_plugin_unsafe(plugin_type);
-            
-            xvaccountobj_t * old_account_obj = exist_account_ptr; //backup first
-            xvaccountobj_t * new_account_obj = new xvaccountobj_t(*this,account_address);
-            exist_account_ptr = new_account_obj;
-            if(old_account_obj != NULL)
+            bool  do_close = false;
+            xvaccountobj_t * target_account_ptr = NULL;
             {
-                old_account_obj->close();
-                old_account_obj->release_ref();
-            }
-            
-            return new_account_obj->get_plugin_unsafe(plugin_type);
-        }
-    
-        //return raw ptr that has been add_ref,caller need manually release it
-        xobject_t*    xvtable_t::get_account_plugin_unsafe(const std::string & account_address,enum_xvaccount_plugin_type plugin_type)
-        {
-            std::lock_guard<std::recursive_mutex> locker(m_lock);
-            auto & exist_account_ptr = m_accounts[account_address];
-            if( (exist_account_ptr != NULL) && (exist_account_ptr->is_close() == false) ) //valid account object
-                return exist_account_ptr->get_plugin_unsafe(plugin_type);
-            
-            xvaccountobj_t * old_account_obj = exist_account_ptr; //backup first
-            xvaccountobj_t * new_account_obj = new xvaccountobj_t(*this,account_address);
-            exist_account_ptr = new_account_obj;
-            if(old_account_obj != NULL)
-            {
-                old_account_obj->close();
-                old_account_obj->release_ref();
-            }
-            
-            return new_account_obj->get_plugin_unsafe(plugin_type);
-        }
-    
-        bool  xvtable_t::set_account_plugin(const std::string & account_address,xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type)
-        {
-            std::lock_guard<std::recursive_mutex> locker(m_lock);
-            if(nullptr != plugin_obj)
-            {
-                auto & exist_account_ptr = m_accounts[account_address];
-                if( (exist_account_ptr != NULL) && (exist_account_ptr->is_close() == false) ) //valid account object
-                    return exist_account_ptr->set_plugin_unsafe(plugin_obj,plugin_type);
-
-                xvaccountobj_t * old_account_obj = exist_account_ptr; //backup first
-                xvaccountobj_t * new_account_obj = new xvaccountobj_t(*this,account_address);
-                exist_account_ptr = new_account_obj;
-                if(old_account_obj != NULL)
-                {
-                    old_account_obj->close();
-                    old_account_obj->release_ref();
-                }
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
                 
-                return exist_account_ptr->set_plugin_unsafe(plugin_obj,plugin_type);
-            }
-            else //reset case
-            {
+                //find target account object ptr
                 auto it = m_accounts.find(account_address);
-                if(it != m_accounts.end())//found exsiting one
+                if(it != m_accounts.end())
                 {
-                    if(it->second->is_close() == false) //still be valid account object
-                        it->second->set_plugin_unsafe(plugin_obj,plugin_type);
-                    
-                    if(it->second->is_close()) //check again after reset
+                    target_account_ptr = it->second;
+                    if(target_account_ptr != NULL)
                     {
-                        it->second->release_ref();
-                        m_accounts.erase(it);
+                        if(target_account_ptr->is_live(current_time_ms) == false)
+                        {
+                            //once get here ,it guarentee nobody hold target_account_ptr object ptr except xvtable
+                            //actually also guanrentee no-plugin is avaiable in this account object
+                            
+                            //step #1: mark account ptr as closing status to avoid reuse it
+                            target_account_ptr->stop();//also push all plugin submit their data
+                            
+                            //step #2: remove from table ' slot,now ownership be transfered to target_account_ptr
+                            m_accounts.erase(it);
+                            
+                            //step #3: save all unsaved thing if have.but at most case it just return as no-change
+                            target_account_ptr->save_meta(); //note:io related job
+                            
+                            //step #4: set flag to clean it
+                            do_close = true;
+                        }
                     }
                 }
-                return true;
             }
+            if(do_close)
+            {
+                target_account_ptr->close(false);//close
+                target_account_ptr->release_ref();//release it
+            }
+            return do_close;
         }
     
-        bool xvtable_t::close_account(const std::string & account_address)
+        bool   xvtable_t::on_timer_for_accounts(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms)
         {
-            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            std::deque<xvaccountobj_t*> _remonitor_list;
             
-            auto it = m_accounts.find(account_address);
-            if(it != m_accounts.end())
+            int   expired_items_count = 0;
+            auto  expire_it = m_monitor_accounts.begin();
+            while(expire_it != m_monitor_accounts.end())
             {
-                if(it->second->is_close()) //protection: not allow close with any valid plugin
+                //map or multiplemap are sorted as < operation as default
+                if(current_time_ms < (int64_t)expire_it->first )
+                    break;
+                
+                xvaccountobj_t* _test_for_account = expire_it->second;
+                if(_test_for_account != nullptr)
                 {
-                    it->second->release_ref();
-                    m_accounts.erase(it);
-                    return true;
+                    if(_test_for_account->is_live(current_time_ms) == false)//quick test whether idle too long
+                    {
+                        _test_for_account->save_meta();//do heavy job at this thread to reduce io within table' spinlock
+                        if(try_close_account(current_time_ms, _test_for_account->get_address()))
+                           _test_for_account->release_ref();//destroy it finally
+                        else
+                           _remonitor_list.push_back(_test_for_account);//transfer to list
+                    }
+                    else
+                    {
+                        _remonitor_list.push_back(_test_for_account);//transfer to list
+                    }
                 }
-                return false; //close fail
+                auto old = expire_it; //just copy the old value
+                ++expire_it;
+                m_monitor_accounts.erase(old);
+                ++expired_items_count;
             }
+            
+            for(auto it : _remonitor_list)
+            {
+                m_monitor_accounts.insert(std::multimap<uint64_t,xvaccountobj_t*>::value_type(it->get_idle_duration() + current_time_ms,it));
+            }
+            return true;
+        }
+        
+        bool   xvtable_t::on_timer_for_plugins(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms)
+        {
+            std::deque<xvactplugin_t*> _remonitor_list;
+            
+            int   expired_items_count = 0;
+            auto  expire_it = m_monitor_plugins.begin();
+            while(expire_it != m_monitor_plugins.end())
+            {
+                //map or multiplemap are sorted as < operation as default
+                if(current_time_ms < (int64_t)expire_it->first )
+                    break;
+                
+                xvactplugin_t* _test_for_plugin = expire_it->second;
+                if(_test_for_plugin != nullptr)
+                {
+                    if(_test_for_plugin->is_live(current_time_ms) == false)//quick test
+                    {
+                        //try do heave job first
+                        {
+                            m_lock.lock();
+                            _test_for_plugin->save_data();
+                            m_lock.unlock();
+                        }
+                        //close_plugin may try hold lock and check is_live agian ,and if so may close
+                        if(_test_for_plugin->get_account_obj()->try_close_plugin(current_time_ms,_test_for_plugin->get_plugin_type()))
+                        {
+                            //force to save meta once one plugin is offline
+                            _test_for_plugin->get_account_obj()->save_meta();
+
+                            xinfo("xvtable_t::timer,closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
+                            _test_for_plugin->release_ref();//destroy it finally
+                        }
+                        else
+                            _remonitor_list.push_back(_test_for_plugin);//transfer to list
+                    }
+                    else
+                    {
+                        _remonitor_list.push_back(_test_for_plugin);//transfer to list
+                    }
+                }
+                auto old = expire_it; //just copy the old value
+                ++expire_it;
+                m_monitor_plugins.erase(old);
+                ++expired_items_count;
+            }
+            
+            for(auto it : _remonitor_list)
+            {
+                m_monitor_plugins.insert(std::multimap<uint64_t,xvactplugin_t*>::value_type(it->get_idle_duration() + current_time_ms,it));
+            }
+            return true;
+        }
+    
+        bool   xvtable_t::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms)
+        {
+            on_timer_for_plugins(thread_id, timer_id, current_time_ms, start_timeout_ms);
+            on_timer_for_accounts(thread_id, timer_id, current_time_ms, start_timeout_ms);
+            return true;
+        }
+    
+        bool  xvtable_t::on_timer_stop(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms)
+        {
+            //never happend actually
+            xerror("xvtable_t::on_timer_stop,timer is stopped!,m_table_index(%llu)",m_table_index);
             return true;
         }
  
@@ -332,9 +995,14 @@ namespace top
         xvbook_t::xvbook_t(xvledger_t & parent_object,const int32_t thread_id,const uint8_t book_index)
           :xionode_t(parent_object, thread_id,enum_xobject_type_vbook)
         {
+            m_monitor_timer  = nullptr;
             m_book_index = book_index;
             m_book_combine_addr = (parent_object.get_ledger_id() << 10) | set_vledger_subaddr(book_index,0);
             memset(m_tables,0,sizeof(m_tables));
+            
+            //each book has own timer
+            m_monitor_timer = get_thread()->create_timer((base::xtimersink_t*)this);
+            m_monitor_timer->start(enum_plugin_idle_check_interval, enum_plugin_idle_check_interval); //check account by every 10 seconds
             
             xkinfo("xvbook_t::xvbook_t,book_index(%d) with full_addr(%d)",m_book_index,m_book_combine_addr);
         }
@@ -343,6 +1011,13 @@ namespace top
             //never destory & never release,should not enter here
             xerror("xvbook_t::destory,book_index(%d) with full_addr(%d)",m_book_index,m_book_combine_addr);
             clean_all(true);
+            
+            if(m_monitor_timer != nullptr)
+            {
+                m_monitor_timer->stop();
+                m_monitor_timer->close();
+                m_monitor_timer->release_ref();
+            }
         }
         
         bool  xvbook_t::clean_all(bool force_clean)
@@ -387,12 +1062,44 @@ namespace top
             return new xvtable_t(*this,get_thread_id(),(uint8_t)table_index);
         }
         
+        bool  xvbook_t::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms)
+        {
+            for (int i = 0; i < enum_vbook_has_tables_count; i++)
+            {
+                xvtable_t* table_ptr = m_tables[i];
+                if(table_ptr != NULL)
+                {
+                    table_ptr->on_timer_fire(thread_id,timer_id,current_time_ms,start_timeout_ms);
+                }
+            }
+            return true;
+        }
+        
+        bool  xvbook_t::on_timer_start(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms)   //attached into io-thread
+        {
+            return true;
+        }
+        
+        bool  xvbook_t::on_timer_stop(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms)   //detach means it detach
+        {
+            for (int i = 0; i < enum_vbook_has_tables_count; i++)
+            {
+                xvtable_t* table_ptr = m_tables[i];
+                if(table_ptr != NULL)
+                {
+                    table_ptr->on_timer_stop(errorcode,thread_id,timer_id,cur_time_ms,timeout_ms);
+                }
+            }
+            return true;
+        }
+        
         //---------------------------------------------xvledger_t---------------------------------------------//
         xvledger_t::xvledger_t(xvchain_t & parent_object,const int32_t thread_id,const uint16_t vledger_id)
             :xionode_t(parent_object,thread_id,enum_xobject_type_vledger)
         {
             m_ledger_id = vledger_id;
             memset(m_books,0,sizeof(m_books));
+            
             xkinfo("xvledger_t::xvledger_t,ledger(%d)",m_ledger_id);
         }
     
@@ -442,17 +1149,6 @@ namespace top
             return get_table(account_obj.get_xvid())->get_account(account_obj.get_address());
         }
     
-        //the returned ptr has done add_ref before return,so release it when nolonger need manually
-        //it is multiple thread safe
-        xvaccountobj_t*   xvledger_t::get_account_unsafe(const std::string & account_address)
-        {
-            return get_table(account_address)->get_account_unsafe(account_address);
-        }
-        xvaccountobj_t*   xvledger_t::get_account_unsafe(const xvaccount_t & account_obj)
-        {
-            return get_table(account_obj.get_xvid())->get_account_unsafe(account_obj.get_address());
-        }
-
         xvbook_t*  xvledger_t::get_book(const xvid_t & account_id)
         {
             if( (m_ledger_id != 0) && (m_ledger_id != get_vledger_ledger_id(account_id)) )
@@ -479,7 +1175,7 @@ namespace top
         {
             return new xvbook_t(*this,get_thread_id(),(uint8_t)book_index);
         }
-
+    
         //----------------------------------xvchain_t------------------------------------//
         xvchain_t * xvchain_t::__global_vchain_instance = NULL;
         xvchain_t &  xvchain_t::instance(const uint16_t chain_id)
@@ -487,20 +1183,31 @@ namespace top
             if(__global_vchain_instance != NULL)
                 return *__global_vchain_instance;
             
-            xiothread_t *_monitor_thread = xcontext_t::instance().find_thread(xiothread_t::enum_xthread_type_monitor, false);
+            //give dedicated thread for ledger and chain
+             xiothread_t *_monitor_thread = base::xcontext_t::instance().find_thread(base::xiothread_t::enum_xthread_type_monitor, false);
             if(NULL == _monitor_thread)
-                _monitor_thread = xiothread_t::create_thread(base::xcontext_t::instance(),base::xiothread_t::enum_xthread_type_monitor,-1);
+                _monitor_thread = base::xiothread_t::create_thread(base::xcontext_t::instance(),base::xiothread_t::enum_xthread_type_monitor,-1);
             
             xassert(_monitor_thread != NULL);
             __global_vchain_instance = new xvchain_t(_monitor_thread->get_thread_id(),chain_id);
             return *__global_vchain_instance;
         }
-    
+ 
         xvchain_t::xvchain_t(const int32_t thread_id,const uint16_t chain_id)
             :xionode_t(xcontext_t::instance(),thread_id,enum_xobject_type_vchain)
         {
+            //initialize
+            m_reserved_1 = 0;
+            m_reserved_2 = 0;
+            m_reserved_3 = 0;
+            m_chain_id = 0;
+            m_current_node_roles = 0;
+            m_current_process_id = 0;
+            //end of initialize
+            
             m_chain_id = chain_id;
             memset(m_ledgers,0,sizeof(m_ledgers));
+            m_current_process_id = base::xsys_utl::get_sys_process_id();
             
             //build default stores
             xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
@@ -511,6 +1218,10 @@ namespace top
             
             xauto_ptr<xvcontractstore_t> default_contract_store(new xvcontractstore_t());
             set_xcontractstore(default_contract_store());
+            
+            xvdrecycle_mgr * default_recycle_mgr = new xvdrecycle_mgr();
+            set_xrecyclemgr(default_recycle_mgr);//may hold addtional reference
+            default_recycle_mgr->release_ref();
             
             xkinfo("xvchain_t::xvchain_t,chain_id(%d)",m_chain_id);
         }
@@ -561,17 +1272,6 @@ namespace top
             return get_table(account_obj.get_xvid())->get_account(account_obj.get_address());
         }
     
-        //the returned ptr has done add_ref before return,so release it when nolonger need manually
-        //it is multiple thread safe
-        xvaccountobj_t*  xvchain_t::get_account_unsafe(const std::string & account_address)
-        {
-            return get_table(account_address)->get_account_unsafe(account_address);
-        }
-        xvaccountobj_t*  xvchain_t::get_account_unsafe(const xvaccount_t & account_obj)
-        {
-            return get_table(account_obj.get_xvid())->get_account_unsafe(account_obj.get_address());
-        }
-     
         xvledger_t*  xvchain_t::get_ledger(const xvid_t & account_id)
         {
             if((m_chain_id != 0) && (m_chain_id != get_vledger_chain_id(account_id)))
@@ -641,6 +1341,18 @@ namespace top
             return (xveventbus_t*)target;
         }
     
+        xvdrecycle_mgr* xvchain_t::get_xrecyclemgr() //global recycler manager
+        {
+            xvdrecycle_mgr * mgr_obj = (xvdrecycle_mgr*)m_plugins[enum_xvchain_plugin_recycle_mgr];
+            return mgr_obj;
+        }
+     
+        xvdrecycle_t*  xvchain_t::get_xrecycler(enum_vdata_recycle_type type)
+        {
+            xvdrecycle_mgr * mgr_obj = (xvdrecycle_mgr*)m_plugins[enum_xvchain_plugin_recycle_mgr];
+            return mgr_obj->get_recycler(type);
+        }
+    
         bool    xvchain_t::set_xdbstore(xvdbstore_t * new_store)
         {
             xassert(new_store != NULL);
@@ -693,5 +1405,15 @@ namespace top
             
             return register_plugin(new_mbus,enum_xvchain_plugin_event_mbus);
         }
+    
+        bool  xvchain_t::set_xrecyclemgr(xvdrecycle_mgr* new_mgr)
+        {
+            xassert(new_mgr != NULL);
+            if(NULL == new_mgr)
+                return false;
+            
+            return register_plugin(new_mgr,enum_xvchain_plugin_recycle_mgr);
+        }
+    
     };//end of namespace of base
 };//end of namespace of top

@@ -226,6 +226,7 @@ public:
     }
 
     void query_table_tx_info(std::vector<std::string> const & address_vec, const uint32_t start_timestamp, const uint32_t end_timestamp) {
+#if 0  // TODO(jimmy) take too much memory,will cause oom
         auto query_and_make_file = [start_timestamp, end_timestamp](db_export_tools *arg, std::string account) {
             json result_json;
             arg->query_table_tx_info(account, start_timestamp, end_timestamp, result_json);
@@ -265,6 +266,22 @@ public:
                 all_thread[i].join();
             }
         }
+#else
+        mkdir("all_table_tx_info", 0750);
+        for (size_t i = 0; i < address_vec.size(); i++) {
+            auto t0 = xtime_utl::time_now_ms();
+            json result_json;
+            query_table_tx_info(address_vec[i], start_timestamp, end_timestamp, result_json);
+            auto t1 = xtime_utl::time_now_ms();
+            std::string filename = "./all_table_tx_info/" + address_vec[i] + "_tx_info.json";
+            std::ofstream out_json(filename);
+            out_json << std::setw(4) << result_json[address_vec[i]];
+            std::cout << "===> " << filename << " generated success!" << std::endl;
+            result_json.clear();
+            auto t2 = xtime_utl::time_now_ms();
+            std::cout << "table=" << address_vec[i] << " t1-t0=" << t1-t0 << " t2-t1=" << t2-t1 << std::endl;
+        }        
+#endif        
     }
 
     void query_block_num() {
@@ -857,7 +874,7 @@ private:
         j["multi detail"] = setj(multi);
         result_json[account] = j;
         auto t4 = xtime_utl::time_now_ms();
-        // std::cout << t2-t1 << " " << t3-t2 << " " << t4-t3 << std::endl;
+        std::cout << "block_height=" << block_height << " t2-t1=" << t2-t1 << " t3-t2=" << t3-t2 << " t4-t3=" << t4-t3 << std::endl;
     }
 
     void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root) {

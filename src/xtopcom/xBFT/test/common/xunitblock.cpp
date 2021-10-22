@@ -41,7 +41,7 @@ namespace top
                 if(body_input.empty())
                     set_block_class(base::enum_xvblock_class_nil);
                 else
-                    set_block_class(base::enum_xvblock_class_full); //test
+                    set_block_class(base::enum_xvblock_class_light); //test
             }
         }
         
@@ -134,6 +134,9 @@ namespace top
         
         xunitblock_t*  xunitblock_t::create_unitblock(const std::string & account,uint64_t height,uint64_t clock,uint64_t viewid,const std::string & last_block_hash,const std::string & last_full_block_hash,const uint64_t last_full_block_height,const std::string & body_input,const std::string & body_output) //link xunitheader_t and xunitcert_t into xunitblock_t
         {
+            if(0 == height)
+                return create_genesis_block(account);
+            
             //setp#1 create header object first,must initialize everyting here
             xunitheader_t* _header_obj = new xunitheader_t(account,height,last_block_hash,last_full_block_hash,last_full_block_height,body_input);
 
@@ -242,7 +245,7 @@ namespace top
         {
         }
         
-        base::xauto_ptr<base::xvblock_t>   xunitblockstore_t::get_genesis_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>   xunitblockstore_t::get_genesis_block(const std::string & account,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             base::xvblock_t* & genesis_block_ptr = _account_blocks[0];
@@ -272,7 +275,7 @@ namespace top
             return genesis_block_ptr;
         }
  
-        base::xauto_ptr<base::xvblock_t>   xunitblockstore_t::get_latest_cert_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>   xunitblockstore_t::get_latest_cert_block(const std::string & account,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             if(_account_blocks.empty())
@@ -283,7 +286,7 @@ namespace top
             return _account_blocks.rbegin()->second;
         }
 
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_locked_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_locked_block(const std::string & account,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
@@ -298,7 +301,7 @@ namespace top
             return  get_genesis_block(account);
         }
         
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_committed_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_committed_block(const std::string & account,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
@@ -313,7 +316,7 @@ namespace top
             return  get_genesis_block(account);
         }
         
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_executed_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_executed_block(const std::string & account,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
@@ -328,7 +331,7 @@ namespace top
             return  get_genesis_block(account);
         }
         
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_connected_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_connected_block(const std::string & account,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
@@ -343,7 +346,7 @@ namespace top
             return  get_genesis_block(account);
         }
         
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::query_block(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::query_block(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account.get_address()];
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
@@ -358,7 +361,7 @@ namespace top
             return nullptr;
         }
         
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::query_block(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::query_block(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account.get_address()];
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
@@ -373,7 +376,7 @@ namespace top
             return nullptr;
         }
         
-        base::xblock_vector xunitblockstore_t::query_block(const base::xvaccount_t & account,const uint64_t height)//might mutiple certs at same height
+        base::xblock_vector xunitblockstore_t::query_block(const base::xvaccount_t & account,const uint64_t height,const int atag)//might mutiple certs at same height
         {
             std::vector<base::xvblock_t*> all_blocks_at_height;
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account.get_address()];
@@ -389,7 +392,7 @@ namespace top
             return base::xblock_vector(all_blocks_at_height);
         }
         
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::get_latest_full_block(const std::string & account)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::get_latest_full_block(const std::string & account,const int atag)
         {
             base::xauto_ptr<base::xvblock_t> _latest_block = get_latest_cert_block(account);//full-block could be cert,lock, or commit status
             if( (_latest_block->get_block_class() == base::enum_xvblock_class_full) || (_latest_block->get_height() == 0) )
@@ -397,11 +400,11 @@ namespace top
                 _latest_block->add_ref();//added reference before return
                 return _latest_block.get();//note:genesis is qualifed as definition of full block
             }
-            return load_block_object(account,_latest_block->get_last_full_block_height(),0,false);
+            return load_block_object(account,_latest_block->get_last_full_block_height(),0,0);
         }
         
         //one api to get latest_commit/latest_lock/latest_cert for better performance
-        base::xblock_mptrs     xunitblockstore_t::get_latest_blocks(const base::xvaccount_t & account)
+        base::xblock_mptrs     xunitblockstore_t::get_latest_blocks(const base::xvaccount_t & account,const int atag)
         {
             base::xvblock_t*  cert_block = nullptr;
             base::xvblock_t*  lock_block = nullptr;
@@ -437,7 +440,7 @@ namespace top
         }
         
         //just load vblock object ,but not load header and body those need load seperately if need
-        base::xauto_ptr<base::xvblock_t>     xunitblockstore_t::load_block_object(const std::string & account,const uint64_t height,bool ask_full_load)
+        base::xauto_ptr<base::xvblock_t>     xunitblockstore_t::load_block_object(const std::string & account,const uint64_t height,bool ask_full_load,const int atag)
         {
             std::map<uint64_t,base::xvblock_t*> & _account_blocks = m_blocks[account];
             auto it = _account_blocks.find(height);
@@ -468,7 +471,7 @@ namespace top
             return new_block_ptr;
         }
         
-        bool    xunitblockstore_t::load_block_input(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
+        bool    xunitblockstore_t::load_block_input(base::xvblock_t* block_ptr,const int atag) //load and assign body data into  xvblock_t
         {
             xassert(block_ptr != NULL);
             if(NULL == block_ptr)
@@ -485,7 +488,7 @@ namespace top
             return block_ptr->set_input_resources(_content);
         }
         
-        bool    xunitblockstore_t::load_block_output(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
+        bool    xunitblockstore_t::load_block_output(base::xvblock_t* block_ptr,const int atag) //load and assign body data into  xvblock_t
         {
             xassert(block_ptr != NULL);
             if(NULL == block_ptr)
@@ -502,7 +505,7 @@ namespace top
             return block_ptr->set_output_resources(_content);
         }
 
-        bool    xunitblockstore_t::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks) //better performance
+        bool    xunitblockstore_t::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks,const int atag) //better performance
         {
             for(auto it : batch_store_blocks)
             {
@@ -511,7 +514,7 @@ namespace top
             return true;
         }
         
-        bool    xunitblockstore_t::store_block(base::xvblock_t* block_ptr) //update old one or insert as new
+        bool    xunitblockstore_t::store_block(base::xvblock_t* block_ptr,const int atag) //update old one or insert as new
         {
             if(NULL == block_ptr)
                 return false;
@@ -562,7 +565,7 @@ namespace top
             
             return true;
         }
-        bool    xunitblockstore_t::delete_block(base::xvblock_t* block_ptr)//return error code indicate what is result
+        bool    xunitblockstore_t::delete_block(base::xvblock_t* block_ptr,const int atag)//return error code indicate what is result
         {
             if(NULL == block_ptr)
                 return false;
@@ -588,80 +591,74 @@ namespace top
             return true;
         }
         
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_genesis_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_genesis_block(const base::xvaccount_t & account,const int atag)
         {
             return get_genesis_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_cert_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_cert_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_cert_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_locked_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_locked_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_locked_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_committed_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_committed_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_committed_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_executed_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_executed_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_executed_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_connected_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_connected_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_connected_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::get_latest_full_block(const base::xvaccount_t & account)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::get_latest_full_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_full_block(account.get_address());
         }
     
-        base::xblock_vector       xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height)
+        base::xblock_vector       xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag)
         {
             return nullptr;
         }
         
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag)
         {
             return nullptr;
         }
         
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load,const int atag)
         {
             return nullptr;
         }
         
-        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load)
+        base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load,const int atag)
         {
             return nullptr;
         }
         
-        bool  xunitblockstore_t::store_block(const base::xvaccount_t & account,base::xvblock_t* block)
+        bool  xunitblockstore_t::store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
         {
             return store_block(block);
         }
-        bool  xunitblockstore_t::delete_block(const base::xvaccount_t & account,base::xvblock_t* block)
+        bool  xunitblockstore_t::delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
         {
             return delete_block(block);
         }
-        bool  xunitblockstore_t::load_block_input(const base::xvaccount_t & account,base::xvblock_t* block)
+        bool  xunitblockstore_t::load_block_input(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
         {
             return load_block_input(block);
         }
-        bool  xunitblockstore_t::load_block_output(const base::xvaccount_t & account,base::xvblock_t* block)
+        bool  xunitblockstore_t::load_block_output(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
         {
             return load_block_output(block);
         }
         
         //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
-        bool   xunitblockstore_t::clean_caches(const base::xvaccount_t & account)
-        {
-            return true;
-        }
-        
-        //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-        bool   xunitblockstore_t::reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms)
+        bool   xunitblockstore_t::clean_caches(const base::xvaccount_t & account,const int atag)
         {
             return true;
         }

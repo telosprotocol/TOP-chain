@@ -18,7 +18,6 @@ public: //return raw ptr with added reference,caller respond to release it after
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(const std::string & account) override {return nullptr;}//highest view# for any status
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(const std::string & account)    override {return nullptr;}//block with locked status
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(const std::string & account) override {return nullptr;}//block with committed status
-    virtual base::xauto_ptr<base::xvblock_t>  get_latest_executed_block(const std::string & account)  override {return nullptr;}//block with executed status
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const std::string & account) override {return nullptr;}//block connected to genesis
     virtual xauto_ptr<xvblock_t>  get_latest_full_block(const std::string & account) override {return nullptr;}//block has full state,genesis is a full block
     //just load vblock object but not load header and body those need load seperately if need.
@@ -37,7 +36,6 @@ public://better performance,and return raw ptr with added reference,caller respo
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(const base::xvaccount_t & account)  override {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(const base::xvaccount_t & account)   override {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(const base::xvaccount_t & account)override {return nullptr;}
-    virtual base::xauto_ptr<base::xvblock_t>  get_latest_executed_block(const base::xvaccount_t & account) override {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account)override {return nullptr;}
     virtual xauto_ptr<xvblock_t>  get_latest_full_block(const xvaccount_t & account) override {return nullptr;} //block has full state,genesis is a full block
 	//ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)

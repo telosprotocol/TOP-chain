@@ -49,9 +49,6 @@ TEST_F(test_block_executed, inorder) {
     }
 
     EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), max_count - 2);
-    auto exe_blk = blockstore->get_latest_executed_block(mocktable);
-    EXPECT_EQ(exe_blk->get_height(), max_count - 2);
-    EXPECT_EQ(exe_blk->get_block_hash(), tableblocks[max_count - 2]->get_block_hash());
 }
 
 TEST_F(test_block_executed, disorder) {
@@ -72,17 +69,11 @@ TEST_F(test_block_executed, disorder) {
 
     {
         EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), hole_height - 1 - 2);
-        auto exe_blk = blockstore->get_latest_executed_block(mocktable);
-        EXPECT_EQ(exe_blk->get_height(), hole_height - 1 - 2);
-        EXPECT_EQ(exe_blk->get_block_hash(), tableblocks[hole_height - 1 - 2]->get_block_hash());
     }
 
     {
         ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[hole_height].get()));
         EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), max_count - 2);
-        auto exe_blk = blockstore->get_latest_executed_block(mocktable);
-        EXPECT_EQ(exe_blk->get_height(), max_count - 2);
-        EXPECT_EQ(exe_blk->get_block_hash(), tableblocks[max_count - 2]->get_block_hash());
     }
 
 }
@@ -105,9 +96,6 @@ TEST_F(test_block_executed, execute_height_update_1) {
 
     {
         EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), hole_height - 1 - 2);
-        auto exe_blk = blockstore->get_latest_executed_block(mocktable);
-        EXPECT_EQ(exe_blk->get_height(), hole_height - 1 - 2);
-        EXPECT_EQ(exe_blk->get_block_hash(), tableblocks[hole_height - 1 - 2]->get_block_hash());
     }
 
     std::cout << "before store hole, execute height = " << blockstore->get_latest_executed_block_height(mocktable) << std::endl;
@@ -172,7 +160,7 @@ TEST_F(test_block_executed, execute_height_update_2) {
         xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
     }
 }
-
+#if 0 // TODO(jimmy) xacctmeta_t is deleted
 TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -183,7 +171,7 @@ TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     xassert(tableblocks.size() == max_count + 1);
 
     std::string table_addr = mocktable.get_account();
-    blockstore->reset_cache_timeout(mocktable, 100); // idle time change to 100ms
+    // blockstore->reset_cache_timeout(mocktable, 100); // idle time change to 100ms
     std::string meta_path = "0/" + table_addr + "/meta";
     base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
 
@@ -231,7 +219,7 @@ TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     }
     xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
 }
-
+#endif
 // // xaccount_cmd_ptr_t create_or_modify_property(xstore_face_t* store, const std::string &address, const std::string& list_name, const std::string& item_value) {
 // //     auto account = store->clone_account(address);
 // //     xaccount_cmd_ptr_t cmd;
