@@ -78,23 +78,26 @@ public:
     std::string target_action_data() const;
     data::xconsensus_action_stage_t action_stage() const;
 
-    uint32_t size() const;
-    uint32_t deposit() const;
+    uint64_t last_nonce() const;
+    uint64_t nonce() const;
+    uint256_t hash() const;
+    uint64_t deposit() const;
     uint32_t used_tgas() const;
     uint32_t used_disk() const;
+    uint32_t size() const;
     std::string digest_hex() const;
     uint32_t last_action_send_tx_lock_tgas() const;
     uint32_t last_action_used_deposit() const;
     uint32_t last_action_recv_tx_use_send_tx_tgas() const;
     data::enum_xunit_tx_exec_status last_action_exec_status() const;
 
-    bool verify_action(std::error_code & ec);
-    void execute_default_source_action(contract_common::xcontract_execution_fee_t & fee_change);
-    void execute_default_target_action(contract_common::xcontract_execution_fee_t & fee_change);
-    void execute_default_confirm_action(contract_common::xcontract_execution_fee_t & fee_change);
+    xcontract_execution_fee_t action_preprocess(std::error_code & ec);
 
 private:
-    void update_tgas_disk_sender(bool is_contract, contract_common::xcontract_execution_fee_t & fee_change, std::error_code & ec);
+    xcontract_execution_fee_t execute_default_source_action();
+    xcontract_execution_fee_t execute_default_target_action();
+    xcontract_execution_fee_t execute_default_confirm_action();
+    void update_tgas_disk_sender(bool is_contract, xcontract_execution_fee_t & fee_change, std::error_code & ec);
     void calc_resource(uint32_t & tgas, uint32_t deposit, uint32_t & used_deposit, std::error_code & ec);
     void calc_used_tgas(uint32_t deposit, uint32_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const;
     void incr_used_tgas(uint64_t num, std::error_code & ec);

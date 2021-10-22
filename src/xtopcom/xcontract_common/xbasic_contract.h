@@ -9,8 +9,10 @@
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xproperties/xproperty_initializer.h"
+#include "xcontract_common/xproperties/xproperty_integer.h"
+#include "xcontract_common/xproperties/xproperty_map.h"
+#include "xcontract_common/xproperties/xproperty_string.h"
 #include "xcontract_common/xproperties/xproperty_token.h"
-#include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xtoken.h"
 
 NS_BEG2(top, contract_common)
@@ -40,6 +42,22 @@ protected:
     xcontract_metadata_t m_contract_meta;
 
     properties::xtoken_property_t m_balance{this};
+    properties::xtoken_property_t m_burn_balance{data::XPROPERTY_BALANCE_BURN, this};
+    properties::xtoken_property_t m_lock_balance{data::XPROPERTY_BALANCE_LOCK, this};
+    properties::xtoken_property_t m_tgas_balance{data::XPROPERTY_BALANCE_PLEDGE_TGAS, this};
+    properties::xtoken_property_t m_vote_balance{data::XPROPERTY_BALANCE_PLEDGE_VOTE, this};
+
+    properties::xuint64_property_t m_lock_tgas{data::XPROPERTY_LOCK_TGAS, this};
+    properties::xstring_property_t m_used_tgas{data::XPROPERTY_USED_TGAS_KEY, this};
+    properties::xstring_property_t m_last_tx_hour{data::XPROPERTY_LAST_TX_HOUR_KEY, this};
+
+    properties::xmap_property_t<std::string, std::string> m_vote_detail{data::XPROPERTY_PLEDGE_VOTE_KEY, this};
+    properties::xstring_property_t m_expire_vote_token{data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, this};
+    properties::xuint64_property_t m_unvote_num{data::XPROPERTY_UNVOTE_NUM, this};
+
+    properties::xmap_property_t<std::string, std::string> m_tx_info{data::XPROPERTY_TX_INFO, this};
+    properties::xuint64_property_t m_create_time{data::XPROPERTY_ACCOUNT_CREATE_TIME, this};
+    properties::xmap_property_t<std::string, std::string> m_lock_token{data::XPROPERTY_LOCK_TOKEN_KEY, this};
 
 protected:
     xtop_basic_contract() = default;

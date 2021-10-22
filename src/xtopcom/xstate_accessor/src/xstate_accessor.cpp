@@ -70,6 +70,9 @@ std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xac
 
 void xtop_state_accessor::set_state(common::xaccount_address_t const & address, std::error_code & ec) {
     assert(!ec);
+    if (bstate_ != nullptr && canvas_ != nullptr && bstate_->get_address() == address.value()) {
+        return;
+    }
     {
         auto it = bstate_pack_.find(address);
         if (it == bstate_pack_.end()) {

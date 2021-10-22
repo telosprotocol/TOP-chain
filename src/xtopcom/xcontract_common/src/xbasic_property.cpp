@@ -18,14 +18,14 @@ static state_accessor::properties::xproperty_category_t lookup_property_category
         {data::XPROPERTY_BALANCE_PLEDGE_TGAS, {{state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system}}},
         {data::XPROPERTY_BALANCE_PLEDGE_VOTE, {{state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system}}},
         {data::XPROPERTY_LOCK_TGAS, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
-        {data::XPROPERTY_USED_TGAS_KEY, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
-        {data::XPROPERTY_LAST_TX_HOUR_KEY, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
-        {data::XPROPERTY_PLEDGE_VOTE_KEY, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
-        {data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
+        {data::XPROPERTY_USED_TGAS_KEY, {{state_accessor::properties::xproperty_type_t::string, state_accessor::properties::xproperty_category_t::system}}},
+        {data::XPROPERTY_LAST_TX_HOUR_KEY, {{state_accessor::properties::xproperty_type_t::string, state_accessor::properties::xproperty_category_t::system}}},
+        {data::XPROPERTY_PLEDGE_VOTE_KEY, {{state_accessor::properties::xproperty_type_t::map, state_accessor::properties::xproperty_category_t::system}}},
+        {data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, {{state_accessor::properties::xproperty_type_t::string, state_accessor::properties::xproperty_category_t::system}}},
         {data::XPROPERTY_UNVOTE_NUM, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
-        {data::XPROPERTY_TX_INFO, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
+        {data::XPROPERTY_TX_INFO, {{state_accessor::properties::xproperty_type_t::map, state_accessor::properties::xproperty_category_t::system}}},
         {data::XPROPERTY_ACCOUNT_CREATE_TIME, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}},
-        {data::XPROPERTY_LOCK_TOKEN_KEY, {{state_accessor::properties::xproperty_type_t::uint64, state_accessor::properties::xproperty_category_t::system}}}
+        {data::XPROPERTY_LOCK_TOKEN_KEY, {{state_accessor::properties::xproperty_type_t::map, state_accessor::properties::xproperty_category_t::system}}}
     };
 
     state_accessor::properties::xproperty_category_t property_category{state_accessor::properties::xproperty_category_t::user};

@@ -53,7 +53,7 @@ public:
     data::enum_xaction_type transaction_source_action_type() const;
     data::enum_xaction_type transaction_target_action_type() const;
     uint32_t size() const;
-    uint32_t deposit() const;
+    uint64_t deposit() const;
     std::string digest_hex() const;
     uint32_t used_tgas() const;
     uint32_t used_disk() const;
@@ -284,7 +284,7 @@ uint32_t xtop_consensus_action<ActionTypeV>::size() const {
 }
 
 template <xtop_action_type_t ActionTypeV>
-uint32_t xtop_consensus_action<ActionTypeV>::deposit() const {
+uint64_t xtop_consensus_action<ActionTypeV>::deposit() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 

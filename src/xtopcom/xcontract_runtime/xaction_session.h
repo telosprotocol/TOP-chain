@@ -89,49 +89,18 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     auto observed_exectx = top::make_observer(execution_context.get());
     std::error_code ec;
 
-    if (false == observed_exectx->verify_action(ec)) {
+    result.output.fee_change = observed_exectx->action_preprocess(ec);
+    if (ec) {
         assert(ec);
         result.status.ec = ec;
         return result;
     }
 
-    switch (execution_context->consensus_action_stage()) {
-    case data::xconsensus_action_stage_t::send: {
-        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num();
-        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1);
-
-        break;
-    }
-
-    case data::xconsensus_action_stage_t::recv: {
+    if (stage == data::xconsensus_action_stage_t::recv) {
         if (!receipt_data.empty()) {
             xdbg("wens_test, recv stage set receipt data");
-            execution_context->input_receipt_data(cons_action->receipt_data());
+            observed_exectx->input_receipt_data(cons_action->receipt_data());
         }
-        uint64_t old_recv_tx_num = execution_context->contract_state()->recvtx_num();
-        execution_context->contract_state()->recvtx_num(old_recv_tx_num + 1);
-
-        break;
-    }
-
-    case data::xconsensus_action_stage_t::confirm: {
-        uint64_t old_unconfirm_tx_num = execution_context->contract_state()->unconfirm_sendtx_num();
-        assert(old_unconfirm_tx_num > 0);
-        execution_context->contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1);
-
-        break;
-    }
-
-    case data::xconsensus_action_stage_t::self: {
-        assert(false);
-        break;
-    }
-
-    default: {
-        assert(false);
-        break;
-    }
-
     }
 
     xdbg("sender: %s, rever: %s, state addr: %s", execution_context->sender().c_str(), execution_context->recver().c_str(), execution_context->contract_state()->state_account_address().c_str());

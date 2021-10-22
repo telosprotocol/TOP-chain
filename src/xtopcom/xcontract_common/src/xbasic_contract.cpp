@@ -179,12 +179,11 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // exec
     auto obj = m_associated_execution_context->system_contract(target_addr);
     auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
-    m_associated_execution_context->contract_state(target_addr);
-    m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::recv);
+    ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
-        m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::self);
+        ctx->consensus_action_stage(data::xconsensus_action_stage_t::self);
     } else {
-        m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::recv);
+        ctx->consensus_action_stage(data::xconsensus_action_stage_t::recv);
     }
 
     auto result = obj->execute(top::make_observer(ctx));
