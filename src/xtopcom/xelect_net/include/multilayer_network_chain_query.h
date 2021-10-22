@@ -49,7 +49,8 @@ public:
      */
     uint32_t Broadcast(uint32_t msg_size, uint32_t count) override;
 #endif
-
+    std::string del_state(const std::string & account, const uint64_t & height);
+    std::string query_state(const std::string & account, const uint64_t & height);
 };
 
 typedef std::shared_ptr<MultilayerNetworkChainQuery> MultilayerNetworkChainQueryPtr;

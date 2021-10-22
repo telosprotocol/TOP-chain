@@ -151,7 +151,26 @@ void ChainCommands::AddNetModuleCommands() try {
         result = net_module_->P2pAddr();
         // std::cout << result << std::endl;
     });
-
+    AddCommand("debug", "delstate", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
+        if (args.size() < 2) {
+            return;
+        }
+        std::string acc = args[0].c_str();
+        uint64_t height = check_cast<uint64_t, const char *>(args[1].c_str());
+        xinfo("delstate:%s,%" PRIu64, acc.c_str(), height);
+        result = net_module_->del_state(acc, height);
+        // std::cout << result << std::endl;
+    });
+    AddCommand("debug", "querystate", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
+        if (args.size() < 2) {
+            return;
+        }
+        std::string acc = args[0].c_str();
+        uint64_t height = check_cast<uint64_t, const char *>(args[1].c_str());
+        xinfo("querystate:%s,%" PRIu64, acc.c_str(), height);
+        result = net_module_->query_state(acc, height);
+        // std::cout << result << std::endl;
+    });
 } catch (std::exception & e) {
     std::cout << "catch error: (" << e.what() << ") check_cast failed" << std::endl;
 }
@@ -946,8 +965,8 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     /*
      * debug
      */
-#ifdef DEBUG
     auto debug = app.add_subcommand("debug", "Only available in debug mode.");
+#ifdef DEBUG
     // create
     auto debug_create = debug->add_subcommand("create", "create an onchain account.");
     debug_create->callback(std::bind(&ApiMethod::create_chain_account, &topcl.api, std::ref(out_str)));
@@ -957,6 +976,20 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     debug_import_key->add_option("private_key", pri_key, "base64 private key.")->required();
     debug_import_key->callback(std::bind(&ApiMethod::import_key, &topcl.api, std::ref(pri_key), std::ref(out_str)));
 #endif
+
+    auto debug_delstate = debug->add_subcommand("delState", "");
+    std::string del_account;
+    uint64_t height;
+    debug_delstate->add_option("account", del_account, "")->required();
+    debug_delstate->add_option("height", height, "")->required();
+    debug_delstate->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
+
+    auto debug_querystate = debug->add_subcommand("queryState", "");
+    std::string query_account;
+    uint64_t height2;
+    debug_querystate->add_option("account", query_account, "")->required();
+    debug_querystate->add_option("height", height2, "")->required();
+    debug_querystate->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
 
     int app_ret = 0;
     try {

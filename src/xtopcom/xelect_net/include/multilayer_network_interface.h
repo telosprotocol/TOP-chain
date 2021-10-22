@@ -51,6 +51,8 @@ public:
      */
     virtual uint32_t Broadcast(uint32_t msg_size, uint32_t count) = 0;
 #endif
+    virtual std::string del_state(const std::string & account, const uint64_t & height) = 0;
+    virtual std::string query_state(const std::string & account, const uint64_t & height) = 0;
 };
 
 typedef std::shared_ptr<MultilayerNetworkInterface> MultilayerNetworkInterfacePtr;

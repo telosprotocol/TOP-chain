@@ -43,7 +43,8 @@ namespace top
 
             virtual xauto_ptr<xvbstate_t> get_block_state_2(xvblock_t * target_block, const int etag=0);
             virtual bool                  execute_block(xvblock_t * target_block, const int etag=0);
-
+            bool                      delete_states_of_db(const xvaccount_t & target_account,const uint64_t block_height);
+            bool                      query_states_of_db(const xvaccount_t & target_account,const uint64_t block_height, uint32_t& num, std::string& result);
         private:
             xauto_ptr<xvbstate_t>     load_block_state(const xvbindex_t * target_index, const int etag=0);
 
@@ -56,7 +57,6 @@ namespace top
             bool                      delete_state_of_db(const xvbindex_t & target_index);
             bool                      delete_state_of_db(const xvblock_t & target_block);
             bool                      delete_state_of_db(const xvaccount_t & target_account,const std::string & block_hash);
-            bool                      delete_states_of_db(const xvaccount_t & target_account,const uint64_t block_height);
 
             xvbstate_t*               rebuild_state_for_full_block(const xvbindex_t & target_index);
             xvbstate_t*               rebuild_state_for_full_block(xvblock_t & target_block);

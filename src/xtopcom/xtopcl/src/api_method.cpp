@@ -11,6 +11,8 @@
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xpbase/base/top_utils.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvblockstore.h"
 
 #include <dirent.h>
 
@@ -4049,5 +4051,16 @@ int ApiMethod::get_account_info(std::ostringstream & out_str, xJson::Value & roo
     }
     sleep(1);
     return 0;
+}
+void ApiMethod::del_state(std::string & account, std::string & height, std::ostringstream & out_str) {
+    top::base::xvblkstatestore_t *blkstatestore = top::base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
+    if (blkstatestore == nullptr) {
+        out_str << "delete state fail." << std::endl;
+        return;
+    }
+    top::base::xvaccount_t acc(account);
+    blkstatestore->delete_states_of_db(acc, (uint64_t)std::stoull(height));
+    out_str << "delete state ok." << std::endl;
+    return;
 }
 }  // namespace xChainSDK

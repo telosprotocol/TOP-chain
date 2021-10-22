@@ -64,7 +64,7 @@ public:
      */
     void create_chain_account(std::ostringstream & out_str);
     void import_key(std::string & pri_key, std::ostringstream & out_str);
-
+    void del_state(std::string & account, std::string & height, std::ostringstream & out_str);
     /*
      * transfer
      */

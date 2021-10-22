@@ -5,7 +5,8 @@
 #include "xwrouter/multi_routing/service_node_cache.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/xwrouter.h"
-
+#include "xvledger/xvledger.h"
+#include "xvledger/xvblockstore.h"
 #include <sys/utsname.h>
 
 namespace top {
@@ -110,6 +111,30 @@ uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t coun
     return sus;
 }
 #endif
+std::string MultilayerNetworkChainQuery::del_state(const std::string & account, const uint64_t & height) {
+    top::base::xvblkstatestore_t *blkstatestore = top::base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
+    if (blkstatestore == nullptr) {
+        return "delete state fail.";
+    }
+    top::base::xvaccount_t acc(account);
+    blkstatestore->delete_states_of_db(acc, height);
+    return "delete state ok.";
+}
+std::string MultilayerNetworkChainQuery::query_state(const std::string & account, const uint64_t & height) {
+    top::base::xvblkstatestore_t *blkstatestore = top::base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
+    if (blkstatestore == nullptr) {
+        return "query state fail.";
+    }
+    top::base::xvaccount_t acc(account);
+    uint32_t num = 0;
+    std::string result;
+    blkstatestore->query_states_of_db(acc, height, num, result);
+    if (num == 0)
+        return std::string("query state: " + std::to_string(num));
+    else
+        return std::string("query state: " + std::to_string(num) + result);
+}
+
 }  // end namespace elect
 
 }  // end namespace top

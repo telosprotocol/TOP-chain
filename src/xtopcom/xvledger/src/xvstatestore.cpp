@@ -121,6 +121,26 @@ namespace top
             }
             return true;
         }
+        bool   xvblkstatestore_t::query_states_of_db(const xvaccount_t & target_account,const uint64_t block_height, uint32_t& num, std::string& result)
+        {
+            num = 0;
+            result = "";
+            xvbindex_vector auto_vector( xvchain_t::instance().get_xblockstore()->load_block_index(target_account,block_height));
+            for(auto index : auto_vector.get_vector())
+            {
+                if(index != NULL)
+                {
+                    xdbg("xvblkstatestore_t::query_states_of_db.account=%s,height=%ld,%s", target_account.get_account().c_str(), block_height, base::xstring_utl::to_hex(index->get_block_hash()).c_str());
+                    if (read_state_from_db(target_account, block_height, index->get_block_hash()) != NULL) {
+                        result += ",";
+                        result += base::xstring_utl::to_hex(index->get_block_hash());
+                        num++;
+                    }
+                }
+            }
+            xdbg("xvblkstatestore_t::query_states_of_db:%d", num);
+            return true;
+        }
 
         xvbstate_t*   xvblkstatestore_t::rebuild_state_for_full_block(const xvbindex_t & target_index)
         {
