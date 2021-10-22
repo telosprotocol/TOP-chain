@@ -27,7 +27,7 @@ void xsend_tx_queue_internal_t::insert_ready_tx(const std::shared_ptr<xtx_entry>
     auto it = m_ready_tx_queue.insert(tx_ent);
     m_ready_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->send_tx_inc(1);
-    xtxpool_info("xsend_tx_queue_internal_t::insert_ready_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_info("xsend_tx_queue_internal_t::insert_ready_tx push tx to ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
 void xsend_tx_queue_internal_t::insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
@@ -36,7 +36,7 @@ void xsend_tx_queue_internal_t::insert_non_ready_tx(const std::shared_ptr<xtx_en
     auto it = m_non_ready_tx_queue.insert(tx_ent);
     m_non_ready_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->send_tx_inc(1);
-    xtxpool_info("xsend_tx_queue_internal_t::insert_non_ready_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_info("xsend_tx_queue_internal_t::insert_non_ready_tx push tx to non ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
 void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
@@ -45,7 +45,7 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
     if (it_ready != m_ready_tx_map.end()) {
         auto & tx_ent = *it_ready->second;
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s,delay:%llu",
+        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx pop tx from ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
                      delay);
@@ -63,7 +63,7 @@ void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash) {
     if (it_non_ready != m_non_ready_tx_map.end()) {
         auto & tx_ent = *it_non_ready->second;
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xsend_tx_queue_internal_t::erase_non_ready_tx from non-ready txs,table:%s,tx:%s,delay:%llu",
+        xtxpool_info("xsend_tx_queue_internal_t::erase_non_ready_tx pop tx from non-ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      (*it_non_ready->second)->get_tx()->dump(true).c_str(),
                      delay);
