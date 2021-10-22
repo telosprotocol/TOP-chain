@@ -60,7 +60,6 @@ private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table(uint8_t zone, uint16_t subaddr) const;
-    void push_fail_record(int32_t err_type);
 
     mutable std::vector<std::shared_ptr<xtxpool_table_t>> m_tables[xtxpool_zone_type_max];
     std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards[xtxpool_zone_type_max];
