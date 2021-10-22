@@ -299,8 +299,8 @@ data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() 
     return ret;
 }
 
-uint32_t xtop_contract_execution_context::deposit() const {
-    uint32_t ret{0};
+uint64_t xtop_contract_execution_context::deposit() const {
+    uint64_t ret{0};
     switch (m_action->type()) {
         case data::xtop_action_type_t::system:{
             ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->deposit();
@@ -325,6 +325,57 @@ std::string xtop_contract_execution_context::digest_hex() const {
         }
         case data::xtop_action_type_t::user:{
             ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->digest_hex();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
+uint64_t xtop_contract_execution_context::last_nonce() const {
+    uint64_t ret{0};
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_nonce();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_nonce();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
+uint64_t xtop_contract_execution_context::nonce() const {
+    uint64_t ret{0};
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->nonce();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->nonce();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
+uint256_t xtop_contract_execution_context::hash() const {
+    uint256_t ret{};
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->hash();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->hash();
             break;
         }
         default:
@@ -452,58 +503,58 @@ data::enum_xunit_tx_exec_status xtop_contract_execution_context::last_action_exe
     return ret;
 }
 
-bool xtop_contract_execution_context::verify_action(std::error_code & ec) {
-    assert(!ec);
+xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std::error_code & ec) {
+    xcontract_execution_fee_t fee_change;
+    auto const stage_ = consensus_action_stage();
+    auto const last_nonce_ = last_nonce();
+    auto const nonce_ = nonce();
+    auto const hash_ = hash();
 
-    uint64_t last_nonce{0};
-    uint64_t nonce{0};
-    uint256_t hash{};
-    switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            auto stage = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->stage();
-            if (stage != data::xconsensus_action_stage_t::send && stage != data::xconsensus_action_stage_t::self) {
-                return true;
-            }
-            last_nonce = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_nonce();
-            nonce = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->nonce();
-            hash = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->hash();
-
-            break;
+    // update nonce
+    if (stage_ == data::xconsensus_action_stage_t::send || stage_ == data::xconsensus_action_stage_t::self) {
+        auto state_nonce = contract_state()->latest_sendtx_nonce(ec);
+        if (state_nonce != last_nonce_) {
+            ec = error::xerrc_t::nonce_mismatch;
+            return {};
         }
-        case data::xtop_action_type_t::user:{
-            auto stage = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->stage();
-            if (stage != data::xconsensus_action_stage_t::send && stage != data::xconsensus_action_stage_t::self) {
-                return true;
-            }
-            last_nonce = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_nonce();
-            nonce = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->nonce();
-            hash = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->hash();
-            break;
-        }
-        default:
-            break;
+        contract_state()->latest_sendtx_nonce(nonce_, ec);
+        top::error::throw_error(ec);
+        contract_state()->latest_sendtx_hash(hash_, ec);
+        top::error::throw_error(ec);
+        contract_state()->latest_followup_tx_nonce(nonce_);
+        contract_state()->latest_followup_tx_hash(hash_);
     }
 
-    auto state_nonce = contract_state()->latest_sendtx_nonce(ec);
-    top::error::throw_error(ec);
-    if (state_nonce != last_nonce) {
-        ec = error::xerrc_t::nonce_mismatch;
-        return false;
+    // default action
+    if (stage_ == data::xconsensus_action_stage_t::send) {
+        execution_stage(contract_common::xcontract_execution_stage_t::source_action);
+        auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
+        contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1);
+        // fee_change = execute_default_source_action();
+    } else if (stage_ == data::xconsensus_action_stage_t::recv) {
+        execution_stage(contract_common::xcontract_execution_stage_t::target_action);
+        auto old_recv_tx_num = contract_state()->recvtx_num();
+        contract_state()->recvtx_num(old_recv_tx_num + 1);
+        // fee_change = execute_default_target_action();
+    } else if (stage_ == data::xconsensus_action_stage_t::confirm) {
+        execution_stage(contract_common::xcontract_execution_stage_t::confirm_action);
+        auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
+        assert(old_unconfirm_tx_num > 0);
+        contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1);
+        // fee_change = execute_default_confirm_action();
+    } else if (stage_ == data::xconsensus_action_stage_t::self) {
+        execution_stage(contract_common::xcontract_execution_stage_t::self_action);
+        // fee_change = execute_default_target_action();
+    } else {
+        assert(false);
     }
-
-    contract_state()->latest_sendtx_nonce(nonce, ec);
-    top::error::throw_error(ec);
-    contract_state()->latest_sendtx_hash(hash, ec);
-    top::error::throw_error(ec);
-    contract_state()->latest_followup_tx_nonce(nonce);
-    contract_state()->latest_followup_tx_hash(hash);
-
-    return true;
+    return fee_change;
 }
 
-void xtop_contract_execution_context::execute_default_source_action(contract_common::xcontract_execution_fee_t & fee_change) {
+xcontract_execution_fee_t  xtop_contract_execution_context::execute_default_source_action() {
     xassert(sender() == contract_state()->state_account_address());
 
+    xcontract_execution_fee_t fee_change;
     // step1: service fee
     uint64_t service_fee{0};
 #ifndef XENABLE_MOCK_ZEC_STAKE
@@ -521,17 +572,21 @@ void xtop_contract_execution_context::execute_default_source_action(contract_com
         update_tgas_disk_sender(true, fee_change, ec);
         top::error::throw_error(ec);
     }
+
+    return fee_change;
 }
 
-void xtop_contract_execution_context::execute_default_target_action(contract_common::xcontract_execution_fee_t & fee_change) {
+xcontract_execution_fee_t xtop_contract_execution_context::execute_default_target_action() {
     xassert((recver() == m_contract_state->state_account_address()) ||
             (action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})));
+    
+    xcontract_execution_fee_t fee_change;
     // step1: fee
     // target_fee_exec();
 
     // step2: action exec
     if (action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})) {
-        return;
+        return fee_change;
     }
     if (!data::is_sys_contract_address(sender())) {
         // ret = m_fee.update_tgas_disk_after_sc_exec(trace);
@@ -551,15 +606,19 @@ void xtop_contract_execution_context::execute_default_target_action(contract_com
         assert(ret.second == true);
         xdbg("tgas_disk tx hash: %s, lock_tgas: %u, use_send_tx_tgas: %u, used_deposit: %u", digest_hex().c_str(), last_action_send_tx_lock_tgas(), 0, last_action_used_deposit());
     }
+
+    return fee_change;
 }
 
-void xtop_contract_execution_context::execute_default_confirm_action(contract_common::xcontract_execution_fee_t & fee_change) {
+xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confirm_action() {
     xassert(sender() == contract_state()->state_account_address());
+
+    xcontract_execution_fee_t fee_change;
     if (action_stage() == data::xconsensus_action_stage_t::self) {
-        return;
+        return fee_change;
     }
     if (data::is_sys_contract_address(sender())) {
-        return;
+        return fee_change;
     }
 
     auto lock_tgas = last_action_send_tx_lock_tgas();
@@ -594,6 +653,8 @@ void xtop_contract_execution_context::execute_default_confirm_action(contract_co
         ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, used_deposit));
         assert(ret.second == true);
     }
+
+    return fee_change;
 }
 
 void xtop_contract_execution_context::calc_resource(uint32_t & tgas, uint32_t deposit, uint32_t & used_deposit, std::error_code & ec) {

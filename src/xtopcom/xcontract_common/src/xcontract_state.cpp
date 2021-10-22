@@ -233,6 +233,13 @@ uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code & ec) const {
     }
 }
 
+uint256_t xtop_contract_state::latest_sendtx_hash() const {
+    std::error_code ec;
+    auto r = latest_sendtx_hash(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
 void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & ec) {
     assert(!ec);
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
@@ -240,6 +247,12 @@ void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & e
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
         top::to_bytes<uint256_t>(hash),
         ec);
+}
+
+void xtop_contract_state::latest_sendtx_hash(uint256_t hash) {
+    std::error_code ec;
+    latest_sendtx_hash(hash, ec);
+    top::error::throw_error(ec);
 }
 
 uint64_t xtop_contract_state::latest_sendtx_nonce(std::error_code & ec) const {
@@ -256,6 +269,13 @@ uint64_t xtop_contract_state::latest_sendtx_nonce(std::error_code & ec) const {
     }
 }
 
+uint64_t xtop_contract_state::latest_sendtx_nonce() const {
+    std::error_code ec;
+    auto r = latest_sendtx_nonce(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
 void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce, std::error_code & ec) {
     assert(!ec);
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
@@ -263,6 +283,12 @@ void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce, std::error_code & 
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM,
         top::to_bytes<uint64_t>(nonce),
         ec);
+}
+
+void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce) {
+    std::error_code ec;
+    latest_sendtx_nonce(nonce, ec);
+    top::error::throw_error(ec);
 }
 
 uint256_t xtop_contract_state::latest_followup_tx_hash() const {

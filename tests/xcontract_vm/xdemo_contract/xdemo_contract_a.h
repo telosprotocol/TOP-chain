@@ -6,8 +6,8 @@
 
 #include "xcontract_common/xproperties/xproperty_map.h"
 #include "xcontract_common/xproperties/xproperty_string.h"
-#include "xsystem_contract_runtime/xsystem_contract_runtime_helper.h"
 #include "xstake/xstake_algorithm.h"
+#include "xsystem_contract_runtime/xsystem_contract_runtime_helper.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 
 NS_BEG3(top, tests, system_contracts)
@@ -62,7 +62,13 @@ public:
 
 private:
     contract_common::properties::xstring_property_t m_string_prop{xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, this};
+    contract_common::properties::xstring_property_t m_string2_prop{data::XPROPERTY_CONTRACT_STANDBYS_KEY, this};
+
     contract_common::properties::xmap_property_t<std::string, std::string> m_map_prop{xstake::XPORPERTY_CONTRACT_REG_KEY, this};
+    contract_common::properties::xmap_property_t<std::string, std::string> m_map2_prop{xstake::XPORPERTY_CONTRACT_TICKETS_KEY, this};
+    contract_common::properties::xmap_property_t<std::string, std::string> m_map3_prop{xstake::XPORPERTY_CONTRACT_REFUND_KEY, this};
+    contract_common::properties::xmap_property_t<std::string, std::string> m_map4_prop{xstake::XPROPERTY_CONTRACT_SLASH_INFO_KEY, this};
+    contract_common::properties::xmap_property_t<std::string, std::string> m_map5_prop{xstake::XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY, this};
 };
 using xcontract_a_t = xdemo_contract_a;
 
