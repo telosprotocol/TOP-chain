@@ -895,6 +895,13 @@ bool RootRoutingTable::ValidNode(NodeInfoPtr node) {
         return false;
     }
 
+#if !defined(XBUILD_CI) && !defined(XBUILD_DEV)
+    if(node->public_ip == "0.0.0.0"){
+        xwarn("node[%s] public ip 0.0.0.0!", node->node_id.c_str());
+        return false;
+    }
+#endif
+
     if (node->public_ip.empty() || node->public_port <= 0) {
         xwarn("node[%s] public ip or public port invalid!", node->node_id.c_str());
         return false;
