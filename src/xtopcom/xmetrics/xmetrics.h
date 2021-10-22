@@ -354,6 +354,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_alarm_recv_tx_reached_upper_limit,
     txpool_alarm_send_tx_reached_upper_limit,
 
+    // txstore
+    txstore_request_origin_tx,
+    txstore_cache_origin_tx,
+
     // blockstore
     blockstore_index_load,
     blockstore_blk_load,
@@ -587,6 +591,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_fast_cur,
     mailbox_txpool_slow_cur,
     mailbox_us_cur,
+
+    //txdelay
+    txdelay_client_timestamp_unmatch_edge,
+    txdelay_from_client_to_edge,
+    txdelay_from_client_to_auditor,
+    txdelay_from_client_to_validator,
+    txdelay_from_client_to_sendtx_exec,
+    txdelay_from_client_to_recvtx_exec,
+    txdelay_from_client_to_confirmtx_exec,
 
     e_simple_total,
 };

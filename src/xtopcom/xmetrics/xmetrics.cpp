@@ -327,6 +327,10 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);
 
+        // txstore
+        RETURN_METRICS_NAME(txstore_request_origin_tx);
+        RETURN_METRICS_NAME(txstore_cache_origin_tx);
+
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
         RETURN_METRICS_NAME(blockstore_blk_load);
@@ -535,6 +539,15 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(mailbox_txpool_fast_cur);
         RETURN_METRICS_NAME(mailbox_txpool_slow_cur);
         RETURN_METRICS_NAME(mailbox_us_cur);
+
+        //txdelay
+        RETURN_METRICS_NAME(txdelay_client_timestamp_unmatch_edge);
+        RETURN_METRICS_NAME(txdelay_from_client_to_edge);
+        RETURN_METRICS_NAME(txdelay_from_client_to_auditor);
+        RETURN_METRICS_NAME(txdelay_from_client_to_validator);
+        RETURN_METRICS_NAME(txdelay_from_client_to_sendtx_exec);
+        RETURN_METRICS_NAME(txdelay_from_client_to_recvtx_exec);
+        RETURN_METRICS_NAME(txdelay_from_client_to_confirmtx_exec);
 
         default: assert(false); return nullptr;
     }

@@ -95,6 +95,10 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                m_cluster_vhost->address().to_string().c_str(),
                message.hash());
 
+        uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+        uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
+        XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, delay_time_s);
+
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
             xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
                   tx_hash.c_str(),

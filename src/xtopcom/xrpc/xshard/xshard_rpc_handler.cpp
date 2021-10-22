@@ -92,6 +92,10 @@ void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg, xjson_
         unit_src->request_transaction_consensus(json_proc.m_tx_ptr);*/
         std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
         xkinfo("[global_trace][shard_rpc][push unit_service]%s,%s", tx_hash.c_str(), json_proc.m_tx_ptr->get_source_addr().c_str());
+        uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+        uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
+        XMETRICS_GAUGE(metrics::txdelay_from_client_to_validator, delay_time_s);
+
         if (xsuccess != m_txpool_service->request_transaction_consensus(json_proc.m_tx_ptr, false)) {
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};
         }

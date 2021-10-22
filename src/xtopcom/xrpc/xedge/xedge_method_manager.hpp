@@ -287,6 +287,13 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_lack, "msg list is empty"};
         }
         if (nullptr != json_proc.m_tx_ptr) {
+            uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();            
+            if (now < json_proc.m_tx_ptr->get_fire_timestamp()) {
+                XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch_edge, 1);
+                xwarn("xedge_method_base::forward_method local time %ld less than firestamp %ld", now, json_proc.m_tx_ptr->get_fire_timestamp());
+            }
+            uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
+            XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr());
         } else {
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "");
