@@ -136,7 +136,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
         std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
-        xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
+        xsync_kinfo("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
             push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_arcs) {
             vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
@@ -210,7 +210,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {
         std::vector<uint32_t> push_edge_arcs = calc_push_mapping(neighbor_number, edge_archive_list.size(), self_position, random);
-        xsync_kinfo("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
+        xsync_dbg("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
             push_edge_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_edge_arcs) {
             m_sync_sender->push_newblock(block, self_addr, edge_archive_list[dst_idx]);

@@ -737,11 +737,11 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
 
         std::vector<common::xnode_address_t> nodes = vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive);
         for (auto node: nodes) {
-            xsync_kinfo("archive_addresses: ", node.to_string().c_str());
+            xsync_kinfo("archive_addresses: %s", node.to_string().c_str());
         }
         nodes = vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node);
         for (auto node: nodes) {
-            xsync_kinfo("storage_full_node: ", node.to_string().c_str());
+            xsync_kinfo("storage_full_node: %s", node.to_string().c_str());
         }
 
     } else if (e->minor_type == xevent_role_t::remove_role) {
