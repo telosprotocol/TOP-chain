@@ -105,21 +105,6 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
         base::xunit_proof_t unit_proof;
         unit_proof.serialize_from(stream);
 
-        auto cur_unit_proof_str = m_sync_store->get_unit_proof(unit_account);
-        if(!cur_unit_proof_str.empty()){
-            base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)cur_unit_proof_str.c_str(), cur_unit_proof_str.size());
-            base::xunit_proof_t cur_unit_proof;
-            cur_unit_proof.serialize_from(stream2);
-            if (cur_unit_proof.get_height() >= unit_proof.get_height()) {
-                xsync_warn("xsync_on_demand_t::on_response_event sync unit proof(h:%llu,v:%llu) is lower than current(h:%llu,v:%llu)",
-                           unit_proof.get_height(),
-                           unit_proof.get_viewid(),
-                           cur_unit_proof.get_height(),
-                           cur_unit_proof.get_viewid());
-                return;
-            }
-        }
-
         if (highest_sync_unit_block->get_height() != unit_proof.get_height() || highest_sync_unit_block->get_viewid() != unit_proof.get_viewid() ||
             !unit_proof.verify_unit_block(highest_sync_unit_block)) {
             xsync_warn("xsync_on_demand_t::handle_blocks_response unit proof check fail,unit:%s,proof h:%llu,v:%llu",
@@ -128,8 +113,8 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
                        unit_proof.get_viewid());
             return;
         }
-        if (!m_sync_store->set_unit_proof(unit_account, unit_proof_str)) {
-            xsync_error("xsync_on_demand_t::handle_blocks_response account %s,fail to writed into db,block=%s",
+        if (!m_sync_store->set_unit_proof(unit_account, unit_proof_str, unit_proof.get_height())) {
+            xsync_error("xsync_on_demand_t::handle_blocks_response account %s,fail to writed unit proof into db,block=%s",
                         unit_account.get_address().c_str(),
                         highest_sync_unit_block->dump().c_str());
             return;
@@ -234,31 +219,12 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
         xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(),
             blocks.front()->get_height(), blocks.back()->get_height());
         if (unit_proof) {
-            do {
-                base::xvaccount_t unit_account(address);
-                unit_proof_str = m_sync_store->get_unit_proof(unit_account);
-                if(unit_proof_str.empty()){
-                    xsync_error("get_unit_proof fail");
-                    blocks.clear();
-                    break;
-                }
-                base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
-                base::xunit_proof_t unit_proof_tmp;
-                unit_proof_tmp.serialize_from(stream2);
-                auto & highest_unit = blocks.back();
-                if (highest_unit->get_height() != unit_proof_tmp.get_height()){
-                    xsync_warn("xsync_on_demand_t::handle_blocks_request unit proof check height fail unit:%s,proof h:%llu", highest_unit->dump().c_str(), unit_proof_tmp.get_height());
-                    blocks.clear();
-                    unit_proof_str.clear();
-                    break;
-                }
-                if (highest_unit->get_viewid() != unit_proof_tmp.get_viewid() || !unit_proof_tmp.verify_unit_block(highest_unit)) {
-                    xsync_error("xsync_on_demand_t::handle_blocks_request unit proof check view id or verify fail unit:%s,proof v:%llu", highest_unit->dump().c_str(), unit_proof_tmp.get_viewid());
-                    blocks.clear();
-                    unit_proof_str.clear();
-                    break;
-                }
-            } while(0);
+            base::xvaccount_t unit_account(address);
+            unit_proof_str = m_sync_store->get_unit_proof(unit_account, blocks.back()->get_height());
+            if(unit_proof_str.empty()){
+                xsync_error("get_unit_proof fail");
+                blocks.clear();
+            }
         }
     }
 

@@ -229,8 +229,8 @@ namespace top
             const std::string get_block_span(const uint64_t height);
 
             
-            bool                    set_unit_proof(const std::string& unit_proof);
-            const std::string       get_unit_proof();
+            bool                    set_unit_proof(const std::string& unit_proof, uint64_t height);
+            const std::string       get_unit_proof(uint64_t height);
 
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);

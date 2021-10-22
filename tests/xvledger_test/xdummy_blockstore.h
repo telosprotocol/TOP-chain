@@ -203,11 +203,11 @@ public:
         return "";
     }
 
-    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof) override {
+    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height) override {
         return true;
     }
 
-    const std::string get_unit_proof(const base::xvaccount_t & account) override {
+    const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override {
         return "";
     }
 };

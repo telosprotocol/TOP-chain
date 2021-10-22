@@ -90,7 +90,7 @@ void xcandidate_account_entry::updata_latest_nonce(uint64_t latest_nonce, const 
             break;
         }
     }
-    if (latest_nonce != m_txs[0]->get_tx()->get_tx_last_nonce()) {
+    if (!m_txs.empty() && latest_nonce != m_txs[0]->get_tx()->get_tx_last_nonce()) {
         xtxpool_error("xcandidate_account_entry::updata_latest_nonce latest nonce:%llu not match with first tx:%s", latest_nonce, m_txs[0]->get_tx()->dump().c_str());
     }
 }

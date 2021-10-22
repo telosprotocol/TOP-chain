@@ -1106,7 +1106,7 @@ namespace top
                             // xassert(unit_proof.verify_unit_block(unit_block));
                             base::xstream_t stream(base::xcontext_t::instance());
                             unit_proof.serialize_to(stream);
-                            if (!set_unit_proof(unit_account, std::string((const char *)stream.data(), stream.size()))) {
+                            if (!set_unit_proof(unit_account, std::string((const char *)stream.data(), stream.size()), unit_block->get_height())) {
                                 xerror("xvblockstore_impl::store_units_to_db account %s,fail to writed into db,block=%s",unit_account.get_address().c_str(), unit_block->dump().c_str());
                                 return false;
                             }
@@ -1215,14 +1215,14 @@ namespace top
             return account_obj->get_block_span(height);
         }
 
-        bool xvblockstore_impl::set_unit_proof(const base::xvaccount_t & account, const std::string& unit_proof){
+        bool xvblockstore_impl::set_unit_proof(const base::xvaccount_t & account, const std::string& unit_proof, uint64_t height){
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->set_unit_proof(unit_proof);
+            return account_obj->set_unit_proof(unit_proof, height);
         }
         
-        const std::string xvblockstore_impl::get_unit_proof(const base::xvaccount_t & account){
+        const std::string xvblockstore_impl::get_unit_proof(const base::xvaccount_t & account, uint64_t height){
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->get_unit_proof();
+            return account_obj->get_unit_proof(height);
         }
     };//end of namespace of vstore
 };//end of namespace of top

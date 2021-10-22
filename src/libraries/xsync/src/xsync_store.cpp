@@ -251,16 +251,16 @@ xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
 
-bool xsync_store_t::set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof) {
-    if (!m_blockstore->set_unit_proof(account, unit_proof)) {
+bool xsync_store_t::set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) {
+    if (!m_blockstore->set_unit_proof(account, unit_proof, height)) {
         xerror("xsync_store_t::store_unit_proof account %s,fail to writed into db,unit_proof=%s",account.get_address().c_str(), unit_proof.c_str());
         return false;
     }
     return true;
 }
 
-const std::string xsync_store_t::get_unit_proof(const base::xvaccount_t & account) {
-    return m_blockstore->get_unit_proof(account);
+const std::string xsync_store_t::get_unit_proof(const base::xvaccount_t & account, uint64_t height) {
+    return m_blockstore->get_unit_proof(account, height);
 }
 
 NS_END2
