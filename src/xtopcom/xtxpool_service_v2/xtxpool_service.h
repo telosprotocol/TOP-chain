@@ -80,6 +80,7 @@ private:
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
     void send_table_receipt_id_state(uint16_t table_id);
     void drop_msg(vnetwork::xmessage_t const & message, std::string reason);
+    void push_send_fail_record(int32_t err_type);
     // void send_neighbor_sync_req(base::xtable_shortid_t table_sid);
 
 private:

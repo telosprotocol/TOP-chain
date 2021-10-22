@@ -464,6 +464,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
 
 void xtxpool_table_t::update_table_state(const data::xtablestate_ptr_t & table_state) {
     m_table_state_cache.update(table_state);
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_xtable_info.set_unconfirm_tx_count((int32_t)table_state->get_receiptid_state()->get_unconfirm_tx_num());
 }
 
