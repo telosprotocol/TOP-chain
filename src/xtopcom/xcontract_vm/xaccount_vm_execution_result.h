@@ -21,8 +21,6 @@ using xaccount_vm_execution_status_t = xtop_account_vm_execution_status;
 
 struct xtop_account_vm_execution_result {
     xaccount_vm_execution_status_t status;
-    std::string binlog{};
-    std::string bincode{};  // full state
     std::map<common::xaccount_address_t, std::string> binlog_pack;
     std::map<common::xaccount_address_t, std::string> bincode_pack;
     std::vector<contract_runtime::xtransaction_execution_result_t> transaction_results;
@@ -31,8 +29,6 @@ using xaccount_vm_execution_result_t = xtop_account_vm_execution_result;
 
 struct xtop_account_vm_output {
     xaccount_vm_execution_status_t status;
-    std::string binlog{};
-    std::string contract_state_snapshot{};
     std::map<common::xaccount_address_t, std::string> binlog_pack;
     std::map<common::xaccount_address_t, std::string> bincode_pack;
     std::vector<data::xcons_transaction_ptr_t> success_tx_assemble;

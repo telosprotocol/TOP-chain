@@ -233,6 +233,13 @@ TEST_F(test_contract_vm, test_recv_tx) {
 
     auto vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
@@ -361,6 +368,13 @@ TEST_F(test_contract_vm, test_sync_call) {
 
     xobject_ptr_t<xvblock_t> const & vblock_a = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     xobject_ptr_t<xvbstate_t> const & bstate_a = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock_a.get());
+    EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
+    EXPECT_EQ(bstate_a->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
+    EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
+    EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
+    EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
+    EXPECT_EQ(bstate_a->find_property(XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
+    EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate_a->find_property(XPROPERTY_TX_INFO) == false) {
@@ -388,6 +402,13 @@ TEST_F(test_contract_vm, test_sync_call) {
 
     xobject_ptr_t<xvblock_t> const & vblock_b = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_registration_addr});
     xobject_ptr_t<xvbstate_t> const & bstate_b = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock_b.get());
+    EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
+    EXPECT_EQ(bstate_b->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
+    EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
+    EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
+    EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
+    EXPECT_EQ(bstate_b->find_property(XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
+    EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate_b->find_property(XPROPERTY_TX_INFO) == false) {
@@ -564,6 +585,13 @@ TEST_F(test_contract_vm, test_async_call) {
 
     auto vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
+    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
@@ -785,7 +813,9 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     xvbstate_t bstate_cmp(*(bstate.get()));
 
     contract_vm::xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, bstate, cs_para);
+    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
+    state_pack.insert(std::make_pair(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, make_observer(bstate.get())));
+    auto result = vm.execute(input_txs, state_pack, cs_para);
     EXPECT_EQ(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 2);
     EXPECT_EQ(result.failed_tx_assemble.size(), 0);

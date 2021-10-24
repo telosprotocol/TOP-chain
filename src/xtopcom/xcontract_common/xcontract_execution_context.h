@@ -76,6 +76,7 @@ public:
     xbyte_buffer_t action_data() const;
     std::string source_action_data() const;
     std::string target_action_data() const;
+    std::string target_action_name() const;
     data::xconsensus_action_stage_t action_stage() const;
 
     uint64_t last_nonce() const;
@@ -98,16 +99,15 @@ private:
     xcontract_execution_fee_t execute_default_target_action();
     xcontract_execution_fee_t execute_default_confirm_action();
     void update_tgas_disk_sender(bool is_contract, xcontract_execution_fee_t & fee_change, std::error_code & ec);
-    void calc_resource(uint32_t & tgas, uint32_t deposit, uint32_t & used_deposit, std::error_code & ec);
-    void calc_used_tgas(uint32_t deposit, uint32_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const;
+    void calc_used_tgas(uint64_t deposit, uint64_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const;
     void incr_used_tgas(uint64_t num, std::error_code & ec);
     uint64_t calc_available_tgas() const;
     uint64_t calc_total_tgas() const;
     uint64_t calc_free_tgas() const;
     uint64_t calc_decayed_tgas() const;
     uint64_t calc_token_price() const;
-    uint32_t calc_cost_tgas(bool is_contract) const;
-    uint32_t calc_cost_disk(bool is_contract) const;
+    uint64_t calc_cost_tgas(bool is_contract) const;
+    uint64_t calc_cost_disk(bool is_contract) const;
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;
 

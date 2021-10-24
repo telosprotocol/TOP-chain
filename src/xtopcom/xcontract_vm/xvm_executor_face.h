@@ -41,7 +41,7 @@ public:
     virtual ~xtop_vm_executor_face() = default;
 
     virtual xaccount_vm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
-                                         xobject_ptr_t<base::xvbstate_t> block_state,
+                                         std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> state_pack,
                                          data::xblock_consensus_para_t const & cs_para) = 0;
 };
 using xvm_executor_face_t = xtop_vm_executor_face;

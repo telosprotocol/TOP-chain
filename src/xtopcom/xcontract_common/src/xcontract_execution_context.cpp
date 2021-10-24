@@ -8,6 +8,8 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 
+#include <cinttypes>
+
 NS_BEG2(top, contract_common)
 
 xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
@@ -282,6 +284,23 @@ std::string xtop_contract_execution_context::target_action_data() const {
     return ret;
 }
 
+std::string xtop_contract_execution_context::target_action_name() const {
+    std::string ret;
+    switch (m_action->type()) {
+        case data::xtop_action_type_t::system:{
+            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_target_action_name();
+            break;
+        }
+        case data::xtop_action_type_t::user:{
+            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_target_action_name();
+            break;
+        }
+        default:
+            break;
+    }
+    return ret;
+}
+
 data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() const {
     data::xconsensus_action_stage_t ret = data::xconsensus_action_stage_t::invalid;
     switch (m_action->type()) {
@@ -530,7 +549,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
         execution_stage(contract_common::xcontract_execution_stage_t::source_action);
         auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
         contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1);
-        // fee_change = execute_default_source_action();
+        fee_change = execute_default_source_action();
     } else if (stage_ == data::xconsensus_action_stage_t::recv) {
         execution_stage(contract_common::xcontract_execution_stage_t::target_action);
         auto old_recv_tx_num = contract_state()->recvtx_num();
@@ -551,8 +570,9 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
     return fee_change;
 }
 
-xcontract_execution_fee_t  xtop_contract_execution_context::execute_default_source_action() {
+xcontract_execution_fee_t xtop_contract_execution_context::execute_default_source_action() {
     xassert(sender() == contract_state()->state_account_address());
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().value().c_str(), recver().value().c_str());
 
     xcontract_execution_fee_t fee_change;
     // step1: service fee
@@ -562,30 +582,52 @@ xcontract_execution_fee_t  xtop_contract_execution_context::execute_default_sour
         service_fee = XGET_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee);
     }
 #endif
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] service_fee to burn: " PRIu64, service_fee);
     if (service_fee > 0) {
         contract_state()->transfer_internal(data::XPROPERTY_BALANCE_AVAILABLE, data::XPROPERTY_BALANCE_BURN, service_fee);
     }
-
     // step2: fee
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    if (data::is_sys_contract_address(recver()) && (target_action_name() == "nodeJoinNetwork2")) {
+        state_accessor::properties::xproperty_identifier_t balance{
+            data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+        contract_state()->deposit(balance, std::move(state_accessor::xtoken_t{10000000000}));
+    }
+#endif
     if (!data::is_sys_contract_address(sender())) {
         std::error_code ec;
         update_tgas_disk_sender(true, fee_change, ec);
         top::error::throw_error(ec);
     }
+    auto tx_deposit = deposit();
+    if (tx_deposit > 0) {
+        contract_state()->transfer_internal(data::XPROPERTY_BALANCE_AVAILABLE, data::XPROPERTY_BALANCE_LOCK, tx_deposit);
+    }
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] deposit to lock: " PRIu64, tx_deposit);
+    // step3: asset out
+    std::string asset_param = source_action_data();
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)asset_param.data(), (size_t)asset_param.size());
+    data::xproperty_asset asset{0};
+    stream >> asset.m_token_name;
+    stream >> asset.m_amount;
+    if (asset.m_amount > 0) {
+        contract_state()->transfer_internal(data::XPROPERTY_BALANCE_AVAILABLE, data::XPROPERTY_BALANCE_LOCK, asset.m_amount);
+    }
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] asset to lock: " PRIu64, asset.m_amount);
 
     return fee_change;
 }
 
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_target_action() {
     xassert((recver() == m_contract_state->state_account_address()) ||
-            (action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})));
-    
+            (consensus_action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})));
+    xdbg("[xtop_contract_execution_context::execute_default_target_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+
     xcontract_execution_fee_t fee_change;
     // step1: fee
     // target_fee_exec();
-
     // step2: action exec
-    if (action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})) {
+    if (consensus_action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})) {
         return fee_change;
     }
     if (!data::is_sys_contract_address(sender())) {
@@ -598,13 +640,14 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_targe
         //      m_trans->get_target_addr().c_str());
         assert(0);
     } else {
-        auto ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::send_tx_lock_tgas, last_action_send_tx_lock_tgas()));
-        assert(ret.second == true);
-        ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::recv_tx_use_send_tx_tgas, 0));
-        assert(ret.second == true);
-        ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, last_action_used_deposit()));
-        assert(ret.second == true);
-        xdbg("tgas_disk tx hash: %s, lock_tgas: %u, use_send_tx_tgas: %u, used_deposit: %u", digest_hex().c_str(), last_action_send_tx_lock_tgas(), 0, last_action_used_deposit());
+        fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::send_tx_lock_tgas, last_action_send_tx_lock_tgas()));
+        fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::recv_tx_use_send_tx_tgas, 0));
+        fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, last_action_used_deposit()));
+        xdbg("[xtop_contract_execution_context::execute_default_target_action] tx: %s, lock_tgas: " PRIu32 ", use_send_tx_tgas: " PRIu32 ", used_deposit: " PRIu32,
+             digest_hex().c_str(),
+             last_action_send_tx_lock_tgas(),
+             0,
+             last_action_used_deposit());
     }
 
     return fee_change;
@@ -612,93 +655,91 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_targe
 
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confirm_action() {
     xassert(sender() == contract_state()->state_account_address());
+    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] %s to %s", sender().value().c_str(), recver().value().c_str());
 
     xcontract_execution_fee_t fee_change;
-    if (action_stage() == data::xconsensus_action_stage_t::self) {
+    if (consensus_action_stage() == data::xconsensus_action_stage_t::self) {
         return fee_change;
     }
     if (data::is_sys_contract_address(sender())) {
         return fee_change;
     }
 
-    auto lock_tgas = last_action_send_tx_lock_tgas();
-    auto used_deposit = last_action_used_deposit();
-    auto target_used_tgas = last_action_recv_tx_use_send_tx_tgas();
-    auto status = last_action_exec_status();
-    auto tx_deposit = deposit();
-    xdbg("tgas_disk tx hash: %s, deposit: %u, recv_tx_use_send_tx_tgas: %llu, used_deposit: %u, lock_tgas: %u, status: %d",
+    uint64_t lock_tgas = last_action_send_tx_lock_tgas();
+    uint64_t used_deposit = last_action_used_deposit();
+    uint64_t target_used_tgas = last_action_recv_tx_use_send_tx_tgas();
+    uint64_t status = last_action_exec_status();
+    uint64_t tx_deposit = deposit();
+    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] tx: %s, deposit: %u, recv_tx_use_send_tx_tgas: %llu, used_deposit: %u, lock_tgas: %u, status: %d",
          digest_hex().c_str(),
          tx_deposit,
          target_used_tgas,
          used_deposit,
          lock_tgas,
          status);
-
     if (lock_tgas > 0) {
         auto cur_lock_tgas = contract_state()->lock_tgas();
-        assert(cur_lock_tgas > lock_tgas);
+        assert(cur_lock_tgas >= lock_tgas);
         contract_state()->lock_tgas(cur_lock_tgas - lock_tgas);
     }
-
+    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] tgas out lock_tgas: " PRIu64, tx_deposit);
     if (tx_deposit > 0) {
         contract_state()->transfer_internal(data::XPROPERTY_BALANCE_LOCK, data::XPROPERTY_BALANCE_AVAILABLE, tx_deposit);
     }
+    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] deposit out lock: " PRIu64, tx_deposit);
 
-    std::error_code ec;
-    calc_resource(target_used_tgas, tx_deposit, target_used_tgas, ec);
-    top::error::throw_error(ec);
-    {
-        auto ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_tgas, target_used_tgas));
-        assert(ret.second == true);
-        ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, used_deposit));
-        assert(ret.second == true);
+    // 0 for contract
+    // std::error_code ec;
+    // calc_resource(tx_deposit, target_used_tgas, target_used_tgas, ec);
+    // top::error::throw_error(ec);
+    if (used_deposit > 0) {
+        xdbg("[xtop_contract_execution_context::execute_default_confirm_action] use deposit for tgas: " PRIu64 ", burn!", used_deposit);
+        contract_state()->transfer_internal(data::XPROPERTY_BALANCE_AVAILABLE, data::XPROPERTY_BALANCE_BURN, used_deposit);
+    }
+    fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_tgas, target_used_tgas));
+    fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, used_deposit));
+
+    std::string asset_param = source_action_data();
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)asset_param.data(), (size_t)asset_param.size());
+    data::xproperty_asset asset{0};
+    stream >> asset.m_token_name;
+    stream >> asset.m_amount;
+    if (asset.m_amount > 0) {
+        // should unlock token by recv tx execute status
+        if(status == data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail){
+            // unlock token and revert to available balance if recv tx execute fail
+            contract_state()->transfer_internal(data::XPROPERTY_BALANCE_LOCK, data::XPROPERTY_BALANCE_AVAILABLE, asset.m_amount);
+        } else {
+            // unlock token only
+            state_accessor::properties::xproperty_identifier_t balance{
+                data::XPROPERTY_BALANCE_LOCK, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+            contract_state()->withdraw(balance, common::SYMBOL_TOP_TOKEN, asset.m_amount);
+        }
     }
 
     return fee_change;
 }
 
-void xtop_contract_execution_context::calc_resource(uint32_t & tgas, uint32_t deposit, uint32_t & used_deposit, std::error_code & ec) {
-    auto used_tgas = calc_decayed_tgas();
-    auto available_tgas = calc_available_tgas();
-    uint64_t set_used_tgas{0};
-    xdbg("tgas_disk used_tgas: %llu, available_tgas: %llu, tgas: %llu, deposit: %u, used_deposit: %u", used_tgas, available_tgas, tgas, deposit, used_deposit);
-    if (tgas > (available_tgas + (deposit - used_deposit) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))) {
-        xdbg("tgas_disk xtransaction_not_enough_pledge_token_tgas");
-        set_used_tgas = available_tgas + used_tgas;
-        tgas = available_tgas - used_tgas;
-        used_deposit = deposit;
-        ec = error::xenum_errc::tx_not_enough_pledge_token_tgas;;
-    } else if (tgas > available_tgas) {
-        used_deposit += (tgas - available_tgas) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
-        set_used_tgas = available_tgas + used_tgas;
-    } else {
-        set_used_tgas = used_tgas + tgas;
-    }
-    contract_state()->used_tgas(set_used_tgas, ec);
-    contract_state()->last_tx_hour(contract_state()->time(), ec);
-
-    if (used_deposit > 0) {
-        xdbg("xaccount_context_t::calc_resource balance withdraw used_deposit=%u", used_deposit);
-        contract_state()->transfer_internal(data::XPROPERTY_BALANCE_AVAILABLE, data::XPROPERTY_BALANCE_BURN, used_deposit);
-    }
-}
-
 void xtop_contract_execution_context::update_tgas_disk_sender(bool is_contract, contract_common::xcontract_execution_fee_t & fee_change, std::error_code & ec) {
+    // step0: check deposit
     auto const tx_deposit = deposit();
-    xdbg("tgas_disk deposit: %d, is_contract: %d", tx_deposit, is_contract);
-
-    if (!data::is_sys_contract_address(sender())) {
-        if (tx_deposit < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
-            xdbg("not_enough_deposit, source addr: %s, target addr: %s, deposit: %d", sender().value().c_str(), recver().value().c_str(), tx_deposit);
-            return;  // xtransaction_not_enough_deposit;
-        }
+    xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] deposit: " PRIu64 ", is_contract: " PRIi32 ", tx: %s", tx_deposit, is_contract, digest_hex().c_str());
+    auto const min_tx_deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
+    if (!data::is_sys_contract_address(sender()) && tx_deposit < min_tx_deposit) {
+        xwarn("[xtop_contract_execution_context::update_tgas_disk_sender] not_enough_deposit, sender: %s, recver: %s, deposit: " PRIu64 ", min_deposit " PRIu64,
+              sender().value().c_str(),
+              recver().value().c_str(),
+              tx_deposit,
+              min_tx_deposit);
+        ec = error::xenum_errc::transaction_not_enough_deposit;
+        return;
     }
-
     auto tgas_usage = calc_cost_tgas(is_contract);
     auto disk_usage = calc_cost_disk(is_contract);
-
+    xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] cost_tgas: " PRIu32 ", cost_disk: " PRIu32, tgas_usage, disk_usage);
     // step1: used tgas
     uint64_t tgas_deposit_usage{0};
+    uint64_t tgas_self_usage{0};
     calc_used_tgas(tx_deposit, tgas_usage, tgas_deposit_usage, ec);
     if (ec) {
         return;
@@ -707,58 +748,56 @@ void xtop_contract_execution_context::update_tgas_disk_sender(bool is_contract, 
     if (ec) {
         return;
     }
-    {
-        auto ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_tgas, tgas_usage - tgas_deposit_usage / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio)));
-        assert(ret.second == true);
-        ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, tgas_deposit_usage));
-        assert(ret.second == true);
-    }
-    xdbg("tgas_disk m_used_tgas %d, %d, %s, %s", contract_state()->used_tgas(), tgas_deposit_usage, sender().value().c_str(), digest_hex().c_str());
-
+    tgas_self_usage = tgas_usage - tgas_deposit_usage / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+    fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_tgas, tgas_self_usage));
+    fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, tgas_deposit_usage));
+    xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] tgas_self_usage: " PRIu64 ", tgas_deposit_usage: " PRIu64, tgas_self_usage, tgas_deposit_usage);
     // step2: disk
     contract_state()->disk(disk_usage);
-    {
-        auto ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_disk, disk_usage));
-        assert(ret.second == true);
-    }
-    xdbg("tgas_disk m_used_disk %d, %s, %s", used_disk(), sender().value().c_str(), digest_hex().c_str());
-
+    fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_disk, disk_usage));
+    xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] disk_usage " PRIu64, disk_usage);
     // step3: frozen tgas
-    auto available_tgas = calc_available_tgas();
-    uint64_t frozen_tgas =
-        std::min((tx_deposit - tgas_deposit_usage) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio), available_tgas - contract_state()->lock_tgas());
-    xdbg("tgas_disk sender frozen_tgas: %llu, available_tgas: %llu, lock_tgas: %llu", frozen_tgas, available_tgas, contract_state()->lock_tgas());
-
-    if(is_contract && frozen_tgas > 0){
-        auto ret = fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::send_tx_lock_tgas, frozen_tgas));
-        assert(ret.second == true);
+    auto const available_tgas = calc_available_tgas();
+    auto const lock_tgas = contract_state()->lock_tgas();
+    auto const frozen_tgas = std::min((tx_deposit - tgas_deposit_usage) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio), available_tgas - lock_tgas);
+    xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] frozen_tgas: " PRIu64 ", available_tgas: " PRIu64 ", lock_tgas: " PRIu64,
+         frozen_tgas,
+         available_tgas,
+         lock_tgas);
+    if (is_contract && frozen_tgas > 0) {
+        fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::send_tx_lock_tgas, frozen_tgas));
         contract_state()->lock_tgas(frozen_tgas);
-        xdbg("tgas_disk tx hash: %s, frozen_tgas: %u", digest_hex().c_str(), frozen_tgas);
+        xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] tgas to lock_tgas: " PRIu64, frozen_tgas);
     }
-
-    // step4: tranfer deposit
-    if (tx_deposit > 0) {
-        contract_state()->transfer_internal(data::XPROPERTY_BALANCE_AVAILABLE, data::XPROPERTY_BALANCE_LOCK, tx_deposit);
-    }
-    xdbg("tgas_disk tx hash: %s, deposit: %u", digest_hex().c_str(), tx_deposit);
 }
 
-void xtop_contract_execution_context::calc_used_tgas(uint32_t deposit, uint32_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const {
-    auto last_hour = contract_state()->last_tx_hour();
-    // xdbg("tgas_disk last_hour: %d, m_timer_height: %d, no decay used_tgas: %d, used_tgas: %d, pledge_token: %d, token_price: %u, total_tgas: %d, tgas_usage: %d, deposit: %d",
-    //       last_hour, m_timer_height, exectx->used_tgas(), calc_decayed_tgas(), m_account->tgas_balance(), get_token_price(), get_total_tgas(), cur_tgas_usage, deposit);
-
+void xtop_contract_execution_context::calc_used_tgas(uint64_t deposit, uint64_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const {
+    xdbg("[xtop_contract_execution_context::calc_used_tgas] last_hour: " PRIu64 ", timer_height: " PRIu64 ", no decay used_tgas: " PRIu64 ", decayed used_tgas: " PRIu64
+         ", token_price: " PRIu64 ", total_tgas: " PRIu64 ", tgas_usage: " PRIu64 ", deposit: " PRIu64,
+         contract_state()->last_tx_hour(),
+         contract_state()->time(),
+         used_tgas(),
+         calc_decayed_tgas(),
+         calc_token_price(),
+         calc_total_tgas(),
+         cur_tgas_usage,
+         deposit);
     auto available_tgas = calc_available_tgas();
-    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d", contract_state()->state_account_address().to_string().c_str(), cur_tgas_usage);
     if (cur_tgas_usage > (available_tgas + deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))) {
-        xdbg("tgas_disk xtransaction_not_enough_pledge_token_tgas");
+        xwarn("[xtop_contract_execution_context::calc_used_tgas] not enough pledge token tgas, cur_tgas_usage: " PRIu64 ", available_tgas: " PRIu64 ", deposit: " PRIu64,
+              cur_tgas_usage,
+              available_tgas,
+              deposit);
         deposit_usage = deposit;
         cur_tgas_usage = available_tgas;
-        ec = error::xenum_errc::tx_not_enough_pledge_token_tgas;
+        ec = error::xenum_errc::transaction_not_enough_pledge_token_tgas;
     } else if (cur_tgas_usage > available_tgas) {
         deposit_usage = (cur_tgas_usage - available_tgas) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
         cur_tgas_usage = available_tgas;
-        xdbg("tgas_disk tx deposit_usage: %d", deposit_usage);
+        xdbg("[xtop_contract_execution_context::calc_used_tgas] available_tgas: " PRIu64 ", cur_tgas_usage: " PRIu64 ", tx_deposit_usage: " PRIu64 ", deposit: " PRIu64,
+             available_tgas,
+             deposit_usage,
+             deposit);
     }
 }
 
@@ -821,13 +860,15 @@ uint64_t xtop_contract_execution_context::calc_decayed_tgas() const {
     auto last_hour = contract_state()->last_tx_hour();
     auto height = contract_state()->time();
     auto decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle);
-    if (height < decay_time + last_hour) {
+    if (height <= last_hour) {
+        decayed_tgas = contract_state()->used_tgas();
+    } else if (height - last_hour < decay_time) {
         decayed_tgas = (decay_time - (height - last_hour)) * contract_state()->used_tgas() / decay_time;
     }
     return decayed_tgas;
 }
 
-uint32_t xtop_contract_execution_context::calc_cost_tgas(bool is_contract) const {
+uint64_t xtop_contract_execution_context::calc_cost_tgas(bool is_contract) const {
     #ifdef ENABLE_SCALE
         uint16_t amplify = 5;
     #else
@@ -840,7 +881,7 @@ uint32_t xtop_contract_execution_context::calc_cost_tgas(bool is_contract) const
     return multiple * amplify * size();
 }
 
-uint32_t xtop_contract_execution_context::calc_cost_disk(bool is_contract) const {
+uint64_t xtop_contract_execution_context::calc_cost_disk(bool is_contract) const {
     #ifdef ENABLE_SCALE
         uint16_t amplify = 100;
     #else
@@ -858,8 +899,8 @@ uint32_t xtop_contract_execution_context::calc_cost_disk(bool is_contract) const
 }
 
 void xtop_contract_execution_context::incr_used_tgas(uint64_t num, std::error_code & ec) {
-    contract_state()->used_tgas(num + calc_decayed_tgas(), ec);
-    contract_state()->last_tx_hour(contract_state()->time(), ec);
+    contract_state()->used_tgas(num + calc_decayed_tgas());
+    contract_state()->last_tx_hour(contract_state()->time());
 }
 
 uint64_t xtop_contract_execution_context::calc_token_price() const {
@@ -867,7 +908,11 @@ uint64_t xtop_contract_execution_context::calc_token_price() const {
     auto total_lock_tgas = contract_state()->system_lock_tgas();
     auto total_pledge_token = total_lock_tgas + initial_total_pledge_token;
     auto token_price = XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard) * XGET_CONFIG(validator_group_count) * TOP_UNIT / total_pledge_token;
-    xdbg("tgas_disk get total pledge token from beacon: %llu + %llu = %llu, price: %llu", initial_total_pledge_token, total_lock_tgas, total_pledge_token, token_price);
+    xdbg("[xtop_contract_execution_context::calc_token_price] get total pledge token from beacon: " PRIu64 " + " PRIu64 " = " PRIu64 ", price: " PRIu64,
+         initial_total_pledge_token,
+         total_lock_tgas,
+         total_pledge_token,
+         token_price);
     return token_price;
 }
 

@@ -120,13 +120,16 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         xassert(!cs_para.get_random_seed().empty());
         xassert(cs_para.get_table_proposal_height() > 0);
 
-        // auto system_contract_manager = make_unique<contract_runtime::system::xsystem_contract_manager_t>();
         auto * system_contract_manager = contract_runtime::system::xsystem_contract_manager_t::instance();
         xassert(system_contract_manager != nullptr);
+        contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
+
+        auto tx_address = common::xaccount_address_t{prev_block->get_account()};
         auto _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
         auto proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
-        contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
-        auto result = vm.execute(input_txs, proposal_bstate, cs_para);
+        std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> state_pack;
+        state_pack.insert(std::make_pair(tx_address, make_observer(proposal_bstate.get())));
+        auto result = vm.execute(input_txs, state_pack, cs_para);
 
         lightunit_build_para->set_fail_txs(result.failed_tx_assemble);
         lightunit_build_para->set_pack_txs(result.success_tx_assemble);
@@ -135,11 +138,12 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
             return nullptr;
         }
 
-        // lightunit_build_para->set_pack_txs(input_txs);
         xlightunit_block_para_t lightunit_para;
         lightunit_para.set_input_txs(result.success_tx_assemble);
-        lightunit_para.set_fullstate_bin(result.contract_state_snapshot);
-        lightunit_para.set_binlog(result.binlog);
+        assert(result.bincode_pack.count(tx_address));
+        assert(result.binlog_pack.count(tx_address));
+        lightunit_para.set_fullstate_bin(result.bincode_pack.at(tx_address));
+        lightunit_para.set_binlog(result.binlog_pack.at(tx_address));
 
         base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
         alloc_tx_receiptid(result.success_tx_assemble, receiptid_state);

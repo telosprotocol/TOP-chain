@@ -381,24 +381,27 @@ void xtop_contract_state::unconfirm_sendtx_num(uint64_t num) {
 
 uint64_t xtop_contract_state::used_tgas(std::error_code & ec) const {
     assert(!ec);
-    return get_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}, ec);
+    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}, ec));
 }
 
 uint64_t xtop_contract_state::used_tgas() const {
-    return get_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system});
+    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}));
 }
 
 void xtop_contract_state::used_tgas(uint64_t amount, std::error_code & ec) {
     assert(!ec);
-    set_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}, amount, ec);
+    set_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system},
+        base::xstring_utl::tostring(amount),
+        ec);
 }
 
 void xtop_contract_state::used_tgas(uint64_t amount) {
-    set_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}, amount);
+    set_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system},
+        base::xstring_utl::tostring(amount));
 }
 
 uint64_t xtop_contract_state::lock_tgas(std::error_code & ec) const {
@@ -441,25 +444,27 @@ void xtop_contract_state::disk(uint64_t amount) {
 
 uint64_t xtop_contract_state::last_tx_hour(std::error_code & ec) const {
     assert(!ec);
-    return get_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system}, ec);
+    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system}, ec));
 }
 
 uint64_t xtop_contract_state::last_tx_hour() const {
-    return get_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system});
+    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system}));
 }
 
 void xtop_contract_state::last_tx_hour(uint64_t hour, std::error_code & ec) {
     assert(!ec);
-    set_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LOCK_TGAS, state_accessor::properties::xproperty_category_t::system}, hour, ec);
+    set_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system},
+        base::xstring_utl::tostring(hour),
+        ec);
 }
 
 void xtop_contract_state::last_tx_hour(uint64_t hour) {
-    set_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LOCK_TGAS, state_accessor::properties::xproperty_category_t::system}, hour);
-
+    set_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system},
+        base::xstring_utl::tostring(hour));
 }
 
 void xtop_contract_state::create_time(std::error_code& ec) {
