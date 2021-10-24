@@ -5,11 +5,18 @@ namespace top { namespace data {
 
 int xtransaction_cache_t::tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx) {
     std::lock_guard<std::mutex> lock(m_mutex);
+    auto iter = m_trans.find(tx_hash);
+    if (iter != m_trans.end()) {
+        XMETRICS_GAUGE(metrics::txstore_request_origin_tx, 0);
+        return 1;
+    }
+
     xtransaction_cache_data_t cache_data;
     cache_data.tran = tx;
     m_trans[tx_hash] = cache_data;
     xdbg("add cache: %s, size:%d", top::HexEncode(tx_hash).c_str(), sizeof(tx_hash) + sizeof(cache_data));
-    XMETRICS_COUNTER_INCREMENT("xtransaction_cache_count", 1);
+    XMETRICS_GAUGE(metrics::txstore_request_origin_tx, 1);
+    XMETRICS_GAUGE(metrics::txstore_cache_origin_tx, 1);
     return 0;
 }
 int xtransaction_cache_t::tx_find(const std::string& tx_hash) {
@@ -55,7 +62,7 @@ int xtransaction_cache_t::tx_erase(const std::string& tx_hash) {
         return 1;
     m_trans.erase(it);
     xdbg("erase cache: %s", top::HexEncode(tx_hash).c_str());
-    XMETRICS_COUNTER_DECREMENT("xtransaction_cache_count", 1);
+    XMETRICS_GAUGE(metrics::txstore_cache_origin_tx, -1);
     return 0;
 }
 int xtransaction_cache_t::tx_clean() {
@@ -66,7 +73,7 @@ int xtransaction_cache_t::tx_clean() {
         if (it->second.tran->get_fire_timestamp() + it->second.tran->get_expire_duration() < (uint64_t)val.tv_sec) {
             xdbg("erase tx: %lld,%d,%lld", it->second.tran->get_fire_timestamp() , it->second.tran->get_expire_duration() , (uint64_t)val.tv_sec);
             m_trans.erase(it++);
-            XMETRICS_COUNTER_DECREMENT("xtransaction_cache_count", 1);
+            XMETRICS_GAUGE(metrics::txstore_cache_origin_tx, -1);
             continue;
         }
         xdbg("not erase tx: %lld,%d,%lld", it->second.tran->get_fire_timestamp() , it->second.tran->get_expire_duration() , (uint64_t)val.tv_sec);

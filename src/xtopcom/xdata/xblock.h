@@ -172,6 +172,7 @@ class xblock_consensus_para_t {
                                        const std::string & extra_data);
     void    set_justify_cert_hash(const std::string & justify_cert_hash) const {m_justify_cert_hash = justify_cert_hash;}
     void    set_parent_height(uint64_t height) const {m_parent_height = height;}
+    void    set_timeofday_s(uint64_t now) {m_timeofday_s = now;}
 
  public:
     const std::string &     get_extra_data() const {return m_extra_data;}
@@ -194,6 +195,7 @@ class xblock_consensus_para_t {
     uint64_t                get_table_proposal_height() const {return m_proposal_height;}
     uint64_t                get_parent_height() const {return m_parent_height;}
     const std::string &     dump() const {return m_dump_str;}
+    uint64_t                get_gettimeofday_s() const {return m_timeofday_s;}
 
  private:
     std::string     m_account;
@@ -215,6 +217,7 @@ class xblock_consensus_para_t {
     xblock_ptr_t    m_latest_committed_block{nullptr};
     mutable std::string     m_justify_cert_hash;  // may changed by unit
     mutable uint64_t        m_parent_height{0};  // may changed by unit
+    uint64_t        m_timeofday_s{0};
 };
 
 NS_END2
