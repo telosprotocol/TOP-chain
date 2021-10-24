@@ -113,22 +113,26 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
 /// @brief COMMON PRE PART OF DECLARE CONTRACT_API
 ///        action_name is from 'BEGIN_CONTRACT_API'
 #define POST_DECLARE_CONTRACT_API(CONTRACT_API)                                                                                                                                    \
-            top::contract_runtime::system::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
-            result.output.binlog = state()->binlog();                                                                                                                              \
-            result.output.contract_state_snapshot = state()->fullstate_bin();                                                                                                      \
-            result.output.followup_transaction_data = followup_transaction();                                                                                                      \
-            result.output.receipt_data =  exe_ctx->output_receipt_data();                                                                                                          \
-        } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
-            result.status.ec = eh.code();                                                                                                                                          \
-            result.status.extra_msg = eh.what();                                                                                                                                   \
-        } catch (std::exception const & eh) {                                                                                                                                      \
-            result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                               \
-            result.status.extra_msg = eh.what();                                                                                                                                   \
-        } catch (...) {                                                                                                                                                            \
-            result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                               \
-        }                                                                                                                                                                          \
-        return result;                                                                                                                                                             \
-    } while (false)
+    top::contract_runtime::system::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                                     \
+    result.output.binlog = state()->binlog();                                                                                                                                      \
+    result.output.contract_state_snapshot = state()->fullstate_bin();                                                                                                              \
+    result.output.followup_transaction_data = followup_transaction();                                                                                                              \
+    result.output.receipt_data = exe_ctx->output_receipt_data();                                                                                                                   \
+    }                                                                                                                                                                              \
+    catch (top::error::xtop_error_t const & eh) {                                                                                                                                  \
+        result.status.ec = eh.code();                                                                                                                                              \
+        result.status.extra_msg = eh.what();                                                                                                                                       \
+    }                                                                                                                                                                              \
+    catch (std::exception const & eh) {                                                                                                                                            \
+        result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                                   \
+        result.status.extra_msg = eh.what();                                                                                                                                       \
+    }                                                                                                                                                                              \
+    catch (...) {                                                                                                                                                                  \
+        result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                                   \
+    }                                                                                                                                                                              \
+    return result;                                                                                                                                                                 \
+    }                                                                                                                                                                              \
+    while (false)
 
 /// @brief Call contract API marco
 ///        action_name is from 'BEGIN_CONTRACT_API'

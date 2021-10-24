@@ -14,6 +14,8 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
 
+#include <cinttypes>
+
 NS_BEG2(top, contract_runtime)
 
 template <typename ActionT>
@@ -74,10 +76,12 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     case data::xenum_consensus_action_stage::send:
     case data::xenum_consensus_action_stage::confirm:
     case data::xenum_consensus_action_stage::self:
+        xdbg("[xtop_action_session::xtop_action_session] stage " PRIi32 ", set state address sender: %s", execution_context->consensus_action_stage(), observed_exectx->sender().value().c_str());
         execution_context->contract_state(execution_context->sender());
         break;
 
     case data::xenum_consensus_action_stage::recv:
+        xdbg("[xtop_action_session::xtop_action_session] stage " PRIi32 ", set state address recver: %s", execution_context->consensus_action_stage(), observed_exectx->sender().value().c_str());
         execution_context->contract_state(execution_context->recver());
         break;
 
@@ -92,6 +96,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     result.output.fee_change = observed_exectx->action_preprocess(ec);
     if (ec) {
         assert(ec);
+        xwarn("[xtop_action_session::xtop_action_session] action_preprocess failed, category: %s, msg: %s", ec.category().name(), ec.message().c_str());
         result.status.ec = ec;
         return result;
     }
@@ -124,13 +129,14 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     }
     auto end_bin_size = observed_exectx->contract_state()->binlog_size();
 
+    xdbg("[xtop_action_session::xtop_action_session] op code size, " PRIu64 " -> " PRIu64, start_bin_size, end_bin_size);
     if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::send ||
         execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
         if (start_bin_size == end_bin_size) {
             // not a fatal error
+            xwarn("[xtop_action_session::xtop_action_session] op code not changed");
             // result.status.ec = error::xenum_errc::enum_bin_code_not_changed;
         }
-    }
 
     return result;
 }

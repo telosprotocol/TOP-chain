@@ -52,6 +52,7 @@ public:
     data::enum_xtransaction_type transaction_type() const;
     data::enum_xaction_type transaction_source_action_type() const;
     data::enum_xaction_type transaction_target_action_type() const;
+    std::string transaction_target_action_name() const;
     uint32_t size() const;
     uint64_t deposit() const;
     std::string digest_hex() const;
@@ -273,6 +274,14 @@ data::enum_xaction_type xtop_consensus_action<ActionTypeV>::transaction_target_a
     assert(tx != nullptr);
 
     return tx->get_transaction()->get_target_action().get_action_type();
+}
+
+template <xtop_action_type_t ActionTypeV>
+std::string xtop_consensus_action<ActionTypeV>::transaction_target_action_name() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_target_action_name();
 }
 
 template <xtop_action_type_t ActionTypeV>

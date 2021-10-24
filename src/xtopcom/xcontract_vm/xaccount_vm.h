@@ -62,10 +62,6 @@ public:
                                  std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> state_pack,
                                  data::xblock_consensus_para_t const & cs_para);
 
-    xaccount_vm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
-                                 xobject_ptr_t<base::xvbstate_t> block_state,
-                                 data::xblock_consensus_para_t const & cs_para) override;
-
 private:
     contract_runtime::xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
                                                                      state_accessor::xstate_accessor_t & ac,

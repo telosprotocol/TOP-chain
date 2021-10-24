@@ -458,22 +458,22 @@ public:
     uint64_t unconfirm_sendtx_num() const;
     void unconfirm_sendtx_num(uint64_t num, std::error_code & ec);
     void unconfirm_sendtx_num(uint64_t num);
-
+    // uint64
     uint64_t lock_tgas(std::error_code & ec) const;
     uint64_t lock_tgas() const;
     void lock_tgas(uint64_t amount, std::error_code & ec);
     void lock_tgas(uint64_t amount);
-
+    // string
     uint64_t used_tgas(std::error_code & ec) const;
     uint64_t used_tgas() const;
     void used_tgas(uint64_t amount, std::error_code & ec);
     void used_tgas(uint64_t amount);
-
+    // string
     uint64_t disk(std::error_code & ec) const;
     uint64_t disk() const;
     void disk(uint64_t amount, std::error_code & ec);
     void disk(uint64_t amount);
-
+    // string
     uint64_t last_tx_hour(std::error_code & ec) const;
     uint64_t last_tx_hour() const;
     void last_tx_hour(uint64_t hour, std::error_code & ec);
