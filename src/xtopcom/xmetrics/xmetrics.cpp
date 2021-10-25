@@ -312,7 +312,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_receipt_recv_num_7to12_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_13to30_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_exceed_30_clock);
-        RETURN_METRICS_NAME(txpool_push_send_fail_queue_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_table_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_role_limit);
         RETURN_METRICS_NAME(txpool_push_send_fail_repeat);
         RETURN_METRICS_NAME(txpool_push_send_fail_unconfirm_limit);
         RETURN_METRICS_NAME(txpool_push_send_fail_nonce_limit);

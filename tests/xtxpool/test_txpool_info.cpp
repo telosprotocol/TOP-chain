@@ -27,18 +27,18 @@ TEST_F(test_xtxpool_info, txpool_info) {
 
     
     // table1.send_tx_inc(1);
-    // ASSERT_EQ(false, table1.is_send_tx_reached_upper_limit());
+    // ASSERT_EQ(false, table1.check_send_tx_reached_upper_limit());
     // table1.send_tx_inc(table_send_tx_queue_size_max - 1);
-    // ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
+    // ASSERT_EQ(true, table1.check_send_tx_reached_upper_limit());
 
     table2.send_tx_inc(1);
-    ASSERT_EQ(false, table2.is_send_tx_reached_upper_limit());
+    ASSERT_EQ(xsuccess, table2.check_send_tx_reached_upper_limit());
     table2.send_tx_inc(table_send_tx_queue_size_max - 1);
-    ASSERT_EQ(true, table2.is_send_tx_reached_upper_limit());
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, table2.check_send_tx_reached_upper_limit());
 
 
     table2.send_tx_inc(shard_send_tx_queue_size_max - table_send_tx_queue_size_max);
-    ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
+    ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
 
-    ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
+    ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
 }

@@ -563,7 +563,7 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 
     std::shared_ptr<xtx_entry> tx_ent0 = std::make_shared<xtx_entry>(txs[0], para);
     int32_t ret = send_tx_queue.push_tx(tx_ent0, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 
     table_para.send_tx_dec(1);
 
@@ -572,11 +572,11 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 
     std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_queue.push_tx(tx_ent1, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 
     std::shared_ptr<xtx_entry> tx_ent2 = std::make_shared<xtx_entry>(txs[2], para);
     ret = send_tx_queue.push_tx(tx_ent2, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 
     table_para.send_tx_dec(1);
 
@@ -591,5 +591,5 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 
     std::shared_ptr<xtx_entry> tx_ent3 = std::make_shared<xtx_entry>(txs[3], para);
     ret = send_tx_queue.push_tx(tx_ent3, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 }

@@ -655,8 +655,11 @@ void xtxpool_service::push_send_fail_record(int32_t err_type) {
     XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);
 
     switch (err_type) {
-    case xtxpool_v2::xtxpool_error_queue_reached_upper_limit:
-        XMETRICS_GAUGE(metrics::txpool_push_send_fail_queue_limit, 1);
+    case xtxpool_v2::xtxpool_error_table_reached_upper_limit:
+        XMETRICS_GAUGE(metrics::txpool_push_send_fail_table_limit, 1);
+        break;
+    case xtxpool_v2::xtxpool_error_role_reached_upper_limit:
+        XMETRICS_GAUGE(metrics::txpool_push_send_fail_role_limit, 1);
         break;
     case xtxpool_v2::xtxpool_error_request_tx_repeat:
         XMETRICS_GAUGE(metrics::txpool_push_send_fail_repeat, 1);

@@ -8,6 +8,7 @@
 #include "xdata/xtransaction.h"
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xreceipt_state_cache.h"
+#include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xverifier_utl.h"
 
@@ -333,7 +334,11 @@ class xtxpool_table_info_t : public base::xvaccount_t {
 public:
     xtxpool_table_info_t() = delete;
     xtxpool_table_info_t(const xtxpool_table_info_t &) = delete;
-    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic, xtable_state_cache_t *table_state_cache, std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
+    xtxpool_table_info_t(const std::string & address,
+                         xtxpool_shard_info_t * shard,
+                         xtxpool_statistic_t * statistic,
+                         xtable_state_cache_t * table_state_cache,
+                         std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
       : base::xvaccount_t(address), m_statistic(statistic), m_table_state_cache(table_state_cache), m_all_table_sids(all_table_sids) {
         XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, 1);
         m_shards.push_back(shard);
@@ -443,12 +448,14 @@ public:
         }
     }
 
-    bool is_send_tx_reached_upper_limit() {
+    int32_t check_send_tx_reached_upper_limit() {
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max) {
             XMETRICS_GAUGE(metrics::txpool_alarm_send_tx_reached_upper_limit, 1);
-            return true;
+            return xtxpool_error_table_reached_upper_limit;
+        } else if (any_shard_send_tx_reached_upper_limit()) {
+            return xtxpool_error_role_reached_upper_limit;
         }
-        return false;
+        return xsuccess;
     }
 
     bool is_recv_tx_reached_upper_limit() {
