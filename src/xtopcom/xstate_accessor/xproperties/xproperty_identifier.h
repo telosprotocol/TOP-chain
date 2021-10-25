@@ -31,7 +31,8 @@ public:
     xtop_typeless_property_identifier & operator=(xtop_typeless_property_identifier &&) = default;
     ~xtop_typeless_property_identifier() = default;
 
-    explicit xtop_typeless_property_identifier(std::string name, xproperty_category_t category) noexcept;
+    explicit xtop_typeless_property_identifier(std::string name, xproperty_category_t category);
+    explicit xtop_typeless_property_identifier(std::string name);
     xtop_typeless_property_identifier(xtop_property_identifier const & property_identifier);
 
     /// @brief Get property full name. Full name contains prefix.

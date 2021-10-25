@@ -13,6 +13,7 @@ NS_BEG3(top, contract_common, properties)
 
 class xtop_bytes_property: public xbasic_property_t {
 public:
+    xtop_bytes_property() = default;
     xtop_bytes_property(xtop_bytes_property const&) = delete;
     xtop_bytes_property& operator=(xtop_bytes_property const&) = delete;
     xtop_bytes_property(xtop_bytes_property&&) = default;
@@ -25,6 +26,8 @@ public:
     void set(xbytes_t const & value);
     void clear();
     xbytes_t value() const;
+    size_t size() const;
+    bool empty() const;
     // xbytes_t value(common::xaccount_address_t const & contract) const;
 };
 

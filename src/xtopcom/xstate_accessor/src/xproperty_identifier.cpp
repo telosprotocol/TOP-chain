@@ -9,7 +9,7 @@
 
 NS_BEG3(top, state_accessor, properties)
 
-xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name, xproperty_category_t category) noexcept
+xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name, xproperty_category_t category)
     : m_name{ std::move(name) }, m_category{ category } {
     assert(!m_name.empty());
     assert(category != xproperty_category_t::invalid);
@@ -19,6 +19,9 @@ xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string
             top::error::throw_error(state_accessor::error::xerrc_t::empty_property_name);
         }
     // }
+}
+
+xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name) : xtop_typeless_property_identifier {std::move(name), xproperty_category_t::user} {
 }
 
 xtop_typeless_property_identifier::xtop_typeless_property_identifier(xtop_property_identifier const & property_identifier)

@@ -31,6 +31,7 @@ class xtop_token_property: public xbasic_property_t {
     common::xsymbol_t m_symbol{common::SYMBOL_TOP_TOKEN};
 
 public:
+    xtop_token_property() = default;
     xtop_token_property(xtop_token_property const&) = delete;
     xtop_token_property& operator=(xtop_token_property const&) = delete;
     xtop_token_property(xtop_token_property&&) = default;
