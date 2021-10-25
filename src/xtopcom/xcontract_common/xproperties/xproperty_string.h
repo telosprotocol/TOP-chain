@@ -13,6 +13,7 @@ NS_BEG3(top, contract_common, properties)
 
 class xtop_string_property: public xbasic_property_t {
 public:
+    xtop_string_property() = default;
     xtop_string_property(xtop_string_property const&) = delete;
     xtop_string_property& operator=(xtop_string_property const&) = delete;
     xtop_string_property(xtop_string_property&&) = default;
@@ -20,11 +21,13 @@ public:
     ~xtop_string_property() = default;
 
     explicit xtop_string_property(std::string const & name, xcontract_face_t * contract);
+    explicit xtop_string_property(std::string const & name, std::unique_ptr<xcontract_state_t> state_owned);
 
     void set(std::string const & value);
     void clear();
     std::string value() const;
-    std::string value(common::xaccount_address_t const & contract) const;
+    size_t size() const;
+    bool empty() const;
 };
 
 using xstring_property_t = xtop_string_property;

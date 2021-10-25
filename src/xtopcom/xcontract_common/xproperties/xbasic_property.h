@@ -28,6 +28,8 @@ public:
     virtual ~xtop_basic_property() = default;
 
 protected:
+    xtop_basic_property() = default;
+
     xtop_basic_property(std::string const & name,
                         state_accessor::properties::xproperty_type_t type,
                         observer_ptr<xcontract_face_t> associated_contract) noexcept;

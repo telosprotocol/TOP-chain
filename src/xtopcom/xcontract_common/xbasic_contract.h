@@ -8,8 +8,9 @@
 #include "xcontract_common/xcontract_face.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xproperties/xproperty_type.h"
 #include "xcontract_common/xproperties/xproperty_initializer.h"
+#include "xcontract_common/xproperties/xproperty_type.h"
+#include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xtoken.h"
 
 NS_BEG2(top, contract_common)
@@ -84,10 +85,33 @@ public:
 protected:
     observer_ptr<properties::xproperty_initializer_t const> property_initializer() const noexcept;
 
-    template <state_accessor::properties::xproperty_type_t PropertyTypeV, typename ... Ts>
-    properties::xproperty_type_of_t<PropertyTypeV, Ts...> get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-                                                                       common::xaccount_address_t const & account_address,
-                                                                       std::error_code & ec) const;
+    template <typename ConcretePropertyT>
+    ConcretePropertyT get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                   common::xaccount_address_t const & account_address,
+                                   std::error_code & ec) const {
+        assert(!ec);
+        assert(m_associated_execution_context != nullptr);
+        assert(m_associated_execution_context->contract_state() != nullptr);
+        auto status_of_other_account = xcontract_state_t::build_from(account_address, ec);
+        if (ec) {
+            return {};
+        }
+
+        try {
+            return ConcretePropertyT{property_id.full_name(), std::move(status_of_other_account)};
+        } catch (top::error::xtop_error_t const & eh) {
+            ec = eh.code();
+            return {};
+        }
+    }
+
+    template <typename ConcretePropertyT>
+    ConcretePropertyT get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & account_address) const {
+        std::error_code ec;
+        auto r = get_property<ConcretePropertyT>(property_id, account_address, ec);
+        top::error::throw_error(ec);
+        return r;
+    }
 
     xbyte_buffer_t const & receipt_data(std::string const & key, std::error_code & ec) const override final;
     void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) override final;
@@ -102,20 +126,10 @@ protected:
     void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec);
 };
 
-template <>
-properties::xproperty_type_of_t<state_accessor::properties::xproperty_type_t::bytes> xtop_basic_contract::get_property(
-    state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-    common::xaccount_address_t const & account_address,
-    std::error_code & ec) const {
-    assert(!ec);
-    assert(m_associated_execution_context != nullptr);
-    assert(m_associated_execution_context->contract_state() != nullptr);
-    auto status_of_other_account = xcontract_state_t::build_from(account_address, ec);
-    if (ec) {
-        return {};
-    }
-
-    properties::xproperty_type_of_t<state_accessor::properties::xproperty_type_t::bytes> property_object{};
-}
+//template <>
+//properties::xbytes_property_t xtop_basic_contract::get_property<properties::xbytes_property_t>(
+//    state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+//    common::xaccount_address_t const & account_address,
+//    std::error_code & ec) const;
 
 NS_END2

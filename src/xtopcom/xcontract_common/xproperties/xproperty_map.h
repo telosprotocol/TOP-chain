@@ -16,6 +16,7 @@ NS_BEG3(top, contract_common, properties)
 template <typename KeyT, typename ValueT>
 class xtop_map_property : public xbasic_property_t {
 public:
+    xtop_map_property() = default;
     xtop_map_property(xtop_map_property const&) = delete;
     xtop_map_property& operator=(xtop_map_property const&) = delete;
     xtop_map_property(xtop_map_property&&) = default;
@@ -24,6 +25,9 @@ public:
 
     explicit xtop_map_property(std::string const& name, xcontract_face_t * contract)
         : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::map , make_observer(contract)} {
+    }
+
+    explicit xtop_map_property(std::string const & name, std::unique_ptr<xcontract_state_t> state_owned) : xbasic_property_t {name, state_accessor::properties::xproperty_type_t::map, std::move(state_owned)} {
     }
 
     void add(KeyT const & key, ValueT const & value, std::error_code & ec) {
@@ -81,7 +85,7 @@ public:
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), ec);
     }
 
-    bool exist(KeyT const & key) {
+    bool exist(KeyT const & key) const {
         return m_associated_contract->contract_state()->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key));
     }
@@ -101,7 +105,7 @@ public:
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key)));
     }
 
-    std::map<KeyT, ValueT> value(std::error_code& ec) {
+    std::map<KeyT, ValueT> value(std::error_code& ec) const {
         std::map<KeyT, ValueT> res;
         auto const& tmp = m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), ec);
@@ -112,7 +116,7 @@ public:
         return res;
     }
 
-    std::map<KeyT, ValueT> value() {
+    std::map<KeyT, ValueT> value() const {
         std::map<KeyT, ValueT> res;
         auto const& tmp = m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
@@ -123,26 +127,11 @@ public:
         return res;
     }
 
-    std::map<KeyT, ValueT> clone(common::xaccount_address_t const & contract, std::error_code& ec) {
-        std::map<KeyT, ValueT> res;
-        auto const& tmp = m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
-            static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), contract, ec);
+    size_t size() const {
+        assert(m_associated_contract != nullptr);
+        assert(m_associated_contract->contract_state() != nullptr);
 
-        for (auto const& pair: tmp) {
-            res.insert({pair.first, top::from_bytes<ValueT>(pair.second)});
-        }
-        return res;
-    }
-
-    std::map<KeyT, ValueT> clone(common::xaccount_address_t const & contract) {
-        std::map<KeyT, ValueT> res;
-        auto const& tmp = m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
-            static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), contract);
-
-        for (auto const& pair: tmp) {
-            res.insert({pair.first, top::from_bytes<ValueT>(pair.second)});
-        }
-        return res;
+        return m_associated_contract->contract_state()->property_size(m_id);
     }
 };
 

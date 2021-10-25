@@ -15,6 +15,7 @@ NS_BEG3(top, contract_common, properties)
 #define DECLARE_INT_PROPERTY(INT_TYPE)                                                                                                                                             \
     class xtop_##INT_TYPE##_property : public xbasic_property_t {                                                                                                                  \
     public:                                                                                                                                                                        \
+        xtop_##INT_TYPE##_property() = default;                                                                                                                                    \
         xtop_##INT_TYPE##_property(xtop_##INT_TYPE##_property const &) = delete;                                                                                                   \
         xtop_##INT_TYPE##_property & operator=(xtop_##INT_TYPE##_property const &) = delete;                                                                                       \
         xtop_##INT_TYPE##_property(xtop_##INT_TYPE##_property &&) = delete;                                                                                                        \
@@ -26,7 +27,6 @@ NS_BEG3(top, contract_common, properties)
         void set(INT_TYPE##_t value);                                                                                                                                              \
         void clear();                                                                                                                                                              \
         INT_TYPE##_t value() const;                                                                                                                                                \
-        INT_TYPE##_t value(common::xaccount_address_t const & contract_address) const;                                                                                             \
     };                                                                                                                                                                             \
     using x##INT_TYPE##_property_t = xtop_##INT_TYPE##_property
 

@@ -38,11 +38,14 @@ xbytes_t xtop_bytes_property::value() const {
     }
 }
 
-xbytes_t xtop_bytes_property::value(common::xaccount_address_t const & contract) const {
+size_t xtop_bytes_property::size() const {
     assert(m_associated_contract != nullptr);
     assert(m_associated_contract->contract_state() != nullptr);
-    return m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::bytes>(
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), contract);
+    return m_associated_contract->contract_state()->property_size(m_id);
+}
+
+bool xtop_bytes_property::empty() const {
+    return size() == 0;
 }
 
 NS_END3

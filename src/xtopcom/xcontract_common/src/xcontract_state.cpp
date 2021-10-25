@@ -30,18 +30,19 @@ void xtop_contract_state::set_state(common::xaccount_address_t const & address) 
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
   : m_action_account_address{account_address}
-  , m_state_accessor_owned_{state_accessor::xstate_accessor_t::build_from(account_address)}, m_state_accessor{make_observer(m_state_accessor_owned_.get())} {
+  , m_state_accessor_owned{state_accessor::xstate_accessor_t::build_from(account_address)}, m_state_accessor{make_observer(m_state_accessor_owned.get())} {
 }
 
 std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address) {
-    return top::make_unique<xtop_contract_state>(address);
+    auto * contract_state = new xtop_contract_state{address};
+    return std::unique_ptr<xtop_contract_state>{contract_state};
 }
 
 std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address, std::error_code & ec) {
     assert(!ec);
 
     try {
-        return top::make_unique<xtop_contract_state>(address);
+        return build_from(address);
     } catch (top::error::xtop_error_t const & eh) {
         ec = eh.code();
     }
@@ -123,6 +124,19 @@ void xtop_contract_state::clear_property(state_accessor::properties::xproperty_i
     std::error_code ec;
     clear_property(property_id, ec);
     top::error::throw_error(ec);
+}
+
+size_t xtop_contract_state::property_size(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
+    assert(!ec);
+    assert(m_state_accessor != nullptr);
+    return m_state_accessor->property_size(property_id, ec);
+}
+
+size_t xtop_contract_state::property_size(state_accessor::properties::xproperty_identifier_t const & property_id) const {
+    std::error_code ec;
+    auto r = property_size(property_id, ec);
+    top::error::throw_error(ec);
+    return r;
 }
 
 void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & property_id, xbyte_buffer_t code, std::error_code & ec) {

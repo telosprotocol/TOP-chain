@@ -10,6 +10,9 @@ xtop_string_property::xtop_string_property(std::string const & name, xcontract_f
     : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::string, make_observer(contract)} {
 }
 
+xtop_string_property::xtop_string_property(std::string const & name, std::unique_ptr<xcontract_state_t> state_owned) : xbasic_property_t {name, state_accessor::properties::xproperty_type_t::string, std::move(state_owned)} {
+}
+
 void xtop_string_property::set(std::string const & value) {
     assert(m_associated_contract != nullptr);
     assert(m_associated_contract->contract_state() != nullptr);
@@ -30,11 +33,21 @@ std::string xtop_string_property::value() const {
         static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
 }
 
-std::string xtop_string_property::value(common::xaccount_address_t const & contract) const {
+//std::string xtop_string_property::value(common::xaccount_address_t const & contract) const {
+//    assert(m_associated_contract != nullptr);
+//    assert(m_associated_contract->contract_state() != nullptr);
+//    return m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::string>(
+//        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), contract);
+//}
+
+size_t xtop_string_property::size() const {
     assert(m_associated_contract != nullptr);
     assert(m_associated_contract->contract_state() != nullptr);
-    return m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::string>(
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), contract);
+    return m_associated_contract->contract_state()->property_size(m_id);
+}
+
+bool xtop_string_property::empty() const {
+    return size() == 0;
 }
 
 NS_END3

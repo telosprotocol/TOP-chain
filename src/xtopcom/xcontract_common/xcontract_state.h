@@ -50,11 +50,12 @@ using xproperty_name_type_t = xtop_enum_property_name_type;
 class xtop_contract_state {
 private:
     common::xaccount_address_t m_action_account_address;
-    std::unique_ptr<state_accessor::xstate_accessor_t> m_state_accessor_owned_{nullptr};
+    std::unique_ptr<state_accessor::xstate_accessor_t> m_state_accessor_owned{nullptr};
     observer_ptr<state_accessor::xstate_accessor_t> m_state_accessor;
     xcontract_execution_param_t const m_param{};
 
 public:
+    xtop_contract_state() = default;
     xtop_contract_state(xtop_contract_state const &) = delete;
     xtop_contract_state & operator=(xtop_contract_state const &) = delete;
     xtop_contract_state(xtop_contract_state &&) = default;
@@ -306,6 +307,17 @@ public:
         top::error::throw_error(ec);
         return r;
     }
+
+    /// @brief Get Property size.
+    /// @param property_id Property ID.
+    /// @param ec Log the error.
+    /// @return Property size.
+    size_t property_size(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
+
+    /// @brief Property size.
+    /// @param property_id Property ID.
+    /// @return Property size.
+    size_t property_size(state_accessor::properties::xproperty_identifier_t const & property_id) const;
 
     /// @brief Get code. If current state is a contract state, returns the contract code.
     /// @param property_id Property ID.

@@ -43,14 +43,15 @@ xtop_state_accessor::xtop_state_accessor(common::xaccount_address_t const & acco
 }
 
 std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xaccount_address_t const & account_address) {
-    return top::make_unique<xtop_state_accessor>(account_address);
+    auto * state_accessor = new xtop_state_accessor{account_address};
+    return std::unique_ptr<xtop_state_accessor>(state_accessor);
 }
 
 std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xaccount_address_t const & account_address, std::error_code & ec) {
     assert(!ec);
 
     try {
-        return top::make_unique<xtop_state_accessor>(account_address);
+        return build_from(account_address);
     } catch (top::error::xtop_error_t const & eh) {
         ec = eh.code();
     }
