@@ -192,6 +192,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         xunit_warn("xbatch_packer::on_view_fire fail-clock expired less than start time.account=%s,viewid=%ld,clock=%ld,start_time=%ld",
             get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), m_start_time);
         XMETRICS_GAUGE(metrics::cons_view_fire_clock_delay, 1);
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
 
@@ -199,6 +200,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         xunit_warn("xbatch_packer::on_view_fire fail-clock expired less than logic time.account=%s,viewid=%ld,clock=%ld,logic_time=%ld",
             get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), m_para->get_resources()->get_chain_timer()->logic_time());
         XMETRICS_GAUGE(metrics::cons_view_fire_clock_delay, 1);
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
 
@@ -209,11 +211,13 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     if (latest_blocks.get_latest_cert_block() == nullptr) {
         xunit_warn("xbatch_packer::on_view_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
             get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
     if (m_last_view_clock < latest_blocks.get_latest_cert_block()->get_clock()) {
         xunit_warn("xbatch_packer::on_view_fire fail-clock less than cert block,account=%s,viewid=%ld,clock=%ld,prev=%ull",
             get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_clock());
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
 
@@ -224,6 +228,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto zone_id = get_zone_id_from_xip2(local_xip);
     if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index) {
         xerror("xbatch_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
 
@@ -232,8 +237,11 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto election_epoch = accessor->election_epoch_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
     if (ec) {
         xunit_warn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
+    XMETRICS_GAUGE(metrics::cons_view_fire_succ, 1);
+
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
     xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
@@ -241,6 +249,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
             is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_height(), 
             latest_blocks.get_latest_cert_block()->get_clock(), this, node_account.c_str(),
             xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
+    XMETRICS_GAUGE(metrics::cons_view_fire_is_leader, is_leader_node ? 1 : 0);
     if (!is_leader_node) {
         return true;
     }

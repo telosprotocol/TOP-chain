@@ -298,7 +298,7 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
         get_latest_bstate()->get_unconfirm_sendtx_num(),
         (uint32_t)result.m_pack_txs.size(), result.m_self_tx_num, result.m_send_tx_num, result.m_recv_tx_num, result.m_confirm_tx_num);
 
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    uint64_t now = cs_para.get_gettimeofday_s();
     for (auto & tx : result.m_pack_txs) {
         uint64_t delay = now - tx->get_push_pool_timestamp();
         xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
