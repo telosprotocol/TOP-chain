@@ -17,7 +17,8 @@ public:
     ~xtxstorehub();
 
 public:
-    base::xvtxstore_t * get_txstore();
+    // base::xvtxstore_t * get_txstore();
+    base::xvtxstore_t * create_txstore();
 };
 
 xtxstorehub::xtxstorehub() {
@@ -25,20 +26,31 @@ xtxstorehub::xtxstorehub() {
 xtxstorehub::~xtxstorehub() {
 }
 
-base::xvtxstore_t * xtxstorehub::get_txstore() {
-    static xtxstoreimpl * _static_txstore = nullptr;
-    if (_static_txstore)
-        return _static_txstore;
+// not recommended to use
+// base::xvtxstore_t * xtxstorehub::get_txstore() {
+//     static xtxstoreimpl * _static_txstore = nullptr;
+//     if (_static_txstore)
+//         return _static_txstore;
 
-    _static_txstore = new xtxstoreimpl();
+//     _static_txstore = new xtxstoreimpl();
 
-    base::xvchain_t::instance().set_xtxstore(_static_txstore);
-    return _static_txstore;
+//     base::xvchain_t::instance().set_xtxstore(_static_txstore);
+//     return _static_txstore;
+// }
+
+base::xvtxstore_t * xtxstorehub::create_txstore() {
+    base::xvtxstore_t * txstore = new xtxstoreimpl();
+    return txstore;
 }
 
-base::xvtxstore_t * get_txstore() {
+// base::xvtxstore_t * get_txstore() {
+//     static xtxstorehub _static_txstore_hub;
+//     return _static_txstore_hub.get_txstore();
+// }
+
+base::xvtxstore_t * create_txstore() {
     static xtxstorehub _static_txstore_hub;
-    return _static_txstore_hub.get_txstore();
+    return _static_txstore_hub.create_txstore();
 }
 
 NS_END2

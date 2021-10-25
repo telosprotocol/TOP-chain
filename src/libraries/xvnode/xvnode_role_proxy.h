@@ -60,7 +60,7 @@ public:
     void destroy(common::xnode_address_t const & address) override;
 
 private:
-    void update_node_type() const;
+    void update_modules_node_type() const;
 
 private:
     bool is_frozen(common::xnode_type_t const & node_type) const;

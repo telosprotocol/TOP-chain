@@ -34,7 +34,7 @@ bool xtop_vnode_role_proxy::is_frozen(common::xnode_type_t const & node_type) co
 void xtop_vnode_role_proxy::create(vnetwork::xvnetwork_driver_face_ptr_t const & vnetwork) {
     xdbg("xtop_vnode_role_proxy::create node_type: %s %x", to_string(vnetwork->type()).c_str(), static_cast<std::underlying_type<common::xnode_type_t>::type>(vnetwork->type()));
     m_node_address_set.insert(vnetwork->address());
-    update_node_type();
+    update_modules_node_type();
 
     if (!is_edge_archive(vnetwork->type()) && !is_frozen(vnetwork->type())) {
         m_cons_mgr->create(vnetwork);
@@ -42,7 +42,7 @@ void xtop_vnode_role_proxy::create(vnetwork::xvnetwork_driver_face_ptr_t const &
 }
 void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, common::xlogic_time_t start_time) {
     m_node_address_set.insert(address);
-    update_node_type();
+    update_modules_node_type();
 
     if (!is_edge_archive(address.type()) && !is_frozen(address.type())) {
         m_cons_mgr->start(address.xip2(), start_time);
@@ -51,7 +51,7 @@ void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, comm
 
 void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
     m_node_address_set.erase(address);
-    update_node_type();
+    update_modules_node_type();
 
     if (!is_edge_archive(address.type()) && !is_frozen(address.type())) {
         m_cons_mgr->unreg(address.xip2());
@@ -59,11 +59,11 @@ void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
 }
 
 void xtop_vnode_role_proxy::destroy(common::xnode_address_t const & address) {
-    common::xip2_t xip2{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id()};
+    common::xip2_t xip2 = address.xip2().group_xip2();
     m_cons_mgr->destroy(xip2);
 }
 
-void xtop_vnode_role_proxy::update_node_type() const {
+void xtop_vnode_role_proxy::update_modules_node_type() const {
     //  add update component
     common::xnode_type_t node_type{common::xnode_type_t::invalid};
     for (auto const & address : m_node_address_set) {

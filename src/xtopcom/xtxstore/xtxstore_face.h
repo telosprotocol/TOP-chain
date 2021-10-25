@@ -8,6 +8,7 @@
 
 NS_BEG2(top, txstore)
 
-base::xvtxstore_t * get_txstore();
+// base::xvtxstore_t * get_txstore();
+base::xvtxstore_t * create_txstore();
 
 NS_END2
