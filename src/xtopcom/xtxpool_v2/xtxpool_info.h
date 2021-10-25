@@ -305,13 +305,8 @@ public:
     bool is_ids_match(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) const {
         return (m_zone == zone && m_front_table_id == front_table_id && m_back_table_id == back_table_id && m_node_type == node_type);
     }
-    bool is_id_contained(uint8_t zone, uint16_t table_id) {
+    bool is_id_contained(uint8_t zone, uint16_t table_id) const {
         return (zone == m_zone && table_id >= m_front_table_id && table_id <= m_back_table_id);
-    }
-    void get_role_ids(uint8_t & zone, uint16_t & front_table_id, uint16_t & back_table_id) {
-        m_zone = zone;
-        m_front_table_id = front_table_id;
-        m_back_table_id = back_table_id;
     }
     uint8_t get_zone() const {
         return m_zone;
@@ -325,14 +320,23 @@ public:
     common::xnode_type_t get_node_type() const {
         return m_node_type;
     }
-    bool send_tx_full() {
+    bool send_tx_full() const {
         return get_send_tx_count() >= m_max_send_tx_num;
     }
-    bool recv_tx_full() {
+    bool recv_tx_full() const {
         return get_recv_tx_count() >= m_max_recv_tx_num;
     }
-    bool confirm_tx_full() {
+    bool confirm_tx_full() const {
         return get_conf_tx_count() >= m_max_confirm_tx_num;
+    }
+    void add_sub_count() {
+        m_sub_count++;
+    }
+    void del_sub_count() {
+        m_sub_count--;
+    }
+    uint8_t get_sub_count() const {
+        return m_sub_count.load();
     }
 
 private:
@@ -343,6 +347,7 @@ private:
     int32_t m_max_send_tx_num;
     int32_t m_max_recv_tx_num;
     int32_t m_max_confirm_tx_num;
+    std::atomic<uint8_t> m_sub_count{0};
 };
 
 class xtxpool_table_info_t : public base::xvaccount_t {
@@ -560,7 +565,7 @@ public:
     void remove_role(xtxpool_role_info_t * role) {
         xtxpool_dbg("remove_role role(%p) table:%s", role, get_address().c_str());
         for (auto it = m_roles.begin(); it != m_roles.end(); it++) {
-            if ((*it)->is_ids_match(role->get_zone(), role->get_front_table_id(), role->get_back_table_id(), role->get_node_type())) {
+            if ((*it) == role) {
                 xtxpool_dbg("remove_role find and remove role(%p) table:%s", role, get_address().c_str());
                 m_roles.erase(it);
                 return;

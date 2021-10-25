@@ -14,8 +14,8 @@
 NS_BEG2(top, blockmaker)
 
 // unconfirm rate limit parameters
-#define table_pair_unconfirm_tx_num_max (32)
-#define table_total_unconfirm_tx_num_max  (128)
+#define table_pair_unconfirm_tx_num_max (64)
+#define table_total_unconfirm_tx_num_max  (256)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {

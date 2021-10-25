@@ -186,18 +186,18 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
         return;
     }
 
-    std::shared_ptr<xtxpool_role_info_t> role = nullptr;
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     for (uint32_t i = 0; i < m_roles[zone].size(); i++) {
         if (m_roles[zone][i]->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
-            role = m_roles[zone][i];
-            break;
+            m_roles[zone][i]->add_sub_count();
+            return;
         }
     }
-    if (role == nullptr) {
-        role = std::make_shared<xtxpool_role_info_t>(zone, front_table_id, back_table_id, node_type);
-        m_roles[zone].push_back(role);
-    }
+    auto role = std::make_shared<xtxpool_role_info_t>(zone, front_table_id, back_table_id, node_type);
+    m_roles[zone].push_back(role);
+    role->add_sub_count();
+
+    xtxpool_info("xtxpool_t::subscribe_tables sub tables:zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
 
     uint32_t add_table_num = 0;
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
@@ -231,9 +231,15 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
     uint32_t remove_table_num = 0;
     for (auto it = m_roles[zone].begin(); it != m_roles[zone].end(); it++) {
         if ((*it)->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
+            (*it)->del_sub_count();
+            if ((*it)->get_sub_count() != 0) {
+                return;
+            }
+            xtxpool_info("xtxpool_t::unsubscribe_tables unsub tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
             for (uint16_t i = front_table_id; i <= back_table_id; i++) {
                 m_tables[zone][i]->remove_role((*it).get());
                 if (m_tables[zone][i]->no_role()) {
+                    xinfo("xtxpool_t::unsubscribe_tables erase table zone:%d idx:%d", zone, i);
                     m_tables[zone][i] = nullptr;
                     remove_table_num++;
                 }
