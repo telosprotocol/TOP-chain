@@ -19,6 +19,10 @@ observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state(
     return m_contract_state;
 }
 
+void xtop_contract_execution_context::contract_state(observer_ptr<xcontract_state_t> new_state) noexcept {
+    m_contract_state = new_state;
+}
+
 data::xconsensus_action_stage_t xtop_contract_execution_context::consensus_action_stage() const noexcept {
     return m_stage;
 }

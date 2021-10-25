@@ -72,6 +72,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     auto const stage = execution_context->action_stage();
     execution_context->consensus_action_stage(stage);
     if (stage == data::xenum_consensus_action_stage::send || stage == data::xenum_consensus_action_stage::confirm || stage == data::xenum_consensus_action_stage::self) {
+
         execution_context->contract_state(execution_context->sender());
     } else if (stage == data::xenum_consensus_action_stage::recv) {
         execution_context->contract_state(execution_context->recver());

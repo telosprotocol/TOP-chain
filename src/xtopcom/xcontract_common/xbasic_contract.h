@@ -9,7 +9,7 @@
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xproperties/xproperty_initializer.h"
-#include "xcontract_common/xproperties/xproperty_type.h"
+#include "xcontract_common/xproperties/xproperty_token.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xtoken.h"
 
