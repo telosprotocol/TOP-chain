@@ -8,6 +8,7 @@
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xtransaction.h"
@@ -46,10 +47,13 @@ public:
     test_zec_slash_contract_other(): xzec_slash_info_contract{common::xnetwork_id_t{0}}{};
 
     void SetUp() {
+        top::base::xvchain_t::instance().clean_all();
         m_store = xstore_factory::create_store_with_memdb();
         top::base::xvchain_t::instance().set_xdbstore(m_store.get());
-        m_blockstore.attach(top::store::get_vblockstore());
-        m_blockstore->add_ref();
+        base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
+        base::xvchain_t::instance().set_xblockstore(blockstore);
+        m_blockstore.attach(base::xvchain_t::instance().get_xblockstore());
+        top::base::xvchain_t::instance().set_xtxstore(txstore::create_txstore());
         auto mbus =  top::make_unique<mbus::xmessage_bus_t>(true, 1000);
         std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
         std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
