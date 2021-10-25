@@ -101,7 +101,7 @@ public:
 
     // use node_type info at this moment to decide whether should use this api/function.
     bool allow(common::xnode_type_t const & c_node_type) const {
-        for (auto riter = m_strategy_type_map.crend(); riter != m_strategy_type_map.crbegin(); ++riter) {
+        for (auto riter = m_strategy_type_map.crbegin(); riter != m_strategy_type_map.crend(); ++riter) {
             switch (riter->second) {
             case xbool_strategy_type_enum::defaulty: {
                 xassert(top::get<xstrategy_value_enum_t>(m_default_strategy) != xstrategy_value_enum_t::invalid);

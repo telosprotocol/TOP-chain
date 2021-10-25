@@ -19,7 +19,7 @@ xtxstoreimpl::xtxstoreimpl()
   : base::xvtxstore_t()
   , m_strategy{common::define_bool_strategy(
         xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
-        xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::normal})} {
+        xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
 }
 
 xtxstoreimpl::~xtxstoreimpl() {
