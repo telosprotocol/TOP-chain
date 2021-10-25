@@ -44,6 +44,7 @@ public:
     explicit xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
+    void contract_state(common::xaccount_address_t const & address) noexcept;
     void contract_state(observer_ptr<xcontract_state_t> new_state) noexcept;
 
     data::xconsensus_action_stage_t consensus_action_stage() const noexcept;
