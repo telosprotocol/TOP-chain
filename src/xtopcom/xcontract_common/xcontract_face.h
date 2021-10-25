@@ -39,7 +39,6 @@ public:
     virtual void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) = 0;
 
     virtual observer_ptr<xcontract_state_t> contract_state() const noexcept = 0;
-    virtual void source_action_general_func() noexcept = 0;
 
 protected:
     xtop_contract_face() = default;

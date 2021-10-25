@@ -51,8 +51,24 @@ public:
     uint64_t amount() const noexcept;
     common::xsymbol_t const & symbol() const noexcept;
     void clear() noexcept;
+
+    std::int32_t serialize_to(base::xstream_t & stream);
+    std::int32_t serialize_from(base::xstream_t & stream);
+    std::int32_t serialize_to(base::xbuffer_t & buffer);
+    std::int32_t serialize_from(base::xbuffer_t & buffer);
+
+private:
+    int32_t do_read(base::xstream_t& stream);
+    int32_t do_write(base::xstream_t& stream); // move token to serialize stream
+
 };
 using xtoken_t = xtop_token;
+
+
+int32_t operator>>(base::xstream_t& stream, xtoken_t data_object);
+int32_t operator<<(base::xstream_t& stream, xtoken_t data_object);
+int32_t operator>>(base::xbuffer_t& buffer, xtoken_t data_object);
+int32_t operator<<(base::xbuffer_t& buffer, xtoken_t data_object);
 
 NS_END2
 

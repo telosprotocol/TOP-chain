@@ -42,6 +42,12 @@ state_accessor::xtoken_t xtop_basic_contract::withdraw(std::uint64_t amount) {
     return m_balance.withdraw(amount);
 }
 
+state_accessor::xtoken_t xtop_basic_contract::state_withdraw(std::uint64_t amount) {
+    state_accessor::properties::xproperty_identifier_t balance_property_id{
+                data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+    return state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, amount);
+}
+
 void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
     assert(m_balance.symbol() == token.symbol());
     m_balance.deposit(std::move(token));
@@ -52,14 +58,14 @@ observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noex
     return m_associated_execution_context->contract_state();
 }
 
-void xtop_basic_contract::source_action_general_func() noexcept {
-    auto const& src_data = source_action_data();
-    if (!src_data.empty() && data::enum_xaction_type::xaction_type_asset_out == source_action_type()) {
-        std::error_code ec;
-        write_receipt_data(contract_common::RECEITP_DATA_ASSET_OUT, xbyte_buffer_t{src_data.begin(), src_data.end()}, ec);
-        assert(!ec);
-        top::error::throw_error(ec);
-    }
+void xtop_basic_contract::asset_to_target_action(state_accessor::xtoken_t token) noexcept {
+    base::xstream_t stream{base::xcontext_t::instance()};
+    token.serialize_to(stream);
+
+    std::error_code ec;
+    write_receipt_data(contract_common::RECEITP_DATA_ASSET_OUT, xbyte_buffer_t{stream.data(), stream.data() + stream.size()}, ec);
+    assert(!ec);
+    top::error::throw_error(ec);
 }
 
 data::enum_xaction_type xtop_basic_contract::action_type() const {
@@ -90,21 +96,15 @@ state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code &
     assert(!ec);
 
     auto& receipt_data = m_associated_execution_context->input_receipt_data();
-    data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
+    state_accessor::xtoken_t token;
     // assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
     if (receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end()) {
         auto const src_asset_data = receipt_data.at(RECEITP_DATA_ASSET_OUT);
         receipt_data.erase(RECEITP_DATA_ASSET_OUT);
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
-        stream >> asset_out.m_token_name;
-        stream >> asset_out.m_amount;
-    } else {
-        asset_out.m_amount = 0;
-        asset_out.m_token_name = "";
+        token.serialize_from(stream);
     }
-
-    if (asset_out.m_token_name.empty()) asset_out.m_token_name = data::XPROPERTY_ASSET_TOP;
-    return state_accessor::xtoken_t{asset_out.m_amount, asset_out.m_token_name};
+    return std::move(token);
 }
 
 data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
