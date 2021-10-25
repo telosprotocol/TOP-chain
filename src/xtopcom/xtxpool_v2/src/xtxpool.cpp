@@ -186,27 +186,27 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
         return;
     }
 
-    std::shared_ptr<xtxpool_shard_info_t> shard = nullptr;
+    std::shared_ptr<xtxpool_role_info_t> role = nullptr;
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
-    for (uint32_t i = 0; i < m_shards[zone].size(); i++) {
-        if (m_shards[zone][i]->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
-            shard = m_shards[zone][i];
+    for (uint32_t i = 0; i < m_roles[zone].size(); i++) {
+        if (m_roles[zone][i]->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
+            role = m_roles[zone][i];
             break;
         }
     }
-    if (shard == nullptr) {
-        shard = std::make_shared<xtxpool_shard_info_t>(zone, front_table_id, back_table_id, node_type);
-        m_shards[zone].push_back(shard);
+    if (role == nullptr) {
+        role = std::make_shared<xtxpool_role_info_t>(zone, front_table_id, back_table_id, node_type);
+        m_roles[zone].push_back(role);
     }
 
     uint32_t add_table_num = 0;
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
         std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, i);
         if (m_tables[zone][i] == nullptr) {
-            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic, &m_all_table_sids);
+            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, role.get(), &m_statistic, &m_all_table_sids);
             add_table_num++;
         } else {
-            m_tables[zone][i]->add_shard(shard.get());
+            m_tables[zone][i]->add_role(role.get());
         }
     }
     if (add_table_num > 0) {
@@ -229,16 +229,16 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
     }
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     uint32_t remove_table_num = 0;
-    for (auto it = m_shards[zone].begin(); it != m_shards[zone].end(); it++) {
+    for (auto it = m_roles[zone].begin(); it != m_roles[zone].end(); it++) {
         if ((*it)->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
             for (uint16_t i = front_table_id; i <= back_table_id; i++) {
-                m_tables[zone][i]->remove_shard((*it).get());
-                if (m_tables[zone][i]->no_shard()) {
+                m_tables[zone][i]->remove_role((*it).get());
+                if (m_tables[zone][i]->no_role()) {
                     m_tables[zone][i] = nullptr;
                     remove_table_num++;
                 }
             }
-            m_shards[zone].erase(it);
+            m_roles[zone].erase(it);
             break;
         }
     }

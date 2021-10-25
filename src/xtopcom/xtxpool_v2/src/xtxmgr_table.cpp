@@ -209,8 +209,18 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacki
 }
 
 void xtxmgr_table_t::clear_expired_txs() {
+#ifdef ENABLE_METRICS
+    auto queue_size_before = m_send_tx_queue.size();
+#endif
     m_send_tx_queue.clear_expired_txs();
     m_pending_accounts.clear_expired_txs();
+
+#ifdef ENABLE_METRICS
+    auto queue_size_after = m_send_tx_queue.size();
+    if (queue_size_after < queue_size_before) {
+        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, queue_size_before - queue_size_after);
+    }
+#endif
 }
 
 // uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
@@ -262,12 +272,20 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
         }
     }
 
+#ifdef ENABLE_METRICS
+    auto queue_size_before = m_send_tx_queue.size();
+#endif
     for (auto & tx_ent : expired_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, true);
     }
-    XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, expired_send_txs.size());
 
+#ifdef ENABLE_METRICS
+    auto queue_size_after = m_send_tx_queue.size();
+    if (queue_size_after < queue_size_before) {
+        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, queue_size_before - queue_size_after);
+    }
+#endif
     for (auto & tx_ent : push_succ_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, false);

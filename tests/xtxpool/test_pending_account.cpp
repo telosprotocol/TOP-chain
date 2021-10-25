@@ -22,7 +22,7 @@ protected:
 
 TEST_F(test_pending_account, sigle_send_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -62,7 +62,7 @@ TEST_F(test_pending_account, sigle_send_tx) {
 
 TEST_F(test_pending_account, sigle_account_multi_send_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);

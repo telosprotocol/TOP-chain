@@ -98,9 +98,6 @@ const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_internal_t::get_exp
         }
         expired_txs.push_back(tx);
     }
-    if (!expired_txs.empty()) {
-        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, expired_txs.size());
-    }
 
     return expired_txs;
 }

@@ -21,9 +21,9 @@ using namespace top::data;
 #define table_recv_tx_queue_size_max (1024)
 #define table_conf_tx_queue_size_max (1024)
 
-#define shard_send_tx_queue_size_max (16384)
-#define shard_recv_tx_queue_size_max (16384)
-#define shard_conf_tx_queue_size_max (16384)
+#define role_send_tx_queue_size_max_for_each_table (800)
+#define role_recv_tx_queue_size_max_for_each_table (800)
+#define role_confirm_tx_queue_size_max_for_each_table (800)
 
 class xtx_counter_t {
 public:
@@ -294,10 +294,13 @@ private:
     std::atomic<uint32_t> m_receipt_repeat_num{0};
 };
 
-class xtxpool_shard_info_t : public xtx_counter_t {
+class xtxpool_role_info_t : public xtx_counter_t {
 public:
-    xtxpool_shard_info_t(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type)
+    xtxpool_role_info_t(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type)
       : m_zone(zone), m_front_table_id(front_table_id), m_back_table_id(back_table_id), m_node_type(node_type) {
+        m_max_send_tx_num = role_send_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
+        m_max_recv_tx_num = role_recv_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
+        m_max_confirm_tx_num = role_confirm_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
     }
     bool is_ids_match(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) const {
         return (m_zone == zone && m_front_table_id == front_table_id && m_back_table_id == back_table_id && m_node_type == node_type);
@@ -305,7 +308,7 @@ public:
     bool is_id_contained(uint8_t zone, uint16_t table_id) {
         return (zone == m_zone && table_id >= m_front_table_id && table_id <= m_back_table_id);
     }
-    void get_shard_ids(uint8_t & zone, uint16_t & front_table_id, uint16_t & back_table_id) {
+    void get_role_ids(uint8_t & zone, uint16_t & front_table_id, uint16_t & back_table_id) {
         m_zone = zone;
         m_front_table_id = front_table_id;
         m_back_table_id = back_table_id;
@@ -322,12 +325,24 @@ public:
     common::xnode_type_t get_node_type() const {
         return m_node_type;
     }
+    bool send_tx_full() {
+        return get_send_tx_count() >= m_max_send_tx_num;
+    }
+    bool recv_tx_full() {
+        return get_recv_tx_count() >= m_max_recv_tx_num;
+    }
+    bool confirm_tx_full() {
+        return get_conf_tx_count() >= m_max_confirm_tx_num;
+    }
 
 private:
     uint8_t m_zone;
     uint16_t m_front_table_id;
     uint16_t m_back_table_id;
     common::xnode_type_t m_node_type;
+    int32_t m_max_send_tx_num;
+    int32_t m_max_recv_tx_num;
+    int32_t m_max_confirm_tx_num;
 };
 
 class xtxpool_table_info_t : public base::xvaccount_t {
@@ -335,13 +350,13 @@ public:
     xtxpool_table_info_t() = delete;
     xtxpool_table_info_t(const xtxpool_table_info_t &) = delete;
     xtxpool_table_info_t(const std::string & address,
-                         xtxpool_shard_info_t * shard,
+                         xtxpool_role_info_t * role,
                          xtxpool_statistic_t * statistic,
                          xtable_state_cache_t * table_state_cache,
                          std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
       : base::xvaccount_t(address), m_statistic(statistic), m_table_state_cache(table_state_cache), m_all_table_sids(all_table_sids) {
         XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, 1);
-        m_shards.push_back(shard);
+        m_roles.push_back(role);
     }
     ~xtxpool_table_info_t() {
         XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, -1);
@@ -362,10 +377,10 @@ public:
     }
     void send_tx_inc(int32_t count) {
         m_counter.send_tx_inc(count);
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg("send_tx_inc shard(%p) table:%s old send num:%d inc num:%d", shard, get_address().c_str(), shard->get_send_tx_count(), count);
-        //     shard->send_tx_inc(count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg("send_tx_inc role(%p) table:%s old send num:%d inc num:%d", role, get_address().c_str(), role->get_send_tx_count(), count);
+            role->send_tx_inc(count);
+        }
 
         m_statistic->inc_push_tx_send_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
@@ -374,10 +389,10 @@ public:
     }
     void send_tx_dec(int32_t count) {
         m_counter.send_tx_inc(-count);
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg("send_tx_dec shard(%p) table:%s old send num:%d dec num:%d", shard, get_address().c_str(), shard->get_send_tx_count(), count);
-        //     shard->send_tx_inc(-count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg("send_tx_dec role(%p) table:%s old send num:%d dec num:%d", role, get_address().c_str(), role->get_send_tx_count(), count);
+            role->send_tx_inc(-count);
+        }
         m_statistic->dec_push_tx_send_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_send_tx_cur" + get_address(), count);
@@ -385,10 +400,10 @@ public:
     }
     void recv_tx_inc(int32_t count) {
         m_counter.recv_tx_inc(count);
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg("recv_tx_inc shard(%p) table:%s old recv num:%d inc num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
-        //     shard->recv_tx_inc(count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg("recv_tx_inc role(%p) table:%s old recv num:%d inc num:%d", role, get_address().c_str(), role->get_recv_tx_count(), count);
+            role->recv_tx_inc(count);
+        }
         m_statistic->inc_push_tx_recv_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_recv_tx_cur" + get_address(), count);
@@ -396,10 +411,10 @@ public:
     }
     void recv_tx_dec(int32_t count) {
         m_counter.recv_tx_inc(-count);
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg("recv_tx_dec shard(%p) table:%s old recv num:%d dec num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
-        //     shard->recv_tx_inc(-count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg("recv_tx_dec role(%p) table:%s old recv num:%d dec num:%d", role, get_address().c_str(), role->get_recv_tx_count(), count);
+            role->recv_tx_inc(-count);
+        }
         m_statistic->dec_push_tx_recv_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_recv_tx_cur" + get_address(), count);
@@ -407,10 +422,10 @@ public:
     }
     void conf_tx_inc(int32_t count) {
         m_counter.conf_tx_inc(count);
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg("conf_tx_inc shard(%p) table:%s old confirm num:%d inc num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
-        //     shard->conf_tx_inc(count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg("conf_tx_inc role(%p) table:%s old confirm num:%d inc num:%d", role, get_address().c_str(), role->get_conf_tx_count(), count);
+            role->conf_tx_inc(count);
+        }
         m_statistic->inc_push_tx_confirm_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_confirm_tx_cur" + get_address(), count);
@@ -418,10 +433,10 @@ public:
     }
     void conf_tx_dec(int32_t count) {
         m_counter.conf_tx_inc(-count);
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg("conf_tx_dec shard(%p) table:%s old confirm num:%d dec num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
-        //     shard->conf_tx_inc(-count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg("conf_tx_dec role(%p) table:%s old confirm num:%d dec num:%d", role, get_address().c_str(), role->get_conf_tx_count(), count);
+            role->conf_tx_inc(-count);
+        }
         m_statistic->dec_push_tx_confirm_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_confirm_tx_cur" + get_address(), count);
@@ -452,14 +467,14 @@ public:
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max) {
             XMETRICS_GAUGE(metrics::txpool_alarm_send_tx_reached_upper_limit, 1);
             return xtxpool_error_table_reached_upper_limit;
-        } else if (any_shard_send_tx_reached_upper_limit()) {
+        } else if (any_role_send_tx_reached_upper_limit()) {
             return xtxpool_error_role_reached_upper_limit;
         }
         return xsuccess;
     }
 
     bool is_recv_tx_reached_upper_limit() {
-        if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max) {
+        if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || any_role_recv_tx_reached_upper_limit()) {
             XMETRICS_GAUGE(metrics::txpool_alarm_recv_tx_reached_upper_limit, 1);
             return true;
         }
@@ -467,7 +482,7 @@ public:
     }
 
     bool is_confirm_tx_reached_upper_limit() {
-        if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max) {
+        if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || any_role_confirm_tx_reached_upper_limit()) {
             XMETRICS_GAUGE(metrics::txpool_alarm_confirm_tx_reached_upper_limit, 1);
             return true;
         }
@@ -479,11 +494,11 @@ public:
         if (count == old_count) {
             return;
         }
-        // for (auto & shard : m_shards) {
-        //     xtxpool_dbg(
-        //         "set_unconfirm_tx_count shard(%p) table:%s old unconfirm count:%d inc count:%d", shard, get_address().c_str(), shard->get_unconfirm_tx_count(), count - old_count);
-        //     shard->unconfirm_tx_inc(count - old_count);
-        // }
+        for (auto & role : m_roles) {
+            xtxpool_dbg(
+                "set_unconfirm_tx_count role(%p) table:%s old unconfirm count:%d inc count:%d", role, get_address().c_str(), role->get_unconfirm_tx_count(), count - old_count);
+            role->unconfirm_tx_inc(count - old_count);
+        }
         m_statistic->inc_unconfirm_tx_num(count - old_count);
         XMETRICS_GAUGE(metrics::txpool_unconfirm_tx_cur, count - old_count);
         m_counter.set_unconfirm_tx_count(count);
@@ -493,68 +508,68 @@ public:
         return m_statistic;
     }
 
-    // bool any_shard_send_tx_reached_upper_limit() {
-    //     for (auto & shard : m_shards) {
-    //         if (shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
-    //             xwarn("any_shard_send_tx_reached_upper_limit table %s shard send queue size:%u", get_address().c_str(), shard->get_send_tx_count());
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
+    bool any_role_send_tx_reached_upper_limit() {
+        for (auto & role : m_roles) {
+            if (role->send_tx_full()) {
+                xwarn("any_role_send_tx_reached_upper_limit table %s role send queue size:%u", get_address().c_str(), role->get_send_tx_count());
+                return true;
+            }
+        }
+        return false;
+    }
 
-    // bool any_shard_recv_tx_reached_upper_limit() {
-    //     for (auto & shard : m_shards) {
-    //         if (shard->get_recv_tx_count() >= shard_recv_tx_queue_size_max) {
-    //             xwarn("any_shard_recv_tx_reached_upper_limit table %s shard recv queue size:%u", get_address().c_str(), shard->get_recv_tx_count());
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
+    bool any_role_recv_tx_reached_upper_limit() {
+        for (auto & role : m_roles) {
+            if (role->recv_tx_full()) {
+                xwarn("any_role_recv_tx_reached_upper_limit table %s role recv queue size:%u", get_address().c_str(), role->get_recv_tx_count());
+                return true;
+            }
+        }
+        return false;
+    }
 
-    // bool any_shard_confirm_tx_reached_upper_limit() {
-    //     for (auto & shard : m_shards) {
-    //         if (shard->get_conf_tx_count() >= shard_conf_tx_queue_size_max) {
-    //             xwarn("any_shard_confirm_tx_reached_upper_limit table %s shard confirm queue size:%u", get_address().c_str(), shard->get_conf_tx_count());
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
+    bool any_role_confirm_tx_reached_upper_limit() {
+        for (auto & role : m_roles) {
+            if (role->confirm_tx_full()) {
+                xwarn("any_role_confirm_tx_reached_upper_limit table %s role confirm queue size:%u", get_address().c_str(), role->get_conf_tx_count());
+                return true;
+            }
+        }
+        return false;
+    }
 
-    void add_shard(xtxpool_shard_info_t * shard) {
-        xtxpool_dbg("add_shard shard(%p) table:%s old count:%d:%d:%d:%d inc count:%d:%d:%d:%d",
-                    shard,
+    void add_role(xtxpool_role_info_t * role) {
+        xtxpool_dbg("add_role role(%p) table:%s old count:%d:%d:%d:%d inc count:%d:%d:%d:%d",
+                    role,
                     get_address().c_str(),
-                    shard->get_send_tx_count(),
-                    shard->get_recv_tx_count(),
-                    shard->get_conf_tx_count(),
-                    shard->get_unconfirm_tx_count(),
+                    role->get_send_tx_count(),
+                    role->get_recv_tx_count(),
+                    role->get_conf_tx_count(),
+                    role->get_unconfirm_tx_count(),
                     m_counter.get_send_tx_count(),
                     m_counter.get_recv_tx_count(),
                     m_counter.get_conf_tx_count(),
                     m_counter.get_unconfirm_tx_count());
-        // shard->send_tx_inc(m_counter.get_send_tx_count());
-        // shard->recv_tx_inc(m_counter.get_recv_tx_count());
-        // shard->conf_tx_inc(m_counter.get_conf_tx_count());
-        // shard->unconfirm_tx_inc(m_counter.get_unconfirm_tx_count());
-        m_shards.push_back(shard);
+        role->send_tx_inc(m_counter.get_send_tx_count());
+        role->recv_tx_inc(m_counter.get_recv_tx_count());
+        role->conf_tx_inc(m_counter.get_conf_tx_count());
+        role->unconfirm_tx_inc(m_counter.get_unconfirm_tx_count());
+        m_roles.push_back(role);
     }
 
-    void remove_shard(xtxpool_shard_info_t * shard) {
-        xtxpool_dbg("remove_shard shard(%p) table:%s", shard, get_address().c_str());
-        for (auto it = m_shards.begin(); it != m_shards.end(); it++) {
-            if ((*it)->is_ids_match(shard->get_zone(), shard->get_front_table_id(), shard->get_back_table_id(), shard->get_node_type())) {
-                xtxpool_dbg("remove_shard find and remove shard(%p) table:%s", shard, get_address().c_str());
-                m_shards.erase(it);
+    void remove_role(xtxpool_role_info_t * role) {
+        xtxpool_dbg("remove_role role(%p) table:%s", role, get_address().c_str());
+        for (auto it = m_roles.begin(); it != m_roles.end(); it++) {
+            if ((*it)->is_ids_match(role->get_zone(), role->get_front_table_id(), role->get_back_table_id(), role->get_node_type())) {
+                xtxpool_dbg("remove_role find and remove role(%p) table:%s", role, get_address().c_str());
+                m_roles.erase(it);
                 return;
             }
         }
     }
 
-    bool no_shard() const {
-        return m_shards.empty();
+    bool no_role() const {
+        return m_roles.empty();
     }
 
     int32_t get_send_tx_count() const {
@@ -581,7 +596,7 @@ public:
     }
 
 private:
-    std::vector<xtxpool_shard_info_t *> m_shards;
+    std::vector<xtxpool_role_info_t *> m_roles;
     xtx_counter_t m_counter{};
     xtxpool_statistic_t * m_statistic{nullptr};
     xtable_state_cache_t * m_table_state_cache{nullptr};

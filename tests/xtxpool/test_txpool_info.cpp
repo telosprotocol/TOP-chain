@@ -19,7 +19,7 @@ protected:
 };
 
 TEST_F(test_xtxpool_info, txpool_info) {
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 15, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, "table_test1");
     xtxpool_table_info_t table1("table_test1", &shard, &statistic, &table_state_cache);
@@ -37,7 +37,7 @@ TEST_F(test_xtxpool_info, txpool_info) {
     ASSERT_EQ(xtxpool_error_table_reached_upper_limit, table2.check_send_tx_reached_upper_limit());
 
 
-    table2.send_tx_inc(shard_send_tx_queue_size_max - table_send_tx_queue_size_max);
+    table2.send_tx_inc(role_send_tx_queue_size_max_for_each_table*16 - table_send_tx_queue_size_max);
     ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
 
     ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
