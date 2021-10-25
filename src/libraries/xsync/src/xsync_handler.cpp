@@ -702,9 +702,9 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         for (auto &id: table_ids)
             set_table_ids.insert(id);
 
-        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses,
-            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive),
-            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), set_table_ids);
+        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, vnetwork_driver, set_table_ids);
+//            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive),
+//            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), set_table_ids);
 
         XMETRICS_GAUGE(metrics::xsync_cost_role_add_event, 1);
 
@@ -734,15 +734,6 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xsync_kinfo("xsync_handler add_role_phase2 %s cost:%dms", addr.to_string().c_str(), tm3-tm2);
         xsync_kinfo("xsync_handler add_role_result(before) %s %s", addr.to_string().c_str(), old_role_string.c_str());
         xsync_kinfo("xsync_handler add_role_result(after) %s %s", addr.to_string().c_str(), new_role_string.c_str());
-
-        std::vector<common::xnode_address_t> nodes = vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive);
-        for (auto node: nodes) {
-            xsync_kinfo("archive_addresses: %s", node.to_string().c_str());
-        }
-        nodes = vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node);
-        for (auto node: nodes) {
-            xsync_kinfo("storage_full_node: %s", node.to_string().c_str());
-        }
 
     } else if (e->minor_type == xevent_role_t::remove_role) {
         auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_remove_t>(e);
