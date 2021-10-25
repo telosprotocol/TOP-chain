@@ -17,16 +17,16 @@ xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_accou
   : m_action_account_address{std::move(action_account_addr)}, m_state_accessor{sa}, m_param{execution_param} {
 }
 
-//void xtop_contract_state::set_state(common::xaccount_address_t const & address) {
-//    assert(m_state_accessor != nullptr);
-//    std::error_code ec;
-//    m_state_accessor->set_state(address, ec);
-//    top::error::throw_error(ec);
-//    m_latest_followup_tx_hash = latest_sendtx_hash(ec);
-//    top::error::throw_error(ec);
-//    m_latest_followup_tx_nonce = latest_sendtx_nonce(ec);
-//    top::error::throw_error(ec);
-//}
+void xtop_contract_state::set_state(common::xaccount_address_t const & address) {
+    assert(m_state_accessor != nullptr);
+    std::error_code ec;
+    m_state_accessor->set_state(address, ec);
+    top::error::throw_error(ec);
+    m_latest_followup_tx_hash = latest_sendtx_hash(ec);
+    top::error::throw_error(ec);
+    m_latest_followup_tx_nonce = latest_sendtx_nonce(ec);
+    top::error::throw_error(ec);
+}
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
   : m_action_account_address{account_address}

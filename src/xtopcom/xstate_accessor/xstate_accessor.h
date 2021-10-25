@@ -30,6 +30,7 @@ public:
 private:
     std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> bstate_pack_;
     std::map<common::xaccount_address_t, xobject_ptr_t<base::xvcanvas_t>> canvas_pack_;
+
     top::xobject_ptr_t<top::base::xvbstate_t> bstate_owned_{nullptr};
 
     top::observer_ptr<top::base::xvbstate_t> bstate_;
@@ -43,15 +44,28 @@ public:
     xtop_state_accessor & operator=(xtop_state_accessor &&) = default;
     ~xtop_state_accessor() = default;
 
-    xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
+    explicit xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
     xtop_state_accessor(std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> const & bstate_pack, xstate_access_control_data_t ac_data);
 
 private:
     explicit xtop_state_accessor(common::xaccount_address_t const & account_address);
 
 public:
+    /// @brief Construct an xstate_accessor_t object against the specified account. Throws xtop_error_t when any error occurs.
+    /// @param account_address The account address the state accessor object associated.
+    /// @return The state accessor object.
     static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address);
+
+    /// @brief Construct an xstate_accessor_t object against the specified account.
+    /// @param account_address The account address the state accessor object associated.
+    /// @param ec Log the error code.
+    /// @return The state accessor object.
     static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address, std::error_code & ec);
+
+    /// @brief Set previous state and canvas.
+    /// @param address State address.
+    /// @param ec Log the error code in the operation.
+    void set_state(common::xaccount_address_t const & address, std::error_code & ec);
 
     /// @brief Withdraw token.
     /// @param property_id Property ID.

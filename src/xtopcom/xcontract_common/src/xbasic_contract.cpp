@@ -179,22 +179,19 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // exec
     auto obj = m_associated_execution_context->system_contract(target_addr);
     auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
-    auto target_state = xcontract_state_t::build_from(target_addr);
-    auto source_state = m_associated_execution_context->contract_state();
-
-    m_associated_execution_context->contract_state(make_observer(target_state.get()));
+    m_associated_execution_context->contract_state(target_addr);
     m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::recv);
     if (source_addr == target_addr) {
         m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::self);
     } else {
         m_associated_execution_context->consensus_action_stage(data::xconsensus_action_stage_t::recv);
     }
-    
+
     auto result = obj->execute(top::make_observer(ctx));
     // TODO: follow up of result
     assert(!result.status.ec);
     // switch address back
-    m_associated_execution_context->contract_state(source_state);
+    m_associated_execution_context->contract_state(source_addr);
 }
 
 void xtop_basic_contract::transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec) {

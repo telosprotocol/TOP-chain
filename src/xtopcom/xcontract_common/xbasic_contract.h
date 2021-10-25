@@ -126,10 +126,4 @@ protected:
     void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec);
 };
 
-//template <>
-//properties::xbytes_property_t xtop_basic_contract::get_property<properties::xbytes_property_t>(
-//    state_accessor::properties::xtypeless_property_identifier_t const & property_id,
-//    common::xaccount_address_t const & account_address,
-//    std::error_code & ec) const;
-
 NS_END2

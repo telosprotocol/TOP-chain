@@ -32,9 +32,18 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
 }
 
 xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data)
-    : bstate_{ bstate }, canvas_{ make_object_ptr<base::xvcanvas_t>() }, ac_data_{ std::move(ac_data) } {
-    if (bstate_ == nullptr) {
-        top::error::throw_error({ error::xerrc_t::invalid_state_backend });
+  : bstate_{bstate}, canvas_{make_object_ptr<base::xvcanvas_t>()}, ac_data_{std::move(ac_data)} {
+    if (bstate == nullptr) {
+        top::error::throw_error({error::xerrc_t::invalid_state_backend});
+    }
+    bstate_pack_.insert(std::make_pair(common::xaccount_address_t{bstate->get_account()}, bstate));
+    canvas_pack_.insert(std::make_pair(common::xaccount_address_t{bstate->get_account()}, canvas_));
+}
+
+xtop_state_accessor::xtop_state_accessor(std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> const & bstate_pack, xstate_access_control_data_t ac_data)
+  : bstate_pack_{bstate_pack}, ac_data_{std::move(ac_data)} {
+    if (bstate_pack_.empty()) {
+        top::error::throw_error({error::xerrc_t::invalid_state_backend});
     }
 }
 
@@ -57,6 +66,28 @@ std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xac
     }
 
     return {};
+}
+
+void xtop_state_accessor::set_state(common::xaccount_address_t const & address, std::error_code & ec) {
+    assert(!ec);
+    {
+        auto it = bstate_pack_.find(address);
+        if (it == bstate_pack_.end()) {
+            ec = error::xenum_errc::load_account_state_failed;
+            return;
+        } else {
+            bstate_ = top::get<observer_ptr<base::xvbstate_t>>(*it);
+        }
+    }
+    {
+        auto it = canvas_pack_.find(address);
+        if (it == canvas_pack_.end()) {
+            canvas_ = make_object_ptr<base::xvcanvas_t>();
+            canvas_pack_.insert(std::make_pair(address, canvas_));
+        } else {
+            canvas_ = top::get<xobject_ptr_t<base::xvcanvas_t>>(*it);
+        }
+    }
 }
 
 uint64_t xtop_state_accessor::nonce(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {

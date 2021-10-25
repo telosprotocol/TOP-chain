@@ -34,16 +34,12 @@ public:
     }
 
     void test_set_string_property(std::string const & string) {
-        if (at_target_action_stage()) {
-            m_string_prop.set(string);
-        }
+        m_string_prop.set(string);
     }
 
     void test_set_map_property(std::map<std::string, std::string> const & map) {
-        if (at_target_action_stage()) {
-            for (auto const & item : map) {
-                m_map_prop.set(item.first, item.second);
-            }
+        for (auto const & item : map) {
+            m_map_prop.set(item.first, item.second);
         }
     }
 
