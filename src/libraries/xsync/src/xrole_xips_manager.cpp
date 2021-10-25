@@ -19,8 +19,7 @@ m_vnode_id(vnode_id) {
 void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip, 
                 const std::vector<vnetwork::xvnode_address_t>& neighbours,
                 const std::vector<vnetwork::xvnode_address_t>& parents, 
-                const std::vector<vnetwork::xvnode_address_t>& archives, 
-                const std::vector<vnetwork::xvnode_address_t>& edge_archives, 
+                const std::shared_ptr<vnetwork::xvnetwork_driver_face_t>& network_driver,
                 const std::set<uint16_t> &table_ids) {
 
     std::unique_lock<std::mutex> lock(m_lock);
@@ -35,10 +34,8 @@ void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip,
     m_map[self_xip] = {self_xip, create_xip_vector_ptr(neighbours, self_xip), create_xip_vector_ptr(parents, self_xip),
                         std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours), table_ids};
 
-    // only the same archive view can obtain the same vrf and hash result
-    m_archive_xips = create_archive_xip_vector_ptr(archives, self_xip);
-
-    m_edge_archive_xips = create_archive_xip_vector_ptr(edge_archives, self_xip);
+    m_vnetwork_driver = network_driver;
+    m_self_xip = self_xip;
 }
 
 void xrole_xips_manager_t::remove_role(const vnetwork::xvnode_address_t& self_xip) {
@@ -51,8 +48,8 @@ void xrole_xips_manager_t::remove_xips_by_id(const common::xnode_id_t& id) {
     for(auto& pair : m_map) {
         pair.second.remove_xips_by_id(id);
     }
-    xrole_xips_t::remove_xips_by_id(m_archive_xips, id);
-    xrole_xips_t::remove_xips_by_id(m_edge_archive_xips, id);
+//    xrole_xips_t::remove_xips_by_id(m_archive_xips, id);
+//    xrole_xips_t::remove_xips_by_id(m_edge_archive_xips, id);
 }
 
 const vnetwork::xvnode_address_t xrole_xips_manager_t::get_static_xip() {
@@ -87,29 +84,38 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_parents(c
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_archives(uint32_t max_peers) {
+    xip_vector_ptr archive_xips{};
+    archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), m_self_xip);
+
     std::unique_lock<std::mutex> lock(m_lock);
-    return get_rand_peers(m_archive_xips, max_peers);
+    return get_rand_peers(archive_xips, max_peers);
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_archive_list() {
+    xip_vector_ptr archive_xips{};
+    archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), m_self_xip);
+
     std::unique_lock<std::mutex> lock(m_lock);
 
     std::vector<vnetwork::xvnode_address_t> nodes;
-    uint32_t count = m_archive_xips->size();
+    uint32_t count = archive_xips->size();
     for (uint32_t i=0; i<count; i++) {
-        nodes.push_back(m_archive_xips->at(i));
+        nodes.push_back(archive_xips->at(i));
     }
 
     return nodes;
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_edge_archive_list() {
+    xip_vector_ptr edge_archive_xips{};
+    edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), m_self_xip);
+
     std::unique_lock<std::mutex> lock(m_lock);
 
     std::vector<vnetwork::xvnode_address_t> nodes;
-    uint32_t count = m_edge_archive_xips->size();
+    uint32_t count = edge_archive_xips->size();
     for (uint32_t i=0; i<count; i++) {
-        nodes.push_back(m_edge_archive_xips->at(i));
+        nodes.push_back(edge_archive_xips->at(i));
     }
 
     return nodes;
