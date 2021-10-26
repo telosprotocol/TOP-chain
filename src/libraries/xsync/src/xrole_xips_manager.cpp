@@ -30,7 +30,8 @@ void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip,
             break;
         }
     }
-
+    for (auto neighbour: neighbours)
+        xinfo("neighbours: %s", neighbour.to_string().c_str());
     m_map[self_xip] = {self_xip, create_xip_vector_ptr(neighbours, self_xip), create_xip_vector_ptr(parents, self_xip),
                         std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours), table_ids};
 
