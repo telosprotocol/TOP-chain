@@ -90,8 +90,6 @@ public:
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
-    std::string source_action_data() const;
-    std::string target_action_data() const;
     state_accessor::xtoken_t src_action_asset(std::error_code & ec) const;
     void asset_to_target_action(state_accessor::xtoken_t token) noexcept;
     data::enum_xtransaction_type transaction_type() const;

@@ -24,8 +24,8 @@ public:
 
     BEGIN_CONTRACT_API()
         DECLARE_API(xdemo_contract_a::setup);
-        DECLARE_API(xdemo_contract_a::test_set_string_property);
-        DECLARE_API(xdemo_contract_a::test_set_map_property);
+        DECLARE_RECV_ONLY_API(xdemo_contract_a::test_set_string_property);
+        DECLARE_RECV_ONLY_API(xdemo_contract_a::test_set_map_property);
         DECLARE_API(xdemo_contract_a::test_sync_call);
         DECLARE_API(xdemo_contract_a::test_async_call);
     END_CONTRACT_API
@@ -62,7 +62,6 @@ public:
 
 private:
     contract_common::properties::xstring_property_t m_string_prop{xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, this};
-    contract_common::properties::xstring_property_t m_string2_prop{data::XPROPERTY_CONTRACT_STANDBYS_KEY, this};
 
     contract_common::properties::xmap_property_t<std::string, std::string> m_map_prop{xstake::XPORPERTY_CONTRACT_REG_KEY, this};
     contract_common::properties::xmap_property_t<std::string, std::string> m_map2_prop{xstake::XPORPERTY_CONTRACT_TICKETS_KEY, this};

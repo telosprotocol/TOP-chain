@@ -17,18 +17,6 @@
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
 #include <gtest/gtest.h>
-// #include "xblockstore/xblockstore_face.h"
-// #include "xcontract_common/xcontract_state.h"
-// #include "xcontract_runtime/xtop_action_generator.h"
-// #include "xdata/xdata_common.h"
-// #include "xdb/xdb_face.h"
-// #include "xdb/xdb_factory.h"
-// #include "xstore/xstore_face.h"
-// #include "xsystem_contract_runtime/xsystem_action_runtime.h"
-// #include "xsystem_contracts/xsystem_contract_addresses.h"
-// #include "xsystem_contracts/xtransfer_contract.h"
-// #include "xvledger/xvledger.h"
-// #include "xvledger/xvstate.h"
 
 NS_BEG3(top, tests, contract_runtime)
 
@@ -70,6 +58,7 @@ TEST_F(test_contract_vm, test_send_tx) {
     const uint256_t last_hash{12345678};
     const uint64_t recv_num{1};
     const uint64_t unconfirm_num{1};
+    const uint64_t start_balance{100000000};
 
     m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
         common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
@@ -107,6 +96,26 @@ TEST_F(test_contract_vm, test_send_tx) {
         }
         if (bstate_cmp->find_property(XPROPERTY_TX_INFO) == false) {
             bstate_cmp->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
+        }
+        if (bstate->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
+            bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+            bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(start_balance), canvas.get());
+        }
+        if (bstate_cmp->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
+            bstate_cmp->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+            bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(start_balance), canvas.get());
+        }
+        if (bstate->find_property(XPROPERTY_BALANCE_BURN) == false) {
+            bstate->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
+        }
+        if (bstate_cmp->find_property(XPROPERTY_BALANCE_BURN) == false) {
+            bstate_cmp->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
+        }
+        if (bstate->find_property(XPROPERTY_BALANCE_LOCK) == false) {
+            bstate->new_token_var(XPROPERTY_BALANCE_LOCK, canvas.get());
+        }
+        if (bstate_cmp->find_property(XPROPERTY_BALANCE_LOCK) == false) {
+            bstate_cmp->new_token_var(XPROPERTY_BALANCE_LOCK, canvas.get());
         }
         auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
         auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
@@ -167,6 +176,26 @@ TEST_F(test_contract_vm, test_send_tx) {
             EXPECT_EQ(value, unconfirm_num + 1);
         }
         { EXPECT_EQ(false, state_out->find_property(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)); }
+        {
+            auto string = state_out->load_string_var(XPROPERTY_USED_TGAS_KEY)->query();
+            EXPECT_EQ(string, std::string{"708"});
+        }
+        {
+            auto string = state_out->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->query();
+            EXPECT_EQ(string, std::string{"5796740"});
+        }
+        {
+            auto value = state_out->load_uint64_var(XPROPERTY_LOCK_TGAS)->get();
+            EXPECT_EQ(value, 5000);
+        }
+        {
+            auto value = state_out->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
+            EXPECT_EQ(value, start_balance - 100000);
+        }
+        {
+            auto value = state_out->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
+            EXPECT_EQ(value, 100000);
+        }
     }
     EXPECT_EQ(result.bincode_pack.size(), 1);
     EXPECT_EQ(result.binlog_pack.size(), 1);
@@ -190,6 +219,18 @@ TEST_F(test_contract_vm, test_send_tx) {
             auto value = top::to_bytes<uint64_t>(unconfirm_num + 1);
             map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
+        bstate_cmp->new_string_var(XPROPERTY_LAST_TX_HOUR_KEY, canvas.get());
+        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{}, canvas.get());
+        bstate_cmp->new_string_var(XPROPERTY_USED_TGAS_KEY, canvas.get());
+        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::string{}, canvas.get());
+        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::string{"708"}, canvas.get());
+        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{"5796740"}, canvas.get());
+        bstate_cmp->new_uint64_var(XPROPERTY_LOCK_TGAS, canvas.get());
+        bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{0}, canvas.get());
+        bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{5000}, canvas.get());
+        bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->withdraw(static_cast<base::vtoken_t>(100000), canvas.get());
+        bstate_cmp->load_token_var(XPROPERTY_BALANCE_LOCK)->deposit(static_cast<base::vtoken_t>(100000), canvas.get());
+
         std::string bincode;
         bstate_cmp->take_snapshot(bincode);
         std::string binlog;
@@ -197,6 +238,101 @@ TEST_F(test_contract_vm, test_send_tx) {
         EXPECT_EQ(result.bincode_pack[common::xaccount_address_t{user_address}], bincode);
         EXPECT_EQ(result.binlog_pack[common::xaccount_address_t{user_address}], binlog);
     }
+}
+
+TEST_F(test_contract_vm, test_send_tx_balance_not_enough) {
+    const uint64_t last_nonce{10};
+    const uint256_t last_hash{12345678};
+    const uint64_t recv_num{1};
+    const uint64_t unconfirm_num{1};
+
+    m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
+        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
+
+    // tx
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+    xstream_t param_stream(xcontext_t::instance());
+    param_stream << std::string{"test_send_tx_str"};
+    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+    tx->make_tx_run_contract("test_set_string_property", param);
+    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_fire_and_expire_time(600);
+    tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+    tx->set_digest();
+    utl::xecprikey_t pri_key_obj((uint8_t *)(DecodePrivateString(sign_key).data()));
+    utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
+    auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+    tx->set_authorization(signature);
+    tx->set_len();
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    cons_tx->set_tx_subtype(enum_transaction_subtype_send);
+
+    std::vector<xcons_transaction_ptr_t> input_txs;
+    input_txs.emplace_back(cons_tx);
+
+    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
+
+    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
+    state_pack.insert(std::make_pair(common::xaccount_address_t{user_address}, make_observer(bstate.get())));
+
+    xaccount_vm_t vm(make_observer(m_manager));
+    auto result = vm.execute(input_txs, state_pack, cs_para);
+
+    EXPECT_NE(result.status.ec.value(), 0);
+    EXPECT_EQ(result.success_tx_assemble.size(), 0);
+    EXPECT_EQ(result.failed_tx_assemble.size(), 1);
+    EXPECT_EQ(result.failed_tx_assemble[0]->get_transaction(), tx.get());
+    EXPECT_EQ(result.delay_tx_assemble.size(), 0);
+}
+
+TEST_F(test_contract_vm, test_send_tx_deposit_not_enough) {
+    const uint64_t last_nonce{10};
+    const uint256_t last_hash{12345678};
+    const uint64_t recv_num{1};
+    const uint64_t unconfirm_num{1};
+
+    m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
+        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
+
+    // tx
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+    xstream_t param_stream(xcontext_t::instance());
+    param_stream << std::string{"test_send_tx_str"};
+    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+    tx->make_tx_run_contract("test_set_string_property", param);
+    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_fire_and_expire_time(600);
+    tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+    tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+    tx->set_digest();
+    utl::xecprikey_t pri_key_obj((uint8_t *)(DecodePrivateString(sign_key).data()));
+    utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
+    auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+    tx->set_authorization(signature);
+    tx->set_len();
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    cons_tx->set_tx_subtype(enum_transaction_subtype_send);
+
+    std::vector<xcons_transaction_ptr_t> input_txs;
+    input_txs.emplace_back(cons_tx);
+
+    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
+    xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
+    if (bstate->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
+        bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+        bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(100000), canvas.get());
+    }
+    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
+    state_pack.insert(std::make_pair(common::xaccount_address_t{user_address}, make_observer(bstate.get())));
+
+    xaccount_vm_t vm(make_observer(m_manager));
+    auto result = vm.execute(input_txs, state_pack, cs_para);
+
+    EXPECT_NE(result.status.ec.value(), 0);
+    EXPECT_EQ(result.success_tx_assemble.size(), 0);
+    EXPECT_EQ(result.failed_tx_assemble.size(), 1);
+    EXPECT_EQ(result.failed_tx_assemble[0]->get_transaction(), tx.get());
+    EXPECT_EQ(result.delay_tx_assemble.size(), 0);
 }
 
 TEST_F(test_contract_vm, test_recv_tx) {
@@ -234,7 +370,6 @@ TEST_F(test_contract_vm, test_recv_tx) {
     auto vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
@@ -369,7 +504,6 @@ TEST_F(test_contract_vm, test_sync_call) {
     xobject_ptr_t<xvblock_t> const & vblock_a = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     xobject_ptr_t<xvbstate_t> const & bstate_a = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock_a.get());
     EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
-    EXPECT_EQ(bstate_a->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
     EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
     EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
     EXPECT_EQ(bstate_a->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
@@ -403,7 +537,6 @@ TEST_F(test_contract_vm, test_sync_call) {
     xobject_ptr_t<xvblock_t> const & vblock_b = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_registration_addr});
     xobject_ptr_t<xvbstate_t> const & bstate_b = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock_b.get());
     EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
-    EXPECT_EQ(bstate_b->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
     EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
     EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
     EXPECT_EQ(bstate_b->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
@@ -586,7 +719,6 @@ TEST_F(test_contract_vm, test_async_call) {
     auto vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
@@ -783,8 +915,9 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
             auto value = top::to_bytes<uint64_t>(unconfirm_num);
             map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
-        if (bstate->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY) == true) {
-            auto string_property = bstate->load_string_var(XPROPERTY_CONTRACT_STANDBYS_KEY);
+        if (bstate->find_property(XPROPERTY_CONTRACT_STANDBYS_KEY) == false) {
+            bstate->new_string_var(XPROPERTY_CONTRACT_STANDBYS_KEY, canvas.get());
+            auto bytes_property = bstate->load_string_var(XPROPERTY_CONTRACT_STANDBYS_KEY);
             data::election::xstandby_result_store_t standby_result_store;
             std::vector<node_info_t> const seed_nodes{
                 node_info_t{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp", "BNRHeRGw4YZnTHeNGxYtuAsvSslTV7THMs3A9RJM+1Vg63gyQ4XmK2i8HW+f3IaM7KavcH7JMhTPFzKtWp7IXW4="},
@@ -806,8 +939,8 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
                 // TODO: contract networkid get
                 standby_result_store.result_of(common::xnetwork_id_t{base::enum_test_chain_id}).insert({node_id, seed_node_info});
             }
-            std::string str = contract_common::serialization::xmsgpack_t<data::election::xstandby_result_store_t>::serialize_to_string_prop(standby_result_store);
-            string_property->reset(str, canvas.get());
+            auto bytes = contract_common::serialization::xmsgpack_t<data::election::xstandby_result_store_t>::serialize_to_bytes(standby_result_store);
+            bytes_property->reset({std::begin(bytes), std::end(bytes)}, canvas.get());
         }
     }
     xvbstate_t bstate_cmp(*(bstate.get()));

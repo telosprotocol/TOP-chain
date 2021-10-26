@@ -480,8 +480,8 @@ public:
     void last_tx_hour(uint64_t hour);
 
     /* ----------account context interface ---------- */
-    void transfer_internal(std::string from, std::string to, uint64_t amount, std::error_code & ec) {}
-    void transfer_internal(std::string from, std::string to, uint64_t amount) {}
+    void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec);
+    void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount);
 };
 using xcontract_state_t = xtop_contract_state;
 

@@ -84,14 +84,6 @@ xbyte_buffer_t xtop_basic_contract::action_data() const {
     return m_associated_execution_context->action_data();
 }
 
-std::string xtop_basic_contract::source_action_data() const {
-    return m_associated_execution_context->source_action_data();
-}
-
-std::string xtop_basic_contract::target_action_data() const {
-    return m_associated_execution_context->target_action_data();
-}
-
 state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code & ec) const {
     assert(!ec);
 

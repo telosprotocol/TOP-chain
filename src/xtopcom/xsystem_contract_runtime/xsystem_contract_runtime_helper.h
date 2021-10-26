@@ -155,34 +155,36 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
             result.status.ec = make_error_code(top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error);                                                     \
             return result;                                                                                                                                                         \
         }                                                                                                                                                                          \
-    POST_DECLARE_CONTRACT_API(CONTRACT_API)                                                                                                                                        \
+    POST_DECLARE_CONTRACT_API(CONTRACT_API)
 
-/// @brief Macro for declaring comfirm only(source action only) contract API 'func'
+/// @brief Macro for declaring recv only(target action only) contract API 'func'
 ///        'CONTRACT' is from 'BEGIN_CONTRACT_APIs'
-#define DECLARE_COMFIRM_ONLY_API(CONTRACT_API)                                                                                                                                     \
+#define DECLARE_RECV_ONLY_API(CONTRACT_API)                                                                                                                                        \
     PRE_DECLARE_CONTRACT_API(CONTRACT_API)                                                                                                                                         \
-        if ( data::xconsensus_action_stage_t::confirm != exe_ctx->consensus_action_stage() ) {                                                                                     \
-            result.status.ec = make_error_code(top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error);                                                     \
-            return result;                                                                                                                                                         \
-        }                                                                                                                                                                          \
+    if (data::xconsensus_action_stage_t::recv != exe_ctx->consensus_action_stage()) {                                                                                              \
+        result.status.ec = make_error_code(top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error);                                                         \
+        return result;                                                                                                                                                             \
+    }                                                                                                                                                                              \
                                                                                                                                                                                    \
-        if ( xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == exe_ctx->action_consensus_result()) {                                                             \
-            return result;                                                                                                                                                         \
-        }                                                                                                                                                                          \
-    POST_DECLARE_CONTRACT_API(CONTRACT_API)                                                                                                                                        \
-
+    if (xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == exe_ctx->action_consensus_result()) {                                                                  \
+        return result;                                                                                                                                                             \
+    }                                                                                                                                                                              \
+    POST_DECLARE_CONTRACT_API(CONTRACT_API)
 
 /// @brief  contract begin & end macro
 #define BEGIN_CONTRACT_API()                                                                                                                                                       \
     top::contract_common::xcontract_execution_result_t execute(observer_ptr<top::contract_common::xcontract_execution_context_t> exe_ctx) override {                               \
         this->reset_execution_context(exe_ctx);                                                                                                                                    \
         top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
-        if ( data::xconsensus_action_stage_t::confirm == exe_ctx->consensus_action_stage() &&                                                                                      \
-             data::xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == exe_ctx->action_consensus_result()) {                                                       \
+        if (data::xconsensus_action_stage_t::confirm == exe_ctx->consensus_action_stage() &&                                                                                       \
+            data::xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == exe_ctx->action_consensus_result()) {                                                        \
             return result;                                                                                                                                                         \
         }                                                                                                                                                                          \
         auto const & action_name = exe_ctx->action_name();                                                                                                                         \
         auto const & action_data = exe_ctx->action_data();                                                                                                                         \
+        if (action_name.empty()) {                                                                                                                                                 \
+            return result;                                                                                                                                                         \
+        }                                                                                                                                                                          \
         std::unique_ptr<base::xstream_t> stream_ptr;                                                                                                                               \
         if (action_data.empty()) {                                                                                                                                                 \
             stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance());                                                                                          \
