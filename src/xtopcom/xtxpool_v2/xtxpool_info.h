@@ -491,7 +491,7 @@ public:
         for (auto & shard : m_shards) {
             if (shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
                 xwarn("any_shard_send_tx_reached_upper_limit table %s shard send queue size:%u", get_address().c_str(), shard->get_send_tx_count());
-                return true;
+                // return true;  // TODO(jimmy) disable shard queue limit
             }
         }
         return false;
