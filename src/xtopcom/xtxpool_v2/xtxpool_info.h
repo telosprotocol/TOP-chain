@@ -301,13 +301,8 @@ public:
     bool is_ids_match(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) const {
         return (m_zone == zone && m_front_table_id == front_table_id && m_back_table_id == back_table_id && m_node_type == node_type);
     }
-    bool is_id_contained(uint8_t zone, uint16_t table_id) {
+    bool is_id_contained(uint8_t zone, uint16_t table_id) const {
         return (zone == m_zone && table_id >= m_front_table_id && table_id <= m_back_table_id);
-    }
-    void get_shard_ids(uint8_t & zone, uint16_t & front_table_id, uint16_t & back_table_id) {
-        m_zone = zone;
-        m_front_table_id = front_table_id;
-        m_back_table_id = back_table_id;
     }
     uint8_t get_zone() const {
         return m_zone;
@@ -321,12 +316,22 @@ public:
     common::xnode_type_t get_node_type() const {
         return m_node_type;
     }
+    void add_sub_count() {
+        m_sub_count++;
+    }
+    void del_sub_count() {
+        m_sub_count--;
+    }
+    uint8_t get_sub_count() const {
+        return m_sub_count.load();
+    }
 
 private:
     uint8_t m_zone;
     uint16_t m_front_table_id;
     uint16_t m_back_table_id;
     common::xnode_type_t m_node_type;
+    std::atomic<uint8_t> m_sub_count{0};
 };
 
 class xtxpool_table_info_t : public base::xvaccount_t {
@@ -539,7 +544,7 @@ public:
     void remove_shard(xtxpool_shard_info_t * shard) {
         xtxpool_dbg("remove_shard shard(%p) table:%s", shard, get_address().c_str());
         for (auto it = m_shards.begin(); it != m_shards.end(); it++) {
-            if ((*it)->is_ids_match(shard->get_zone(), shard->get_front_table_id(), shard->get_back_table_id(), shard->get_node_type())) {
+            if ((*it) == shard) {
                 xtxpool_dbg("remove_shard find and remove shard(%p) table:%s", shard, get_address().c_str());
                 m_shards.erase(it);
                 return;

@@ -186,18 +186,19 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
         return;
     }
 
-    std::shared_ptr<xtxpool_shard_info_t> shard = nullptr;
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     for (uint32_t i = 0; i < m_shards[zone].size(); i++) {
         if (m_shards[zone][i]->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
-            shard = m_shards[zone][i];
-            break;
+            m_shards[zone][i]->add_sub_count();
+            return;
         }
     }
-    if (shard == nullptr) {
-        shard = std::make_shared<xtxpool_shard_info_t>(zone, front_table_id, back_table_id, node_type);
-        m_shards[zone].push_back(shard);
-    }
+
+    std::shared_ptr<xtxpool_shard_info_t> shard = std::make_shared<xtxpool_shard_info_t>(zone, front_table_id, back_table_id, node_type);
+    m_shards[zone].push_back(shard);
+    shard->add_sub_count();
+
+    xtxpool_info("xtxpool_t::subscribe_tables sub tables:zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
 
     uint32_t add_table_num = 0;
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
@@ -231,6 +232,11 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
     uint32_t remove_table_num = 0;
     for (auto it = m_shards[zone].begin(); it != m_shards[zone].end(); it++) {
         if ((*it)->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
+            (*it)->del_sub_count();
+            if ((*it)->get_sub_count() != 0) {
+                return;
+            }
+            xtxpool_info("xtxpool_t::unsubscribe_tables unsub tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
             for (uint16_t i = front_table_id; i <= back_table_id; i++) {
                 m_tables[zone][i]->remove_shard((*it).get());
                 if (m_tables[zone][i]->no_shard()) {
