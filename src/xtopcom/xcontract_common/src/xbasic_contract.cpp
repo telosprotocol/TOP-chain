@@ -58,7 +58,7 @@ observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noex
     return m_associated_execution_context->contract_state();
 }
 
-void xtop_basic_contract::asset_to_target_action(state_accessor::xtoken_t token) noexcept {
+void xtop_basic_contract::asset_to_target_action(state_accessor::xtoken_t token) {
     base::xstream_t stream{base::xcontext_t::instance()};
     token.move_to(stream);
 
