@@ -91,7 +91,7 @@ public:
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
     state_accessor::xtoken_t src_action_asset(std::error_code & ec) const;
-    void asset_to_target_action(state_accessor::xtoken_t token) noexcept;
+    void asset_to_target_action(state_accessor::xtoken_t token);
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;
