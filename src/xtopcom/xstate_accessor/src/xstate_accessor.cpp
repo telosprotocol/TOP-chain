@@ -167,7 +167,7 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
         return;
     }
 
-    if (static_cast<base::vtoken_t>(token.amount())) {
+    if (static_cast<base::vtoken_t>(token.amount()) < 0) {
         ec = error::xerrc_t::property_value_out_of_range;
         return;
     }
@@ -473,37 +473,47 @@ bool xtop_state_accessor::block_exist(common::xaccount_address_t const & address
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::int64>::type xtop_state_accessor::get_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::int64>::type xtop_state_accessor::get_property<properties::xproperty_type_t::int64>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    auto const & peroperty_name = property_id.full_name();
-    auto int_property = bstate_->load_int64_var(peroperty_name);
-    if (int_property == nullptr) {
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
         if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_int64_var(property_name, canvas_.get());
+            bstate_->load_int64_var(property_name)->set(int64_t(0), canvas_.get());
         }
-
-        return {};
     }
+    auto int_property = bstate_->load_int64_var(property_name);
+    assert(int_property != nullptr);
 
     return int_property->get();
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xtop_state_accessor::get_property<properties::xproperty_type_t::uint64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::uint64>::type xtop_state_accessor::get_property<properties::xproperty_type_t::uint64>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    auto const & peroperty_name = property_id.full_name();
-    auto int_property = bstate_->load_uint64_var(peroperty_name);
-    if (int_property == nullptr) {
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
         if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_uint64_var(property_name, canvas_.get());
+            bstate_->load_uint64_var(property_name)->set(uint64_t(0), canvas_.get());
         }
-
-        return {};
     }
+    auto int_property = bstate_->load_uint64_var(property_name);
+    assert(int_property != nullptr);
 
     return int_property->get();
 }
@@ -521,64 +531,79 @@ properties::xtype_of_t<properties::xproperty_type_t::bytes>::type xtop_state_acc
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_accessor::get_property<properties::xproperty_type_t::string>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_accessor::get_property<properties::xproperty_type_t::string>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    auto const & peroperty_name = property_id.full_name();
-    auto string_property = bstate_->load_string_var(peroperty_name);
-    if (string_property == nullptr) {
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
         if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_var(property_name, canvas_.get());
+            bstate_->load_string_var(property_name)->reset(std::string{}, canvas_.get());
         }
-
-        return {};
     }
+    auto string_property = bstate_->load_string_var(property_name);
+    assert(string_property != nullptr);
 
     return string_property->query();
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property<properties::xproperty_type_t::map>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    auto const & peroperty_name = property_id.full_name();
-    auto map_property = bstate_->load_string_map_var(peroperty_name);
-    if (map_property == nullptr) {
-        assert(!properties::system_property(property_id));
-
-        ec = error::xerrc_t::property_not_exist;
-        return {};
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_map_var(property_name, canvas_.get());
+        }
     }
+    auto map_property = bstate_->load_string_map_var(property_name);
+    assert(map_property != nullptr);
 
     auto map = map_property->query();
     properties::xtype_of_t<properties::xproperty_type_t::map>::type ret;
     for (auto & pair : map) {
-        ret.insert({ std::move(pair.first), {std::begin(pair.second), std::end(pair.second)} });
+        ret.insert({std::move(pair.first), {std::begin(pair.second), std::end(pair.second)}});
     }
     return ret;
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::deque>::type xtop_state_accessor::get_property<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::deque>::type xtop_state_accessor::get_property<properties::xproperty_type_t::deque>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
 
-    auto const & peroperty_name = property_id.full_name();
-    auto deque_property = bstate_->load_string_deque_var(peroperty_name);
-    if (deque_property == nullptr) {
-        assert(!properties::system_property(property_id));
-
-        ec = error::xerrc_t::property_not_exist;
-        return {};
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_deque_var(property_name, canvas_.get());
+        }
     }
+    auto deque_property = bstate_->load_string_deque_var(property_name);
+    assert(deque_property != nullptr);
 
     auto deque = deque_property->query();
     properties::xtype_of_t<properties::xproperty_type_t::deque>::type ret;
     ret.resize(deque.size());
     for (auto i = 0u; i < deque.size(); ++i) {
-        ret[i] = { std::begin(deque[i]), std::end(deque[i]) };
+        ret[i] = {std::begin(deque[i]), std::end(deque[i])};
     }
     return ret;
 }
@@ -608,21 +633,27 @@ properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_ac
     }
 
     assert(address_state != nullptr);
-    auto const & peroperty_name = property_id.full_name();
-    auto string_property = address_state->load_string_var(peroperty_name);
-    if (string_property == nullptr) {
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
         if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_var(property_name, canvas_.get());
+            bstate_->load_string_var(property_name)->reset(std::string{}, canvas_.get());
         }
-
-        return {};
     }
+    auto string_property = bstate_->load_string_var(property_name);
+    assert(string_property != nullptr);
 
     return string_property->query();
 }
 
 template <>
-properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & address, std::error_code & ec) const {
+properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property<properties::xproperty_type_t::map>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    common::xaccount_address_t const & address,
+    std::error_code & ec) const {
     assert(!ec);
     auto const & address_state = state(address, ec);
     if (ec) {
@@ -630,19 +661,22 @@ properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_acces
     }
 
     assert(address_state != nullptr);
-    auto const & peroperty_name = property_id.full_name();
-    auto map_property = address_state->load_string_map_var(peroperty_name);
-    if (map_property == nullptr) {
-        assert(!properties::system_property(property_id));
-
-        ec = error::xerrc_t::property_not_exist;
-        return {};
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_map_var(property_name, canvas_.get());
+        }
     }
+    auto map_property = bstate_->load_string_map_var(property_name);
+    assert(map_property != nullptr);
 
     auto map = map_property->query();
     properties::xtype_of_t<properties::xproperty_type_t::map>::type ret;
     for (auto & pair : map) {
-        ret.insert({ std::move(pair.first), {std::begin(pair.second), std::end(pair.second)} });
+        ret.insert({std::move(pair.first), {std::begin(pair.second), std::end(pair.second)}});
     }
     return ret;
 }
@@ -653,19 +687,22 @@ void xtop_state_accessor::set_property<properties::xproperty_type_t::int64>(prop
                                                                             std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
+    assert(canvas_ != nullptr);
 
     auto const & property_name = property_id.full_name();
-    xobject_ptr_t<base::xvintvar_t<int64_t>> int_property = bstate_->load_int64_var(property_name);
-    if (int_property == nullptr) {
-        if (properties::system_property(property_id)) {
-            int_property = bstate_->new_int64_var(property_name, canvas_.get());
-        } else {
+
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
             return;
+        } else {
+            bstate_->new_int64_var(property_name, canvas_.get());
+            bstate_->load_int64_var(property_name)->set(int64_t(0), canvas_.get());
         }
     }
-
+    auto int_property = bstate_->load_int64_var(property_name);
     assert(int_property != nullptr);
+
     if (!int_property->set(value, canvas_.get())) {
         ec = error::xerrc_t::update_property_failed;
         return;
@@ -678,19 +715,21 @@ void xtop_state_accessor::set_property<properties::xproperty_type_t::uint64>(pro
                                                                              std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
+    assert(canvas_ != nullptr);
 
     auto const & property_name = property_id.full_name();
-    xobject_ptr_t<base::xvintvar_t<uint64_t>> int_property = bstate_->load_uint64_var(property_name);
-    if (int_property == nullptr) {
-        if (properties::system_property(property_id)) {
-            int_property = bstate_->new_uint64_var(property_name, canvas_.get());
-        } else {
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
             return;
+        } else {
+            bstate_->new_uint64_var(property_name, canvas_.get());
+            bstate_->load_uint64_var(property_name)->set(uint64_t(0), canvas_.get());
         }
     }
-
+    auto int_property = bstate_->load_uint64_var(property_name);
     assert(int_property != nullptr);
+
     if (!int_property->set(value, canvas_.get())) {
         ec = error::xerrc_t::update_property_failed;
         return;
@@ -709,18 +748,22 @@ void xtop_state_accessor::set_property<properties::xproperty_type_t::string>(pro
                                                                              properties::xtype_of_t<properties::xproperty_type_t::string>::type const & value,
                                                                              std::error_code & ec) {
     assert(!ec);
+    assert(bstate_ != nullptr);
+    assert(canvas_ != nullptr);
+
     auto const & property_name = property_id.full_name();
-    xobject_ptr_t<base::xstringvar_t> string_property = bstate_->load_string_var(property_name);
-    if (string_property == nullptr) {
-        if (properties::system_property(property_id)) {
-            string_property = bstate_->new_string_var(property_name, canvas_.get());
-        } else {
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
             ec = error::xerrc_t::property_not_exist;
             return;
+        } else {
+            bstate_->new_string_var(property_name, canvas_.get());
+            bstate_->load_string_var(property_name)->reset(std::string{}, canvas_.get());
         }
     }
-
+    auto string_property = bstate_->load_string_var(property_name);
     assert(string_property != nullptr);
+
     if (!string_property->reset(value, canvas_.get())) {
         ec = error::xerrc_t::update_property_failed;
         return;
@@ -735,33 +778,23 @@ void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::
     assert(!ec);
     assert(bstate_ != nullptr);
     assert(canvas_ != nullptr);
-#if 0
-    assert(!properties::system_property(property_id));
 
-    auto const & property_name = property_id.full_name();
-    auto map_property = bstate_->load_string_map_var(property_name);
-    if (map_property == nullptr) {
-        ec = error::xerrc_t::property_not_exist;
-        return;
-    }
-
-    assert(map_property != nullptr);
-    if (!map_property->insert(key, { std::begin(value), std::end(value) }, canvas_.get())) {
-        ec = error::xerrc_t::update_property_failed;
-        return;
-    }
-#else
     auto const & property_name = property_id.full_name();
     if (!bstate_->find_property(property_name)) {
-        bstate_->new_string_map_var(property_name, canvas_.get());
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return;
+        } else {
+            bstate_->new_string_map_var(property_name, canvas_.get());
+        }
     }
     auto map_property = bstate_->load_string_map_var(property_name);
     xassert(map_property != nullptr);
-    if (!map_property->insert(key, { std::begin(value), std::end(value) }, canvas_.get())) {
+
+    if (!map_property->insert(key, {std::begin(value), std::end(value)}, canvas_.get())) {
         ec = error::xerrc_t::update_property_failed;
         return;
     }
-#endif
 }
 
 template <>
@@ -773,57 +806,42 @@ void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::
     assert(bstate_ != nullptr);
     assert(canvas_ != nullptr);
 
-    assert(!properties::system_property(property_id));
-
     auto const & property_name = property_id.full_name();
-    auto deque_property = bstate_->load_string_deque_var(property_name);
-    if (deque_property == nullptr) {
-        ec = error::xerrc_t::property_not_exist;
-        return;
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return;
+        } else {
+            bstate_->new_string_deque_var(property_name, canvas_.get());
+        }
     }
+    auto deque_property = bstate_->load_string_deque_var(property_name);
+    xassert(deque_property != nullptr);
 
-
-
-    assert(deque_property != nullptr);
-    if (!deque_property->update(key, { std::begin(value), std::end(value) }, canvas_.get())) {
+    if (!deque_property->update(key, {std::begin(value), std::end(value)}, canvas_.get())) {
         ec = error::xerrc_t::update_property_failed;
         return;
     }
 }
 
 template <>
-properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type
-xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::map>(properties::xtypeless_property_identifier_t const & property_id,
-                                                                                properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
-                                                                                std::error_code & ec) const {
+properties::xvalue_type_of_t<properties::xproperty_type_t::map>::type xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::map>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    properties::xkey_type_of_t<properties::xproperty_type_t::map>::type const & key,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
     assert(canvas_ != nullptr);
-    // TODO: fix system_property
-#if 0
-    assert(!properties::system_property(property_id));
 
-    auto const & property_name = property_id.full_name();
-    auto map_property = bstate_->load_string_map_var(property_name);
-    if (map_property == nullptr) {
-        ec = error::xerrc_t::property_not_exist;
-        return{};
-    }
-
-    assert(map_property != nullptr);
-    if (!map_property->find(key)) {
-        ec = error::xerrc_t::property_key_not_exist;
-        return{};
-    }
-
-    auto string = map_property->query(key);
-    return { std::begin(string), std::end(string) };
-#else
     auto const & property_name = property_id.full_name();
     if (!bstate_->find_property(property_name)) {
-        bstate_->new_string_map_var(property_name, canvas_.get());
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_map_var(property_name, canvas_.get());
+        }
     }
-
     auto map_property = bstate_->load_string_map_var(property_name);
     assert(map_property != nullptr);
 
@@ -833,35 +851,36 @@ xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::map>(
     }
 
     return {std::begin(string), std::end(string)};
-#endif
 }
 
 template <>
-properties::xvalue_type_of_t<properties::xproperty_type_t::deque>::type
-xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::deque>(properties::xtypeless_property_identifier_t const & property_id,
-                                                                                  properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
-                                                                                  std::error_code & ec) const {
+properties::xvalue_type_of_t<properties::xproperty_type_t::deque>::type xtop_state_accessor::get_property_cell_value<properties::xproperty_type_t::deque>(
+    properties::xtypeless_property_identifier_t const & property_id,
+    properties::xkey_type_of_t<properties::xproperty_type_t::deque>::type const & key,
+    std::error_code & ec) const {
     assert(!ec);
     assert(bstate_ != nullptr);
     assert(canvas_ != nullptr);
 
-    assert(!properties::system_property(property_id));
-
     auto const & property_name = property_id.full_name();
-    auto deque_property = bstate_->load_string_deque_var(property_name);
-    if (deque_property == nullptr) {
-        ec = error::xerrc_t::property_not_exist;
-        return{};
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::property_not_exist;
+            return {};
+        } else {
+            bstate_->new_string_deque_var(property_name, canvas_.get());
+        }
     }
+    auto deque_property = bstate_->load_string_deque_var(property_name);
+    xassert(deque_property != nullptr);
 
-    assert(deque_property != nullptr);
     if (key >= deque_property->query().size()) {
         ec = error::xerrc_t::property_key_not_exist;
-        return{};
+        return {};
     }
 
     auto string = deque_property->query(key);
-    return { std::begin(string), std::end(string) };
+    return {std::begin(string), std::end(string)};
 }
 
 template <>

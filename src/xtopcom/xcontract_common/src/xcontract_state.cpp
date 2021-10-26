@@ -8,6 +8,7 @@
 #include "xbasic/xutility.h"
 
 #include <cassert>
+#include <cinttypes>
 
 NS_BEG2(top, contract_common)
 
@@ -474,6 +475,20 @@ void xtop_contract_state::create_time(std::error_code& ec) {
 bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, uint64_t height) const {
     assert(m_state_accessor != nullptr);
     return m_state_accessor->block_exist(user, height);
+}
+
+void xtop_contract_state::transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec) {
+    auto withdraw_token = withdraw(from, common::SYMBOL_TOP_TOKEN, amount, ec);
+    top::error::throw_error(ec);
+    deposit(to, std::move(withdraw_token), ec);
+    top::error::throw_error(ec);
+    xdbg("[xtop_contract_state::transfer_internal] %s to %s success, amount: " PRIu64, from.full_name().c_str(), to.full_name().c_str(), amount);
+}
+
+void xtop_contract_state::transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount) {
+    std::error_code ec;
+    transfer_internal(from, to, amount, ec);
+    top::error::throw_error(ec);
 }
 
 NS_END2

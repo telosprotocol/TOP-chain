@@ -24,30 +24,25 @@ public:
 
     BEGIN_CONTRACT_API()
         DECLARE_API(xdemo_contract_b::setup);
-        DECLARE_API(xdemo_contract_b::test_set_string_property);
-        DECLARE_API(xdemo_contract_b::test_set_map_property);
+        DECLARE_RECV_ONLY_API(xdemo_contract_b::test_set_string_property);
+        DECLARE_RECV_ONLY_API(xdemo_contract_b::test_set_map_property);
     END_CONTRACT_API
 
     void setup() {
     }
 
     void test_set_string_property(std::string const & string) {
-        if (at_target_action_stage()) {
-            m_string_prop.set(string);
-        }
+        m_string_prop.set(string);
     }
 
     void test_set_map_property(std::map<std::string, std::string> const & map) {
-        if (at_target_action_stage()) {
-            for (auto const & item : map) {
-                m_map_prop.set(item.first, item.second);
-            }
+        for (auto const & item : map) {
+            m_map_prop.set(item.first, item.second);
         }
     }
 
 private:
     contract_common::properties::xstring_property_t m_string_prop{xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, this};
-    contract_common::properties::xstring_property_t m_string2_prop{data::XPROPERTY_CONTRACT_STANDBYS_KEY, this};
 
     contract_common::properties::xmap_property_t<std::string, std::string> m_map_prop{xstake::XPORPERTY_CONTRACT_REG_KEY, this};
     contract_common::properties::xmap_property_t<std::string, std::string> m_map2_prop{xstake::XPORPERTY_CONTRACT_TICKETS_KEY, this};

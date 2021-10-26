@@ -33,6 +33,7 @@ enum class xenum_errc {
     nonce_mismatch,
     user_contract_forbid_create_transfer,
 
+    transaction_not_enough_balance,
     transaction_not_enough_deposit,
     transaction_not_enough_pledge_token_tgas,
     unknown_error,

@@ -76,12 +76,12 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     case data::xenum_consensus_action_stage::send:
     case data::xenum_consensus_action_stage::confirm:
     case data::xenum_consensus_action_stage::self:
-        xdbg("[xtop_action_session::xtop_action_session] stage " PRIi32 ", set state address sender: %s", execution_context->consensus_action_stage(), observed_exectx->sender().value().c_str());
+        xdbg("[xtop_action_session::xtop_action_session] stage %d, set state address sender: %s", execution_context->consensus_action_stage(), execution_context->sender().value().c_str());
         execution_context->contract_state(execution_context->sender());
         break;
 
     case data::xenum_consensus_action_stage::recv:
-        xdbg("[xtop_action_session::xtop_action_session] stage " PRIi32 ", set state address recver: %s", execution_context->consensus_action_stage(), observed_exectx->sender().value().c_str());
+        xdbg("[xtop_action_session::xtop_action_session] stage %d, set state address recver: %s", execution_context->consensus_action_stage(), execution_context->recver().value().c_str());
         execution_context->contract_state(execution_context->recver());
         break;
 
@@ -101,24 +101,15 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
         return result;
     }
 
-    if (stage == data::xconsensus_action_stage_t::recv) {
+    if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::recv) {
         if (!receipt_data.empty()) {
             xdbg("wens_test, recv stage set receipt data");
             observed_exectx->input_receipt_data(cons_action->receipt_data());
         }
     }
 
-    xdbg("sender: %s, rever: %s, state addr: %s", execution_context->sender().c_str(), execution_context->recver().c_str(), execution_context->contract_state()->state_account_address().c_str());
-    auto const& src_name = execution_context->action_name();
-    auto const& src_data = execution_context->action_data();
-    xdbg("source action name: %s, src action data size: %zu", src_name.c_str(), src_data.size());
-    if (!src_data.empty()) {
-        xdbg("wens_test, src_data not empty");
-        data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, uint64_t{0}};
-        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_data.data(), src_data.size());
-        stream >> asset_out.m_token_name;
-        stream >> asset_out.m_amount;
-        xdbg("source action name: %s, token_name: %s, token amount: %d", src_name.c_str(), asset_out.m_token_name.c_str(), (int32_t)asset_out.m_amount);
+    if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::confirm) {
+        return result;
     }
 
     auto start_bin_size = observed_exectx->contract_state()->binlog_size();
@@ -137,6 +128,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
             xwarn("[xtop_action_session::xtop_action_session] op code not changed");
             // result.status.ec = error::xenum_errc::enum_bin_code_not_changed;
         }
+    }
 
     return result;
 }

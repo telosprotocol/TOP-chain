@@ -68,15 +68,10 @@ public:
     data::enum_xtransaction_type transaction_type() const noexcept;
 
     std::string action_name() const;
-    std::string source_action_name() const;
-    std::string target_action_name() const;
     data::enum_xaction_type action_type() const;
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
-    std::string source_action_data() const;
-    std::string target_action_data() const;
-    std::string target_action_name() const;
     data::xconsensus_action_stage_t action_stage() const;
 
     uint64_t last_nonce() const;
@@ -95,9 +90,9 @@ public:
     xcontract_execution_fee_t action_preprocess(std::error_code & ec);
 
 private:
-    xcontract_execution_fee_t execute_default_source_action();
-    xcontract_execution_fee_t execute_default_target_action();
-    xcontract_execution_fee_t execute_default_confirm_action();
+    xcontract_execution_fee_t execute_default_source_action(std::error_code & ec);
+    xcontract_execution_fee_t execute_default_target_action(std::error_code & ec);
+    xcontract_execution_fee_t execute_default_confirm_action(std::error_code & ec);
     void update_tgas_disk_sender(bool is_contract, xcontract_execution_fee_t & fee_change, std::error_code & ec);
     void calc_used_tgas(uint64_t deposit, uint64_t & cur_tgas_usage, uint64_t & deposit_usage, std::error_code & ec) const;
     void incr_used_tgas(uint64_t num, std::error_code & ec);
@@ -108,6 +103,12 @@ private:
     uint64_t calc_token_price() const;
     uint64_t calc_cost_tgas(bool is_contract) const;
     uint64_t calc_cost_disk(bool is_contract) const;
+
+    std::string source_action_name() const;
+    std::string target_action_name() const;
+    std::string source_action_data() const;
+    std::string target_action_data() const;
+    data::xproperty_asset asset() const;
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;
 

@@ -31,8 +31,8 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     const size_t result_size = txs.size();
     const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);
     const contract_common::xcontract_execution_param_t param(cs_para);
-    xdbg("[xtop_account_vm::execute] tx size: " PRIu64, result_size);
-    xdbg("[xtop_account_vm::execute] param, clock: " PRIu64 ", timestamp: " PRIu64 ", table_account: %s, table_height: " PRIu64 ", total_lock_tgas: " PRIu64,
+    xdbg("[xtop_account_vm::execute] tx size: %" PRIu64, result_size);
+    xdbg("[xtop_account_vm::execute] param, clock: %" PRIu64 ", timestamp: %" PRIu64 ", table_account: %s, table_height: %" PRIu64 ", total_lock_tgas: %" PRIu64,
          param.m_clock,
          param.m_timestamp,
          param.m_table_account.c_str(),
@@ -54,7 +54,7 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
             auto action_result = execute_action(std::move(actions[i]), sa, param);
             xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu\n", action_result.output.receipt_data.size());
             if (action_result.status.ec) {
-                xwarn("[xtop_account_vm::execute] tx[" PRIu64 "] failed, category: %s, msg: %s, abort all txs after!",
+                xwarn("[xtop_account_vm::execute] tx[%" PRIu64 "] failed, category: %s, msg: %s, abort all txs after!",
                       i,
                       action_result.status.ec.category().name(),
                       action_result.status.ec.message().c_str());
@@ -81,7 +81,7 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     }
     // exception
     if (i < result_size) {
-        xwarn("[xtop_account_vm::execute] tx[" PRIu64 "] failed, abort all txs after!", i);
+        xwarn("[xtop_account_vm::execute] tx[%" PRIu64 "] failed, abort all txs after!", i);
         abort(i, result_size, result);
         result.status.ec = error::xerrc_t::transaction_execution_abort;
     }
@@ -113,17 +113,17 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
 
     default: {
-        xerror("[xtop_account_vm::execute_action] error action type: " PRIi32, action->type());
+        xerror("[xtop_account_vm::execute_action] error action type: %" PRIi32, action->type());
         assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         result.status.ec = error::xerrc_t::invalid_contract_type;
         break;
     }
     }
 
-    xdbg("[xtop_account_vm::execute] followup_tx size: " PRIu64, result.output.followup_transaction_data.size());
+    xdbg("[xtop_account_vm::execute] followup_tx size: %" PRIu64, result.output.followup_transaction_data.size());
     for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
         auto & followup_tx = result.output.followup_transaction_data[i];
-        xdbg("[xtop_account_vm::execute] followup_tx[" PRIu64 "] failed, schedule_type: " PRIu64 ", execute_type: " PRIu64 "",
+        xdbg("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, schedule_type: %" PRIu64 ", execute_type: %" PRIu64 "",
              i,
              followup_tx.schedule_type,
              followup_tx.execute_type);
@@ -132,7 +132,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
                 auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);
                 auto followup_result = execute_action(std::move(followup_action), sa, param);
                 if (followup_result.status.ec) {
-                    xwarn("[xtop_account_vm::execute] followup_tx[" PRIu64 "] failed, category: %s, msg: %s, break!",
+                    xwarn("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, category: %s, msg: %s, break!",
                           i,
                           followup_result.status.ec.category().name(),
                           followup_result.status.ec.message().c_str());
@@ -147,13 +147,13 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
                 }
             } else if (followup_tx.execute_type == contract_common::xfollowup_transaction_execute_type_t::success) {
             } else {
-                xerror("[xtop_account_vm::execute_action] error followup_tx execute type: " PRIi32, followup_tx.execute_type);
+                xerror("[xtop_account_vm::execute_action] error followup_tx execute type: %" PRIi32, followup_tx.execute_type);
                 assert(false);
             }
         } else if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
             assert(followup_tx.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
         } else {
-            xerror("[xtop_account_vm::execute_action] error followup_tx schedule type: " PRIi32, followup_tx.schedule_type);
+            xerror("[xtop_account_vm::execute_action] error followup_tx schedule type: %" PRIi32, followup_tx.schedule_type);
             assert(false);
         }
     }
@@ -187,30 +187,47 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, ec);
     top::error::throw_error(ec);
     auto last_hash = last_hash_bytes.empty() ? uint256_t{} : top::from_bytes<uint256_t>(last_hash_bytes);
-    xinfo("[xtop_account_vm::pack] pack last_nonce: " PRIu64, last_nonce);
+    xinfo("[xtop_account_vm::pack] pack last_nonce: %" PRIu64, last_nonce);
 
     for (size_t i = 0; i < result.transaction_results.size(); i++) {
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
+        for (auto const & pair : r.output.fee_change) {
+            auto const & option = pair.first;
+            auto const & value = pair.second;
+            if (option == contract_common::xcontract_execution_fee_option_t::send_tx_lock_tgas) {
+                tx->set_current_send_tx_lock_tgas(value);
+            } else if (option == contract_common::xcontract_execution_fee_option_t::used_tgas) {
+                tx->set_current_used_tgas(value);
+            } else if (option == contract_common::xcontract_execution_fee_option_t::used_deposit) {
+                tx->set_current_used_deposit(value);
+            } else if (option == contract_common::xcontract_execution_fee_option_t::used_disk) {
+                tx->set_current_used_disk(value);
+            } else if (option == contract_common::xcontract_execution_fee_option_t::recv_tx_use_send_tx_tgas) {
+                tx->set_current_recv_tx_use_send_tx_tgas(value);
+            } else {
+                assert(false);
+            }
+        }
         if (r.status.ec) {
             xdbg("wens_test, fail, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
             xdbg("wens_test, fail, eccode: %d, msg: %s", r.status.ec.value(), r.status.ec.message().c_str());
-            xwarn("[xtop_account_vm::pack] tx[" PRIu64 "] failed, category: %s, msg: %s", i, r.status.ec.category().name(), r.status.ec.message().c_str());
+            xwarn("[xtop_account_vm::pack] tx[%" PRIu64 "] failed, category: %s, msg: %s", i, r.status.ec.category().name(), r.status.ec.message().c_str());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
             if (tx->is_send_tx() || tx->is_self_tx()) {
-                xdbg("[xtop_account_vm::pack] tx[" PRIu64 "] add to failed assemble", i);
+                xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] add to failed assemble", i);
                 output.failed_tx_assemble.emplace_back(tx);
             } else if (tx->is_recv_tx()) {
-                xdbg("[xtop_account_vm::pack] tx[" PRIu64 "] add to success assemble", i);
+                xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] add to success assemble", i);
                 output.success_tx_assemble.emplace_back(tx);
             } else {
-                xerror("[xtop_account_vm::pack] invalid tx type: " PRIi32, tx->get_tx_type());
+                xerror("[xtop_account_vm::pack] invalid tx type: %" PRIi32, tx->get_tx_type());
                 assert(false);
             }
         } else {
             xdbg("wens_test, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
             xdbg("wens_test, eccode: %d, msg: %s", ec.value(), ec.message().c_str());
-            xdbg("[xtop_account_vm::pack] tx[" PRIu64 "] success, category: %s, msg: %s!", i, r.status.ec.category().name(), r.status.ec.message().c_str());
+            xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] success, category: %s, msg: %s!", i, r.status.ec.category().name(), r.status.ec.message().c_str());
             if (!r.output.receipt_data.empty()) {
                 auto const & receipt_data = r.output.receipt_data.at(contract_common::RECEITP_DATA_ASSET_OUT);
                 xdbg("wens_test,set receipt data, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
@@ -218,18 +235,18 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 tx->set_receipt_data(r.output.receipt_data);
             }
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
-            xdbg("[xtop_account_vm::pack] tx[" PRIu64 "] add to success assemble", i);
+            xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] add to success assemble", i);
             output.success_tx_assemble.emplace_back(tx);
             for (auto & follow_up : r.output.followup_transaction_data) {
                 auto const & follow_up_tx = follow_up.followed_transaction;
                 if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
                     // followup_tx of success tx is success
-                    xdbg("[xtop_account_vm::pack] immediately followup_tx of tx[" PRIu64 "] add to success assemble", i);
+                    xdbg("[xtop_account_vm::pack] immediately followup_tx of tx[%" PRIu64 "] add to success assemble", i);
                     follow_up_tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
                     output.success_tx_assemble.emplace_back(follow_up_tx);
                 } else if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::delay) {
                     assert(follow_up.execute_type == contract_common::xfollowup_transaction_execute_type_t::unexecuted);
-                    xdbg("[xtop_account_vm::pack] delay followup_tx of tx[" PRIu64 "] add to delay assemble, set last nonce: " PRIu64, i, last_nonce);
+                    xdbg("[xtop_account_vm::pack] delay followup_tx of tx[%" PRIu64 "] add to delay assemble, set last nonce: %" PRIu64, i, last_nonce);
                     follow_up_tx->get_transaction()->set_last_trans_hash_and_nonce(last_hash, last_nonce);
                     follow_up_tx->get_transaction()->set_digest();
                     follow_up_tx->get_transaction()->set_digest();
@@ -237,7 +254,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                     last_nonce = follow_up_tx->get_tx_nonce();
                     output.delay_tx_assemble.emplace_back(follow_up_tx);
                 } else {
-                    xerror("[xtop_account_vm::pack] invalid follow_up tx schedule type: " PRIi32, follow_up.schedule_type);
+                    xerror("[xtop_account_vm::pack] invalid follow_up tx schedule type: %" PRIi32, follow_up.schedule_type);
                     assert(false);
                 }
             }
