@@ -129,8 +129,16 @@ void xtop_token::clear() noexcept {
     symbol_.clear();
 }
 
+void xtop_token::move_to(base::xstream_t& stream) noexcept {
+    serialize_to(stream);
+    clear();  // move serialize, clear token
+}
+void xtop_token::move_from(base::xstream_t& stream) noexcept {
+    serialize_from(stream);
+    stream.reset();
+}
 
-std::int32_t xtop_token::serialize_to(base::xstream_t & stream) {
+std::int32_t xtop_token::serialize_to(base::xstream_t & stream) const {
     return do_write(stream);
 }
 
@@ -138,11 +146,10 @@ std::int32_t xtop_token::serialize_from(base::xstream_t & stream) {
     return do_read(stream);
 }
 
-std::int32_t xtop_token::serialize_to(base::xbuffer_t & buffer) {
+std::int32_t xtop_token::serialize_to(base::xbuffer_t & buffer) const {
     auto const size = buffer.size();
     buffer << amount_;
     buffer << symbol_;
-    clear(); // move serialize, clear token
     return buffer.size() - size;
 }
 
@@ -160,29 +167,11 @@ int32_t xtop_token::do_read(base::xstream_t& stream) {
     return size - stream.size();
 }
 
-int32_t  xtop_token::do_write(base::xstream_t& stream) {
+int32_t  xtop_token::do_write(base::xstream_t& stream) const {
     auto const size = stream.size();
     stream << amount_;
     stream << symbol_;
-    clear(); // move serialize, clear token
     return stream.size() - size;
-}
-
-
-int32_t operator>>(base::xstream_t& stream, xtoken_t data_object) {
-    return data_object.serialize_from(stream);
-}
-
-int32_t operator<<(base::xstream_t& stream, xtoken_t data_object) {
-    return data_object.serialize_to(stream);
-}
-
-int32_t operator>>(base::xbuffer_t& buffer, xtoken_t data_object) {
-    return data_object.serialize_from(buffer);
-}
-
-int32_t operator<<(base::xbuffer_t& buffer, xtoken_t data_object) {
-    return data_object.serialize_to(buffer);
 }
 
 NS_END2

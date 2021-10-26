@@ -60,7 +60,7 @@ observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noex
 
 void xtop_basic_contract::asset_to_target_action(state_accessor::xtoken_t token) noexcept {
     base::xstream_t stream{base::xcontext_t::instance()};
-    token.serialize_to(stream);
+    token.move_to(stream);
 
     std::error_code ec;
     write_receipt_data(contract_common::RECEITP_DATA_ASSET_OUT, xbyte_buffer_t{stream.data(), stream.data() + stream.size()}, ec);
@@ -102,7 +102,7 @@ state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code &
         auto const src_asset_data = receipt_data.at(RECEITP_DATA_ASSET_OUT);
         receipt_data.erase(RECEITP_DATA_ASSET_OUT);
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
-        token.serialize_from(stream);
+        token.move_from(stream);
     }
     return std::move(token);
 }

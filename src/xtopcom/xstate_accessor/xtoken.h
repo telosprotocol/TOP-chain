@@ -52,23 +52,21 @@ public:
     common::xsymbol_t const & symbol() const noexcept;
     void clear() noexcept;
 
-    std::int32_t serialize_to(base::xstream_t & stream);
-    std::int32_t serialize_from(base::xstream_t & stream);
-    std::int32_t serialize_to(base::xbuffer_t & buffer);
-    std::int32_t serialize_from(base::xbuffer_t & buffer);
+    void move_to(base::xstream_t& stream) noexcept; // move token to serialize stream
+    void move_from(base::xstream_t& stream) noexcept; // serialize token from stream
+
 
 private:
     int32_t do_read(base::xstream_t& stream);
-    int32_t do_write(base::xstream_t& stream); // move token to serialize stream
+    int32_t do_write(base::xstream_t& stream) const;
+
+    std::int32_t serialize_to(base::xstream_t & stream) const;
+    std::int32_t serialize_from(base::xstream_t & stream);
+    std::int32_t serialize_to(base::xbuffer_t & buffer) const;
+    std::int32_t serialize_from(base::xbuffer_t & buffer);
 
 };
 using xtoken_t = xtop_token;
-
-
-int32_t operator>>(base::xstream_t& stream, xtoken_t data_object);
-int32_t operator<<(base::xstream_t& stream, xtoken_t data_object);
-int32_t operator>>(base::xbuffer_t& buffer, xtoken_t data_object);
-int32_t operator<<(base::xbuffer_t& buffer, xtoken_t data_object);
 
 NS_END2
 
