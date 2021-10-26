@@ -62,7 +62,6 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
 
     auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
     auto const receipt_data = cons_action->receipt_data();
-    xdbg("wens_test, receipt data, size : %zu", receipt_data.size());
 
     xtransaction_execution_result_t result;
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), m_contract_state)};
@@ -72,7 +71,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     } };
 
     execution_context->consensus_action_stage(execution_context->action_stage());
-    switch (execution_context->consensus_action_stage()) { 
+    switch (execution_context->consensus_action_stage()) {
     case data::xenum_consensus_action_stage::send:
     case data::xenum_consensus_action_stage::confirm:
     case data::xenum_consensus_action_stage::self:
@@ -103,8 +102,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
 
     if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::recv) {
         if (!receipt_data.empty()) {
-            xdbg("wens_test, recv stage set receipt data");
-            observed_exectx->input_receipt_data(cons_action->receipt_data());
+            execution_context->input_receipt_data(cons_action->receipt_data());
         }
     }
 
@@ -114,7 +112,6 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
 
     auto start_bin_size = observed_exectx->contract_state()->binlog_size();
     result = m_associated_runtime->execute(observed_exectx);
-    xdbg("wens_test, xtop_action_session<ActionT>::execute_action, receipt data, size : %zu\n", result.output.receipt_data.size());
     if (result.status.ec) {
         return result;
     }

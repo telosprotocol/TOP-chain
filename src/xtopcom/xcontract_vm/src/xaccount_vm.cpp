@@ -46,13 +46,11 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     state_accessor::xstate_accessor_t sa{state_pack, ac_data};
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
-    xdbg("wens_test, xtop_account_vm::execute, action size : %zu\n", actions.size());
 
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
             auto action_result = execute_action(std::move(actions[i]), sa, param);
-            xdbg("wens_test, xtop_account_vm::execute, receipt data, size : %zu\n", action_result.output.receipt_data.size());
             if (action_result.status.ec) {
                 xwarn("[xtop_account_vm::execute] tx[%" PRIu64 "] failed, category: %s, msg: %s, abort all txs after!",
                       i,
@@ -210,8 +208,8 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             }
         }
         if (r.status.ec) {
-            xdbg("wens_test, fail, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            xdbg("wens_test, fail, eccode: %d, msg: %s", r.status.ec.value(), r.status.ec.message().c_str());
+            xdbg("xtop_account_vm::pack, fail, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+            xdbg("xtop_account_vm::pack, fail, eccode: %d, msg: %s", r.status.ec.value(), r.status.ec.message().c_str());
             xwarn("[xtop_account_vm::pack] tx[%" PRIu64 "] failed, category: %s, msg: %s", i, r.status.ec.category().name(), r.status.ec.message().c_str());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
             if (tx->is_send_tx() || tx->is_self_tx()) {
@@ -225,13 +223,11 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 assert(false);
             }
         } else {
-            xdbg("wens_test, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            xdbg("wens_test, eccode: %d, msg: %s", ec.value(), ec.message().c_str());
+            xdbg("xtop_account_vm::pack, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
+            xdbg("xtop_account_vm::pack, eccode: %d, msg: %s", ec.value(), ec.message().c_str());
             xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] success, category: %s, msg: %s!", i, r.status.ec.category().name(), r.status.ec.message().c_str());
             if (!r.output.receipt_data.empty()) {
-                auto const & receipt_data = r.output.receipt_data.at(contract_common::RECEITP_DATA_ASSET_OUT);
-                xdbg("wens_test,set receipt data, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-                xdbg("wens_test,set receipt data, %s\n", std::string{receipt_data.begin(), receipt_data.end()}.c_str());
+                auto const& receipt_data = r.output.receipt_data.at(contract_common::RECEITP_DATA_ASSET_OUT);
                 tx->set_receipt_data(r.output.receipt_data);
             }
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
