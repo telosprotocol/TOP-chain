@@ -23,6 +23,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<router::xrouter_face_t> const & router,
                        observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
+                       observer_ptr<base::xvtxstore_t> const & txstore,
                        observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
@@ -30,8 +31,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                     //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                       observer_ptr<xbase_timer_driver_t> const & timer_driver)
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : xbasic_vnode_t{common::xnode_address_t{sharding_address,
                                            common::xaccount_election_address_t{vhost->host_node_id(), slot_id},
                                            election_round,
@@ -44,6 +44,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_router{router}
   , m_store{store}
   , m_block_store{block_store}
+  , m_txstore{txstore}
   , m_bus{bus}
   , m_logic_timer{logic_timer}
   , m_sync_obj{sync_obj}
@@ -54,9 +55,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
-        joined_election_round)}
-  , m_timer_driver{timer_driver}
-  , m_tx_prepare_mgr{nullptr} {
+        joined_election_round)} {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen) {
@@ -79,15 +78,15 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<router::xrouter_face_t> const & router,
                        observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
+                       observer_ptr<base::xvtxstore_t> const & txstore,
                        observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-                    //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+                       //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                       observer_ptr<xbase_timer_driver_t> const & timer_driver)
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : xtop_vnode{elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
                group_info->node_element(vhost->host_node_id())->slot_id(),
@@ -99,15 +98,16 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                router,
                store,
                block_store,
+               txstore,
                bus,
                logic_timer,
                sync_obj,
                grpc_mgr,
-            //    cons_mgr,
+               //    cons_mgr,
                txpool_service_mgr,
                txpool,
-               election_cache_data_accessor,
-               timer_driver} {}
+               election_cache_data_accessor} {
+}
 
 std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_driver() const noexcept {
     return m_the_binding_driver;
@@ -186,7 +186,7 @@ void xtop_vnode::new_driver_added() {
     // update_message_bus should be called before update_store
     // update_consensus_instance();
     // update_unit_service();
-    update_tx_cache_service();
+    // update_tx_cache_service();
     update_rpc_service();
     update_contract_manager(false);
     update_block_prune();
@@ -196,13 +196,13 @@ void xtop_vnode::driver_removed() {
     if (m_rpc_services != nullptr) {
         m_rpc_services->stop();
     }
-    if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type()) && m_tx_prepare_mgr != nullptr) {
-        m_tx_prepare_mgr->stop();
-    }
+    // if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type()) && m_tx_prepare_mgr != nullptr) {
+    //     m_tx_prepare_mgr->stop();
+    // }
     sync_remove_vnet();
 }
 void xtop_vnode::update_block_prune() {
-    xdbg("try update block prune. node type %s, %p", common::to_string(m_the_binding_driver->type()).c_str(), m_timer_driver.get());
+    xdbg("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
     if (XGET_CONFIG(auto_prune_data) == "off")
         return;
     if (common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
@@ -229,22 +229,30 @@ void xtop_vnode::update_rpc_service() {
         xdbg("[virtual node] update rpc service with node type %s address %s",
              common::to_string(m_the_binding_driver->type()).c_str(),
              m_the_binding_driver->address().to_string().c_str());
-        m_rpc_services = std::make_shared<xrpc::xrpc_init>(
-            m_the_binding_driver, m_the_binding_driver->type(), m_router, http_port, ws_port,
-            m_txpool_face, m_store, m_block_store, m_elect_main, m_election_cache_data_accessor, make_observer(m_transaction_cache));
+        m_rpc_services = std::make_shared<xrpc::xrpc_init>(m_the_binding_driver,
+                                                           m_the_binding_driver->type(),
+                                                           m_router,
+                                                           http_port,
+                                                           ws_port,
+                                                           m_txpool_face,
+                                                           m_store,
+                                                           m_block_store,
+                                                           m_txstore,
+                                                           m_elect_main,
+                                                           m_election_cache_data_accessor);
     }
 }
-void xtop_vnode::update_tx_cache_service() {
-    xdbg("try update tx cache service. node type %s, %p", common::to_string(m_the_binding_driver->type()).c_str(), m_timer_driver.get());
-    if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type())) {
-        xdbg("[virtual node] update tx cache service with node type %s address %s",
-             common::to_string(m_the_binding_driver->type()).c_str(),
-             m_the_binding_driver->address().to_string().c_str());
-        m_transaction_cache = std::make_shared<data::xtransaction_cache_t>();
-        m_tx_prepare_mgr = std::make_shared<txexecutor::xtransaction_prepare_mgr>(m_bus, m_timer_driver, make_observer(m_transaction_cache));
-        m_tx_prepare_mgr->start();
-    }
-}
+// void xtop_vnode::update_tx_cache_service() {
+//     xdbg("try update tx cache service. node type %s, %p", common::to_string(m_the_binding_driver->type()).c_str(), m_timer_driver.get());
+//     if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type())) {
+//         xdbg("[virtual node] update tx cache service with node type %s address %s",
+//              common::to_string(m_the_binding_driver->type()).c_str(),
+//              m_the_binding_driver->address().to_string().c_str());
+//         m_transaction_cache = std::make_shared<data::xtransaction_cache_t>();
+//         m_tx_prepare_mgr = std::make_shared<txexecutor::xtransaction_prepare_mgr>(m_bus, m_timer_driver, make_observer(m_transaction_cache));
+//         m_tx_prepare_mgr->start();
+//     }
+// }
 
 void xtop_vnode::update_contract_manager(bool destory) {
     // TODO(justin): remove unit_services temp

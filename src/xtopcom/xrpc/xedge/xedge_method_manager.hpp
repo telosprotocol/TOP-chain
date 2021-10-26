@@ -18,7 +18,7 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xdata/xcons_transaction.h"
-#include "xtxexecutor/xtransaction_prepare.h"
+#include "xtxstore/xtransaction_prepare.h"
 #include "xdata/xtransaction_cache.h"
 
 NS_BEG2(top, xrpc)
@@ -40,9 +40,9 @@ public:
                       bool archive_flag = false,
                       observer_ptr<store::xstore_face_t> store = nullptr,
                       observer_ptr<base::xvblockstore_t> block_store = nullptr,
+                      observer_ptr<base::xvtxstore_t> txstore = nullptr,
                       observer_ptr<elect::ElectMain> elect_main = nullptr,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr,
-                      observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr);
+                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
     virtual ~xedge_method_base() {
     }
     void do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip);
@@ -66,9 +66,9 @@ protected:
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
     std::shared_ptr<xcluster_query_manager> m_cluster_query_mgr;
+    top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
-    observer_ptr<data::xtransaction_cache_t> m_transaction_cache;
 };
 
 class xedge_http_method : public xedge_method_base<xedge_http_handler> {
@@ -79,10 +79,10 @@ public:
                       bool archive_flag,
                       observer_ptr<store::xstore_face_t> store,
                       observer_ptr<base::xvblockstore_t> block_store,
+                      observer_ptr<base::xvtxstore_t> txstore,
                       observer_ptr<elect::ElectMain> elect_main,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                      observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr)
-      : xedge_method_base<xedge_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, elect_main, election_cache_data_accessor, transaction_cache) {
+                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+      : xedge_method_base<xedge_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
@@ -100,10 +100,10 @@ public:
                     bool archive_flag,
                     observer_ptr<store::xstore_face_t> store,
                     observer_ptr<base::xvblockstore_t> block_store,
+                    observer_ptr<base::xvtxstore_t> txstore,
                     observer_ptr<elect::ElectMain> elect_main,
-                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                    observer_ptr<data::xtransaction_cache_t> const & transaction_cache = nullptr)
-      : xedge_method_base<xedge_ws_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, elect_main, election_cache_data_accessor, transaction_cache) {
+                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+      : xedge_method_base<xedge_ws_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->send(content, [](const error_code & ec) {
@@ -124,13 +124,12 @@ xedge_method_base<T>::xedge_method_base(shared_ptr<xrpc_edge_vhost> edge_vhost,
                                         bool archive_flag,
                                         observer_ptr<store::xstore_face_t> store,
                                         observer_ptr<base::xvblockstore_t> block_store,
+                                        observer_ptr<base::xvtxstore_t> txstore,
                                         observer_ptr<elect::ElectMain> elect_main,
-                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                                        observer_ptr<data::xtransaction_cache_t> const & transaction_cache)
+                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, nullptr, transaction_cache))
+  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, txstore, nullptr))
   , m_archive_flag(archive_flag)
-  , m_transaction_cache(transaction_cache)
 {
     m_edge_handler_ptr = top::make_unique<T>(edge_vhost, ioc, election_cache_data_accessor);
     m_edge_handler_ptr->init();
@@ -223,8 +222,9 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         tx->set_target_addr(old_target_addr);
 
         std::string hash((char *)json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
-        if (m_transaction_cache != nullptr)
-            m_transaction_cache->tx_add(hash, tx);
+        if (m_txstore != nullptr) {
+            m_txstore->tx_cache_add(hash, tx);
+        }
     }
     std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
     xinfo_rpc("send tx hash:%s", tx_hash.c_str());

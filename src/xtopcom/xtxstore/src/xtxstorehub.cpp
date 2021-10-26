@@ -18,7 +18,7 @@ public:
 
 public:
     // base::xvtxstore_t * get_txstore();
-    base::xvtxstore_t * create_txstore();
+    base::xvtxstore_t * create_txstore(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver);
 };
 
 xtxstorehub::xtxstorehub() {
@@ -38,8 +38,8 @@ xtxstorehub::~xtxstorehub() {
 //     return _static_txstore;
 // }
 
-base::xvtxstore_t * xtxstorehub::create_txstore() {
-    base::xvtxstore_t * txstore = new xtxstoreimpl();
+base::xvtxstore_t * xtxstorehub::create_txstore(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver) {
+    base::xvtxstore_t * txstore = new xtxstoreimpl(mbus, timer_driver);
     return txstore;
 }
 
@@ -48,9 +48,9 @@ base::xvtxstore_t * xtxstorehub::create_txstore() {
 //     return _static_txstore_hub.get_txstore();
 // }
 
-base::xvtxstore_t * create_txstore() {
+base::xvtxstore_t * create_txstore(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver) {
     static xtxstorehub _static_txstore_hub;
-    return _static_txstore_hub.create_txstore();
+    return _static_txstore_hub.create_txstore(mbus, timer_driver);
 }
 
 NS_END2

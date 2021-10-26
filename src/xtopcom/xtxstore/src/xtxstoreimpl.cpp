@@ -8,18 +8,19 @@
 
 NS_BEG2(top, txstore)
 
-
 using common::xdefault_strategy_t;
 using common::xnode_type_strategy_t;
+using common::xnode_type_t;
 using common::xstrategy_priority_enum_t;
 using common::xstrategy_value_enum_t;
-using common::xnode_type_t;
 
-xtxstoreimpl::xtxstoreimpl()
+xtxstoreimpl::xtxstoreimpl(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
   : base::xvtxstore_t()
-  , m_strategy{common::define_bool_strategy(
-        xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
-        xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
+  , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
+                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})}
+  , m_tx_prepare_mgr{top::make_unique<txexecutor::xtransaction_prepare_mgr>(mbus, timer_driver)}
+  , m_tx_cache_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
+                                                     xnode_type_strategy_t{xnode_type_t::full_node, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
 }
 
 xtxstoreimpl::~xtxstoreimpl() {
@@ -76,7 +77,7 @@ base::xauto_ptr<base::xdataunit_t> xtxstoreimpl::load_tx_obj(const std::string &
 }
 
 bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr, bool store_raw_tx_bin) {
-    if(!strategy_permission()){
+    if (!strategy_permission(m_txstore_strategy)) {
         return false;
     }
 
@@ -195,16 +196,37 @@ bool xtxstoreimpl::store_tx_obj(const std::string & raw_tx_hash, base::xdataunit
     return base::xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key, raw_tx_bin);
 }
 
+bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) {
+    if (strategy_permission(m_tx_cache_strategy)) {
+        m_tx_prepare_mgr->transaction_cache()->tx_add(tx_hash, tx_ptr);
+        return true;
+    }
+    return false;
+}
+
+bool xtxstoreimpl::tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data_ptr) {
+    if (strategy_permission(m_tx_cache_strategy)) {
+        m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get()); // todo change tx_get interface.
+        return true;
+    }
+    return false;
+}
+
 void xtxstoreimpl::update_node_type(uint32_t combined_node_type) noexcept {
     XLOCK_GUARD(m_node_type_mutex) {
         m_combined_node_type = static_cast<common::xnode_type_t>(combined_node_type);
         xdbg("xtxstoreimpl::update_node_type update to %s", common::to_string(m_combined_node_type).c_str());
     }
+    if (strategy_permission(m_tx_cache_strategy)) {
+        m_tx_prepare_mgr->start();
+    } else {
+        m_tx_prepare_mgr->stop();
+    }
 }
 
-bool xtxstoreimpl::strategy_permission() const noexcept {
-    XLOCK_GUARD(m_node_type_mutex){
-        return m_strategy.allow(m_combined_node_type);
+bool xtxstoreimpl::strategy_permission(common::xbool_strategy_t const & strategy) const noexcept {
+    XLOCK_GUARD(m_node_type_mutex) {
+        return strategy.allow(m_combined_node_type);
     }
     return false;
 }
