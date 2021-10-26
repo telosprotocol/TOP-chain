@@ -136,24 +136,27 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
         std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
-        xsync_kinfo("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
-            push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
+        xsync_kinfo("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s, self_position:%d, random:%d", neighbor_number, archive_list.size(),
+            push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str(), self_position, random);
         for (auto &dst_idx: push_arcs) {
             vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
             auto found = validator_auditor_neighbours.find(target_addr.account_address());
             if (found == validator_auditor_neighbours.end()) {
-                xsync_kinfo("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                xsync_kinfo("push_newblock_to_archive src=%s dst=%s, block_height = %llu, dst_idx=%d",
                     self_addr.to_string().c_str(),
                     target_addr.to_string().c_str(),
-                    block->get_height());
+                    block->get_height(), dst_idx);
                 m_sync_sender->push_newblock(block, self_addr, target_addr);
             } else {
-                xsync_kinfo("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                xsync_kinfo("push_newblock_to_archive2 src=%s dst=%s, block_height = %llu, dst_idx=%d",
                     self_addr.to_string().c_str(),
                     target_addr.to_string().c_str(),
-                    block->get_height());
+                    block->get_height(), dst_idx);
             }
         }
+        for (auto archive: archive_list)
+            xinfo("archive: %s", archive.to_string().c_str());            
+
     }
 
     #if 0
