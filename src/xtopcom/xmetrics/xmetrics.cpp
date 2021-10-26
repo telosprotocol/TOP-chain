@@ -96,6 +96,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
+        RETURN_METRICS_NAME(cons_view_fire_succ);
+        RETURN_METRICS_NAME(cons_view_fire_is_leader);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
         RETURN_METRICS_NAME(cons_verify_proposal_tick);
@@ -310,11 +312,15 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_receipt_recv_num_7to12_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_13to30_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_exceed_30_clock);
-        RETURN_METRICS_NAME(txpool_push_fail_queue_limit);
-        RETURN_METRICS_NAME(txpool_push_fail_repeat);
-        RETURN_METRICS_NAME(txpool_push_fail_unconfirm_limit);
-        RETURN_METRICS_NAME(txpool_push_fail_nonce_limit);
-        RETURN_METRICS_NAME(txpool_push_fail_account_fall_behind);
+        RETURN_METRICS_NAME(txpool_push_send_fail_queue_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_repeat);
+        RETURN_METRICS_NAME(txpool_push_send_fail_unconfirm_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_nonce_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_account_fall_behind);
+        RETURN_METRICS_NAME(txpool_push_send_fail_account_not_in_charge);
+        RETURN_METRICS_NAME(txpool_push_send_fail_nonce_expired);
+        RETURN_METRICS_NAME(txpool_push_send_fail_nonce_duplicate);
+         RETURN_METRICS_NAME(txpool_push_send_fail_other);
         RETURN_METRICS_NAME(txpool_send_tx_timeout);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_send);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_recv);
@@ -326,6 +332,10 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_alarm_confirm_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);
+
+        // txstore
+        RETURN_METRICS_NAME(txstore_request_origin_tx);
+        RETURN_METRICS_NAME(txstore_cache_origin_tx);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
@@ -535,6 +545,15 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(mailbox_txpool_fast_cur);
         RETURN_METRICS_NAME(mailbox_txpool_slow_cur);
         RETURN_METRICS_NAME(mailbox_us_cur);
+
+        //txdelay
+        RETURN_METRICS_NAME(txdelay_client_timestamp_unmatch);
+        RETURN_METRICS_NAME(txdelay_from_client_to_edge);
+        RETURN_METRICS_NAME(txdelay_from_client_to_auditor);
+        RETURN_METRICS_NAME(txdelay_from_client_to_validator);
+        RETURN_METRICS_NAME(txdelay_from_client_to_sendtx_exec);
+        RETURN_METRICS_NAME(txdelay_from_client_to_recvtx_exec);
+        RETURN_METRICS_NAME(txdelay_from_client_to_confirmtx_exec);
 
         default: assert(false); return nullptr;
     }

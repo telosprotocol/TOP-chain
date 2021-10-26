@@ -383,6 +383,9 @@ std::string xproposal_maker_t::calc_random_seed(base::xvblock_t* latest_cert_blo
 }
 
 bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_block, xblock_consensus_para_t & cs_para) {
+    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+    cs_para.set_timeofday_s(now);
+
     uint64_t total_lock_tgas_token = 0;
     uint64_t property_height = 0;
     bool ret = store::xtgas_singleton::get_instance().leader_get_total_lock_tgas_token(cs_para.get_clock(), total_lock_tgas_token, property_height);
@@ -407,6 +410,9 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_block, base::xvblock_t* proposal, base::xvqcert_t * bind_drand_cert, xblock_consensus_para_t & cs_para) {
+    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+    cs_para.set_timeofday_s(now);
+
     cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_common_consensus_para(proposal->get_cert()->get_clock(),
                                       proposal->get_cert()->get_validator(),

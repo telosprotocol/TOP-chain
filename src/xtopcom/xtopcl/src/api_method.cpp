@@ -3946,4 +3946,41 @@ int ApiMethod::get_account_info(std::ostringstream & out_str, xJson::Value & roo
     sleep(1);
     return 0;
 }
+
+void ApiMethod::block_prune(std::string & prune_enable, std::ostringstream & out_str) {
+    top::base::xstring_utl::tolower_string(prune_enable);
+    if (prune_enable != "off" && prune_enable != "on") {
+        out_str << "Please set auto prune data to On or Off." << std::endl;
+        return;
+    }
+    std::string extra_config = g_data_dir + "/.extra_conf.json";
+    xJson::Value key_info_js;
+    std::ifstream keyfile(extra_config, std::ios::in);
+    if (keyfile) {
+        std::stringstream buffer;
+        buffer << keyfile.rdbuf();
+        keyfile.close();
+        std::string key_info = buffer.str();
+        xJson::Reader reader;
+        // ignore any error when parse
+        reader.parse(key_info, key_info_js);
+    }
+
+    key_info_js["auto_prune_data"] = prune_enable;
+
+    // dump new json to file
+    xJson::StyledWriter new_sw;
+    std::ofstream os;
+    os.open(extra_config);
+    if (!os.is_open()) {
+        out_str << "Dump file failed" << std::endl;
+        return;
+    }
+    os << new_sw.write(key_info_js);
+    os.close();
+    if (prune_enable == "off")
+        out_str << "Set auto prune data Off successfully." << std::endl;    
+    else if (prune_enable == "on")
+        out_str << "Set auto prune data On successfully." << std::endl;    
+}
 }  // namespace xChainSDK

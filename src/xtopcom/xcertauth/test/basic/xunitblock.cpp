@@ -663,12 +663,6 @@ namespace top
             return true;
         }
         
-        //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-        bool   xunitblockstore_t::reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms)
-        {
-            return true;
-        }
-        
         base::xvblock_t*   xunitblockstore_t::create_clock_block(const std::string & account,const std::string & block_input,const std::string & block_output)
         {
             base::xauto_ptr<base::xvblock_t> last_block = get_latest_cert_block(account);

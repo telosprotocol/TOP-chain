@@ -391,6 +391,7 @@ XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
 XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
+XDECLARE_CONFIGURATION(auto_prune_data, const char *, "off");
 
 /* end of development parameters */
 

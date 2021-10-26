@@ -82,7 +82,7 @@ namespace top
         public:
             /**
              * Calculate merkle root from value (leaf) list.
-             * @param IN values leafs
+             * @param  values leafs
              * @return the root hash. if succ, return value is not empty, otherwise, empty string
              */
             std::string calc_root(const std::vector<std::string> &values)
@@ -103,9 +103,9 @@ namespace top
 
             /**
              * Calculate path from value (leaf) list
-             * @param IN values leafs
-             * @param IN index the index of value in values list
-             * @param OUT hash_path hash path list,contains enough hash values which is used by validate_path()
+             * @param values leafs
+             * @param index the index of value in values list
+             * @param hash_path hash path list,contains enough hash values which is used by validate_path()
              * NOTE : root is not included in the path, since it is unbelievable to validator
              * @return if succ, return true; otherwise false
              */
@@ -134,9 +134,9 @@ namespace top
 
             /**
              * Validate hash path for special value.
-             * @param IN value the special value, which is one of leaf to be validated
-             * @param IN root the root of merkle tree
-             * @param IN hash_path the hash path for value validation
+             * @param value the special value, which is one of leaf to be validated
+             * @param root the root of merkle tree
+             * @param hash_path the hash path for value validation
              * @return true if valid; otherwise false
              */
             bool validate_path(const std::string &value, const std::string &root, const std::vector<xmerkle_path_node_t<_Tv>> &hash_path)
