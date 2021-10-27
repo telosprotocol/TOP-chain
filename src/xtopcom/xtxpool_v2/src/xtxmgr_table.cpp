@@ -233,6 +233,7 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> send_txs = m_send_tx_queue.get_txs(send_txs_num_pop_from_queue_max);
+    std::set<std::string> expired_tx_accounts;
     uint32_t send_txs_pos = 0;
     uint32_t send_txs_pos_max = 0;
     int32_t ret = 0;
@@ -246,6 +247,11 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
             ret = xverifier::xtx_verifier::verify_tx_duration_expiration(send_txs[send_txs_pos]->get_tx()->get_transaction(), now);
             if (ret) {
                 expired_send_txs.push_back(send_txs[send_txs_pos]);
+                expired_tx_accounts.insert(send_txs[send_txs_pos]->get_tx()->get_source_addr());
+                continue;
+            }
+            auto iter = expired_tx_accounts.find(send_txs[send_txs_pos]->get_tx()->get_source_addr());
+            if (iter != expired_tx_accounts.end()) {
                 continue;
             }
             ret = m_pending_accounts.push_tx(send_txs[send_txs_pos]);
@@ -256,17 +262,24 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
         }
     }
 
+#ifdef ENABLE_METRICS
+    auto queue_size_before = m_send_tx_queue.size();
+#endif
     for (auto & tx_ent : expired_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, true);
     }
-    XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, expired_send_txs.size());
 
+#ifdef ENABLE_METRICS
+    auto queue_size_after = m_send_tx_queue.size();
+    if (queue_size_after < queue_size_before) {
+        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, queue_size_before - queue_size_after);
+    }
+#endif
     for (auto & tx_ent : push_succ_send_txs) {
         tx_info_t txinfo(tx_ent->get_tx());
         m_send_tx_queue.pop_tx(txinfo, false);
     }
 }
-
 }  // namespace xtxpool_v2
 }  // namespace top
