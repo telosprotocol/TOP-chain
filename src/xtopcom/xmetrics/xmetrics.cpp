@@ -330,7 +330,6 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_commit_recv);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_commit_confirm);
         RETURN_METRICS_NAME(txpool_receipt_id_state_msg_send_num);
-        RETURN_METRICS_NAME(txpool_sync_on_demand_unit);
         RETURN_METRICS_NAME(txpool_alarm_confirm_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);

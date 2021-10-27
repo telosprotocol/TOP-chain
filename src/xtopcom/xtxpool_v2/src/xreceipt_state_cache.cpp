@@ -79,14 +79,6 @@ bool xtable_state_cache_t::get_account_index(const std::string & account, base::
     return true;
 }
 
-uint64_t xtable_state_cache_t::get_height() const {
-    std::lock_guard<std::mutex> lck(m_mutex);
-    if (m_table_state == nullptr) {
-        return 0;
-    }
-    return m_table_state->get_block_height();
-}
-
 bool xtable_state_cache_t::init_table_state() const {
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_table_account);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());

@@ -39,20 +39,10 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
         proposal_tbstate.get_account_index(unit->get_account(), _old_aindex);
         // update unconfirm sendtx flag
         bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
-        uint64_t nonce = _old_aindex.get_latest_tx_nonce();
         if (unit->get_block_class() == base::enum_xvblock_class_full) {
             has_unconfirm_sendtx = false;
         } else if (unit->get_block_class() == base::enum_xvblock_class_light) {
             has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
-            auto & tx_infos = unit->get_txs();
-            for (auto & tx_info : tx_infos) {
-                if (tx_info->is_send_tx() || tx_info->is_self_tx()) {
-                    uint64_t tx_nonce = tx_info->get_last_trans_nonce() + 1;
-                    if (tx_nonce > nonce) {
-                        nonce = tx_nonce;
-                    }
-                }
-            }
         }
         // update light-unit consensus flag, light-unit must push to committed status for receipt make
         base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
@@ -68,7 +58,7 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
             }
         }
 
-        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, 0);  // TODO(jimmy)
         proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
     }
 
