@@ -53,7 +53,7 @@ private:
     mutable std::mutex m_node_type_mutex{};
     common::xnode_type_t m_combined_node_type;
     common::xbool_strategy_t m_txstore_strategy;
-    std::unique_ptr<txexecutor::xtransaction_prepare_mgr> m_tx_prepare_mgr;
+    std::shared_ptr<txexecutor::xtransaction_prepare_mgr> m_tx_prepare_mgr;
     common::xbool_strategy_t m_tx_cache_strategy;
 };
 

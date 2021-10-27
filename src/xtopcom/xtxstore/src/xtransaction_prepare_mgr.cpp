@@ -8,6 +8,11 @@
 
 NS_BEG2(top, txexecutor)
 
+xtransaction_prepare_mgr::xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
+  : m_mbus{mbus}, m_timer_driver{timer_driver}, m_transaction_cache{std::make_shared<data::xtransaction_cache_t>()} {
+    xdbg("xtransaction_prepare_mgr init %p, %p, %p", this, m_timer_driver.get(), m_transaction_cache.get());
+}
+
 void xtransaction_prepare_mgr::start() {
     if (running()) {
         return;
@@ -17,13 +22,13 @@ void xtransaction_prepare_mgr::start() {
     assert(!running());
     running(true);
     assert(running());
-    xdbg("start m_timer_driver: %p, %p", this, m_timer_driver.get());
+    xdbg("xtransaction_prepare_mgr start %p, %p, %p", this, m_timer_driver.get(), m_transaction_cache.get());
     do_check_tx();
     // base::xxtimer_t::start(0, 60*1000);
     return;
 }
 void xtransaction_prepare_mgr::stop() {
-    if(!running()){
+    if (!running()) {
         return;
     }
     xdbg("xtransaction_prepare_mgr stop");

@@ -18,9 +18,7 @@ class xtransaction_prepare_mgr
   : public std::enable_shared_from_this<xtransaction_prepare_mgr>
   , public xbasic_runnable_t<xtransaction_prepare_mgr> {
 public:
-    xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
-      : m_mbus(mbus), m_timer_driver(timer_driver), m_transaction_cache(std::shared_ptr<data::xtransaction_cache_t>()) {
-    }
+    xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver);
     void start() override;
     void stop() override;
     std::string tx_exec_status_to_str(uint8_t exec_status);
