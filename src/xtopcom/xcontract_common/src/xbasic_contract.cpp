@@ -220,6 +220,12 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
     m_associated_execution_context->add_followup_transaction(std::move(cons_tx), type);
 }
 
+void xtop_basic_contract::transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type) {
+    std::error_code ec;
+    transfer(target_addr, amount, type, ec);
+    top::error::throw_error(ec);
+}
+
 std::vector<xfollowup_transaction_datum_t> xtop_basic_contract::followup_transaction() const {
     return m_associated_execution_context->followup_transaction();
 }
