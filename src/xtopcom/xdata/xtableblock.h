@@ -64,10 +64,14 @@ class xtable_block_t : public xblock_t {
  private:
     xtable_block_t(const xtable_block_t &);
     xtable_block_t & operator = (const xtable_block_t &);
+    void parse_to_json_v2(xJson::Value & root, const std::string & rpc_version);
  public:
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
+    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
+    virtual const std::vector<base::xvaction_t> & get_tx_actions();
+    virtual const std::vector<xvheader_ptr_t> & get_unit_headers();
 
  protected:
     void                    unpack_proposal_units(std::vector<xblock_ptr_t> & units) const;
@@ -87,6 +91,8 @@ class xtable_block_t : public xblock_t {
     mutable std::once_flag              m_once_unpack_flag;
     mutable std::once_flag              m_once_set_parent_cert_flag;
     mutable std::vector<xblock_ptr_t>   m_cache_units;  // delay load
+    std::vector<base::xvaction_t>       m_tx_actions;
+    std::vector<xvheader_ptr_t>         m_unit_headers;
 };
 
 

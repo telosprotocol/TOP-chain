@@ -84,12 +84,14 @@ class xtransaction_t : virtual public base::xrefcount_t {
  public:
     static std::string transaction_type_to_string(uint16_t type);
     static bool set_tx_by_serialized_data(xtransaction_ptr_t & tx_ptr, const std::string & data);
+    static uint64_t get_gmttime_s();
+    static void set_action_type_by_tx_type(data::xaction_t & source_action, data::xaction_t & target_action, const enum_xtransaction_type tx_type);
+
  public:
     virtual int32_t       serialize_to(base::xstream_t & stream) = 0;        //serialize header and object,return how many bytes is writed
     virtual int32_t       serialize_from(base::xstream_t & stream) = 0;      //serialize header and object,return how many bytes is readed
     virtual int32_t       serialize_to_string(std::string & bin_data) = 0;
     virtual int32_t       serialize_from_string(const std::string & bin_data) = 0;
-    // virtual int32_t       get_obj_type() = 0;
 
  public:  // check apis
     bool                transaction_type_check() const;

@@ -13,6 +13,8 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xblockbuild.h"
+#include "xvledger/xvledger.h"
 
 NS_BEG2(top, data)
 
@@ -59,6 +61,43 @@ void * xlightunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
+std::string tx_exec_status_to_str(uint8_t exec_status) {
+    if (exec_status == enum_xunit_tx_exec_status_success) {
+        return "success";
+    } else {
+        return "failure";
+    }
+}
+
+void xlightunit_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
+    if (get_block_version() == base::enum_xvblock_version_1) {
+        auto & txs = get_txs();
+        xJson::Value ji;
+        if (rpc_version == RPC_VERSION_V1) {
+            for (auto & tx : txs) {
+                xJson::Value jv;
+                jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
+                jv["send_tx_lock_gas"] = static_cast<unsigned long long>(tx->get_send_tx_lock_tgas());
+                jv["used_gas"] = tx->get_used_tgas();
+                jv["used_tx_deposit"] = tx->get_used_deposit();
+                jv["used_disk"] = tx->get_used_disk();
+                jv["tx_exec_status"] = tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
+                xJson::Value jtx;
+                jtx["0x" + tx->get_tx_hex_hash()] = jv;
+                ji["txs"].append(jtx);
+            }
+            root["lightunit"]["lightunit_input"] = ji;
+        } else {
+            for (auto & tx : txs) {
+                xJson::Value jv;
+                jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
+                jv["tx_hash"] = "0x" + tx->get_tx_hex_hash();
+                root["lightunit"]["lightunit_input"].append(jv);
+            }
+        }
+    }
+}
+
 std::string xlightunit_block_t::dump_body() const {
     std::stringstream ss;
     ss << "{";
@@ -74,7 +113,7 @@ const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() cons
 
 bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = get_txs();
-    xassert(!txs_info.empty());
+    // xassert(!txs_info.empty());
     for (auto & tx : txs_info) {
         base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, dynamic_cast<xdataunit_t*>(tx->get_raw_tx().get()), tx->get_tx_hash(), tx->get_tx_subtype());
         sub_txs.push_back(tx_index);
@@ -84,12 +123,18 @@ bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_
 
 const xlightunit_body_t & xlightunit_block_t::get_lightunit_body() const {
     try_load_body();
-    xassert(!m_cache_body.is_empty());
+    // xassert(!m_cache_body.is_empty());
     return m_cache_body;
 }
 
 void xlightunit_block_t::load_body() const {
+    if (get_input() == nullptr) {
+        return;
+    }
     base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
+    if (primary_input_entity == nullptr) {
+        return;
+    }
     const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
     for (auto & action : actions) {
         xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
