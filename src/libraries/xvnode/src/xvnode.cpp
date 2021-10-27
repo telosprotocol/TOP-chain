@@ -116,7 +116,7 @@ void xtop_vnode::synchronize() {
     if (m_sync_started)
         return;
 
-    sync_add_vnet();
+    m_the_binding_driver->start();
 
     m_sync_started = true;
 
@@ -131,8 +131,9 @@ void xtop_vnode::start() {
     assert(m_logic_timer != nullptr);
     assert(m_vhost != nullptr);
 
+    sync_add_vnet();
+
     new_driver_added();
-    m_the_binding_driver->start();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
         common::has<common::xnode_type_t::storage_full_node>(vnetwork_driver()->type()));
     // if (m_cons_face != nullptr) {
@@ -171,7 +172,6 @@ void xtop_vnode::stop() {
     }
     m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
-    m_the_binding_driver->stop();
     driver_removed();
     update_contract_manager(true);
 
