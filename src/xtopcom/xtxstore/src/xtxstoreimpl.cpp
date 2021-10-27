@@ -54,6 +54,7 @@ base::xauto_ptr<base::xvtxindex_t> xtxstoreimpl::load_tx_idx(const std::string &
         xerror("xvtxstore_t::load_tx_idx,found bad index for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
         return nullptr;
     }
+    txindex->set_tx_hash(raw_tx_hash);
     return txindex;
 }
 
