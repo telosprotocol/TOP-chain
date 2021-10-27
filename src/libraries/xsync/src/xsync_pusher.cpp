@@ -131,6 +131,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         std::vector<vnetwork::xvnode_address_t> parents = m_role_xips_mgr->get_rand_parents(self_addr, 0xffffffff);
         for (auto neighbor:parents) {
             validator_auditor_neighbours.insert(neighbor.account_address());
+            xsync_kinfo("add validator_auditor_neighbours: %s", neighbor.to_string().c_str());
         }
     }
 
