@@ -298,9 +298,9 @@ class xtxpool_role_info_t : public xtx_counter_t {
 public:
     xtxpool_role_info_t(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type)
       : m_zone(zone), m_front_table_id(front_table_id), m_back_table_id(back_table_id), m_node_type(node_type) {
-        m_max_send_tx_num = role_send_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
-        m_max_recv_tx_num = role_recv_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
-        m_max_confirm_tx_num = role_confirm_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
+        // m_max_send_tx_num = role_send_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
+        // m_max_recv_tx_num = role_recv_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
+        // m_max_confirm_tx_num = role_confirm_tx_queue_size_max_for_each_table * (back_table_id + 1 - front_table_id);
     }
     bool is_ids_match(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) const {
         return (m_zone == zone && m_front_table_id == front_table_id && m_back_table_id == back_table_id && m_node_type == node_type);
@@ -320,15 +320,15 @@ public:
     common::xnode_type_t get_node_type() const {
         return m_node_type;
     }
-    bool send_tx_full() const {
-        return get_send_tx_count() >= m_max_send_tx_num;
-    }
-    bool recv_tx_full() const {
-        return get_recv_tx_count() >= m_max_recv_tx_num;
-    }
-    bool confirm_tx_full() const {
-        return get_conf_tx_count() >= m_max_confirm_tx_num;
-    }
+    // bool send_tx_full() const {
+    //     return get_send_tx_count() >= m_max_send_tx_num;
+    // }
+    // bool recv_tx_full() const {
+    //     return get_recv_tx_count() >= m_max_recv_tx_num;
+    // }
+    // bool confirm_tx_full() const {
+    //     return get_conf_tx_count() >= m_max_confirm_tx_num;
+    // }
     void add_sub_count() {
         m_sub_count++;
     }
@@ -344,9 +344,9 @@ private:
     uint16_t m_front_table_id;
     uint16_t m_back_table_id;
     common::xnode_type_t m_node_type;
-    int32_t m_max_send_tx_num;
-    int32_t m_max_recv_tx_num;
-    int32_t m_max_confirm_tx_num;
+    // int32_t m_max_send_tx_num;
+    // int32_t m_max_recv_tx_num;
+    // int32_t m_max_confirm_tx_num;
     std::atomic<uint8_t> m_sub_count{0};
 };
 
@@ -382,10 +382,10 @@ public:
     }
     void send_tx_inc(int32_t count) {
         m_counter.send_tx_inc(count);
-        for (auto & role : m_roles) {
-            xtxpool_dbg("send_tx_inc role(%p) table:%s old send num:%d inc num:%d", role, get_address().c_str(), role->get_send_tx_count(), count);
-            role->send_tx_inc(count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg("send_tx_inc role(%p) table:%s old send num:%d inc num:%d", role, get_address().c_str(), role->get_send_tx_count(), count);
+        //     role->send_tx_inc(count);
+        // }
 
         m_statistic->inc_push_tx_send_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
@@ -394,10 +394,10 @@ public:
     }
     void send_tx_dec(int32_t count) {
         m_counter.send_tx_inc(-count);
-        for (auto & role : m_roles) {
-            xtxpool_dbg("send_tx_dec role(%p) table:%s old send num:%d dec num:%d", role, get_address().c_str(), role->get_send_tx_count(), count);
-            role->send_tx_inc(-count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg("send_tx_dec role(%p) table:%s old send num:%d dec num:%d", role, get_address().c_str(), role->get_send_tx_count(), count);
+        //     role->send_tx_inc(-count);
+        // }
         m_statistic->dec_push_tx_send_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_send_tx_cur" + get_address(), count);
@@ -405,10 +405,10 @@ public:
     }
     void recv_tx_inc(int32_t count) {
         m_counter.recv_tx_inc(count);
-        for (auto & role : m_roles) {
-            xtxpool_dbg("recv_tx_inc role(%p) table:%s old recv num:%d inc num:%d", role, get_address().c_str(), role->get_recv_tx_count(), count);
-            role->recv_tx_inc(count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg("recv_tx_inc role(%p) table:%s old recv num:%d inc num:%d", role, get_address().c_str(), role->get_recv_tx_count(), count);
+        //     role->recv_tx_inc(count);
+        // }
         m_statistic->inc_push_tx_recv_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_recv_tx_cur" + get_address(), count);
@@ -416,10 +416,10 @@ public:
     }
     void recv_tx_dec(int32_t count) {
         m_counter.recv_tx_inc(-count);
-        for (auto & role : m_roles) {
-            xtxpool_dbg("recv_tx_dec role(%p) table:%s old recv num:%d dec num:%d", role, get_address().c_str(), role->get_recv_tx_count(), count);
-            role->recv_tx_inc(-count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg("recv_tx_dec role(%p) table:%s old recv num:%d dec num:%d", role, get_address().c_str(), role->get_recv_tx_count(), count);
+        //     role->recv_tx_inc(-count);
+        // }
         m_statistic->dec_push_tx_recv_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_recv_tx_cur" + get_address(), count);
@@ -427,10 +427,10 @@ public:
     }
     void conf_tx_inc(int32_t count) {
         m_counter.conf_tx_inc(count);
-        for (auto & role : m_roles) {
-            xtxpool_dbg("conf_tx_inc role(%p) table:%s old confirm num:%d inc num:%d", role, get_address().c_str(), role->get_conf_tx_count(), count);
-            role->conf_tx_inc(count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg("conf_tx_inc role(%p) table:%s old confirm num:%d inc num:%d", role, get_address().c_str(), role->get_conf_tx_count(), count);
+        //     role->conf_tx_inc(count);
+        // }
         m_statistic->inc_push_tx_confirm_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_confirm_tx_cur" + get_address(), count);
@@ -438,10 +438,10 @@ public:
     }
     void conf_tx_dec(int32_t count) {
         m_counter.conf_tx_inc(-count);
-        for (auto & role : m_roles) {
-            xtxpool_dbg("conf_tx_dec role(%p) table:%s old confirm num:%d dec num:%d", role, get_address().c_str(), role->get_conf_tx_count(), count);
-            role->conf_tx_inc(-count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg("conf_tx_dec role(%p) table:%s old confirm num:%d dec num:%d", role, get_address().c_str(), role->get_conf_tx_count(), count);
+        //     role->conf_tx_inc(-count);
+        // }
         m_statistic->dec_push_tx_confirm_cur_num(count);
         XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_confirm_tx_cur" + get_address(), count);
@@ -472,14 +472,14 @@ public:
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max) {
             XMETRICS_GAUGE(metrics::txpool_alarm_send_tx_reached_upper_limit, 1);
             return xtxpool_error_table_reached_upper_limit;
-        } else if (any_role_send_tx_reached_upper_limit()) {
+        }/* else if (any_role_send_tx_reached_upper_limit()) {
             return xtxpool_error_role_reached_upper_limit;
-        }
+        }*/
         return xsuccess;
     }
 
     bool is_recv_tx_reached_upper_limit() {
-        if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || any_role_recv_tx_reached_upper_limit()) {
+        if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max/* || any_role_recv_tx_reached_upper_limit()*/) {
             XMETRICS_GAUGE(metrics::txpool_alarm_recv_tx_reached_upper_limit, 1);
             return true;
         }
@@ -487,7 +487,7 @@ public:
     }
 
     bool is_confirm_tx_reached_upper_limit() {
-        if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || any_role_confirm_tx_reached_upper_limit()) {
+        if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max/* || any_role_confirm_tx_reached_upper_limit()*/) {
             XMETRICS_GAUGE(metrics::txpool_alarm_confirm_tx_reached_upper_limit, 1);
             return true;
         }
@@ -499,11 +499,11 @@ public:
         if (count == old_count) {
             return;
         }
-        for (auto & role : m_roles) {
-            xtxpool_dbg(
-                "set_unconfirm_tx_count role(%p) table:%s old unconfirm count:%d inc count:%d", role, get_address().c_str(), role->get_unconfirm_tx_count(), count - old_count);
-            role->unconfirm_tx_inc(count - old_count);
-        }
+        // for (auto & role : m_roles) {
+        //     xtxpool_dbg(
+        //         "set_unconfirm_tx_count role(%p) table:%s old unconfirm count:%d inc count:%d", role, get_address().c_str(), role->get_unconfirm_tx_count(), count - old_count);
+        //     role->unconfirm_tx_inc(count - old_count);
+        // }
         m_statistic->inc_unconfirm_tx_num(count - old_count);
         XMETRICS_GAUGE(metrics::txpool_unconfirm_tx_cur, count - old_count);
         m_counter.set_unconfirm_tx_count(count);
@@ -513,52 +513,52 @@ public:
         return m_statistic;
     }
 
-    bool any_role_send_tx_reached_upper_limit() {
-        for (auto & role : m_roles) {
-            if (role->send_tx_full()) {
-                xwarn("any_role_send_tx_reached_upper_limit table %s role send queue size:%u", get_address().c_str(), role->get_send_tx_count());
-                return true;
-            }
-        }
-        return false;
-    }
+    // bool any_role_send_tx_reached_upper_limit() {
+    //     for (auto & role : m_roles) {
+    //         if (role->send_tx_full()) {
+    //             xwarn("any_role_send_tx_reached_upper_limit table %s role send queue size:%u", get_address().c_str(), role->get_send_tx_count());
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
-    bool any_role_recv_tx_reached_upper_limit() {
-        for (auto & role : m_roles) {
-            if (role->recv_tx_full()) {
-                xwarn("any_role_recv_tx_reached_upper_limit table %s role recv queue size:%u", get_address().c_str(), role->get_recv_tx_count());
-                return true;
-            }
-        }
-        return false;
-    }
+    // bool any_role_recv_tx_reached_upper_limit() {
+    //     for (auto & role : m_roles) {
+    //         if (role->recv_tx_full()) {
+    //             xwarn("any_role_recv_tx_reached_upper_limit table %s role recv queue size:%u", get_address().c_str(), role->get_recv_tx_count());
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
-    bool any_role_confirm_tx_reached_upper_limit() {
-        for (auto & role : m_roles) {
-            if (role->confirm_tx_full()) {
-                xwarn("any_role_confirm_tx_reached_upper_limit table %s role confirm queue size:%u", get_address().c_str(), role->get_conf_tx_count());
-                return true;
-            }
-        }
-        return false;
-    }
+    // bool any_role_confirm_tx_reached_upper_limit() {
+    //     for (auto & role : m_roles) {
+    //         if (role->confirm_tx_full()) {
+    //             xwarn("any_role_confirm_tx_reached_upper_limit table %s role confirm queue size:%u", get_address().c_str(), role->get_conf_tx_count());
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
     void add_role(xtxpool_role_info_t * role) {
-        xtxpool_dbg("add_role role(%p) table:%s old count:%d:%d:%d:%d inc count:%d:%d:%d:%d",
-                    role,
-                    get_address().c_str(),
-                    role->get_send_tx_count(),
-                    role->get_recv_tx_count(),
-                    role->get_conf_tx_count(),
-                    role->get_unconfirm_tx_count(),
-                    m_counter.get_send_tx_count(),
-                    m_counter.get_recv_tx_count(),
-                    m_counter.get_conf_tx_count(),
-                    m_counter.get_unconfirm_tx_count());
-        role->send_tx_inc(m_counter.get_send_tx_count());
-        role->recv_tx_inc(m_counter.get_recv_tx_count());
-        role->conf_tx_inc(m_counter.get_conf_tx_count());
-        role->unconfirm_tx_inc(m_counter.get_unconfirm_tx_count());
+        // xtxpool_dbg("add_role role(%p) table:%s old count:%d:%d:%d:%d inc count:%d:%d:%d:%d",
+        //             role,
+        //             get_address().c_str(),
+        //             role->get_send_tx_count(),
+        //             role->get_recv_tx_count(),
+        //             role->get_conf_tx_count(),
+        //             role->get_unconfirm_tx_count(),
+        //             m_counter.get_send_tx_count(),
+        //             m_counter.get_recv_tx_count(),
+        //             m_counter.get_conf_tx_count(),
+        //             m_counter.get_unconfirm_tx_count());
+        // role->send_tx_inc(m_counter.get_send_tx_count());
+        // role->recv_tx_inc(m_counter.get_recv_tx_count());
+        // role->conf_tx_inc(m_counter.get_conf_tx_count());
+        // role->unconfirm_tx_inc(m_counter.get_unconfirm_tx_count());
         m_roles.push_back(role);
     }
 
