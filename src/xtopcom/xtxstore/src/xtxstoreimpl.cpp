@@ -207,8 +207,7 @@ bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_
 
 bool xtxstoreimpl::tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data_ptr) {
     if (strategy_permission(m_tx_cache_strategy)) {
-        m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get()); // todo change tx_get interface.
-        return true;
+        return m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get()); // todo change tx_get interface.
     }
     return false;
 }

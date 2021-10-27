@@ -32,12 +32,12 @@ int xtransaction_cache_t::tx_get_json(const std::string& tx_hash, xJson::Value &
     jv = m_trans[tx_hash].jv;
     return 1;
 }
-int xtransaction_cache_t::tx_get(const std::string& tx_hash, xtransaction_cache_data_t& cache_data){
+bool xtransaction_cache_t::tx_get(const std::string& tx_hash, xtransaction_cache_data_t& cache_data){
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_trans.find(tx_hash) == m_trans.end())
-        return 0;
+        return false;
     cache_data = m_trans[tx_hash];
-    return 1;
+    return true;
 }
 int xtransaction_cache_t::tx_set_json(const std::string& tx_hash, const xJson::Value & jv) {
     std::lock_guard<std::mutex> lock(m_mutex);
