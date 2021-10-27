@@ -258,6 +258,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_rumor_category_unknown,
     message_rumor_category_end = message_rumor_category_unknown,
 
+    message_transport_recv,
+    message_transport_send,
+
     // sync 
     xsync_recv_new_block,
     xsync_recv_new_hash,
@@ -608,6 +611,20 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txdelay_from_client_to_sendtx_exec,
     txdelay_from_client_to_recvtx_exec,
     txdelay_from_client_to_confirmtx_exec,
+
+    //cpu
+    cpu_hash_256_calc,
+    cpu_ca_merge_sign_xbft,
+    cpu_ca_merge_sign_tc,
+    cpu_ca_do_sign_xbft,
+    cpu_ca_do_sign_tc,
+    cpu_ca_verify_sign_xbft,
+    cpu_ca_verify_sign_tc,
+    cpu_ca_verify_multi_sign_txreceipt,
+    cpu_ca_verify_multi_sign_sync,
+    cpu_ca_verify_multi_sign_xbft,
+    cpu_ca_verify_multi_sign_tc,
+    cpu_ca_verify_multi_sign_blockstore,
 
     e_simple_total,
 };

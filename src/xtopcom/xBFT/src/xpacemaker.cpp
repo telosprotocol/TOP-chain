@@ -375,6 +375,7 @@ namespace top
                     {
                         const std::string xclock_account_addrs = xcsobject_t::get_xclock_account_address();
                         _packet_xclock_cert->reset_unit_flag(base::enum_xvblock_flag_authenticated);//remove first
+                        XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                         if(get_vcertauth()->verify_muti_sign(_packet_xclock_cert,xclock_account_addrs) == base::enum_vcert_auth_result::enum_successful)
                             _packet_xclock_cert->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         else
@@ -384,6 +385,7 @@ namespace top
                     if(NULL != _packet_vblock_cert)
                     {
                         _packet_vblock_cert->reset_unit_flag(base::enum_xvblock_flag_authenticated);//remove first
+                        XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                         if(get_vcertauth()->verify_muti_sign(_packet_vblock_cert,get_account()) == base::enum_vcert_auth_result::enum_successful)
                             _packet_vblock_cert->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         else

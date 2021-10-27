@@ -232,6 +232,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_rumor_block_broadcast);
         RETURN_METRICS_NAME(message_rumor_category_unknown);
 
+        RETURN_METRICS_NAME(message_transport_recv);
+        RETURN_METRICS_NAME(message_transport_send);
+
         // sync 
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
@@ -556,6 +559,20 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txdelay_from_client_to_sendtx_exec);
         RETURN_METRICS_NAME(txdelay_from_client_to_recvtx_exec);
         RETURN_METRICS_NAME(txdelay_from_client_to_confirmtx_exec);
+
+        //cpu
+        RETURN_METRICS_NAME(cpu_hash_256_calc);
+        RETURN_METRICS_NAME(cpu_ca_merge_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_merge_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_do_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_do_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_verify_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_verify_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_txreceipt);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_sync);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_blockstore);
 
         default: assert(false); return nullptr;
     }
