@@ -199,8 +199,7 @@ bool xtxstoreimpl::store_tx_obj(const std::string & raw_tx_hash, base::xdataunit
 
 bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) {
     if (strategy_permission(m_tx_cache_strategy)) {
-        m_tx_prepare_mgr->transaction_cache()->tx_add(tx_hash, tx_ptr);
-        return true;
+        return m_tx_prepare_mgr->transaction_cache()->tx_add(tx_hash, tx_ptr);
     }
     return false;
 }

@@ -20,7 +20,7 @@ public:
     xtransaction_cache_t() {
     }
     ~xtransaction_cache_t() {}
-    int tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx);
+    bool tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx);
     int tx_find(const std::string& tx_hash);
     int tx_get_json(const std::string& tx_hash, xJson::Value & jv);
     int tx_set_json(const std::string& tx_hash, const xJson::Value & jv);
