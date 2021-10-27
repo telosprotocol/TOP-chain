@@ -478,6 +478,7 @@ namespace top
                         xwarn_err("xBFTSyncdrv::fire_verify_syncblock,fail-unmatched commit_cert=%s vs proposal=%s,at node=0x%llx",_merge_cert->dump().c_str(),_for_check_block_->dump().c_str(),get_xip2_low_addr());
                         return true;
                     }
+                    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                     if(   _for_check_block_->check_block_flag(base::enum_xvblock_flag_authenticated)
                        || (get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful) )
                     {

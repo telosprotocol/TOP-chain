@@ -139,6 +139,7 @@ namespace top
                 }
 
                 //step#4: do signature here
+                XMETRICS_GAUGE(metrics::cpu_ca_do_sign_xbft, 1);
                 if(proposal->get_cert()->is_validator(get_xip2_addr().low_addr))
                 {
                     proposal->set_verify_signature(get_vcertauth()->do_sign(get_xip2_addr(), proposal->get_cert(),base::xtime_utl::get_fast_random64()));//bring leader 'signature
@@ -1136,6 +1137,7 @@ namespace top
             auto _verify_function = [this](base::xcall_t & call, const int32_t cur_thread_id,const uint64_t timenow_ms)->bool{
                 if(is_close() == false)
                 {
+                    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                     base::xvqcert_t* _to_verify_cert_ = (base::xvqcert_t *)call.get_param1().get_object();
                     if(   _to_verify_cert_->check_unit_flag(base::enum_xvblock_flag_authenticated)
                        || (get_vcertauth()->verify_muti_sign(_to_verify_cert_,get_account()) == base::enum_vcert_auth_result::enum_successful) )
@@ -1220,6 +1222,7 @@ namespace top
                         return true;
                     }
                     
+                    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                     if(get_vcertauth()->verify_muti_sign(_merge_cert.get(),_for_check_block_->get_account()) == base::enum_vcert_auth_result::enum_successful)
                     {
                         xinfo("xBFTdriver_t::fire_verify_commit_job,successful finish verify for commit block:%s at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_addr().low_addr);
@@ -1264,6 +1267,7 @@ namespace top
 
                     if(false == _proposal->is_vote_finish()) //check first as async case,it might be finished already
                     {
+                        XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
                         if(get_vcertauth()->verify_sign(replica_xip, replica_cert,_proposal->get_account()) == base::enum_vcert_auth_result::enum_successful) //verify partial-certication of msg
                         {
                             if(_proposal->add_voted_cert(replica_xip,replica_cert,get_vcertauth())) //add to local list
@@ -1272,14 +1276,17 @@ namespace top
                                 {
                                     if(false == _proposal->get_voted_validators().empty())
                                     {
+                                        XMETRICS_GAUGE(metrics::cpu_ca_merge_sign_xbft, 1);
                                         const std::string merged_sign_for_validators = get_vcertauth()->merge_muti_sign(_proposal->get_voted_validators(), _proposal->get_block());
                                         _proposal->get_block()->set_verify_signature(merged_sign_for_validators);
                                     }
                                     if(false == _proposal->get_voted_auditors().empty())
                                     {
+                                        XMETRICS_GAUGE(metrics::cpu_ca_merge_sign_xbft, 1);
                                         const std::string merged_sign_for_auditors = get_vcertauth()->merge_muti_sign(_proposal->get_voted_auditors(), _proposal->get_block());
                                         _proposal->get_block()->set_audit_signature(merged_sign_for_auditors);
                                     }
+                                    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                                     if(get_vcertauth()->verify_muti_sign(_proposal->get_block()) == base::enum_vcert_auth_result::enum_successful) //quorum certification and  check if majority voted
                                     {
                                         _proposal->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
@@ -1347,6 +1354,7 @@ namespace top
                     {
                         const std::string xclock_account_addrs = xcsobject_t::get_xclock_account_address();
                         _bind_xclock_cert->reset_unit_flag(base::enum_xvblock_flag_authenticated);//remove first
+                        XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                         if(get_vcertauth()->verify_muti_sign(_bind_xclock_cert,xclock_account_addrs) == base::enum_vcert_auth_result::enum_successful)
                         {
                             _bind_xclock_cert->set_unit_flag(base::enum_xvblock_flag_authenticated);
@@ -1357,6 +1365,7 @@ namespace top
                         }
                     }
 
+                    XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
                     if(get_vcertauth()->verify_sign(leader_xip,_proposal->get_proposal_cert(),_proposal->get_block()->get_account()) == base::enum_vcert_auth_result::enum_successful)//first verify leader'signature as well
                     {
                         const int result_of_verify_proposal = verify_proposal(_proposal->get_block(),_bind_xclock_cert,this);
@@ -1367,6 +1376,7 @@ namespace top
                             _proposal->get_proposal_cert()->set_verify_signature(empty);//reset cert
                             _proposal->get_proposal_cert()->set_audit_signature(empty); //reset cert
 
+                            XMETRICS_GAUGE(metrics::cpu_ca_do_sign_xbft, 1);
                             const std::string signature = get_vcertauth()->do_sign(replica_xip, _proposal->get_proposal_cert(),base::xtime_utl::get_fast_random64());//sign for this proposal at replica side
 
                             if(_proposal->get_proposal_cert()->is_validator(replica_xip.low_addr))
