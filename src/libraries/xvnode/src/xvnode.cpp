@@ -120,8 +120,6 @@ void xtop_vnode::synchronize() {
 
     m_sync_started = true;
 
-    m_the_binding_driver->start();
-
     xinfo("[virtual node] vnode (%p) start synchronizing at address %s", this, m_the_binding_driver->address().to_string().c_str());
 }
 
@@ -134,6 +132,7 @@ void xtop_vnode::start() {
     assert(m_vhost != nullptr);
 
     new_driver_added();
+    m_the_binding_driver->start();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
         common::has<common::xnode_type_t::storage_full_node>(vnetwork_driver()->type()));
     // if (m_cons_face != nullptr) {
