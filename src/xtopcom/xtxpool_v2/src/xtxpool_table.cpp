@@ -616,6 +616,7 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
         return xtxpool_error_tx_multi_sign_error;
     }
 
+    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_txreceipt, 1);
     base::enum_vcert_auth_result auth_result = m_para->get_certauth()->verify_muti_sign(prove_cert.get(), prove_account);
     if (auth_result != base::enum_vcert_auth_result::enum_successful) {
         int32_t ret = xtxpool_error_tx_multi_sign_error;

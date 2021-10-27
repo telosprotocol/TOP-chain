@@ -11,8 +11,7 @@ add_library(xcertauth STATIC ${src_dir})
 
 target_link_libraries(xcertauth PRIVATE xmutisig xxbase)
 
-# if (BUILD_METRICS)
-#     #add_dependencies(xcertauth xmetrics)
-#     target_link_libraries(xcertauth PRIVATE xmetrics)
-# endif()
+if (BUILD_METRICS)
+    target_link_libraries(xcertauth PRIVATE xmetrics)
+endif()
 

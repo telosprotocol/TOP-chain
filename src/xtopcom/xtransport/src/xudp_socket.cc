@@ -164,6 +164,7 @@ int32_t xp2pudp_t::connect_xudp(const std::string& target_ip,const uint16_t targ
 }
 int xp2pudp_t::send(xpacket_t& packet)
 {
+    XMETRICS_GAUGE(metrics::message_transport_send, 1);
     if (packet.get_size() > 512) {
         packet.set_process_flag(enum_xpacket_process_flag_compress); //ask compres
     }

@@ -8,9 +8,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 
-#ifdef ENABLE_METRICS
-    #include "xmetrics/xmetrics.h"
-#endif
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -61,6 +59,7 @@ namespace top
                 return true;
             }
             
+            XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_blockstore, 1);
             target_block->reset_block_flags(); //No.1 safe rule: clean all flags first when sync/replicated one block
             base::enum_vcert_auth_result result = get_vcertauth()->verify_muti_sign(target_block);
             if(result != base::enum_vcert_auth_result::enum_successful)//do heavy job at caller'thread without xsyncvstore_t ' lock involved
@@ -111,6 +110,7 @@ namespace top
                 xerror("xsyncvstore_t::store_block,an unvalid block=%s",target_block->dump().c_str());
                 return false;
             }
+            XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_blockstore, 1);
             base::enum_vcert_auth_result result = get_vcertauth()->verify_muti_sign(target_block);
             if(result != base::enum_vcert_auth_result::enum_successful)//do heavy job at caller'thread without xsyncvstore_t ' lock involved
             {
