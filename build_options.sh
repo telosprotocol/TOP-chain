@@ -14,6 +14,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXBUILD_GALILEO=ON"
         echo "Build Galileo testnet"
     ;;
+    build_bounty)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_BOUNTY=ON"
+        echo "Build Bounty testnet"
+    ;;
     test)
         CMAKE_EXTRA_OPTIONS+=" -DXENABLE_TESTS=ON"
         if [ $osname == "Linux" ]; then

@@ -114,6 +114,9 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval, xinterval_t, no
 #elif defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval, xinterval_t, normal, 181, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+#elif defined(XBUILD_BOUNTY)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval, xinterval_t, normal, 181, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 #else
 // for mainnet, the followed two intervals will be updated some time by TCC proposal. We want the genesis stage run a little faster
 // to fill the group with less time.
@@ -136,6 +139,11 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, nor
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size, xgroup_size_t, normal, 16, 16, 256);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_group_size, xgroup_size_t, normal, 6, 6, 16);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_group_size, xgroup_size_t, normal, 16, 16, 512);
+#elif defined(XBUILD_BOUNTY)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 4, 4, 16);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size, xgroup_size_t, normal, 7, 7, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_group_size, xgroup_size_t, normal, 4, 4, 16);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_group_size, xgroup_size_t, normal, 7, 7, 512);
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 6, 6, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size, xgroup_size_t, normal, 64, 32, 256);
@@ -149,10 +157,14 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t
 #elif defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 32, 8, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 32, 32, 512);
+#elif defined(XBUILD_BOUNTY)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 20, 8, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 20, 20, 512);
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 32, 8, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 256, 128, 512);
 #endif
+
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t, normal, 2, 1, 62);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size, std::uint16_t, normal, 512, 64, 1022);
@@ -207,6 +219,10 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit, std::uint64_t, normal
 #if defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_auditors, std::uint32_t, normal, 32, 0, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators, std::uint32_t, normal, 64, 0, std::numeric_limits<std::uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes, std::uint64_t, normal, 0, 0, std::numeric_limits<std::uint64_t>::max());
+#elif defined(XBUILD_BOUNTY)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_auditors, std::uint32_t, normal, 20, 0, std::numeric_limits<std::uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators, std::uint32_t, normal, 20, 0, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes, std::uint64_t, normal, 0, 0, std::numeric_limits<std::uint64_t>::max());
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_auditors, std::uint32_t, normal, 128, 0, std::numeric_limits<std::uint32_t>::max());
@@ -418,6 +434,13 @@ XDECLARE_CONFIGURATION(platform_public_endpoints,
                        "206.189.201.14:9000,167.172.128.168:9000,206.189.194.250:9000,134.122.123.81:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://galileo.seed.topnetwork.org/");
 XDECLARE_CONFIGURATION(root_hash, char const *, "a450ce6a875d55024f60b7ac2a1e9984689ccc6b5de1690890c3b59d588a2ad0");
+#elif defined(XBUILD_BOUNTY)
+XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
+XDECLARE_CONFIGURATION(platform_public_endpoints,
+                       char const *,
+                       "161.35.98.159:9000,137.184.102.85:9000,137.184.68.56:9000,143.198.189.238:9000,147.182.173.6:9000,137.184.106.236:9000,137.184.106.135:9000,137.184.21.161:9000,137.184.66.111:9000,137.184.106.34:9000,138.197.15.200:9000,159.203.163.160:9000,142.93.73.113:9000,142.93.65.231:9000,159.89.184.201:9000,159.89.178.45:9000,159.65.45.247:9000,142.93.73.207:9000,167.71.110.183:9000,142.93.73.67:9000");
+XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://bounty.seed.topnetwork.org/");
+XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #else
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_mainnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
