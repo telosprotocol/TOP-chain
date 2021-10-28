@@ -424,6 +424,78 @@ public:
         }
     }
 
+    void query_block_basic(std::string const & account, std::string const & param) {
+        json root;
+        if (param == "last") {
+            auto vblock = m_blockstore->get_latest_cert_block(base::xvaccount_t{account});
+            if (vblock == nullptr) {
+                std::cout << "account: " << account << ", latest cert block nullptr!" << std::endl;
+                return;
+            }
+            uint64_t h = vblock->get_height();
+            std::cout << "account: " << account << ", latest cert height: " << h << ", block info:" << std::endl;
+            query_block_basic(account, h, root);
+            std::cout << root << std::endl;
+        } else if (param != "all") {
+            uint64_t h = std::stoi(param);
+            std::cout << "account: " << account << ", height: " << h << ", block info:" << std::endl;
+            query_block_basic(account, h, root);
+            std::cout << root << std::endl;
+        } else {
+            auto vblock = m_blockstore->get_latest_cert_block(base::xvaccount_t{account});
+            if (vblock == nullptr) {
+                std::cout << "account: " << account << ", latest cert block nullptr!" << std::endl;
+                return;
+            }
+            uint64_t h = vblock->get_height();
+            for (size_t i = 0; i <= h; i++) {
+                json j;
+                query_block_basic(account, i, j);
+                root["height" + std::to_string(i)] = j;
+            }
+            std::string filename = account + "_all_block_basic.json";
+            std::ofstream out_json(filename);
+            out_json << std::setw(4) << root;
+            std::cout << "===> " << filename << " generated success!" << std::endl;
+        }
+    }
+
+    void query_state_basic(std::string const & account, std::string const & param) {
+        json root;
+        if (param == "last") {
+            auto vblock = m_blockstore->get_latest_cert_block(base::xvaccount_t{account});
+            if (vblock == nullptr) {
+                std::cout << "account: " << account << ", latest cert block nullptr!" << std::endl;
+                return;
+            }
+            uint64_t h = vblock->get_height();
+            std::cout << "account: " << account << ", latest cert height: " << h << ", state info:" << std::endl;
+            query_state_basic(account, h, root);
+            std::cout << root << std::endl;
+        } else if (param != "all") {
+            uint64_t h = std::stoi(param);
+            std::cout << "account: " << account << ", height: " << h << ", state info:" << std::endl;
+            query_state_basic(account, h, root);
+            std::cout << root << std::endl;
+        } else {
+            auto vblock = m_blockstore->get_latest_cert_block(base::xvaccount_t{account});
+            if (vblock == nullptr) {
+                std::cout << "account: " << account << ", latest cert block nullptr!" << std::endl;
+                return;
+            }
+            uint64_t h = vblock->get_height();
+            for (size_t i = 0; i <= h; i++) {
+                json j;
+                query_state_basic(account, i, j);
+                root["height" + std::to_string(i)] = j;
+            }
+            std::string filename = account + "_all_state_basic.json";
+            std::ofstream out_json(filename);
+            out_json << std::setw(4) << root;
+            std::cout << "===> " << filename << " generated success!" << std::endl;
+        }
+    }
+
     void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param) {
         auto const latest_height = m_blockstore->get_latest_committed_block_height(account);
 
@@ -944,6 +1016,76 @@ private:
             return;
         }
         root = dynamic_cast<chain_info::get_block_handle*>(m_getblock.get())->get_block_json(bp);
+    }
+
+    void query_block_basic(std::string const & account, const uint64_t h, json & result) {
+        auto block_vec = m_blockstore->load_block_object(account, h).get_vector();
+        if (block_vec.empty()) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }
+        for (size_t i = 0; i < block_vec.size(); i++) {
+            auto const & vblock = block_vec[i];
+            if (vblock == nullptr) {
+                std::cout << "account: " << account << ", height: " << h << " block[" << i << "] null" << std::endl;
+                continue;
+            }
+            if (block_vec.size() > 1) {
+                std::string block_id = std::string{"block"} + std::to_string(i);
+                result[block_id]["account"] = vblock->get_account();
+                result[block_id]["height"] = vblock->get_height();
+                result[block_id]["class"] = vblock->get_block_class();
+                result[block_id]["viewid"] = vblock->get_viewid();
+                result[block_id]["viewtoken"] = vblock->get_viewtoken();
+                result[block_id]["clock"] = vblock->get_clock();
+                result[block_id]["hash"] = xstring_utl::to_hex(vblock->get_block_hash());
+                result[block_id]["last_hash"] = xstring_utl::to_hex(vblock->get_last_block_hash());
+                
+            } else {
+                result["account"] = vblock->get_account();
+                result["height"] = vblock->get_height();
+                result["class"] = vblock->get_block_class();
+                result["viewid"] = vblock->get_viewid();
+                result["viewtoken"] = vblock->get_viewtoken();
+                result["clock"] = vblock->get_clock();
+                result["hash"] = xstring_utl::to_hex(vblock->get_block_hash());
+                result["last_hash"] = xstring_utl::to_hex(vblock->get_last_block_hash());
+            }
+        }
+    }
+
+    void query_state_basic(std::string const & account, const uint64_t h, json & result) {
+        auto block_vec = m_blockstore->load_block_object(account, h).get_vector();
+        if (block_vec.empty()) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }
+        for (size_t i = 0; i < block_vec.size(); i++) {
+            auto const & vblock = block_vec[i];
+            if (vblock == nullptr) {
+                std::cout << "account: " << account << ", height: " << h << " block[" << i << "] null" << std::endl;
+                continue;
+            }
+            auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock);
+            if (bstate == nullptr) {
+                std::cout << "account: " << account << ", height: " << h << " state null" << std::endl;
+                continue;
+            }
+            if (block_vec.size() > 1) {
+                std::string block_id = std::string{"block"} + std::to_string(i);
+                result[block_id]["account"] = bstate->get_account();
+                result[block_id]["height"] = bstate->get_block_height();
+                result[block_id]["class"] = bstate->get_block_class();
+                result[block_id]["viewid"] = bstate->get_block_viewid();
+                result[block_id]["last_hash"] = xstring_utl::to_hex(bstate->get_last_block_hash());
+            } else {
+                result["account"] = bstate->get_account();
+                result["height"] = bstate->get_block_height();
+                result["class"] = bstate->get_block_class();
+                result["viewid"] = bstate->get_block_viewid();
+                result["last_hash"] = xstring_utl::to_hex(bstate->get_last_block_hash());
+            }
+        }
     }
 
     void query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph) {
@@ -1693,6 +1835,8 @@ void usage() {
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
+    std::cout << "        - check_block_basic <account> <height|last|all>" << std::endl;
+    std::cout << "        - check_state_basic <account> <height|last|all>" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
@@ -1846,6 +1990,18 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_info(argv[3], argv[4]);
+    } else if (function_name == "check_block_basic") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        tools.query_block_basic(argv[3], argv[4]);
+    } else if (function_name == "check_state_basic") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        tools.query_state_basic(argv[3], argv[4]);
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {
