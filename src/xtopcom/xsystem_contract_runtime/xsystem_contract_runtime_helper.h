@@ -262,7 +262,7 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         this->reset_execution_context(exe_ctx);                                                                                                                                    \
         top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
         auto const & action_name = exe_ctx->action_name();                                                                                                                         \
-        auto const & action_data = exe_ctx->action_data();                                                                                                                         \
+        auto const & action_data = exe_ctx->action_data(); xdbg("inhere, action_name: %s, contract_addr: %s", action_name.c_str(), exe_ctx->contract_address().c_str());                                                                                                                        \
         if (action_name.empty()) {                                                                                                                                                 \
             return result;                                                                                                                                                         \
         }                                                                                                                                                                          \

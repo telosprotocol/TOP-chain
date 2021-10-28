@@ -41,6 +41,14 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
                                                                                blockstore);
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(
         common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, blockstore);
+    deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
+        common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xnode_type_t::consensus_validator,
+        static_cast<xsniff_type_t>((uint32_t)xsniff_type_t::timer | (uint32_t)xsniff_type_t::block),
+        {},
+        {config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::value, "report_summarized_statistic_info"},
+        {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{}, "on_collect_statistic_info"},
+        blockstore
+    );
 }
 
 bool xtop_system_contract_manager::contains(common::xaccount_address_t const & address) const noexcept {

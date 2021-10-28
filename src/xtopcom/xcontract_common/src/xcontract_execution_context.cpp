@@ -129,6 +129,12 @@ common::xaccount_address_t xtop_contract_execution_context::contract_address() c
     return recver();
 }
 
+common::xaccount_address_t xtop_contract_execution_context::base_contract_address() const {
+    auto const& recv = recver();
+    xdbg("xtop_contract_execution_context::base_contract_address, base account: %s", recv.base_account().c_str());
+    return common::xaccount_address_t{recv.base_account()};
+}
+
 data::enum_xtransaction_type xtop_contract_execution_context::transaction_type() const noexcept {
     data::enum_xtransaction_type ret = data::enum_xtransaction_type::xtransaction_type_max;
     switch (m_action->type()) {
