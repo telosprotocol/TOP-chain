@@ -36,6 +36,10 @@ std::string const & xtop_node_id::value() const noexcept {
     return m_account_string;
 }
 
+std::string const & xtop_node_id::base_account() const noexcept {
+    return m_account_base_address.to_string();
+}
+
 uint64_t xtop_node_id::hash() const {
     if (has_value()) {
         return utl::xxh64_t::digest(m_account_string.data(), m_account_string.size());
@@ -162,7 +166,7 @@ int32_t xtop_node_id::serialize_from(base::xbuffer_t & buffer) {
 }
 
 void xtop_node_id::parse() {
-    if (m_account_string.length() <= static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
+    if (m_account_string.length() < static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
         m_account_string.length() >= static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
         assert(false);
         top::error::throw_error(error::xerrc_t::invalid_account_address);

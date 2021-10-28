@@ -66,6 +66,7 @@ public:
     bool empty() const noexcept;
     bool has_value() const noexcept;
     std::string const & value() const noexcept;
+    std::string const & base_account() const noexcept;
     uint64_t hash() const;
     std::string const & to_string() const noexcept;
     void clear();

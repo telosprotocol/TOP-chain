@@ -12,6 +12,16 @@
 
 NS_BEG4(top, vnode, components, sniffing)
 
+struct xtable_schedule_info_t {
+    uint16_t    cur_interval{0};
+    uint16_t    target_interval{0};
+    bool        clock_or_table{false}; ///< defualt false, means interval is clock interval, otherwise means table num
+    uint16_t    cur_table{0};
+
+    xtable_schedule_info_t() = default;
+    xtable_schedule_info_t(uint16_t clock_interval, uint16_t start_table): target_interval{clock_interval}, cur_table{start_table}{}
+};
+
 class xtop_vnode_sniff {
 public:
     struct xtop_role_config {
@@ -40,6 +50,7 @@ public:
 
     bool is_valid_timer_call(common::xaccount_address_t const & address, xrole_config_t & data, const uint64_t height) const;
     void call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const;
+    void call(common::xaccount_address_t const& address, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint64_t table_id) const;
     void call(common::xaccount_address_t const & source_address,
               common::xaccount_address_t const & target_address,
               std::string const & action_name,
@@ -53,6 +64,7 @@ private:
     observer_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
     observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> m_txpool_face;
     mutable std::map<common::xaccount_address_t, xrole_config_t> m_config_map;
+    mutable std::unordered_map<common::xaccount_address_t, xtable_schedule_info_t>      m_table_contract_schedule; // table schedule
     // std::unordered_map<common::xaccount_address_t, contract_runtime::system::xcontract_deployment_data_t> m_contracts_deployment_data;
     // mutable std::unordered_map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> m_contracts_logic_timer_triggle_records;
 };
