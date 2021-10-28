@@ -4,9 +4,9 @@ name: CI
 
 on:
   push:
-    branches: [ dev/fast_sync_develop ]
+    branches: [ dev/fast_sync_develop, dev/new_horizions_1.2.6 ]
   pull_request:
-    branches: [ dev/fast_sync_develop ]
+    branches: [ dev/fast_sync_develop, dev/new_horizions_1.2.6 ]
 
 jobs:
   build:
