@@ -443,9 +443,11 @@ namespace top
                     _highest_lock_block_height + _highest_commit_block_height +
                     _highest_full_block_height + _highest_connect_block_height +
                     _highest_deleted_block_height + _lowest_vkey2_block_height;
-            
+
+            const bool connect_hash_changed = new_meta._highest_connect_block_hash != _highest_connect_block_hash;
+
             xblockmeta_t::operator=(new_meta);
-            if(total_new_heights != total_old_heights)//using quick path to determine
+            if(total_new_heights != total_old_heights || connect_hash_changed)//using quick path to determine
                 add_modified_count();
             return true;
         }

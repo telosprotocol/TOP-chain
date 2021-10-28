@@ -663,8 +663,9 @@ namespace top
                     && m_meta->_highest_connect_block_height == connectindex->get_height()
                     && m_meta->_highest_connect_block_hash != connectindex->get_block_hash())
                 {
+                    xwarn("xblockacct_t::load_latest_connected_index,recover,account=%s,height=%ld,old_hash=%s,new_hash=%s",
+                        get_account().c_str(), m_meta->_highest_connect_block_height, base::xstring_utl::to_hex(m_meta->_highest_connect_block_hash).c_str(), base::xstring_utl::to_hex(connectindex->get_block_hash()).c_str());
                     m_meta->_highest_connect_block_hash = connectindex->get_block_hash();
-                    xwarn("xblockacct_t::load_latest_connected_index,recover _highest_connect_block_hash,account=%s,height=%ld",get_account().c_str(), m_meta->_highest_connect_block_height);
                 }
             }
 
@@ -724,7 +725,7 @@ namespace top
                         else
                         {
                             xerror("xblockacct_t::load_latest_connected_index,account=%s,hash mismatch last=%s,commit=%s,connnect_height=%" PRIu64 "",
-                                get_account().c_str(), m_meta->_highest_connect_block_hash.c_str(), next_commit->get_last_block_hash().c_str(), m_meta->_highest_connect_block_height);
+                                get_account().c_str(), base::xstring_utl::to_hex(m_meta->_highest_connect_block_hash).c_str(), base::xstring_utl::to_hex(next_commit->get_last_block_hash()).c_str(), m_meta->_highest_connect_block_height);
                         }
                     }
                     else
@@ -1177,6 +1178,7 @@ namespace top
                     m_meta->_block_level = new_raw_block->get_block_level();
                 }
 
+                update_meta();  // TODO(jimmy) force update meta now, should delete after finish meta recover
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 return true;
             }
@@ -1479,12 +1481,17 @@ namespace top
                 m_meta->_highest_connect_block_height = this_block_height;
                 m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
             }
-            else if(   (this_block_height == (m_meta->_highest_connect_block_height + 1)) //regular check
-                    && (m_meta->_highest_connect_block_hash  == this_block->get_last_block_hash()))
+            else if( this_block_height == m_meta->_highest_connect_block_height + 1) //regular check
             {
-                // this_block->set_block_flag(base::enum_xvblock_flag_connected);
-                m_meta->_highest_connect_block_height = this_block_height;
-                m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
+                if (m_meta->_highest_connect_block_hash  == this_block->get_last_block_hash()) {
+                    // this_block->set_block_flag(base::enum_xvblock_flag_connected);
+                    m_meta->_highest_connect_block_height = this_block_height;
+                    m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
+                } else {
+                    xerror("xblockacct_t::full_connect_to,account=%s,hash mismatch last=%s,commit=%s,connnect_height=%" PRIu64 "",
+                        get_account().c_str(), base::xstring_utl::to_hex(m_meta->_highest_connect_block_hash).c_str(), 
+                        base::xstring_utl::to_hex(this_block->get_last_block_hash()).c_str(), m_meta->_highest_connect_block_height);
+                }
             }
 
             bool  logic_connect_more  = true;//logic connection that just ask connect to all the way to any fullblock
@@ -1551,6 +1558,12 @@ namespace top
                     m_meta->_highest_full_block_height = new_block_height;
                 }
 
+                // update connect hash, so let meta changed and saved
+                if (new_block_height == 0) {
+                    if (m_meta->_highest_connect_block_height == 0 && m_meta->_highest_connect_block_hash.empty()) {
+                        m_meta->_highest_connect_block_hash = new_block_ptr->get_block_hash();
+                    }
+                }
             }
             else if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_locked))
             {

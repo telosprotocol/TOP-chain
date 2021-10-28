@@ -196,7 +196,7 @@ namespace top
             }
             //note:dont enable log too much since it sensitive for spinlock
             #ifdef DEBUG_XVLEDGER
-            xdbg_info("xvaccountobj_t::set_block_meta,meta=%s",new_meta.ddump().c_str());
+            xdbg_info("xvaccountobj_t::set_block_meta,account=%s,meta=%s",get_account().c_str(),new_meta.ddump().c_str());
             #endif
             
             save_meta(vmeta_bin);
