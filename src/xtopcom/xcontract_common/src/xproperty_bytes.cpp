@@ -15,33 +15,25 @@ xtop_bytes_property::xtop_bytes_property(std::string const & name, std::unique_p
 }
 
 void xtop_bytes_property::set(xbytes_t const & value) {
-    assert(m_associated_contract != nullptr);
-    assert(m_associated_contract->contract_state() != nullptr);
-    m_associated_contract->contract_state()->set_property<state_accessor::properties::xproperty_type_t::bytes>(
+    assert(associated_state() != nullptr);
+    associated_state()->xcontract_state_t::set_property<state_accessor::properties::xproperty_type_t::bytes>(
         static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), value);
 }
 
 void xtop_bytes_property::clear() {
-    assert(m_associated_contract != nullptr);
-    assert(m_associated_contract->contract_state() != nullptr);
-    m_associated_contract->contract_state()->clear_property(m_id);
+    assert(associated_state() != nullptr);
+    associated_state()->clear_property(m_id);
 }
 
 xbytes_t xtop_bytes_property::value() const {
-    if (m_associated_contract != nullptr) {
-        assert(m_associated_contract->contract_state() != nullptr);
-        return m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::bytes>(
-            static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
-    } else {
-        assert(m_state_owned != nullptr);
-        return m_state_owned->get_property<state_accessor::properties::xproperty_type_t::bytes>(static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
-    }
+    assert(associated_state() != nullptr);
+    return associated_state()->xcontract_state_t::get_property<state_accessor::properties::xproperty_type_t::bytes>(
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
 }
 
 size_t xtop_bytes_property::size() const {
-    assert(m_associated_contract != nullptr);
-    assert(m_associated_contract->contract_state() != nullptr);
-    return m_associated_contract->contract_state()->property_size(m_id);
+    assert(associated_state() != nullptr);
+    return associated_state()->property_size(m_id);
 }
 
 bool xtop_bytes_property::empty() const {

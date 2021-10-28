@@ -47,7 +47,7 @@ namespace top
         void xtop_chain_data_processor::get_all_user_data(std::vector<data_processor_t> & data_vec) 
         {
             for (auto it = user_property_json_parse.begin(); it != user_property_json_parse.end(); it++) {
-                common::xaccount_address_t account_address{it.key()};
+                common::xlegacy_account_address_t account_address{it.key()};
                 data_processor_t data;
                 data.address = it.key();
                 data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE).get<std::string>())) : 0;
@@ -70,7 +70,7 @@ namespace top
             }
         }
 
-        void xtop_chain_data_processor::get_user_data(common::xaccount_address_t const &addr, data_processor_t & data) {
+        void xtop_chain_data_processor::get_user_data(common::xlegacy_account_address_t const & addr, data_processor_t & data) {
             std::string account = addr.to_string();
             auto it = user_property_json_parse.find(account);
             if(it != user_property_json_parse.end())
@@ -98,7 +98,7 @@ namespace top
         void xtop_chain_data_processor::get_all_contract_data(std::vector<data_processor_t> & data_vec) 
         {
             for (auto it = stake_property_json_parse.begin(); it != stake_property_json_parse.end(); it++) {
-                common::xaccount_address_t account_address{it.key()};
+                common::xlegacy_account_address_t account_address{it.key()};
                 data_processor_t data;
                 data.address = it.key();
                 data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE).get<std::string>())) : 0;
@@ -121,7 +121,7 @@ namespace top
             }
         }
 
-        void xtop_chain_data_processor::get_contract_data(common::xaccount_address_t const &addr, data_processor_t & data) {
+        void xtop_chain_data_processor::get_contract_data(common::xlegacy_account_address_t const & addr, data_processor_t & data) {
             std::string account = addr.to_string();
             auto it = stake_property_json_parse.find(account);
             if(it != stake_property_json_parse.end())
@@ -146,7 +146,7 @@ namespace top
             }
         }
 
-        void xtop_chain_data_processor::get_stake_string_property(common::xaccount_address_t const &addr, std::string const &property, std::string &value)
+        void xtop_chain_data_processor::get_stake_string_property(common::xlegacy_account_address_t const & addr, std::string const & property, std::string & value)
         {
             if (stake_property_json_parse.count(addr.to_string())) 
             {
@@ -154,7 +154,9 @@ namespace top
             }
         }
 
-        void xtop_chain_data_processor::get_stake_map_property(common::xaccount_address_t const &addr, std::string const &property, std::vector<std::pair<std::string, std::string>> &map)
+        void xtop_chain_data_processor::get_stake_map_property(common::xlegacy_account_address_t const & addr,
+                                                               std::string const & property,
+                                                               std::vector<std::pair<std::string, std::string>> & map)
         {
             if (stake_property_json_parse.count(addr.to_string())) 
             {

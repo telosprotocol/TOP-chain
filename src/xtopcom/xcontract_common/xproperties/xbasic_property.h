@@ -17,6 +17,7 @@ class xtop_basic_property {
 protected:
     observer_ptr<xcontract_face_t> m_associated_contract{ nullptr };
     std::unique_ptr<xcontract_state_t> m_state_owned{nullptr};
+    observer_ptr<xcontract_state_t> m_state{nullptr};
     state_accessor::properties::xproperty_identifier_t m_id;
     common::xaccount_address_t m_owner;
 
@@ -40,9 +41,14 @@ protected:
 
 public:
     void initialize();
+
     state_accessor::properties::xproperty_identifier_t const & identifier() const;
     common::xaccount_address_t owner() const;
     common::xaccount_address_t accessor() const;
+
+protected:
+    observer_ptr<xcontract_state_t const> associated_state() const noexcept;
+    observer_ptr<xcontract_state_t> associated_state() noexcept;
 };
 using xbasic_property_t = xtop_basic_property;
 

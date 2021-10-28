@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xcommon/xaddress.h"
+#include "xcommon/xlogic_time.h"
 
 #include <cstdint>
 #include <string>
@@ -38,8 +39,22 @@ struct xtop_sniff_broadcast_config {
 };
 using xsniff_broadcast_config_t = xtop_sniff_broadcast_config;
 
+class xtop_timer_config_data {
+    common::xlogic_time_t m_interval{0};
+    std::string m_tcc_config_name{};
+
+public:
+    explicit xtop_timer_config_data(common::xlogic_time_t const interval) noexcept;
+    explicit xtop_timer_config_data(std::string tcc_config_name) noexcept;
+
+    common::xlogic_time_t get_timer_interval(std::error_code & ec) const;
+    common::xlogic_time_t get_timer_interval() const;
+};
+using xtimer_config_data_t = xtop_timer_config_data;
+
 struct xtop_sniff_timer_config {
-    uint32_t interval{0};
+    common::xlogic_time_t interval{0};
+    
     std::string action{};
 
     xtop_sniff_timer_config() = default;
@@ -76,5 +91,23 @@ enum class enum_sniff_type: uint32_t {
     block = 0x00000004,
 };
 using xsniff_type_t = enum_sniff_type;
+
+constexpr xsniff_type_t operator|(xsniff_type_t const lhs, xsniff_type_t const rhs) noexcept {
+    using type = std::underlying_type<xsniff_type_t>::type;
+    return static_cast<xsniff_type_t>(static_cast<type>(lhs) | static_cast<type>(rhs));
+}
+
+constexpr xsniff_type_t operator&(xsniff_type_t const lhs, xsniff_type_t const rhs) noexcept {
+    using type = std::underlying_type<xsniff_type_t>::type;
+    return static_cast<xsniff_type_t>(static_cast<type>(lhs) & static_cast<type>(rhs));
+}
+
+xsniff_type_t & operator&=(xsniff_type_t & lhs, xsniff_type_t const rhs) noexcept;
+xsniff_type_t & operator|=(xsniff_type_t & lhs, xsniff_type_t const rhs) noexcept;
+
+template <xsniff_type_t SniffTypeV>
+constexpr bool has(xsniff_type_t const input) noexcept {
+    return SniffTypeV == (SniffTypeV & input);
+}
 
 NS_END2

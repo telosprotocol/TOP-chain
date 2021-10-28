@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -115,6 +115,14 @@ base::enum_vaccount_addr_type xtop_node_id::type(std::error_code & ec) const {
     return m_account_base_address.type(ec);
 }
 
+xaccount_id_t const & xtop_node_id::account_id() const noexcept {
+    return m_account_id;
+}
+
+xledger_id_t xtop_node_id::ledger_id() const {
+    return m_account_base_address.ledger_id();
+}
+
 uint16_t xtop_node_id::table_id(std::error_code & ec) const {
     assert(!ec);
     if (m_assigned_table_id != std::numeric_limits<uint16_t>::max()) {
@@ -129,6 +137,10 @@ uint16_t xtop_node_id::table_id() const {
     auto const r = table_id(ec);
     top::error::throw_error(ec);
     return r;
+}
+
+xaccount_base_address_t const & xtop_node_id::base_address() const noexcept {
+    return m_account_base_address;
 }
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
@@ -179,6 +191,8 @@ void xtop_node_id::parse() {
 
         assert(m_assigned_table_id == assigned_table_id);
     }
+
+    m_account_id = xaccount_id_t{m_account_string};
 }
 
 std::int32_t

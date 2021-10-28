@@ -5,7 +5,8 @@
 #pragma once
 
 #include "xbase/xmem.h"
-#include "xbase/xns_macro.h"
+#include "xcommon/xaccount_base_address_fwd.h"
+#include "xcommon/xledger_id.h"
 #include "xvledger/xvaccount.h"
 
 #include <functional>
@@ -25,8 +26,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xaccount_base_address_t const & acc
 class xtop_account_base_address {
     std::string m_base_address_str;
     base::enum_vaccount_addr_type m_account_type{base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid};
-    uint32_t m_account_index{std::numeric_limits<uint32_t>::max()};
-    uint32_t m_ledger_id{std::numeric_limits<uint32_t>::max()};
+    xledger_id_t m_ledger_id;
     uint16_t m_default_table_id{std::numeric_limits<uint16_t>::max()};
 
 public:
@@ -53,11 +53,11 @@ public:
     void clear();
 
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
-    uint32_t ledger_id(std::error_code & ec) const;
+    xledger_id_t ledger_id(std::error_code & ec) const;
     uint16_t default_table_id(std::error_code & ec) const;
 
     base::enum_vaccount_addr_type type() const;
-    uint32_t ledger_id() const;
+    xledger_id_t ledger_id() const;
     uint16_t default_table_id() const;
 
     bool operator==(xtop_account_base_address const & other) const noexcept;

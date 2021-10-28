@@ -12,8 +12,7 @@
 
 NS_BEG2(top, contract_common)
 
-xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                 observer_ptr<xcontract_state_t> s) noexcept
+xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept
   : m_contract_state{s}, m_action{std::move(action)} {
 }
 
@@ -112,16 +111,16 @@ common::xaccount_address_t xtop_contract_execution_context::sender() const {
 common::xaccount_address_t xtop_contract_execution_context::recver() const {
     common::xaccount_address_t ret;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = common::xaccount_address_t{static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->to_address()};
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = common::xaccount_address_t{static_cast<data::xuser_consensus_action_t const *>(m_action.get())->to_address()};
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = common::xaccount_address_t{static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->to_address()};
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = common::xaccount_address_t{static_cast<data::xuser_consensus_action_t const *>(m_action.get())->to_address()};
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -133,43 +132,49 @@ common::xaccount_address_t xtop_contract_execution_context::contract_address() c
 data::enum_xtransaction_type xtop_contract_execution_context::transaction_type() const noexcept {
     data::enum_xtransaction_type ret = data::enum_xtransaction_type::xtransaction_type_max;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_type();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_type();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_type();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_type();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
 
 std::string xtop_contract_execution_context::action_name() const {
-    if (data::xconsensus_action_stage_t::send == consensus_action_stage()) {
+    switch (consensus_action_stage()) {
+    case data::xconsensus_action_stage_t::send:
+    case data::xconsensus_action_stage_t::confirm:
         return source_action_name();
-    } else if (data::xconsensus_action_stage_t::recv == consensus_action_stage()) {
-        return target_action_name();
-    }
 
-    return std::string{};
+    case data::xconsensus_action_stage_t::self:
+    case data::xconsensus_action_stage_t::recv:
+        return target_action_name();
+
+    default:
+        assert(false);
+        return {};
+    }
 }
 
 std::string xtop_contract_execution_context::source_action_name() const {
     std::string ret;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->source_action_name();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->source_action_name();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->source_action_name();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->source_action_name();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -177,16 +182,16 @@ std::string xtop_contract_execution_context::source_action_name() const {
 std::string xtop_contract_execution_context::target_action_name() const {
     std::string ret;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->target_action_name();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->target_action_name();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->target_action_name();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->target_action_name();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -241,10 +246,20 @@ data::enum_xaction_type xtop_contract_execution_context::target_action_type() co
 
 xbyte_buffer_t xtop_contract_execution_context::action_data() const {
     std::string ret;
-    if (data::xconsensus_action_stage_t::send == consensus_action_stage()) {
+    switch (consensus_action_stage()) {
+    case data::xconsensus_action_stage_t::send:
+    case data::xconsensus_action_stage_t::confirm:
         ret = source_action_data();
-    } else if (data::xconsensus_action_stage_t::recv == consensus_action_stage()) {
+        break;
+
+    case data::xconsensus_action_stage_t::recv:
+    case data::xconsensus_action_stage_t::self:
         ret = target_action_data();
+        break;
+
+    default:
+        assert(false);
+        break;
     }
 
     return xbyte_buffer_t{ret.data(), ret.data() + ret.size()};
@@ -253,16 +268,16 @@ xbyte_buffer_t xtop_contract_execution_context::action_data() const {
 std::string xtop_contract_execution_context::source_action_data() const {
     std::string ret;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_source_action_data();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -270,16 +285,16 @@ std::string xtop_contract_execution_context::source_action_data() const {
 std::string xtop_contract_execution_context::target_action_data() const {
     std::string ret;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->transaction_target_action_data();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -287,16 +302,16 @@ std::string xtop_contract_execution_context::target_action_data() const {
 data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() const {
     data::xconsensus_action_stage_t ret = data::xconsensus_action_stage_t::invalid;
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->stage();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->stage();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->stage();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->stage();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -304,16 +319,16 @@ data::xconsensus_action_stage_t xtop_contract_execution_context::action_stage() 
 uint64_t xtop_contract_execution_context::deposit() const {
     uint64_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->deposit();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->deposit();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->deposit();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->deposit();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -321,16 +336,16 @@ uint64_t xtop_contract_execution_context::deposit() const {
 std::string xtop_contract_execution_context::digest_hex() const {
     std::string ret{};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->digest_hex();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->digest_hex();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->digest_hex();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->digest_hex();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -338,16 +353,16 @@ std::string xtop_contract_execution_context::digest_hex() const {
 uint64_t xtop_contract_execution_context::last_nonce() const {
     uint64_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_nonce();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_nonce();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_nonce();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_nonce();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -355,16 +370,16 @@ uint64_t xtop_contract_execution_context::last_nonce() const {
 uint64_t xtop_contract_execution_context::nonce() const {
     uint64_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->nonce();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->nonce();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->nonce();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->nonce();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -372,16 +387,16 @@ uint64_t xtop_contract_execution_context::nonce() const {
 uint256_t xtop_contract_execution_context::hash() const {
     uint256_t ret{};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->hash();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->hash();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->hash();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->hash();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -389,16 +404,16 @@ uint256_t xtop_contract_execution_context::hash() const {
 uint32_t xtop_contract_execution_context::size() const {
     uint32_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->size();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->size();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->size();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->size();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -406,16 +421,16 @@ uint32_t xtop_contract_execution_context::size() const {
 uint32_t xtop_contract_execution_context::used_tgas() const {
     uint32_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->used_tgas();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->used_tgas();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->used_tgas();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->used_tgas();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -423,16 +438,16 @@ uint32_t xtop_contract_execution_context::used_tgas() const {
 uint32_t xtop_contract_execution_context::used_disk() const {
     uint32_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->used_disk();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->used_disk();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->used_disk();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->used_disk();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -440,16 +455,16 @@ uint32_t xtop_contract_execution_context::used_disk() const {
 uint32_t xtop_contract_execution_context::last_action_send_tx_lock_tgas() const {
     uint32_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_send_tx_lock_tgas();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_send_tx_lock_tgas();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_send_tx_lock_tgas();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_send_tx_lock_tgas();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -457,16 +472,16 @@ uint32_t xtop_contract_execution_context::last_action_send_tx_lock_tgas() const 
 uint32_t xtop_contract_execution_context::last_action_used_deposit() const {
     uint32_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_used_deposit();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_used_deposit();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_used_deposit();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_used_deposit();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -474,16 +489,16 @@ uint32_t xtop_contract_execution_context::last_action_used_deposit() const {
 uint32_t xtop_contract_execution_context::last_action_recv_tx_use_send_tx_tgas() const {
     uint32_t ret{0};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_recv_tx_use_send_tx_tgas();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_recv_tx_use_send_tx_tgas();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_recv_tx_use_send_tx_tgas();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_recv_tx_use_send_tx_tgas();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -491,16 +506,16 @@ uint32_t xtop_contract_execution_context::last_action_recv_tx_use_send_tx_tgas()
 data::enum_xunit_tx_exec_status xtop_contract_execution_context::last_action_exec_status() const {
     data::enum_xunit_tx_exec_status ret{data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success};
     switch (m_action->type()) {
-        case data::xtop_action_type_t::system:{
-            ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_exec_status();
-            break;
-        }
-        case data::xtop_action_type_t::user:{
-            ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_exec_status();
-            break;
-        }
-        default:
-            break;
+    case data::xtop_action_type_t::system: {
+        ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->last_action_exec_status();
+        break;
+    }
+    case data::xtop_action_type_t::user: {
+        ret = static_cast<data::xuser_consensus_action_t const *>(m_action.get())->last_action_exec_status();
+        break;
+    }
+    default:
+        break;
     }
     return ret;
 }
@@ -643,7 +658,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_targe
         fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::send_tx_lock_tgas, last_action_send_tx_lock_tgas()));
         fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::recv_tx_use_send_tx_tgas, 0));
         fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, last_action_used_deposit()));
-        xdbg("[xtop_contract_execution_context::execute_default_target_action] tx: %s, lock_tgas: " PRIu32 ", use_send_tx_tgas: " PRIu32 ", used_deposit: " PRIu32,
+        xdbg("[xtop_contract_execution_context::execute_default_target_action] tx: %s, lock_tgas: %" PRIu32 ", use_send_tx_tgas: %" PRIu32 ", used_deposit: %" PRIu32,
              digest_hex().c_str(),
              last_action_send_tx_lock_tgas(),
              0,
@@ -709,7 +724,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confi
     auto const asset_ = asset();
     if (asset_.m_amount > 0) {
         // should unlock token by recv tx execute status
-        if(status == data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail){
+        if (status == data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail) {
             // unlock token and revert to available balance if recv tx execute fail
             contract_state()->transfer_internal(lock_balance_prop, balance_prop, asset_.m_amount);
         } else {
@@ -870,12 +885,12 @@ uint64_t xtop_contract_execution_context::calc_decayed_tgas() const {
 }
 
 uint64_t xtop_contract_execution_context::calc_cost_tgas(bool is_contract) const {
-    #ifdef ENABLE_SCALE
-        uint16_t amplify = 5;
-    #else
-        uint16_t amplify = 1;
-    #endif
-    if(is_contract) {
+#ifdef ENABLE_SCALE
+    uint16_t amplify = 5;
+#else
+    uint16_t amplify = 1;
+#endif
+    if (is_contract) {
         amplify = 1;
     }
     uint32_t multiple = (action_stage() == data::xconsensus_action_stage_t::self) ? 1 : 3;
@@ -883,11 +898,11 @@ uint64_t xtop_contract_execution_context::calc_cost_tgas(bool is_contract) const
 }
 
 uint64_t xtop_contract_execution_context::calc_cost_disk(bool is_contract) const {
-    #ifdef ENABLE_SCALE
-        uint16_t amplify = 100;
-    #else
-        uint16_t amplify = 1;
-    #endif
+#ifdef ENABLE_SCALE
+    uint16_t amplify = 100;
+#else
+    uint16_t amplify = 1;
+#endif
 #if 1
     return 0;
 #else

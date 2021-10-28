@@ -35,14 +35,14 @@ void xtop_basic_vnode::broadcast(common::xip2_t const & broadcast_dst, vnetwork:
     assert(m_vhost != nullptr);
 
     if (!running()) {
-        ec = vnode::error::xerrc::vnode_is_not_running;
+        ec = vnode::error::xerrc_t::vnode_is_not_running;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
     if (!common::broadcast(broadcast_dst.network_id()) && !common::broadcast(broadcast_dst.zone_id()) && !common::broadcast(broadcast_dst.cluster_id()) &&
         !common::broadcast(broadcast_dst.group_id()) && !common::broadcast(broadcast_dst.slot_id())) {
-        ec = vnode::error::xerrc::invalid_address;
+        ec = vnode::error::xerrc_t::invalid_address;
         xwarn("%s %s. dst address is a broadcast address %s", ec.category().name(), ec.message().c_str(), broadcast_dst.to_string().c_str());
         return;
     }
@@ -58,14 +58,14 @@ void xtop_basic_vnode::send_to(common::xip2_t const & unicast_dst, vnetwork::xme
     assert(!ec);
 
     if (!running()) {
-        ec = vnode::error::xerrc::vnode_is_not_running;
+        ec = vnode::error::xerrc_t::vnode_is_not_running;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
     if (common::broadcast(unicast_dst.network_id()) || common::broadcast(unicast_dst.zone_id()) || common::broadcast(unicast_dst.cluster_id()) ||
         common::broadcast(unicast_dst.group_id()) || common::broadcast(unicast_dst.slot_id())) {
-        ec = vnode::error::xerrc::invalid_address;
+        ec = vnode::error::xerrc_t::invalid_address;
         xwarn("%s %s. dst address is a broadcast address %s", ec.category().name(), ec.message().c_str(), unicast_dst.to_string().c_str());
         return;
     }
@@ -80,7 +80,7 @@ void xtop_basic_vnode::send_to(common::xip2_t const & unicast_dst, vnetwork::xme
                                common::xaccount_election_address_t{dst_account_address, unicast_dst.slot_id()},
                                common::xlogic_epoch_t{unicast_dst.size(), unicast_dst.height()}};
     if (address().group_address() == to.group_address() && address().account_address() == to.account_address()) {
-        ec = error::xerrc::invalid_address;
+        ec = error::xerrc_t::invalid_address;
         return;
     }
 
@@ -202,7 +202,7 @@ std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common
                                     return address.group_address().xip() == child_group_address.xip() && address.associated_blk_height() == child_group_xip2.height();
                                 });
     if (it == std::end(child_group_addresses)) {
-        ec = error::xerrc::invalid_address;
+        ec = error::xerrc_t::invalid_address;
         return {};
     }
 

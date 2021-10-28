@@ -24,8 +24,8 @@ public:
 
     BEGIN_CONTRACT_API()
         DECLARE_API(xdemo_contract_a::setup);
-        DECLARE_RECV_ONLY_API(xdemo_contract_a::test_set_string_property);
-        DECLARE_RECV_ONLY_API(xdemo_contract_a::test_set_map_property);
+        DECLARE_API(xdemo_contract_a::test_set_string_property);
+        DECLARE_API(xdemo_contract_a::test_set_map_property);
         DECLARE_API(xdemo_contract_a::test_sync_call);
         DECLARE_API(xdemo_contract_a::test_async_call);
     END_CONTRACT_API

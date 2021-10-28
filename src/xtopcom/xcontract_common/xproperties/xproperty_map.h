@@ -31,67 +31,73 @@ public:
     }
 
     void add(KeyT const & key, ValueT const & value, std::error_code & ec) {
-        m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
+        assert(m_associated_contract != nullptr);
+        assert(associated_state() != nullptr);
+
+        associated_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value), ec);
     }
 
     void add(KeyT const & key, ValueT const & value) {
-        m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->xcontract_state_t::set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value));
     }
 
     void remove(KeyT const & key, std::error_code & ec) {
-        m_associated_contract->contract_state()->remove_property_cell<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->remove_property_cell<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), ec);
     }
 
     void remove(KeyT const & key) {
-        m_associated_contract->contract_state()->remove_property_cell<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->xcontract_state_t::remove_property_cell<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key));
     }
 
     void set(KeyT const & key, ValueT const & value, std::error_code & ec) {
-        m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value), ec);
     }
 
     void set(KeyT const & key, ValueT const & value) {
-        m_associated_contract->contract_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->xcontract_state_t::set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), top::to_bytes(value));
     }
 
     void set(std::map<KeyT, ValueT> const& value, std::error_code& ec) {
-        m_associated_contract->contract_state()->set_property<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->set_property<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_bytes(value), ec);
     }
 
     void set(std::map<KeyT, ValueT> const& value) {
-        m_associated_contract->contract_state()->set_property<state_accessor::properties::xproperty_type_t::map>(
+        associated_state()->set_property<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_bytes(value));
     }
 
     void clear(std::error_code& ec) {
-         m_associated_contract->contract_state()->clear_property(m_id, ec);
+         associated_state()->clear_property(m_id, ec);
     }
     void clear() {
-         m_associated_contract->contract_state()->clear_property(m_id);
+         associated_state()->clear_property(m_id);
     }
 
     bool exist(KeyT const & key, std::error_code & ec) const {
         assert(m_associated_contract != nullptr);
         assert(!ec);
 
-        return m_associated_contract->contract_state()->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(
+        assert(associated_state() != nullptr);
+        return associated_state()->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), ec);
     }
 
     bool exist(KeyT const & key) const {
-        return m_associated_contract->contract_state()->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(
+        assert(associated_state() != nullptr);
+        return associated_state()->xcontract_state_t::exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key));
     }
 
     ValueT get(KeyT const & key, std::error_code & ec) const {
-        auto const & bytes = m_associated_contract->contract_state()->get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
+        assert(associated_state());
+        auto const & bytes = associated_state()->get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key), ec);
         if (ec) {
             return {};
@@ -101,13 +107,19 @@ public:
     }
 
     ValueT get(KeyT const & key) const {
-        return from_bytes<ValueT>(m_associated_contract->contract_state()->get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
-            static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key)));
+        assert(associated_state());
+
+        auto const & bytes = associated_state()->xcontract_state_t::get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
+            static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), top::to_string(key));
+
+        return from_bytes<ValueT>(bytes);
     }
 
     std::map<KeyT, ValueT> value(std::error_code& ec) const {
+        assert(associated_state() != nullptr);
+
         std::map<KeyT, ValueT> res;
-        auto const& tmp = m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
+        auto const& tmp = associated_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), ec);
 
         for (auto const& pair: tmp) {
@@ -117,8 +129,10 @@ public:
     }
 
     std::map<KeyT, ValueT> value() const {
+        assert(associated_state() != nullptr);
+
         std::map<KeyT, ValueT> res;
-        auto const& tmp = m_associated_contract->contract_state()->get_property<state_accessor::properties::xproperty_type_t::map>(
+        auto const & tmp = associated_state()->xcontract_state_t::get_property<state_accessor::properties::xproperty_type_t::map>(
             static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
 
         for (auto const& pair: tmp) {
@@ -128,10 +142,8 @@ public:
     }
 
     size_t size() const {
-        assert(m_associated_contract != nullptr);
-        assert(m_associated_contract->contract_state() != nullptr);
-
-        return m_associated_contract->contract_state()->property_size(m_id);
+        assert(associated_state() != nullptr);
+        return associated_state()->property_size(m_id);
     }
 };
 

@@ -57,6 +57,7 @@ xtop_basic_property::xtop_basic_property(std::string const & name, state_accesso
 
 xtop_basic_property::xtop_basic_property(std::string const & name, state_accessor::properties::xproperty_type_t type, std::unique_ptr<xcontract_state_t> state_owned)
   : m_state_owned{std::move(state_owned)}
+  , m_state{make_observer(m_state_owned.get())}
   , m_id{name, type, lookup_property_category(name, type)}
   , m_owner{m_state_owned->state_account_address()} {
 }
@@ -79,6 +80,30 @@ common::xaccount_address_t xtop_basic_property::owner() const {
 common::xaccount_address_t xtop_basic_property::accessor() const {
     assert(m_associated_contract != nullptr);
     return m_associated_contract->contract_state()->state_account_address();
+}
+
+observer_ptr<xcontract_state_t const> xtop_basic_property::associated_state() const noexcept {
+    if (m_associated_contract != nullptr) {
+        auto assoc_state = m_associated_contract->contract_state();
+        if (assoc_state != nullptr) {
+            return assoc_state;
+        }
+    }
+
+    assert(m_state);
+    return m_state;
+}
+
+observer_ptr<xcontract_state_t> xtop_basic_property::associated_state() noexcept {
+    if (m_associated_contract != nullptr) {
+        auto assoc_state = m_associated_contract->contract_state();
+        if (assoc_state != nullptr) {
+            return assoc_state;
+        }
+    }
+
+    assert(m_state);
+    return m_state;
 }
 
 NS_END3

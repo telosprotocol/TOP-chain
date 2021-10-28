@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xcommon/xaddress.h"
+#include "xcommon/xlegacy_account_address.h"
 
 namespace top
 {
@@ -30,13 +30,15 @@ namespace top
             static bool check_state();
             static bool set_state();
 
-            static void get_user_data(common::xaccount_address_t const &addr, data_processor_t & reset_data);
+            static void get_user_data(common::xlegacy_account_address_t const &addr, data_processor_t & reset_data);
             static void get_all_user_data(std::vector<data_processor_t> & reset_data);
 
-            static void get_contract_data(common::xaccount_address_t const &addr, data_processor_t & reset_data);
+            static void get_contract_data(common::xlegacy_account_address_t const & addr, data_processor_t & reset_data);
             static void get_all_contract_data(std::vector<data_processor_t> & reset_data);
-            static void get_stake_string_property(common::xaccount_address_t const &addr, std::string const &property, std::string &value);
-            static void get_stake_map_property(common::xaccount_address_t const &addr, std::string const &property, std::vector<std::pair<std::string, std::string>> &map);
+            static void get_stake_string_property(common::xlegacy_account_address_t const & addr, std::string const & property, std::string & value);
+            static void get_stake_map_property(common::xlegacy_account_address_t const & addr,
+                                               std::string const & property,
+                                               std::vector<std::pair<std::string, std::string>> & map);
             
             static void release();
         };
