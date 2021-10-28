@@ -4,6 +4,7 @@
 
 #include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff.h"
 
+#include "xbasic/xutility.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvm/manager/xcontract_address_map.h"
@@ -36,8 +37,8 @@ void xtop_vnode_sniff::sniff_set() {
 
     auto const & system_contract_deployment_data = m_system_contract_manager->deployment_data();
     for (auto const & contract_data_pair : system_contract_deployment_data) {
-        auto const & contract_address = contract_data_pair.first;
-        auto const & contract_data = contract_data_pair.second;
+        auto const & contract_address = top::get<common::xaccount_address_t const>(contract_data_pair);
+        auto const & contract_data = top::get<contract_runtime::system::xcontract_deployment_data_t>(contract_data_pair);
 
         if (!common::has(type, contract_data.node_type)) {
             continue;
@@ -68,17 +69,19 @@ void xtop_vnode_sniff::sniff_set() {
 xvnode_sniff_config_t xtop_vnode_sniff::sniff_config() const {
     xvnode_sniff_config_t config;
     for (auto const & data_pair : m_config_map) {
-        auto const & data = data_pair.second;
+        auto const & data = top::get<xrole_config_t>(data_pair);
         auto const & sniff_type = data.role_data.sniff_type;
-        if (static_cast<uint32_t>(contract_runtime::xsniff_type_t::broadcast) & static_cast<uint32_t>(sniff_type)) {
-            config.insert(std::make_pair(xvnode_sniff_event_type_t::broadcast,
-                                         xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_broadcast, this, std::placeholders::_1)}));
-        } else if (static_cast<uint32_t>(contract_runtime::xsniff_type_t::timer) & static_cast<uint32_t>(sniff_type)) {
+        if (contract_runtime::has<contract_runtime::xsniff_type_t::broadcast>(sniff_type)) {
+            config.insert(
+                std::make_pair(xvnode_sniff_event_type_t::broadcast,
+                               xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_broadcast, this, std::placeholders::_1)}));
+        } else if (contract_runtime::has<contract_runtime::xsniff_type_t::timer>(sniff_type)) {
             config.insert(std::make_pair(xvnode_sniff_event_type_t::timer,
                                          xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::all, std::bind(&xtop_vnode_sniff::sniff_timer, this, std::placeholders::_1)}));
-        } else if (static_cast<uint32_t>(contract_runtime::xsniff_type_t::block) & static_cast<uint32_t>(sniff_type)) {
-            config.insert(std::make_pair(xvnode_sniff_event_type_t::block,
-                                         xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_block, this, std::placeholders::_1)}));
+        } else if (contract_runtime::has<contract_runtime::xsniff_type_t::block>(sniff_type)) {
+            config.insert(
+                std::make_pair(xvnode_sniff_event_type_t::block,
+                               xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_block, this, std::placeholders::_1)}));
         }
     }
 
@@ -106,8 +109,8 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
         }
         base::xstream_t stream(base::xcontext_t::instance());
         stream << height;
-        std::string action_params = std::string((char *)stream.data(), stream.size());
-        xdbg("[xtop_vnode_sniff::sniff_timer] make tx, action: %s, params: %s", config.timer_config.action.c_str(), action_params.c_str());
+        std::string action_params = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
+        xdbg("[xtop_vnode_sniff::sniff_timer] make tx, action: %s, params size: %zu", config.timer_config.action.c_str(), action_params.size());
         call(contract_address, config.timer_config.action, action_params, vblock->get_cert()->get_gmtime());
     }
     return true;
@@ -206,7 +209,7 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::str
     tx->set_len();
 
     int32_t r = m_txpool_face->request_transaction_consensus(tx, true);
-    xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
+    xinfo("[xtop_vnode_sniff] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
           r,
           tx->get_digest_hex_str().c_str(),
           address.value().c_str(),

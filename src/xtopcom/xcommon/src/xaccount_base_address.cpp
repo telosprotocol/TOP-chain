@@ -71,9 +71,9 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 
     m_base_address_str = base_address;
 
-    m_account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
-    m_ledger_id = static_cast<uint16_t>(base::xstring_utl::hex2uint64(m_base_address_str.substr(2, 4)));
-    m_default_table_id = static_cast<uint16_t>(m_account_index % static_cast<uint32_t>(enum_vbucket_has_tables_count));
+    auto account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
+    m_ledger_id = xledger_id_t{m_base_address_str.substr(2, 4)};
+    m_default_table_id = static_cast<uint16_t>(account_index % static_cast<uint32_t>(enum_vbucket_has_tables_count));
 }
 
 xtop_account_base_address xtop_account_base_address::build_from(std::string const & input, std::error_code & ec) {
@@ -94,7 +94,6 @@ xtop_account_base_address xtop_account_base_address::build_from(std::string cons
 void xtop_account_base_address::swap(xtop_account_base_address & other) noexcept {
     std::swap(m_base_address_str, other.m_base_address_str);
     std::swap(m_account_type, other.m_account_type);
-    std::swap(m_account_index, other.m_account_index);
     std::swap(m_ledger_id, other.m_ledger_id);
     std::swap(m_default_table_id, other.m_default_table_id);
 }
@@ -113,8 +112,7 @@ bool xtop_account_base_address::empty() const noexcept {
 
 void xtop_account_base_address::clear() {
     m_default_table_id = std::numeric_limits<uint16_t>::max();
-    m_ledger_id = std::numeric_limits<uint32_t>::max();
-    m_account_index = std::numeric_limits<uint32_t>::max();
+    m_ledger_id.clear();
     m_account_type = base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid;
     m_base_address_str.clear();
 }
@@ -127,8 +125,8 @@ base::enum_vaccount_addr_type xtop_account_base_address::type(std::error_code & 
     return m_account_type;
 }
 
-uint32_t xtop_account_base_address::ledger_id(std::error_code & ec) const {
-    if (m_ledger_id == std::numeric_limits<uint32_t>::max()) {
+xledger_id_t xtop_account_base_address::ledger_id(std::error_code & ec) const {
+    if (m_ledger_id.empty()) {
         ec = error::xerrc_t::invalid_ledger_id;
     }
     return m_ledger_id;
@@ -148,7 +146,7 @@ base::enum_vaccount_addr_type xtop_account_base_address::type() const {
     return r;
 }
 
-uint32_t xtop_account_base_address::ledger_id() const {
+xledger_id_t xtop_account_base_address::ledger_id() const {
     std::error_code ec;
     auto const r = ledger_id(ec);
     top::error::throw_error(ec);

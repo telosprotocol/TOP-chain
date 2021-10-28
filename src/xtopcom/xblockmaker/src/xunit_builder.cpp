@@ -106,7 +106,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         new_vm = true;
     }
 
-
+    if (input_txs.size() == 1 && input_txs[0]->get_tx_subtype() == enum_transaction_subtype_self && input_txs[0]->get_source_addr() == sys_contract_rec_standby_pool_addr) {
+        new_vm = true;
+    }
     if (new_vm) {
         for (auto const & tx : input_txs) {
             xdbg("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());

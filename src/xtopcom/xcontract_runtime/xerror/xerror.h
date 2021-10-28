@@ -22,6 +22,7 @@ enum class xenum_errc {
     transaction_execution_abort,
     contract_not_found,
     contract_api_not_found,
+    invalid_timer_interval,
 
     enum_vm_api_exception,
     enum_vm_code_is_exist,

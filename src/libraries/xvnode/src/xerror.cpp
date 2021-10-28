@@ -8,12 +8,12 @@
 
 NS_BEG3(top, vnode, error)
 
-static char const * errc_to_string(xerrc const errc) noexcept {
+static char const * errc_to_string(xerrc_t const errc) noexcept {
     switch (errc) {
-    case xerrc::vnode_is_not_running:
+    case xerrc_t::vnode_is_not_running:
         return "vnode is not running";
 
-     case xerrc::invalid_address:
+     case xerrc_t::invalid_address:
         return "invalid address";
 
     default:
@@ -22,11 +22,11 @@ static char const * errc_to_string(xerrc const errc) noexcept {
     }
 }
 
-std::error_code make_error_code(xerrc const errc) noexcept {
+std::error_code make_error_code(xerrc_t const errc) noexcept {
     return std::error_code{static_cast<int>(errc), vnode_category() };
 }
 
-std::error_condition make_error_condition(xerrc const errc) noexcept {
+std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition{ static_cast<int>(errc), vnode_category() };
 }
 
@@ -37,7 +37,7 @@ public:
     }
 
     std::string message(int errc) const override {
-        auto const ec = static_cast<xerrc>(errc);
+        auto const ec = static_cast<xerrc_t>(errc);
         return errc_to_string(ec);
     }
 };
@@ -54,7 +54,7 @@ NS_BEG1(std)
 
 #if !defined(XCXX14_OR_ABOVE)
 
-size_t hash<top::vnode::error::xerrc>::operator()(top::vnode::error::xerrc const errc) const noexcept {
+size_t hash<top::vnode::error::xerrc_t>::operator()(top::vnode::error::xerrc_t const errc) const noexcept {
     return static_cast<size_t>(static_cast<int>(errc));
 }
 

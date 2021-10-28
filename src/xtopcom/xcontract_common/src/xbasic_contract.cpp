@@ -19,7 +19,7 @@ xtop_contract_metadata::xtop_contract_metadata(common::xaccount_address_t const&
 }
 
 common::xaccount_address_t xtop_basic_contract::address() const {
-    if (m_associated_execution_context) {
+    if (m_associated_execution_context != nullptr) {
         return m_associated_execution_context->contract_state()->state_account_address();
     } else {
         return m_contract_meta.m_account;

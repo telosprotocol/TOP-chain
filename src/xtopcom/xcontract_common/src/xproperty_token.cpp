@@ -33,13 +33,13 @@ xtop_token_property::xtop_token_property(contract_common::xcontract_face_t * con
 }
 
 uint64_t xtop_token_property::amount() const {
-    assert(m_associated_contract != nullptr);
-    return m_associated_contract->contract_state()->balance(m_id, m_symbol);
+    assert(associated_state() != nullptr);
+    return associated_state()->balance(m_id, m_symbol);
 }
 
 state_accessor::xtoken_t xtop_token_property::withdraw(std::uint64_t amount) {
     xproperty_utl_t::property_assert(amount > this->amount(),  error::xerrc_t::token_not_enough, "[xtop_token_property::withdraw]withdraw amount overflow, amount: " + std::to_string(amount));
-    return m_associated_contract->contract_state()->withdraw(m_id, m_symbol, amount);
+    return associated_state()->withdraw(m_id, m_symbol, amount);
 }
 
 void xtop_token_property::deposit(state_accessor::xtoken_t tokens) {
@@ -48,7 +48,7 @@ void xtop_token_property::deposit(state_accessor::xtoken_t tokens) {
     }
 
     xproperty_utl_t::property_assert(xtoken_safe_t::transfer_safe_rule(tokens.amount()),  error::xerrc_t::token_not_enough, "[xtop_token_property::deposit]deposit amount overflow, amount: " + std::to_string(tokens.amount()));
-    m_associated_contract->contract_state()->deposit(m_id, std::move(tokens));
+    associated_state()->deposit(m_id, std::move(tokens));
 }
 
 common::xsymbol_t const & xtop_token_property::symbol() const noexcept {

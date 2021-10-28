@@ -36,15 +36,18 @@ void xtop_vnode_sniff_proxy::unreg(common::xnode_address_t const & address) {
 }
 
 void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
-    xdbg("xtop_contract_manager::process_event %d", e->major_type);
+    xdbg("xvnode_sniff_proxy_t::process_event %d", e->major_type);
     if (e->major_type == mbus::xevent_major_type_chain_timer) {
         auto const & event = dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e);
         auto const & vblock = make_object_ptr<base::xvblock_t>(*(event->time_block));
         assert(vblock != nullptr);
 
+        xdbg("[xvnode_sniff_proxy_t::sniff] logic time block to db, block=%s", vblock->dump().c_str());
+
         for (auto const & config : m_sniff_config) {
             auto it = config.second.find(components::sniffing::xvnode_sniff_event_type_t::timer);
             if (it != config.second.end()) {
+                xdbg("[xvnode_sniff_proxy_t::sniff] logic time listener triggled");
                 it->second.function(vblock);
             }
         }
@@ -62,7 +65,7 @@ void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
         auto const & vblock = mbus::extract_block_from(event, true, metrics::blockstore_access_from_mbus_contract_db_on_block);  // load mini-block firstly
         assert(vblock != nullptr);
 
-        xdbg("[xtop_vnode_sniff_proxy::sniff] committed table block to db, block=%s", vblock->dump().c_str());
+        xdbg("[xvnode_sniff_proxy_t::sniff] committed table block to db, block=%s", vblock->dump().c_str());
 
         for (auto const & config : m_sniff_config) {
             auto it = config.second.find(components::sniffing::xvnode_sniff_event_type_t::block);

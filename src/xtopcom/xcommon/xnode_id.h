@@ -28,8 +28,10 @@
 #include "xbasic/xhashable.hpp"
 #include "xbasic/xrandomizable.h"
 #include "xbasic/xserializable_based_on.h"
-#include "xcommon/xstring_id.hpp"
+#include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xaccount_base_address.h"
+#include "xcommon/xledger_id.h"
+#include "xcommon/xaccount_id.h"
 
 #include <cstdint>
 #include <string>
@@ -48,6 +50,7 @@ private:
 
     xaccount_base_address_t m_account_base_address;
     uint16_t m_assigned_table_id{std::numeric_limits<uint16_t>::max()};
+    xaccount_id_t m_account_id{};
 
 public:
     xtop_node_id()                                 = default;
@@ -94,8 +97,13 @@ public:
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
     base::enum_vaccount_addr_type type() const;
 
+    xaccount_id_t const & account_id() const noexcept;
+
+    xledger_id_t ledger_id() const;
+
     uint16_t table_id(std::error_code & ec) const;
     uint16_t table_id() const;
+    xaccount_base_address_t const & base_address() const noexcept;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
