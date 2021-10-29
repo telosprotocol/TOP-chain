@@ -384,6 +384,9 @@ namespace top
                 }
                 return 0; //invalid account
             }
+            
+            //convert to binary/bytes address with compact mode as for DB 'key
+            static const std::string  get_storage_key(const xvaccount_t & src_account);
 
         public:
             xvaccount_t(const std::string & account_address);
@@ -399,7 +402,8 @@ namespace top
             inline const int            get_zone_index()  const {return get_vledger_zone_index(m_account_xid);}
             inline const int            get_bucket_index()const {return get_zone_index();}
             inline const int            get_net_id()      const {return get_chainid();}
-            inline const std::string&   get_chainid_str() const {return m_chain_id_str;}
+            //full-ledger = /chainid/get_short_table_id
+            inline const std::string&   get_storage_key() const {return m_account_store_key;}
             
             inline const int            get_ledger_subaddr() const {return get_vledger_subaddr(m_account_xid);}
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
@@ -421,13 +425,14 @@ namespace top
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
             bool                        is_unit_address() const;
+            bool                        is_table_address() const;
             bool                        is_contract_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;
             std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
-            std::string                 m_chain_id_str; //convert from chain_id to hex string
             std::string                 m_account_addr;
+            std::string                 m_account_store_key;//address as key of DB
         };
     
         //meta data of account
@@ -564,7 +569,7 @@ namespace top
             xindxmeta_t  &  get_index_meta();
             xsyncmeta_t  &  get_sync_meta();
             
-            void    update_meta_process_id();
+            void    update_meta_process_id(const uint16_t _process_id);
         protected:
             //not safe for multiple threads
             virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary

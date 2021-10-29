@@ -1190,12 +1190,12 @@ namespace top
             return total_count;
         }
         
-        std::string xvinput_t::dump()
+        std::string xvinput_t::dump() const
         {
             char local_param_buf[128];
 
-            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,actions=%zu,res=%zu}",
-                    get_entitys().size(),get_action_count(),get_resources_data().size());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,actions=%zu}",
+                    get_entitys().size(),get_action_count());
             return std::string(local_param_buf);
         }
 
@@ -1283,12 +1283,12 @@ namespace top
             return outentity->get_state_hash();
         }
         
-        std::string xvoutput_t::dump()
+        std::string xvoutput_t::dump() const
         {
             char local_param_buf[128];
             
-            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,res=%zu}",
-                    get_entitys().size(),get_resources_data().size());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu}",
+                    get_entitys().size());
             return std::string(local_param_buf);
         }
  

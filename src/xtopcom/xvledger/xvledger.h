@@ -135,11 +135,6 @@ namespace top
             xauto_ptr<xvactplugin_t>get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&) > & lambda_to_create);
             
         public: //multiple thread safe
-            bool                    set_block_meta(const xblockmeta_t & new_meta);
-            bool                    set_state_meta(const xstatemeta_t & new_meta);
-            bool                    set_sync_meta(const xsyncmeta_t & new_meta);
-            bool                    set_index_meta(const xindxmeta_t & new_meta);
-            
             const xblockmeta_t      get_block_meta();
             const xstatemeta_t      get_state_meta();
             const xsyncmeta_t       get_sync_meta();
@@ -153,13 +148,19 @@ namespace top
             bool                    set_latest_deleted_block_height(const uint64_t height);
             const uint64_t          get_latest_deleted_block_height();
             
-            bool                    save_meta();
-            
+            bool                    save_meta(bool carry_process_id = true);
+            bool                    update_meta(xvactplugin_t * plugin);
         protected:
             std::recursive_mutex&   get_table_lock();
             xspinlock_t&            get_spin_lock()  {return m_spin_lock;}
             xvactmeta_t*            get_meta();
-        
+            bool                    recover_meta(xvactmeta_t & _meta);//check whether recover the lost as reboot
+            
+            bool                    set_block_meta(const xblockmeta_t & new_meta);
+            bool                    set_state_meta(const xstatemeta_t & new_meta);
+            bool                    set_sync_meta(const xsyncmeta_t & new_meta);
+            bool                    set_index_meta(const xindxmeta_t & new_meta);
+            
         private: //only open for table object
             virtual bool            is_live(const uint64_t timenow_ms) override;//test whether has been idel status
             virtual bool            close(bool force_async = true) override;
@@ -234,7 +235,7 @@ namespace top
             
             //param of force_clean indicate whether force to close valid account 
             virtual bool               clean_all(bool force_clean = false);//clean all accounts & but table self still ok to use
-            
+            virtual bool               on_process_close();//send process_close event to every objects
         private:
             xspinlock_t&               get_spin_lock()  {return m_spin_lock;}
             
@@ -272,6 +273,7 @@ namespace top
         protected://internal or subcalss use only
             //param of force_clean indicate whether force to close valid account
             virtual bool            clean_all(bool force_clean = false); //just clean all accounts but table object is not release
+            virtual bool            on_process_close();//send process_close event to every objects
             virtual xvtable_t*      create_table_object(const uint32_t table_index);//give default implementation
             
         protected: //interface xtimersink_t
@@ -318,6 +320,8 @@ namespace top
         protected:
             //param of force_clean indicate whether force to close valid account
             virtual bool            clean_all(bool force_clean = false); //just do clean but not never destory objects of book/table
+            virtual bool            on_process_close();//send process_close event to every objects
+            
             virtual xvbook_t*       create_book_object(const uint32_t book_index);//give default implementation
             
         private:
@@ -386,6 +390,9 @@ namespace top
             
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
+            
+            virtual bool                save_all(); //save all unsaved data and meta etc
+            virtual bool                on_process_close();//send process_close event to every objects
         protected:
             virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
             bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);
