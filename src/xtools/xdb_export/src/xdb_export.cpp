@@ -457,6 +457,75 @@ void xdb_export_tools_t::query_contract_property(std::string const & account, st
     std::cout << "===> " << filename << " generated success!" << std::endl;
 }
 
+void xdb_export_tools_t::query_balance() {
+    json root;
+    uint64_t balance = 0;
+    uint64_t lock_balance = 0;
+    uint64_t tgas_balance = 0;
+    uint64_t vote_balance = 0;
+    uint64_t burn_balance = 0;
+    auto const & table_vec = xdb_export_tools_t::get_table_contract_accounts();
+    for (auto const & table : table_vec) {
+        json j_table;
+        query_balance(table, root[table], j_table);
+        uint64_t table_balance = 0;
+        uint64_t table_lock_balance = 0;
+        uint64_t table_tgas_balance = 0;
+        uint64_t table_vote_balance = 0;
+        uint64_t table_burn_balance = 0;
+        if (j_table == nullptr) {
+            table_balance = 0;
+            table_lock_balance = 0;
+            table_tgas_balance = 0;
+            table_vote_balance = 0;
+            table_burn_balance = 0;
+        } else {
+            table_balance = j_table[XPROPERTY_BALANCE_AVAILABLE].get<uint64_t>();
+            table_lock_balance = j_table[XPROPERTY_BALANCE_LOCK].get<uint64_t>();
+            table_tgas_balance = j_table[XPROPERTY_BALANCE_PLEDGE_TGAS].get<uint64_t>();
+            table_vote_balance = j_table[XPROPERTY_BALANCE_PLEDGE_VOTE].get<uint64_t>();
+            table_burn_balance = j_table[XPROPERTY_BALANCE_BURN].get<uint64_t>();
+        }
+        std::cout << "table: " << table;
+        std::cout << ", available balance: " << table_balance;
+        std::cout << ", lock balance: " << table_lock_balance;
+        std::cout << ", tgas balance: " << table_tgas_balance;
+        std::cout << ", vote balance: " << table_vote_balance;
+        std::cout << ", burn balance: " << table_burn_balance << std::endl;
+        balance += table_balance;
+        lock_balance += table_lock_balance;
+        tgas_balance += table_tgas_balance;
+        vote_balance += table_vote_balance;
+        burn_balance += table_burn_balance;
+    }
+    std::cout << "===> top system" << std::endl;
+    std::cout << "total available balance: " << balance;
+    std::cout << ", total lock balance: " << lock_balance;
+    std::cout << ", total tgas balance: " << tgas_balance;
+    std::cout << ", total vote balance: " << vote_balance;
+    std::cout << ", total burn balance: " << burn_balance << std::endl;
+    uint64_t total_balance = balance + lock_balance + tgas_balance + vote_balance;
+    std::cout << "===> top system calculate" << std::endl;
+    std::cout << "total balance: " << total_balance;
+    std::cout << ", total burn balance: " << burn_balance;
+    std::cout << ", usable balance: " << total_balance - burn_balance << std::endl;
+
+    std::cout << "===> top reward issurance" << std::endl;
+    auto reward_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{sys_contract_zec_reward_addr});
+    auto reward_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(reward_vblock.get());
+    if (reward_bstate != nullptr && true == reward_bstate->find_property(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
+        auto map = reward_bstate->load_string_map_var(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
+        std::cout << map["total"] << std::endl;
+    } else {
+        std::cerr << "load error!" << std::endl;
+    }
+
+    std::string filename = "top_balance_detail.json";
+    std::ofstream out_json(filename);
+    out_json << std::setw(4) << root;
+    std::cout << "===> " << filename << " generated success!" << std::endl;
+}
+
 std::set<std::string> xdb_export_tools_t::query_db_unit_accounts() {
     std::set<std::string> accounts;
     std::ifstream file_stream("all_account.json");
@@ -1102,6 +1171,83 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
         root[account] = j_unit;
     }
 }
+
+void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit, json & j_table) {
+    auto vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{table});
+    if (vblock == nullptr) {
+        std::cerr << "table: " << table << ", latest committed block nullptr!" << std::endl;
+        j_table = nullptr;
+        return;
+    }
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    if (bstate == nullptr) {
+        std::cerr << "table: " << table << ", latest committed block state constructed failed" << std::endl;
+        j_table = nullptr;
+        return;
+    }
+    std::map<std::string, std::string> table_account_index;
+    if (false == bstate->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
+        std::cerr << "table: " << table << ", latest committed block state fail-find property XPROPERTY_TABLE_ACCOUNT_INDEX " << XPROPERTY_TABLE_ACCOUNT_INDEX << std::endl;
+    } else {
+        auto propobj = bstate->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
+        table_account_index = propobj->query();
+    }
+    uint64_t balance = 0;
+    uint64_t lock_balance = 0;
+    uint64_t tgas_balance = 0;
+    uint64_t vote_balance = 0;
+    uint64_t burn_balance = 0;
+    for (auto const & pair : table_account_index) {
+        auto const & account  = pair.first;
+        json j;
+        auto unit_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{account});
+        if (unit_vblock == nullptr) {
+            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block nullptr!" << std::endl;
+            continue;
+        }
+        auto unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
+        if (unit_bstate == nullptr) {
+            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block state constructed failed" << std::endl;
+            continue;
+        }
+        uint64_t unit_balance = 0;
+        uint64_t unit_lock_balance = 0;
+        uint64_t unit_tgas_balance = 0;
+        uint64_t unit_vote_balance = 0;
+        uint64_t unit_burn_balance = 0;
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_AVAILABLE)) {
+            unit_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_LOCK)) {
+            unit_lock_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_TGAS)) {
+            unit_tgas_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_TGAS)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_VOTE)) {
+            unit_vote_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_VOTE)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_BURN)) {
+            unit_burn_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
+        }
+        j_unit[account][XPROPERTY_BALANCE_AVAILABLE] = unit_balance;
+        j_unit[account][XPROPERTY_BALANCE_LOCK] = unit_lock_balance;
+        j_unit[account][XPROPERTY_BALANCE_PLEDGE_TGAS] = unit_tgas_balance;
+        j_unit[account][XPROPERTY_BALANCE_PLEDGE_VOTE] = unit_vote_balance;
+        j_unit[account][XPROPERTY_BALANCE_BURN] = unit_burn_balance;
+        balance += unit_balance;
+        lock_balance += unit_lock_balance;
+        tgas_balance += unit_tgas_balance;
+        vote_balance += unit_vote_balance;
+        burn_balance += unit_burn_balance;
+    }
+    j_table[XPROPERTY_BALANCE_AVAILABLE] = balance;
+    j_table[XPROPERTY_BALANCE_BURN] = burn_balance;
+    j_table[XPROPERTY_BALANCE_LOCK] = lock_balance;
+    j_table[XPROPERTY_BALANCE_PLEDGE_TGAS] = tgas_balance;
+    j_table[XPROPERTY_BALANCE_PLEDGE_VOTE] = vote_balance;
+}
+
 
 void xdb_export_tools_t::query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph) {
     static std::set<std::string> property_names = {XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY,

@@ -38,6 +38,7 @@ void usage() {
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
+    std::cout << "        - check_balance" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -187,6 +188,8 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_contract_property(argv[3], argv[4], param);
+    } else if (function_name == "check_balance") {
+        tools.query_balance();
     } else {
         usage();
     }

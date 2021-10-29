@@ -32,10 +32,12 @@ public:
     void query_block_basic(std::string const & account, std::string const & param);
     // query state basic info
     void query_state_basic(std::string const & account, std::string const & param);
-    // query one table state and its all units state
+    // query table state and its all units state
     void query_table_unit_state(std::string const & table);
     // query contract property(use contract manager interface)
     void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param);
+    // query balance info
+    void query_balance();
 
 private:
     struct tx_ext_t {
@@ -92,6 +94,7 @@ private:
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_table_unit_state(std::string const & table, json & result);
     void query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph);
+    void query_balance(std::string const & table, json & j_unit, json & j_table);
 
     void read_info_from_table_block(const data::xblock_t * block, xdbtool_table_info_t & table_info, std::vector<tx_ext_t> & txinfos);
     void set_txinfo_to_json(json & j, const tx_ext_t & txinfo);
