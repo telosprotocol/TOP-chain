@@ -58,7 +58,8 @@ public:
     virtual bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const = 0;
     virtual void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const = 0;
     virtual void resend_receipts(uint64_t now) = 0;
-    virtual void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) = 0;
+    virtual void pull_lacking_receipts_v1(uint64_t now, xcovered_tables_t & covered_tables) = 0;
+    virtual void pull_lacking_receipts_v2(uint64_t now, xcovered_tables_t & covered_tables) = 0;
     virtual void send_receipt_id_state(uint64_t now) = 0;
 };
 

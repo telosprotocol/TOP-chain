@@ -242,7 +242,8 @@ public:
     virtual void on_block_confirmed(xblock_t * block) = 0;
     virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
     virtual const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) = 0;
-    virtual void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) = 0;
+    virtual void refresh_table_v1(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) = 0;
+    virtual void refresh_table_v2(uint8_t zone, uint16_t subaddr) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_table_state(const data::xtablestate_ptr_t & table_state) = 0;
     // virtual xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const = 0;
@@ -256,7 +257,7 @@ public:
                                   std::vector<xcons_transaction_ptr_t> & receipts) = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
-    // virtual const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
+    virtual const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
     virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
     virtual void print_statistic_values() const = 0;
     // virtual bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const = 0;

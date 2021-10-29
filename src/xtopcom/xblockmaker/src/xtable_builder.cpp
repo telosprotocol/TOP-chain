@@ -12,6 +12,7 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xtable_bstate.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -24,7 +25,7 @@ void make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::str
     }
 }
 
-void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
+void xlighttable_builder_t::make_light_table_binlog_v2(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
                                                            const std::vector<xblock_ptr_t> & units,
                                                            std::string & property_binlog,
                                                            std::map<std::string, std::string> & property_hashs) {
@@ -119,6 +120,98 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
         units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
 }
 
+void xlighttable_builder_t::make_light_table_binlog_v1(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
+                                                           const std::vector<xblock_ptr_t> & units,
+                                                           std::string & property_binlog) {
+    xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+
+    data::xtable_bstate_t proposal_tbstate(proposal_bstate.get());
+
+    // make account index property binlog
+    for (auto & unit : units) {
+        // read old index
+        xaccount_index_t _old_aindex;
+        proposal_tbstate.get_account_index(unit->get_account(), _old_aindex);
+        // update unconfirm sendtx flag
+        bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
+        if (unit->get_block_class() == base::enum_xvblock_class_full) {
+            has_unconfirm_sendtx = false;
+        } else if (unit->get_block_class() == base::enum_xvblock_class_light) {
+            has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
+        }
+        // update light-unit consensus flag, light-unit must push to committed status for receipt make
+        base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
+        if (unit->get_block_class() == base::enum_xvblock_class_light) {
+            _cs_type = base::enum_xblock_consensus_flag_authenticated;  // if light-unit, reset to authenticated
+        } else {
+            if (_cs_type == base::enum_xblock_consensus_flag_authenticated) {  // if other-unit, update type
+                _cs_type = base::enum_xblock_consensus_flag_locked;
+            } else if (_cs_type == base::enum_xblock_consensus_flag_locked) {
+                _cs_type = base::enum_xblock_consensus_flag_committed;
+            } else if (_cs_type == base::enum_xblock_consensus_flag_committed) {
+                // do nothing
+            }
+        }
+
+        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, 0);  // TODO(jimmy)
+        proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
+    }
+
+    // make receiptid property binlog
+    base::xreceiptid_check_t receiptid_check;
+    xblock_t::batch_units_to_receiptids(units, receiptid_check);  // units make changed receiptids
+
+    base::xreceiptid_pairs_ptr_t modified_pairs = std::make_shared<base::xreceiptid_pairs_t>();
+
+    const std::map<base::xtable_shortid_t, std::set<uint64_t>> & sendids = receiptid_check.get_sendids();
+    for (auto & v : sendids) {
+        base::xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        uint64_t maxid = *ids.rbegin();
+        base::xreceiptid_pair_t pair;
+        if (false == modified_pairs->find_pair(tableid, pair)) {  // find modified pairs firstly
+            proposal_tbstate.find_receiptid_pair(tableid, pair);
+        }
+        pair.set_sendid_max(maxid);
+        modified_pairs->add_pair(tableid, pair);  // save to modified pairs
+    }
+    const std::map<base::xtable_shortid_t, std::set<uint64_t>> & recvids = receiptid_check.get_recvids();
+    for (auto & v : recvids) {
+        base::xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        uint64_t maxid = *ids.rbegin();
+        base::xreceiptid_pair_t pair;
+        if (false == modified_pairs->find_pair(tableid, pair)) {  // find modified pairs firstly
+            proposal_tbstate.find_receiptid_pair(tableid, pair);
+        }
+        pair.set_recvid_max(maxid);
+        modified_pairs->add_pair(tableid, pair);  // save to modified pairs
+    }
+    const std::map<base::xtable_shortid_t, std::set<uint64_t>> & confirmids = receiptid_check.get_confirmids();
+    for (auto & v : confirmids) {
+        base::xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        uint64_t maxid = *ids.rbegin();
+        base::xreceiptid_pair_t pair;
+        if (false == modified_pairs->find_pair(tableid, pair)) {  // find modified pairs firstly
+            proposal_tbstate.find_receiptid_pair(tableid, pair);
+        }
+        pair.set_confirmid_max(maxid);
+        modified_pairs->add_pair(tableid, pair);  // save to modified pairs
+    }
+    // make modified pairs to binlog
+    const std::map<base::xtable_shortid_t, base::xreceiptid_pair_t> & all_pairs = modified_pairs->get_all_pairs();
+    for (auto & v : all_pairs) {
+        proposal_tbstate.set_receiptid_pair(v.first, v.second, canvas.get());
+    }
+
+    canvas->encode(property_binlog);
+    xassert(!property_binlog.empty());
+
+    xdbg("jimmy xlighttable_builder_t::make_light_table_binlog units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu",
+        units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
+}
+
 xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev_block,
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
@@ -133,7 +226,17 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
 
     std::map<std::string, std::string> property_hashs;  // need put in table self action for prove
     std::string property_binlog;
-    make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs);
+
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    auto clock = cs_para.get_clock();
+    if (!chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.table_receipt_data_fork_point, clock)) {
+        xdbg("xlighttable_builder_t::build_block old version,clock:%llu", clock);
+        make_light_table_binlog_v1(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog);
+    } else {
+        xdbg("xlighttable_builder_t::build_block new version,clock:%llu", clock);
+        make_light_table_binlog_v2(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs);
+    }
+
     xtable_block_para_t lighttable_para;
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
@@ -154,7 +257,19 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     return proposal_table;
 }
 
-void xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
+void xfulltable_builder_t::make_binlog_v1(const xblock_ptr_t & prev_block,
+                                                const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                                std::string & property_binlog) {
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
+
+    std::string property_snapshot;
+    auto canvas = proposal_bstate->rebase_change_to_snapshot();  // TODO(jimmy)
+    canvas->encode(property_snapshot);
+    property_binlog = property_snapshot;
+}
+
+void xfulltable_builder_t::make_binlog_v2(const xblock_ptr_t & prev_block,
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                 std::string & property_binlog,
                                                 std::map<std::string, std::string> & property_hashs) {
@@ -168,7 +283,6 @@ void xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
     
     make_table_prove_property_hashs(proposal_bstate.get(), property_hashs);
 }
-
 
 xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_block,
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
@@ -184,7 +298,16 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
 
     std::map<std::string, std::string> property_hashs;
     std::string property_binlog;
-    make_binlog(prev_block, prev_bstate, property_binlog, property_hashs);
+
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    auto clock = cs_para.get_clock();
+    if (!chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.table_receipt_data_fork_point, clock)) {
+        xdbg("xfulltable_builder_t::build_block old version,clock:%llu", clock);
+        make_binlog_v1(prev_block, prev_bstate, property_binlog);
+    } else {
+        xdbg("xfulltable_builder_t::build_block new version,clock:%llu", clock);
+        make_binlog_v2(prev_block, prev_bstate, property_binlog, property_hashs);
+    }
 
     int64_t tgas_balance_change_total = 0;
     for(auto & block : blocks) {

@@ -195,8 +195,15 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
 
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    xtableblock_action_t _action(BLD_URI_LIGHT_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
-    set_input_entity(_action);
+    if (para.get_property_hashs().empty()) {
+        base::xvaction_t _action = make_block_build_action(BLD_URI_LIGHT_TABLE);
+        set_input_entity(_action);
+        xdbg("xlighttable_build_t::build_block_body method_uri=%s", _action.get_method_uri().c_str());
+    } else {
+        xtableblock_action_t _action(BLD_URI_LIGHT_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
+        set_input_entity(_action);
+        xdbg("xlighttable_build_t::build_block_body method_uri=%s", _action.get_method_uri().c_str());
+    }
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
     for (auto & v : para.get_account_units()) {
@@ -211,7 +218,6 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
-    xdbg("xlighttable_build_t::build_block_body method_uri=%s", _action.get_method_uri().c_str());
     return true;
 }
 
@@ -416,8 +422,14 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
 
 bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    xtableblock_action_t _action(BLD_URI_FULL_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
-    set_input_entity(_action);
+    if (para.get_property_hashs().empty()) {
+        base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_TABLE);
+        set_input_entity(_action);
+    } else {
+        xtableblock_action_t _action(BLD_URI_FULL_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
+        set_input_entity(_action);
+    }
+
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
     set_output_full_state(full_state_bin);
