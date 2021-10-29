@@ -108,6 +108,8 @@ namespace top
                 //xvheader.input_hash/output_hash must be valid
             //but it disabled as default,which mean xvqcert.m_header_hash = hash(xvheader+xvinput+xvoutput)
             enum_xvblock_character_certify_header_only = 0x01,
+            //indicate whether this block is pruneable while recylcing db space
+            enum_xvblock_character_pruneable           = 0x02,
         };
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
@@ -141,7 +143,8 @@ namespace top
             static enum_xvblock_level   cal_block_level(const int types){return (enum_xvblock_level)((types >> 12) & 0x07);}
             static enum_xvblock_class   cal_block_class(const int types){return (enum_xvblock_class)((types >> 9) & 0x07);}
             static enum_xvblock_type    cal_block_type(const int types){return (enum_xvblock_type) ((types >> 2) & 0x7F);}
-
+            
+            static int                  cal_block_character(const int types){ return (types & 0x03);};
         public:
             xvheader_t(const xvheader_t & other);
 
@@ -500,7 +503,7 @@ namespace top
 
             base::xvinentity_t*         get_primary_entity() const;
             size_t                      get_action_count() const;
-            virtual std::string         dump();
+            virtual std::string         dump() const override;
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
@@ -537,7 +540,7 @@ namespace top
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
             base::xvoutentity_t*        get_primary_entity() const;
-            virtual std::string         dump();
+            virtual std::string         dump() const override;
 
         protected:
             const std::string           get_binlog_hash();

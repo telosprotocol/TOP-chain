@@ -119,13 +119,13 @@ namespace top
             if(is_close())
                 return false;
             
-            #ifdef DEBUG_XVLEDGER
             xinfo("xvaccountobj_t::stop,acccount(%s)",get_address().c_str());
-            #endif
             if(is_closing() == false)
             {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
                 m_is_closing = 1; //mark closing first
                 
+                //stop_plugin and update meta from plugin
                 for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
                 {
                     xvactplugin_t* old_ptr = m_plugins[i];
@@ -137,9 +137,10 @@ namespace top
                         if(blockmeta != NULL) //block meta need update in-time(synchronization) as it 'lazy mode
                         {
                             get_meta()->set_block_meta(*blockmeta);
+                            
                             //note:dont enable log at release since it sensitive for spinlock
                             #ifdef DEBUG_XVLEDGER
-                            xdbg_info("xvaccountobj_t::stop,upate meta=%s",blockmeta->ddump().c_str());
+                            xdbg_info("xvaccountobj_t::stop,account(%s) meta=%s",get_address().c_str(), blockmeta->ddump().c_str());
                             #endif
                         }
                     }
@@ -155,12 +156,26 @@ namespace top
             {
                 xobject_t::close(false); //force mark close flag
                 
-                for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
+                std::vector<xvactplugin_t*> valid_plugins;
                 {
-                    xvactplugin_t* old_ptr = m_plugins[i];
-                    if(old_ptr != NULL)//catch exception case if have
+                    xauto_lock<xspinlock_t> locker(get_spin_lock());
+                    for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
                     {
-                        old_ptr->close(force_async);//true means that plugin do async job for some heavy process
+                        xvactplugin_t* old_ptr = m_plugins[i];
+                        if(old_ptr != NULL)
+                        {
+                            xatomic_t::xreset(m_plugins[i]);
+                            valid_plugins.push_back(old_ptr);
+                        }
+                    }
+                }
+                
+                for(auto plugin_ptr : valid_plugins)
+                {
+                    if(plugin_ptr != NULL)//catch exception case if have
+                    {
+                        plugin_ptr->close(force_async);//true means that plugin do async job for some heavy process
+                        plugin_ptr->release_ref();
                     }
                 }
             }
@@ -171,98 +186,107 @@ namespace top
         {
             return m_ref_table.get_lock();
         }
-       
-        bool   xvaccountobj_t::set_block_meta(const xblockmeta_t & new_meta)
+        
+        //fetch and update together
+        bool   xvaccountobj_t::update_meta(xvactplugin_t * plugin)
         {
-            bool result = false;
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            if(NULL == plugin)
+                return false;
+            
             std::string vmeta_bin;
+            bool update_success = false;
+            if(NULL != plugin->get_block_meta())
             {
                 xauto_lock<xspinlock_t> locker(get_spin_lock());
                 xvactmeta_t * meta_ptr = get_meta();
-                result = meta_ptr->set_block_meta(new_meta);
-                if(result)
+                update_success = meta_ptr->set_block_meta(*plugin->get_block_meta());
+                if(update_success)
                 {
-                    const uint32_t modified_count = meta_ptr->get_modified_count();
-                    if (modified_count > 0)
+                    if(  (meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                       ||(meta_ptr->_highest_commit_block_height <= 2) )//froce save to db for the first 3 blocks
                     {
-                        if(modified_count > enum_account_save_meta_interval
-                        ||(is_unit_address() == false))  // TODO(jimmy) always save meta for table and contract now
-                        {
-                            m_meta_ptr->serialize_to_string(vmeta_bin);
-                            m_meta_ptr->reset_modified_count();
-                        }
+                        m_meta_ptr->update_meta_process_id(base::xvchain_t::instance().get_current_process_id());
+                        m_meta_ptr->serialize_to_string(vmeta_bin);
+                        m_meta_ptr->reset_modified_count();
                     }
                 }
             }
-            //note:dont enable log too much since it sensitive for spinlock
-            #ifdef DEBUG_XVLEDGER
-            xdbg_info("xvaccountobj_t::set_block_meta,meta=%s",new_meta.ddump().c_str());
-            #endif
-            
             save_meta(vmeta_bin);
+            return update_success;
+        }
+           
+        bool   xvaccountobj_t::set_block_meta(const xblockmeta_t & new_meta)
+        {
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_block_meta(new_meta);
+            if(result)
+            {
+                //note:dont enable log too much since it sensitive for spinlock
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::set_block_meta,meta=%s",new_meta.ddump().c_str());
+                #endif
+            }
             return result;
         }
         
         bool   xvaccountobj_t::set_state_meta(const xstatemeta_t & new_meta)
         {
-            bool result = false;
-            std::string vmeta_bin;
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_state_meta(new_meta);
+            if(result)
             {
-                xauto_lock<xspinlock_t> locker(get_spin_lock());
-                xvactmeta_t * meta_ptr = get_meta();
-                result = meta_ptr->set_state_meta(new_meta);
-                if(result)
-                {
-                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    {
-                        m_meta_ptr->serialize_to_string(vmeta_bin);
-                        m_meta_ptr->reset_modified_count();
-                    }
-                }
+                //note:dont enable log too much since it sensitive for spinlock
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::set_state_meta,meta=%s",new_meta.ddump().c_str());
+                #endif
             }
-            save_meta(vmeta_bin);
             return result;
         }
         
         bool  xvaccountobj_t::set_index_meta(const xindxmeta_t & new_meta)
         {
-            bool result = false;
-            std::string vmeta_bin;
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_index_meta(new_meta);
+            if(result)
             {
-                xauto_lock<xspinlock_t> locker(get_spin_lock());
-                xvactmeta_t * meta_ptr = get_meta();
-                result = meta_ptr->set_index_meta(new_meta);
-                if(result)
-                {
-                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    {
-                        m_meta_ptr->serialize_to_string(vmeta_bin);
-                        m_meta_ptr->reset_modified_count();
-                    }
-                }
+                //note:dont enable log too much since it sensitive for spinlock
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::set_index_meta,meta=%s",new_meta.ddump().c_str());
+                #endif
             }
-            save_meta(vmeta_bin);
             return result;
         }
     
         bool   xvaccountobj_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
-            bool result = false;
-            std::string vmeta_bin;
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_sync_meta(new_meta);
+            if(result)
             {
-                xauto_lock<xspinlock_t> locker(get_spin_lock());
-                xvactmeta_t * meta_ptr = get_meta();
-                result = meta_ptr->set_sync_meta(new_meta);
-                if(result)
-                {
-                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    {
-                        m_meta_ptr->serialize_to_string(vmeta_bin);
-                        m_meta_ptr->reset_modified_count();
-                    }
-                }
+                //note:dont enable log too much since it sensitive for spinlock
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::set_sync_meta,meta=%s",new_meta.ddump().c_str());
+                #endif
             }
-            save_meta(vmeta_bin);
             return result;
         }
         
@@ -298,22 +322,13 @@ namespace top
     
         bool   xvaccountobj_t::set_latest_executed_block(const uint64_t height, const std::string & blockhash)
         {
-            bool result = false;
-            std::string vmeta_bin;
-            {
-                xauto_lock<xspinlock_t> locker(get_spin_lock());
-                xvactmeta_t * meta_ptr = get_meta();
-                result = meta_ptr->set_latest_executed_block(height,blockhash);
-                if(result)
-                {
-                    if(meta_ptr->get_modified_count() > enum_account_save_meta_interval)
-                    {
-                        m_meta_ptr->serialize_to_string(vmeta_bin);
-                        m_meta_ptr->reset_modified_count();
-                    }
-                }
-            }
-            save_meta(vmeta_bin);
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_latest_executed_block(height,blockhash);
+
             return result;
         }
     
@@ -336,7 +351,7 @@ namespace top
     
         bool   xvaccountobj_t::set_latest_deleted_block_height(const uint64_t height)
         {
-            if(is_close())
+            if(is_close())//not allow write anymore at closed status
                 return false;
             
             xauto_lock<xspinlock_t> locker(get_spin_lock());
@@ -358,6 +373,11 @@ namespace top
             return atom_copy;
         }
     
+        bool   xvaccountobj_t::recover_meta(xvactmeta_t & _meta)//recover at account level if possible
+        {
+            return false;//default do nothing at account level
+        }
+    
         xvactmeta_t*  xvaccountobj_t::get_meta()
         {
             if( (m_meta_ptr != NULL) && (m_meta_ptr->is_close() == false) )
@@ -368,7 +388,16 @@ namespace top
             const std::string meta_content = xvchain_t::instance().get_xdbstore()->get_value(full_meta_path);
    
             xvactmeta_t* new_meta_ptr = xvactmeta_t::load(*this,meta_content);
-            xvactmeta_t * old_ptr = base::xatomic_t::xexchange(m_meta_ptr, new_meta_ptr);
+            const bool recovered_something = recover_meta(*new_meta_ptr);//try to recover the lost if rebooted
+            if(recovered_something)//makeup the lost to DB
+            {
+                new_meta_ptr->update_meta_process_id(base::xvchain_t::instance().get_current_process_id()); //update process id to avoid double-saving
+                std::string  recovered_meta_bin;
+                new_meta_ptr->serialize_to_string(recovered_meta_bin);
+                xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,recovered_meta_bin);
+            }
+
+            xvactmeta_t * old_ptr = base::xatomic_t::xexchange(m_meta_ptr,new_meta_ptr);
             if(old_ptr != NULL)
             {
                 old_ptr->close(); //close first
@@ -393,7 +422,6 @@ namespace top
                 const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
-                    get_meta()->update_meta_process_id();
                     #ifdef DEBUG_XVLEDGER
                     xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
                     #endif
@@ -401,8 +429,7 @@ namespace top
                 }
                 else //failure handle
                 {
-                    if(m_meta_ptr != NULL)
-                        m_meta_ptr->add_modified_count(true);//XTODO,may add enum_account_save_meta_interval
+                    get_meta()->add_modified_count(true);//XTODO,may add enum_account_save_meta_interval
 
                     xerror("xvaccountobj_t::meta->save_meta,fail to write db for account(%s)",get_address().c_str());
                     return false;
@@ -411,7 +438,7 @@ namespace top
             return true;
         }
         
-        bool  xvaccountobj_t::save_meta()
+        bool  xvaccountobj_t::save_meta(bool carry_process_id)
         {
             std::string vmeta_bin;
             if(m_meta_ptr != NULL)
@@ -420,6 +447,11 @@ namespace top
                 if(last_modified_count > 0)
                 {
                     xauto_lock<xspinlock_t> locker(get_spin_lock());
+                    if(carry_process_id)
+                        m_meta_ptr->update_meta_process_id(base::xvchain_t::instance().get_current_process_id());
+                    else
+                        m_meta_ptr->update_meta_process_id(0);//0 means has been saved anything,no-need to recover op
+                    
                     m_meta_ptr->serialize_to_string(vmeta_bin);
                     m_meta_ptr->reset_modified_count();//optimisic prediction
                 }
@@ -455,7 +487,7 @@ namespace top
             if(NULL == plugin_ptr)
             {
                 #ifdef DEBUG_XVLEDGER
-                xdbg("xvaccountobj_t::get_plugin,closed plugin_type(%d) for account(%s) ",plugin_type,get_address().c_str());
+                xdbg("xvaccountobj_t::get_plugin,not find plugin of type(%d) for account(%s) ",plugin_type,get_address().c_str());
                 #endif
             }
             
@@ -679,7 +711,13 @@ namespace top
                         //step #2: remove from plugins slot,now ownership transfered to target_plugin_obj
                         xatomic_t::xstore(m_plugins[plugin_type],(xvactplugin_t*)NULL);
                         
-                        //step #3: update meta of block
+                        //step #3: update status of account
+                        update_idle_status();
+                        
+                        //step #4: save unsaved data to db if need
+                        target_plugin_obj->save_data();//note: that might have i/o related op
+                        
+                        //step #5: update meta of block
                         //note: it safe to directly fetch block meta since right now no other accessing blockstore
                         const xblockmeta_t* blockmeta = target_plugin_obj->get_block_meta();
                         if(blockmeta != NULL) //block meta need update in-time(synchronization) as it 'lazy mode
@@ -688,19 +726,18 @@ namespace top
                             
                             //note:dont enable log at release since it sensitive for spinlock
                             #ifdef DEBUG_XVLEDGER
-                            xdbg_info("xvaccountobj_t::try_close_plugin,meta=%s",blockmeta->ddump().c_str());
+                            xdbg_info("xvaccountobj_t::try_close_plugin,account(%s) meta=%s",get_address().c_str(), blockmeta->ddump().c_str());
                             #endif
                         }
-                        
-                        //step #4: update status of account
-                        update_idle_status();
-                        
-                        //step #5: save unsaved data to db if need
-                        target_plugin_obj->save_data();//note: that might have i/o related op
                         
                         //step #6: trigger close by setting flag
                         do_close = true;
                     }
+                }
+                else //plugin has been closed and removed
+                {
+                    xwarn("xvaccountobj_t::try_close_plugin,dont find plugin of type(%d) of account(%s)",plugin_type,get_address().c_str());
+                    return true;
                 }
             }
             if(do_close)
@@ -709,6 +746,10 @@ namespace top
                 //and close is a heavy job
                 target_plugin_obj->close(false);
                 target_plugin_obj->release_ref();//release it finally
+                
+                #ifdef DEBUG_XVLEDGER
+                xdbg_info("xvaccountobj_t::try_close_plugin,close plugin of type(%d) of account(%s)",plugin_type,get_address().c_str());
+                #endif
             }
             return do_close;
         }
@@ -738,18 +779,40 @@ namespace top
     
         bool   xvtable_t::clean_all(bool force_clean)
         {
-            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xwarn("xvtable_t::clean_all,table_index(%d) with full_addr(%d)",m_table_index,m_table_combine_addr);
+
             if(force_clean)
             {
-                for(auto it : m_accounts)
+                //do close under the protection of table 'mutext lock,since plugin might be still running at this case
+                //step#1: acquired mutext lock of table
+                std::lock_guard<std::recursive_mutex> locker(m_lock);
+                //at here all plugin has doen their job because step#1 has acquired mutex lock
+                
+                //step#2: acquired spin lock of table and clean accounts
+                std::map<std::string,xvaccountobj_t*> clone_accounts;
                 {
-                    it.second->close(false); //force close first
-                    it.second->release_ref();
+                    xauto_lock<xspinlock_t> locker(get_spin_lock());
+                    clone_accounts = m_accounts;
+                    m_accounts.clear();
+                    for(auto it : clone_accounts)//quickly mark stop for account
+                    {
+                        it.second->stop();//force to stop and upload meta into account
+                        it.second->save_meta(false);//then save meta
+                    }
                 }
-                m_accounts.clear();
+                //step#3: final close them
+                {
+                    for(auto it : clone_accounts)
+                    {
+                        it.second->close(false);//force to close(save raw data as well)
+                        it.second->release_ref();//release reference
+                    }
+                }
+
             }
             else//just clean closed ones
             {
+                xauto_lock<xspinlock_t> locker(get_spin_lock());
                 for(auto it = m_accounts.begin(); it != m_accounts.end();)
                 {
                     auto old = it; //just copy the old value
@@ -762,6 +825,11 @@ namespace top
                 }
             }
             return true;
+        }
+    
+        bool    xvtable_t::on_process_close()//send process_close event to every objects
+        {
+            return clean_all(true);
         }
  
         void    xvtable_t::monitor_plugin(xvactplugin_t * plugin_obj)
@@ -873,12 +941,26 @@ namespace top
                             do_close = true;
                         }
                     }
+                    else //account object reset to null
+                    {
+                        m_accounts.erase(it);
+                        xwarn("xvtable_t::try_close_account,find null account(%s)",account_address.c_str());
+                        return true;
+                    }
+                }
+                else //account object has been removed
+                {
+                    xwarn("xvtable_t::try_close_account,dont find account(%s)",account_address.c_str());
+                    return true;
                 }
             }
             if(do_close)
             {
-                target_account_ptr->close(false);//close
-                target_account_ptr->release_ref();//release it
+                if(target_account_ptr != NULL)
+                {
+                    target_account_ptr->close(false);//close
+                    target_account_ptr->release_ref();//release it
+                }
             }
             return do_close;
         }
@@ -900,14 +982,27 @@ namespace top
                 {
                     if(_test_for_account->is_live(current_time_ms) == false)//quick test whether idle too long
                     {
-                        _test_for_account->save_meta();//do heavy job at this thread to reduce io within table' spinlock
-                        if(try_close_account(current_time_ms, _test_for_account->get_address()))
-                           _test_for_account->release_ref();//destroy it finally
-                        else
-                           _remonitor_list.push_back(_test_for_account);//transfer to list
+                        if(_test_for_account->is_close())//has been closed by on_process_close()
+                        {
+                            xkinfo("xvtable_t::timer,found closed account(%s)",_test_for_account->get_address().c_str());
+                            _test_for_account->release_ref();//destroy it finally
+                        }
+                        else //do reguare  check
+                        {
+                            _test_for_account->save_meta();//do heavy job at this thread to reduce io within table' spinlock
+                            if(try_close_account(current_time_ms, _test_for_account->get_address()))
+                            {
+                                xkinfo("xvtable_t::timer,closed account(%s)",_test_for_account->get_address().c_str());
+                                _test_for_account->release_ref();//destroy it finally
+                            }
+                            else
+                                _remonitor_list.push_back(_test_for_account);//transfer to list
+                        }
                     }
                     else
                     {
+                        //save meta at every cycle if have any change
+                        _test_for_account->save_meta();//do heavy job at this thread
                         _remonitor_list.push_back(_test_for_account);//transfer to list
                     }
                 }
@@ -941,23 +1036,31 @@ namespace top
                 {
                     if(_test_for_plugin->is_live(current_time_ms) == false)//quick test
                     {
-                        //try do heave job first
+                        if(_test_for_plugin->is_close())//has been closed by on_process_close()
                         {
-                            m_lock.lock();
-                            _test_for_plugin->save_data();
-                            m_lock.unlock();
-                        }
-                        //close_plugin may try hold lock and check is_live agian ,and if so may close
-                        if(_test_for_plugin->get_account_obj()->try_close_plugin(current_time_ms,_test_for_plugin->get_plugin_type()))
-                        {
-                            //force to save meta once one plugin is offline
-                            _test_for_plugin->get_account_obj()->save_meta();
-
-                            xinfo("xvtable_t::timer,closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
+                            xinfo("xvtable_t::timer,found closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
                             _test_for_plugin->release_ref();//destroy it finally
                         }
                         else
-                            _remonitor_list.push_back(_test_for_plugin);//transfer to list
+                        {
+                            //try do heave job first
+                            {
+                                m_lock.lock();
+                                _test_for_plugin->save_data();
+                                m_lock.unlock();
+                            }
+                            //close_plugin may try hold lock and check is_live agian ,and if so may close
+                            if(_test_for_plugin->get_account_obj()->try_close_plugin(current_time_ms,_test_for_plugin->get_plugin_type()))
+                            {
+                                //force to save meta once one plugin is offline
+                                _test_for_plugin->get_account_obj()->save_meta();
+                                
+                                xinfo("xvtable_t::timer,closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
+                                _test_for_plugin->release_ref();//destroy it finally
+                            }
+                            else
+                                _remonitor_list.push_back(_test_for_plugin);//transfer to list
+                        }
                     }
                     else
                     {
@@ -1029,6 +1132,20 @@ namespace top
                 if(exist_ptr != NULL)
                 {
                     exist_ptr->clean_all(force_clean);
+                }
+            }
+            return true;
+        }
+    
+        bool  xvbook_t::on_process_close()//send process_close event to every objects
+        {
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            for (int i = 0; i < enum_vbook_has_tables_count; i++)
+            {
+                xvtable_t* exist_ptr = m_tables[i];
+                if(exist_ptr != NULL)
+                {
+                    exist_ptr->on_process_close();
                 }
             }
             return true;
@@ -1119,6 +1236,20 @@ namespace top
                 if(exist_ptr != NULL)
                 {
                     exist_ptr->clean_all(force_clean);
+                }
+            }
+            return true;
+        }
+    
+        bool  xvledger_t::on_process_close()//send process_close event to every objects
+        {
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            for (int i = 0; i < enum_vbucket_has_books_count; i++)
+            {
+                xvbook_t* exist_ptr = m_books[i];
+                if(exist_ptr != NULL)
+                {
+                    exist_ptr->on_process_close();
                 }
             }
             return true;
@@ -1235,6 +1366,9 @@ namespace top
     
         bool   xvchain_t::clean_all(bool force_clean)
         {
+            xkinfo("xvchain_t::clean_all(),start!");
+            const int64_t begin_time_ms = xtime_utl::time_now_ms();
+            
             std::lock_guard<std::recursive_mutex> locker(m_lock);
             for (int i = 0; i < enum_vchain_has_buckets_count; i++)
             {
@@ -1244,7 +1378,36 @@ namespace top
                     exist_ptr->clean_all(force_clean);//never destoryed,just do clean
                 }
             }
+            
+            const int duration = (int)(xtime_utl::time_now_ms() - begin_time_ms);
+            xkinfo("xvchain_t::clean_all(),finish after duration(%d)ms",duration);
             return true;
+        }
+    
+        bool   xvchain_t::on_process_close() //save all unsaved data and meta etc
+        {
+            xkinfo("xvchain_t::on_process_close(),start!");
+            const int64_t begin_time_ms = xtime_utl::time_now_ms();
+            
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            for (int i = 0; i < enum_vchain_has_buckets_count; i++)
+            {
+                xvledger_t* exist_ptr = m_ledgers[i];
+                if(exist_ptr != NULL)
+                {
+                    exist_ptr->on_process_close();//never destoryed,just do clean
+                }
+            }
+            
+            const int duration = (int)(xtime_utl::time_now_ms() - begin_time_ms);
+            xkinfo("xvchain_t::on_process_close(),finish after duration(%d)ms",duration);
+            return true;
+        }
+    
+        bool   xvchain_t::save_all()
+        {
+            xkinfo("xvchain_t::save_all()");
+            return on_process_close();
         }
         
         xvtable_t*  xvchain_t::get_table(const xvid_t & account_id)
@@ -1302,7 +1465,7 @@ namespace top
         xvdbstore_t*    xvchain_t::get_xdbstore() //must be valid
         {
             xobject_t* target = m_plugins[enum_xvchain_plugin_kdb_store];
-            xassert(target != NULL);
+            //xassert(target != NULL);
             return (xvdbstore_t*)target;
         }
         
