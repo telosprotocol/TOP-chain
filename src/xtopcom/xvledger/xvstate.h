@@ -32,6 +32,7 @@ namespace top
             //check whether property already existing
             bool                        find_property(const std::string & property_name);
             virtual xvproperty_t*       get_property_object(const std::string & name);
+            std::set<std::string>       get_all_property_names();
 
             bool                        take_snapshot(std::string & to_full_state_bin);
             xauto_ptr<xvcanvas_t>       take_snapshot();

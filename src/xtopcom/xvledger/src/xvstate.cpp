@@ -147,6 +147,18 @@ namespace top
             
             return nullptr;
         }
+
+        std::set<std::string> xvexestate_t::get_all_property_names() 
+        {
+            std::lock_guard<std::recursive_mutex> locker(get_mutex());
+            
+            std::set<std::string> names;
+            auto const & units = get_child_units();
+            for (auto const & pair : units) {
+                names.insert(pair.first);
+            }
+            return names;
+        }
     
         bool  xvexestate_t::find_property(const std::string & property_name) //check whether property already existing
         {
