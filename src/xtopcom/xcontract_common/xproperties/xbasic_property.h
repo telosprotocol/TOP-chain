@@ -14,7 +14,6 @@
 NS_BEG3(top, contract_common, properties)
 
 class xtop_basic_property {
-protected:
     observer_ptr<xcontract_face_t> m_associated_contract{ nullptr };
     std::unique_ptr<xcontract_state_t> m_state_owned{nullptr};
     observer_ptr<xcontract_state_t> m_state{nullptr};
@@ -42,7 +41,8 @@ protected:
 public:
     void initialize();
 
-    state_accessor::properties::xproperty_identifier_t const & identifier() const;
+    state_accessor::properties::xproperty_identifier_t const & id() const;
+    state_accessor::properties::xtypeless_property_identifier_t typeless_id() const;
     common::xaccount_address_t owner() const;
     common::xaccount_address_t accessor() const;
 

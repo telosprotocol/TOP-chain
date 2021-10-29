@@ -15,19 +15,17 @@ xtop_string_property::xtop_string_property(std::string const & name, std::unique
 
 void xtop_string_property::set(std::string const & value) {
     assert(associated_state() != nullptr);
-    associated_state()->xcontract_state_t::set_property<state_accessor::properties::xproperty_type_t::string>(
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), value);
+    associated_state()->xcontract_state_t::set_property<state_accessor::properties::xproperty_type_t::string>(typeless_id(), value);
 }
 
 void xtop_string_property::clear() {
     assert(associated_state() != nullptr);
-    associated_state()->clear_property(m_id);
+    associated_state()->clear_property(id());
 }
 
 std::string xtop_string_property::value() const {
     assert(associated_state() != nullptr);
-    return associated_state()->xcontract_state_t::get_property<state_accessor::properties::xproperty_type_t::string>(
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));
+    return associated_state()->xcontract_state_t::get_property<state_accessor::properties::xproperty_type_t::string>(typeless_id());
 }
 
 //std::string xtop_string_property::value(common::xaccount_address_t const & contract) const {
@@ -39,7 +37,7 @@ std::string xtop_string_property::value() const {
 
 size_t xtop_string_property::size() const {
     assert(associated_state() != nullptr);
-    return associated_state()->property_size(m_id);
+    return associated_state()->property_size(id());
 }
 
 bool xtop_string_property::empty() const {

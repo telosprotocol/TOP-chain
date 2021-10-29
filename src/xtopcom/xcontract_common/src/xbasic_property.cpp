@@ -69,8 +69,12 @@ void xtop_basic_property::initialize() {
     }
 }
 
-state_accessor::properties::xproperty_identifier_t const & xtop_basic_property::identifier() const {
+state_accessor::properties::xproperty_identifier_t const & xtop_basic_property::id() const {
     return m_id;
+}
+
+state_accessor::properties::xtypeless_property_identifier_t xtop_basic_property::typeless_id() const {
+    return static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id);
 }
 
 common::xaccount_address_t xtop_basic_property::owner() const {
