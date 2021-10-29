@@ -18,7 +18,6 @@
 #include "xdata/xchain_param.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_v2.h"
-#include "xelect_common/elect_option.h"
 #include "xmbus/xevent_store.h"
 #include "xpbase/base/top_log.h"
 #include "xrpc/xerror/xrpc_error_code.h"

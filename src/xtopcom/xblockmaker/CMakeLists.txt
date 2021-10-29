@@ -16,7 +16,6 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         xvm
         xchain_upgrade
         xstake
-        xelect_common
         xxbase
     )
 ELSE()
@@ -29,7 +28,6 @@ ELSE()
         xvm
         xchain_upgrade
         xstake
-        xelect_common
         xxbase
         intel_aes64
     )

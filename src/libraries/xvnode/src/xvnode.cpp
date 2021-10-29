@@ -4,7 +4,6 @@
 
 #include "xvnode/xvnode.h"
 
-#include "xelect_common/elect_option.h"
 #include "xmbus/xevent_role.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvnetwork_driver.h"

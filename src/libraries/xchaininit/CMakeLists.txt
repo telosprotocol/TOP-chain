@@ -52,7 +52,6 @@ target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
     xtopcl
     xrouter
     xvnetwork
-    xelect_common
     db_tool
     xxbase
     jsoncpp
