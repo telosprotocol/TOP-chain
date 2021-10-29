@@ -340,10 +340,12 @@ xsync_command_execute_result xchain_downloader_t::handle_next(uint64_t current_h
 
     do {
         m_sync_range_mgr.get_next_behind(height, count_limit, start_height, count, self_addr, target_addr);
+        xinfo("get_next_behind: %d,%d", start_height, count);
         if (count == 0) {
             break;
         }
         auto interval = m_sync_store->get_shadow()->get_continuous_unused_interval(m_address, std::make_pair(start_height, start_height + count - 1));
+        xinfo("get_continuous_unused_interval:%d,%d", interval.first, interval.second);
         if (interval.second == 0) {
             height = start_height + count - 1;          
             start_height = 0;
