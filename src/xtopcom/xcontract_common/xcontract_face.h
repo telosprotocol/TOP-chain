@@ -51,6 +51,12 @@ protected:
                       std::string const & method_name,
                       std::string const & method_params,
                       xfollowup_transaction_schedule_type_t type) = 0;
+    virtual void call(common::xaccount_address_t const & target_addr,
+                      std::string const & source_method_name,
+                      std::string const & source_method_params,
+                      std::string const & target_method_name,
+                      std::string const & target_method_params,
+                      xfollowup_transaction_schedule_type_t type) = 0;
 };
 
 NS_END2
