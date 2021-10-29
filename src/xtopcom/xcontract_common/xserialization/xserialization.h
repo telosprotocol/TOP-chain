@@ -8,6 +8,7 @@
 #include "xcodec/xmsgpack_codec.hpp"
 
 #include "xsystem_contracts/xbasic_system_contract.h"
+#include "xcontract_common/xproperties/xproperty_bytes.h"
 
 #include <string>
 

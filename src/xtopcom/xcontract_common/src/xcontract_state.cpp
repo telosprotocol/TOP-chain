@@ -31,7 +31,14 @@ void xtop_contract_state::set_state(common::xaccount_address_t const & address) 
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
   : m_action_account_address{account_address}
-  , m_state_accessor_owned{state_accessor::xstate_accessor_t::build_from(account_address)}, m_state_accessor{make_observer(m_state_accessor_owned.get())} {
+  , m_state_accessor_owned{state_accessor::xstate_accessor_t::build_from(account_address)}
+  , m_state_accessor{make_observer(m_state_accessor_owned.get())} {
+}
+
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address, uint64_t const height)
+  : m_action_account_address{account_address}
+  , m_state_accessor_owned{state_accessor::xstate_accessor_t::build_from(account_address, height)}
+  , m_state_accessor{make_observer(m_state_accessor_owned.get())} {
 }
 
 std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address) {
@@ -44,6 +51,23 @@ std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xac
 
     try {
         return build_from(address);
+    } catch (top::error::xtop_error_t const & eh) {
+        ec = eh.code();
+    }
+
+    return {};
+}
+
+std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address, uint64_t const height) {
+    auto * contract_state = new xtop_contract_state{address};
+    return std::unique_ptr<xtop_contract_state>{contract_state};
+}
+
+std::unique_ptr<xtop_contract_state> xtop_contract_state::build_from(common::xaccount_address_t const & address, uint64_t const height, std::error_code & ec) {
+    assert(!ec);
+
+    try {
+        return build_from(address, height);
     } catch (top::error::xtop_error_t const & eh) {
         ec = eh.code();
     }
@@ -469,7 +493,10 @@ void xtop_contract_state::last_tx_hour(uint64_t hour) {
 }
 
 void xtop_contract_state::create_time(std::error_code& ec) {
+}
 
+std::string const & xtop_contract_state::random_seed() const noexcept {
+    return m_param.m_random_seed;
 }
 
 bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, uint64_t height) const {

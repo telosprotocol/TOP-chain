@@ -49,6 +49,7 @@ public:
 
 private:
     explicit xtop_state_accessor(common::xaccount_address_t const & account_address);
+    explicit xtop_state_accessor(common::xaccount_address_t const & account_address, uint64_t const height);
 
 public:
     /// @brief Construct an xstate_accessor_t object against the specified account. Throws xtop_error_t when any error occurs.
@@ -61,6 +62,19 @@ public:
     /// @param ec Log the error code.
     /// @return The state accessor object.
     static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address, std::error_code & ec);
+
+    /// @brief Construct an xstate_accessor_t object against the specified account. Throws xtop_error_t when any error occurs.
+    /// @param account_address The account address the state accessor object associated.
+    /// @param height The state at the specified height.
+    /// @return The state accessor object.
+    static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address, std::uint64_t const height);
+
+    /// @brief Construct an xstate_accessor_t object against the specified account.
+    /// @param account_address The account address the state accessor object associated.
+    /// @param height The state at the specified height.
+    /// @param ec Log the error code.
+    /// @return The state accessor object.
+    static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address, std::uint64_t const height, std::error_code & ec);
 
     /// @brief Set previous state and canvas.
     /// @param address State address.

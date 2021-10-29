@@ -52,8 +52,8 @@ void xtop_vnode_sniff::sniff_set() {
         }
     }
 #if defined(DEBUG)
-    std::error_code ec;
     for (auto const & data_pair : m_config_map) {
+        std::error_code ec;
         xdbg("address: %s, driver type: %d", data_pair.first.c_str(), m_the_binding_driver->type());
         auto const & data = data_pair.second;
         xdbg("contract, node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s, snifff block: %s, target: %s, action: %s",

@@ -75,6 +75,8 @@ public:
 
     void register_property(properties::xbasic_property_t * property) override final;
 
+    common::xnetwork_id_t network_id() const override;
+
     uint64_t balance() const override;
     state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
     state_accessor::xtoken_t state_withdraw(std::uint64_t amount);
@@ -95,6 +97,7 @@ public:
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;
+    std::string const & random_seed() const noexcept;
     uint64_t state_height(common::xaccount_address_t const & address = common::xaccount_address_t{}) const;
     bool block_exist(common::xaccount_address_t const & address, uint64_t height) const;
     std::vector<xfollowup_transaction_datum_t> followup_transaction() const;
@@ -123,9 +126,38 @@ protected:
     }
 
     template <typename ConcretePropertyT>
+    ConcretePropertyT get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id,
+                                   common::xaccount_address_t const & account_address,
+                                   uint64_t const height,
+                                   std::error_code & ec) const {
+        assert(!ec);
+        assert(m_associated_execution_context != nullptr);
+        assert(m_associated_execution_context->contract_state() != nullptr);
+        auto status_of_other_account = xcontract_state_t::build_from(account_address, height, ec);
+        if (ec) {
+            return {};
+        }
+
+        try {
+            return ConcretePropertyT{property_id.full_name(), std::move(status_of_other_account)};
+        } catch (top::error::xtop_error_t const & eh) {
+            ec = eh.code();
+            return {};
+        }
+    }
+
+    template <typename ConcretePropertyT>
     ConcretePropertyT get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & account_address) const {
         std::error_code ec;
         auto r = get_property<ConcretePropertyT>(property_id, account_address, ec);
+        top::error::throw_error(ec);
+        return r;
+    }
+
+    template <typename ConcretePropertyT>
+    ConcretePropertyT get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id, common::xaccount_address_t const & account_address, uint64_t const height) const {
+        std::error_code ec;
+        auto r = get_property<ConcretePropertyT>(property_id, account_address, height, ec);
         top::error::throw_error(ec);
         return r;
     }
