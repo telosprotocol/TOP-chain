@@ -55,6 +55,7 @@ void print_version() {
     std::cout << "build user: " << TOP_BUILD_USER << std::endl;
     std::cout << "build host: " << TOP_BUILD_HOST << std::endl;
     std::cout << "build path: " << TOP_BUILD_PATH << std::endl;
+    std::cout << "build options: " << TOP_BUILD_OPTIONS << std::endl;
     uint32_t version = base::xcontext_t::get_version_code();
     std::cout << "xbase version: " << ((version & 0x00FF0000) >> 16)
            << "." << ((version & 0x0000FF00) >> 8) << "."
@@ -67,6 +68,7 @@ void print_version() {
     std::cout << "git commit info: " << TOP_GIT_LOG_LATEST << std::endl;
     std::cout << "git submodule: " << TOP_GIT_SUBMODULE << std::endl;
     std::cout << "build date: " << TOP_BUILD_DATE << " " << TOP_BUILD_TIME << std::endl;
+    std::cout << "build options: " << TOP_BUILD_OPTIONS << std::endl;
     std::cout << "MD5:" << get_md5() << std::endl;
     std::cout << "================================================" << std::endl;
 
