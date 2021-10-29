@@ -51,6 +51,7 @@ void xtop_vnode_sniff::sniff_set() {
         }
     }
 #if defined(DEBUG)
+    std::error_code ec;
     for (auto const & data_pair : m_config_map) {
         xdbg("address: %s, driver type: %d", data_pair.first.c_str(), m_the_binding_driver->type());
         auto const & data = data_pair.second;
@@ -60,7 +61,7 @@ void xtop_vnode_sniff::sniff_set() {
              data.role_data.sniff_type,
              data.role_data.broadcast_config.type,
              data.role_data.broadcast_config.policy,
-             data.role_data.timer_config.interval,
+             data.role_data.timer_config.timer_config_data.get_timer_interval(ec),
              data.role_data.timer_config.action.c_str());
     }
 #endif
@@ -103,7 +104,7 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
         }
         xdbg("[xtop_vnode_sniff::sniff_timer] block address: %s, height: %lu", vblock->get_account().c_str(), vblock->get_height());
         auto valid = is_valid_timer_call(contract_address, role_data_pair.second, height);
-        xdbg("[xtop_vnode_sniff::sniff_timer] contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.interval, valid);
+        xdbg("[xtop_vnode_sniff::sniff_timer] contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
         if (!valid) {
             return false;
         }
@@ -174,7 +175,7 @@ bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & ad
         }
     }
 
-    auto const interval = data.role_data.timer_config.interval;
+    auto const interval = data.role_data.timer_config.timer_config_data.get_timer_interval();
     assert(interval > 0);
     if (interval != 0 && height != 0 && ((is_first_block && (height % 3) == 0) || (!is_first_block && (height % interval) == 0))) {
         xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);

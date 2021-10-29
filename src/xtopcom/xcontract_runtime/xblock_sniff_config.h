@@ -40,21 +40,27 @@ struct xtop_sniff_broadcast_config {
 using xsniff_broadcast_config_t = xtop_sniff_broadcast_config;
 
 class xtop_timer_config_data {
-    common::xlogic_time_t m_interval{0};
+    uint32_t m_interval{0};
     std::string m_tcc_config_name{};
 
 public:
-    explicit xtop_timer_config_data(common::xlogic_time_t const interval) noexcept;
+    xtop_timer_config_data() = default;
+    xtop_timer_config_data(xtop_timer_config_data const &) = default;
+    xtop_timer_config_data & operator=(xtop_timer_config_data const &) = default;
+    xtop_timer_config_data(xtop_timer_config_data &&) = default;
+    xtop_timer_config_data & operator=(xtop_timer_config_data &&) = default;
+    ~xtop_timer_config_data() = default;
+
+    explicit xtop_timer_config_data(uint32_t const interval) noexcept;
     explicit xtop_timer_config_data(std::string tcc_config_name) noexcept;
 
-    common::xlogic_time_t get_timer_interval(std::error_code & ec) const;
-    common::xlogic_time_t get_timer_interval() const;
+    uint32_t get_timer_interval(std::error_code & ec) const;
+    uint32_t get_timer_interval() const;
 };
 using xtimer_config_data_t = xtop_timer_config_data;
 
 struct xtop_sniff_timer_config {
-    common::xlogic_time_t interval{0};
-    
+    xtimer_config_data_t timer_config_data{};
     std::string action{};
 
     xtop_sniff_timer_config() = default;
@@ -64,7 +70,8 @@ struct xtop_sniff_timer_config {
     xtop_sniff_timer_config & operator=(xtop_sniff_timer_config &&) = default;
     ~xtop_sniff_timer_config() = default;
 
-    xtop_sniff_timer_config(uint32_t interval, std::string action);
+    explicit xtop_sniff_timer_config(uint32_t interval, std::string action);
+    explicit xtop_sniff_timer_config(std::string tcc_config_name, std::string action);
 };
 using xsniff_timer_config_t = xtop_sniff_timer_config;
 

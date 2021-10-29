@@ -16,7 +16,10 @@ NS_BEG2(top, contract_runtime)
 xtop_sniff_broadcast_config::xtop_sniff_broadcast_config(xsniff_broadcast_type_t type, xsniff_broadcast_policy_t policy) : type{type}, policy{policy} {
 }
 
-xtop_sniff_timer_config::xtop_sniff_timer_config(uint32_t interval, std::string action) : interval{interval}, action{std::move(action)} {
+xtop_sniff_timer_config::xtop_sniff_timer_config(uint32_t interval, std::string action) : timer_config_data{interval}, action{std::move(action)} {
+}
+
+xtop_sniff_timer_config::xtop_sniff_timer_config(std::string tcc_config_name, std::string action) : timer_config_data{tcc_config_name}, action{std::move(action)} {
 }
 
 xtop_sniff_block_config::xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action)
@@ -33,13 +36,13 @@ xsniff_type_t & operator|=(xsniff_type_t & lhs, xsniff_type_t const rhs) noexcep
     return lhs;
 }
 
-xtop_timer_config_data::xtop_timer_config_data(common::xlogic_time_t const interval) noexcept : m_interval{interval} {
+xtop_timer_config_data::xtop_timer_config_data(uint32_t const interval) noexcept : m_interval{interval} {
 }
 
 xtop_timer_config_data::xtop_timer_config_data(std::string tcc_config_name) noexcept : m_tcc_config_name{std::move(tcc_config_name)} {
 }
 
-common::xlogic_time_t xtop_timer_config_data::get_timer_interval(std::error_code & ec) const {
+uint32_t xtop_timer_config_data::get_timer_interval(std::error_code & ec) const {
     assert(!ec);
     if (m_tcc_config_name.empty()) {
         if (m_interval == 0) {
@@ -66,7 +69,7 @@ common::xlogic_time_t xtop_timer_config_data::get_timer_interval(std::error_code
     return 0;
 }
 
-common::xlogic_time_t xtop_timer_config_data::get_timer_interval() const {
+uint32_t xtop_timer_config_data::get_timer_interval() const {
     std::error_code ec;
     auto const r = get_timer_interval(ec);
     top::error::throw_error(ec);

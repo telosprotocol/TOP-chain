@@ -5,8 +5,9 @@
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 
 #include "xbasic/xutility.h"
-#include "xcontract_common/xcontract_state.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xcontract_common/xcontract_execution_context.h"
+#include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xblocktool.h"
@@ -35,7 +36,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
                                                                                common::xnode_type_t::rec,
                                                                                xsniff_type_t::timer,
                                                                                xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-                                                                               xsniff_timer_config_t{2, "on_timer"},
+                                                                               xsniff_timer_config_t{config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
                                                                                xsniff_block_config_t{},
                                                                                blockstore);
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(
