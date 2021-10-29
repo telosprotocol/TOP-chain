@@ -10,9 +10,9 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnode/xvnode_face.h"
 
-NS_BEG4(top, vnode, components, util)
+NS_BEG4(top, vnode, components, sniffing)
 
-class xtop_vnode_util {
+class xtop_sniffer_action {
 public:
     static void call(observer_ptr<store::xstore_face_t> store,
                      observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
@@ -30,6 +30,6 @@ public:
     static void broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, xblock_ptr_t const & block_ptr, common::xnode_type_t types);
 };
 
-using xvnode_util_t = xtop_vnode_util;
+using xsniffer_action_t = xtop_sniffer_action;
 
 NS_END4

@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvnode/xcomponents/xblock_sniffing/xvnode_sniff.h"
+#include "xvnode/xcomponents/xblock_sniffing/xsniffer.h"
 
 #include "xbasic/xutility.h"
 #include "xdata/xfull_tableblock.h"
@@ -15,20 +15,16 @@
 
 NS_BEG4(top, vnode, components, sniffing)
 
-xtop_vnode_sniff::xtop_vnode_sniff(observer_ptr<store::xstore_face_t> const & store,
-                                   observer_ptr<base::xvnodesrv_t> const& nodesrv,
-                                   observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & manager,
-                                   observer_ptr<vnetwork::xvnetwork_driver_face_t> const & driver,
-                                   observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool)
-  : m_store(store), m_nodesvr(nodesrv), m_system_contract_manager(manager), m_the_binding_driver(driver), m_txpool_face(txpool) {
-
+xtop_sniffer::xtop_sniffer(observer_ptr<store::xstore_face_t> const & store,
+                           observer_ptr<base::xvnodesrv_t> const & nodesrv,
+                           observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & manager,
+                           observer_ptr<xvnode_face_t> const & vnode)
+  : m_store(store), m_nodesvr(nodesrv), m_system_contract_manager(manager), m_vnode(vnode) {
     sniff_set();
 }
 
-void xtop_vnode_sniff::sniff_set() {
-    // common::xnode_type_t type = e->driver->type();
-    // common::xnode_type_t type = m_the_binding_driver->type();
-    common::xnode_type_t type{m_the_binding_driver->type()};
+void xtop_sniffer::sniff_set() {
+    common::xnode_type_t type{m_vnode->vnetwork_driver()->type()};
     bool disable_broadcasts{false};
     xdbg("[xtop_vnode::get_roles_data] node type : %s", common::to_string(type).c_str());
 
@@ -55,35 +51,33 @@ void xtop_vnode_sniff::sniff_set() {
     }
 }
 
-xvnode_sniff_config_t xtop_vnode_sniff::sniff_config() const {
-    xvnode_sniff_config_t config;
+xsniffer_config_t xtop_sniffer::sniff_config() const {
+    xsniffer_config_t config;
     for (auto const & data_pair : m_config_map) {
         auto const & data = top::get<xrole_config_t>(data_pair);
         auto const & sniff_type = data.role_data.sniff_type;
         if (contract_runtime::has<contract_runtime::xsniff_type_t::broadcast>(sniff_type)) {
-            config.insert(
-                std::make_pair(xvnode_sniff_event_type_t::broadcast,
-                               xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_broadcast, this, std::placeholders::_1)}));
+            config.insert(std::make_pair(xsniffer_event_type_t::broadcast,
+                                         xsniffer_event_config_t{xsniffer_block_type_t::full_block, std::bind(&xtop_sniffer::sniff_broadcast, this, std::placeholders::_1)}));
         }
         if (contract_runtime::has<contract_runtime::xsniff_type_t::timer>(sniff_type)) {
-            config.insert(std::make_pair(xvnode_sniff_event_type_t::timer,
-                                         xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::all, std::bind(&xtop_vnode_sniff::sniff_timer, this, std::placeholders::_1)}));
+            config.insert(std::make_pair(xsniffer_event_type_t::timer,
+                                         xsniffer_event_config_t{xsniffer_block_type_t::all, std::bind(&xtop_sniffer::sniff_timer, this, std::placeholders::_1)}));
         }
         if (contract_runtime::has<contract_runtime::xsniff_type_t::block>(sniff_type)) {
-            config.insert(
-                std::make_pair(xvnode_sniff_event_type_t::block,
-                               xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_block, this, std::placeholders::_1)}));
+            config.insert(std::make_pair(xsniffer_event_type_t::block,
+                                         xsniffer_event_config_t{xsniffer_block_type_t::full_block, std::bind(&xtop_sniffer::sniff_block, this, std::placeholders::_1)}));
         }
     }
 
     return config;
 }
 
-bool xtop_vnode_sniff::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock) const {
+bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     return true;
 }
 
-bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) const {
+bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     assert(common::xaccount_address_t{vblock->get_account()} == common::xaccount_address_t{sys_contract_beacon_timer_addr});
     auto const height = vblock->get_height();
     auto const timestamp = vblock->get_cert()->get_gmtime();
@@ -92,13 +86,13 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
         auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
 
         if (!contract_runtime::has<contract_runtime::xsniff_type_t::timer>(config.sniff_type)) {
-            xdbg("xtop_vnode_sniff::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", height, contract_address.c_str());
+            xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", height, contract_address.c_str());
             continue;
         }
 
-        xdbg("xtop_vnode_sniff::sniff_timer: logic time: %" PRIu64 " sees %s", height, contract_address.c_str());
+        xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s", height, contract_address.c_str());
         auto const valid = is_valid_timer_call(contract_address, top::get<xrole_config_t>(role_data_pair), height);
-        // xdbg("xtop_vnode_sniff::sniff_timer: contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
+        // xdbg("xtop_sniffer::sniff_timer: contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
         if (!valid) {
             continue;
         }
@@ -106,13 +100,13 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
         base::xstream_t stream(base::xcontext_t::instance());
         stream << height;
         std::string action_params = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
-        xdbg("[xtop_vnode_sniff::sniff_timer] make tx, action: %s, params size: %zu", config.timer_config.action.c_str(), action_params.size());
+        xdbg("[xtop_sniffer::sniff_timer] make tx, action: %s, params size: %zu", config.timer_config.action.c_str(), action_params.size());
 
         if (contract_address == common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}) {
 
             int table_num = m_the_binding_driver->table_ids().size();
             if (table_num == 0) {
-                xwarn("[xtop_vnode_sniff::sniff_timer] table_ids empty\n");
+                xwarn("[xtop_sniffer::sniff_timer] table_ids empty\n");
                 return false;
             }
 
@@ -125,21 +119,21 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
                 schedule_info.cur_interval++;
                 if (schedule_info.cur_interval == schedule_info.target_interval) {
                     schedule_info.cur_table = m_the_binding_driver->table_ids().at(0) +  static_cast<uint16_t>((height / clock_interval) % table_num);
-                    xinfo("[xtop_vnode_sniff::sniff_timer] table contract schedule, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
+                    xinfo("[xtop_sniffer::sniff_timer] table contract schedule, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
                         contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
                     call(contract_address, config.timer_config.action, action_params, timestamp, schedule_info.cur_table);
                     schedule_info.cur_interval = 0;
                 }
             } else { // have not schedule yet
                 xtable_schedule_info_t schedule_info(clock_interval, m_the_binding_driver->table_ids().at(0) + static_cast<uint16_t>((height / clock_interval) % table_num));
-                xinfo("[xtop_vnode_sniff::sniff_timer] table contract schedule initial, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
+                xinfo("[xtop_sniffer::sniff_timer] table contract schedule initial, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
                         contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
                 call(contract_address, config.timer_config.action, action_params, timestamp, schedule_info.cur_table);
                 m_table_contract_schedule[contract_address] = schedule_info;
             }
 
         } else {
-            xdbg("xtop_vnode_sniff::sniff_timer: make tx, action: %s, params: %s", config.timer_config.action.c_str(), action_params.c_str());
+            xdbg("xtop_sniffer::sniff_timer: make tx, action: %s, params: %s", config.timer_config.action.c_str(), action_params.c_str());
             call(contract_address, config.timer_config.action, action_params, timestamp);
         }
 
@@ -147,7 +141,7 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
     return true;
 }
 
-bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) const {
+bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     auto const & block_address = vblock->get_account();
     auto const height = vblock->get_height();
     xdbg("[xtop_vnode::sniff_block begin]  block: %s, height: %llu",  block_address.c_str(), height);
@@ -178,7 +172,7 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
             assert(result);
             {
                 // table id check
-                auto const & driver_ids = m_the_binding_driver->table_ids();
+                auto const & driver_ids = m_vnode->vnetwork_driver()->table_ids();
                 auto result = find(driver_ids.begin(), driver_ids.end(), table_id);
                 if (result == driver_ids.end()) {
                     return false;
@@ -193,7 +187,7 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
     return true;
 }
 
-bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & address, xrole_config_t & data, const uint64_t height) const {
+bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & address, xrole_config_t & data, const uint64_t height) const {
     static std::vector<common::xaccount_address_t> const sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
                                                                        common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
@@ -228,9 +222,9 @@ bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & ad
     auto const interval = data.role_data.timer_config.timer_config_data.get_timer_interval();
     assert(interval > 0);
     if (interval != 0 && height != 0 && ((is_first_block && (height % 3) == 0) || (!is_first_block && (height % interval) == 0))) {
-        xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);
+        xdbg("[xtop_sniffer::is_valid_timer_call] param check pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);
     } else {
-        xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check not pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);
+        xdbg("[xtop_sniffer::is_valid_timer_call] param check not pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);
         return false;
     }
 
@@ -240,12 +234,12 @@ bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & ad
         round[address] = height;
         return true;
     } else {
-        xwarn("[xtop_vnode_sniff::is_valid_timer_call] address %s height check error, last height: %llu, this height : %llu", address.c_str(), round[address], height);
+        xwarn("[xtop_sniffer::is_valid_timer_call] address %s height check error, last height: %llu, this height : %llu", address.c_str(), round[address], height);
         return false;
     }
 }
 
-bool xtop_vnode_sniff::trigger_first_timer_call(common::xaccount_address_t const & address) const {
+bool xtop_sniffer::trigger_first_timer_call(common::xaccount_address_t const & address) const {
     static std::vector<common::xaccount_address_t> const sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
                                                                        common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
@@ -263,7 +257,7 @@ bool xtop_vnode_sniff::trigger_first_timer_call(common::xaccount_address_t const
     return 0 == account->get_chain_height();
 }
 
-void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
+void xtop_sniffer::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
     xproperty_asset asset_out{0};
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
 
@@ -277,8 +271,8 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::str
     tx->set_digest();
     tx->set_len();
 
-    int32_t r = m_txpool_face->request_transaction_consensus(tx, true);
-    xinfo("[xtop_vnode_sniff] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
+    int32_t r = m_vnode->txpool_proxy()->request_transaction_consensus(tx, true);
+    xinfo("[xtop_sniffer] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
           r,
           tx->get_digest_hex_str().c_str(),
           address.value().c_str(),
@@ -288,12 +282,16 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::str
           action_name.c_str());
 }
 
-void xtop_vnode_sniff::call(common::xaccount_address_t const& address, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint64_t table_id) const {
+void xtop_sniffer::call(common::xaccount_address_t const & address,
+                        std::string const & action_name,
+                        std::string const & action_params,
+                        uint64_t timestamp,
+                        uint64_t table_id) const {
     auto const specific_addr = data::make_address_by_prefix_and_subaddr(address.value(), table_id);
     call(specific_addr, action_name, action_params, timestamp);
 }
 
-void xtop_vnode_sniff::call(common::xaccount_address_t const & source_address,
+void xtop_sniffer::call(common::xaccount_address_t const & source_address,
                             common::xaccount_address_t const & target_address,
                             std::string const & action_name,
                             std::string const & action_params,
@@ -309,7 +307,7 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & source_address,
     tx->set_digest();
     tx->set_len();
 
-    int32_t r = m_txpool_face->request_transaction_consensus(tx, true);
+    int32_t r = m_vnode->txpool_proxy()->request_transaction_consensus(tx, true);
     xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
             r,
             tx->get_digest_hex_str().c_str(),

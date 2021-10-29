@@ -2,20 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvnode/xcomponents/xutil/xvnode_util.h"
+#include "xvnode/xcomponents/xblock_sniffing/xsniffer_action.h"
 
 #include "xdata/xtransaction_v2.h"
 #include "xvm/manager/xmessage_ids.h"
 #include "xvnetwork/xmessage.h"
 
-NS_BEG4(top, vnode, components, util)
+NS_BEG4(top, vnode, components, sniffing)
 
-void xtop_vnode_util::call(observer_ptr<store::xstore_face_t> store,
-                           observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
-                           common::xaccount_address_t const & address,
-                           std::string const & action_name,
-                           std::string const & action_params,
-                           const uint64_t timestamp) {
+void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
+                               observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
+                               common::xaccount_address_t const & address,
+                               std::string const & action_name,
+                               std::string const & action_params,
+                               const uint64_t timestamp) {
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->make_tx_run_contract(action_name, action_params);
     tx->set_same_source_target_address(address.value());
@@ -37,13 +37,13 @@ void xtop_vnode_util::call(observer_ptr<store::xstore_face_t> store,
           timestamp);
 }
 
-void xtop_vnode_util::call(observer_ptr<store::xstore_face_t> store,
-                           observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
-                           common::xaccount_address_t const & source_address,
-                           common::xaccount_address_t const & target_address,
-                           std::string const & action_name,
-                           std::string const & action_params,
-                           uint64_t timestamp) {
+void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
+                               observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
+                               common::xaccount_address_t const & source_address,
+                               common::xaccount_address_t const & target_address,
+                               std::string const & action_name,
+                               std::string const & action_params,
+                               uint64_t timestamp) {
     auto tx = make_object_ptr<xtransaction_v2_t>();
     tx->make_tx_run_contract(action_name, action_params);
     tx->set_different_source_target_address(source_address.value(), target_address.value());
@@ -65,7 +65,7 @@ void xtop_vnode_util::call(observer_ptr<store::xstore_face_t> store,
             timestamp);
 }
 
-void xtop_vnode_util::broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, xblock_ptr_t const & block_ptr, common::xnode_type_t types) {
+void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, xblock_ptr_t const & block_ptr, common::xnode_type_t types) {
     assert(block_ptr != nullptr);
     base::xstream_t stream(base::xcontext_t::instance());
     block_ptr->full_block_serialize_to(stream);
