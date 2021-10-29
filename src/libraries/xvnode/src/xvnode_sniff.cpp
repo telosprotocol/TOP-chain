@@ -11,6 +11,8 @@
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 
+#include <cinttypes>
+
 NS_BEG4(top, vnode, components, sniffing)
 
 xtop_vnode_sniff::xtop_vnode_sniff(observer_ptr<store::xstore_face_t> const & store,
@@ -56,16 +58,15 @@ void xtop_vnode_sniff::sniff_set() {
         std::error_code ec;
         xdbg("address: %s, driver type: %d", data_pair.first.c_str(), m_the_binding_driver->type());
         auto const & data = data_pair.second;
-        xdbg("contract, node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s, snifff block: %s, target: %s, action: %s",
-             // &data.role_data.system_contract,
+        xdbg("contract %s node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s, snifff block: %s, target: %s, action: %s",
+             data_pair.first.c_str(),
              data.role_data.node_type,
              data.role_data.sniff_type,
              data.role_data.broadcast_config.type,
              data.role_data.broadcast_config.policy,
              data.role_data.block_config.sniff_address.c_str(),
              data.role_data.block_config.action_address.c_str(),
-             data.role_data.block_config.action.c_str()
-             );
+             data.role_data.block_config.action.c_str());
     }
 #endif
 }
@@ -103,17 +104,21 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
     auto const height = vblock->get_height();
     auto const timestamp = vblock->get_cert()->get_gmtime();
     for (auto & role_data_pair : m_config_map) {
-        auto const & contract_address = role_data_pair.first;
-        auto const & config = role_data_pair.second.role_data;
-        if ((static_cast<uint32_t>(contract_runtime::xsniff_type_t::timer) & static_cast<uint32_t>(config.sniff_type)) == 0) {
+        auto const & contract_address = top::get<common::xaccount_address_t const>(role_data_pair);
+        auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
+
+        if (!contract_runtime::has<contract_runtime::xsniff_type_t::timer>(config.sniff_type)) {
+            xdbg("xtop_vnode_sniff::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", height, contract_address.c_str());
             continue;
         }
-        xdbg("[xtop_vnode_sniff::sniff_timer] block address: %s, height: %lu", vblock->get_account().c_str(), vblock->get_height());
-        auto valid = is_valid_timer_call(contract_address, role_data_pair.second, height);
-        xdbg("[xtop_vnode_sniff::sniff_timer] contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
+
+        xdbg("xtop_vnode_sniff::sniff_timer: logic time: %" PRIu64 " sees %s", height, contract_address.c_str());
+        auto const valid = is_valid_timer_call(contract_address, top::get<xrole_config_t>(role_data_pair), height);
+        // xdbg("xtop_vnode_sniff::sniff_timer: contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
         if (!valid) {
-            return false;
+            continue;
         }
+
         base::xstream_t stream(base::xcontext_t::instance());
         stream << height;
         std::string action_params = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
@@ -150,7 +155,7 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
             }
 
         } else {
-            xdbg("[xtop_vnode_sniff::sniff_timer] make tx, action: %s, params: %s", config.timer_config.action.c_str(), action_params.c_str());
+            xdbg("xtop_vnode_sniff::sniff_timer: make tx, action: %s, params: %s", config.timer_config.action.c_str(), action_params.c_str());
             call(contract_address, config.timer_config.action, action_params, timestamp);
         }
 
@@ -205,12 +210,30 @@ bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock
 }
 
 bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & address, xrole_config_t & data, const uint64_t height) const {
-    static std::vector<common::xaccount_address_t> sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
-                                                                 common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
-                                                                 // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
-                                                                 // common::xaccount_address_t{ sys_contract_zec_elect_archive_addr },
-                                                                 common::xaccount_address_t{sys_contract_rec_elect_zec_addr},
-                                                                 common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
+    static std::vector<common::xaccount_address_t> const sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
+                                                                       common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
+                                                                       // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
+                                                                       // common::xaccount_address_t{ sys_contract_zec_elect_archive_addr },
+                                                                       common::xaccount_address_t{sys_contract_rec_elect_zec_addr},
+                                                                       common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
+    //auto const first_block = trigger_first_timer_call(address);
+
+    //std::error_code ec;
+    //auto const interval = data.role_data.timer_config.timer_config_data.get_timer_interval(ec);
+    //if (ec) {
+    //    xwarn("xvnode_sniff_t::is_valid_timer_call: fail to get trigger interval. contract %s, ec %d, msg %s", address.value().c_str(), ec.value(), ec.message().c_str());
+    //    return false;
+    //}
+
+    //assert(interval > 0);
+    //if (interval != 0 && height != 0 && ((first_block && (height % 3) == 0) || (!first_block && (height % interval) == 0))) {
+    //    xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check pass, interval: %u, height: %llu, first_block: %d", interval, height, first_block);
+    //    return true;
+    //} else {
+    //    xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check not pass, interval: %u, height: %llu, first_block: %d", interval, height, first_block);
+    //    return false;
+    //}
+
     bool is_first_block{false};
     if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), address) != std::end(sys_addr_list)) {
         if (m_store->query_account(address.value())->get_chain_height() == 0) {
@@ -236,6 +259,24 @@ bool xtop_vnode_sniff::is_valid_timer_call(common::xaccount_address_t const & ad
         xwarn("[xtop_vnode_sniff::is_valid_timer_call] address %s height check error, last height: %llu, this height : %llu", address.c_str(), round[address], height);
         return false;
     }
+}
+
+bool xtop_vnode_sniff::trigger_first_timer_call(common::xaccount_address_t const & address) const {
+    static std::vector<common::xaccount_address_t> const sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
+                                                                       common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
+                                                                       // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
+                                                                       // common::xaccount_address_t{ sys_contract_zec_elect_archive_addr },
+                                                                       common::xaccount_address_t{sys_contract_rec_elect_zec_addr},
+                                                                       common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
+
+    if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), address) == std::end(sys_addr_list)) {
+        xdbg("xtop_vnode_sniff::trigger_first_timer_call: not monitored address %s", address.c_str());
+        return false;
+    }
+
+    auto const account = m_store->query_account(address.value());
+    xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.c_str(), account->get_chain_height());
+    return 0 == account->get_chain_height();
 }
 
 void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
@@ -267,7 +308,6 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const& address, std::stri
     auto const specific_addr = data::make_address_by_prefix_and_subaddr(address.value(), table_id);
     call(specific_addr, action_name, action_params, timestamp);
 }
-
 
 void xtop_vnode_sniff::call(common::xaccount_address_t const & source_address,
                             common::xaccount_address_t const & target_address,

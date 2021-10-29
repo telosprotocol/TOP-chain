@@ -28,10 +28,12 @@ void xtop_vnode_sniff_proxy::stop() {
 }
 
 void xtop_vnode_sniff_proxy::reg(common::xnode_address_t const & address, components::sniffing::xvnode_sniff_config_t const & config) {
+    assert(m_sniff_config.count(address) == 0);
     m_sniff_config.insert(std::make_pair(address, config));
 }
 
 void xtop_vnode_sniff_proxy::unreg(common::xnode_address_t const & address) {
+    assert(m_sniff_config.count(address) == 1);
     m_sniff_config.erase(address);
 }
 
