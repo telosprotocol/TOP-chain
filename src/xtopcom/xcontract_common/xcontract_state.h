@@ -209,7 +209,6 @@ public:
         return r;
     }
 
-
     /// @brief Remove property cell at the position key. Only map and deque are supported.
     /// @param property_id Property ID.
     /// @param key Cell position key.
@@ -224,8 +223,6 @@ public:
         m_state_accessor->remove_property_cell<PropertyTypeV>(property_id, key, ec);
     }
 
-
-
     /// @brief Remove property cell at the position key. Only map and deque are supported.
     /// @param property_id Property ID.
     /// @param key Cell position key.
@@ -237,7 +234,6 @@ public:
         this->remove_property_cell<PropertyTypeV>(property_id, key, ec);
         top::error::throw_error(ec);
     }
-
 
     /// @brief Set property.
     /// @param property_id Property ID.
