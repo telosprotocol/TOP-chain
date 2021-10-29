@@ -18,6 +18,10 @@ namespace top
         {
             //sample of full address as "Tx0000[raw_public_addr]@[subledger]"
             const std::string& account_full_adress = _account.get_address();
+            if (account_full_adress.size() < enum_vaccount_address_prefix_size) {
+                xerror("xvaccount_t::get_storage_key fail,address=%s", account_full_adress.c_str());
+                return std::string();
+            }
             
             //step#1: extract the raw address of public key from full-address
             std::string raw_public_addr;
