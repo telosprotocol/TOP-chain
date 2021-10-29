@@ -105,10 +105,11 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
     deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
         common::xaccount_address_t{sys_contract_sharding_statistic_info_addr},
         common::xnode_type_t::consensus_validator,
-        static_cast<xsniff_type_t>((uint32_t)xsniff_type_t::timer | (uint32_t)xsniff_type_t::block),
-        {},
-        {config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::value, "report_summarized_statistic_info"},
-        {common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"},
+        xsniff_type_t::timer | xsniff_type_t::block,
+        xsniff_broadcast_config_t{},
+        xsniff_timer_config_t{config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::name, "report_summarized_statistic_info"},
+        xsniff_block_config_t{
+            common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"},
         blockstore);
 
     deploy_system_contract<system_contracts::xgroup_association_contract_new_t>(common::xaccount_address_t{sys_contract_zec_group_assoc_addr},
