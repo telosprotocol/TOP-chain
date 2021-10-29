@@ -89,6 +89,7 @@ bool xsync_range_mgr_t::set_behind_info(uint64_t start_height, uint64_t end_heig
     m_behind_target_addr = target_addr;
     m_behind_time = now;
     m_current_sync_start_height = start_height;
+    xinfo("set_behind_info:%d,%d", m_behind_height, m_current_sync_start_height);
     return true;
 }
 
