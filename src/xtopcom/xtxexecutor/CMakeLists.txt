@@ -14,7 +14,6 @@ target_link_libraries(xtxexecutor PRIVATE
     xvm
     xchain_upgrade
     xstake
-    xelect_common
     xxbase
 )
 

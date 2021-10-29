@@ -11,7 +11,6 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xgenesis_data.h"
-#include "xelect_common/elect_option.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xconfig/xconfig_register.h"
