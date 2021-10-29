@@ -65,6 +65,8 @@ namespace top {
          */
         struct xtop_chain_fork_config {
             top::optional<xfork_point_t> table_statistic_info_fork_point;
+            top::optional<xfork_point_t> table_receipt_data_fork_point;
+            top::optional<xfork_point_t> table_receipt_protocol_fork_point;
         };
         using xchain_fork_config_t = xtop_chain_fork_config;
     }
