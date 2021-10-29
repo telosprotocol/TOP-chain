@@ -29,7 +29,7 @@ xtransaction_execution_result_t xtop_action_runtime<data::xsystem_consensus_acti
         assert(system_contract_manager_ != nullptr);
 
         exe_ctx->system_contract(std::bind(&system::xsystem_contract_manager_t::system_contract, system_contract_manager_, std::placeholders::_1));
-        auto system_contract = system_contract_manager_->system_contract(exe_ctx->base_contract_address());
+        auto system_contract = system_contract_manager_->system_contract(exe_ctx->deployed_contract_address());
         assert(system_contract != nullptr);
         result = system_contract->execute(exe_ctx);
     } catch (top::error::xtop_error_t const & eh) {

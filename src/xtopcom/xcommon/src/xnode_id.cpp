@@ -36,8 +36,8 @@ std::string const & xtop_node_id::value() const noexcept {
     return m_account_string;
 }
 
-std::string const & xtop_node_id::base_account() const noexcept {
-    return m_account_base_address.to_string();
+xaccount_base_address_t const & xtop_node_id::base_account() const noexcept {
+    return m_account_base_address;
 }
 
 uint64_t xtop_node_id::hash() const {

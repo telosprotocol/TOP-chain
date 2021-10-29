@@ -70,6 +70,7 @@ void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
         for (auto const & config : m_sniff_config) {
             auto it = config.second.find(components::sniffing::xvnode_sniff_event_type_t::block);
             if (it != config.second.end()) {
+                xdbg("[xvnode_sniff_proxy_t::sniff] block listener triggled");
                 it->second.function(vblock);
             }
         }

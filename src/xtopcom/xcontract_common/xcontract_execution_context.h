@@ -64,7 +64,7 @@ public:
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;
     common::xaccount_address_t contract_address() const;
-    common::xaccount_address_t base_contract_address() const;
+    common::xaccount_address_t deployed_contract_address() const;
 
     data::enum_xtransaction_type transaction_type() const noexcept;
 

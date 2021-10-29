@@ -56,14 +56,16 @@ void xtop_vnode_sniff::sniff_set() {
     for (auto const & data_pair : m_config_map) {
         xdbg("address: %s, driver type: %d", data_pair.first.c_str(), m_the_binding_driver->type());
         auto const & data = data_pair.second;
-        xdbg("contract, node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s",
+        xdbg("contract, node type: %d, sniff type: %d, broadcast: %d, %d, timer: %d, action: %s, snifff block: %s, target: %s, action: %s",
              // &data.role_data.system_contract,
              data.role_data.node_type,
              data.role_data.sniff_type,
              data.role_data.broadcast_config.type,
              data.role_data.broadcast_config.policy,
-             data.role_data.timer_config.timer_config_data.get_timer_interval(ec),
-             data.role_data.timer_config.action.c_str());
+             data.role_data.block_config.sniff_address.c_str(),
+             data.role_data.block_config.action_address.c_str(),
+             data.role_data.block_config.action.c_str()
+             );
     }
 #endif
 }
@@ -77,10 +79,12 @@ xvnode_sniff_config_t xtop_vnode_sniff::sniff_config() const {
             config.insert(
                 std::make_pair(xvnode_sniff_event_type_t::broadcast,
                                xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_broadcast, this, std::placeholders::_1)}));
-        } else if (contract_runtime::has<contract_runtime::xsniff_type_t::timer>(sniff_type)) {
+        }
+        if (contract_runtime::has<contract_runtime::xsniff_type_t::timer>(sniff_type)) {
             config.insert(std::make_pair(xvnode_sniff_event_type_t::timer,
                                          xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::all, std::bind(&xtop_vnode_sniff::sniff_timer, this, std::placeholders::_1)}));
-        } else if (contract_runtime::has<contract_runtime::xsniff_type_t::block>(sniff_type)) {
+        }
+        if (contract_runtime::has<contract_runtime::xsniff_type_t::block>(sniff_type)) {
             config.insert(
                 std::make_pair(xvnode_sniff_event_type_t::block,
                                xvnode_sniff_event_config_t{xvnode_sniff_block_type_t::full_block, std::bind(&xtop_vnode_sniff::sniff_block, this, std::placeholders::_1)}));
@@ -150,7 +154,6 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
             call(contract_address, config.timer_config.action, action_params, timestamp);
         }
 
-        call(contract_address, config.timer_config.action, action_params, timestamp);
     }
     return true;
 }
@@ -158,15 +161,17 @@ bool xtop_vnode_sniff::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock
 bool xtop_vnode_sniff::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     auto const & block_address = vblock->get_account();
     auto const height = vblock->get_height();
+    xdbg("[xtop_vnode::sniff_block begin]  block: %s, height: %llu",  block_address.c_str(), height);
     for (auto & role_data_pair : m_config_map) {
         auto const & contract_address = role_data_pair.first;
         auto const & config = role_data_pair.second.role_data;
         if ((static_cast<uint32_t>(contract_runtime::xsniff_type_t::block) & static_cast<uint32_t>(config.sniff_type)) == 0) {
             continue;
         }
+        xdbg("[xtop_vnode::sniff_block] contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
 
         // table upload contract sniff sharding table addr
-        if ((block_address.find(config.block_config.sniff_address.value()) != std::string::npos) && (contract_address.value() == sys_contract_sharding_statistic_info_addr)) {
+        if ((block_address.find(config.block_config.sniff_address.value()) != std::string::npos) && (contract_address == config.block_config.action_address)) {
             xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
             auto const full_tableblock = (dynamic_cast<xfull_tableblock_t *>(vblock.get()));
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
@@ -248,13 +253,14 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & address, std::str
     tx->set_len();
 
     int32_t r = m_txpool_face->request_transaction_consensus(tx, true);
-    xinfo("[xtop_vnode_sniff] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
+    xinfo("[xtop_vnode_sniff] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
           r,
           tx->get_digest_hex_str().c_str(),
           address.value().c_str(),
           data::to_hex_str(account->account_send_trans_hash()).c_str(),
           account->account_send_trans_number(),
-          timestamp);
+          timestamp,
+          action_name.c_str());
 }
 
 void xtop_vnode_sniff::call(common::xaccount_address_t const& address, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint64_t table_id) const {
@@ -280,13 +286,14 @@ void xtop_vnode_sniff::call(common::xaccount_address_t const & source_address,
     tx->set_len();
 
     int32_t r = m_txpool_face->request_transaction_consensus(tx, true);
-    xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
+    xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
             r,
             tx->get_digest_hex_str().c_str(),
             source_address.c_str(),
             data::to_hex_str(account->account_send_trans_hash()).c_str(),
             account->account_send_trans_number(),
-            timestamp);
+            timestamp,
+            action_name.c_str());
 }
 
 NS_END4

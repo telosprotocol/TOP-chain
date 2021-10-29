@@ -129,10 +129,14 @@ common::xaccount_address_t xtop_contract_execution_context::contract_address() c
     return recver();
 }
 
-common::xaccount_address_t xtop_contract_execution_context::base_contract_address() const {
+common::xaccount_address_t xtop_contract_execution_context::deployed_contract_address() const {
     auto const& recv = recver();
     xdbg("xtop_contract_execution_context::base_contract_address, base account: %s", recv.base_account().c_str());
-    return common::xaccount_address_t{recv.base_account()};
+    if (data::is_sys_sharding_contract_address(recv)) {
+        auto const& base_account = recv.base_account();
+        return common::xaccount_address_t{base_account.to_string()};
+    }
+    return recv;
 }
 
 data::enum_xtransaction_type xtop_contract_execution_context::transaction_type() const noexcept {
