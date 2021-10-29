@@ -16,18 +16,18 @@ NS_BEG3(top, contract_common, properties)
     void xtop_##INT_TYPE##_property::set(INT_TYPE##_t const value) {                                                                                                            \
         assert(associated_state() != nullptr);                                                                                                                                  \
         associated_state()->xcontract_state_t::set_property<state_accessor::properties::xproperty_type_t::INT_TYPE>(                                                            \
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id), value);                                                                                 \
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(id()), value);                                                                                 \
     }                                                                                                                                                                           \
                                                                                                                                                                                 \
     void xtop_##INT_TYPE##_property::clear() {                                                                                                                                  \
         assert(associated_state() != nullptr);                                                                                                                                  \
-        associated_state()->clear_property(m_id);                                                                                                                               \
+        associated_state()->clear_property(id());                                                                                                                               \
     }                                                                                                                                                                           \
                                                                                                                                                                                 \
     INT_TYPE##_t xtop_##INT_TYPE##_property::value() const {                                                                                                                    \
         assert(associated_state() != nullptr);                                                                                                                                  \
         return associated_state()->xcontract_state_t::get_property<state_accessor::properties::xproperty_type_t::INT_TYPE>(                                                     \
-        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(m_id));                                                                                        \
+        static_cast<state_accessor::properties::xtypeless_property_identifier_t>(id()));                                                                                        \
     }
 
 DEFINE_INT_PROPERTY(uint64)
