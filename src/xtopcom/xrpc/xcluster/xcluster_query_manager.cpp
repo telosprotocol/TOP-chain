@@ -441,16 +441,15 @@ void xcluster_query_manager::set_sharding_vote_prop(xjson_proc_t & json_proc, st
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
 
+    // XTODO not support target empty now
     xJson::Value jv;
-
-    auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
-    auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_vote_addr}, table_id);
-    xdbg("account: %s, target: %s, addr: %s, prop: %s", owner.c_str(), target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-    m_bh.query_account_property(jv, shard_reward_addr.value(), prop_name);
-
     if (target == "") {
         json_proc.m_response_json["data"] = jv[prop_name];
     } else {
+        auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
+        auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_vote_addr}, table_id);
+        xdbg("account: %s, target: %s, addr: %s, prop: %s", owner.c_str(), target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
+        m_bh.query_account_property(jv, shard_reward_addr.value(), prop_name);
         json_proc.m_response_json["data"] = jv[prop_name][target];
     }
 }

@@ -26,6 +26,7 @@ class test_tx_cache : public testing::Test {
         tx->set_deposit(100000);
         struct timeval val;
         base::xtime_utl::gettimeofday(&val);
+        tx->set_different_source_target_address("T80000733b43e6a2542709dc918ef2209ae0fc6503c2f2", "T80000733b43e6a2542709dc918ef2209ae0fc6503c2f1");
         tx->set_fire_timestamp((uint64_t)val.tv_sec);
         tx->set_expire_duration(1);
         tx->set_digest();
