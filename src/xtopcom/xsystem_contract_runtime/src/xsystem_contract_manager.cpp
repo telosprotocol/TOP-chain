@@ -17,6 +17,7 @@
 #include "xsystem_contracts/xsystem_contract_addresses.h"
 #include "xsystem_contracts/xtransfer_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
+#include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract_new.h"
@@ -32,15 +33,27 @@ xtop_contract_deployment_data::xtop_contract_deployment_data(common::xnode_type_
 }
 
 void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> const & blockstore) {
-    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(common::xaccount_address_t{sys_contract_rec_standby_pool_addr},
-                                                                               common::xnode_type_t::rec,
-                                                                               xsniff_type_t::timer,
-                                                                               xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-                                                                               xsniff_timer_config_t{config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
-                                                                               xsniff_block_config_t{},
-                                                                               blockstore);
+    deploy_system_contract<system_contracts::xrec_standby_pool_contract_new_t>(
+        common::xaccount_address_t{sys_contract_rec_standby_pool_addr},
+        common::xnode_type_t::rec,
+        xsniff_type_t::timer,
+        xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
+        xsniff_timer_config_t{config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        xsniff_block_config_t{},
+        blockstore);
+
     deploy_system_contract<system_contracts::xrec_registration_contract_new_t>(
         common::xaccount_address_t{sys_contract_rec_registration_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, blockstore);
+
+    deploy_system_contract<system_contracts::xzec_standby_pool_contract_new_t>(
+        common::xaccount_address_t{sys_contract_zec_standby_pool_addr},
+        common::xnode_type_t::zec,
+        xsniff_type_t::timer,
+        xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
+        xsniff_timer_config_t{config::xzec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        xsniff_block_config_t{},
+        blockstore);
+
     deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(
         common::xaccount_address_t{sys_contract_sharding_statistic_info_addr},
         common::xnode_type_t::consensus_validator,
