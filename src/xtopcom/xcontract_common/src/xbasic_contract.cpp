@@ -5,6 +5,9 @@
 #include "xcontract_common/xbasic_contract.h"
 
 #include "xbasic/xutility.h"
+#include "xconfig/xchain_names.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_v2.h"
@@ -32,6 +35,10 @@ xcontract_type_t xtop_basic_contract::type() const {
 
 void xtop_basic_contract::register_property(properties::xbasic_property_t * property) {
     m_property_initializer.register_property(make_observer(property));
+}
+
+common::xnetwork_id_t xtop_basic_contract::network_id() const {
+    return common::xnetwork_id_t{config::to_chainid(XGET_CONFIG(chain_name))};
 }
 
 uint64_t xtop_basic_contract::balance() const {
@@ -258,6 +265,10 @@ common::xlogic_time_t xtop_basic_contract::time() const {
 
 common::xlogic_time_t xtop_basic_contract::timestamp() const {
     return m_associated_execution_context->contract_state()->timestamp();
+}
+
+std::string const & xtop_basic_contract::random_seed() const noexcept {
+    return m_associated_execution_context->contract_state()->random_seed();
 }
 
 uint64_t xtop_basic_contract::state_height(common::xaccount_address_t const & address) const {

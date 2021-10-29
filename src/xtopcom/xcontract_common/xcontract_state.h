@@ -68,11 +68,15 @@ public:
 
 private:
     explicit xtop_contract_state(common::xaccount_address_t const & account_address);
+    explicit xtop_contract_state(common::xaccount_address_t const & account_address, uint64_t const height);
 
 public:
 
     static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address);
     static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address, std::error_code & ec);
+
+    static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address, uint64_t const height);
+    static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address, uint64_t const height, std::error_code & ec);
 
     /// @brief Set previous state and canvas.
     /// @param address State address.
@@ -428,6 +432,7 @@ private:
 
 public:
     void create_time(std::error_code & ec);
+    std::string const & random_seed() const noexcept;
 
     uint256_t latest_sendtx_hash(std::error_code & ec) const;
     uint256_t latest_sendtx_hash() const;

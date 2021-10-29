@@ -109,7 +109,10 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     if (input_txs.size() == 1 && input_txs[0]->get_tx_subtype() == enum_transaction_subtype_self && input_txs[0]->get_source_addr() == sys_contract_rec_standby_pool_addr) {
         new_vm = true;
     }
-    if (input_txs[0]->get_source_addr() == sys_contract_zec_standby_pool_addr) {
+    if (input_txs[0]->get_source_addr() == sys_contract_zec_standby_pool_addr || input_txs[0]->get_source_addr() == sys_contract_rec_elect_archive_addr ||
+        input_txs[0]->get_source_addr() == sys_contract_rec_elect_edge_addr || input_txs[0]->get_source_addr() == sys_contract_rec_elect_rec_addr ||
+        input_txs[0]->get_source_addr() == sys_contract_rec_elect_zec_addr || input_txs[0]->get_source_addr() == sys_contract_zec_elect_consensus_addr ||
+        input_txs[0]->get_source_addr() == sys_contract_zec_group_assoc_addr) {
         new_vm = true;
     }
     if (new_vm) {

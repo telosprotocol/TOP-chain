@@ -12,6 +12,7 @@
 #include "xvledger/xvledger.h"
 
 #include <cassert>
+#include <cinttypes>
 
 NS_BEG2(top, state_accessor)
 
@@ -24,6 +25,18 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
         base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr, metrics::statestore_access_from_store_bstate);
     if (address_bstate == nullptr) {
         xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.c_str());
+        top::error::throw_error(error::xenum_errc::load_account_state_failed);
+        return nullptr;
+    }
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.c_str(), address_bstate->get_block_height());
+    return address_bstate;
+}
+
+static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & address, uint64_t const height) {
+    base::xvaccount_t _vaddr(address.to_string());
+    xobject_ptr_t<base::xvbstate_t> address_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_vaddr, height);
+    if (address_bstate == nullptr) {
+        xerror("[xtop_state_accessor::get_property] get committed state none at height %" PRIu64 ", account=%s", height, address.c_str());
         top::error::throw_error(error::xenum_errc::load_account_state_failed);
         return nullptr;
     }
@@ -51,6 +64,10 @@ xtop_state_accessor::xtop_state_accessor(common::xaccount_address_t const & acco
   : bstate_owned_{top::state_accessor::state(account_address)}, bstate_{make_observer(bstate_owned_.get())}, canvas_{make_object_ptr<base::xvcanvas_t>()} {
 }
 
+xtop_state_accessor::xtop_state_accessor(common::xaccount_address_t const & account_address, uint64_t const height)
+  : bstate_owned_{top::state_accessor::state(account_address, height)}, bstate_{make_observer(bstate_owned_.get())}, canvas_{make_object_ptr<base::xvcanvas_t>()} {
+}
+
 std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xaccount_address_t const & account_address) {
     auto * state_accessor = new xtop_state_accessor{account_address};
     return std::unique_ptr<xtop_state_accessor>(state_accessor);
@@ -61,6 +78,23 @@ std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xac
 
     try {
         return build_from(account_address);
+    } catch (top::error::xtop_error_t const & eh) {
+        ec = eh.code();
+    }
+
+    return {};
+}
+
+std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xaccount_address_t const & account_address, uint64_t const height) {
+    auto * state_accessor = new xtop_state_accessor{account_address, height};
+    return std::unique_ptr<xtop_state_accessor>(state_accessor);
+}
+
+std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xaccount_address_t const & account_address, uint64_t const height, std::error_code & ec) {
+    assert(!ec);
+
+    try {
+        return build_from(account_address, height);
     } catch (top::error::xtop_error_t const & eh) {
         ec = eh.code();
     }
