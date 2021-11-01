@@ -4,16 +4,102 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
 
 #include "xchaininit/xinit.h"
 #include "xpbase/base/top_utils.h"
 #include "xchaininit/version.h"
 #include "xdata/xoperation_config.h"
+#include "xvledger/xvledger.h"
 
 #include "xmetrics/xmetrics.h"
 // #include "tcmalloc_options.h"
 
 using namespace top;
+
+void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
+{
+    switch(signum)
+    {
+        //signals to generate core dump
+    case SIGSEGV:
+    case SIGILL:
+    case SIGFPE:
+    case SIGABRT:
+        {
+            printf("on_sys_signal_callback:capture core_signal(%d)\n",signum);
+            xwarn("on_sys_signal_callback:capture core_signal(%d)",signum);
+            
+            //trigger save data before coredump
+            top::base::xvchain_t::instance().on_process_close();
+            
+            //forward to default handler
+            signal(signum, SIG_DFL);//restore to default handler
+            kill(getpid(), signum); //send signal again to genereate core dump by default hander
+        }
+        break;
+        
+        //signal to terminate process
+    case SIGHUP:
+    case SIGINT:
+    case SIGTERM:
+        {
+            printf("on_sys_signal_callback:capture terminate_signal(%d) \n",signum);
+            xwarn("on_sys_signal_callback:capture terminate_signal(%d)",signum);
+            
+            //trigger save data before terminate
+            top::base::xvchain_t::instance().on_process_close();
+            
+            //forward to default handler
+            signal(signum, SIG_DFL);//restore to default handler
+            kill(getpid(), signum); //send signal again to default handler
+        }
+        break;
+        
+    case SIGUSR1:
+    case SIGUSR2:
+        {
+            printf("on_sys_signal_callback:capture user_signal(%d)\n",signum);
+            xwarn("on_sys_signal_callback:capture user_signal(%d)",signum);
+            
+            //trigger save data
+            top::base::xvchain_t::instance().save_all();
+        }
+        break;
+        
+    default:
+        {
+            printf("on_sys_signal_callback:capture other_signal(%d) \n",signum);
+            xwarn("on_sys_signal_callback:capture other_signal(%d)",signum);
+        }
+    }
+}
+
+void catch_system_signals()
+{
+    static struct sigaction _sys_sigact;
+    memset(&_sys_sigact, 0, sizeof(_sys_sigact));
+    
+    _sys_sigact.sa_sigaction = on_sys_signal_callback;
+    _sys_sigact.sa_flags = SA_SIGINFO;
+    
+    //config signal of termine
+    sigaction(SIGTERM, &_sys_sigact, NULL);
+    signal(SIGINT, SIG_IGN); //disable INT signal
+    signal(SIGHUP, SIG_IGN); //disable HUP signal
+    
+    //config signal of cores
+    sigaction(SIGSEGV, &_sys_sigact, NULL);
+    sigaction(SIGILL, &_sys_sigact, NULL);
+    sigaction(SIGFPE, &_sys_sigact, NULL);
+    sigaction(SIGABRT, &_sys_sigact, NULL);
+    
+    //config user 'signal
+    sigaction(SIGUSR1, &_sys_sigact, NULL);
+    sigaction(SIGUSR2, &_sys_sigact, NULL);
+}
 
 void ntp_thread_proc() {
     xkinfo("ntp monitor thread running");
@@ -61,6 +147,8 @@ int start_monitor_thread() {
 
 int main(int argc, char * argv[]) {
 
+    catch_system_signals();//setup and hook system signals
+    
     // use this to join or quit network, config show_cmd = false will come here
     // auto elect_mgr = elect_main.elect_manager();
     try {

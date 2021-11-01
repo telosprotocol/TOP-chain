@@ -76,27 +76,7 @@ namespace top
             uint8_t          m_is_closing; //atomic indicate whether is beeing idle status, 1 = true, 0 = false
         };
         
-        class xvblockplugin_t : public xvactplugin_t
-        {
-        protected:
-            xvblockplugin_t(xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms);
-            virtual ~xvblockplugin_t();
-        private:
-            xvblockplugin_t();
-            xvblockplugin_t(xvblockplugin_t &&);
-            xvblockplugin_t(const xvblockplugin_t &);
-            xvblockplugin_t & operator = (const xvblockplugin_t &);
-        protected:
-            //only allow call once
-            virtual bool                    init_meta(const xvactmeta_t & meta) override;
-            
-        protected:
-            virtual const xblockmeta_t*     get_block_meta() const override;
-            virtual bool                    save_meta()  override; //peristen meta
-            virtual bool                    update_meta() override;//update meta into cache
-        private:
-            xblockmeta_t*   m_layer2_cache_meta; //L2 cache for plugin,and account ' meta is L1 cache
-        };
+       
         
         class xvstateplugin_t : public xvactplugin_t
         {

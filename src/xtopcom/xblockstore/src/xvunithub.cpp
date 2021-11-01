@@ -163,7 +163,7 @@ namespace top
             }
             
             uint64_t timeout_for_block_plugin = base::enum_plugin_idle_timeout_ms;
-            if(auto_account_ptr->is_contract_address())
+            if(auto_account_ptr->is_table_address())
             {
                 timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
             }

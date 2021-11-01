@@ -23,7 +23,7 @@ namespace top
             enum_index_store_flag_output_entity   = 0x04, //output entity has been stored
             enum_index_store_flag_input_resource  = 0x08, //input  resource has bedn stored
             enum_index_store_flag_output_resource = 0x10, //output resource has bedn stored
-            enum_index_store_flag_offchain_data   = 0x20, //mark when offchain data  been persised on DB
+            enum_index_store_flag_non_index       = 0x20, //mark it when not save xvbindex self
             enum_index_store_flag_transactions    = 0x40, //mark txs of this block has been decode and stored seperately
             enum_index_store_flag_full_block      = 0x7F, //mark when every piece of block been on DB
             enum_index_store_flag_main_entry      = 0x80, //indicate that is main entry of mutiple blocks
@@ -70,7 +70,7 @@ namespace top
             inline enum_xvblock_level   get_block_level()  const {return xvheader_t::cal_block_level(m_block_types);}
             inline enum_xvblock_class   get_block_class()  const {return xvheader_t::cal_block_class(m_block_types);}
             inline enum_xvblock_type    get_block_type()   const {return xvheader_t::cal_block_type(m_block_types);}
-
+            inline const int            get_block_characters() const{return xvheader_t::cal_block_character(m_block_types);}
         public:
             //refer enum_xvblock_flag
             bool                        check_block_flag(enum_xvblock_flag flag) const;
@@ -87,6 +87,9 @@ namespace top
             int                         get_store_flags() const;  //return all flags related index
             int                         reset_store_flags(const uint32_t new_flags); //clean all flags related index
 
+            void                        set_block_character(base::enum_xvblock_character character);
+            void                        remove_block_character(base::enum_xvblock_character character);
+            
             bool is_fulltable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_full;}
 
         public:

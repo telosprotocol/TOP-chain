@@ -70,56 +70,6 @@ namespace top
             return true;
         }
         
-        xvblockplugin_t::xvblockplugin_t(xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms)
-            :xvactplugin_t(parent_obj,idle_timeout_ms,enum_xvaccount_plugin_blockmgr)
-        {
-            m_layer2_cache_meta = NULL;
-        }
-        
-        xvblockplugin_t::~xvblockplugin_t()
-        {
-            if(m_layer2_cache_meta != NULL)
-                delete m_layer2_cache_meta;
-        }
-        
-        bool  xvblockplugin_t::init_meta(const xvactmeta_t & meta)
-        {
-            if(NULL == m_layer2_cache_meta)
-            {
-                m_layer2_cache_meta = new xblockmeta_t(meta.clone_block_meta());
-                return true;
-            }
-            xassert(NULL == m_layer2_cache_meta);
-            return false;
-        }
-        
-        const xblockmeta_t*   xvblockplugin_t::get_block_meta() const
-        {
-            return m_layer2_cache_meta;
-        }
-        
-        bool  xvblockplugin_t::save_meta()
-        {
-            if(m_layer2_cache_meta != NULL)
-            {
-                get_account_obj()->set_block_meta(*m_layer2_cache_meta);
-                get_account_obj()->save_meta();//force to save one
-                return true;
-            }
-            xassert(m_layer2_cache_meta != NULL);
-            return false;
-        }
-        
-        bool  xvblockplugin_t::update_meta()
-        {
-            if(m_layer2_cache_meta != NULL)
-            {
-                return get_account_obj()->set_block_meta(*m_layer2_cache_meta);
-            }
-            xassert(m_layer2_cache_meta != NULL);
-            return false;
-        }
-    
         xvstateplugin_t::xvstateplugin_t(xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms)
             :xvactplugin_t(parent_obj,idle_timeout_ms,enum_xvaccount_plugin_statemgr)
         {

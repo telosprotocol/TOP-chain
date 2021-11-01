@@ -108,9 +108,50 @@ namespace top
             //return base::xvchain_t::instance().get_xdbstore();
             return m_xvdb_ptr;
         }
+        
+        xvblockplugin_t::xvblockplugin_t(base::xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms)
+            :xvactplugin_t(parent_obj,idle_timeout_ms,base::enum_xvaccount_plugin_blockmgr)
+        {
+            m_layer2_cache_meta = NULL;
+        }
+        
+        xvblockplugin_t::~xvblockplugin_t()
+        {
+            if(m_layer2_cache_meta != NULL)
+                delete m_layer2_cache_meta;
+        }
+           
+        bool  xvblockplugin_t::init_meta(const base::xvactmeta_t & meta)
+        {
+            if(NULL == m_layer2_cache_meta)
+            {
+                base::xblockmeta_t* new_meta_obj = new base::xblockmeta_t(meta.clone_block_meta());
+                m_layer2_cache_meta = new_meta_obj;
+                return true;
+            }
+            xassert(NULL == m_layer2_cache_meta);
+            return false;
+        }
+        
+        const base::xblockmeta_t*   xvblockplugin_t::get_block_meta() const
+        {
+            return m_layer2_cache_meta;
+        }
+        
+        bool  xvblockplugin_t::save_meta()
+        {
+            get_account_obj()->update_meta(this);
+            get_account_obj()->save_meta();//force to save one
+            return true;
+        }
+        
+        bool  xvblockplugin_t::update_meta()
+        {
+            return get_account_obj()->update_meta(this);
+        }
 
         xblockacct_t::xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
-            :base::xvblockplugin_t(parent_obj,timeout_ms),
+            :xvblockplugin_t(parent_obj,timeout_ms),
              xvaccount_t(parent_obj.get_address())
         {
 #ifdef ENABLE_METRICS
@@ -147,11 +188,12 @@ namespace top
             return std::string(local_param_buf);
         }
 
-        bool  xblockacct_t::init_meta(const base::xvactmeta_t & meta)
+        bool  xblockacct_t::init_meta(const base::xvactmeta_t & account_meta)
         {
-            if(base::xvblockplugin_t::init_meta(meta))
+            if(xvblockplugin_t::init_meta(account_meta))
             {
                 m_meta = (base::xblockmeta_t*)get_block_meta();
+                recover_meta(account_meta);
                 //note:after here, dont delete m_meta that reserved just for code compatibible
             }
             
@@ -160,12 +202,40 @@ namespace top
                   get_obj_id(),this,m_meta->ddump().c_str());
             return true;
         }
+        
+        bool   xblockacct_t::recover_meta(const base::xvactmeta_t & account_meta)//recover at plugin level if possible
+        {
+            if(  (0 == account_meta.get_meta_process_id())
+               ||(account_meta.get_meta_process_id() == base::xvchain_t::instance().get_current_process_id())
+               )
+            {
+                return false; //nothing need recover since there not reboot yet
+            }
+            
+            bool recovered_something = false;
+            
+            const int64_t min_recover_height = m_meta->_highest_cert_block_height + 1;
+            const int64_t max_recover_height = min_recover_height + base::enum_account_save_meta_interval + 1;
+            for(int64_t i = min_recover_height; i <= max_recover_height; ++i)
+            {
+                if(load_index(i) > 0)//load_index may update_meta as well
+                {
+                    recovered_something = true;
+                    xwarn("xblockacct_t::recover_meta,recover block at height=% " PRId64 " of account(%s)",i,get_address().c_str());
+                }
+                else//stop recover if not load any block
+                {
+                    break;
+                }
+            }
+            return recovered_something;
+        }
  
         bool  xblockacct_t::close(bool force_async)
         {
             if(is_close() == false)
             {
-                base::xvblockplugin_t::close(force_async); //mark close status first
+                xvblockplugin_t::close(force_async); //mark close status first
                 xkinfo("xblockacct_t::close,account=%s,objectid=% " PRId64 " and this=% " PRId64 "ptr",dump().c_str(),get_obj_id(),this);
 
                 //then clean all blocks at memory
@@ -265,8 +335,6 @@ namespace top
                         }
                     }
                 }
-                // try to save meta when clean blocks
-                update_meta();
             }
             else if(force_release_unused_block) //force release block that only hold by internal
             {
@@ -1178,6 +1246,9 @@ namespace top
                 }
 
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
+                
+                //update meta right now
+                update_meta();
                 return true;
             }
             else if( (exist_cert) && (exist_cert->check_block_flag(base::enum_xvblock_flag_stored) == false) )

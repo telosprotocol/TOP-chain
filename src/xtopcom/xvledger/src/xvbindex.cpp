@@ -316,6 +316,28 @@ namespace top
             return m_combineflags;
         }
     
+        void  xvbindex_t::set_block_character(base::enum_xvblock_character character)
+        {
+            uint16_t block_types = m_block_types;
+            if((block_types & character) == 0)//if not found
+            {
+                block_types |= character;
+                m_block_types = block_types; //reset back
+                set_modified_flag();
+            }
+        }
+    
+        void  xvbindex_t::remove_block_character(base::enum_xvblock_character character)
+        {
+            uint16_t block_types = m_block_types;
+            if((block_types & character) != 0)//if has falg already
+            {
+                block_types &= (~character);
+                m_block_types = block_types; //reset back
+                set_modified_flag();
+            }
+        }
+    
         bool  xvbindex_t::reset_prev_block(xvbindex_t * _new_prev_index)//return false if hash or height not match
         {
             if(_new_prev_index == m_prev_index) //same one

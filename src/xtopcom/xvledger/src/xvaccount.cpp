@@ -13,6 +13,45 @@ namespace top
 {
     namespace base
     {
+        //convert to binary/bytes address with compact mode as for DB 'key
+        const std::string  xvaccount_t::get_storage_key(const xvaccount_t & _account)
+        {
+            //sample of full address as "Tx0000[raw_public_addr]@[subledger]"
+            const std::string& account_full_adress = _account.get_address();
+            if (account_full_adress.size() < enum_vaccount_address_prefix_size) {
+                xerror("xvaccount_t::get_storage_key fail,address=%s", account_full_adress.c_str());
+                return std::string();
+            }
+            
+            //step#1: extract the raw address of public key from full-address
+            std::string raw_public_addr;
+            const std::string::size_type end_raw_public_addr_pos = account_full_adress.find_last_of('@');
+            if(end_raw_public_addr_pos == std::string::npos)//most cases
+            {
+                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size);
+            }
+            else if(end_raw_public_addr_pos > enum_vaccount_address_prefix_size)
+            {
+                //note: string substr (size_t pos = 0, size_t len = npos); //[)
+                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size,end_raw_public_addr_pos - enum_vaccount_address_prefix_size);
+            }
+            else //exception case
+            {
+                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size);
+            }
+            
+            //step#2: decode hex to byte address for eth address
+            enum_vaccount_addr_type addr_type = _account.get_addr_type();
+            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account)
+            {
+                raw_public_addr = base::xstring_utl::from_hex(raw_public_addr);
+            }
+            
+            //step#3: combine with ledger_id/subsubleder/raw_public_addr
+            const std::string final_storage_key = xstring_utl::tostring(_account.get_ledger_id()) + "/" + xstring_utl::tostring(_account.get_ledger_subaddr()) + "/" + raw_public_addr;
+            return final_storage_key;
+        }
+    
         xvaccount_t::xvaccount_t()
         {
             XMETRICS_GAUGE(metrics::dataobject_xvaccount, 1);
@@ -25,8 +64,8 @@ namespace top
             m_account_addr  = account_address;
             m_account_xid   = get_xid_from_account(account_address);
             m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
-            
-            m_chain_id_str = xstring_utl::tostring(get_chainid());
+            //storage key
+            m_account_store_key = xvaccount_t::get_storage_key(*this);
         }
         
         xvaccount_t::xvaccount_t(const xvaccount_t & obj)
@@ -35,6 +74,7 @@ namespace top
             m_account_addr = obj.m_account_addr;
             m_account_xid  = obj.m_account_xid;
             m_account_xid_str = obj.m_account_xid_str;
+            m_account_store_key  = obj.m_account_store_key;
         }
     
         xvaccount_t & xvaccount_t::operator = (const xvaccount_t & obj)
@@ -42,6 +82,7 @@ namespace top
             m_account_addr = obj.m_account_addr;
             m_account_xid  = obj.m_account_xid;
             m_account_xid_str = obj.m_account_xid_str;
+            m_account_store_key  = obj.m_account_store_key;
             return *this;
         }
     
@@ -50,6 +91,8 @@ namespace top
             m_account_addr  = new_account_addr;
             m_account_xid   = get_xid_from_account(new_account_addr);
             m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
+            
+            m_account_store_key = xvaccount_t::get_storage_key(*this);
             return *this;
         }
     
@@ -109,11 +152,19 @@ namespace top
             return false;
         }
         
-        bool  xvaccount_t::is_contract_address() const
+        bool  xvaccount_t::is_table_address() const
         {
             //table address like "Ta0000@255"
-            if(  (get_addr_type() == enum_vaccount_addr_type_block_contract) //table address
-               ||(get_addr_type() == enum_vaccount_addr_type_native_contract) )
+            if(get_addr_type() == enum_vaccount_addr_type_block_contract) //table address
+            {
+                return true;
+            }
+            return false;
+        }
+        
+        bool  xvaccount_t::is_contract_address() const
+        {
+            if(get_addr_type() == enum_vaccount_addr_type_native_contract)
             {
                 return true;
             }
@@ -123,7 +174,7 @@ namespace top
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
-            _lowest_vkey2_block_height     = 0;
+            _lowest_vkey2_block_height     = (uint64_t)-1;//init as max value
             _highest_deleted_block_height  = 0;
             _highest_cert_block_height     = 0;
             _highest_lock_block_height     = 0;
@@ -416,9 +467,10 @@ namespace top
             return *this;
         }
     
-        void   xvactmeta_t::update_meta_process_id()
+        void   xvactmeta_t::update_meta_process_id(const uint16_t _process_id)
         {
-            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
+            if(_meta_process_id != _process_id)
+                _meta_process_id = _process_id;
         }
     
         //APIs only open for  xvaccountobj_t object
@@ -429,24 +481,18 @@ namespace top
                ||(new_meta._highest_commit_block_height  < _highest_commit_block_height)
                ||(new_meta._highest_full_block_height    < _highest_full_block_height)
                ||(new_meta._highest_connect_block_height < _highest_connect_block_height)
-               ||(new_meta._highest_deleted_block_height < _highest_deleted_block_height)
-               ||(new_meta._lowest_vkey2_block_height    < _lowest_vkey2_block_height)  )
+               ||(new_meta._highest_deleted_block_height < _highest_deleted_block_height) )
             {
                 xerror("xvactmeta_t::set_block_meta,try overwrited newer_meta(%s) with old_meta( %s)",xblockmeta_t::ddump().c_str(),new_meta.ddump().c_str());
                 return false; //try to overwrited newer version
             }
-            
-            const uint64_t total_new_heights = new_meta._highest_cert_block_height + new_meta._highest_lock_block_height + new_meta._highest_commit_block_height + new_meta._highest_full_block_height + new_meta._highest_connect_block_height +
-                new_meta._highest_deleted_block_height + new_meta._lowest_vkey2_block_height ;
-            
-            const uint64_t total_old_heights = _highest_cert_block_height  +
-                    _highest_lock_block_height + _highest_commit_block_height +
-                    _highest_full_block_height + _highest_connect_block_height +
-                    _highest_deleted_block_height + _lowest_vkey2_block_height;
+            else if(xblockmeta_t::operator==(new_meta))
+            {
+                return false;
+            }
             
             xblockmeta_t::operator=(new_meta);
-            if(total_new_heights != total_old_heights)//using quick path to determine
-                add_modified_count();
+            add_modified_count();
             return true;
         }
     
@@ -460,7 +506,7 @@ namespace top
             }
             else if(xstatemeta_t::operator==(new_meta))
             {
-                return true;
+                return false;
             }
 
             xstatemeta_t::operator=(new_meta);
@@ -479,7 +525,7 @@ namespace top
             }
             else if(xindxmeta_t::operator==(new_meta))
             {
-                return true;
+                return false;
             }
             
             xindxmeta_t::operator=(new_meta);
@@ -497,7 +543,7 @@ namespace top
             }
             else if(xsyncmeta_t::operator==(new_meta))
             {
-                return true;
+                return false;
             }
                 
             xsyncmeta_t::operator=(new_meta);
@@ -514,12 +560,14 @@ namespace top
                 return false;
             }
             
-            if(height != _highest_execute_block_height)
+            if( (height != _highest_execute_block_height) || (blockhash != _highest_execute_block_hash) )
+            {
+                _highest_execute_block_height = height;
+                _highest_execute_block_hash   = blockhash;
                 add_modified_count();
-                
-            _highest_execute_block_height = height;
-            _highest_execute_block_hash   = blockhash;
-            return true;
+                return true;
+            }
+            return false;
         }
     
         bool   xvactmeta_t::set_latest_deleted_block(const uint64_t height)
