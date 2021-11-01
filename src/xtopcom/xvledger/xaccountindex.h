@@ -43,8 +43,7 @@ class xaccount_index_t {
         if (m_latest_unit_height == other.m_latest_unit_height
             && m_latest_unit_viewid == other.m_latest_unit_viewid
             && m_account_flag == other.m_account_flag
-            && m_latest_tx_nonce == other.m_latest_tx_nonce)
-        {
+            && m_latest_tx_nonce == other.m_latest_tx_nonce) {
             return true;
         }
         return false;

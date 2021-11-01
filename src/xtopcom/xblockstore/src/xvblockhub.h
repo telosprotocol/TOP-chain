@@ -98,6 +98,10 @@ namespace top
             std::vector<base::xvbindex_t*>  load_indexes(const uint64_t target_height);//load indexes from db for height
             size_t                 load_index_by_height(const uint64_t target_height);
 
+            
+            bool                    set_unit_proof(const std::string& unit_proof, uint64_t height);
+            const std::string       get_unit_proof(uint64_t height);
+
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
             bool                resort_index_of_store(std::map<uint64_t,base::xvbindex_t*> & target_height_map);

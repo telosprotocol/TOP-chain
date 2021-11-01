@@ -120,7 +120,11 @@ namespace top
             virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) override;
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override;
 
+            virtual bool        set_unit_proof(const base::xvaccount_t & account, const std::string &unit_proof, const uint64_t height) override;
+            virtual const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override;
+
             bool                         store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
+            bool                         on_block_committed(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
         protected:
             bool    get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj);
 
@@ -141,6 +145,7 @@ namespace top
         private:
             bool                        on_block_committed(const xblockevent_t & event);
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
+            bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
 
             virtual bool                on_object_close() override;
 

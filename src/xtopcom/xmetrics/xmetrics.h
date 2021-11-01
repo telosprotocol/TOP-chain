@@ -309,6 +309,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_recv_get_blocks_by_hashes_bytes,
     xsync_store_block_units,
     xsync_store_block_tables,
+    xsync_unit_proof_sync_req_send,
+    xsync_unit_proof_sync_req_recv,
 
 
     // txpool
@@ -345,7 +347,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_receipt_recv_num_7to12_clock,
     txpool_receipt_recv_num_13to30_clock,
     txpool_receipt_recv_num_exceed_30_clock,
-    txpool_push_send_fail_queue_limit,
+    txpool_push_send_fail_table_limit,
+    txpool_push_send_fail_role_limit,
     txpool_push_send_fail_repeat,
     txpool_push_send_fail_unconfirm_limit,
     txpool_push_send_fail_nonce_limit,
@@ -416,6 +419,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_id_state,
+    blockstore_access_from_txpool_get_nonce,
     blockstore_access_from_txpool_refresh_table,
     blockstore_access_from_txpool_create_receipt,
     blockstore_access_from_txpool_pull_lacking_receipts,

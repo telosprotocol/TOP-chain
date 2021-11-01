@@ -163,8 +163,8 @@ bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
         if (iter != m_service_map.end()) {
             auto txpool_service = iter->second;
             txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
-            need_cleanup = true;
             txpool_service->unreg(xip);
+            need_cleanup = true;
             m_service_map.erase(iter);
         }
     }

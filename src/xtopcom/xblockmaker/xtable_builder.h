@@ -66,5 +66,12 @@ class xfulltable_builder_t : public xblock_builder_face_t {
  protected:
     xstatistics_data_t                 make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
 };
+class xemptytable_builder_t : public xblock_builder_face_t {
+ public:
+    virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                            const data::xblock_consensus_para_t & cs_para,
+                                            xblock_builder_para_ptr_t & build_para);
+};
 
 NS_END2
