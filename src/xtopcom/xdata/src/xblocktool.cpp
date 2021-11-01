@@ -460,7 +460,7 @@ xcons_transaction_ptr_t xblocktool_t::create_one_txreceipt(base::xvblock_t* comm
                 continue;                        
             }
             xlightunit_action_t txaction(action);
-            xinfo("nathan peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
+            xinfo("xblocktool_t::create_one_txreceipt peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
             if (txaction.get_receipt_id_peer_tableid() != peer_table_sid || txaction.get_receipt_id() != receipt_id) {
                 continue;  
             }

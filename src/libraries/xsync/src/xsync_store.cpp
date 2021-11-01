@@ -7,6 +7,7 @@
 #include "xsync/xsync_log.h"
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_store_shadow.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 NS_BEG2(top, sync)
 
 xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow):
@@ -19,6 +20,11 @@ m_shadow(shadow) {
 bool xsync_store_t::store_block(base::xvblock_t* block) {
     if (block->get_block_level() == base::enum_xvblock_level_unit) {
         XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
+        auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+        if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, get_clock())) {
+            block->set_block_flag(base::enum_xvblock_flag_committed);
+            block->set_block_flag(base::enum_xvblock_flag_locked);
+        }
     } else if (block->get_block_level() == base::enum_xvblock_level_table) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }
@@ -222,7 +228,9 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
     }
     return blocks;
 }
-
+base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height) {
+    return m_blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+}
 bool xsync_store_t::set_genesis_height(const base::xvaccount_t &account, const std::string &height) {
     return m_blockstore->set_genesis_height(account, height);
 }
@@ -246,5 +254,27 @@ const std::string xsync_store_t::get_block_span(const base::xvaccount_t &account
 xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
+
+bool xsync_store_t::set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) {
+    if (!m_blockstore->set_unit_proof(account, unit_proof, height)) {
+        xerror("xsync_store_t::store_unit_proof account %s,fail to writed into db,unit_proof=%s",account.get_address().c_str(), unit_proof.c_str());
+        return false;
+    }
+    return true;
+}
+
+const std::string xsync_store_t::get_unit_proof(const base::xvaccount_t & account, uint64_t height) {
+    return m_blockstore->get_unit_proof(account, height);
+}
+
+uint64_t xsync_store_t::get_clock() const {
+    auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    xblock_t * bp = static_cast<xblock_t *>(vb.get());
+    if (bp != nullptr) {
+        return bp->get_height();
+    } else {
+        return 0;
+    }
+}
 
 NS_END2

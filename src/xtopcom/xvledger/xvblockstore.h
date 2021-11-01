@@ -125,7 +125,6 @@ namespace top
             std::vector<xvblock_t*> m_vector;
         };
 
-
         //manage/connect "virtual block" with "virtual header",usally it implement based on xvblocknode_t
         //note: each chain may has own block store by assined different store_path at DB/disk
         class xvblockstore_t : public xiobject_t
@@ -222,6 +221,12 @@ namespace top
             virtual bool        set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string &span) = 0;
             virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
+
+        public:
+            // read/write corresponding table prove for latest commit unit block
+            virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height) = 0;
+            virtual const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) = 0;
+
         protected:
             //only allow remove flag within xvblockstore_t
             void                          remove_block_flag(xvblock_t* to_block, enum_xvblock_flag flag);

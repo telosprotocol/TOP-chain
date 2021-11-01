@@ -9,6 +9,9 @@
 #include "xsync/xsync_util.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"
+#include "xvledger/xvblockstore.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xvledger/xunit_proof.h"
 
 NS_BEG2(top, sync)
 
@@ -32,6 +35,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     uint32_t count = bme->count;
     bool is_consensus = bme->is_consensus;
     const std::string &reason = bme->reason;
+    bool unit_proof = bme->unit_proof;
 
     if (count == 0)
         return;
@@ -66,7 +70,15 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     context["consensus"] = std::to_string(is_consensus);
     bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count - 1), context);
     if (permit) {
-        m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
+        auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+        if (!chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, m_sync_store->get_clock())) {
+            m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
+        } else {
+            m_sync_sender->send_get_on_demand_blocks_with_proof(address, start_height, count, is_consensus, unit_proof, self_addr, target_addr);
+            if (unit_proof) {
+                XMETRICS_GAUGE(metrics::xsync_unit_proof_sync_req_send, 1);
+            }
+        }
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         xsync_info("xsync_on_demand_t::on_behind_event is not permit because of overflow or during downloading, account: %s",
@@ -132,6 +144,106 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     }
 }
 
+void xsync_on_demand_t::handle_blocks_response_with_proof(const std::vector<data::xblock_ptr_t> &blocks, const std::string& unit_proof_str,
+    const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
+
+    xsync_dbg("xsync_on_demand_t::handle_blocks_response_with_proof receive blocks(on_demand) %s, %s, count %d",
+        network_self.to_string().c_str(), to_address.to_string().c_str(), blocks.size());
+
+    if (blocks.empty()) {
+        m_download_tracer.expire();
+        return;
+    }
+
+    std::string account = blocks[0]->get_account();
+    xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks of account %s, count %d",
+        account.c_str(), blocks.size());
+    int ret = check(account, to_address, network_self);
+    if (ret != 0) {
+        xsync_warn("xsync_on_demand_t::on_response_event check the source of message failed %s,ret=%d", account.c_str(), ret);
+        return;
+    }
+
+    auto highest_sync_unit_block = blocks.back();
+
+    if (!unit_proof_str.empty()) {
+        base::xvaccount_t unit_account(account);
+        base::xunit_proof_t unit_proof;
+        auto len = unit_proof.serialize_from(unit_proof_str);
+        if (len == 0) {
+            xerror("xsync_on_demand_t::handle_blocks_response_with_proof deserialize unit proof fail");
+            return;
+        }
+
+        if (highest_sync_unit_block->get_height() != unit_proof.get_height() || highest_sync_unit_block->get_viewid() != unit_proof.get_viewid() ||
+            !unit_proof.verify_unit_block(m_certauth.get(), highest_sync_unit_block)) {
+            xsync_warn("xsync_on_demand_t::handle_blocks_response unit proof check fail,unit:%s,proof h:%llu,v:%llu",
+                       highest_sync_unit_block->dump().c_str(),
+                       unit_proof.get_height(),
+                       unit_proof.get_viewid());
+            return;
+        }
+        if (!m_sync_store->set_unit_proof(unit_account, unit_proof_str, unit_proof.get_height())) {
+            xsync_error("xsync_on_demand_t::handle_blocks_response account %s,fail to writed unit proof into db,block=%s",
+                        unit_account.get_address().c_str(),
+                        highest_sync_unit_block->dump().c_str());
+            return;
+        }
+        xsync_dbg("xsync_on_demand_t::handle_blocks_response sync unit proof succ,unit:%s,proof h:%llu,v:%llu",
+                  highest_sync_unit_block->dump().c_str(),
+                  unit_proof.get_height(),
+                  unit_proof.get_viewid());
+    } else {
+        uint64_t next_height = highest_sync_unit_block->get_height() + 1;
+        auto next_block = m_sync_store->load_block_object(account, next_height);
+        if (next_block == nullptr) {
+            xsync_warn("xsync_on_demand_t::handle_blocks_response load unit fail,account:%s,h:%llu", account.c_str(), next_height);
+            return;
+        }
+        if (next_block->get_last_block_hash() != highest_sync_unit_block->get_block_hash()) {
+            xsync_error("xsync_on_demand_t::handle_blocks_response sync unit(%s) can not connect with local unit(%s)",
+                        highest_sync_unit_block->dump().c_str(),
+                        next_block->dump().c_str());
+            return;
+        }
+    }
+
+    if (!store_blocks(blocks)) {
+        return;
+    }
+
+    if (!m_download_tracer.refresh(account, blocks.rbegin()->get()->get_height())) {
+        return;
+    }
+
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
+    if (current_vblock != nullptr){
+        data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+        xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
+        if(current_block->is_tableblock() && !current_block->is_full_state_block()){
+            xsync_warn("xsync_handler::on_demand_blocks request account(%s)'s snapshot, height is %llu",
+                current_block->get_account().c_str(), current_block->get_height());
+            m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
+            return;
+        }
+    }
+
+    xsync_download_tracer tracer;
+    if (!m_download_tracer.get(account, tracer)){
+        return;
+    }
+
+    std::map<std::string, std::string> context = tracer.context();
+    bool is_consensus = std::stoi(context["consensus"]);
+    int32_t count = tracer.height_interval().second - tracer.trace_height();
+    if (count > 0) {
+        m_sync_sender->send_get_on_demand_blocks_with_proof(account, tracer.trace_height() + 1, count, is_consensus, false, network_self, to_address);
+        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
+    } else {
+        m_download_tracer.expire(account);
+        on_response_event(account);
+    }
+}
 
 void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
@@ -176,6 +288,65 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     }
 
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_blocks, "on_demand_blocks", network_self, to_address);
+}
+
+void xsync_on_demand_t::handle_blocks_request_with_proof(const xsync_message_get_on_demand_blocks_with_proof_t &block,
+    const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
+    std::string address = block.address;
+    uint64_t start_height = block.start_height;
+    uint64_t end_height = 0;
+    uint32_t heights = block.count;
+    bool is_consensus = block.is_consensus;
+    bool unit_proof = block.unit_proof;
+
+    if (unit_proof) {
+        XMETRICS_GAUGE(metrics::xsync_unit_proof_sync_req_recv, 1);
+    }
+
+    if (heights == 0)
+        return;
+
+    xsync_dbg("xsync_on_demand_t::handle_blocks_request receive request of account %s, start_height %llu, count %u,unit_proof:%d",
+        address.c_str(), start_height, heights, unit_proof);
+
+    std::vector<data::xblock_ptr_t> blocks;
+
+    end_height = start_height + (uint64_t)heights - 1;
+    if (is_consensus) {
+        base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
+        if (latest_full_block != nullptr && latest_full_block->get_height() >= start_height &&
+            end_height >= latest_full_block->get_height()) {
+                xblock_ptr_t block_ptr = autoptr_to_blockptr(latest_full_block);
+                blocks.push_back(block_ptr);
+                start_height = latest_full_block->get_height() + 1;
+        }
+    }
+
+    for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
+        auto need_blocks = m_sync_store->load_block_objects(address, height);
+        if (need_blocks.empty()) {
+            break;
+        }
+        for (uint32_t j = 0; j < need_blocks.size(); j++, i++){
+            blocks.push_back(xblock_t::raw_vblock_to_object_ptr(need_blocks[j].get()));
+        }
+    }
+
+    std::string unit_proof_str;
+    if (blocks.size() != 0){
+        xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(),
+            blocks.front()->get_height(), blocks.back()->get_height());
+        if (unit_proof) {
+            base::xvaccount_t unit_account(address);
+            unit_proof_str = m_sync_store->get_unit_proof(unit_account, blocks.back()->get_height());
+            if(unit_proof_str.empty()){
+                xsync_error("get_unit_proof fail");
+                blocks.clear();
+            }
+        }
+    }
+
+    m_sync_sender->send_on_demand_blocks_with_proof(blocks, xmessage_id_sync_on_demand_blocks_with_proof, "on_demand_blocks", network_self, to_address, unit_proof_str);
 }
 
 void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta,
@@ -249,7 +420,14 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
         m_download_tracer.refresh(account);
-        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
+        auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+        if (!chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, m_sync_store->get_clock())) {
+            xdbg("xsync_on_demand_t::handle_chain_snapshot old version");
+            m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
+        } else {
+            xdbg("xsync_on_demand_t::handle_chain_snapshot new version");
+            m_sync_sender->send_get_on_demand_blocks_with_proof(account, tracer.trace_height() + 1, count, is_consensus, false, network_self, to_address);
+        }
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         on_response_event(account);

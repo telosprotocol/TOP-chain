@@ -9,6 +9,7 @@
 #include "xdata/xblock.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
+#include "xblockmaker/xunit_block_cache.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -18,11 +19,12 @@ class xunit_maker_t : public xblock_maker_t {
     virtual ~xunit_maker_t();
 
  public:
-    int32_t                 check_latest_state(const data::xblock_consensus_para_t & cs_para,const base::xaccount_index_t & account_index);  // check block and state is latest
+    int32_t                 check_latest_state(const data::xblock_consensus_para_t & cs_para, const base::xaccount_index_t & account_index, const xunit_block_cache & unit_block_cache);  // check block and state is latest
     bool                    push_tx(const data::xblock_consensus_para_t & cs_para, const xcons_transaction_ptr_t & tx);
     void                    clear_tx();
     xblock_ptr_t            make_proposal(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     bool                    can_make_next_block() const;
+    bool                    can_make_next_block_v2() const;
     bool                    can_make_next_empty_block() const;
     bool                    can_make_next_full_block() const;
     bool                    must_make_next_full_block() const;
@@ -36,7 +38,7 @@ class xunit_maker_t : public xblock_maker_t {
     void                    find_highest_send_tx(uint64_t & latest_nonce, uint256_t & latest_hash);
     bool                    is_match_account_fullunit_send_tx_limit(uint64_t current_lightunit_count) const;
     bool                    is_match_account_fullunit_recv_tx_limit(uint64_t current_lightunit_count) const;
-    void                    try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus);
+    void                    try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus, bool need_proof);
     uint64_t                get_current_lightunit_count_from_full() const;
 
  private:

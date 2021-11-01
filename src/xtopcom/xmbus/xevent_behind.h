@@ -96,6 +96,7 @@ public:
             const uint32_t _count,
             const bool _is_consensus,
             const std::string &_reason,
+            bool _unit_proof = false,
             direction_type dir = to_listener,
             bool _sync = true):
     xevent_behind_t(type_on_demand, dir, _sync),
@@ -103,7 +104,8 @@ public:
     start_height(_start_height),
     count(_count),
     is_consensus(_is_consensus),
-    reason(_reason) {
+    reason(_reason),
+    unit_proof(_unit_proof) {
         XMETRICS_GAUGE(metrics::xsync_behind_on_demand, 1);
     }
 
@@ -112,6 +114,7 @@ public:
     uint32_t count;
     bool is_consensus;
     std::string reason;
+    bool unit_proof;
 };
 
 class xevent_behind_on_demand_by_hash_t : public xevent_behind_t {

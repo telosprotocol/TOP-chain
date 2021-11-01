@@ -2518,11 +2518,12 @@ namespace top
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
             if(0 != new_idx->get_height())
             {
-                //just keep low 4bit flags about unpack/store/connect etc
-                new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
-                new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
-                new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
-
+                if (new_raw_block->get_block_level() == base::enum_xvblock_level_table) {
+                    //just keep low 4bit flags about unpack/store/connect etc
+                    new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
+                    new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
+                    new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
+                }
                 load_index(new_idx->get_height()); //always load index first for non-genesis block
             }
 
@@ -2728,6 +2729,21 @@ namespace top
                 }
             }
             return true;
+        }
+
+        bool        xblockacct_t::set_unit_proof(const std::string& unit_proof, uint64_t height){
+            const std::string key_path = base::xvdbkey_t::create_unit_proof_key(*this, height);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, unit_proof)) {
+                xerror("xblockacct_t::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
+                return false;
+            }
+
+            return true;
+        }
+
+        const std::string xblockacct_t::get_unit_proof(uint64_t height){
+            const std::string key_path = base::xvdbkey_t::create_unit_proof_key(*this, height);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
     };//end of namespace of vstore
 };//end of namespace of top

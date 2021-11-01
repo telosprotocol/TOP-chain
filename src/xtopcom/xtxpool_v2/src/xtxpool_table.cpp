@@ -447,7 +447,7 @@ void xtxpool_table_t::refresh_table_v2() {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
                 // try sync table block
                 mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block");
+                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block", false);
                 m_para->get_bus()->push_event(ev);
                 xtxpool_warn("xtxpool_table_t::refresh_table load table block fail:table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), sync_from_height, height);
                 XMETRICS_GAUGE(metrics::txpool_try_sync_table_block, 1);
@@ -494,19 +494,19 @@ void xtxpool_table_t::update_table_state(const data::xtablestate_ptr_t & table_s
     m_xtable_info.set_unconfirm_tx_count((int32_t)table_state->get_receiptid_state()->get_unconfirm_tx_num());
 }
 
-void xtxpool_table_t::add_shard(xtxpool_shard_info_t * shard) {
+void xtxpool_table_t::add_role(xtxpool_role_info_t * role) {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    m_xtable_info.add_shard(shard);
+    m_xtable_info.add_role(role);
 }
 
-void xtxpool_table_t::remove_shard(xtxpool_shard_info_t * shard) {
+void xtxpool_table_t::remove_role(xtxpool_role_info_t * role) {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    m_xtable_info.remove_shard(shard);
+    m_xtable_info.remove_role(role);
 }
 
-bool xtxpool_table_t::no_shard() const {
+bool xtxpool_table_t::no_role() const {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    return m_xtable_info.no_shard();
+    return m_xtable_info.no_role();
 }
 
 // xcons_transaction_ptr_t xtxpool_table_t::get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const {
@@ -732,9 +732,7 @@ void xtxpool_table_t::build_recv_tx(base::xtable_shortid_t peer_table_sid, std::
     }
 }
 
-void xtxpool_table_t::build_confirm_tx(base::xtable_shortid_t peer_table_sid,
-                                                          std::vector<uint64_t> receiptids,
-                                                          std::vector<xcons_transaction_ptr_t> & receipts) {
+void xtxpool_table_t::build_confirm_tx(base::xtable_shortid_t peer_table_sid, std::vector<uint64_t> receiptids, std::vector<xcons_transaction_ptr_t> & receipts) {
     auto self_table_sid = m_xtable_info.get_short_table_id();
     auto peer_confirmid = m_para->get_receiptid_state_cache().get_confirmid_max(peer_table_sid, self_table_sid);
     for (auto & receiptid : receiptids) {
