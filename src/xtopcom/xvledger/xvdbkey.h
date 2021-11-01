@@ -71,6 +71,9 @@ namespace top
            static const std::string  create_prunable_block_input_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            static const std::string  create_prunable_block_output_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            static const std::string  create_prunable_block_output_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
+
+           //unit block prov ->link to corresponding table proof for latest commit unit block
+           static const std::string  create_unit_proof_key(const xvaccount_t & account, const uint64_t height);
        };
 
     }//end of namespace of base

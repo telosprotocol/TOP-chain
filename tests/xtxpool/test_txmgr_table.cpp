@@ -27,7 +27,7 @@ protected:
 
 TEST_F(test_txmgr_table, sigle_send_tx) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -73,7 +73,7 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
 
 TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -97,7 +97,7 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
 
 TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -130,8 +130,10 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ret = txmgr_table.push_send_tx(tx_ent2a, 0);
     ASSERT_EQ(0, ret);
 
-    base::xreceiptid_state_ptr_t receiptid_state_highqc = std::make_shared<base::xreceiptid_state_t>();
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, receiptid_state_highqc, {}, 40, 35, 30);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(3, ready_txs.size());
@@ -177,7 +179,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
 
 TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -233,8 +235,10 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     ret = txmgr_table.push_send_tx(tx_ent2b, 1);
     ASSERT_EQ(0, ret);
 
-    base::xreceiptid_state_ptr_t receiptid_state_highqc = std::make_shared<base::xreceiptid_state_t>();
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, receiptid_state_highqc, {}, 40, 35, 30);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(3, ready_txs.size());
     ASSERT_EQ(tx1b->get_digest_hex_str(), ready_txs[0]->get_digest_hex_str());
@@ -244,7 +248,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
 
 TEST_F(test_txmgr_table, send_tx_clear_follower) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -265,8 +269,10 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
         ASSERT_EQ(0, ret);
     }
 
-    base::xreceiptid_state_ptr_t receiptid_state_highqc = std::make_shared<base::xreceiptid_state_t>();
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, receiptid_state_highqc, {}, 40, 35, 30);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(3, ready_txs.size());
@@ -285,7 +291,7 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
 }
 TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -333,8 +339,10 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
         ASSERT_NE(tx_tmp, nullptr);
     }
 
-    base::xreceiptid_state_ptr_t receiptid_state_highqc = std::make_shared<base::xreceiptid_state_t>();
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, receiptid_state_highqc, {}, 40, 35, 30);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(0, ready_txs.size());
@@ -389,7 +397,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
 
 TEST_F(test_txmgr_table, expired_tx) {
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -416,8 +424,10 @@ TEST_F(test_txmgr_table, expired_tx) {
     ASSERT_EQ(q_tx, nullptr);
 
     sleep(1);
-    base::xreceiptid_state_ptr_t receiptid_state_highqc = std::make_shared<base::xreceiptid_state_t>();
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, receiptid_state_highqc, {}, 40, 35, 30);
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(0, ready_txs.size());
@@ -433,7 +443,7 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     std::string sender = unit_addrs[0];
     std::string receiver = unit_addrs[1];
 
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);

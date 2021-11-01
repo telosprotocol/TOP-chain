@@ -62,7 +62,7 @@ private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table(uint8_t zone, uint16_t subaddr) const;
 
     mutable std::vector<std::shared_ptr<xtxpool_table_t>> m_tables[xtxpool_zone_type_max];
-    std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards[xtxpool_zone_type_max];
+    std::vector<std::shared_ptr<xtxpool_role_info_t>> m_roles[xtxpool_zone_type_max];
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[xtxpool_zone_type_max];
     xtxpool_statistic_t m_statistic;

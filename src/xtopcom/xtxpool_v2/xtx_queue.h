@@ -86,8 +86,8 @@ public:
     uint32_t non_ready_size() const {
         return m_non_ready_tx_queue.size();
     }
-    bool full() const {
-        return m_xtable_info->is_send_tx_reached_upper_limit();
+    int32_t check_full() const {
+        return m_xtable_info->check_send_tx_reached_upper_limit();
     }
 
 private:
