@@ -220,7 +220,6 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                 if (vnode->faded() && vnode->running()) {
                     vnode->stop();
                     m_vnode_proxy->unreg(vnode->address());
-                    m_sniff_proxy->unreg(vnode->address());
                 }
                 xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
                       vnode.get(),
