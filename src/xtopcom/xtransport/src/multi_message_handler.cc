@@ -159,6 +159,7 @@ void MultiThreadHandler::unregister_on_dispatch_callback() {
 }
 
 void MultiThreadHandler::HandleMessage(base::xpacket_t & packet) {
+    XMETRICS_GAUGE(metrics::message_transport_recv, 1);
     if ((size_t)packet.get_body().size() < enum_xbase_header_len)  // filter empty packet
     {
         TOP_WARN("HandleMessage Recv invalid packet with size: %d, from:%s:%d", packet.get_body().size(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());

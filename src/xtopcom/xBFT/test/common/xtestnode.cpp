@@ -39,7 +39,7 @@ namespace top
             const std::string  default_path = szBuff;
             xstoredb_t* _persist_db = new xstoredb_t(default_path);
             base::xvchain_t::instance().set_xdbstore(_persist_db);
-            base::xvblockstore_t * blockstore_ptr = store::create_vblockstore();
+            base::xvblockstore_t * blockstore_ptr = store::create_vblockstore(_persist_db);
             set_vblockstore(blockstore_ptr);
             register_plugin(blockstore_ptr);
 

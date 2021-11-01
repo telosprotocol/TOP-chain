@@ -18,7 +18,6 @@ class xtransaction_cache_t{
 public:
     //static xtransaction_cache_t & instance();
     xtransaction_cache_t() {
-        XMETRICS_COUNTER_SET("xtransaction_cache_count", 0);
     }
     ~xtransaction_cache_t() {}
     int tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx);

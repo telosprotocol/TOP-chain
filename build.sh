@@ -50,6 +50,7 @@ if [ $? -eq 1 ]; then
     
     mkdir -p ${CBUILD_DIR}
     cd ${CBUILD_DIR}
+    echo -n "$options" > ./build_options.inc
     
     if [ $osname == "Linux" ]; then
         cmake3 .. ${CMAKE_EXTRA_OPTIONS}
@@ -78,6 +79,7 @@ else
 
     echo "install found, install mode from path:$cbuild_path"
     cd $cbuild_path
+    echo -n "$options" > ./build_options.inc
     make install
     sudo ldconfig
 fi

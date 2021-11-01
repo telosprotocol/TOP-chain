@@ -281,6 +281,77 @@ R"T(
 }
 )T";
 
+static std::string const g_bounty_genesis_config =
+R"T(
+{
+    "accounts": {
+        "genesis_funds_account": {
+            "T00000LSygN1JSvh6U1TuAH9FZa26rdfmTajcxtX": {
+                "balance": "999980000000000"
+            },
+            "T00000LT2dXv55By7ztYYRfMx36tvThs4wJFMhyc": {
+                "balance": "1000000000000000"
+            },
+            "T00000LP2gWBqTqAFwKayruPsbXPC8iBFSG5hT82": {
+                "balance": "1000000000000000"
+            },
+            "T00000LWxPzhvHkPifdEAHQnWijWkiVUtqzFdnZQ": {
+                "balance": "6400000000000000"
+            },
+            "T00000LhfHNK8tRC6oxu52gSxDNtyiQCCbziSpLf": {
+                "balance": "600000000000000"
+            },
+            "T00000LQus6jqkqYqqsC8HgMS4yU4MpnCypgYMfW": {
+                "balance": "600000000000000"
+            },
+            "T00000LN9xMBacSK4B5YbJyzPk8X57mLZbkfdGNu": {
+                "balance": "600000000000000"
+            },
+            "T00000LKcor36zsZG7GNJS8C24ssfBrXJ46bHpLT": {
+                "balance": "600000000000000"
+            },
+            "T00000LTiSW4nmBpSiggm69BhZQQSjTbaNig4uFp": {
+                "balance": "600000000000000"
+            }
+        },
+        "tcc": {
+            "T00000LcZBayy2KgfH4JfF2N34H3gc4QZ5nqvSeH": {
+                "balance": "10000000000"
+            },
+            "T00000LTtfiE7gdNh5LLGHN1k8AEHZfPA11Wcyqe": {
+                "balance": "5000000000"
+            },
+            "T00000LdLyQGGhxmNdDjmZHkYpBSU1sgSSHYcBgN": {
+                "balance": "5000000000"
+            }
+        }
+    },
+    "seedNodes": {
+        "T00000LPh7Wscvt7USP8RWih97FM7EbwVGEVuDgK": "BNEm1sDpZxHILhJxv0lSsEFeFRWMwKCA1BYH6W2xBwknptf59qfirFoOjM9OPSXpFlhUNaAvIl4cj//H/ypkdzk=",
+        "T00000LWNRgpaXmNwsmH2nLTovaZp3EGWMjhqYsi": "BPNuaCJhYsRVfqz1ZM/nnTiByTHCxjIY+Jkp/3pnGlSKl6/z5vINvEHTQERvndHllehGBx7+M6iUENg4YhgyG1Q=",
+        "T00000LSUQ15vDvjCENcyFrW3W4T2RiDVVKKxus9": "BPXhMinKh2wiQoA13bUp4zyQpTqQxs7EEmU4cE3D98vTVRb33rOk+9UAaBnGVp9AD1UrszoEuHlpLLGoz8KMO5U=",
+        "T00000LgZ576phz47cEHa9L6V5hRYKtKa4BZpJ5A": "BLeislQODlzIiI2NxsezcizboVCYHLPu5SLg+R4VG42eU3rS+VOAkDYY2AnHgVs4sN59WMOtb5u3s4a8vUw1uuQ=",
+        "T00000LXVsWHie7sRGCdK4kktXjK43srJcVZeYaP": "BGBtC9HbjyzWlw/0s/+ts+VNlz3pHLVUh3DEa0y5eF76JIhLHWbbD/Jsg3ygclVuI4qBp+YyOq7S4yYqBOO4lwc=",
+        "T00000LQ6pvNEjxc4vGsxjpZTdrdtdDBo67DLgXV": "BHk6qt6khszfnm8d3btzg1UgAae9PV4uUCrMaXG/RCTT0YfTgvB/BGjX6fekxPwAf7goNaQHOWNhGII0yZB77G0=",
+        "T00000LTQB5VoQUamGbnSxXjj4rSGJF4gTtNUQLD": "BHD6adaWNI7GsTyO7YXmBv9d4m/++wUKuJNdXUiHrK6hGcSsgq7akogfi9LP4qWPU6mLTdiM1NOivcmuLk3HvXk=",
+        "T00000LZxaZQLbDcDsjZQ5rbwaQBXatVG1AdLvDB": "BBVkPNbBzKkZvZ06yNEeFns4ko3UiyZA2a9xLwma5TxbJRZ/xiYDlzUe4QiN2X8YiHwbugt30mlTH3uyX+dF+VI=",
+        "T00000LZT3fuxiGBmCjUrP7yDKVWryffTYTUvctk": "BKsYk28XpjxzSqwiqBBe28EPl9roA4VPeG1FipguhFqqlB7NWo6c3Y+sXz/i3fUsuQ9i7uVotdr4bE0hLI/E734=",
+        "T00000LKvLi6cVAHQEV12ZebsQC9n3RGzJVr1dbx": "BDrdTUhkR5+biKfgqhG2AjdzTqcJeLerhUzvAMAVQucqaVThKs0TsEBGrMZddvnc/5ObxHt80NqbFWS3o+S0uBo=",
+        "T00000LQ3akeuKSeu8pGVSfPe2Kxe9Ego7WG3fcK": "BBDqPToxeewYcl21wsmUsB1jwsLl7M8NhQ9t2flRY/imQuiRWh08QQ1u1BCBz7JWN5Oe2eyErEUzeVJfsWmy0wo=",
+        "T00000Lc5mfESZ4uQbaB5i85So5cCE49iRQMAf3C": "BBOP9JgOlzpCebT3tTLWY1PhADbSxaukAFTo0ZGqsAIxpV2/Bhig76nh9Rf3mnDkqMJRB329I7444jLTPRk1V6I=",
+        "T00000LfhkbusbBCxnpyMko8spVYByF3S6XxHkT1": "BAW/Z22ZpDLQV5xVq1loLJg9yYDebvjOmY2+/bOfNJNsNfxAsgwwm+dtRSa5Pwz+COa20hCLJWoM+kTaaRdA6ZY=",
+        "T00000LWi3nfReoWFHsXerSqhn7gCFLFW8L4YB71": "BG2CPRhuJEYwVmK8wyJ+Ms/24gUfKsf4uZD/pwlKlECZj304DHHFsfnGoYJl4yi+waXVT5UyL7hqdEpIfIGvgLY=",
+        "T00000Lcbff6epw6Ciz7UvMsGHfaRJuNqFJFgj3b": "BBX2twjh1sM2dlpCO6uFnzKXy0Y0m18PhOo1PeyuXWtVmQssu0OY/TbAhBZpzoOxLTex6BKCLLbfjMr0dOYVuj4=",
+        "T00000LgW2dw5SnBH5v4A31nCqFbnYLhcJrfhowQ": "BPKCu0NqMjuunztWvHwQ6JBdMuSPPK7FBvHUewDoudyzVf9DeKEipIid+YR/f0UHE2ugf3wIKJPC3N+QJICXlF8=",
+        "T00000LVX7bhUmx1qk1JBDBxoUbmUoQVKVZrzyUC": "BBKcxkEedJEXeRAu9NLpvP4dmU6sm34rW+oweSWPbxI7eAg6F2N9sIiWLhCwa78+vOVIKMicdUBV0cfHFCQjK7Q=",
+        "T00000LNK98GhS51wyBNQafaHZ31GobSo2Y39qUf": "BKfZlndwODeFnl4y3zDb4MGSIEQ3Z17v6PvEYiJ18tZUhwkdmb9AqtWxz+2DR8QIp1AR1l/2h7xbwtDu6FaoIE0=",
+        "T00000LYHXC2soSmkvcySdKqc56FBh5XMUeAbqsd": "BFj83APhuMt425X26Dix9iuErAi0XjRklXbZpxghqRT/JZwDUg5saEgBeQmJOW0EW8ITFAp/Ld8ElEq594o/KSA=",
+        "T00000Lhqt91nNEt5uBfgG9ACFsuQw6taFkP1Xd3": "BGhYfKmFKHg+UWHEXI014I1OXWTFu2LOR+zqfp76sw9en0y+T80J6Sx4cSKy5fB4L9UVPRghC4XW6tBaWhRz3Ag="
+    },
+    "timestamp": 1599555555
+}
+)T";
+
 const std::string & get_genesis_info() {
 #if defined(XBUILD_CI)
     return g_ci_genesis_config;
@@ -288,6 +359,8 @@ const std::string & get_genesis_info() {
     return g_testnet_genesis_config;
 #elif defined(XBUILD_DEV)
     return g_dev_genesis_config;
+#elif defined(XBUILD_BOUNTY)
+    return g_bounty_genesis_config;
 #else
     return g_mainnet_genesis_config;
 #endif

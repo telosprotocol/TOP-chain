@@ -7,7 +7,7 @@
 NS_BEG2(top, metrics)
 
 #define RETURN_METRICS_NAME(TAG) case TAG: return #TAG
-char const * matrics_name(xmetircs_tag_t const tag) noexcept {
+char const * matrics_name(xmetrics_tag_t const tag) noexcept {
     switch (tag) {
         RETURN_METRICS_NAME(e_simple_begin);
         RETURN_METRICS_NAME(blockstore_cache_block_total);
@@ -96,6 +96,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
+        RETURN_METRICS_NAME(cons_view_fire_succ);
+        RETURN_METRICS_NAME(cons_view_fire_is_leader);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
         RETURN_METRICS_NAME(cons_verify_proposal_tick);
@@ -230,6 +232,9 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_rumor_block_broadcast);
         RETURN_METRICS_NAME(message_rumor_category_unknown);
 
+        RETURN_METRICS_NAME(message_transport_recv);
+        RETURN_METRICS_NAME(message_transport_send);
+
         // sync 
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
@@ -310,11 +315,15 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_receipt_recv_num_7to12_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_13to30_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_exceed_30_clock);
-        RETURN_METRICS_NAME(txpool_push_fail_queue_limit);
-        RETURN_METRICS_NAME(txpool_push_fail_repeat);
-        RETURN_METRICS_NAME(txpool_push_fail_unconfirm_limit);
-        RETURN_METRICS_NAME(txpool_push_fail_nonce_limit);
-        RETURN_METRICS_NAME(txpool_push_fail_account_fall_behind);
+        RETURN_METRICS_NAME(txpool_push_send_fail_queue_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_repeat);
+        RETURN_METRICS_NAME(txpool_push_send_fail_unconfirm_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_nonce_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_account_fall_behind);
+        RETURN_METRICS_NAME(txpool_push_send_fail_account_not_in_charge);
+        RETURN_METRICS_NAME(txpool_push_send_fail_nonce_expired);
+        RETURN_METRICS_NAME(txpool_push_send_fail_nonce_duplicate);
+         RETURN_METRICS_NAME(txpool_push_send_fail_other);
         RETURN_METRICS_NAME(txpool_send_tx_timeout);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_send);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_recv);
@@ -323,6 +332,13 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_commit_recv);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_commit_confirm);
         RETURN_METRICS_NAME(txpool_receipt_id_state_msg_send_num);
+        RETURN_METRICS_NAME(txpool_alarm_confirm_tx_reached_upper_limit);
+        RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
+        RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);
+
+        // txstore
+        RETURN_METRICS_NAME(txstore_request_origin_tx);
+        RETURN_METRICS_NAME(txstore_cache_origin_tx);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
@@ -533,6 +549,29 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(mailbox_txpool_slow_cur);
         RETURN_METRICS_NAME(mailbox_us_cur);
 
+        //txdelay
+        RETURN_METRICS_NAME(txdelay_client_timestamp_unmatch);
+        RETURN_METRICS_NAME(txdelay_from_client_to_edge);
+        RETURN_METRICS_NAME(txdelay_from_client_to_auditor);
+        RETURN_METRICS_NAME(txdelay_from_client_to_validator);
+        RETURN_METRICS_NAME(txdelay_from_client_to_sendtx_exec);
+        RETURN_METRICS_NAME(txdelay_from_client_to_recvtx_exec);
+        RETURN_METRICS_NAME(txdelay_from_client_to_confirmtx_exec);
+
+        //cpu
+        RETURN_METRICS_NAME(cpu_hash_256_calc);
+        RETURN_METRICS_NAME(cpu_ca_merge_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_merge_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_do_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_do_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_verify_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_verify_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_txreceipt);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_sync);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_xbft);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_tc);
+        RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_blockstore);
+
         default: assert(false); return nullptr;
     }
 }
@@ -569,7 +608,7 @@ void e_metrics::start() {
     XMETRICS_CONFIG_GET("queue_procss_behind_sleep_time", m_queue_procss_behind_sleep_time);
 
     for (size_t index = e_simple_begin; index < e_simple_total; index++) {
-        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
+        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetrics_tag_t>(index)), 0);
     }
 
     for (size_t index = e_array_counter_begin; index < e_array_counter_total; index++) {

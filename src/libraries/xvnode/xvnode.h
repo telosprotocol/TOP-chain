@@ -119,6 +119,7 @@ private:
     void sync_add_vnet();
     void sync_remove_vnet();
     void update_tx_cache_service();
+    void update_block_prune();
 };
 
 using xvnode_t = xtop_vnode;

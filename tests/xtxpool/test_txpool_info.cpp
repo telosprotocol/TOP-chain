@@ -36,9 +36,9 @@ TEST_F(test_xtxpool_info, txpool_info) {
     table2.send_tx_inc(table_send_tx_queue_size_max - 1);
     ASSERT_EQ(true, table2.is_send_tx_reached_upper_limit());
 
+    // TODO(jimmy) disable shard limit
+    // table2.send_tx_inc(shard_send_tx_queue_size_max - table_send_tx_queue_size_max);
+    // ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
 
-    table2.send_tx_inc(shard_send_tx_queue_size_max - table_send_tx_queue_size_max);
-    ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
-
-    ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
+    // ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
 }

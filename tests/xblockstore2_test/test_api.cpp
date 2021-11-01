@@ -130,9 +130,6 @@ TEST_F(test_api, store_table_block_1) {
     base::xauto_ptr<base::xvblock_t> latest_committed_block = blockstore->get_latest_committed_block(table_vaddr);
     std::cout << "commit=" << latest_committed_block->get_height() << std::endl;
     // xassert(latest_committed_block->get_height() == count - 2);
-    base::xauto_ptr<base::xvblock_t> latest_executed_block = blockstore->get_latest_executed_block(table_vaddr);
-    std::cout << "execute=" << latest_executed_block->get_height() << std::endl;
-    // xassert(latest_executed_block->get_height() == count - 2);
 }
 
 TEST_F(test_api, store_table_block_2) {
@@ -163,9 +160,6 @@ TEST_F(test_api, store_table_block_2) {
     base::xauto_ptr<base::xvblock_t> latest_committed_block = blockstore->get_latest_committed_block(table_vaddr);
     std::cout << "commit=" << latest_committed_block->get_height() << std::endl;
     xassert(latest_committed_block->get_height() == max_block_height - 2);
-    base::xauto_ptr<base::xvblock_t> latest_executed_block = blockstore->get_latest_executed_block(table_vaddr);
-    std::cout << "execute=" << latest_executed_block->get_height() << std::endl;
-    xassert(latest_executed_block->get_height() == max_block_height - 2);
 }
 
 TEST_F(test_api, store_table_block_3) {
@@ -199,9 +193,6 @@ TEST_F(test_api, store_table_block_3) {
     base::xauto_ptr<base::xvblock_t> latest_committed_block = blockstore->get_latest_committed_block(table_vaddr);
     std::cout << "commit=" << latest_committed_block->get_height() << std::endl;
     xassert(latest_committed_block->get_height() == max_block_height - 2);
-    base::xauto_ptr<base::xvblock_t> latest_executed_block = blockstore->get_latest_executed_block(table_vaddr);
-    std::cout << "execute=" << latest_executed_block->get_height() << std::endl;
-    xassert(latest_executed_block->get_height() == max_block_height - 2);
 }
 
 TEST_F(test_api, store_tx_1) {

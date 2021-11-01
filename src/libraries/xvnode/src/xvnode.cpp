@@ -4,7 +4,6 @@
 
 #include "xvnode/xvnode.h"
 
-#include "xelect_common/elect_option.h"
 #include "xmbus/xevent_role.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvnetwork_driver.h"
@@ -189,6 +188,7 @@ void xtop_vnode::new_driver_added() {
     update_tx_cache_service();
     update_rpc_service();
     update_contract_manager(false);
+    update_block_prune();
 }
 
 void xtop_vnode::driver_removed() {
@@ -200,7 +200,24 @@ void xtop_vnode::driver_removed() {
     }
     sync_remove_vnet();
 }
-
+void xtop_vnode::update_block_prune() {
+    xdbg("try update block prune. node type %s, %p", common::to_string(m_the_binding_driver->type()).c_str(), m_timer_driver.get());
+    if (XGET_CONFIG(auto_prune_data) == "off")
+        return;
+    if (common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
+        return;
+    }
+    if (!common::has<common::xnode_type_t::storage>(m_the_binding_driver->type())) {
+        if (top::store::install_block_recycler(m_store.get()))
+            xdbg("install_block_recycler ok.");
+        else
+            xdbg("install_block_recycler fail.");
+        if (top::store::enable_block_recycler())
+            xdbg("enable_block_recycler ok.");
+        else
+            xdbg("enable_block_recycler fail.");
+    }
+}
 void xtop_vnode::update_rpc_service() {
     xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
     if (!common::has<common::xnode_type_t::storage_archive>(m_the_binding_driver->type()) &&

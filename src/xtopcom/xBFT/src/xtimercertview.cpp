@@ -220,6 +220,7 @@ bool xconspacemaker_t::on_receive_timeout(xvip2_t const & from_addr, base::xcspd
         return true;
     }
 
+    XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_tc, 1);
     if (get_vcertauth()->verify_sign(from_addr, (base::xvblock_t *)msg->block) != base::enum_vcert_auth_result::enum_successful) {
         xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} verify failed clock %" PRIu64" block:%s",
             from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str());
@@ -294,12 +295,13 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
 }
 
 bool xconspacemaker_t::merge_multi_sign(const xvip2_t &xip_addr, base::xvblock_t *block, const std::map<xvip2_t,std::string,xvip2_compare> &validators) {
+    XMETRICS_GAUGE(metrics::cpu_ca_merge_sign_tc, 1);
     // cert, is the target of the sign function, also is the target of the multi sign function.
     std::string sign = get_vcertauth()->merge_muti_sign(validators, block->get_cert());
     block->set_verify_signature(sign);
     block->reset_block_flags();
     block->set_block_flag(base::enum_xvblock_flag_authenticated);
-
+    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_tc, 1);
     return (get_vcertauth()->verify_muti_sign(block) == base::enum_vcert_auth_result::enum_successful);
 }
 
@@ -352,9 +354,11 @@ void xconspacemaker_t::on_timeout(time_t cur_time) {
 void xconspacemaker_t::on_timeout_stage2(base::xvblock_t *vote) {
     base::xvblock_t *model_block = vote;
 
+    XMETRICS_GAUGE(metrics::cpu_ca_do_sign_tc, 1);
     xvip2_t xip_addr = get_xip2_addr();
     auto sign = get_vcertauth()->do_sign(xip_addr, vote, base::xtime_utl::get_fast_random64());
     vote->set_verify_signature(sign);
+    XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_tc, 1);
     xassert(get_vcertauth()->verify_sign(xip_addr, vote) == base::enum_vcert_auth_result::enum_successful);
 
     base::xauto_ptr<xtimeout_msg_t> msg = new xtimeout_msg_t{vote};

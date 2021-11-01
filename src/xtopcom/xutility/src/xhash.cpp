@@ -13,6 +13,9 @@ extern "C"
     #include "trezor-crypto/sha2.h"
     #include "trezor-crypto/sha3.h"
 }
+#include "xmetrics/xmetrics.h"
+
+#define ENABLE_HASH_METRICS
 
 namespace top
 {
@@ -300,6 +303,9 @@ namespace top
             uint256_t   output;
             hasher.update(data, numBytes);
             hasher.get_hash(output);
+#ifdef ENABLE_HASH_METRICS
+            XMETRICS_GAUGE(metrics::cpu_hash_256_calc, 1);
+#endif
             return output;
         }
         uint256_t  xsha2_256_t::digest(const std::string & text)
@@ -308,6 +314,9 @@ namespace top
             uint256_t   output;
             hasher.update(text);
             hasher.get_hash(output);
+#ifdef ENABLE_HASH_METRICS
+            XMETRICS_GAUGE(metrics::cpu_hash_256_calc, 1);
+#endif
             return output;
         }
         ////////////////////////////////////xsha2_512_t////////////////////////////////////////////////

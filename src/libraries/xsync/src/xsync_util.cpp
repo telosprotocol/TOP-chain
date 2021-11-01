@@ -36,6 +36,7 @@ bool check_auth(const observer_ptr<base::xvcertauth_t> &certauth, data::xblock_p
     //No.1 safe rule: clean all flags first when sync/replicated one block
     block->reset_block_flags();
 
+    XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_sync, 1);
     base::enum_vcert_auth_result result = certauth->verify_muti_sign(block.get());
     if (result != base::enum_vcert_auth_result::enum_successful) {
         return false;

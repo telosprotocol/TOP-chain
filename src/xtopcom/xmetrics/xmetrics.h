@@ -112,6 +112,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_verify_proposal_table_with_local,
 
     cons_view_fire_clock_delay,
+    cons_view_fire_succ,
+    cons_view_fire_is_leader,
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
     cons_verify_proposal_tick,
@@ -256,6 +258,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_rumor_category_unknown,
     message_rumor_category_end = message_rumor_category_unknown,
 
+    message_transport_recv,
+    message_transport_send,
+
     // sync 
     xsync_recv_new_block,
     xsync_recv_new_hash,
@@ -337,11 +342,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_receipt_recv_num_7to12_clock,
     txpool_receipt_recv_num_13to30_clock,
     txpool_receipt_recv_num_exceed_30_clock,
-    txpool_push_fail_queue_limit,
-    txpool_push_fail_repeat,
-    txpool_push_fail_unconfirm_limit,
-    txpool_push_fail_nonce_limit,
-    txpool_push_fail_account_fall_behind,
+    txpool_push_send_fail_queue_limit,
+    txpool_push_send_fail_repeat,
+    txpool_push_send_fail_unconfirm_limit,
+    txpool_push_send_fail_nonce_limit,
+    txpool_push_send_fail_account_fall_behind,
+    txpool_push_send_fail_account_not_in_charge,
+    txpool_push_send_fail_nonce_expired,
+    txpool_push_send_fail_nonce_duplicate,
+    txpool_push_send_fail_other,
     txpool_send_tx_timeout,
     txpool_tx_delay_from_push_to_pack_send,
     txpool_tx_delay_from_push_to_pack_recv,
@@ -350,6 +359,13 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_tx_delay_from_push_to_commit_recv,
     txpool_tx_delay_from_push_to_commit_confirm,
     txpool_receipt_id_state_msg_send_num,
+    txpool_alarm_confirm_tx_reached_upper_limit,
+    txpool_alarm_recv_tx_reached_upper_limit,
+    txpool_alarm_send_tx_reached_upper_limit,
+
+    // txstore
+    txstore_request_origin_tx,
+    txstore_cache_origin_tx,
 
     // blockstore
     blockstore_index_load,
@@ -585,9 +601,32 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_slow_cur,
     mailbox_us_cur,
 
+    //txdelay
+    txdelay_client_timestamp_unmatch,
+    txdelay_from_client_to_edge,
+    txdelay_from_client_to_auditor,
+    txdelay_from_client_to_validator,
+    txdelay_from_client_to_sendtx_exec,
+    txdelay_from_client_to_recvtx_exec,
+    txdelay_from_client_to_confirmtx_exec,
+
+    //cpu
+    cpu_hash_256_calc,
+    cpu_ca_merge_sign_xbft,
+    cpu_ca_merge_sign_tc,
+    cpu_ca_do_sign_xbft,
+    cpu_ca_do_sign_tc,
+    cpu_ca_verify_sign_xbft,
+    cpu_ca_verify_sign_tc,
+    cpu_ca_verify_multi_sign_txreceipt,
+    cpu_ca_verify_multi_sign_sync,
+    cpu_ca_verify_multi_sign_xbft,
+    cpu_ca_verify_multi_sign_tc,
+    cpu_ca_verify_multi_sign_blockstore,
+
     e_simple_total,
 };
-using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
+using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;
 
 enum E_ARRAY_COUNTER_TAG : size_t {
     e_array_counter_begin = 0,

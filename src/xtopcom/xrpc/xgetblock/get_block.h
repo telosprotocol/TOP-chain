@@ -10,7 +10,6 @@
 #include "xdata/xelection/xelection_cluster_result.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
-#include "xelect_common/proto/elect_mock.pb.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xstore/xstore.h"
 #include "xsyncbase/xsync_face.h"
@@ -20,9 +19,6 @@
 namespace top {
 
 namespace chain_info {
-
-using namespace elect;
-// void on_report_node(const pb::ReportNode& report_node);
 
 using namespace data::election;
 

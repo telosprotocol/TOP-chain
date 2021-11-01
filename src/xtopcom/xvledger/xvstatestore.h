@@ -65,6 +65,8 @@ namespace top
             void                      set_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash, const xobject_ptr_t<xvbstate_t> & state);
             bool                      recover_highest_execute_height(const xvaccount_t & target_account, uint64_t old_execute_height);
             bool                      try_update_execute_height(const xvaccount_t & target_account);
+            void                      set_latest_executed_info(const xvaccount_t & target_account, uint64_t height,const std::string & blockhash);
+            uint64_t                  get_latest_executed_block_height(const xvaccount_t & target_account);
 
         private:
             base::xlru_cache<std::string, xobject_ptr_t<xvbstate_t>> m_table_state_cache;  //tablestate cache

@@ -6,12 +6,14 @@
 
 #include <mutex>
 #include "xvaccount.h"
+#include "xvactplugin.h"
 #include "xvdbstore.h"
 #include "xvblockstore.h"
 #include "xvstatestore.h"
 #include "xvcontractstore.h"
 #include "xvtxstore.h"
 #include "xveventbus.h"
+#include "xvdrecycle.h"
 
 namespace top
 {
@@ -21,7 +23,60 @@ namespace top
         class xvbook_t;
         class xvledger_t;
         class xvchain_t;
+ 
+        struct xspinlock_t
+        {
+            std::atomic<bool> lock_ = {0};
+            
+            void lock() noexcept {
+                for (;;) {
+                    // Optimistically assume the lock is free on the first try
+                    if (!lock_.exchange(true, std::memory_order_acquire)) {
+                        return;
+                    }
+                    // Wait for lock to be released without generating cache misses
+                    while (lock_.load(std::memory_order_relaxed)) {
+                        // Issue X86 PAUSE or ARM YIELD instruction to reduce contention between
+                        // hyper-threads
+                        __builtin_ia32_pause();
+                    }
+                }
+            }
+            
+            bool try_lock() noexcept {
+                // First do a relaxed load to check if lock is free in order to prevent
+                // unnecessary cache misses if someone does while(!try_lock())
+                return !lock_.load(std::memory_order_relaxed) &&
+                       !lock_.exchange(true, std::memory_order_acquire);
+            }
+            
+            void unlock() noexcept {
+                lock_.store(false, std::memory_order_release);
+            }
+        };
 
+        template<typename T>
+        class xauto_lock
+        {
+        public:
+            xauto_lock(T & locker)
+                :m_raw_locker(&locker)
+            {
+                m_raw_locker->lock();
+            }
+            ~xauto_lock()
+            {
+                m_raw_locker->unlock();
+            }
+        private:
+            xauto_lock();
+            xauto_lock(xauto_lock &&);
+            xauto_lock(const xauto_lock &);
+            xauto_lock & operator = (const xauto_lock &);
+        private:
+            T *   m_raw_locker;
+        };
+    
         /*
         XID/xvvid  definition as total 64bit =
         {
@@ -38,21 +93,22 @@ namespace top
         }
         */
     
-        enum enum_xvaccount_plugin_type //max 8 plugins
+        enum enum_xvaccount_config
         {
-            enum_xvaccount_plugin_start      = 0x00,
-            enum_xvaccount_plugin_txsmgr     = 0x00, //manage transactions
-            enum_xvaccount_plugin_blockmgr   = 0x01, //manage blocks
-            enum_xvaccount_plugin_statemgr   = 0x02, //manage states
-            enum_xvaccount_plugin_indexmgr   = 0x03, //manage indexs
-            enum_xvaccount_plugin_executemgr = 0x04, //manage contract & function execute
+            enum_max_active_acconts         = 2048,  //max active accounts number
+            enum_units_group_count          = 256,   //same with max subaddr
+            enum_max_expire_check_count     = 4096,  //not clean too much at each loop
             
-            //note:update max once add new plugin at above
-            enum_xvaccount_plugin_end        = enum_xvaccount_plugin_executemgr + 1,
-            enum_xvaccount_plugin_max        = 0x08,
+            enum_account_idle_check_interval= 50000,  //check every 50 seconds
+            enum_account_idle_timeout_ms    = 300000, //account change to idle status if not access within 300 seconds
+
+            enum_plugin_idle_check_interval = 10000,  //check every 10 seconds
+            enum_plugin_idle_timeout_ms     = 60000,  //idle duration for plugin
+            
+            enum_account_save_meta_interval = 64, //force save meta every 64 modification
         };
-        
-        class xvaccountobj_t : public xobject_t,public xvaccount_t
+    
+        class xvaccountobj_t : public xiobject_t,public xvaccount_t
         {
             friend class xvtable_t;
             
@@ -64,27 +120,75 @@ namespace top
             xvaccountobj_t(xvaccountobj_t &&);
             xvaccountobj_t(const xvaccountobj_t &);
             xvaccountobj_t & operator = (const xvaccountobj_t &);
-        public:
-            std::recursive_mutex&   get_lock();
+        public: //multiple thread safe
             virtual bool            handle_event(const xvevent_t & ev) override;//add entry of handle event
+            const uint64_t          get_idle_duration() const;
             
-            //the returned ptr has done add_ref before return,so release it when nolonger need manually
-            xobject_t*              get_plugin(enum_xvaccount_plugin_type plugin);
-            //return to indicate setup successful or not
-            bool                    set_plugin(xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type);
+            //status machine: [normal<=>idle->closing->closed]
+            bool                    is_idle() const   {return (m_is_idle != 0);}
+            bool                    is_closing()const {return (m_is_closing != 0);}
+            //bool is_close() is already defined
             
-        private: //overwrite to protected mode for following api
+            xauto_ptr<xvactplugin_t>get_plugin(enum_xvaccount_plugin_type plugin_type);
+           
+            xauto_ptr<xvactplugin_t>get_set_plugin(xvactplugin_t * new_plugin_obj);
+            xauto_ptr<xvactplugin_t>get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&) > & lambda_to_create);
+            
+        public: //multiple thread safe
+            const xblockmeta_t      get_block_meta();
+            const xstatemeta_t      get_state_meta();
+            const xsyncmeta_t       get_sync_meta();
+            const xindxmeta_t       get_index_meta();
+            const xvactmeta_t       get_full_meta();
+            
+            bool                    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            bool                    get_latest_executed_block(uint64_t & block_height,std::string & block_hash);
+            const uint64_t          get_latest_executed_block_height();
+            
+            bool                    set_latest_deleted_block_height(const uint64_t height);
+            const uint64_t          get_latest_deleted_block_height();
+            
+            bool                    save_meta(bool carry_process_id = true);
+            bool                    update_meta(xvactplugin_t * plugin);
+        protected:
+            std::recursive_mutex&   get_table_lock();
+            xspinlock_t&            get_spin_lock()  {return m_spin_lock;}
+            xvactmeta_t*            get_meta();
+            bool                    recover_meta(xvactmeta_t & _meta);//check whether recover the lost as reboot
+            
+            bool                    set_block_meta(const xblockmeta_t & new_meta);
+            bool                    set_state_meta(const xstatemeta_t & new_meta);
+            bool                    set_sync_meta(const xsyncmeta_t & new_meta);
+            bool                    set_index_meta(const xindxmeta_t & new_meta);
+            
+        private: //only open for table object
+            virtual bool            is_live(const uint64_t timenow_ms) override;//test whether has been idel status
             virtual bool            close(bool force_async = true) override;
-          
-            //the returned ptr has done add_ref before return,so release it when nolonger need manually
-            xobject_t*              get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type);
-            //return to indicate setup successful or not
-            bool                    set_plugin_unsafe(xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type);
+            virtual bool            stop(); //convert to closing status if possible
+            //return status of currently,return true when it is idled
+            bool                    update_idle_status();
+            bool                    save_meta(const std::string & vmeta_bin);
+            
+            //the returned ptr is not reference safe,use careully
+            xvactplugin_t*          get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type);
+            bool                    set_plugin_unsafe(xvactplugin_t * plugin_obj,xvactplugin_t*& old_ptr);//caller need release old_ptr whent it is not nullptr
+ 
+            //note:try_close_plugin may try hold lock and check is_live agian ,and if so then close
+            //return result whether closed
+            bool                    try_close_plugin(const uint64_t timenow_ms,enum_xvaccount_plugin_type plugin_type);
             
         private:
+            xspinlock_t         m_spin_lock;
             xvtable_t&          m_ref_table; //link to table
+            xvactmeta_t*        m_meta_ptr; //meta data of account
             //note: only support max 8 plugins for one object as considering size and reality
-            xobject_t*          m_plugins[enum_xvaccount_plugin_max];
+            xvactplugin_t*      m_plugins[enum_xvaccount_plugin_max];
+        private:
+            uint64_t            m_idle_start_time_ms; //UTC ms
+            uint64_t            m_idle_timeout_ms;     //how long(ms) it will change to idle status
+            uint8_t             m_is_idle; //atomic indicate whether is beeing idle status, 1 = true, 0 = false
+            uint8_t             m_is_closing;//status before close but after idle.[normal<=>idle->closing->closed]
+            uint8_t             m_is_keep_forever;  //table/book object never be release/close for performance
         };
     
         //note: zone_index = bucket_index:range of [0,15], book_index: range of [0,127], table_index: range of [0,7]
@@ -93,6 +197,7 @@ namespace top
         class xvtable_t : public xionode_t
         {
             friend class xvbook_t;
+            friend class xvaccountobj_t;
         protected://max as 8 tables per book
             xvtable_t(xvbook_t & parent_object,const int32_t thread_id,const uint8_t table_index);
             virtual ~xvtable_t();
@@ -101,43 +206,54 @@ namespace top
             xvtable_t(xvtable_t &&);
             xvtable_t(const xvtable_t &);
             xvtable_t & operator = (const xvtable_t &);
-        public:
-            //return raw ptr that has been add_ref,caller need manually release it
-            //but it is multiple thread safe
-            xvaccountobj_t*            get_account_unsafe(const std::string & account_address);
+            
+        public: //multiple thread safe
             xauto_ptr<xvaccountobj_t>  get_account(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>  get_account(const xvaccount_t & account_obj){return get_account(account_obj.get_address());}
-            
-            xauto_ptr<xobject_t>       get_account_plugin(const std::string & account_address,enum_xvaccount_plugin_type plugin_type);
-            //return raw ptr that has been add_ref,caller need manually release it
-            xobject_t*                 get_account_plugin_unsafe(const std::string & account_address,enum_xvaccount_plugin_type plugin_type);
-            
-            //return to indicate setup successful or not
-            bool                       set_account_plugin(const std::string & account_address,xobject_t * new_plugin_obj,enum_xvaccount_plugin_type plugin_type);
-            
             bool                       close_account(const std::string & account_address);
-
+            
             inline const uint64_t      get_table_index() const {return m_table_index;}
             inline const uint32_t      get_table_combine_addr() const {return m_table_combine_addr;}
             
             inline std::recursive_mutex&  get_lock() {return m_lock;}
+            inline xvbook_t &             get_book() {return m_ref_book;}
+            
         private:
+            xvaccountobj_t*            create_account_unsafe(const std::string & account_address);
+            xvaccountobj_t*            get_account_unsafe(const std::string & account_address);
+            xvaccountobj_t*            find_account_unsafe(const std::string & account_address);
+            bool                       close_account_unsafe(const std::string & account_address);
+            bool                       try_close_account(const int64_t current_time_ms,const std::string & account_address);
+            
+            void                       monitor_plugin(xvactplugin_t * plugin_obj);
+            void                       monitor_account(xvaccountobj_t * account_obj);
+            
+            bool                       on_timer_for_accounts(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms);
+            bool                       on_timer_for_plugins(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms);
+            bool                       on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms);
+            bool                       on_timer_stop(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms);
+            
             //param of force_clean indicate whether force to close valid account 
             virtual bool               clean_all(bool force_clean = false);//clean all accounts & but table self still ok to use
+            virtual bool               on_process_close();//send process_close event to every objects
+        private:
+            xspinlock_t&               get_spin_lock()  {return m_spin_lock;}
             
-        #ifdef DEBUG //debug only purpose
-            virtual int32_t   add_ref() override;
-            virtual int32_t   release_ref() override;
-        #endif
         private:
             std::recursive_mutex   m_lock;
+            xspinlock_t            m_spin_lock;
+            xvbook_t&              m_ref_book; //link to book
             uint64_t               m_table_index;         //define uint64_t just for performance
-            std::map<std::string,xvaccountobj_t*> m_accounts;
             uint32_t               m_table_combine_addr; //[ledgerid:16bit][book:7bit][table:3bit]
+            uint32_t               m_reserved_4byte;
+            
+            std::map<std::string,xvaccountobj_t*>   m_accounts;
+            std::multimap<uint64_t,xvactplugin_t*>  m_monitor_plugins;//key:expired_time(UTC ms), value: xvactplugin_t*,sort from lower
+            std::multimap<uint64_t,xvaccountobj_t*> m_monitor_accounts;//key:expired_time(UTC ms), value: xvaccountobj_t*,sort from lower
         };
         
         //each book manage 8 tables
-        class xvbook_t : public xionode_t
+        class xvbook_t : public xionode_t,public xtimersink_t
         {
             friend class xvledger_t;
         protected://max as 32 books per bucket
@@ -149,6 +265,7 @@ namespace top
             xvbook_t(const xvbook_t &);
             xvbook_t & operator = (const xvbook_t &);
         public:
+            inline std::recursive_mutex&  get_lock() {return m_lock;}
             xvtable_t*              get_table(const xvid_t & account_id);//return raw ptr as perforamnce
             const uint64_t          get_book_index() const {return m_book_index;}//return uint64_t just for performance
             const uint32_t          get_book_combine_addr() const {return m_book_combine_addr;}//combined address
@@ -156,12 +273,20 @@ namespace top
         protected://internal or subcalss use only
             //param of force_clean indicate whether force to close valid account
             virtual bool            clean_all(bool force_clean = false); //just clean all accounts but table object is not release
+            virtual bool            on_process_close();//send process_close event to every objects
             virtual xvtable_t*      create_table_object(const uint32_t table_index);//give default implementation
+            
+        protected: //interface xtimersink_t
+            virtual bool            on_timer_start(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms) override;   //attached into io-thread
+            virtual bool            on_timer_stop(const int32_t errorcode,const int32_t thread_id,const int64_t timer_id,const int64_t cur_time_ms,const int32_t timeout_ms,const int32_t timer_repeat_ms) override;   //detach means it detach
+            virtual bool            on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms) override;
+            
         private:
             std::recursive_mutex    m_lock;
             uint64_t                m_book_index;         //define uint64_t just for performance
         protected:
             xvtable_t*   m_tables[enum_vbook_has_tables_count];
+            xtimer_t*    m_monitor_timer;
             uint32_t     m_book_combine_addr;  //[ledgerid:16bit][book:7bit][table:3bit]
         };
         
@@ -185,10 +310,6 @@ namespace top
             
             xauto_ptr<xvaccountobj_t>   get_account(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>   get_account(const xvaccount_t & account_obj);
-            //the returned ptr has done add_ref before return,so release it when nolonger need manually
-            //but it is multiple thread safe
-            xvaccountobj_t*             get_account_unsafe(const std::string & account_address);
-            xvaccountobj_t*             get_account_unsafe(const xvaccount_t & account_obj);
             
             inline const int        get_ledger_id()    const {return (int)m_ledger_id;}
             inline const int        get_chain_id()     const {return ((int)m_ledger_id >> 4);}
@@ -199,12 +320,15 @@ namespace top
         protected:
             //param of force_clean indicate whether force to close valid account
             virtual bool            clean_all(bool force_clean = false); //just do clean but not never destory objects of book/table
+            virtual bool            on_process_close();//send process_close event to every objects
+            
             virtual xvbook_t*       create_book_object(const uint32_t book_index);//give default implementation
+            
         private:
             std::recursive_mutex    m_lock;
             uint64_t                m_ledger_id;
         protected:
-            xvbook_t*   m_books[enum_vbucket_has_books_count];
+            xvbook_t*        m_books[enum_vbucket_has_books_count];
         };
         
         //each chain manage 16 zone/buckets, each bucket/zone has unique ledger
@@ -219,7 +343,9 @@ namespace top
                 enum_xvchain_plugin_contract_store= 0x03, //manage vcontract
                 enum_xvchain_plugin_txs_store     = 0x04, //manage all transactions
                 enum_xvchain_plugin_event_mbus    = 0x05, //manage mbus
-                enum_xvchain_plugin_type_end      = 0x05,
+                enum_xvchain_plugin_recycle_mgr   = 0x06, //manage xvdrecycle
+ 
+                enum_xvchain_plugin_type_max      = 0x07, //max value,DONT over it
             };
         public:
             static xvchain_t &  instance(const uint16_t chain_id = 0);
@@ -239,14 +365,11 @@ namespace top
             
             xauto_ptr<xvaccountobj_t>   get_account(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>   get_account(const xvaccount_t & account_obj);
-            //the returned ptr has done add_ref before return,so release it when nolonger need manually
-            //it is multiple thread safe
-            xvaccountobj_t*             get_account_unsafe(const std::string & account_address);
-            xvaccountobj_t*             get_account_unsafe(const xvaccount_t & account_obj);
             
             inline const int            get_chain_id()     const {return (int)m_chain_id;}
             inline const int            get_network_id()   const {return (int)m_chain_id;}
-            
+            inline const uint32_t       get_current_process_id() const {return m_current_process_id;}
+ 
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
             xvtxstore_t*                get_xtxstore();   //global shared xvtxstore_t instance
@@ -254,6 +377,9 @@ namespace top
             xvstatestore_t*             get_xstatestore();//global shared statestore instance
             xvcontractstore_t*          get_xcontractstore();//global shared statestore instance
             xveventbus_t*               get_xevmbus(); //global mbus object
+            xvdrecycle_mgr*             get_xrecyclemgr(); //global recycler manager
+            xvdrecycle_t*               get_xrecycler(enum_vdata_recycle_type type);//quick path
+            
         public:
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
             bool                        set_xtxstore(xvtxstore_t * new_store);
@@ -261,14 +387,23 @@ namespace top
             bool                        set_xstatestore(xvstatestore_t* new_sotre);
             bool                        set_xcontractstore(xvcontractstore_t * new_store);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
-        
+            
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
+            
+            virtual bool                save_all(); //save all unsaved data and meta etc
+            virtual bool                on_process_close();//send process_close event to every objects
         protected:
-            virtual xvledger_t*     create_ledger_object(const uint64_t ledger_id);//give default implementation
+            virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
+            bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);
         private:
             std::recursive_mutex    m_lock;
-            uint64_t                m_chain_id;//aka network_id
+            uint8_t                 m_reserved_1;
+            uint8_t                 m_reserved_2;
+            uint16_t                m_reserved_3;
+            uint32_t                m_chain_id;//aka network_id
+            uint32_t                m_current_node_roles;//multiple roles
+            uint32_t                m_current_process_id;
         protected:
             xvledger_t*   m_ledgers[enum_vchain_has_buckets_count];
         private:

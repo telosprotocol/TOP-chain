@@ -321,40 +321,40 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     // db write count statistics
     std::cout << "=============db write count statistics=============" << std::endl;
     #ifdef ENABLE_METRICS
-    std::cout << "db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::db_write) << std::endl;
-    std::cout << "store_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_table_write) << std::endl;
-    std::cout << "store_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_unit_write) << std::endl;
-    std::cout << "store_block_index_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_other_write) << std::endl;
-    std::cout << "store_block_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_table_write) << std::endl;
-    std::cout << "store_block_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_unit_write) << std::endl;
-    std::cout << "store_block_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_other_write) << std::endl;
-    std::cout << "store_block_input_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_input_table_write) << std::endl;
-    std::cout << "store_block_input_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_input_unit_write) << std::endl;
-    std::cout << "store_block_output_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_output_table_write) << std::endl;
-    std::cout << "store_block_output_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_output_unit_write) << std::endl;
-    std::cout << "store_state_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_table_write) << std::endl;
-    std::cout << "store_state_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_unit_write) << std::endl;
-    std::cout << "store_tx_index_self=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_self) << std::endl;
-    std::cout << "store_tx_index_send=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_send) << std::endl;
-    std::cout << "store_tx_index_recv=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_recv) << std::endl;
-    std::cout << "store_tx_index_confirm=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_confirm) << std::endl;
-    std::cout << "store_block_meta_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_meta_write) << std::endl;        
+    std::cout << "db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_write) << std::endl;
+    std::cout << "store_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_index_table_write) << std::endl;
+    std::cout << "store_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_index_unit_write) << std::endl;
+    std::cout << "store_block_index_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_index_other_write) << std::endl;
+    std::cout << "store_block_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_table_write) << std::endl;
+    std::cout << "store_block_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_unit_write) << std::endl;
+    std::cout << "store_block_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_other_write) << std::endl;
+    std::cout << "store_block_input_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_input_table_write) << std::endl;
+    std::cout << "store_block_input_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_input_unit_write) << std::endl;
+    std::cout << "store_block_output_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_output_table_write) << std::endl;
+    std::cout << "store_block_output_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_output_unit_write) << std::endl;
+    std::cout << "store_state_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_state_table_write) << std::endl;
+    std::cout << "store_state_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_state_unit_write) << std::endl;
+    std::cout << "store_tx_index_self=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_self) << std::endl;
+    std::cout << "store_tx_index_send=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_send) << std::endl;
+    std::cout << "store_tx_index_recv=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_recv) << std::endl;
+    std::cout << "store_tx_index_confirm=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_confirm) << std::endl;
+    std::cout << "store_block_meta_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_meta_write) << std::endl;        
 
     // db read count statistics
     std::cout << "=============db read count statistics=============" << std::endl;
-    std::cout << "db_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::db_read) << std::endl;
-    std::cout << "store_block_index_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_read) << std::endl;
-    std::cout << "store_block_table_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_table_read) << std::endl;
-    std::cout << "store_block_unit_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_unit_read) << std::endl;
-    std::cout << "store_block_other_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_other_read) << std::endl;
-    std::cout << "store_block_input_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_input_read) << std::endl;
-    std::cout << "store_block_output_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_output_read) << std::endl;
-    std::cout << "store_block_meta_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_meta_read) << std::endl;
+    std::cout << "db_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_read) << std::endl;
+    std::cout << "store_block_index_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_index_read) << std::endl;
+    std::cout << "store_block_table_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_table_read) << std::endl;
+    std::cout << "store_block_unit_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_unit_read) << std::endl;
+    std::cout << "store_block_other_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_other_read) << std::endl;
+    std::cout << "store_block_input_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_input_read) << std::endl;
+    std::cout << "store_block_output_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_output_read) << std::endl;
+    std::cout << "store_block_meta_read=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_meta_read) << std::endl;
 
     // db delete count statistics       
     std::cout << "=============db delete count statistics=============" << std::endl; 
-    std::cout << "db_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::db_delete) << std::endl;
-    std::cout << "store_state_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_delete) << std::endl;
+    std::cout << "db_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_delete) << std::endl;
+    std::cout << "store_state_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_state_delete) << std::endl;
 
     // db size statistics
     std::cout << "=============db size statistics=============" << std::endl; 
@@ -362,13 +362,13 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     std::cout << "db_value_size=" << db_meta.m_db_value_size << std::endl;
     std::cout << "key_count=" << db_meta.m_key_count << std::endl;
 
-    std::cout << "store_dbsize_block_unit_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_unit_empty) << std::endl;
-    std::cout << "store_dbsize_block_unit_light=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_unit_light) << std::endl;
-    std::cout << "store_dbsize_block_unit_full=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_unit_full) << std::endl;
-    std::cout << "store_dbsize_block_table_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_empty) << std::endl;
-    std::cout << "store_dbsize_block_table_light=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_light) << std::endl;
-    std::cout << "store_dbsize_block_table_full=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_full) << std::endl;
-    std::cout << "store_dbsize_block_other=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_other) << std::endl;
+    std::cout << "store_dbsize_block_unit_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_unit_empty) << std::endl;
+    std::cout << "store_dbsize_block_unit_light=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_unit_light) << std::endl;
+    std::cout << "store_dbsize_block_unit_full=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_unit_full) << std::endl;
+    std::cout << "store_dbsize_block_table_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_table_empty) << std::endl;
+    std::cout << "store_dbsize_block_table_light=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_table_light) << std::endl;
+    std::cout << "store_dbsize_block_table_full=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_table_full) << std::endl;
+    std::cout << "store_dbsize_block_other=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_other) << std::endl;
     #endif
 }
 
@@ -559,7 +559,7 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     mocktable.genrate_table_chain(200);
     auto table_blocks = mocktable.get_history_tables();
 
-    blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
+    // blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
 
     // store first tableblock
     for (int i = 0; i < 200; i++) {
@@ -571,8 +571,8 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
         ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
     }
 
-    sleep(1*16+5); // wait for meta save to db. table has 16 times than unit
-
+    //sleep(1*16+5); // wait for meta save to db. table has 16 times than unit
+    sleep((enum_plugin_idle_timeout_ms + enum_plugin_idle_check_interval)/1000+1);
     db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
     #ifdef ENABLE_METRICS
     auto store_call_1 = XMETRICS_GAUGE_GET_VALUE(metrics::store_block_call);
@@ -587,7 +587,7 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
         ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
     }
     db::xdb_meta_t db_meta2 = creator.get_xdb()->get_meta();
-    ASSERT_EQ(db_meta.m_write_count, db_meta2.m_write_count);
+    ASSERT_TRUE(db_meta.m_write_count < db_meta2.m_write_count + 2);
     std::cout << "db write count = " << db_meta.m_write_count << std::endl;
 
     #ifdef ENABLE_METRICS
@@ -597,7 +597,6 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     std::cout << "store_call_2 = " << store_call_2 << std::endl;
     #endif
 }
-
 
 TEST_F(test_block_store_load, commit_block_event_1) {
     mock::xvchain_creator creator;

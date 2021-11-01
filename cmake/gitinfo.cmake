@@ -66,6 +66,14 @@ macro(get_git_info)
     message("git submodule info:")
     message("${TOP_GIT_SUBMODULE}")
 
+    set(BUILD_OPTIONS_LIST "unknown")
+    if (EXISTS ${PROJECT_BINARY_DIR}/build_options.inc)
+        file(READ ${PROJECT_BINARY_DIR}/build_options.inc BUILD_OPTIONS_LIST)
+        message("build options: ${BUILD_OPTIONS_LIST}")
+    else()
+        message("not find build_options file (should be generate by build.sh)")
+    endif()
+
     set(VersionInc "${PROJECT_SOURCE_DIR}/src/libraries/xchaininit/src/version.inc")
     file(WRITE  ${VersionInc} "const std::string TOP_VERSION_PREFIX  = \"TOP_VERSION\";\n")  # will overwrite
     file(APPEND ${VersionInc} "const std::string TOP_GIT_BRANCH      = \"${TOP_GIT_BRANCH}\";\n")
@@ -78,5 +86,6 @@ macro(get_git_info)
     file(APPEND ${VersionInc} "const std::string TOP_BUILD_USER      = \"${TOP_BUILD_USER}\";\n")
     file(APPEND ${VersionInc} "const std::string TOP_BUILD_HOST      = \"${TOP_BUILD_HOST}\";\n")
     file(APPEND ${VersionInc} "const std::string TOP_BUILD_PATH      = \"${TOP_BUILD_PATH}\";\n")
+    file(APPEND ${VersionInc} "const std::string TOP_BUILD_OPTIONS   = \"${BUILD_OPTIONS_LIST}\";\n")
 
 endmacro()
