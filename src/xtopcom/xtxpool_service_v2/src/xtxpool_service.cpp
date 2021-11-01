@@ -655,8 +655,11 @@ void xtxpool_service::push_send_fail_record(int32_t err_type) {
     XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);
 
     switch (err_type) {
-    case xtxpool_v2::xtxpool_error_queue_reached_upper_limit:
-        XMETRICS_GAUGE(metrics::txpool_push_send_fail_queue_limit, 1);
+    case xtxpool_v2::xtxpool_error_table_reached_upper_limit:
+        XMETRICS_GAUGE(metrics::txpool_push_send_fail_table_limit, 1);
+        break;
+    case xtxpool_v2::xtxpool_error_role_reached_upper_limit:
+        XMETRICS_GAUGE(metrics::txpool_push_send_fail_role_limit, 1);
         break;
     case xtxpool_v2::xtxpool_error_request_tx_repeat:
         XMETRICS_GAUGE(metrics::txpool_push_send_fail_repeat, 1);
@@ -979,38 +982,69 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
         }
     }
     if (property_prove == nullptr) {
-        auto commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_id_state);
+        auto latest_commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_id_state);
+        base::enum_xvblock_class block_class = latest_commit_block->get_block_class();
+        uint32_t nil_block_num = 0;
+        xvblock_ptr_t non_nil_commit_block = nullptr;
+        uint64_t height = latest_commit_block->get_height();
+        if (block_class != base::enum_xvblock_class_nil) {
+            xvblock_t * _block = latest_commit_block.get();
+            _block->add_ref();
+            non_nil_commit_block.attach(_block);
+        } else {
+            while (block_class == base::enum_xvblock_class_nil && height > 0) {
+                nil_block_num++;
+                if (nil_block_num > 2) {
+                    xerror("xtxpool_service::send_table_receipt_id_state, continuous nil table block number is more than 2,table:%s,height:%llu", table_addr.c_str(), height);
+                }
 
-        if (commit_block->get_height() == 0) {
+                auto commit_block = m_para->get_vblockstore()->load_block_object(vaccount, height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
+                if (commit_block == nullptr) {
+                    xwarn("xtxpool_service::send_table_receipt_id_state load block fail,table:%s,height:%llu", table_addr.c_str(), height - 1);
+                    return;
+                }
+                height = commit_block->get_height();
+
+                if (commit_block->get_block_class() != base::enum_xvblock_class_nil) {
+                    xvblock_t * _block = commit_block.get();
+                    _block->add_ref();
+                    non_nil_commit_block.attach(_block);
+                    break;
+                }
+            }
+        }
+
+        if (height == 0 || block_class == base::enum_xvblock_class_nil) {
             xinfo("xtxpool_service::send_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
             return;
         }
-        auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block.get());
+
+        auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(non_nil_commit_block.get());
         if (bstate == nullptr) {
-            xwarn("xtxpool_service::send_receipt_id_state table:%s,height:%llu,get bstate fail", table_addr.c_str(), commit_block->get_height());
+            xwarn("xtxpool_service::send_receipt_id_state table:%s,height:%llu,get bstate fail", table_addr.c_str(), non_nil_commit_block->get_height());
             return;
         }
 
-        auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_id_state);
+        auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, non_nil_commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_id_state);
         if (cert_block == nullptr) {
-            xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), commit_block->get_height() + 2);
+            xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), non_nil_commit_block->get_height() + 2);
             return;
         }
 
         xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
         if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
-            xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), commit_block->get_height());
+            xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), non_nil_commit_block->get_height());
             return;
         }
-        property_prove = base::xpropertyprove_build_t::create_property_prove(commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
+        property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
         xassert(property_prove != nullptr);
         xassert(property_prove->is_valid());
 
         m_para->get_txpool()->update_peer_receipt_id_state(tablestate->get_receiptid_state());
         if (iter == m_table_info_cache.end()) {
-            m_table_info_cache.insert(std::make_pair(table_id, table_info(commit_block->get_height(), property_prove)));
+            m_table_info_cache.insert(std::make_pair(table_id, table_info(non_nil_commit_block->get_height(), property_prove)));
         } else {
-            iter->second.m_last_property_height = commit_block->get_height();
+            iter->second.m_last_property_height = non_nil_commit_block->get_height();
             iter->second.m_property_prove = property_prove;
         }
     }

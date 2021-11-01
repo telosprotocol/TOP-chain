@@ -119,33 +119,7 @@ xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwor
 // destroy useless txpool services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
-    // auto key = xcons_utl::erase_version(xip);
-    // auto key = xip;
     xinfo("xtxpool_service_mgr::destroy xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
-    // erase useless txpool service
-    bool need_cleanup = false;
-    base::enum_xchain_zone_index zone_id;
-    uint32_t fount_table_id;
-    uint32_t back_table_id;
-    common::xnode_type_t node_type;
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto iter = m_service_map.find(xip);
-        if (iter != m_service_map.end()) {
-            auto txpool_service = iter->second;
-            txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
-            need_cleanup = true;
-            m_service_map.erase(iter);
-        }
-    }
-
-    if (need_cleanup) {
-        // clear txpool tables corresponding to this service
-        m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
-    } else {
-        xinfo("xtxpool_service_mgr::destroy xip not found:{%" PRIu64 ", %" PRIu64 "}", xip.high_addr, xip.low_addr);
-    }
-
     return true;
 }
 
@@ -177,10 +151,28 @@ bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetw
 bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
     // auto key = xcons_utl::erase_version(xip);
     xinfo("xtxpool_service_mgr::unreg xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
-    std::shared_ptr<xtxpool_service_face> service = find(xip);
-    if (service != nullptr) {
-        service->unreg(xip);
-        return true;
+    bool need_cleanup = false;
+    base::enum_xchain_zone_index zone_id;
+    uint32_t fount_table_id;
+    uint32_t back_table_id;
+    common::xnode_type_t node_type;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        auto iter = m_service_map.find(xip);
+        if (iter != m_service_map.end()) {
+            auto txpool_service = iter->second;
+            txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
+            txpool_service->unreg(xip);
+            need_cleanup = true;
+            m_service_map.erase(iter);
+        }
+    }
+
+    if (need_cleanup) {
+        // clear txpool tables corresponding to this service
+        m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
+    } else {
+        xwarn("xtxpool_service_mgr::unreg xip not found:{%" PRIu64 ", %" PRIu64 "}", xip.high_addr, xip.low_addr);
     }
     return false;
 }

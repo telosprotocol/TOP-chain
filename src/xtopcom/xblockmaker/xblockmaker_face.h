@@ -132,8 +132,7 @@ class xtablemaker_para_t {
     xtablemaker_para_t() {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
-    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate)
-    : m_tablestate(tablestate) {
+    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate) : m_tablestate(tablestate) {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
     xtablemaker_para_t(const std::vector<xcons_transaction_ptr_t> & origin_txs)
@@ -174,6 +173,7 @@ class xtablemaker_para_t {
 
     mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
     mutable data::xtablestate_ptr_t         m_tablestate{nullptr};
+    mutable data::xtablestate_ptr_t         m_commit_tablestate{nullptr};
 };
 
 class xblock_maker_t : public base::xvaccount_t {
@@ -184,7 +184,7 @@ class xblock_maker_t : public base::xvaccount_t {
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
     void                        reset_latest_cert_block(const xblock_ptr_t & block);
-    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height);
+    bool                        load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_block_height);
     bool                        check_latest_blocks(const xblock_ptr_t & latest_block) const;
 
  public:
@@ -199,7 +199,7 @@ class xblock_maker_t : public base::xvaccount_t {
     xblock_ptr_t                get_prev_block_from_cache(const xblock_ptr_t & current) const;
 
  protected:
-    bool                        update_account_state(const xblock_ptr_t & latest_committed_block, uint64_t & lacked_block_height);
+    bool                        update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_block_height);
     void                        clear_old_blocks();
 
  private:

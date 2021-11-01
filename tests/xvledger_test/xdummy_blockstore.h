@@ -194,6 +194,14 @@ public:
     const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override {
         return "";
     }
+
+    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height) override {
+        return true;
+    }
+
+    const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override {
+        return "";
+    }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;
 
