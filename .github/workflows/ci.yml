@@ -35,7 +35,7 @@ jobs:
 
       - name: Build XTOP DEBUG
         run: |
-          bash .github/scripts/build_xtop.sh "test build_ci"
+          bash .github/scripts/build_xtop.sh "test build_ci chain_forked_by_default"
 
       - name: UnitTest
         run: |

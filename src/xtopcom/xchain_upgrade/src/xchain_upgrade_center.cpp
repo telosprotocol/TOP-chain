@@ -34,22 +34,22 @@ namespace top {
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6230880, "table receipt data fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6231000, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt data fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
         };
 
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6230880, "table receipt data fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6231000, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt data fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
         };
 
         // !!!change!!! fork time for local develop net
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6230880, "table receipt data fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6231000, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt data fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
 

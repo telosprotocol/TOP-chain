@@ -115,6 +115,7 @@ public:
 };
 
 
+#if 0
 TEST_F(test_table_slash_contract_other, table_slash_on_collect_statistic_info) {
     using namespace top::mock;
     xdatamock_unit  table_account{shard_table_slash_addr};
@@ -270,6 +271,7 @@ TEST_F(test_table_slash_contract_other, table_slash_report_statistic_info) {
     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 
 }
+#endif
 
 TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
     xunqualified_node_info_t  node_info;
