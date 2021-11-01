@@ -209,10 +209,19 @@ namespace top
             _header->set_block_type(_para.m_type);
             _header->set_last_full_block(_para.m_last_full_block_hash, _para.m_last_full_block_height);
             _header->set_extra_data(_para.m_extra_data);
+
+            if (xvblock_fork_t::instance().is_forked(_para.m_clock)) {
+                _header->set_block_version(xvblock_fork_t::get_block_fork_new_version());
+                xdbg("xvblockbuild_t::init_header set new version.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
+            } else {
+                _header->set_block_version(xvblock_fork_t::get_block_fork_old_version());
+                xdbg("xvblockbuild_t::init_header set old version.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
+            }
+
             set_header(_header.get());
         }
 
-        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block) {
+        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block, uint64_t _clock) {
             xauto_ptr<xvheader_t> _header = new xvheader_t();
             _header->set_chainid(block->get_chainid());
             _header->set_account(block->get_account());
@@ -228,6 +237,15 @@ namespace top
                 _header->set_last_full_block(block->get_last_full_block_hash(), block->get_last_full_block_height());
             }
             _header->set_extra_data(std::string());
+
+            if (xvblock_fork_t::instance().is_forked(_clock)) {
+                _header->set_block_version(xvblock_fork_t::get_block_fork_new_version());
+                xdbg("xvblockbuild_t::build_proposal_header set new version.account=%s,height=%ld,clock=%ld,version=0x%x",_header->get_account().c_str(),_header->get_height(),_clock,_header->get_block_version());
+            } else {
+                _header->set_block_version(xvblock_fork_t::get_block_fork_old_version());
+                xdbg("xvblockbuild_t::build_proposal_header set old version.account=%s,height=%ld,clock=%ld,version=0x%x",_header->get_account().c_str(),_header->get_height(),_clock,_header->get_block_version());
+            }
+
             return _header;
         }
 

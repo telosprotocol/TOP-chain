@@ -13,31 +13,43 @@ namespace top {
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
         };
 
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
         };
 
         // !!!change!!! fork time for local develop net
         xchain_fork_config_t default_chain_config {
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
         };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
         };
 
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
         };
 
         // !!!change!!! fork time for local develop net
         xchain_fork_config_t default_chain_config {
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
 
@@ -54,6 +66,24 @@ namespace top {
         bool xtop_chain_fork_config_center::is_forked(top::optional<xfork_point_t> const& fork_point, uint64_t target) noexcept {
             if (!fork_point.has_value()) return false;
             return  target >= fork_point.value().point;
+        }
+
+        bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
+            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::instance().get_chain_fork_config();
+            return  xtop_chain_fork_config_center::is_forked(_fork_config.block_fork_point, target);
+        }
+
+        void xtop_chain_fork_config_center::init() {
+            if (top::config::chain_name_mainnet == XGET_CONFIG(chain_name)) {
+                m_fork_config = mainnet_chain_config;
+                xinfo("xtop_chain_fork_config_center::init mainnet config");
+            } else if (top::config::chain_name_testnet == XGET_CONFIG(chain_name)) {
+                m_fork_config = testnet_chain_config;
+                xinfo("xtop_chain_fork_config_center::init testnet config");
+            } else {
+                m_fork_config = default_chain_config;
+                xinfo("xtop_chain_fork_config_center::init default config");
+            }
         }
     }
 }
