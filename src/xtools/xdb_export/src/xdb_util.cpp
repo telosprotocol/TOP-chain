@@ -1,6 +1,5 @@
 #include "../xdb_util.h"
 
-#include "../xdb_property.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xaction_parse.h"
@@ -12,9 +11,15 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
+#include "xdata/xtable_bstate.h"
 #include "xstake/xstake_algorithm.h"
 
+#define XPROPERTY_CONTRACT_ELECTION_RESULT_0_KEY  "@42_0"
+#define XPROPERTY_CONTRACT_ELECTION_RESULT_1_KEY  "@42_1"
+#define XPROPERTY_CONTRACT_ELECTION_RESULT_2_KEY  "@42_2"
+
 using namespace top::data;
+using namespace top::xstake;
 
 NS_BEG2(top, db_export)
 
@@ -53,20 +58,20 @@ static void parse_association_result_string(std::string const & str, json & j);
 static void parse_election_result_string(std::string const & str, json & j);
 
 static std::set<std::string> system_property = {
-    BALANCE_AVAILABLE,      // token
-    BALANCE_BURN,           // token
-    BALANCE_LOCK,           // token
-    BALANCE_PLEDGE_TGAS,    // token
-    BALANCE_PLEDGE_VOTE,    // token
-    LOCK_TGAS,              // uint64
-    USED_TGAS_KEY,          // string
-    LAST_TX_HOUR_KEY,       // string
-    PLEDGE_VOTE_KEY,        // map
-    EXPIRE_VOTE_TOKEN_KEY,  // string
-    UNVOTE_NUM,             // uint64
-    TX_INFO,                // map
-    ACCOUNT_CREATE_TIME,    // uint64
-    LOCK_TOKEN_KEY,         // map
+    XPROPERTY_BALANCE_AVAILABLE,      // token
+    XPROPERTY_BALANCE_BURN,           // token
+    XPROPERTY_BALANCE_LOCK,           // token
+    XPROPERTY_BALANCE_PLEDGE_TGAS,    // token
+    XPROPERTY_BALANCE_PLEDGE_VOTE,    // token
+    XPROPERTY_LOCK_TGAS,              // uint64
+    XPROPERTY_USED_TGAS_KEY,          // string
+    XPROPERTY_LAST_TX_HOUR_KEY,       // string
+    XPROPERTY_PLEDGE_VOTE_KEY,        // map
+    XPROPERTY_EXPIRE_VOTE_TOKEN_KEY,  // string
+    XPROPERTY_UNVOTE_NUM,             // uint64
+    XPROPERTY_TX_INFO,                // map
+    XPROPERTY_ACCOUNT_CREATE_TIME,    // uint64
+    XPROPERTY_LOCK_TOKEN_KEY,         // map
 };
 
 static std::set<std::string> user_property = {
@@ -125,10 +130,10 @@ static std::set<std::string> user_property = {
 };
 
 static std::set<std::string> tx_info_key = {
-    TX_INFO_LATEST_SENDTX_NUM,
-    TX_INFO_LATEST_SENDTX_HASH,
-    TX_INFO_RECVTX_NUM,
-    TX_INFO_UNCONFIRM_TX_NUM,
+    XPROPERTY_TX_INFO_LATEST_SENDTX_NUM,
+    XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
+    XPROPERTY_TX_INFO_RECVTX_NUM,
+    XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,
 };
 
 static std::unordered_map<common::xnode_type_t, std::string> node_type_map = {{common::xnode_type_t::consensus_auditor, "auditor"},
@@ -153,26 +158,27 @@ void property_json(xobject_ptr_t<base::xvbstate_t> const & state, json & j) {
 }
 
 static void system_property_json(xobject_ptr_t<base::xvbstate_t> const & state, std::string const & property, json & j) {
-    if (property == BALANCE_AVAILABLE || property == BALANCE_BURN || property == BALANCE_LOCK || property == BALANCE_PLEDGE_TGAS || property == BALANCE_PLEDGE_VOTE) {
+    if (property == XPROPERTY_BALANCE_AVAILABLE || property == XPROPERTY_BALANCE_BURN || property == XPROPERTY_BALANCE_LOCK || property == XPROPERTY_BALANCE_PLEDGE_TGAS ||
+        property == XPROPERTY_BALANCE_PLEDGE_VOTE) {
         auto token_property = state->load_token_var(property);
         auto balance = token_property->get_balance();
         j[property] = balance;
-    } else if (property == USED_TGAS_KEY || property == LAST_TX_HOUR_KEY || property == EXPIRE_VOTE_TOKEN_KEY) {
+    } else if (property == XPROPERTY_USED_TGAS_KEY || property == XPROPERTY_LAST_TX_HOUR_KEY || property == XPROPERTY_EXPIRE_VOTE_TOKEN_KEY) {
         auto string_property = state->load_string_var(property);
         auto string = string_property->query();
         j[property] = base::xstring_utl::touint64(string);
-    } else if (property == LOCK_TGAS || property == UNVOTE_NUM || property == ACCOUNT_CREATE_TIME) {
+    } else if (property == XPROPERTY_LOCK_TGAS || property == XPROPERTY_UNVOTE_NUM || property == XPROPERTY_ACCOUNT_CREATE_TIME) {
         auto uint64_property = state->load_uint64_var(property);
         auto integer = uint64_property->get();
         j[property] = integer;
-    } else if (property == PLEDGE_VOTE_KEY || property == TX_INFO || property == LOCK_TOKEN_KEY) {
+    } else if (property == XPROPERTY_PLEDGE_VOTE_KEY || property == XPROPERTY_TX_INFO || property == XPROPERTY_LOCK_TOKEN_KEY) {
         auto map_property = state->load_string_map_var(property);
         auto map = map_property->query();
-        if (property == PLEDGE_VOTE_KEY) {
+        if (property == XPROPERTY_PLEDGE_VOTE_KEY) {
             parse_pledge_vote_map(map, j[property]);
-        } else if (property == TX_INFO) {
+        } else if (property == XPROPERTY_TX_INFO) {
             parse_tx_info_map(map, j[property]);
-        } else if (property == LOCK_TOKEN_KEY) {
+        } else if (property == XPROPERTY_LOCK_TOKEN_KEY) {
             parse_lock_token_map(map, j[property]);
         }
     } else {
@@ -292,35 +298,35 @@ static void parse_pledge_vote_map(std::map<std::string, std::string> const & map
 
 static void parse_tx_info_map(std::map<std::string, std::string> const & map, json & j) {
     {
-        auto iter = map.find(TX_INFO_LATEST_SENDTX_NUM);
+        auto iter = map.find(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
         if (iter != map.end()) {
-            j[TX_INFO_LATEST_SENDTX_NUM] = base::xstring_utl::touint64(iter->second);
+            j[XPROPERTY_TX_INFO_LATEST_SENDTX_NUM] = base::xstring_utl::touint64(iter->second);
         } else {
-            j[TX_INFO_LATEST_SENDTX_NUM] = nullptr;
+            j[XPROPERTY_TX_INFO_LATEST_SENDTX_NUM] = nullptr;
         }
     }
     {
-        auto iter = map.find(TX_INFO_LATEST_SENDTX_HASH);
+        auto iter = map.find(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
         if (iter != map.end()) {
-            j[TX_INFO_LATEST_SENDTX_HASH] = base::xstring_utl::to_hex(iter->second);
+            j[XPROPERTY_TX_INFO_LATEST_SENDTX_HASH] = base::xstring_utl::to_hex(iter->second);
         } else {
-            j[TX_INFO_LATEST_SENDTX_HASH] = nullptr;
+            j[XPROPERTY_TX_INFO_LATEST_SENDTX_HASH] = nullptr;
         }
     }
     {
-        auto iter = map.find(TX_INFO_RECVTX_NUM);
+        auto iter = map.find(XPROPERTY_TX_INFO_RECVTX_NUM);
         if (iter != map.end()) {
-            j[TX_INFO_RECVTX_NUM] = base::xstring_utl::touint64(iter->second);
+            j[XPROPERTY_TX_INFO_RECVTX_NUM] = base::xstring_utl::touint64(iter->second);
         } else {
-            j[TX_INFO_RECVTX_NUM] = nullptr;
+            j[XPROPERTY_TX_INFO_RECVTX_NUM] = nullptr;
         }
     }
     {
-        auto iter = map.find(TX_INFO_UNCONFIRM_TX_NUM);
+        auto iter = map.find(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
         if (iter != map.end()) {
-            j[TX_INFO_UNCONFIRM_TX_NUM] = base::xstring_utl::touint64(iter->second);
+            j[XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM] = base::xstring_utl::touint64(iter->second);
         } else {
-            j[TX_INFO_UNCONFIRM_TX_NUM] = nullptr;
+            j[XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM] = nullptr;
         }
     }
 }
