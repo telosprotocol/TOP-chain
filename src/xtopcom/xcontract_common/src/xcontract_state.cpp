@@ -518,4 +518,111 @@ void xtop_contract_state::transfer_internal(state_accessor::properties::xpropert
     top::error::throw_error(ec);
 }
 
+std::map<std::string, xstake::xreward_dispatch_task> xtop_contract_state::delay_followup(std::error_code & ec) const {
+    state_accessor::properties::xproperty_identifier_t property_id{
+        xstake::XPORPERTY_CONTRACT_TASK_KEY, state_accessor::properties::xproperty_type_t::map, state_accessor::properties::xproperty_category_t::user};
+    if (!property_exist(property_id, ec)) {
+        m_state_accessor->create_property(property_id, ec);
+        if (ec) {
+            return {};
+        }
+    }
+    auto tasks_ser =
+        get_property<state_accessor::properties::xproperty_type_t::map>(state_accessor::properties::xtypeless_property_identifier_t{xstake::XPORPERTY_CONTRACT_TASK_KEY}, ec);
+    if (ec) {
+        return {};
+    }
+    std::map<std::string, xstake::xreward_dispatch_task> res;
+    for (auto const & pair : tasks_ser) {
+        xstake::xreward_dispatch_task task;
+        auto str = top::from_bytes<std::string>(pair.second);
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)str.c_str(), (uint32_t)str.size());
+        task.serialize_from(stream);
+        res.insert(std::make_pair(pair.first, task));
+    }
+    return res;
+}
+
+std::map<std::string, xstake::xreward_dispatch_task> xtop_contract_state::delay_followup() const {
+    std::error_code ec;
+    auto r = delay_followup(ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+void xtop_contract_state::delay_followup(xstake::xreward_dispatch_task const & task, std::error_code & ec) {
+    auto const & tasks = delay_followup(ec);
+    if (ec) {
+        return;
+    }
+    uint32_t task_id = 0;
+    if (tasks.size() > 0) {
+        auto it = tasks.end();
+        it--;
+        task_id = base::xstring_utl::touint32(it->first);
+        task_id++;
+    }
+
+    state_accessor::properties::xtypeless_property_identifier_t property{xstake::XPORPERTY_CONTRACT_TASK_KEY};
+    base::xstream_t stream(base::xcontext_t::instance());
+    task.serialize_to(stream);
+    std::stringstream ss;
+    ss << std::setw(10) << std::setfill('0') << task_id;
+    auto key = ss.str();
+    auto value = std::string((char *)stream.data(), stream.size());
+    m_state_accessor->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(property, key, top::to_bytes(value), ec);
+}
+
+void xtop_contract_state::delay_followup(xstake::xreward_dispatch_task const & task) {
+    std::error_code ec;
+    delay_followup(task, ec);
+    top::error::throw_error(ec);
+}
+
+void xtop_contract_state::delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks, std::error_code & ec) {
+    auto const & prev_tasks = delay_followup(ec);
+    if (ec) {
+        return;
+    }
+    uint32_t task_id = 0;
+    if (prev_tasks.size() > 0) {
+        auto it = prev_tasks.end();
+        it--;
+        task_id = base::xstring_utl::touint32(it->first);
+        task_id++;
+    }
+
+    state_accessor::properties::xtypeless_property_identifier_t property{xstake::XPORPERTY_CONTRACT_TASK_KEY};
+    for (auto const & task : tasks) {
+        base::xstream_t stream(base::xcontext_t::instance());
+        task.serialize_to(stream);
+        std::stringstream ss;
+        ss << std::setw(10) << std::setfill('0') << task_id;
+        auto key = ss.str();
+        auto value = std::string((char *)stream.data(), stream.size());
+        m_state_accessor->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(property, key, top::to_bytes(value), ec);
+        if (ec) {
+            return;
+        }
+        task_id++;
+    }
+}
+
+void xtop_contract_state::delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks) {
+    std::error_code ec;
+    delay_followup(tasks, ec);
+    top::error::throw_error(ec);
+}
+
+void xtop_contract_state::remove_delay_followup(std::string const & key, std::error_code & ec) {
+    state_accessor::properties::xtypeless_property_identifier_t property{xstake::XPORPERTY_CONTRACT_TASK_KEY};
+    remove_property_cell<state_accessor::properties::xproperty_type_t::map>(property, key, ec);
+}
+
+void xtop_contract_state::remove_delay_followup(std::string const & key) {
+    std::error_code ec;
+    remove_delay_followup(key, ec);
+    top::error::throw_error(ec);
+}
+
 NS_END2

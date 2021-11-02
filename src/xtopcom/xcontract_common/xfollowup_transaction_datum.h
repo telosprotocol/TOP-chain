@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
+#include "xcommon/xaccount_address.h"
 #include "xdata/xcons_transaction.h"
 
 NS_BEG2(top, contract_common)
@@ -22,6 +23,31 @@ enum class xenum_followup_transaction_execute_type {
     fail
 };
 using xfollowup_transaction_execute_type_t = xenum_followup_transaction_execute_type;
+
+enum class xenum_delay_followup_type {
+    invalid,
+    call,
+    transfer,
+};
+using xdelay_followup_type_t = xenum_delay_followup_type;
+
+struct xtop_followup_transaction_delay_param {
+    xdelay_followup_type_t type;
+    uint64_t time;
+    common::xaccount_address_t target_address;
+    std::string method_name;
+    std::string method_params;
+
+    xtop_followup_transaction_delay_param() = default;
+    xtop_followup_transaction_delay_param(xdelay_followup_type_t type_,
+                                          uint64_t time_,
+                                          common::xaccount_address_t const & addr_,
+                                          std::string const & method_name_,
+                                          std::string const & method_params_)
+      : type(type_), time(time_), target_address(addr_), method_name(method_name_), method_params(method_params_) {
+    }
+};
+using xfollowup_transaction_delay_param_t = xtop_followup_transaction_delay_param;
 
 struct xtop_followup_transaction_datum {
     xtop_followup_transaction_datum() = default;

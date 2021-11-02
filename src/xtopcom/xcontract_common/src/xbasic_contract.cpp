@@ -11,6 +11,7 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_v2.h"
+#include "xstake/xstake_algorithm.h"
 
 #include <cassert>
 #include <iostream>
@@ -309,6 +310,97 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
     std::error_code ec;
     transfer(target_addr, amount, type, ec);
     top::error::throw_error(ec);
+}
+
+void xtop_basic_contract::delay_followup(xfollowup_transaction_delay_param_t const & param) {
+    xstake::xreward_dispatch_task task;
+    task.onchain_timer_round = param.time;
+    task.contract = param.target_address.value();
+    task.action = param.method_name;
+    if (task.action == xstake::XTRANSFER_ACTION) {
+        std::map<std::string, uint64_t> map;
+        base::xstream_t stream(base::xcontext_t::instance());
+        map.emplace(task.contract, base::xstring_utl::touint64(task.params));
+        stream << map;
+        task.params = std::string((char *)stream.data(), stream.size());
+    } else {
+        task.params = param.method_params;
+    }
+    m_associated_execution_context->contract_state()->delay_followup(task);
+}
+
+void xtop_basic_contract::delay_followup(std::vector<xfollowup_transaction_delay_param_t> const & params) {
+    std::vector<xstake::xreward_dispatch_task> tasks;
+    for (auto const & param : params) {
+        xstake::xreward_dispatch_task task;
+        task.onchain_timer_round = param.time;
+        task.contract = param.target_address.value();
+        task.action = param.method_name;
+        if (task.action == xstake::XTRANSFER_ACTION) {
+            std::map<std::string, uint64_t> map;
+            base::xstream_t stream(base::xcontext_t::instance());
+            map.emplace(task.contract, base::xstring_utl::touint64(param.method_params));
+            stream << map;
+            task.params = std::string((char *)stream.data(), stream.size());
+        } else {
+            task.params = param.method_params;
+        }
+        tasks.emplace_back(task);
+    }
+    m_associated_execution_context->contract_state()->delay_followup(tasks);
+}
+
+void xtop_basic_contract::exec_delay_followup() {
+    // only for reward contract now
+    if (m_associated_execution_context->deployed_contract_address() != common::xaccount_address_t{sys_contract_zec_reward_addr}) {
+        return;
+    }
+    auto tasks = m_associated_execution_context->contract_state()->delay_followup();
+    const uint32_t task_num_per_round = 16;
+    xinfo("[xtop_basic_contract::exec_delay_followup] tasks size: %lu, task_num_per_round: %u\n", tasks.size(), task_num_per_round);
+
+    for (size_t i = 0; i < task_num_per_round; i++) {
+        auto it = tasks.begin();
+        if (it == tasks.end()) {
+            return;
+        }
+        auto const id = it->first;
+        auto const task = it->second;
+        if (task.action == xstake::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == xstake::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
+            // debug output
+            base::xstream_t stream_params(base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
+            uint64_t onchain_timer_round;
+            std::map<std::string, top::xstake::uint128_t> rewards;
+            stream_params >> onchain_timer_round;
+            stream_params >> rewards;
+            for (auto const & r : rewards) {
+                xinfo("[xzec_reward_contract::execute_task] contract: %s, action: %s, account: %s, reward: [%llu, %u], onchain_timer_round: %llu\n",
+                      task.contract.c_str(),
+                      task.action.c_str(),
+                      r.first.c_str(),
+                      static_cast<uint64_t>(r.second / xstake::REWARD_PRECISION),
+                      static_cast<uint32_t>(r.second % xstake::REWARD_PRECISION),
+                      task.onchain_timer_round);
+            }
+            call(common::xaccount_address_t{task.contract}, task.action, task.params, xfollowup_transaction_schedule_type_t::immediately);
+        } else if (task.action == xstake::XTRANSFER_ACTION) {
+            // issuances stored in task.params
+            std::map<std::string, uint64_t> issuances;
+            base::xstream_t seo_stream(base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
+            seo_stream >> issuances;
+            for (auto const & issue : issuances) {
+                xinfo("[xtop_basic_contract::exec_delay_followup] action: %s, contract account: %s, issuance: %llu, onchain_timer_round: %llu\n",
+                      task.action.c_str(),
+                      issue.first.c_str(),
+                      issue.second,
+                      task.onchain_timer_round);
+                transfer(common::xaccount_address_t{issue.first}, issue.second, xfollowup_transaction_schedule_type_t::immediately);
+            }
+        }
+
+        m_associated_execution_context->contract_state()->remove_delay_followup(id);
+        tasks.erase(it);
+    }
 }
 
 std::vector<xfollowup_transaction_datum_t> xtop_basic_contract::followup_transaction() const {

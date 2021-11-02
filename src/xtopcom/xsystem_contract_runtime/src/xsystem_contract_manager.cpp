@@ -27,6 +27,7 @@
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract_new.h"
+#include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
 
 NS_BEG3(top, contract_runtime, system)
 
@@ -100,6 +101,15 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
         xsniff_timer_config_t{config::xzec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
         xsniff_block_config_t{},
+        blockstore);
+
+    deploy_system_contract<system_contracts::xzec_reward_contract_new_t>(
+        common::xaccount_address_t{sys_contract_zec_reward_addr},
+        common::xnode_type_t::zec,
+        xsniff_type_t::timer | xsniff_type_t::block,
+        {},
+        xsniff_timer_config_t{config::xreward_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        {},
         blockstore);
 
     deploy_system_contract<system_contracts::xtable_statistic_info_collection_contract_new>(

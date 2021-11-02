@@ -100,31 +100,19 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
         return result;
     }
 
-    if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::recv) {
+    if (observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::recv) {
         if (!receipt_data.empty()) {
-            execution_context->input_receipt_data(cons_action->receipt_data());
+            observed_exectx->input_receipt_data(cons_action->receipt_data());
         }
     }
 
-    if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::confirm) {
+    if (observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::confirm) {
         return result;
     }
 
-    auto start_bin_size = observed_exectx->contract_state()->binlog_size();
     result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;
-    }
-    auto end_bin_size = observed_exectx->contract_state()->binlog_size();
-
-    xdbg("[xtop_action_session::xtop_action_session] op code size, " PRIu64 " -> " PRIu64, start_bin_size, end_bin_size);
-    if (execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::send ||
-        execution_context->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
-        if (start_bin_size == end_bin_size) {
-            // not a fatal error
-            xwarn("[xtop_action_session::xtop_action_session] op code not changed");
-            // result.status.ec = error::xenum_errc::enum_bin_code_not_changed;
-        }
     }
 
     return result;
