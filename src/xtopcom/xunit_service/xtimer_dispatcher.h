@@ -22,6 +22,8 @@ public:
 public:
     virtual bool start(const xvip2_t &xip, const common::xlogic_time_t& start_time);
 
+    virtual bool fade(const xvip2_t &xip);
+
     virtual bool unreg(const xvip2_t &xip);
 
     virtual bool destroy(const xvip2_t &xip);

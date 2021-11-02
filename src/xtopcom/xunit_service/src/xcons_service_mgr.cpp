@@ -194,6 +194,19 @@ bool xcons_service_mgr::start(const xvip2_t & xip, const common::xlogic_time_t& 
     return false;
 }
 
+bool xcons_service_mgr::fade(const xvip2_t & xip) {
+    auto key_ = xcons_utl::erase_version(xip);
+    xkinfo(" [xunitservice] consrv_mgr fade consensus proxy:%s, key:%s", xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(key_).c_str());
+    std::vector<std::shared_ptr<xcons_service_face>> services;
+    if (!find(key_, &services)) {
+        for (auto service : services) {
+            service->fade(xip);
+        }
+        return true;
+    }
+    return false;
+}
+
 // uninit data
 bool xcons_service_mgr::unreg(const xvip2_t & xip) {
     xkinfo(" [xunitservice] consrv_mgr unreg consensus proxy %s", xcons_utl::xip_to_hex(xip).c_str());

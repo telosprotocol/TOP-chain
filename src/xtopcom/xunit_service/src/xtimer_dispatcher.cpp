@@ -40,6 +40,19 @@ bool xtimer_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t
     return true;
 }
 
+bool xtimer_dispatcher_t::fade(const xvip2_t & xip) {
+    xunit_info("xtimer_dispatcher_t::fade %s %p fade", xcons_utl::xip_to_hex(xip).c_str(), this);
+    auto async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+        auto packer = dynamic_cast<xtimer_picker_t *>(call.get_param1().get_object());
+        packer->set_fade_xip_addr(xip);
+        xunit_info("[xtimer_dispatcher_t::fade] with xip {%" PRIx64 ", %" PRIx64 "} done", xip.high_addr, xip.low_addr);
+        return true;
+    };
+    base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)m_picker);
+    ((xconsensus::xcsaccount_t *)m_picker)->send_call(asyn_call);
+    return true;
+}
+
 bool xtimer_dispatcher_t::unreg(const xvip2_t & xip) {
     xunit_info("xtimer_dispatcher_t::unreg %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     return true;

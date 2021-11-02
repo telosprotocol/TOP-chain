@@ -49,6 +49,12 @@ void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, comm
     }
 }
 
+void xtop_vnode_role_proxy::fade(common::xnode_address_t const & address) {
+    if (!is_edge_archive(address.type()) && !is_frozen(address.type())) {
+        m_cons_mgr->fade(address.xip2());
+    }
+}
+
 void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
     m_node_address_set.erase(address);
     update_modules_node_type();

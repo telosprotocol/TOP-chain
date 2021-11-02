@@ -20,6 +20,9 @@ public:
                     std::shared_ptr<xcons_service_para_face> const & para,
                     std::shared_ptr<xblock_maker_face> const &       block_maker);
 
+public:
+    bool set_fade_xip_addr(const xvip2_t & new_addr);
+
 protected:
     bool on_view_fire(const base::xvevent_t & event, xconsensus::xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
     bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
@@ -37,7 +40,10 @@ protected:
     std::shared_ptr<xcons_service_para_face> m_params{};
     observer_ptr<xleader_election_face>      m_leader_selector{};
     std::shared_ptr<xblock_maker_face>       m_block_maker{};
-    mbus::xmessage_bus_face_t               *m_bus{};
+    mbus::xmessage_bus_face_t               *m_bus{};    
+
+    // fade xip. fade version should not make new proposal
+    xvip2_t                                  m_faded_xip2{};
 };
 
 NS_END2

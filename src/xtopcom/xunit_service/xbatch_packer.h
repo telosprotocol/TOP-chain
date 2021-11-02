@@ -48,6 +48,7 @@ public:
     virtual int  verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) override;
 
     virtual bool reset_xip_addr(const xvip2_t & new_addr);
+    virtual bool set_fade_xip_addr(const xvip2_t & new_addr);
     virtual bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     virtual bool set_start_time(const common::xlogic_time_t& start_time);
@@ -91,6 +92,8 @@ private:
     bool                                     m_leader_packed{false};
     uint64_t                                 m_last_view_clock{0};
 
+    // fade xip. fade version should not make new proposal
+    xvip2_t                                  m_faded_xip2{};
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;

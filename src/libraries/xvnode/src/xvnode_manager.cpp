@@ -244,6 +244,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
             case common::xrotation_status_t::faded: {
                 if (!vnode->faded() && vnode->running()) {
                     vnode->fade();
+                    m_vnode_proxy->fade(vnode->address());
 
                     xwarn("[vnode mgr] vnode (%p) at address %s fades at logic time %" PRIu64 " current logic time %" PRIu64,
                           vnode.get(),

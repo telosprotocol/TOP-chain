@@ -56,6 +56,7 @@ public:
 
     void create(vnetwork::xvnetwork_driver_face_ptr_t const & vnetwork) override;
     void change(common::xnode_address_t const & address, common::xlogic_time_t start_time) override;
+    void fade(common::xnode_address_t const & address) override;
     void unreg(common::xnode_address_t const & address) override;
     void destroy(common::xnode_address_t const & address) override;
 

@@ -52,7 +52,18 @@ xtimer_picker_t::~xtimer_picker_t() {
     xunit_info("xtimer_picker_t::~xtimer_picker_t,destroy,this=%p", this);
 }
 
+bool xtimer_picker_t::set_fade_xip_addr(const xvip2_t & new_addr) {
+    xdbg("xtimer_picker_t::set_fade_xip_addr set fade xip from %s to %s", xcons_utl::xip_to_hex(m_faded_xip2).c_str(), xcons_utl::xip_to_hex(new_addr).c_str());
+    m_faded_xip2 = new_addr;
+    return true;
+}
+
 bool xtimer_picker_t::on_view_fire(const base::xvevent_t & event, xconsensus::xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
+    if (xcons_utl::xip_equals(m_faded_xip2, get_xip2_addr())) {
+        xdbg_info("xtimer_picker_t::on_view_fire local_xip equal m_fade_xip2 %s . fade round should not make proposal", xcons_utl::xip_to_hex(m_faded_xip2).c_str());
+        return false;
+    }
+
     auto const & view_event = (xconsensus::xcsview_fire const &)event;
     if(m_cur_view < view_event.get_viewid()) {
         m_cur_view = view_event.get_viewid();
