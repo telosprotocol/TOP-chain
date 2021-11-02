@@ -102,39 +102,18 @@ bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) co
         std::string action_params = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
         xdbg("[xtop_sniffer::sniff_timer] make tx, action: %s, params size: %zu", config.timer_config.action.c_str(), action_params.size());
 
-        if (contract_address == common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}) {
+        switch (config.timer_config.strategy) {
+            case top::contract_runtime::xtimer_strategy_type_t::normal:
+                normal_timer_func(contract_address, config.timer_config, action_params, timestamp);
+                break;
 
-            int table_num = m_the_binding_driver->table_ids().size();
-            if (table_num == 0) {
-                xwarn("[xtop_sniffer::sniff_timer] table_ids empty\n");
-                return false;
-            }
 
-            int clock_interval = 1;
-            clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
+            case top::contract_runtime::xtimer_strategy_type_t::table:
+                table_timer_func(contract_address, config.timer_config, action_params, timestamp, height);
+                break;
 
-            if (m_table_contract_schedule.find(contract_address) != m_table_contract_schedule.end()) {
-                auto& schedule_info = m_table_contract_schedule[contract_address];
-                schedule_info.target_interval = clock_interval;
-                schedule_info.cur_interval++;
-                if (schedule_info.cur_interval == schedule_info.target_interval) {
-                    schedule_info.cur_table = m_the_binding_driver->table_ids().at(0) +  static_cast<uint16_t>((height / clock_interval) % table_num);
-                    xinfo("[xtop_sniffer::sniff_timer] table contract schedule, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
-                        contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
-                    call(contract_address, config.timer_config.action, action_params, timestamp, schedule_info.cur_table);
-                    schedule_info.cur_interval = 0;
-                }
-            } else { // have not schedule yet
-                xtable_schedule_info_t schedule_info(clock_interval, m_the_binding_driver->table_ids().at(0) + static_cast<uint16_t>((height / clock_interval) % table_num));
-                xinfo("[xtop_sniffer::sniff_timer] table contract schedule initial, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
-                        contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
-                call(contract_address, config.timer_config.action, action_params, timestamp, schedule_info.cur_table);
-                m_table_contract_schedule[contract_address] = schedule_info;
-            }
-
-        } else {
-            xdbg("xtop_sniffer::sniff_timer: make tx, action: %s, params: %s", config.timer_config.action.c_str(), action_params.c_str());
-            call(contract_address, config.timer_config.action, action_params, timestamp);
+            default:
+                assert(false); // invalid
         }
 
     }
@@ -255,6 +234,39 @@ bool xtop_sniffer::trigger_first_timer_call(common::xaccount_address_t const & a
     auto const account = m_store->query_account(address.value());
     xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.c_str(), account->get_chain_height());
     return 0 == account->get_chain_height();
+}
+
+void xtop_sniffer::table_timer_func(common::xaccount_address_t const& contract_address, top::contract_runtime::xsniff_timer_config_t const& timer_config,
+                                            std::string const& action_params, uint64_t timestamp, uint64_t height) const {
+    int table_num = m_vnode->vnetwork_driver()->table_ids().size();
+    if (table_num == 0) {
+        xwarn("[xtop_vnode_sniff::table_timer_func] table_ids empty\n");
+        return;
+    }
+
+    int clock_interval = 1;
+    clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
+
+    if (m_table_contract_schedule.find(contract_address) != m_table_contract_schedule.end()) {
+        auto& schedule_info = m_table_contract_schedule[contract_address];
+        schedule_info.cur_table = m_vnode->vnetwork_driver()->table_ids().at(0) +  static_cast<uint16_t>((height / clock_interval) % table_num);
+        xinfo("[xtop_vnode_sniff::table_timer_func] table contract schedule, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
+            contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
+        call(contract_address, timer_config.action, action_params, timestamp, schedule_info.cur_table);
+
+    } else { // have not schedule yet
+        xtable_schedule_info_t schedule_info(clock_interval, m_vnode->vnetwork_driver()->table_ids().at(0) + static_cast<uint16_t>((height / clock_interval) % table_num));
+        xinfo("[xtop_vnode_sniff::table_timer_func] table contract schedule initial, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
+                contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
+        call(contract_address, timer_config.action, action_params, timestamp, schedule_info.cur_table);
+        m_table_contract_schedule[contract_address] = schedule_info;
+    }
+}
+
+void xtop_sniffer::normal_timer_func(common::xaccount_address_t const& contract_address, top::contract_runtime::xsniff_timer_config_t const& timer_config,
+                                             std::string const& action_params, uint64_t timestamp) const {
+    xdbg("xtop_vnode_sniff::normal_timer_func: make tx, action: %s, params: %s", timer_config.action.c_str(), action_params.c_str());
+    call(contract_address, timer_config.action, action_params, timestamp);
 }
 
 void xtop_sniffer::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {

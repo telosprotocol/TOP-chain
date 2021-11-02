@@ -59,9 +59,17 @@ public:
 };
 using xtimer_config_data_t = xtop_timer_config_data;
 
+enum class xtop_timer_strategy_type: uint8_t {
+    invalid,
+    normal,
+    table
+};
+using xtimer_strategy_type_t = xtop_timer_strategy_type;
+
 struct xtop_sniff_timer_config {
     xtimer_config_data_t timer_config_data{};
     std::string action{};
+    xtimer_strategy_type_t strategy{};
 
     xtop_sniff_timer_config() = default;
     xtop_sniff_timer_config(xtop_sniff_timer_config const &) = default;
@@ -70,8 +78,8 @@ struct xtop_sniff_timer_config {
     xtop_sniff_timer_config & operator=(xtop_sniff_timer_config &&) = default;
     ~xtop_sniff_timer_config() = default;
 
-    explicit xtop_sniff_timer_config(uint32_t interval, std::string action);
-    explicit xtop_sniff_timer_config(std::string tcc_config_name, std::string action);
+    explicit xtop_sniff_timer_config(uint32_t interval, std::string action, xtimer_strategy_type_t strategy);
+    explicit xtop_sniff_timer_config(std::string tcc_config_name, std::string action, xtimer_strategy_type_t strategy);
 };
 using xsniff_timer_config_t = xtop_sniff_timer_config;
 

@@ -43,7 +43,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
                                                                             common::xnode_type_t::rec,
                                                                             xsniff_type_t::timer,
                                                                             xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-                                                                            xsniff_timer_config_t{config::xrec_election_interval_onchain_goverance_parameter_t::name, "on_timer"},
+                                                                            xsniff_timer_config_t{config::xrec_election_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
                                                                             xsniff_block_config_t{},
                                                                             blockstore);
 
@@ -51,7 +51,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
                                                                             common::xnode_type_t::rec,
                                                                             xsniff_type_t::timer,
                                                                             xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-                                                                            xsniff_timer_config_t{config::xzec_election_interval_onchain_goverance_parameter_t::name, "on_timer"},
+                                                                            xsniff_timer_config_t{config::xzec_election_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
                                                                             xsniff_block_config_t{},
                                                                             blockstore);
 
@@ -60,7 +60,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         common::xnode_type_t::rec,
         xsniff_type_t::timer,
         xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-        xsniff_timer_config_t{config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        xsniff_timer_config_t{config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
         xsniff_block_config_t{},
         blockstore);
 
@@ -72,7 +72,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         common::xnode_type_t::rec,
         xsniff_type_t::timer,
         xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-        xsniff_timer_config_t{config::xarchive_election_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        xsniff_timer_config_t{config::xarchive_election_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
         xsniff_block_config_t{},
         blockstore);
 
@@ -80,7 +80,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
                                                                              common::xnode_type_t::rec,
                                                                              xsniff_type_t::timer,
                                                                              xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-                                                                             xsniff_timer_config_t{config::xedge_election_interval_onchain_goverance_parameter_t::name, "on_timer"},
+                                                                             xsniff_timer_config_t{config::xedge_election_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
                                                                              xsniff_block_config_t{},
                                                                              blockstore);
 
@@ -89,7 +89,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         common::xnode_type_t::zec,
         xsniff_type_t::timer,
         xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-        xsniff_timer_config_t{config::xzone_election_trigger_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        xsniff_timer_config_t{config::xzone_election_trigger_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
         xsniff_block_config_t{},
         blockstore);
 
@@ -98,7 +98,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         common::xnode_type_t::zec,
         xsniff_type_t::timer,
         xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_broadcast_policy_t::all_block},
-        xsniff_timer_config_t{config::xzec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer"},
+        xsniff_timer_config_t{config::xzec_standby_pool_update_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
         xsniff_block_config_t{},
         blockstore);
 
@@ -107,7 +107,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         common::xnode_type_t::consensus_validator,
         xsniff_type_t::timer | xsniff_type_t::block,
         xsniff_broadcast_config_t{},
-        xsniff_timer_config_t{config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::name, "report_summarized_statistic_info"},
+        xsniff_timer_config_t{config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::name, "report_summarized_statistic_info", xtimer_strategy_type_t::table},
         xsniff_block_config_t{
             common::xaccount_address_t{sys_contract_sharding_table_block_addr}, common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, "on_collect_statistic_info"},
         blockstore);

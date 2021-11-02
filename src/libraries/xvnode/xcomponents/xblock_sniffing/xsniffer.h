@@ -35,10 +35,8 @@ private:
     observer_ptr<base::xvnodesrv_t> m_nodesvr;
     observer_ptr<contract_runtime::system::xsystem_contract_manager_t> m_system_contract_manager;
     observer_ptr<xvnode_face_t> m_vnode;
-    observer_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
-    observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> m_txpool_face;
     mutable std::map<common::xaccount_address_t, xrole_config_t> m_config_map;
-    mutable std::unordered_map<common::xaccount_address_t, xtable_schedule_info_t>      m_table_contract_schedule; // table schedule
+    mutable std::unordered_map<common::xaccount_address_t, xtable_schedule_info_t> m_table_contract_schedule; // table schedule
 
 public:
     xtop_sniffer(xtop_sniffer const &) = delete;
@@ -58,7 +56,7 @@ public:
     bool sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) const;
     xsniffer_config_t sniff_config() const;
 
-    
+
     void call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const;
     void call(common::xaccount_address_t const& address, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint64_t table_id) const;
     void call(common::xaccount_address_t const & source_address,
@@ -70,6 +68,8 @@ public:
 private:
     bool is_valid_timer_call(common::xaccount_address_t const & address, xrole_config_t & data, const uint64_t height) const;
     bool trigger_first_timer_call(common::xaccount_address_t const & address) const;
+    void table_timer_func(common::xaccount_address_t const& contract_address, top::contract_runtime::xsniff_timer_config_t const& timer_config, std::string const& action_params, uint64_t timestamp, uint64_t height) const;
+    void normal_timer_func(common::xaccount_address_t const& contract_address, top::contract_runtime::xsniff_timer_config_t const& timer_config, std::string const& action_params, uint64_t timestamp) const;
 };
 
 using xsniffer_t = xtop_sniffer;
