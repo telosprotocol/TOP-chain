@@ -101,6 +101,7 @@ public:
     uint64_t state_height(common::xaccount_address_t const & address = common::xaccount_address_t{}) const;
     bool block_exist(common::xaccount_address_t const & address, uint64_t height) const;
     std::vector<xfollowup_transaction_datum_t> followup_transaction() const;
+    void exec_delay_followup();
 
 protected:
     observer_ptr<properties::xproperty_initializer_t const> property_initializer() const noexcept;
@@ -186,6 +187,8 @@ protected:
                    xfollowup_transaction_schedule_type_t type = xfollowup_transaction_schedule_type_t::invalid);
     void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec);
     void transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type);
+    void delay_followup(xfollowup_transaction_delay_param_t const & param);
+    void delay_followup(std::vector<xfollowup_transaction_delay_param_t> const & params);
 };
 
 NS_END2

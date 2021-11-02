@@ -115,6 +115,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         input_txs[0]->get_source_addr() == sys_contract_zec_group_assoc_addr) {
         new_vm = true;
     }
+    if (input_txs[0]->get_source_addr() == sys_contract_zec_reward_addr || input_txs[0]->get_target_addr() == sys_contract_zec_reward_addr) {
+        new_vm = true;
+    }
     if (new_vm) {
         for (auto const & tx : input_txs) {
             xdbg("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());

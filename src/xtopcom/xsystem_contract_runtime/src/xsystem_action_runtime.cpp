@@ -31,7 +31,19 @@ xtransaction_execution_result_t xtop_action_runtime<data::xsystem_consensus_acti
         exe_ctx->system_contract(std::bind(&system::xsystem_contract_manager_t::system_contract, system_contract_manager_, std::placeholders::_1));
         auto system_contract = system_contract_manager_->system_contract(exe_ctx->deployed_contract_address());
         assert(system_contract != nullptr);
+
+        auto start_bin_size = exe_ctx->contract_state()->binlog_size();
         result = system_contract->execute(exe_ctx);
+        auto end_bin_size = exe_ctx->contract_state()->binlog_size();
+        xdbg("[xtop_action_session::xtop_action_session] op code size, %" PRIu64 " -> %" PRIu64, start_bin_size, end_bin_size);
+        if (exe_ctx->consensus_action_stage() == data::xconsensus_action_stage_t::send || exe_ctx->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
+            if (start_bin_size == end_bin_size) {
+                // not a fatal error
+                xwarn("[xtop_action_session::xtop_action_session] op code not changed");
+                system_contract->exec_delay_followup();
+            }
+        }
+
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
