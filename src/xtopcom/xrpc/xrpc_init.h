@@ -8,7 +8,7 @@
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "xrpc/xcluster/xcluster_rpc_handler.h"
 #include "xbase/xobject_ptr.h"
-#include "xdata/xtransaction_cache.h"
+#include "xtxstore/xtxstore_face.h"
 
 NS_BEG2(top, xrpc)
 class xrpc_init
@@ -22,9 +22,9 @@ public:
               xtxpool_service_v2::xtxpool_proxy_face_ptr const &  txpool_service,
               observer_ptr<store::xstore_face_t> const & store,
               observer_ptr<base::xvblockstore_t> const & block_store,
+              observer_ptr<base::xvtxstore_t> const & txstore,
               observer_ptr<elect::ElectMain> elect_main,
-              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-              observer_ptr<data::xtransaction_cache_t> const & transaction_cache);
+              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     void stop();
 

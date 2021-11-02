@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include "xbasic/xmemory.hpp"
 #include "xbase/xobject_ptr.h"
+#include "xbasic/xmemory.hpp"
+#include "xbasic/xtimer_driver_fwd.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xchain_param.h"
+#include "xdata/xtransaction_cache.h"
 #include "xelect_net/include/elect_main.h"
 #include "xelection/xcache/xgroup_element.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
@@ -16,16 +18,14 @@
 #include "xrouter/xrouter.h"
 #include "xrpc/xrpc_init.h"
 #include "xstore/xstore_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xsync/xsync_object.h"
-#include "xtxpool_v2/xtxpool_face.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xbasic_vnode.h"
 #include "xvnode/xvnode_face.h"
-#include "xtxexecutor/xtransaction_prepare_mgr.h"
-#include "xbasic/xtimer_driver_fwd.h"
-#include "xdata/xtransaction_cache.h"
 
 #include <memory>
 
@@ -38,6 +38,7 @@ private:
     observer_ptr<router::xrouter_face_t> m_router;
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
+    observer_ptr<base::xvtxstore_t> m_txstore;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
@@ -55,10 +56,6 @@ private:
     // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
 
-    observer_ptr<top::xbase_timer_driver_t> m_timer_driver;
-    std::shared_ptr<txexecutor::xtransaction_prepare_mgr>      m_tx_prepare_mgr;
-    std::shared_ptr<data::xtransaction_cache_t> m_transaction_cache;
-
 public:
     xtop_vnode(xtop_vnode const &) = delete;
     xtop_vnode & operator=(xtop_vnode const &) = delete;
@@ -72,15 +69,15 @@ public:
                observer_ptr<router::xrouter_face_t> const & router,
                observer_ptr<store::xstore_face_t> const & store,
                observer_ptr<base::xvblockstore_t> const & block_store,
+               observer_ptr<base::xvtxstore_t> const & txstore,
                observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-            //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+               //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-               observer_ptr<xbase_timer_driver_t> const & timer_driver);
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
@@ -93,15 +90,15 @@ public:
                observer_ptr<router::xrouter_face_t> const & router,
                observer_ptr<store::xstore_face_t> const & store,
                observer_ptr<base::xvblockstore_t> const & block_store,
+               observer_ptr<base::xvtxstore_t> const & txstore,
                observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-            //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+               //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-               observer_ptr<xbase_timer_driver_t> const & timer_driver);
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const noexcept;
 
@@ -118,7 +115,7 @@ private:
     void update_contract_manager(bool destory);
     void sync_add_vnet();
     void sync_remove_vnet();
-    void update_tx_cache_service();
+    // void update_tx_cache_service();
     void update_block_prune();
 };
 

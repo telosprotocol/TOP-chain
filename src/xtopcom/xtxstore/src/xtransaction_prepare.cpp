@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <assert.h>
-#include "xtxexecutor/xtransaction_prepare.h"
+#include "xtxstore/xtransaction_prepare.h"
 
 #include "xbase/xlog.h"
 #include "xtxexecutor/xunit_service_error.h"

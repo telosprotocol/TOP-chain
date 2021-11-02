@@ -8,6 +8,7 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
+#include "xdata/xtransaction_cache.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
@@ -15,7 +16,6 @@
 #include "xstore/xtgas_singleton.h"
 #include "xutility/xhash.h"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xdata/xtransaction_cache.h"
 
 using namespace top::data;
 
@@ -34,9 +34,9 @@ using store::xstore_face_t;
 
 xcluster_query_manager::xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                                observer_ptr<base::xvblockstore_t> block_store,
-                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
-                                               observer_ptr<data::xtransaction_cache_t> const & transaction_cache)
-  : m_store(store), m_block_store(block_store), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr), m_transaction_cache(transaction_cache) {
+                                               observer_ptr<base::xvtxstore_t> txstore,
+                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service)
+  : m_store(store), m_block_store(block_store), m_txstore(txstore), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr) {
     CLUSTER_REGISTER_V1_METHOD(getAccount);
     CLUSTER_REGISTER_V1_METHOD(getTransaction);
     CLUSTER_REGISTER_V1_METHOD(get_transactionlist);
@@ -87,7 +87,8 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     uint256_t tx_hash = hex_to_uint256(tx_hash_str);
     std::string strHash((char*)tx_hash.data(), tx_hash.size());
     xtransaction_cache_data_t cache_data;
-    if (m_transaction_cache != nullptr && m_transaction_cache->tx_get(strHash, cache_data) == 1) {
+    if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, std::make_shared<xtransaction_cache_data_t>(cache_data))) {
+    // if (m_transaction_cache != nullptr && m_transaction_cache->tx_get(strHash, std::make_shared<>(cache_data)) == 1) {
         if (cache_data.jv["send_unit_info"].empty()) {
             cache_data.jv.removeMember("send_unit_info");
             xdbg("find tx:%s", tx_hash_str.c_str());

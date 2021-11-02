@@ -68,6 +68,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                               m_application->message_bus(),
                                                               m_application->store(),
                                                               make_observer(m_application->blockstore().get()),
+                                                              m_application->txstore(),
                                                               m_application->logic_timer(),
                                                               m_application->router(),
                                                               m_application->cert_serivce(),
@@ -77,8 +78,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                             //   make_observer(m_cons_mgr),
                                                               make_observer(m_txpool_service_mgr.get()),
                                                               m_application->txpool(),
-                                                              make_observer(m_election_cache_data_accessor),
-                                                              m_application->timer_driver())} {
+                                                              make_observer(m_election_cache_data_accessor))} {
                                                               }
 
 void xtop_chain_application::start() {

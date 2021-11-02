@@ -28,6 +28,7 @@ private:
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
+    observer_ptr<base::xvtxstore_t> m_txstore;
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
     observer_ptr<router::xrouter_face_t> m_router;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
@@ -37,13 +38,13 @@ private:
     observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
-    observer_ptr<xbase_timer_driver_t> m_timer_driver;
 
 public:
     xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> bus,
                        observer_ptr<store::xstore_face_t> store,
                        observer_ptr<base::xvblockstore_t> blockstore,
+                       observer_ptr<base::xvtxstore_t> txstore,
                        observer_ptr<time::xchain_time_face_t> logic_timer,
                        observer_ptr<router::xrouter_face_t> router,
                        observer_ptr<vnetwork::xvhost_face_t> vhost,
@@ -52,8 +53,7 @@ public:
                     //    observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
-                       observer_ptr<xbase_timer_driver_t> timer_driver);
+                       observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor);
 
     xtop_vnode_factory(xtop_vnode_factory &&) = default;
     xtop_vnode_factory & operator=(xtop_vnode_factory &&) = default;
