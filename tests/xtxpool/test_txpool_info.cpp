@@ -40,8 +40,8 @@ TEST_F(test_xtxpool_info, txpool_info) {
     // table2.send_tx_inc(shard_send_tx_queue_size_max - table_send_tx_queue_size_max);
     // ASSERT_EQ(true, table1.is_send_tx_reached_upper_limit());
 
-    table2.send_tx_inc(role_send_tx_queue_size_max_for_each_table*16 - table_send_tx_queue_size_max);
-    ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
+    // table2.send_tx_inc(role_send_tx_queue_size_max_for_each_table*16 - table_send_tx_queue_size_max);
+    // ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
 
-    ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
+    // ASSERT_EQ(xtxpool_error_role_reached_upper_limit, table1.check_send_tx_reached_upper_limit());
 }

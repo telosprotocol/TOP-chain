@@ -430,7 +430,11 @@ void xsync_handler_t::get_on_demand_blocks(uint32_t msg_size, const vnetwork::xv
     XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks_bytes, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_t>();
-    ptr->serialize_from(stream);
+    auto len = ptr->serialize_from(stream);
+    if (len <= 0) {
+        xerror("xsync_handler_t::get_on_demand_blocks deserialize fail");
+        return;
+    }
 
    m_sync_on_demand->handle_blocks_request(*(ptr.get()), from_address, network_self);
 }
@@ -446,7 +450,11 @@ void xsync_handler_t::get_on_demand_blocks_with_proof(uint32_t msg_size, const v
     XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks_bytes, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_with_proof_t>();
-    ptr->serialize_from(stream);
+    auto len = ptr->serialize_from(stream);
+    if (len <= 0) {
+        xerror("xsync_handler_t::get_on_demand_blocks_with_proof deserialize fail");
+        return;
+    }
 
    m_sync_on_demand->handle_blocks_request_with_proof(*(ptr.get()), from_address, network_self);
 }
@@ -462,7 +470,11 @@ void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode
     XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks_bytes, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_blocks_t>();
-    ptr->serialize_from(stream);
+    auto len = ptr->serialize_from(stream);
+    if (len <= 0) {
+        xerror("xsync_handler_t::on_demand_blocks deserialize fail");
+        return;
+    }
 
     std::vector<xblock_ptr_t> &blocks = ptr->blocks;
     if (blocks.size() == 0)
@@ -482,7 +494,11 @@ void xsync_handler_t::on_demand_blocks_with_proof(uint32_t msg_size, const vnetw
     XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks_bytes, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_blocks_with_proof_t>();
-    ptr->serialize_from(stream);
+    auto len = ptr->serialize_from(stream);
+    if (len <= 0) {
+        xerror("xsync_handler_t::on_demand_blocks_with_proof deserialize fail");
+        return;
+    }
 
     std::vector<xblock_ptr_t> &blocks = ptr->blocks;
     if (blocks.size() == 0)

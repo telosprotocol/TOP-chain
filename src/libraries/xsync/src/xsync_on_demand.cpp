@@ -11,6 +11,7 @@
 #include "xdata/xtable_bstate.h"
 #include "xvledger/xvblockstore.h"
 #include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xvledger/xunit_proof.h"
 
 NS_BEG2(top, sync)
 
@@ -74,6 +75,9 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
             m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
         } else {
             m_sync_sender->send_get_on_demand_blocks_with_proof(address, start_height, count, is_consensus, unit_proof, self_addr, target_addr);
+            if (unit_proof) {
+                XMETRICS_GAUGE(metrics::xsync_unit_proof_sync_req_send, 1);
+            }
         }
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
@@ -164,12 +168,15 @@ void xsync_on_demand_t::handle_blocks_response_with_proof(const std::vector<data
 
     if (!unit_proof_str.empty()) {
         base::xvaccount_t unit_account(account);
-        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
         base::xunit_proof_t unit_proof;
-        unit_proof.serialize_from(stream);
+        auto len = unit_proof.serialize_from(unit_proof_str);
+        if (len == 0) {
+            xerror("xsync_on_demand_t::handle_blocks_response_with_proof deserialize unit proof fail");
+            return;
+        }
 
         if (highest_sync_unit_block->get_height() != unit_proof.get_height() || highest_sync_unit_block->get_viewid() != unit_proof.get_viewid() ||
-            !unit_proof.verify_unit_block(highest_sync_unit_block)) {
+            !unit_proof.verify_unit_block(m_certauth.get(), highest_sync_unit_block)) {
             xsync_warn("xsync_on_demand_t::handle_blocks_response unit proof check fail,unit:%s,proof h:%llu,v:%llu",
                        highest_sync_unit_block->dump().c_str(),
                        unit_proof.get_height(),
@@ -188,15 +195,15 @@ void xsync_on_demand_t::handle_blocks_response_with_proof(const std::vector<data
                   unit_proof.get_viewid());
     } else {
         uint64_t next_height = highest_sync_unit_block->get_height() + 1;
-        auto next_blocks = m_sync_store->load_block_objects(account, next_height);
-        if (next_blocks.empty()) {
+        auto next_block = m_sync_store->load_block_object(account, next_height);
+        if (next_block == nullptr) {
             xsync_warn("xsync_on_demand_t::handle_blocks_response load unit fail,account:%s,h:%llu", account.c_str(), next_height);
             return;
         }
-        if (next_blocks[0]->get_last_block_hash() != highest_sync_unit_block->get_block_hash()) {
+        if (next_block->get_last_block_hash() != highest_sync_unit_block->get_block_hash()) {
             xsync_error("xsync_on_demand_t::handle_blocks_response sync unit(%s) can not connect with local unit(%s)",
                         highest_sync_unit_block->dump().c_str(),
-                        next_blocks[0]->dump().c_str());
+                        next_block->dump().c_str());
             return;
         }
     }
@@ -291,6 +298,10 @@ void xsync_on_demand_t::handle_blocks_request_with_proof(const xsync_message_get
     uint32_t heights = block.count;
     bool is_consensus = block.is_consensus;
     bool unit_proof = block.unit_proof;
+
+    if (unit_proof) {
+        XMETRICS_GAUGE(metrics::xsync_unit_proof_sync_req_recv, 1);
+    }
 
     if (heights == 0)
         return;

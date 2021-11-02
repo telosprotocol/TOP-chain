@@ -8,7 +8,6 @@
 #include "xvblock.h"
 #include "xvbindex.h"
 #include "xvtransact.h"
-#include "xunit_proof.h"
 
 namespace top
 {

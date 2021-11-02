@@ -1024,9 +1024,9 @@ namespace top
                             // store corresponding table proof for latest commit unit block
                             base::xunit_proof_t unit_proof(unit_block->get_height(), unit_block->get_viewid(), cert_blocks.get_vector().at(0)->get_cert());
                             // xassert(unit_proof.verify_unit_block(unit_block));
-                            base::xstream_t stream(base::xcontext_t::instance());
-                            unit_proof.serialize_to(stream);
-                            if (!set_unit_proof(unit_account, std::string((const char *)stream.data(), stream.size()), unit_block->get_height())) {
+                            std::string unit_proof_str;
+                            unit_proof.serialize_to(unit_proof_str);
+                            if (!set_unit_proof(unit_account, unit_proof_str, unit_block->get_height())) {
                                 xerror("xvblockstore_impl::store_units_to_db account %s,fail to writed into db,block=%s",unit_account.get_address().c_str(), unit_block->dump().c_str());
                                 return false;
                             }
