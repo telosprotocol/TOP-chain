@@ -41,7 +41,12 @@ namespace top
                     {
                         if(enum_blockstore_event_committed == event.get_type())
                         {
-                            m_store_ptr->on_block_committed(m_raw_ptr, event.get_index());
+                            // todo:remove empty unit fork!!!!!!!!!
+                            // if () {
+                            //     m_store_ptr->store_txs_to_db(m_raw_ptr, event.get_index());
+                            // } else {
+                                m_store_ptr->on_block_committed(m_raw_ptr, event.get_index());
+                            // }
                         }
                     }
                 }
@@ -614,6 +619,7 @@ namespace top
             }
 
             bool did_stored = false;//inited as false
+            // todo: remove empty unit fork!!!!
             //then try extract for container if that is
             // if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
             //    &&(container_block->get_block_level() == base::enum_xvblock_level_table)
@@ -996,11 +1002,11 @@ namespace top
                         {
                             base::xvaccount_t  unit_account(unit_block->get_account());
 
-                            // // todo(nathan): not store unit for test
+                            // // test: not store unit for test
                             // if (!data::is_sys_contract_address(common::xaccount_address_t{unit_account.get_account()})) {
                             //     uint64_t rand_num = rand();
                             //     if (rand_num % 8 == 0) {
-                            //         xwarn("nathan test drop unit=%s", unit_block->dump().c_str());
+                            //         xwarn("test drop unit=%s", unit_block->dump().c_str());
                             //         return true;
                             //     }  
                             // }

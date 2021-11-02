@@ -14,6 +14,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xstore/xaccount_context.h"
 #include "xmbus/xevent_behind.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -374,15 +375,20 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         result.m_make_block_error_code = m_default_builder_para->get_error_code();
     }
 
-    // thirdly try to make full unit
-    if (nullptr == proposal_unit && can_make_next_empty_block()) {
-        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
-        proposal_unit = m_emptyunit_builder->build_block(cert_block,
-                                                        nullptr,
-                                                        cs_para,
-                                                        m_default_builder_para);
-        result.m_make_block_error_code = m_default_builder_para->get_error_code();
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    if (!is_forked) {
+        // thirdly try to make empty unit
+        if (nullptr == proposal_unit && can_make_next_empty_block()) {
+            XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
+            proposal_unit = m_emptyunit_builder->build_block(cert_block,
+                                                            nullptr,
+                                                            cs_para,
+                                                            m_default_builder_para);
+            result.m_make_block_error_code = m_default_builder_para->get_error_code();
+        }
     }
+
     result.m_block = proposal_unit;
     return proposal_unit;
 }
@@ -394,22 +400,29 @@ bool xunit_maker_t::can_make_next_block() const {
     return false;
 }
 
+bool xunit_maker_t::can_make_next_block_v2() const {
+    if (can_make_next_light_block() || can_make_next_full_block()) {
+        return true;
+    }
+    return false;
+}
+
 bool xunit_maker_t::can_make_next_empty_block() const {
     // TODO(jimmy)
-    // const xblock_ptr_t & current_block = get_highest_height_block();
-    // if (current_block->get_height() == 0) {
-    //     return false;
-    // }
-    // if (current_block->get_block_class() == base::enum_xvblock_class_light) {
-    //     return true;
-    // }
-    // xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
-    // if (prev_block == nullptr) {
-    //     return false;
-    // }
-    // if (prev_block->get_block_class() == base::enum_xvblock_class_light) {
-    //     return true;
-    // }
+    const xblock_ptr_t & current_block = get_highest_height_block();
+    if (current_block->get_height() == 0) {
+        return false;
+    }
+    if (current_block->get_block_class() == base::enum_xvblock_class_light) {
+        return true;
+    }
+    xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
+    if (prev_block == nullptr) {
+        return false;
+    }
+    if (prev_block->get_block_class() == base::enum_xvblock_class_light) {
+        return true;
+    }
     return false;
 }
 

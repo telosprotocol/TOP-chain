@@ -105,12 +105,12 @@ void xsync_sender_t::send_blocks(xsync_msg_err_code_t code, const std::string &a
 }
 
 void xsync_sender_t::send_get_on_demand_blocks(const std::string &address,
-            uint64_t start_height, uint32_t count, bool is_consensus, bool unit_proof,
+            uint64_t start_height, uint32_t count, bool is_consensus,
             const vnetwork::xvnode_address_t &self_addr,
             const vnetwork::xvnode_address_t &target_addr) {
 
     xsync_dbg("xsync_sender_t %s get_on_demand_blocks send to %s", address.c_str(), target_addr.to_string().c_str());
-    auto body = make_object_ptr<xsync_message_get_on_demand_blocks_t>(address, start_height, count, is_consensus, unit_proof);
+    auto body = make_object_ptr<xsync_message_get_on_demand_blocks_t>(address, start_height, count, is_consensus);
     send_message(body, xmessage_id_sync_get_on_demand_blocks, "get_on_demand_blocks", self_addr, target_addr);
 }
 
@@ -118,9 +118,29 @@ void xsync_sender_t::send_on_demand_blocks(const std::vector<data::xblock_ptr_t>
     const common::xmessage_id_t msgid, 
     const std::string metric_key,
     const vnetwork::xvnode_address_t& self_addr, 
+    const vnetwork::xvnode_address_t& target_addr) {
+    auto body = make_object_ptr<xsync_message_general_blocks_t>(blocks);
+    send_message(body, msgid, metric_key, self_addr, target_addr);
+    xsync_dbg("xsync_sender_t on_demand_blocks send to target %s", target_addr.to_string().c_str());
+}
+
+void xsync_sender_t::send_get_on_demand_blocks_with_proof(const std::string &address,
+            uint64_t start_height, uint32_t count, bool is_consensus, bool unit_proof,
+            const vnetwork::xvnode_address_t &self_addr,
+            const vnetwork::xvnode_address_t &target_addr) {
+
+    xsync_dbg("xsync_sender_t %s get_on_demand_blocks send to %s", address.c_str(), target_addr.to_string().c_str());
+    auto body = make_object_ptr<xsync_message_get_on_demand_blocks_with_proof_t>(address, start_height, count, is_consensus, unit_proof);
+    send_message(body, xmessage_id_sync_get_on_demand_blocks_with_proof, "get_on_demand_blocks", self_addr, target_addr);
+}
+
+void xsync_sender_t::send_on_demand_blocks_with_proof(const std::vector<data::xblock_ptr_t> &blocks, 
+    const common::xmessage_id_t msgid, 
+    const std::string metric_key,
+    const vnetwork::xvnode_address_t& self_addr, 
     const vnetwork::xvnode_address_t& target_addr,
     const std::string& unit_proof_str) {
-    auto body = make_object_ptr<xsync_message_general_blocks_t>(blocks, unit_proof_str);
+    auto body = make_object_ptr<xsync_message_general_blocks_with_proof_t>(blocks, unit_proof_str);
     send_message(body, msgid, metric_key, self_addr, target_addr);
     xsync_dbg("xsync_sender_t on_demand_blocks send to target %s", target_addr.to_string().c_str());
 }
