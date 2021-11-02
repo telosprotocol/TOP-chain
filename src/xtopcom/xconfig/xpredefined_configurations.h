@@ -383,7 +383,7 @@ XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 16);
 #else
-XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128); // TODO(jimmy) 512
+XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 16); // TODO(jimmy) 512
 #endif
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
