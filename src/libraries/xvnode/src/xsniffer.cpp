@@ -114,6 +114,7 @@ bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) co
 
             default:
                 assert(false); // invalid
+                break;
         }
 
     }
