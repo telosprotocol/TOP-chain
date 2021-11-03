@@ -217,7 +217,7 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
 
 /// @brief Macro for declaring sender only(source action only) contract API 'func'
 ///        'CONTRACT' is from 'BEGIN_CONTRACT_APIs'
-#define DECLARE_COMFIRM_ONLY_API(CONTRACT_API)                                                                                                                                     \
+#define DECLARE_CONFIRM_ONLY_API(CONTRACT_API)                                                                                                                                     \
     do {                                                                                                                                                                           \
         std::string const api_string{#CONTRACT_API};                                                                                                                               \
         auto const pos = api_string.find("::");                                                                                                                                    \

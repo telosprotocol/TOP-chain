@@ -81,7 +81,7 @@ TEST_F(test_contract_framework_api, test_asset_out) {
     contract_handle.contract_execution_context(ctx);
 
     std::error_code ec;
-    auto token = contract_handle.src_action_asset(ec);
+    auto token = contract_handle.last_action_asset(ec);
     assert(!ec);
 
     EXPECT_EQ(token_amount, token.amount());
@@ -90,8 +90,8 @@ TEST_F(test_contract_framework_api, test_asset_out) {
 
     // second call will trigger assert
     ec.clear();
-    // contract_handle.src_action_asset(ec);
-    ASSERT_DEATH(contract_handle.src_action_asset(ec), "");
+    // contract_handle.last_action_asset(ec);
+    ASSERT_DEATH(contract_handle.last_action_asset(ec), "");
 }
 
 NS_END3

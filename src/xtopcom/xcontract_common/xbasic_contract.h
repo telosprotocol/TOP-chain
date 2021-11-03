@@ -80,6 +80,7 @@ public:
     uint64_t balance() const override;
     state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
     state_accessor::xtoken_t state_withdraw(std::uint64_t amount);
+    void state_deposit(state_accessor::xtoken_t token);
     void deposit(state_accessor::xtoken_t token) override;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept override;
@@ -92,8 +93,8 @@ public:
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
-    state_accessor::xtoken_t src_action_asset(std::error_code & ec) const;
-    void asset_to_target_action(state_accessor::xtoken_t token);
+    state_accessor::xtoken_t last_action_asset(std::error_code & ec) const;
+    void asset_to_next_action(state_accessor::xtoken_t token);
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;

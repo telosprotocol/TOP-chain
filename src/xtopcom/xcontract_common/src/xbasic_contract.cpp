@@ -56,6 +56,12 @@ state_accessor::xtoken_t xtop_basic_contract::state_withdraw(std::uint64_t amoun
     return state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, amount);
 }
 
+void xtop_basic_contract::state_deposit(state_accessor::xtoken_t token) {
+    state_accessor::properties::xproperty_identifier_t balance_property_id{
+                data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
+    return state()->deposit(balance_property_id, std::move(token));
+}
+
 void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
     assert(m_balance.symbol() == token.symbol());
     m_balance.deposit(std::move(token));
@@ -66,7 +72,7 @@ observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noex
     return m_associated_execution_context->contract_state();
 }
 
-void xtop_basic_contract::asset_to_target_action(state_accessor::xtoken_t token) {
+void xtop_basic_contract::asset_to_next_action(state_accessor::xtoken_t token) {
     base::xstream_t stream{base::xcontext_t::instance()};
     token.move_to(stream);
 
@@ -92,7 +98,7 @@ xbyte_buffer_t xtop_basic_contract::action_data() const {
     return m_associated_execution_context->action_data();
 }
 
-state_accessor::xtoken_t xtop_basic_contract::src_action_asset(std::error_code & ec) const {
+state_accessor::xtoken_t xtop_basic_contract::last_action_asset(std::error_code & ec) const {
     assert(!ec);
 
     auto& receipt_data = m_associated_execution_context->input_receipt_data();

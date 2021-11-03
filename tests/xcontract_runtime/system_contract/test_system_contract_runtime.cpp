@@ -168,7 +168,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_normal) {
     transfer_contract->reset_execution_context(contract_ctx);
 
     std::error_code err;
-    auto token = transfer_contract->src_action_asset(err);
+    auto token = transfer_contract->last_action_asset(err);
     assert(!err);
 
     EXPECT_EQ(token.amount(), 100000);
@@ -197,7 +197,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_fail) {
     transfer_contract->reset_execution_context(contract_ctx);
 
     std::error_code err;
-    ASSERT_DEATH(transfer_contract->src_action_asset(err), "");
+    ASSERT_DEATH(transfer_contract->last_action_asset(err), "");
 }
 
 
