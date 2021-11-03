@@ -107,7 +107,13 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     }
 
     if (observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::confirm) {
-        return result;
+        if (!receipt_data.empty()) {
+            execution_context->input_receipt_data(cons_action->receipt_data());
+        }
+
+        if (data::xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == exe_ctx->action_consensus_result()) {                                                          \
+            return result;                                                                                                                                                     \
+        }
     }
 
     result = m_associated_runtime->execute(observed_exectx);

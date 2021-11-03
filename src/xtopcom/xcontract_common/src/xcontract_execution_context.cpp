@@ -634,11 +634,6 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
         contract_state()->transfer_internal(balance_prop, lock_balance_prop, tx_deposit);
     }
     xdbg("[xtop_contract_execution_context::execute_default_source_action] deposit to lock: %" PRIu64, tx_deposit);
-    // step3: asset out
-    if (asset_.m_amount > 0) {
-        contract_state()->transfer_internal(balance_prop, lock_balance_prop, asset_.m_amount);
-    }
-    xdbg("[xtop_contract_execution_context::execute_default_source_action] asset to lock: %" PRIu64, asset_.m_amount);
 
     return fee_change;
 }
@@ -730,18 +725,6 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confi
     }
     fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_tgas, target_used_tgas));
     fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, used_deposit));
-
-    auto const asset_ = asset();
-    if (asset_.m_amount > 0) {
-        // should unlock token by recv tx execute status
-        if (status == data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail) {
-            // unlock token and revert to available balance if recv tx execute fail
-            contract_state()->transfer_internal(lock_balance_prop, balance_prop, asset_.m_amount);
-        } else {
-            // unlock token only
-            contract_state()->withdraw(balance_prop, common::SYMBOL_TOP_TOKEN, asset_.m_amount);
-        }
-    }
 
     return fee_change;
 }

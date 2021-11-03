@@ -728,6 +728,7 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
+    std::string source_action_name = "source_withdraw";
     xaction_asset_param asset_param(this, "", 0);
     std::string param_s = asset_param.create();
 
@@ -735,7 +736,7 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     std::string target_action_name = "updateNodeType";
     std::string param_t = stream_params(stream_t, role);
 
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
@@ -792,6 +793,7 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     if (type == 2) {
         transfer_amount = 0;
     }
+    std::string source_action_name = "source_withdraw";
     xaction_asset_param asset_param(this, "", transfer_amount);
     std::string param = asset_param.create();
 
@@ -801,7 +803,7 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     target_action_name = "updateNodeInfo";
     param_t = stream_params(stream_t, name, type, mortgage, rate, role, node_sign_key);
 
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
