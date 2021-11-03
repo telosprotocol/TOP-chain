@@ -28,6 +28,10 @@ namespace top
             memset(m_plugins,0,sizeof(m_plugins));
             m_idle_start_time_ms  = get_time_now();
             m_idle_timeout_ms     = enum_account_idle_timeout_ms;
+            #ifdef XENABLE_TESTS// DEBUG DMOCK_SAVE
+              m_idle_timeout_ms = 15000;
+                xinfo("m_idle_timeout_ms=%ld",m_idle_timeout_ms);
+            #endif
             
             if(is_unit_address() == false) //keep contract/table account forever at memory
                 m_is_keep_forever  = 1;
@@ -416,6 +420,12 @@ namespace top
         
         bool  xvaccountobj_t::save_meta(const std::string & vmeta_bin)
         {
+            #ifdef XENABLE_TESTS// DEBUG DMOCK_SAVE
+              xinfo("xvaccountobj_t::meta->save_meta,mock test",m_meta_ptr->dump().c_str());
+              return true;
+            #endif
+
+
             if(vmeta_bin.empty() == false)
             {
                 XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
