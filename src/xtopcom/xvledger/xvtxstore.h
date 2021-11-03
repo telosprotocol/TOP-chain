@@ -11,7 +11,7 @@
 namespace top {
 namespace data {
 // fwd
-class xtransaction_cache_data_t;
+struct xtransaction_cache_data_t;
 class xtransaction_t;
 using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
 }  // namespace data
