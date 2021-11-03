@@ -28,15 +28,11 @@ namespace top
             memset(m_plugins,0,sizeof(m_plugins));
             m_idle_start_time_ms  = get_time_now();
             m_idle_timeout_ms     = enum_account_idle_timeout_ms;
-            #ifdef XENABLE_TESTS// DEBUG DMOCK_SAVE
-              m_idle_timeout_ms = 15000;
-                xinfo("m_idle_timeout_ms=%ld",m_idle_timeout_ms);
-            #endif
-            
+            m_is_save = 1;
             if(is_unit_address() == false) //keep contract/table account forever at memory
                 m_is_keep_forever  = 1;
             
-            xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
+            xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu) m_idle_timeout_ms=%ld",get_address().c_str(),get_xvid(),m_idle_timeout_ms);
             XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, 1);
         }
     
@@ -395,6 +391,7 @@ namespace top
             const bool recovered_something = recover_meta(*new_meta_ptr);//try to recover the lost if rebooted
             if(recovered_something)//makeup the lost to DB
             {
+                 xinfo(" xvaccountobj_t::get_meta() ,set process_id(%d)", base::xvchain_t::instance().get_current_process_id());
                 new_meta_ptr->update_meta_process_id(base::xvchain_t::instance().get_current_process_id()); //update process id to avoid double-saving
                 std::string  recovered_meta_bin;
                 new_meta_ptr->serialize_to_string(recovered_meta_bin);
@@ -420,11 +417,10 @@ namespace top
         
         bool  xvaccountobj_t::save_meta(const std::string & vmeta_bin)
         {
-            #ifdef XENABLE_TESTS// DEBUG DMOCK_SAVE
-              xinfo("xvaccountobj_t::meta->save_meta,mock test",m_meta_ptr->dump().c_str());
-              return true;
-            #endif
-
+            #ifdef XENABLE_TESTS
+                 xinfo("xvaccountobj_t::meta->save_meta,mock not save, meta(%s)",m_meta_ptr->dump().c_str());
+                 return true;
+            #endif 
 
             if(vmeta_bin.empty() == false)
             {
@@ -486,6 +482,8 @@ namespace top
             {
                 xauto_lock<xspinlock_t> locker(get_spin_lock());
                 plugin_ptr = get_plugin_unsafe(plugin_type);
+
+                xinfo("plugin_ptr = %lp  account(%s)", plugin_ptr,get_address().c_str());
                 if(plugin_ptr != NULL)
                 {
                     plugin_ptr->add_ref();//note:add reference for xauto_ptr
@@ -509,8 +507,8 @@ namespace top
         {
             if((int)plugin_type >= enum_xvaccount_plugin_max)
             {
-                xerror("xvaccountobj_t::get_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d)",plugin_type,enum_xvaccount_plugin_max);
-                return nullptr;
+               xerror("xvaccountobj_t::get_plugin,bad plugin_type(%d) >= enum_max_plugins_count(%d)",plugin_type,enum_xvaccount_plugin_max);
+                 return nullptr;
             }
 
             xvactplugin_t* plugin_ptr = xatomic_t::xload(m_plugins[plugin_type]);
@@ -594,6 +592,7 @@ namespace top
                 //pre-fetch existing one
                 {
                     xvactplugin_t * existing_ptr = get_plugin_unsafe(new_plugin_obj->get_plugin_type());
+                     xinfo("existing_ptr = %lp",existing_ptr);
                     if(existing_ptr != NULL)
                     {
                         existing_ptr->add_ref();
@@ -848,6 +847,9 @@ namespace top
             {
                 std::function<void(void*)> _add_new_plugin_job = [this](void* _raw_ptr)->void{
                     xvactplugin_t * _new_obj = (xvactplugin_t*)_raw_ptr;
+
+
+
                     //transfer ownership of _new_obj to m_monitor_accounts now,so no-need release manually
                     m_monitor_plugins.insert(std::multimap<uint64_t,xvactplugin_t*>::value_type(_new_obj->get_idle_duration() + get_time_now(),_new_obj));
                 };
@@ -863,6 +865,9 @@ namespace top
                 std::function<void(void*)> _add_new_account_job = [this](void* _account_ptr)->void{
                     xvaccountobj_t * _new_obj = (xvaccountobj_t*)_account_ptr;
                     //transfer ownership of _new_obj to m_monitor_accounts now,so no-need release manually
+                   xinfo("xvtable_t::monitor_account time %ld addr(%s)", 
+                   _new_obj->get_idle_duration() + get_time_now(), 
+                   _new_obj->get_address().c_str());
                     m_monitor_accounts.insert(std::multimap<uint64_t,xvaccountobj_t*>::value_type(_new_obj->get_idle_duration() + get_time_now(),_new_obj));
                 };
                 account_obj->add_ref();//add reference for _add_new_account_job
@@ -898,14 +903,16 @@ namespace top
         xvaccountobj_t*   xvtable_t::get_account_unsafe(const std::string & account_address)
         {
             auto & exist_account_ptr = m_accounts[account_address];
+            
             if(   (exist_account_ptr != NULL)
                && (exist_account_ptr->is_close() == false)
                && (exist_account_ptr->is_closing() == false)
             ) //valid account object
             {
+                 xinfo("xvtable_t::get_account_unsafe exist_account_ptr %s", exist_account_ptr->get_account().c_str());
                 return exist_account_ptr;
             }
-
+             
             xvaccountobj_t * old_account_obj = exist_account_ptr; //backup first
             xvaccountobj_t * new_account_obj = create_account_unsafe(account_address);
             exist_account_ptr = new_account_obj;//overwrite the referenced exist_account_ptr
@@ -914,6 +921,7 @@ namespace top
                 old_account_obj->close(false);//force makr as closed
                 old_account_obj->release_ref();//release it
             }
+              xinfo("xvtable_t::get_account_unsafe new_account_obj %s", new_account_obj->get_account().c_str());
             //push to monitor queue
             monitor_account(new_account_obj);
             return new_account_obj;
@@ -983,13 +991,23 @@ namespace top
             auto  expire_it = m_monitor_accounts.begin();
             while(expire_it != m_monitor_accounts.end())
             {
+                 xvaccountobj_t* _test_for_account2 = expire_it->second;
+                xinfo("on_timer_for_accounts now %ld time %ld addr(%s) ref %d ",current_time_ms, (int64_t)expire_it->first, 
+                _test_for_account2->get_address().c_str(), _test_for_account2->get_refcount());
+               
+
                 //map or multiplemap are sorted as < operation as default
                 if(current_time_ms < (int64_t)expire_it->first )
                     break;
                 
+
+
                 xvaccountobj_t* _test_for_account = expire_it->second;
                 if(_test_for_account != nullptr)
                 {
+                       xinfo("on_timer_for_accounts  addr(%s) ref %d ", _test_for_account->get_address().c_str(),
+                        _test_for_account->get_refcount());
+
                     if(_test_for_account->is_live(current_time_ms) == false)//quick test whether idle too long
                     {
                         if(_test_for_account->is_close())//has been closed by on_process_close()
@@ -1005,12 +1023,17 @@ namespace top
                                 xkinfo("xvtable_t::timer,closed account(%s)",_test_for_account->get_address().c_str());
                                 _test_for_account->release_ref();//destroy it finally
                             }
-                            else
-                                _remonitor_list.push_back(_test_for_account);//transfer to list
+                            else{
+                                 _remonitor_list.push_back(_test_for_account);//transfer to list
+                                  xinfo("on_timer_for_accounts  _test_for_account addr(%s) save ", _test_for_account->get_address().c_str());
+                            }
+                              
                         }
                     }
                     else
                     {
+                          xinfo("on_timer_for_accounts  addr(%s) save ", _test_for_account->get_address().c_str());
+
                         //save meta at every cycle if have any change
                         _test_for_account->save_meta();//do heavy job at this thread
                         _remonitor_list.push_back(_test_for_account);//transfer to list
@@ -1364,7 +1387,7 @@ namespace top
             set_xrecyclemgr(default_recycle_mgr);//may hold addtional reference
             default_recycle_mgr->release_ref();
             
-            xkinfo("xvchain_t::xvchain_t,chain_id(%d)",m_chain_id);
+            xkinfo("xvchain_t::xvchain_t,chain_id(%d) m_current_process_id(%d)",m_chain_id,m_current_process_id);
         }
     
         xvchain_t::~xvchain_t()
