@@ -100,6 +100,12 @@ namespace top
             enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
         };
 
+        enum enum_xvblock_version
+        {
+            enum_xvblock_version_1   = 256, // 0.0.1.0, 1 << 8
+            enum_xvblock_version_2   = 512, // 0.0.2.0, 2 << 8
+        };
+
         //total 2bits = max 4 definition
         enum enum_xvblock_character // for future definition
         {

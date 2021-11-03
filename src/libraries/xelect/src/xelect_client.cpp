@@ -17,7 +17,11 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xgenesis_data.h"
+#ifdef RPC_V2
 #include "xdata/xtransaction_v2.h"
+#else
+#include "xdata/xtransaction_v1.h"
+#endif
 #include "xmbus/xevent_store.h"
 #include "xpbase/base/top_log.h"
 #include "xrpc/xerror/xrpc_error_code.h"
@@ -84,8 +88,11 @@ void xelect_client_imp::bootstrap_node_join() {
                 auto account_info_response = client.request("POST", "/", account_info_request);
                 const auto& account_info_response_str = account_info_response->content.string();
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
-
+#ifdef RPC_V2
                 xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+#else
+                xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
+#endif
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
                 param_stream << user_params.account;
                 param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
@@ -125,7 +132,11 @@ void xelect_client_imp::bootstrap_node_join() {
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;
                 xJson::Value tx_json;
+#ifdef RPC_V2
                 tx->parse_to_json(tx_json["params"]);
+#else
+                tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V1);
+#endif
                 tx_json["params"]["authorization"] = data::uint_to_str(tx->get_authorization().data(), tx->get_authorization().size());
                 xdbg("tx_json: %s", writer.write(tx_json).c_str());
                 send_tx_request += "&body=" + SimpleWeb::Percent::encode(writer.write(tx_json));

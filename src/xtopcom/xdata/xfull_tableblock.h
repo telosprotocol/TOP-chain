@@ -58,6 +58,7 @@ class xfull_tableblock_t : public xblock_t {
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
+    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
 
     virtual int64_t get_pledge_balance_change_tgas() const override {
         auto out_entity = get_output()->get_primary_entity();

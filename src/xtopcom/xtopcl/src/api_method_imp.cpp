@@ -177,10 +177,19 @@ bool api_method_imp::transfer(const user_info & uinfo,
     info->trans_action->set_fire_timestamp(get_timestamp());
     info->trans_action->set_expire_duration(100);
 
+#ifdef RPC_V2
     info->trans_action->set_amount(amount);
     info->trans_action->set_source_addr(from);
     info->trans_action->set_target_addr(to);
-
+#else
+    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
+    info->trans_action->get_source_action().set_action_type(xaction_type_asset_out);
+    info->trans_action->get_source_action().set_account_addr(from);
+    info->trans_action->get_source_action().set_action_param(param);
+    info->trans_action->get_target_action().set_action_type(xaction_type_asset_in);
+    info->trans_action->get_target_action().set_account_addr(to);
+    info->trans_action->get_target_action().set_action_param(param);
+#endif
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
         delete info;
         return false;

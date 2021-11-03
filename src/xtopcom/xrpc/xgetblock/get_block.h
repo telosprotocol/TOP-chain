@@ -31,6 +31,20 @@ using query_method_handler = std::function<void(void)>;
 #define REGISTER_QUERY_METHOD(func_name)                                                                                                                                           \
     m_query_method_map.emplace(std::pair<std::string, query_method_handler>{std::string{#func_name}, std::bind(&get_block_handle::func_name, this)})
 
+class xtx_exec_json_key {
+public:
+    xtx_exec_json_key(const std::string & rpc_version) {
+        if (rpc_version == RPC_VERSION_V2) {
+            m_send = "send_block_info";
+            m_recv = "recv_block_info";
+            m_confirm = "confirm_block_info";
+        }
+    }
+
+    std::string m_send = "send_unit_info";
+    std::string m_recv = "recv_unit_info";
+    std::string m_confirm = "confirm_unit_info";
+};
 class get_block_handle : public rpc::xrpc_handle_face_t {
 public:
     get_block_handle(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync)
@@ -78,7 +92,7 @@ public:
         }
         return rsp;
     }
-    xJson::Value get_block_json(data::xblock_t * bp);
+    xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
     void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height);
@@ -93,11 +107,11 @@ public:
     void getWorkloadDetail();
     uint64_t get_timer_clock() const;
     xJson::Value parse_account(const std::string & account);
-    void update_tx_state(xJson::Value & result, const xJson::Value & cons);
+    void update_tx_state(xJson::Value & result, const xJson::Value & cons, const std::string & rpc_version);
     xJson::Value parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & version);
     xJson::Value parse_tx(xtransaction_t * tx_ptr, const std::string & version);
     xJson::Value parse_action(const xaction_t & action);
-    xJson::Value get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo);
+    xJson::Value get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version);
     void getRecs();
     void getZecs();
     void getEdges();
@@ -116,11 +130,8 @@ private:
     void set_header_info(xJson::Value & header, data::xblock_t * bp);
 
     void set_property_info(xJson::Value & jph, const std::map<std::string, std::string> & ph);
-    void set_table_info(xJson::Value & jv, data::xblock_t * bp);
-    void set_lightunit_info(xJson::Value & j_txs, data::xblock_t * bp);
-    void set_fullunit_info(xJson::Value & j_txs, data::xblock_t * bp);
     void set_addition_info(xJson::Value & body, data::xblock_t * bp);
-    void set_body_info(xJson::Value & body, data::xblock_t * bp);
+    void set_body_info(xJson::Value & body, data::xblock_t * bp, const std::string & rpc_version);
 
     void getGeneralInfos();
     void getRootblockInfo();

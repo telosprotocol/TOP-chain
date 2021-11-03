@@ -448,40 +448,35 @@ void get_block_handle::set_unlock_token_info(xJson::Value & j, const xaction_t &
 void get_block_handle::set_create_sub_account_info(xJson::Value & j, const xaction_t & action) {
 }
 
-std::string tx_exec_status_to_str(uint8_t exec_status) {
-    if (exec_status == enum_xunit_tx_exec_status_success) {
-        return "success";
-    } else {
-        return "failure";
+xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version) {
+    xJson::Value jv;
+    if (account.empty()) {
+        return jv;
     }
-}
-
-xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo) {
     base::xvaccount_t _account_vaddress(account);
-    auto vb = m_block_store->load_block_object(_account_vaddress, unit_height, 0, true, metrics::blockstore_access_from_rpc_get_unit);
+    auto vb = m_block_store->load_block_object(_account_vaddress, block_height, 0, true, metrics::blockstore_access_from_rpc_get_unit);
     auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
     if (block_ptr == nullptr) {
         throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address does not exist or block height does not exist"};
     }
 
-    xJson::Value jv;
-    jv["unit_hash"] = block_ptr->get_block_hash_hex_str();
-    jv["height"] = static_cast<xJson::UInt64>(unit_height);
+    jv["height"] = static_cast<xJson::UInt64>(block_height);
+    if (rpc_version == RPC_VERSION_V2) {
+        jv["account"] = account;
+    }
     auto tx_info = block_ptr->get_tx_info(tx_ptr->get_digest_str());
     if (tx_info != nullptr) {
         jv["used_gas"] = tx_info->get_used_tgas();
-        jv["used_disk"] = tx_info->get_used_disk();
-        jv["used_deposit"] = tx_info->get_used_deposit();
         if (tx_info->is_self_tx()) {
-            jv["tx_exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status());
-            jv["exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status());
+            jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
+            jv["used_deposit"] = tx_info->get_used_deposit();
         }
         if (tx_info->is_confirm_tx()) {
-            jv["tx_exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status());
+            jv["used_deposit"] = tx_info->get_used_deposit();
             // TODO(jimmy) should read recv tx exec status from recv tx unit
             if (recv_txinfo != nullptr) {
-                jv["recv_tx_exec_status"] = tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
-                jv["exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());
+                jv["recv_tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+                jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());
             }
         }
         if (tx_info->is_recv_tx()) {
@@ -507,19 +502,20 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr, const std::stri
     return ori_tx_info;
 }
 
-void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::Value & cons) {
-    if (cons["confirm_unit_info"]["exec_status"].asString() == "success") {
+void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::Value & cons, const std::string & rpc_version) {
+    const xtx_exec_json_key jk(rpc_version);
+    if (cons[jk.m_confirm]["exec_status"].asString() == "success") {
         result_json["tx_state"] = "success";
-    } else if (cons["confirm_unit_info"]["exec_status"].asString() == "failure") {
+    } else if (cons[jk.m_confirm]["exec_status"].asString() == "failure") {
         result_json["tx_state"] = "fail";
-    } else if (cons["send_unit_info"]["height"].asUInt64() > 0) {
+    } else if (cons[jk.m_send]["height"].asUInt64() > 0) {
         result_json["tx_state"] = "queue";
     } else {
         result_json["tx_state"] = "pending";
     }
 }
 
-xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & tx_version) {
+xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
     base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
     xJson::Value result_json;
@@ -530,20 +526,21 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         tx->add_ref();
         tx_ptr.attach(tx);
         
+        const xtx_exec_json_key jk(rpc_version);
         xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
-            cons["send_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_send_unit_height(), tx_ptr, recv_txinfo);
+            cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, recv_txinfo, rpc_version);
             auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
-            cons["send_unit_info"]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
-            cons["recv_unit_info"] = get_unit_json(tx_ptr->get_target_addr(), tx_store_ptr->get_recv_unit_height(), tx_ptr, recv_txinfo);
+            cons[jk.m_send]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
+            cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, recv_txinfo, rpc_version);
         }
-        cons["confirm_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_confirm_unit_height(), tx_ptr, recv_txinfo);
+        cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, recv_txinfo, rpc_version);
         result_json["tx_consensus_state"] = cons;
 
-        update_tx_state(result_json, cons);
+        update_tx_state(result_json, cons, rpc_version);
 
-        auto ori_tx_info = parse_tx(tx_ptr.get(), tx_version);
+        auto ori_tx_info = parse_tx(tx_ptr.get(), rpc_version);
         result_json["original_tx_info"] = ori_tx_info;
 
         return result_json;
@@ -551,7 +548,7 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         if (cons_tx_ptr == nullptr) {
             throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
         } else {
-            auto ori_tx_info = parse_tx(cons_tx_ptr, tx_version);
+            auto ori_tx_info = parse_tx(cons_tx_ptr, rpc_version);
             result_json["original_tx_info"] = ori_tx_info;
             result_json["tx_consensus_state"] = cons;
             result_json["tx_state"] = "queue";
@@ -689,6 +686,9 @@ xJson::Value get_block_handle::parse_action(const xaction_t & action) {
 void get_block_handle::getTransaction() {
     uint256_t hash = top::data::hex_to_uint256(m_js_req["tx_hash"].asString());
     std::string version = m_js_req["version"].asString();
+    if (version.empty()) {
+        version = "1.0";
+    }
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
         m_js_rsp["value"] = parse_tx(hash, nullptr, version);
@@ -913,6 +913,10 @@ void get_block_handle::getBlockByHeight() {
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
+    std::string version = m_js_req["version"].asString();
+    if (version.empty()) {
+        version = "1.0";
+    }
     base::xvaccount_t _owner_vaddress(owner);
 
     xJson::Value value;
@@ -920,7 +924,7 @@ void get_block_handle::getBlock() {
         uint64_t height = m_js_req["height"].asUInt64();
         auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true, metrics::blockstore_access_from_rpc_get_block_load_object);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-        value = get_block_json(bp);
+        value = get_block_json(bp, version);
 
         if (owner == sys_contract_zec_slash_info_addr) {
             xJson::Value slash_prop;
@@ -936,7 +940,7 @@ void get_block_handle::getBlock() {
     } else if (type == "last") {
         auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_block);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-        value = get_block_json(bp);
+        value = get_block_json(bp, version);
     }
 
     m_js_rsp["value"] = value;
@@ -1001,14 +1005,13 @@ void get_block_handle::set_shared_info(xJson::Value & root, xblock_t * bp) {
     root["height"] = static_cast<unsigned long long>(bp->get_height());
     root["hash"] = bp->get_block_hash_hex_str();
     root["prev_hash"] = to_hex_str(bp->get_last_block_hash());
-    root["timestamp"] = static_cast<unsigned long long>(bp->get_timestamp());  // ?
-                                                                               // root["signature"] = to_hex_str(bp->get_signature());
+    root["timestamp"] = static_cast<unsigned long long>(bp->get_timestamp());
 }
 
 void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
     header["timerblock_height"] = static_cast<unsigned long long>(bp->get_timerblock_height());
     // header["status"] = p_header->m_block_status;
-
+    header["version"] = bp->get_block_version();
     auto auditor = bp->get_cert()->get_auditor();
     header["auditor_xip"] = xdatautil::xip_to_hex(auditor);
     std::string addr;
@@ -1292,33 +1295,6 @@ void get_block_handle::set_property_info(xJson::Value & jph, const std::map<std:
     }
 }
 
-void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
-    if (bp->is_lightunit()) {
-        auto & txs = bp->get_txs();
-        xJson::Value ji;
-        // set_object_info(ji, input);
-        for (auto & tx : txs) {
-            xJson::Value jv;
-            // jv["object_type_value"] = xlightunit_input_t::get_object_type();
-            jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
-            // jv["m_unit_height"] = static_cast<unsigned long long>(input_tx.m_unit_height);
-            // jv["m_unit_hash"] = to_hex_str(input_tx.m_unit_hash);
-            jv["send_tx_lock_gas"] = static_cast<unsigned long long>(tx->get_send_tx_lock_tgas());
-            jv["used_gas"] = tx->get_used_tgas();
-            jv["used_tx_deposit"] = tx->get_used_deposit();
-            jv["used_disk"] = tx->get_used_disk();
-            jv["tx_exec_status"] = tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
-            // if (tx->is_confirm_tx()) {
-            //     jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx->get_last_action_exec_status());
-            // }
-            xJson::Value jtx;
-            jtx["0x" + tx->get_tx_hex_hash()] = jv;
-            ji["txs"].append(jtx);
-        }
-        j_lu["lightunit_input"] = ji;
-    }
-}
-
 static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
     { common::xnode_type_t::consensus_auditor, "auditor" },
     { common::xnode_type_t::consensus_validator, "validator" },
@@ -1415,112 +1391,16 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
     }
 }
 
-void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
-    if (bp->is_fullunit()) {
-        // TODO(jimmy)
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp, metrics::statestore_access_from_rpc_set_fullunit);
-        xassert(bstate != nullptr);
-        data::xunit_bstate_t unitstate(bstate.get());
-        j_fu["latest_full_unit_number"] = static_cast<unsigned int>(bp->get_height());
-        j_fu["latest_full_unit_hash"] = to_hex_str(bp->get_block_hash());
-        j_fu["latest_send_trans_number"] = static_cast<unsigned int>(unitstate.account_send_trans_number());
-        j_fu["latest_send_trans_hash"] = to_hex_str(unitstate.account_send_trans_hash());
-        j_fu["latest_recv_trans_number"] = static_cast<unsigned int>(unitstate.account_recv_trans_number());
-        j_fu["account_balance"] = static_cast<unsigned int>(unitstate.balance());
-        j_fu["burned_amount_change"] = static_cast<unsigned int>(unitstate.burn_balance());
-        // j_fu["account_credit"] = 0;
-        // j_fu["account_nonce"] = static_cast<unsigned int>(unitstate.get_account_nonce());
-        j_fu["account_create_time"] = static_cast<unsigned int>(unitstate.get_account_create_time());
-    }
-}
-
-void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
-    // need input
-    base::xvaccount_t _vaccount(bp->get_account());
-    base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, bp, metrics::blockstore_access_from_rpc_get_block_set_table);
-
-    xJson::Value ju;
-
-    const std::vector<base::xventity_t*> & _table_inentitys = bp->get_input()->get_entitys();
-    uint32_t entitys_count = _table_inentitys.size();
-    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-        base::xtable_inentity_extend_t extend;
-        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
-
-        xJson::Value jui;
-        jui["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
-
-        xJson::Value jv;
-
-        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                continue;
-            }
-            xlightunit_action_t txaction(action);
-            xtransaction_ptr_t _rawtx = bp->query_raw_transaction(txaction.get_tx_hash());
-            uint64_t last_tx_nonce = 0;
-            if (_rawtx != nullptr) {
-                last_tx_nonce = _rawtx->get_last_nonce();
-            }
-
-            xJson::Value juj;
-            juj["tx_consensus_phase"] = txaction.get_tx_subtype_str();
-            if (txaction.is_self_tx() || txaction.is_send_tx()) {
-                juj["last_tx_nonce"] = static_cast<unsigned int>(last_tx_nonce);
-            }
-            juj["sender_tx_locked_gas"] = static_cast<unsigned int>(txaction.get_send_tx_lock_tgas());
-            if (_rawtx != nullptr) {
-                juj["sender"] = _rawtx->get_source_addr();
-                juj["receiver"] = _rawtx->get_target_addr();
-                juj["action_name"] = _rawtx->get_target_action_name();
-                juj["action_param"] = parse_action(_rawtx->get_target_action());
-            }
-            jv["0x" + txaction.get_tx_hex_hash()] = juj;
-        }
-        jui["lightunit_input"] = jv;
-        ju[_unit_header->get_account()] = jui;
-    }
-    jv["units"] = ju;
-}
-
-void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp) {
+void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp, const std::string & rpc_version) {
     auto block_level = bp->get_block_level();
 
-    switch (block_level) {
-    case base::enum_xvblock_level_unit: {
-        xJson::Value j_lu;
-        set_lightunit_info(j_lu, bp);
-        body["lightunit"] = j_lu;
-
-        xJson::Value j_fu;
-        set_fullunit_info(j_fu, bp);
-        body["fullunit"] = j_fu;
-
+    bp->parse_to_json(body, rpc_version);
+    if (block_level == base::enum_xvblock_level_unit) {
         set_addition_info(body, bp);
-        break;
-    }
-
-    case base::enum_xvblock_level_table: {
-        xJson::Value j_tb;
-        set_table_info(j_tb, bp);
-        body["tableblock"] = j_tb;
-
-        if (bp->is_fulltable()) {
-            body["statistics"] = dynamic_cast<data::xfull_tableblock_t *>(bp)->get_table_statistics().to_json_object<xJson::Value>();
-        }
-
-        break;
-    }
-
-    default:
-        break;
     }
 }
 
-xJson::Value get_block_handle::get_block_json(xblock_t * bp) {
+xJson::Value get_block_handle::get_block_json(xblock_t * bp, const std::string & rpc_version) {
     xJson::Value root;
     if (bp == nullptr) {
         return root;
@@ -1538,13 +1418,16 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp) {
     }
 
     set_shared_info(root, bp);
-
+    if (rpc_version == RPC_VERSION_V2) {
+        root["parent_height"] = static_cast<unsigned long long>(bp->get_parent_block_height());    
+    }
+    
     xJson::Value header;
     set_header_info(header, bp);
     root["header"] = header;
 
     xJson::Value body;
-    set_body_info(body, bp);
+    set_body_info(body, bp, rpc_version);
 
     root["body"] = body;
 
