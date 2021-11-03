@@ -412,7 +412,7 @@ void xsync_handler_t::gossip(uint32_t msg_size, const vnetwork::xvnode_address_t
         const xgossip_behind_info_t &info = it.second;
         if (info.local_height == info.peer_height)
             continue;
-        xsync_info("xsync_handler_t::gossip, %s, %lu", address.c_str(), info.peer_height);
+
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_policy_full, network_self, from_address, reason);
         m_downloader->push_event(ev);
     }

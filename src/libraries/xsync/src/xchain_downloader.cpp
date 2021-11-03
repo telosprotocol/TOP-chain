@@ -87,7 +87,7 @@ bool xchain_downloader_t::on_timer(int64_t now) {
         if (!m_chain_objects[index].pick(interval, self_addr, target_addr)){
             continue;
         }
-        xinfo("xchain_downloader_t::on_timer,pick:%d,%d", interval.first, interval.second);
+
         if (index == enum_chain_sync_policy_full) {
             auto shadow = m_sync_store->get_shadow();
             uint64_t genesis_height = shadow->genesis_connect_height(m_address);
@@ -97,7 +97,6 @@ bool xchain_downloader_t::on_timer(int64_t now) {
                 interval.first = m_chain_objects[index].height();
             }
         }
-        xinfo("xchain_downloader_t::on_timer:%d,%d", interval.first, interval.second);
 
         m_current_object_index = index;
         m_task.start();
@@ -208,7 +207,6 @@ void xchain_downloader_t::on_block_committed_event(uint64_t height) {
         if (finish == result) {
             m_chain_objects[m_current_object_index].set_height(m_chain_objects[m_current_object_index].picked_height() + 1);
             m_continuous_times = 0;
-            xinfo("xchain_downloader_t::on_block_committed_event, %d,%d,%d", m_current_object_index, height, m_chain_objects[m_current_object_index].picked_height() + 1);
         } else if (abort == result) {
             m_continuous_times++;
         } else {
@@ -342,12 +340,10 @@ xsync_command_execute_result xchain_downloader_t::handle_next(uint64_t current_h
 
     do {
         m_sync_range_mgr.get_next_behind(height, count_limit, start_height, count, self_addr, target_addr);
-        xinfo("get_next_behind: %d,%d", start_height, count);
         if (count == 0) {
             break;
         }
         auto interval = m_sync_store->get_shadow()->get_continuous_unused_interval(m_address, std::make_pair(start_height, start_height + count - 1));
-        xinfo("get_continuous_unused_interval:%d,%d", interval.first, interval.second);
         if (interval.second == 0) {
             height = start_height + count - 1;          
             start_height = 0;
