@@ -11,8 +11,16 @@
 NS_BEG2(top, store)
 
 uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
-    std::lock_guard<std::mutex> lock(m_mtx);
-    return m_last_total_lock_tgas_token;
+    uint64_t total_lock_tgas_token = 0;
+    std::string value;
+    uint64_t height;
+    if (get_latest_property(value, height)) {
+        total_lock_tgas_token = base::xstring_utl::touint64(value);
+        xdbg("xtgas_singleton::get_cache_total_lock_tgas_token success: %llu", total_lock_tgas_token);
+    } else {
+        xwarn("xtgas_singleton::get_cache_total_lock_tgas_token failed!");
+    }
+    return total_lock_tgas_token;
 }
 
 bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height) {
