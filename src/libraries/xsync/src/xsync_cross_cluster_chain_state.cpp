@@ -109,7 +109,7 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
 
         uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
         if (peer_end_height > latest_end_block_height) {
-            xsync_info("cross_cluster_chain_state notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu)", 
+            xsync_dbg("cross_cluster_chain_state notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu)", 
                         address.c_str(), m_sync_store->get_latest_start_block_height(address, sync_policy), latest_end_block_height, peer_start_height, peer_end_height);
 
             mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 
