@@ -9,6 +9,7 @@ add_dependencies(xdata_test xblockstore)
 include_directories(src/xtopcom/xdata/)
 target_link_libraries(xdata_test PRIVATE
     xdata
+    xchain_upgrade
     gtest
 )
 

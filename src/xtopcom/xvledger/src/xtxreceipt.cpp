@@ -8,6 +8,7 @@
 #include "xvledger/xvcontract.h"
 #include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
+#include "xdata/xdatautil.h"
 
 namespace top
 {
@@ -165,24 +166,15 @@ namespace top
 
             // #1 get send/recv action leafs, which need make txreceipt
             std::vector<xvaction_t> receipt_actions;
-            auto & all_entitys = commit_block->get_input()->get_entitys();
-            for (auto & entity : all_entitys) {
-                // it must be xinentitys
-                xvinentity_t* _inentity = dynamic_cast<xvinentity_t*>(entity);
-                if (_inentity == nullptr) {
-                    xassert(false);
-                    return {};
-                }
-                auto & all_actions = _inentity->get_actions();
-                for (auto & action : all_actions) {
-                    if (false == action.get_org_tx_hash().empty()) {
-                        enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
-                        // only send and recv action need make receipt
-                        if (_actionid == base::enum_transaction_subtype_send || _actionid == base::enum_transaction_subtype_recv) {
-                            receipt_actions.push_back(action);
-                        }
+            auto tx_actions = commit_block->get_tx_actions();
+            for (auto & action : tx_actions) {
+                if (false == action.get_org_tx_hash().empty()) {
+                    enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
+                    // only send and recv action need make receipt
+                    if (_actionid == base::enum_transaction_subtype_send || _actionid == base::enum_transaction_subtype_recv) {
+                        receipt_actions.push_back(action);
                     }
-                }
+                }                
             }
             if (receipt_actions.empty()) {
                 return {};
@@ -199,20 +191,11 @@ namespace top
 
             // find txactin by txhash
             std::vector<xvaction_t> receipt_actions;
-            auto & all_entitys = commit_block->get_input()->get_entitys();
-            for (auto & entity : all_entitys) {
-                // it must be xinentitys
-                xvinentity_t* _inentity = dynamic_cast<xvinentity_t*>(entity);
-                if (_inentity == nullptr) {
-                    xassert(false);
-                    return nullptr;
-                }
-                auto & all_actions = _inentity->get_actions();
-                for (auto & action : all_actions) {
-                    if (txhash == action.get_org_tx_hash()) {
-                        receipt_actions.push_back(action);
-                        break;
-                    }
+            auto tx_actions = commit_block->get_tx_actions();
+            for (auto & action : tx_actions) {
+                if (txhash == action.get_org_tx_hash()) {
+                    receipt_actions.push_back(action);
+                    break;
                 }
             }
             if (receipt_actions.size() != 1) {  // not find txhash

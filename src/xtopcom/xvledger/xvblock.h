@@ -120,6 +120,43 @@ namespace top
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
 
+        class xvheader_extra {
+        public:
+            int32_t do_write(base::xstream_t & stream) {
+                const int32_t begin_size = stream.size();
+                stream << static_cast<uint32_t>(m_map.size());
+                for (auto pair : m_map) {
+                    stream.write_compact_var(pair.first);
+                    stream.write_compact_var(pair.second);
+                }
+                return (stream.size() - begin_size);
+            }
+
+            int32_t do_read(base::xstream_t & stream) {
+                const int32_t begin_size = stream.size();
+                uint32_t size;
+                stream >> size;
+                for (uint32_t i = 0; i < size; ++i) {
+                    std::string key;
+                    std::string val;
+                    stream.read_compact_var(key);
+                    stream.read_compact_var(val);
+                    m_map[key] = val;
+                }
+                return (begin_size - stream.size());
+            }
+
+            void insert(const std::string & key, const std::string & val) {
+                m_map[key] = val;
+            }
+
+            const std::string & get_val(const std::string & key) {
+                return m_map[key];
+            }
+
+        private:
+            std::map<std::string, std::string> m_map;
+        };
         //The definition of version defintion for binary of node and block:[8:Features][8:MAJOR][8:MINOR][8:PATCH]
             //Features: added new featurs that need most node agree then make it effect,refer BIP8 spec
             //MAJOR： version when make incompatible API changes
@@ -592,6 +629,7 @@ namespace top
         };
 
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
+        using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
         class xvblock_t : public xdataobj_t
         {
             friend class xvbbuild_t;
@@ -698,7 +736,9 @@ namespace top
         public:
             xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
-            
+            virtual std::vector<base::xvaction_t> get_tx_actions() {return std::vector<base::xvaction_t>{};}
+            virtual std::vector<xvheader_ptr_t> get_unit_headers() {return std::vector<xvheader_ptr_t>{};}
+
             const std::string           get_fullstate_hash();
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
             const std::string           get_full_state();

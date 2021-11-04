@@ -107,7 +107,7 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root, const std::string & r
         jv["txs"].append(ju);
     }
 
-    auto & headers = get_unit_headers();
+    auto headers = get_unit_headers();
     for (auto _unit_header : headers) {
         xJson::Value ju;
         ju["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
@@ -117,7 +117,7 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root, const std::string & r
     root["tableblock"] = jv;
 }
 
-const std::vector<base::xvaction_t> & xtable_block_t::get_tx_actions() {
+std::vector<base::xvaction_t> xtable_block_t::get_tx_actions() {
     if (!m_tx_actions.empty()) {
         return m_tx_actions;
     }
@@ -128,7 +128,6 @@ const std::vector<base::xvaction_t> & xtable_block_t::get_tx_actions() {
     
     auto version = get_block_version();
     if (version == base::enum_xvblock_version_1) {
-        xdbg("wish block version 1");
         uint32_t entitys_count = _table_inentitys.size();
         for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
             base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
@@ -139,13 +138,12 @@ const std::vector<base::xvaction_t> & xtable_block_t::get_tx_actions() {
         }
         return m_tx_actions;
     } else {
-        xdbg("wish block version 2");
         base::xvinentity_t* tx_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[0]);
         return tx_inentity->get_actions();
     }
 }
 
-const std::vector<xvheader_ptr_t> & xtable_block_t::get_unit_headers() {
+std::vector<xvheader_ptr_t> xtable_block_t::get_unit_headers() {
     if (!m_unit_headers.empty()) {
         return m_unit_headers;
     }
@@ -225,6 +223,47 @@ bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock
 bool xtable_block_t::extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {
     sub_block = xlighttable_build_t::unpack_one_unit_from_table(this, entity_id, extend_cert, extend_data);
     return sub_block != nullptr ? true : false;
+}
+
+void xtable_block_t::update_txs_by_actions(const std::vector<base::xvaction_t> & actions, std::vector<xlightunit_tx_info_ptr_t> & txs) const {
+    for (auto & action : actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
+        }
+        xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
+        xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(action, raw_tx.get());
+        txs.push_back(txinfo);
+    }
+}
+
+const std::vector<xlightunit_tx_info_ptr_t> xtable_block_t::get_txs() const {
+    std::vector<xlightunit_tx_info_ptr_t> txs;
+    if (get_block_version() == base::enum_xvblock_version_1) {
+        const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
+        uint32_t entitys_count = _table_inentitys.size();
+        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+            const std::vector<base::xvaction_t> &  actions = _table_unit_inentity->get_actions();
+            update_txs_by_actions(actions, txs);
+        }
+    } else {
+        base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
+        const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
+        update_txs_by_actions(actions, txs);
+    }
+
+    return txs;
+}
+
+bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
+    auto txs = get_txs();
+    for (auto & tx : txs) {
+        xdbg("extract_sub_txs tx_hash:%s, account: %s, height:%llu, type:%s", tx->get_tx_hex_hash().c_str(), get_account().c_str(), get_height(), tx->get_tx_subtype_str().c_str());
+        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, dynamic_cast<xdataunit_t*>(tx.get()), tx->get_tx_hash(), static_cast<enum_transaction_subtype>(tx->get_tx_subtype()));
+        sub_txs.push_back(tx_index);
+    }
+
+    return true;
 }
 
 NS_END2

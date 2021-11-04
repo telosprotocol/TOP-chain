@@ -476,9 +476,9 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     }
 
     base::xvaccount_t _vaccount(tx_store->get_recv_unit_addr());
-    uint64_t unit_height = tx_store->get_recv_unit_height();
+    uint64_t unit_height = tx_store->get_recv_block_height();
     base::xauto_ptr<base::xvblock_t> commit_block =
-        m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, tx_store->get_recv_unit_hash(), false,
+        m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, tx_store->get_recv_block_hash(), false,
         metrics::blockstore_access_from_txpool_create_confirm_receipt);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-commit unit not exist txhash=%s,account=%s,block_height:%ld",

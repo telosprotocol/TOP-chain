@@ -487,31 +487,23 @@ xcons_transaction_ptr_t xblocktool_t::create_one_txreceipt(base::xvblock_t* comm
 
     // find txaction by receiptid
     std::vector<base::xvaction_t> receipt_actions;
-    auto & all_entitys = commit_block->get_input()->get_entitys();
-    for (auto & entity : all_entitys) {
-        // it must be xinentitys
-        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
-        if (_inentity == nullptr) {
-            xassert(false);
-            return nullptr;
+    auto tx_actions = commit_block->get_tx_actions();
+    for (auto & action : tx_actions) {
+        if (action.get_org_tx_hash().empty()) {
+            continue;
         }
-        auto & all_actions = _inentity->get_actions();
-        for (auto & action : all_actions) {            
-            if (action.get_org_tx_hash().empty()) {
-                continue;
-            }
-            enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
-            if (_actionid != subtype) {
-                continue;                        
-            }
-            xlightunit_action_t txaction(action);
-            xinfo("nathan peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
-            if (txaction.get_receipt_id_peer_tableid() != peer_table_sid || txaction.get_receipt_id() != receipt_id) {
-                continue;  
-            }
-            receipt_actions.push_back(action);
+        enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
+        if (_actionid != subtype) {
+            continue;                        
         }
+        xlightunit_action_t txaction(action);
+        xinfo("nathan peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
+        if (txaction.get_receipt_id_peer_tableid() != peer_table_sid || txaction.get_receipt_id() != receipt_id) {
+            continue;  
+        }
+        receipt_actions.push_back(action);        
     }
+
     if (receipt_actions.size() != 1) {  // not find txhash
         xassert(false);
         return nullptr;

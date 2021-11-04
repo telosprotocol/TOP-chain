@@ -51,6 +51,41 @@ namespace top
             enum_transaction_subtype    m_subtype;
         };
 
+        class xvtxkey_vec_t {
+        public:
+            int32_t do_write(base::xstream_t & stream) {
+                const int32_t begin_size = stream.size();
+                stream << static_cast<uint32_t>(m_vec.size());
+                for (auto key : m_vec) {
+                    key.do_write(stream);
+                }
+                return (stream.size() - begin_size);
+            }
+
+            int32_t do_read(base::xstream_t & stream) {
+                const int32_t begin_size = stream.size();
+                uint32_t size;
+                stream >> size;
+                for (uint32_t i = 0; i < size; ++i) {
+                    xvtxkey_t key;
+                    key.do_read(stream);
+                    m_vec.push_back(key);
+                }
+                return (begin_size - stream.size());
+            }
+
+            void push_back(const xvtxkey_t & key) {
+                m_vec.push_back(key);
+            }
+
+            const std::vector<xvtxkey_t> & get_txkeys() const {
+                return m_vec;
+            }
+
+        private:
+            std::vector<xvtxkey_t> m_vec;
+        };
+
         class xvblock_t;
         class xvtxindex_t : public xdataunit_t
         {

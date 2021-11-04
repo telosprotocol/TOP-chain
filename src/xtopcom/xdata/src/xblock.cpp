@@ -149,6 +149,24 @@ xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblo
     return object_ptr;
 }
 
+void  xblock_t::txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & txs_info, base::xreceiptid_check_t & receiptid_check) {
+    for (auto & tx : txs_info) {
+        if (tx->is_send_tx()) {
+            uint64_t sendid = tx->get_receipt_id();
+            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+            receiptid_check.set_sendid(tableid, sendid);
+        } else if (tx->is_recv_tx()) {
+            uint64_t recvid = tx->get_receipt_id();
+            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+            receiptid_check.set_recvid(tableid, recvid);
+        } else if (tx->is_confirm_tx()) {
+            uint64_t confirmid = tx->get_receipt_id();
+            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+            receiptid_check.set_confirmid(tableid, confirmid);
+        }
+    }
+}
+
 void  xblock_t::batch_units_to_receiptids(const std::vector<xblock_ptr_t> & units, base::xreceiptid_check_t & receiptid_check) {
     for (auto & unit : units) {
         const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
@@ -434,7 +452,7 @@ uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
     return value.size();
 }
 
-std::vector<xlightunit_action_ptr_t> xblock_t::get_lighttable_tx_actions() const {
+std::vector<xlightunit_action_ptr_t> xblock_t::get_lighttable_tx_actions() {
     if (get_block_class() != base::enum_xvblock_class_light
         || get_block_level() != base::enum_xvblock_level_table) {
         xassert(false);
@@ -442,20 +460,13 @@ std::vector<xlightunit_action_ptr_t> xblock_t::get_lighttable_tx_actions() const
     }
 
     std::vector<xlightunit_action_ptr_t> txactions;
-
-    const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
-    uint32_t entitys_count = _table_inentitys.size();
-    xassert(entitys_count > 1);
-    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                continue;
-            }
-            xlightunit_action_ptr_t txaction = std::make_shared<xlightunit_action_t>(action);
-            txactions.push_back(txaction);
+    auto actions = get_tx_actions();
+    for (auto & action : actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
         }
+        xlightunit_action_ptr_t txaction = std::make_shared<xlightunit_action_t>(action);
+        txactions.push_back(txaction);        
     }
     return txactions;
 }

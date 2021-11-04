@@ -952,7 +952,7 @@ namespace top
                 return false;
 
             if( (index_ptr->get_block_class() == base::enum_xvblock_class_light)
-               && (index_ptr->get_block_level() == base::enum_xvblock_level_unit) )
+               && (index_ptr->get_block_level() == base::enum_xvblock_level_table) )
             {
                 if(!index_ptr->check_store_flag(base::enum_index_store_flag_transactions))
                 {

@@ -1655,7 +1655,7 @@ namespace top
                 return false;
 
             if( (index_ptr->get_block_class() == base::enum_xvblock_class_light)
-               && (index_ptr->get_block_level() == base::enum_xvblock_level_unit) )
+               && (index_ptr->get_block_level() == base::enum_xvblock_level_table) )
             {
                 if(!index_ptr->check_store_flag(base::enum_index_store_flag_transactions))
                 {
@@ -1805,7 +1805,8 @@ namespace top
             if(index_ptr->check_store_flag(base::enum_index_store_flag_input_entity) == false)
             {
                 std::string input_bin;
-                block_ptr->get_input()->serialize_to_string(input_bin);
+                if (block_ptr->get_block_version() == base::enum_xvblock_version_1 || block_ptr->get_block_level() != base::enum_xvblock_level_unit)
+                    block_ptr->get_input()->serialize_to_string(input_bin);
                 const std::string input_key = base::xvdbkey_t::create_block_input_key(*this,block_ptr->get_block_hash());
                 if(get_xdbstore()->set_value(input_key, input_bin))
                 {

@@ -1421,6 +1421,7 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp, const std::string &
     if (rpc_version == RPC_VERSION_V2) {
         root["parent_height"] = static_cast<unsigned long long>(bp->get_parent_block_height());    
     }
+    root["clock"] = static_cast<unsigned long long>(bp->get_clock());
     
     xJson::Value header;
     set_header_info(header, bp);

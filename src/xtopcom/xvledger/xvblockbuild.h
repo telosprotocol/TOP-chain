@@ -36,6 +36,9 @@ namespace top
                                         const std::string & _justify_hash);
             // some optional parameters
             void    set_extra_data(const std::string & _extra_data) {m_extra_data = _extra_data;}
+            // std::string get_header_extra(const xlightunit_block_para_t & bodypara) const;
+            uint64_t get_clock() {return m_clock;}
+            uint64_t get_height() {return m_height;}
 
         private:
             void    set_default_qcert();
@@ -73,7 +76,8 @@ namespace top
 
         class xvblockbuild_t {
         public:
-            static xauto_ptr<xvheader_t>    build_proposal_header(xvblock_t* block);
+            static bool should_build_version_2(const uint64_t clock, const uint64_t height);
+            static xauto_ptr<xvheader_t>    build_proposal_header(xvblock_t* block, const uint64_t clock);
         public:
             xvblockbuild_t();  // genesis genesis construct
             xvblockbuild_t(base::xvheader_t* header, base::xvqcert_t* cert);

@@ -89,7 +89,7 @@ class xlightunit_block_t : public xblock_t {
     virtual     std::string     dump_body() const;
  public:  // override base block api
     bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
-    const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
+    const std::vector<xlightunit_tx_info_ptr_t> get_txs() const override;
     uint32_t                    get_txs_count() const override {return (uint32_t)get_input()->get_entitys().size();}
     uint32_t                    get_unconfirm_sendtx_num() const override;
 

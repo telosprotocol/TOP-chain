@@ -6,6 +6,7 @@
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xmerkle.hpp"
 #include "xutility/xhash.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 
 namespace top
 {
@@ -162,6 +163,17 @@ namespace top
             }
         }
 
+        bool xvblockbuild_t::should_build_version_2(const uint64_t clock, const uint64_t height) {
+            auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+            if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_version2_fork_point, clock)) {
+                // genesis block needs to be verison 1 for compatibility
+                if (height >= 1) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         void xvblockbuild_t::init_qcert(const xbbuild_para_t & _para) {
             if (get_header() == nullptr) {  // must init header firstly
                 xassert(false);
@@ -202,6 +214,11 @@ namespace top
             _header->set_chainid(_para.m_chainid);
             _header->set_account(_para.m_account);
             _header->set_height(_para.m_height);
+            xdbg("init_header clock:%llu, height:%llu, account:%s", _para.m_clock, _para.m_height, _para.m_account.c_str());
+            if (should_build_version_2(_para.m_clock, _para.m_height)) {
+                _header->set_block_version(base::enum_xvblock_version_2);
+            }
+
             _header->set_block_level(_para.m_level);
             _header->set_weight(1);
             _header->set_last_block_hash(_para.m_last_block_hash);
@@ -212,11 +229,16 @@ namespace top
             set_header(_header.get());
         }
 
-        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block) {
+        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block, const uint64_t clock) {
             xauto_ptr<xvheader_t> _header = new xvheader_t();
             _header->set_chainid(block->get_chainid());
             _header->set_account(block->get_account());
             _header->set_height(block->get_height() + 1);
+            
+            xdbg("build_proposal_header clock:%llu, height:%llu, account:%s", clock, _header->get_height(), _header->get_account().c_str());
+            if (should_build_version_2(clock, _header->get_height())) {
+                _header->set_block_version(base::enum_xvblock_version_2);
+            }
             _header->set_block_level(block->get_block_level());
             _header->set_weight(1);
             _header->set_last_block_hash(block->get_block_hash());

@@ -278,22 +278,11 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
     // set other accounts for tableblock
     std::vector<std::string> other_accounts;
-    const std::vector<base::xventity_t*> & _table_inentitys = proposal_block->get_input()->get_entitys();
-    for (auto & _inentity : _table_inentitys) {
-        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_inentity);
-        if (_table_unit_inentity == nullptr) {
-            xerror("xproposal_maker_t::verify_proposal_input fail-get inentity. proposal=%s",
-                proposal_block->dump().c_str());
-            return false;
-        }
-        if (!_table_unit_inentity->get_extend_data().empty()) {
-            base::xtable_inentity_extend_t extend;
-            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
-            if (_unit_header->get_block_class() == base::enum_xvblock_class_nil || _unit_header->get_block_class() == base::enum_xvblock_class_full) {
-                other_accounts.push_back(_unit_header->get_account());
-            }
-        }
+    auto unit_headers = proposal_block->get_unit_headers();
+    for (auto & _unit_header : unit_headers) {
+        if (_unit_header->get_block_class() == base::enum_xvblock_class_nil || _unit_header->get_block_class() == base::enum_xvblock_class_full) {
+            other_accounts.push_back(_unit_header->get_account());
+        }        
     }
 
     const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
@@ -453,39 +442,27 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const {
-    if (block->get_block_class() == base::enum_xvblock_class_light) {
-        base::xvaccount_t _vaccount(block->get_account());
-        get_blockstore()->load_block_input(_vaccount, block.get());
-        const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
-        uint32_t entitys_count = _table_inentitys.size();
-        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-            base::xtable_inentity_extend_t extend;
-            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+    auto tx_actions = block->get_tx_actions();
+    for (auto & action : tx_actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
+        }
+        base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
 
-            const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-            for (auto & action : input_actions) {
-                if (action.get_org_tx_hash().empty()) {  // not txaction
-                    continue;
-                }
-                base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-
-                if (_subtype == enum_transaction_subtype_self || _subtype == enum_transaction_subtype_send) {
-                    xlightunit_action_t txaction(action);
-                    xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
-                    if (_rawtx != nullptr) {
-                        uint64_t txnonce = _rawtx->get_tx_nonce();
-                        auto account_addr = _unit_header->get_account();
-                        auto it = locked_nonce_map.find(account_addr);
-                        xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
-                        if (it == locked_nonce_map.end()) {
-                            locked_nonce_map[account_addr] = txnonce;
-                        } else {
-                            if (it->second < txnonce) {
-                                locked_nonce_map[account_addr] = txnonce;
-                            }
-                        }
+        if (_subtype == enum_transaction_subtype_self || _subtype == enum_transaction_subtype_send) {
+            xlightunit_action_t txaction(action);
+            xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+            if (_rawtx != nullptr) {
+                uint64_t txnonce = _rawtx->get_tx_nonce();
+                const std::string uri = txaction.get_contract_uri();
+                const std::string & account_addr = base::xvcontract_t::get_contract_address(uri);
+                auto it = locked_nonce_map.find(account_addr);
+                xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
+                if (it == locked_nonce_map.end()) {
+                    locked_nonce_map[account_addr] = txnonce;
+                } else {
+                    if (it->second < txnonce) {
+                        locked_nonce_map[account_addr] = txnonce;
                     }
                 }
             }

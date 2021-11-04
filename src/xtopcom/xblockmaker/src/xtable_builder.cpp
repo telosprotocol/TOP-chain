@@ -27,7 +27,8 @@ void make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::str
 void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
                                                            const std::vector<xblock_ptr_t> & units,
                                                            std::string & property_binlog,
-                                                           std::map<std::string, std::string> & property_hashs) {
+                                                           std::map<std::string, std::string> & property_hashs,
+                                                           const std::vector<xlightunit_tx_info_ptr_t> & txs_info) {
     xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
 
     data::xtable_bstate_t proposal_tbstate(proposal_bstate.get());
@@ -64,7 +65,12 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
 
     // make receiptid property binlog
     base::xreceiptid_check_t receiptid_check;
-    xblock_t::batch_units_to_receiptids(units, receiptid_check);  // units make changed receiptids
+    xdbg("block version: %d, height:%llu, unit_height:%llu, unit_version:%d", proposal_bstate->get_block_version(), proposal_bstate->get_block_height(), units[0]->get_height(), units[0]->get_block_version());
+    if (proposal_bstate->get_block_version() == base::enum_xvblock_version_1) {
+        xblock_t::batch_units_to_receiptids(units, receiptid_check);  // units make changed receiptids
+    } else {
+        xblock_t::txs_to_receiptids(txs_info, receiptid_check);  // units make changed receiptids
+    }
 
     base::xreceiptid_pairs_ptr_t modified_pairs = std::make_shared<base::xreceiptid_pairs_t>();
 
@@ -128,12 +134,13 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     std::shared_ptr<xlighttable_builder_para_t> lighttable_build_para = std::dynamic_pointer_cast<xlighttable_builder_para_t>(build_para);
     xassert(lighttable_build_para != nullptr);
 
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
+    auto & txs_info = build_para->get_txs();
     std::map<std::string, std::string> property_hashs;  // need put in table self action for prove
     std::string property_binlog;
-    make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs);
+    make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs, txs_info);
     xtable_block_para_t lighttable_para;
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
@@ -143,6 +150,7 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     proposal_bstate->take_snapshot(fullstate_bin);
     lighttable_para.set_fullstate_bin(fullstate_bin);
     lighttable_para.set_property_hashs(property_hashs);
+    lighttable_para.set_txs(txs_info);
 
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_tableblock(lighttable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
@@ -157,8 +165,9 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
 void xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                 std::string & property_binlog,
-                                                std::map<std::string, std::string> & property_hashs) {
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+                                                std::map<std::string, std::string> & property_hashs,
+                                                const uint64_t clock) {
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), clock);
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_snapshot;
@@ -184,7 +193,7 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
 
     std::map<std::string, std::string> property_hashs;
     std::string property_binlog;
-    make_binlog(prev_block, prev_bstate, property_binlog, property_hashs);
+    make_binlog(prev_block, prev_bstate, property_binlog, property_hashs, cs_para.get_clock());
 
     int64_t tgas_balance_change_total = 0;
     for(auto & block : blocks) {

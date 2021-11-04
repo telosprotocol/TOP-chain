@@ -66,6 +66,7 @@ namespace top
         void xvtransaction_store_t::set_send_block_info(const xvtxindex_ptr & txindex) {
 //            xassert(txindex->get_block_height() > 0);
             xassert(m_send_block_height == 0 && m_send_block_hash.empty());
+            m_send_addr = txindex->get_block_addr();
             m_send_block_height = txindex->get_block_height();
             m_send_block_hash = txindex->get_block_hash();
             m_is_self_tx = txindex->is_self_tx();

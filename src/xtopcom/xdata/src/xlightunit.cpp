@@ -87,6 +87,44 @@ void xlightunit_block_t::parse_to_json(xJson::Value & root, const std::string & 
                 root["lightunit"]["lightunit_input"].append(jv);
             }
         }
+    } else {
+        // need input
+        base::xvaccount_t _vaccount(get_account());
+        base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, this, metrics::blockstore_access_from_rpc_get_block_set_table);
+
+        auto header = get_header();
+        auto extra_str = header->get_extra_data();
+        base::xvheader_extra he;
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)extra_str.data(), extra_str.size());
+        he.do_read(stream);
+        auto txs_str = he.get_val("txs");
+        if (txs_str.empty()) {
+            xdbg("empty header, account:%s", get_account().c_str());
+            return;
+        }
+
+        base::xstream_t stream1(base::xcontext_t::instance(), (uint8_t *)txs_str.data(), txs_str.size());
+        base::xvtxkey_vec_t txs;
+        auto size = txs.do_read(stream1);
+        auto & tx_vec = txs.get_txkeys();
+        if (rpc_version == RPC_VERSION_V1) {
+            xJson::Value ji;
+            for (auto & tx : tx_vec) {
+                xJson::Value jv;
+                jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+                xJson::Value jtx;
+                jtx["0x" + tx.get_tx_hex_hash()] = jv;
+                ji["txs"].append(jtx);
+            }
+            root["lightunit"]["lightunit_input"] = ji;
+        } else {
+            for (auto & tx : tx_vec) {
+                xJson::Value jv;
+                jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+                jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
+                root["lightunit"]["lightunit_input"].append(jv);
+            }
+        }
     }
 }
 
@@ -99,7 +137,7 @@ std::string xlightunit_block_t::dump_body() const {
     return ss.str();
 }
 
-const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() const {
+const std::vector<xlightunit_tx_info_ptr_t> xlightunit_block_t::get_txs() const {
     return get_lightunit_body().get_txs();
 }
 
@@ -129,6 +167,9 @@ void xlightunit_block_t::load_body() const {
     }
     const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
     for (auto & action : actions) {
+        if (action.get_org_tx_hash().empty()) {
+            continue;
+        }
         xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
         xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(action, raw_tx.get());
         m_cache_body.add_tx_info(txinfo);

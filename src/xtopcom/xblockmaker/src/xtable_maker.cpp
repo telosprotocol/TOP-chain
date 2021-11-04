@@ -8,6 +8,7 @@
 #include "xblockmaker/xtable_maker.h"
 #include "xblockmaker/xtable_builder.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xblockbuild.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 
@@ -302,16 +303,9 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
 }
 
 void xtable_maker_t::get_unit_accounts(const xblock_ptr_t & block, std::set<std::string> & accounts) const {
-    if (block->get_block_class() == base::enum_xvblock_class_light) {
-        const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
-        uint32_t entitys_count = _table_inentitys.size();
-        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-            base::xtable_inentity_extend_t extend;
-            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
-            accounts.insert(_unit_header->get_account());
-        }
+    auto unit_headers = block->get_unit_headers();
+    for (auto & _unit_header : unit_headers) {
+        accounts.insert(_unit_header->get_account());
     }
 }
 
@@ -356,6 +350,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
 
     int64_t tgas_balance_change = 0;
     std::vector<xblock_ptr_t> batch_units;
+    std::vector<xlightunit_tx_info_ptr_t> txs_info;
     // try to make unit for unitmakers
     for (auto & v : unitmakers) {
         xunit_maker_ptr_t & unitmaker = v.second;
@@ -378,6 +373,14 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         if (proposal_unit->get_block_class() == base::enum_xvblock_class_full || proposal_unit->get_block_class() == base::enum_xvblock_class_nil) {
             table_para.get_proposal()->set_other_account(proposal_unit->get_account());
         }
+
+        std::vector<base::xvaction_t> input_actions;
+        for (auto & tx : unit_result.m_pack_txs) {
+            base::xvaction_t _action = data::xlightunit_build_t::make_action(tx);
+            input_actions.push_back(_action);
+            xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
+            txs_info.push_back(txinfo);
+        }
     }
 
     // backup should check if origin txs is changed
@@ -397,7 +400,12 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     }
 
     base::xreceiptid_check_t receiptid_check;
-    xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
+    xdbg("block version: %d, height:%llu", batch_units[0]->get_block_version(), batch_units[0]->get_height());
+    if (batch_units[0]->get_block_version() == base::enum_xvblock_version_1) {
+        xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);  // units make changed receiptids
+    } else {
+        xblock_t::txs_to_receiptids(txs_info, receiptid_check);
+    }
     if (false == receiptid_check.check_contious(table_para.get_tablestate()->get_receiptid_state())) {
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
         xerror("xtable_maker_t::make_light_table fail check receiptid contious.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
@@ -413,7 +421,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     }
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     cs_para.set_parent_height(0);
-    xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
+    xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources(), txs_info);
     build_para->set_tgas_balance_change(tgas_balance_change);
     xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     return proposal_block;

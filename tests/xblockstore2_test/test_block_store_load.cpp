@@ -173,7 +173,7 @@ TEST_F(test_block_store_load, load_unexsit_block_3) {
         auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, false);
         ASSERT_NE(_block, nullptr);
         ASSERT_EQ(_block->is_output_ready(true), false);
-        ASSERT_EQ(_block->is_input_ready(true), false);
+        ASSERT_EQ(_block->is_input_ready(true), true);
     }
     {
         auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, true);
