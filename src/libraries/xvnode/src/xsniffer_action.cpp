@@ -76,20 +76,20 @@ void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & v
         common::xip2_t broadcast_xip{vnode->address().network_id()};
         vnode->broadcast(broadcast_xip, message, ec);
         if (ec) {
-            xwarn("[xrole_context_t] broadcast to ALL failed. block owner %s height %lu", block_ptr->get_block_owner().c_str(), block_ptr->get_height());
+            xwarn("[xtop_sniffer_action::broadcast] broadcast to ALL failed. block owner %s height %lu", block_ptr->get_block_owner().c_str(), block_ptr->get_height());
             assert(false);
         } else {
-            xdbg("[xrole_context_t] broadcast to ALL. block owner %s height %lu", block_ptr->get_block_owner().c_str(), block_ptr->get_height());
+            xdbg("[xtop_sniffer_action::broadcast] broadcast to ALL. block owner %s height %lu", block_ptr->get_block_owner().c_str(), block_ptr->get_height());
         }
     } else {
         if (common::has<common::xnode_type_t::committee>(types)) {
             common::xnode_address_t dest{common::build_committee_sharding_address(vnode->address().network_id())};
             vnode->broadcast(dest.xip2().group_xip2(), message, ec);
             if (ec) {
-                xwarn("[xrole_context_t] broadcast to beacon failed. block owner %s", block_ptr->get_block_owner().c_str());
+                xwarn("[xtop_sniffer_action::broadcast] broadcast to beacon failed. block owner %s", block_ptr->get_block_owner().c_str());
                 assert(false);
             } else {
-                xdbg("[xrole_context_t] broadcast to beacon. block owner %s", block_ptr->get_block_owner().c_str());
+                xdbg("[xtop_sniffer_action::broadcast] broadcast to beacon. block owner %s", block_ptr->get_block_owner().c_str());
             }
         }
 
@@ -97,10 +97,10 @@ void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & v
             common::xnode_address_t dest{common::build_zec_sharding_address(vnode->address().network_id())};
             vnode->broadcast(dest.xip2().group_xip2(), message, ec);
             if (ec) {
-                xwarn("[xrole_context_t] broadcast to zec. block owner %s", block_ptr->get_block_owner().c_str());
+                xwarn("[xtop_sniffer_action::broadcast] broadcast to zec. block owner %s", block_ptr->get_block_owner().c_str());
                 assert(false);
             } else {
-                xdbg("[xrole_context_t] broadcast to zec. block owner %s", block_ptr->get_block_owner().c_str());
+                xdbg("[xtop_sniffer_action::broadcast] broadcast to zec. block owner %s", block_ptr->get_block_owner().c_str());
             }
         }
 
@@ -111,10 +111,10 @@ void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & v
                 };
                 vnode->broadcast(dest.xip2().group_xip2(), message, ec);
                 if (ec) {
-                    xwarn("[xrole_context_t] broadcast to archive failed. block owner %s", block_ptr->get_block_owner().c_str());
+                    xwarn("[xtop_sniffer_action::broadcast] broadcast to archive failed. block owner %s", block_ptr->get_block_owner().c_str());
                     assert(false);
                 } else {
-                    xdbg("[xrole_context_t] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
+                    xdbg("[xtop_sniffer_action::broadcast] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
                 }
             }
         }

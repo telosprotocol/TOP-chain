@@ -5,11 +5,14 @@
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer.h"
 
 #include "xbasic/xutility.h"
+#include "xcontract_runtime/xblock_sniff_config.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_v2.h"
+#include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
+#include "xvnode/xcomponents/xblock_sniffing/xsniffer_action.h"
 
 #include <cinttypes>
 
@@ -46,7 +49,7 @@ void xtop_sniffer::sniff_set() {
             m_config_map.insert(std::make_pair(contract_address, xrole_config_t{contract_data, std::map<common::xaccount_address_t, uint64_t>()}));
         }
         if (disable_broadcasts) {
-            m_config_map[contract_address].role_data.broadcast_config.type = contract_runtime::xsniff_broadcast_type_t::invalid;
+            m_config_map[contract_address].role_data.broadcast_config.zone = contract_runtime::xsniff_broadcast_type_t::invalid;
         }
     }
 }
@@ -57,16 +60,18 @@ xsniffer_config_t xtop_sniffer::sniff_config() const {
         auto const & data = top::get<xrole_config_t>(data_pair);
         auto const & sniff_type = data.role_data.sniff_type;
         if (contract_runtime::has<contract_runtime::xsniff_type_t::broadcast>(sniff_type)) {
-            config.insert(std::make_pair(xsniffer_event_type_t::broadcast,
-                                         xsniffer_event_config_t{xsniffer_block_type_t::full_block, std::bind(&xtop_sniffer::sniff_broadcast, this, std::placeholders::_1)}));
+            auto sniff_block_type = data.role_data.broadcast_config.type;
+            assert(sniff_block_type != contract_runtime::xsniff_block_type_t::invalid);
+            config.insert(std::make_pair(xsniffer_event_type_t::broadcast, xsniffer_event_config_t{sniff_block_type, std::bind(&xtop_sniffer::sniff_broadcast, this, std::placeholders::_1)}));
         }
         if (contract_runtime::has<contract_runtime::xsniff_type_t::timer>(sniff_type)) {
             config.insert(std::make_pair(xsniffer_event_type_t::timer,
-                                         xsniffer_event_config_t{xsniffer_block_type_t::all, std::bind(&xtop_sniffer::sniff_timer, this, std::placeholders::_1)}));
+                                         xsniffer_event_config_t{xsniffer_block_type_t::all_block, std::bind(&xtop_sniffer::sniff_timer, this, std::placeholders::_1)}));
         }
         if (contract_runtime::has<contract_runtime::xsniff_type_t::block>(sniff_type)) {
-            config.insert(std::make_pair(xsniffer_event_type_t::block,
-                                         xsniffer_event_config_t{xsniffer_block_type_t::full_block, std::bind(&xtop_sniffer::sniff_block, this, std::placeholders::_1)}));
+            auto sniff_block_type = data.role_data.block_config.type;
+            assert(sniff_block_type != contract_runtime::xsniff_block_type_t::invalid);
+            config.insert(std::make_pair(xsniffer_event_type_t::block, xsniffer_event_config_t{sniff_block_type, std::bind(&xtop_sniffer::sniff_block, this, std::placeholders::_1)}));
         }
     }
 
@@ -74,7 +79,42 @@ xsniffer_config_t xtop_sniffer::sniff_config() const {
 }
 
 bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock) const {
-    return true;
+    xassert(vblock->get_block_level() == base::enum_xvblock_level_table);
+    auto const & block_address = vblock->get_account();
+    auto const height = vblock->get_height();
+    for (auto & role_data_pair : m_config_map) {
+        auto const & contract_address = top::get<common::xaccount_address_t const>(role_data_pair);
+        auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
+        
+        if ((static_cast<uint32_t>(contract_runtime::xsniff_type_t::broadcast) & static_cast<uint32_t>(config.sniff_type)) == 0) {
+            continue;
+        }
+        if (data::account_address_to_block_address(contract_address) != block_address) {
+            continue;
+        }
+        common::xip_t validator_xip{vblock->get_cert()->get_validator().low_addr};
+        if (validator_xip.slot_id() == m_vnode->vnetwork_driver()->address().slot_id()) {
+            // load full block input and output
+            base::xvaccount_t _vaccount(block_address);
+            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, vblock.get()) ||
+                false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, vblock.get())) {
+                xerror("[xtop_vnode::sniff_broadcast] fail-load block input output, block=%s", vblock->dump().c_str());
+                return false;
+            }
+            vblock->add_ref();
+            xblock_ptr_t block{};
+            block.attach(static_cast<xblock_t *>(vblock.get()));
+            xsniffer_action_t::broadcast(m_vnode, block, static_cast<common::xnode_type_t>(config.broadcast_config.zone));
+            xinfo("[xtop_vnode::sniff_broadcast] contract: %s, block: %s, height: %llu, broadcast success, block=%s!",
+                  contract_address.c_str(),
+                  block_address.c_str(),
+                  height,
+                  vblock->dump().c_str());
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) const {

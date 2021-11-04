@@ -13,7 +13,7 @@
 
 NS_BEG2(top, contract_runtime)
 
-xtop_sniff_broadcast_config::xtop_sniff_broadcast_config(xsniff_broadcast_type_t type, xsniff_broadcast_policy_t policy) : type{type}, policy{policy} {
+xtop_sniff_broadcast_config::xtop_sniff_broadcast_config(xsniff_broadcast_type_t zone, xsniff_block_type_t type) : zone{zone}, type{type} {
 }
 
 xtop_sniff_timer_config::xtop_sniff_timer_config(uint32_t interval, std::string action, xtimer_strategy_type_t strategy) : timer_config_data{interval}, action{std::move(action)}, strategy{strategy} {
@@ -22,8 +22,11 @@ xtop_sniff_timer_config::xtop_sniff_timer_config(uint32_t interval, std::string 
 xtop_sniff_timer_config::xtop_sniff_timer_config(std::string tcc_config_name, std::string action, xtimer_strategy_type_t strategy) : timer_config_data{tcc_config_name}, action{std::move(action)}, strategy{strategy} {
 }
 
-xtop_sniff_block_config::xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action)
-  : sniff_address{sniff_address}, action_address{action_address}, action{std::move(action)} {
+xtop_sniff_block_config::xtop_sniff_block_config(common::xaccount_address_t const & sniff_address,
+                                                 common::xaccount_address_t const & action_address,
+                                                 std::string action,
+                                                 xsniff_block_type_t type)
+  : sniff_address{sniff_address}, action_address{action_address}, action{std::move(action)}, type(type) {
 }
 
 xsniff_type_t & operator&=(xsniff_type_t & lhs, xsniff_type_t const rhs) noexcept {
