@@ -36,9 +36,7 @@ struct xtop_contract_metadata {
 class xtop_basic_contract : public xcontract_face_t {
 protected:
     properties::xproperty_initializer_t m_property_initializer;
-    std::unique_ptr<xcontract_state_t> m_contract_state_owned_{};
     observer_ptr<xcontract_execution_context_t> m_associated_execution_context{nullptr};
-    observer_ptr<xcontract_state_t> m_contract_state;
     xcontract_metadata_t m_contract_meta;
 
     properties::xtoken_property_t m_balance{this};
@@ -87,7 +85,6 @@ public:
 
     void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) override final;
 
-    observer_ptr<xcontract_state_t> state() const noexcept;
     xcontract_type_t type() const;
     data::enum_xaction_type action_type() const;
     data::enum_xaction_type source_action_type() const;

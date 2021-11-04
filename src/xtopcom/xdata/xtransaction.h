@@ -25,7 +25,6 @@ enum enum_xtransaction_type {
 
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset
-    xtransaction_type_run_contract_new           = 5,    // run contract new
 
     xtransaction_type_vote                       = 20,
     xtransaction_type_abolish_vote               = 21,

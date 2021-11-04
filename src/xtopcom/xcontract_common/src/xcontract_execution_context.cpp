@@ -17,6 +17,7 @@ xtop_contract_execution_context::xtop_contract_execution_context(std::unique_ptr
 }
 
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
+    assert(m_contract_state != nullptr);
     return m_contract_state;
 }
 
