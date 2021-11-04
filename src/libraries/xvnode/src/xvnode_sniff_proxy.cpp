@@ -58,21 +58,30 @@ void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
         if (event->minor_type != mbus::xevent_store_t::type_block_committed) {
             return;
         }
-        if (event->blk_level != base::enum_xvblock_level_table) {
-            return;
-        }
-        if (event->blk_class != base::enum_xvblock_class_full) {
-            return;
-        }
+        bool is_table_block = (event->blk_level == base::enum_xvblock_level_table) ? true : false;
         auto const & vblock = mbus::extract_block_from(event, true, metrics::blockstore_access_from_mbus_contract_db_on_block);  // load mini-block firstly
         assert(vblock != nullptr);
 
-        xdbg("[xvnode_sniff_proxy_t::sniff] committed table block to db, block=%s", vblock->dump().c_str());
-
+        bool broadcasted{false};
         for (auto const & config : m_sniff_config) {
+            // broadcast
+            if (is_table_block && !broadcasted) {
+                auto it = config.second.find(components::sniffing::xsniffer_event_type_t::broadcast);
+                if (it != config.second.end()) {
+                    xdbg("[xvnode_sniff_proxy_t::sniff] broadcast listener triggled, block=%s", vblock->dump().c_str());
+                    if (it->second.type == components::sniffing::xsniffer_block_type_t::full_block && event->blk_class != base::enum_xvblock_class_full) {
+                        continue;
+                    }
+                    broadcasted = it->second.function(vblock);
+                }
+            }
+            // block
             auto it = config.second.find(components::sniffing::xsniffer_event_type_t::block);
             if (it != config.second.end()) {
-                xdbg("[xvnode_sniff_proxy_t::sniff] block listener triggled");
+                xdbg("[xvnode_sniff_proxy_t::sniff] block listener triggled, block=%s", vblock->dump().c_str());
+                if (it->second.type == components::sniffing::xsniffer_block_type_t::full_block && event->blk_class != base::enum_xvblock_class_full) {
+                    continue;
+                }
                 it->second.function(vblock);
             }
         }

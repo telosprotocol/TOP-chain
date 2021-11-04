@@ -21,12 +21,12 @@ enum class enum_sniff_broadcast_type : std::uint32_t {
 };
 using xsniff_broadcast_type_t = enum_sniff_broadcast_type;
 
-enum class enum_sniff_broadcast_policy : uint8_t { invalid, full_block, all_block };
-using xsniff_broadcast_policy_t = enum_sniff_broadcast_policy;
+enum class enum_sniff_block_type : uint8_t { invalid, full_block, all_block };
+using xsniff_block_type_t = enum_sniff_block_type;
 
 struct xtop_sniff_broadcast_config {
-    xsniff_broadcast_type_t type{xsniff_broadcast_type_t::invalid};
-    xsniff_broadcast_policy_t policy{xsniff_broadcast_policy_t::invalid};
+    xsniff_broadcast_type_t zone{xsniff_broadcast_type_t::invalid};
+    xsniff_block_type_t type{xsniff_block_type_t::invalid};
 
     xtop_sniff_broadcast_config() = default;
     xtop_sniff_broadcast_config(xtop_sniff_broadcast_config const &) = default;
@@ -35,7 +35,7 @@ struct xtop_sniff_broadcast_config {
     xtop_sniff_broadcast_config & operator=(xtop_sniff_broadcast_config &&) = default;
     ~xtop_sniff_broadcast_config() = default;
 
-    xtop_sniff_broadcast_config(xsniff_broadcast_type_t type, xsniff_broadcast_policy_t policy);
+    xtop_sniff_broadcast_config(xsniff_broadcast_type_t zone, xsniff_block_type_t type);
 };
 using xsniff_broadcast_config_t = xtop_sniff_broadcast_config;
 
@@ -87,6 +87,7 @@ struct xtop_sniff_block_config {
     common::xaccount_address_t sniff_address;
     common::xaccount_address_t action_address;
     std::string action{};
+    xsniff_block_type_t type{xsniff_block_type_t::invalid};
 
     xtop_sniff_block_config() = default;
     xtop_sniff_block_config(xtop_sniff_block_config const &) = default;
@@ -95,12 +96,12 @@ struct xtop_sniff_block_config {
     xtop_sniff_block_config & operator=(xtop_sniff_block_config &&) = default;
     ~xtop_sniff_block_config() = default;
 
-    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action);
+    xtop_sniff_block_config(common::xaccount_address_t const & sniff_address, common::xaccount_address_t const & action_address, std::string action, xsniff_block_type_t type);
 };
 using xsniff_block_config_t = xtop_sniff_block_config;
 
 enum class enum_sniff_type: uint32_t {
-    invalid = 0x00000000,
+    none = 0x00000000,
     broadcast = 0x00000001,
     timer = 0x00000002,
     block = 0x00000004,

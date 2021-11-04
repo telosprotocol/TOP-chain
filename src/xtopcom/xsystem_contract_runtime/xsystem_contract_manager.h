@@ -19,7 +19,7 @@ NS_BEG3(top, contract_runtime, system)
 struct xtop_contract_deployment_data {
     // std::shared_ptr<system_contracts::xbasic_system_contract_t> system_contract{nullptr};
     common::xnode_type_t node_type{common::xnode_type_t::invalid};
-    xsniff_type_t sniff_type{xsniff_type_t::invalid};
+    xsniff_type_t sniff_type{xsniff_type_t::none};
     xsniff_broadcast_config_t broadcast_config{};
     xsniff_timer_config_t timer_config{};
     xsniff_block_config_t block_config{};

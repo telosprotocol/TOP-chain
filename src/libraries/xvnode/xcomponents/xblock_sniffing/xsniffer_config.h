@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xbase/xobject_ptr.h"
+#include "xcontract_runtime/xblock_sniff_config.h"
 #include "xvledger/xvblock.h"
 
 NS_BEG4(top, vnode, components, sniffing)
@@ -13,12 +14,7 @@ enum class enum_sniffer_event_type: uint8_t {
 };
 using xsniffer_event_type_t = enum_sniffer_event_type;
 
-enum class enum_sniffer_block_type: uint8_t {
-    invalid,
-    full_block,
-    all
-};
-using xsniffer_block_type_t = enum_sniffer_block_type;
+using xsniffer_block_type_t = contract_runtime::xsniff_block_type_t;
 
 struct xtop_sniffer_event_config {
     xsniffer_block_type_t type;
