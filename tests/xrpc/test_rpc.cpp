@@ -33,6 +33,7 @@ public:
     observer_ptr<top::election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
     config::xtop_http_port_configuration::type m_http_port;
     config::xtop_ws_port_configuration::type m_ws_port;
+    observer_ptr<mbus::xmessage_bus_face_t>  m_bus;
 };
 
 // TEST_F(test_rpc, edge) {
@@ -59,7 +60,8 @@ TEST_F(test_rpc, auditor) {
                                                             m_block_store,
                                                             m_txstore,
                                                             m_elect_main,
-                                                            m_election_cache_data_accessor);
+                                                            m_election_cache_data_accessor,
+                                                            m_bus);
     m_rpc_services->stop();
 }
 
@@ -74,6 +76,7 @@ TEST_F(test_rpc, validator) {
                                                             m_block_store,
                                                             m_txstore,
                                                             m_elect_main,
-                                                            m_election_cache_data_accessor);
+                                                            m_election_cache_data_accessor,
+                                                            m_bus);
     m_rpc_services->stop();
 }
