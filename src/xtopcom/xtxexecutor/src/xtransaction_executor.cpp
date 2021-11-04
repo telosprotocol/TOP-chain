@@ -39,9 +39,9 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
     }
 
     size_t after_op_records_size = account_context->get_op_records_size();
-
+    xdbg("wish tx_hash:%s, type:%s, befor:%zu, after:%zu", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str(), before_op_records_size, after_op_records_size);
     if (after_op_records_size == before_op_records_size) {
-        xdbg("wish tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
+        xdbg("wish no change tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
     }
 
     if (tx->is_self_tx() || tx->is_send_tx()) {

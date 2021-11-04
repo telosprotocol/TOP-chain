@@ -68,6 +68,7 @@ class xaccount_context_t {
     int32_t  set_used_tgas(uint64_t);
     int32_t  incr_used_tgas(uint64_t);
     int32_t  update_tgas_sender(uint64_t tgas_usage, const uint32_t deposit, uint64_t& deposit_usage, bool is_contract);
+    int32_t  update_tgas_sender(uint64_t tgas_usage, const uint32_t deposit, uint64_t& deposit_usage);
     int32_t  update_tgas_contract_recv(uint64_t tgas_usage, const uint32_t deposit, uint64_t& deposit_usage, uint64_t& send_frozen_tgas, uint64_t deal_used_tgas);
     uint64_t get_total_tgas() const ;
     uint64_t get_available_tgas() const ;

@@ -233,6 +233,16 @@ int32_t xaccount_context_t::update_tgas_sender(uint64_t tgas_usage, const uint32
     return ret;
 }
 
+int32_t xaccount_context_t::update_tgas_sender(uint64_t tgas_usage, const uint32_t deposit, uint64_t& deposit_usage) {
+    auto ret = check_used_tgas(tgas_usage, deposit, deposit_usage);
+    if(ret == 0) {
+        incr_used_tgas(tgas_usage);
+    }
+    available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(deposit_usage));
+    xdbg("xaccount_context_t::update_tgas_sender tgas_usage: %llu, deposit: %u, deposit_usage: %llu", tgas_usage, deposit, deposit_usage);
+    return ret;
+}
+
 int32_t xaccount_context_t::update_tgas_contract_recv(uint64_t sender_used_deposit, const uint32_t deposit, uint64_t& deposit_usage, uint64_t& send_frozen_tgas, uint64_t deal_used_tgas){
     uint64_t available_tgas = get_available_tgas();
     xdbg("tgas_disk contract tx tgas calc, sender_used_deposit: %d, deposit: %d, deposit_usage: %d send_frozen_tgas: %d, available_tgas: %d, tgas_limit: %d",

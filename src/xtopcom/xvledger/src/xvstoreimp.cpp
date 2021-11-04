@@ -220,13 +220,13 @@ namespace top
             const std::string tx_idx_bin = base::xvchain_t::instance().get_xdbstore()->get_value(tx_idx_key);
             if(tx_idx_bin.empty())
             {
-                xwarn("xvtxstore_t::load_tx_idx,index not find for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+                xwarn("xvtxstore_t::load_tx_idx,index not find for hash_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
                 return nullptr;
             }
             xauto_ptr<xvtxindex_t> txindex(new xvtxindex_t());
             if(txindex->serialize_from_string(tx_idx_bin) <= 0)
             {
-                xerror("xvtxstore_t::load_tx_idx,found bad index for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+                xerror("xvtxstore_t::load_tx_idx,found bad index for hash_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
                 return nullptr;
             }
             return txindex;
