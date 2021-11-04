@@ -374,10 +374,13 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
             table_para.get_proposal()->set_other_account(proposal_unit->get_account());
         }
 
-        std::vector<base::xvaction_t> input_actions;
         for (auto & tx : unit_result.m_pack_txs) {
             base::xvaction_t _action = data::xlightunit_build_t::make_action(tx);
-            input_actions.push_back(_action);
+            xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
+            txs_info.push_back(txinfo);
+        }
+        for (auto & tx : unit_result.m_unchange_txs) {
+            base::xvaction_t _action = data::xlightunit_build_t::make_action(tx);
             xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
             txs_info.push_back(txinfo);
         }

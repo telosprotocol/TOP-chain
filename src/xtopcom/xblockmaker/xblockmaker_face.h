@@ -71,6 +71,7 @@ struct xunitmaker_result_t {
     int32_t                                 m_make_block_error_code{0};
     std::vector<xcons_transaction_ptr_t>    m_pack_txs;
     std::vector<xcons_transaction_ptr_t>    m_fail_txs;
+    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
     int64_t                                 m_tgas_balance_change{0};
     uint32_t                                m_self_tx_num{0};
     uint32_t                                m_send_tx_num{0};
@@ -107,6 +108,7 @@ class xtablemaker_result_t {
         m_send_tx_num += unit_result.m_send_tx_num;
         m_recv_tx_num += unit_result.m_recv_tx_num;
         m_confirm_tx_num += unit_result.m_confirm_tx_num;
+        m_unchange_txs.insert(m_unchange_txs.end(), unit_result.m_unchange_txs.begin(), unit_result.m_unchange_txs.end());
     }
  public:
     xblock_ptr_t                            m_block{nullptr};
@@ -125,6 +127,7 @@ class xtablemaker_result_t {
     uint32_t                                m_empty_unit_num{0};
     uint32_t                                m_light_unit_num{0};
     uint32_t                                m_full_unit_num{0};
+    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
 };
 
 class xtablemaker_para_t {

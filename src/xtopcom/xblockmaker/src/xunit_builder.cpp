@@ -29,9 +29,16 @@ void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transactio
     }
 }
 
-xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state) {
-    alloc_tx_receiptid(lightunit_para.get_input_txs(), receiptid_state);
+xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state,
+                                                const std::vector<xcons_transaction_ptr_t> & unchange_txs) {
+    std::vector<xcons_transaction_ptr_t> succ_txs{lightunit_para.get_input_txs()};
+    succ_txs.insert(succ_txs.end(), unchange_txs.begin(), unchange_txs.end());
+    alloc_tx_receiptid(succ_txs, receiptid_state);
 
+    if (lightunit_para.get_input_txs().empty()) {
+        return nullptr;
+    }
+    
     xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
@@ -66,6 +73,8 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     lightunit_build_para->set_tgas_balance_change(exec_result.m_tgas_balance_change);
     lightunit_build_para->set_pack_txs(exec_result.m_exec_succ_txs);
+    lightunit_build_para->set_unchange_txs(exec_result.m_exec_unchange_txs);
+    xdbg("wish m_exec_unchange_txs size: %zu", exec_result.m_exec_unchange_txs.size());
 
     xlightunit_block_para_t lightunit_para;
     // set lightunit para by tx result
@@ -73,7 +82,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     lightunit_para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
     lightunit_para.set_fullstate_bin(exec_result.m_full_state);
     lightunit_para.set_binlog(exec_result.m_property_binlog);
-    return create_block(prev_block, cs_para, lightunit_para, lightunit_build_para->get_receiptid_state());
+    return create_block(prev_block, cs_para, lightunit_para, lightunit_build_para->get_receiptid_state(), exec_result.m_exec_unchange_txs);
 }
 
 std::string     xfullunit_builder_t::make_binlog(const xblock_ptr_t & prev_block,

@@ -21,15 +21,18 @@ class xlightunit_builder_para_t : public xblock_builder_para_face_t {
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::vector<xcons_transaction_ptr_t> &    get_fail_txs() const {return m_fail_txs;}
     const std::vector<xcons_transaction_ptr_t> &    get_pack_txs() const {return m_pack_txs;}
+    const std::vector<xcons_transaction_ptr_t> &    get_unchange_txs() const {return m_unchange_txs;}
 
     void                                            set_fail_tx(const xcons_transaction_ptr_t & tx) {m_fail_txs.push_back(tx);}
     void                                            set_fail_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_fail_txs = txs;}
     void                                            set_pack_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_pack_txs = txs;}
+    void                                            set_unchange_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_unchange_txs = txs;}
     const base::xreceiptid_state_ptr_t &            get_receiptid_state() const {return m_receiptid_state;}
  private:
     std::vector<xcons_transaction_ptr_t>        m_origin_txs;
     std::vector<xcons_transaction_ptr_t>        m_pack_txs;  // txs included in light-unit
     std::vector<xcons_transaction_ptr_t>        m_fail_txs;
+    std::vector<xcons_transaction_ptr_t>        m_unchange_txs;
     base::xreceiptid_state_ptr_t                m_receiptid_state;
 };
 
@@ -42,7 +45,7 @@ class xlightunit_builder_t : public xblock_builder_face_t {
                                             xblock_builder_para_ptr_t & build_para) override;
  protected:
     void    alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state);
-    xblock_ptr_t create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state);    
+    xblock_ptr_t create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state, const std::vector<xcons_transaction_ptr_t> & unchange_txs);    
 };
 
 class xfullunit_builder_t : public xblock_builder_face_t {

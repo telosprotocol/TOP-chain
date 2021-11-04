@@ -23,6 +23,7 @@ enum enum_xunit_service_error_type {
     xtransaction_parse_type_invalid,
     xchain_error_action_parse_exception,
     xunit_contract_exec_no_property_change,
+    xtransaction_confirm_state_unchange,
 
     xtransaction_pledge_token_overflow,
     xtransaction_not_enough_pledge_token_tgas,
@@ -62,6 +63,8 @@ inline std::string xunit_error_to_string(int32_t code) {
         XUNIT_TO_STR(xtransaction_parse_type_invalid),
         XUNIT_TO_STR(xchain_error_action_parse_exception),
         XUNIT_TO_STR(xunit_contract_exec_no_property_change),
+        XUNIT_TO_STR(xtransaction_confirm_state_unchange),
+
         XUNIT_TO_STR(xtransaction_pledge_token_overflow),
         XUNIT_TO_STR(xtransaction_not_enough_pledge_token_tgas),
         XUNIT_TO_STR(xtransaction_not_enough_pledge_token_disk),

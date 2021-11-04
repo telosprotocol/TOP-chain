@@ -65,6 +65,7 @@ class xlighttable_build_t : public base::xvtableblock_maker_t {
  private:
     bool                build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
     base::xvaction_t    make_action(const std::vector<xobject_ptr_t<base::xvblock_t>> & batch_units);
+    base::xvaction_t    make_action(const xcons_transaction_ptr_t & tx);
     static base::xauto_ptr<base::xvinput_t>     make_unit_input_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvinentity_t* _table_unit_inentity);
     static base::xauto_ptr<base::xvoutput_t>    make_unit_output_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvoutentity_t* _table_unit_outentity);
 };

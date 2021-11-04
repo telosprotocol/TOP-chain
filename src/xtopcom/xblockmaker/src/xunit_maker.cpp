@@ -265,7 +265,7 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     xblock_ptr_t proposal_block = make_next_block(unit_para, cs_para, result);
     clear_tx();
     if (proposal_block == nullptr) {
-        xassert(result.m_make_block_error_code != xsuccess);
+        // xassert(result.m_make_block_error_code != xsuccess);
         if (xblockmaker_error_no_need_make_unit != result.m_make_block_error_code) {
             xwarn("xunit_maker_t::make_proposal fail-make proposal.%s,account=%s,height=%" PRIu64 ",ret=%s",
                 cs_para.dump().c_str(), get_account().c_str(), get_highest_height_block()->get_height(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
@@ -340,6 +340,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         result.add_pack_txs(lightunit_build_para->get_pack_txs());
         result.m_fail_txs = lightunit_build_para->get_fail_txs();
         result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
+        result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
         for (auto & tx : lightunit_build_para->get_fail_txs()) {
             xassert(tx->is_self_tx() || tx->is_send_tx());
             xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());

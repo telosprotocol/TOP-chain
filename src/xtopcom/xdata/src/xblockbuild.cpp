@@ -47,6 +47,7 @@ std::string xlightunit_build_t::get_header_extra(const xlightunit_block_para_t &
     for (auto & tx : bodypara.get_input_txs()) {
         base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
         txs.push_back(tx_key);
+        xdbg("wish lightunit tx hash:%s, type:%s", tx->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
     }
     base::xstream_t stream(base::xcontext_t::instance());
     auto size = txs.do_write(stream);
@@ -224,6 +225,24 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
+}
+
+base::xvaction_t xlighttable_build_t::make_action(const xcons_transaction_ptr_t & tx) {
+    std::string caller_addr;  // empty means version0, no caller addr
+    std::string contract_addr = tx->get_account_addr();
+    std::string contract_name; // empty means version0, default contract
+    uint32_t    contract_version = 0;
+    std::string target_uri = base::xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
+    std::string method_name = xtransaction_t::transaction_type_to_string(tx->get_tx_type());
+    if (tx->is_recv_tx()) {  // set origin tx source addr for recv tx, confirm tx need know source addr without origin tx
+        caller_addr = tx->get_source_addr();
+    }
+
+    base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
+    base::xvaction_t _tx_action(tx->get_tx_hash(), caller_addr, target_uri, method_name);
+    _tx_action.set_org_tx_action_id(tx->get_tx_subtype());
+    _tx_action.copy_result(_action_result);
+    return _tx_action;
 }
 
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
