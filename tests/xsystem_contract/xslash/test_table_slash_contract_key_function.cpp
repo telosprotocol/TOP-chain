@@ -9,6 +9,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblock_statistics_data.h"
+#include "xdata/xfulltableblock_account_data.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstake/xstake_algorithm.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
@@ -43,7 +44,8 @@ public:
     void create_account_addrs(uint32_t auditor_account_num, uint32_t validator_account_num);
     common::xip2_t create_group_xip2(uint64_t elect_blk_height, uint8_t group_id, uint16_t group_size);
     void nodeservice_add_group(uint64_t elect_blk_height, common::xip2_t const& group_xip, std::vector<common::xaccount_address_t> const& nodes);
-    void set_according_block_statistic_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xip);
+    void set_according_block_statistic_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips);
+    void set_according_block_accounts_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips);
     xunqualified_node_info_t process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data,
                                                     std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes);
 
@@ -52,6 +54,7 @@ public:
     std::vector<common::xaccount_address_t> auditor_account_addrs;
     std::vector<common::xaccount_address_t> validator_account_addrs;
     xstatistics_data_t data;
+    data::xfulltableblock_statistic_accounts  accounts;
     xmocked_vnodesvr_t node_serv;
 };
 
@@ -141,6 +144,25 @@ void test_table_slash_contract::set_according_block_statistic_data(uint64_t elec
 
 }
 
+void test_table_slash_contract::set_according_block_accounts_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips) {
+    data::xfulltableblock_group_data_t group_data;
+
+    for (std::size_t i = 0; i < group_xips.size(); ++i) {
+        common::xgroup_address_t  group_addr{group_xips[i].xip()};
+        data::xfulltableblock_account_data_t account_data;
+        if (group_xips[i].group_id().value() == 1) {
+            account_data.account_data = auditor_account_addrs;
+            group_data.group_data[group_addr] = account_data;
+        } else if (group_xips[i].group_id().value() == 64) {
+            account_data.account_data = validator_account_addrs;
+            group_data.group_data[group_addr] = account_data;
+        }
+    }
+
+    accounts.accounts_detail[elect_blk_height] = group_data;
+
+}
+
 xunqualified_node_info_t test_table_slash_contract::process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes) {
     xunqualified_node_info_t res_node_info;
 
@@ -194,6 +216,7 @@ TEST_F(test_table_slash_contract, collect_slash_statistic_info_BENCH) {
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
     set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    set_according_block_accounts_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
 
     auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
     auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
@@ -219,7 +242,7 @@ TEST_F(test_table_slash_contract, collect_slash_statistic_info_BENCH) {
     for (auto i = 0; i < count; ++i) {
         auto time_start = std::chrono::system_clock::now();
         // success height
-        collect_slash_statistic_info(data, &node_serv, summarize_info_str, summarize_tableblock_count_str,
+        collect_slash_statistic_info(data, accounts, summarize_info_str, summarize_tableblock_count_str,
                                                 summarize_info, summarize_tableblock_count);
         auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
         total_time += durarion.count();
