@@ -53,13 +53,13 @@ state_accessor::xtoken_t xtop_basic_contract::withdraw(std::uint64_t amount) {
 state_accessor::xtoken_t xtop_basic_contract::state_withdraw(std::uint64_t amount) {
     state_accessor::properties::xproperty_identifier_t balance_property_id{
                 data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-    return state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, amount);
+    return contract_state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, amount);
 }
 
 void xtop_basic_contract::state_deposit(state_accessor::xtoken_t token) {
     state_accessor::properties::xproperty_identifier_t balance_property_id{
                 data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-    return state()->deposit(balance_property_id, std::move(token));
+    return contract_state()->deposit(balance_property_id, std::move(token));
 }
 
 void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
@@ -117,10 +117,6 @@ data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {
     return m_associated_execution_context->transaction_type();
 }
 
-observer_ptr<xcontract_state_t> xtop_basic_contract::state() const noexcept {
-    return m_associated_execution_context->contract_state();
-}
-
 common::xaccount_address_t xtop_basic_contract::sender() const {
     return m_associated_execution_context->sender();
 }
@@ -141,14 +137,14 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     data::xcons_transaction_ptr_t cons_tx;
     if (type == xfollowup_transaction_schedule_type_t::immediately) {
         // delay type need process nonce final
-        auto latest_hash = state()->latest_followup_tx_hash();
-        auto latest_nonce = state()->latest_followup_tx_nonce();
+        auto latest_hash = contract_state()->latest_followup_tx_hash();
+        auto latest_nonce = contract_state()->latest_followup_tx_nonce();
         tx->set_last_trans_hash_and_nonce(latest_hash, latest_nonce);
         tx->set_digest();
         tx->set_len();
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
-        state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
-        state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
+        contract_state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
+        contract_state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
     } else {
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     }
@@ -173,14 +169,14 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     data::xcons_transaction_ptr_t cons_tx;
     if (type == xfollowup_transaction_schedule_type_t::immediately) {
         // delay type need process nonce final
-        auto latest_hash = state()->latest_followup_tx_hash();
-        auto latest_nonce = state()->latest_followup_tx_nonce();
+        auto latest_hash = contract_state()->latest_followup_tx_hash();
+        auto latest_nonce = contract_state()->latest_followup_tx_nonce();
         tx->set_last_trans_hash_and_nonce(latest_hash, latest_nonce);
         tx->set_digest();
         tx->set_len();
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
-        state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
-        state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
+        contract_state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
+        contract_state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
     } else {
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     }
@@ -294,14 +290,14 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
     data::xcons_transaction_ptr_t cons_tx;
     if (type == xfollowup_transaction_schedule_type_t::immediately) {
         // delay type need process nonce final
-        auto latest_hash = state()->latest_followup_tx_hash();
-        auto latest_nonce = state()->latest_followup_tx_nonce();
+        auto latest_hash = contract_state()->latest_followup_tx_hash();
+        auto latest_nonce = contract_state()->latest_followup_tx_nonce();
         tx->set_last_trans_hash_and_nonce(latest_hash, latest_nonce);
         tx->set_digest();
         tx->set_len();
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
-        state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
-        state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
+        contract_state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
+        contract_state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
         xdbg_info("xtop_basic_contract::transfer tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld",
             tx->get_digest_hex_str().c_str(), address().value().c_str(), target_addr.value().c_str(), amount, tx->get_tx_nonce());
     } else {

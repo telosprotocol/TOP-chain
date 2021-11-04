@@ -111,8 +111,8 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
             execution_context->input_receipt_data(cons_action->receipt_data());
         }
 
-        if (data::xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == exe_ctx->action_consensus_result()) {                                                          \
-            return result;                                                                                                                                                     \
+        if (data::xaction_consensus_exec_status::enum_xunit_tx_exec_status_success == observed_exectx->action_consensus_result()) {
+            return result;
         }
     }
 

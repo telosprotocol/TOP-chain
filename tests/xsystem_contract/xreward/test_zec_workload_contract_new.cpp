@@ -2,25 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #define private public
-// #include "xbase/xobject_ptr.h"
-// #include "xbasic/xasio_io_context_wrapper.h"
-// #include "xbasic/xtimer_driver.h"
-// #include "xblockstore/xblockstore_face.h"
-// #include "xchain_timer/xchain_timer.h"
-// #include "xchain_upgrade/xchain_upgrade_center.h"
-// #include "xdata/xblocktool.h"
-// #include "xdata/xgenesis_data.h"
-// #include "xloader/xconfig_onchain_loader.h"
-// #include "xstore/xstore_face.h"
-// #include "xvm/manager/xcontract_manager.h"
-// #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
-// #include "xvm/xsystem_contracts/xreward/xtable_vote_contract.h"
-// #include "xvm/xsystem_contracts/xreward/xzec_reward_contract.h"
-// #include "xvm/xsystem_contracts/xreward/xzec_vote_contract.h"
-// #include "xvm/xsystem_contracts/xworkload/xzec_workload_contract_v2.h"
-// #include "xvm/xvm_service.h"
-// #include "xvm/xvm_trace.h"
-#include "xcontract_runtime/xtop_action_generator.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvm/xsystem_contracts/xworkload/xzec_workload_contract_new.h"
@@ -35,26 +16,6 @@ using namespace top::base;
 using namespace top::xstake;
 
 NS_BEG2(top, system_contracts)
-
-class xtop_hash_t : public top::base::xhashplugin_t {
-public:
-    xtop_hash_t()
-      : base::xhashplugin_t(-1)  //-1 = support every hash types
-    {
-    }
-
-private:
-    xtop_hash_t(const xtop_hash_t &) = delete;
-    xtop_hash_t & operator=(const xtop_hash_t &) = delete;
-
-public:
-    virtual ~xtop_hash_t(){};
-    virtual const std::string hash(const std::string & input, enum_xhash_type type) override {
-        xassert(type == enum_xhash_type_sha2_256);
-        auto hash = utl::xsha2_256_t::digest(input);
-        return std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    }
-};
 
 static std::vector<std::string> test_account = {
     "T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv",
@@ -597,23 +558,12 @@ static double get_cpu_time2() {
 
 class xtop_test_zec_workload_contract_new : public testing::Test {
 public:
-    xtop_test_zec_workload_contract_new() {
-        auto hash_plugin = new xtop_hash_t();
-        top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
-        top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
-    }
-
-    static void SetUpTestCase() {}
-    static void TearDownTestCase() {}
+    xtop_test_zec_workload_contract_new() = default;
 
     xzec_workload_contract_new_t m_workload_contract;
-
     common::xgroup_address_t m_group_addr1{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{1}};
     common::xgroup_address_t m_group_addr2{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{2}};
     common::xgroup_address_t m_group_addr3{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3}};
-    common::xaccount_address_t m_table{common::xaccount_address_t{std::string{sys_contract_sharding_statistic_info_addr} + "@" + std::to_string(1)}};
-    common::xaccount_address_t m_contract{common::xaccount_address_t{sys_contract_zec_workload_addr}};
-    
 };
 using xtest_zec_workload_contract_new_t = xtop_test_zec_workload_contract_new;
 

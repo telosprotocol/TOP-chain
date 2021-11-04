@@ -145,7 +145,7 @@ TEST_F(test_system_contract_runtime, init_system_contract) {
     transfer_contract->reset_execution_context(top::make_observer(contract_ctx.get()));
 
     state_accessor::properties::xproperty_identifier_t propety_identifier("balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xenum_property_category::system);
-    transfer_contract->state()->property_exist(propety_identifier);
+    transfer_contract->contract_state()->property_exist(propety_identifier);
 }
 
 TEST_F(test_system_contract_runtime, test_asset_api_normal) {

@@ -85,8 +85,7 @@ bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock
     for (auto & role_data_pair : m_config_map) {
         auto const & contract_address = top::get<common::xaccount_address_t const>(role_data_pair);
         auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
-        
-        if ((static_cast<uint32_t>(contract_runtime::xsniff_type_t::broadcast) & static_cast<uint32_t>(config.sniff_type)) == 0) {
+        if (!contract_runtime::has<contract_runtime::xsniff_type_t::broadcast>(config.sniff_type)) {
             continue;
         }
         if (data::account_address_to_block_address(contract_address) != block_address) {
@@ -168,7 +167,7 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
     for (auto & role_data_pair : m_config_map) {
         auto const & contract_address = role_data_pair.first;
         auto const & config = role_data_pair.second.role_data;
-        if ((static_cast<uint32_t>(contract_runtime::xsniff_type_t::block) & static_cast<uint32_t>(config.sniff_type)) == 0) {
+        if (!contract_runtime::has<contract_runtime::xsniff_type_t::block>(config.sniff_type)) {
             continue;
         }
         xdbg("[xtop_vnode::sniff_block] contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);

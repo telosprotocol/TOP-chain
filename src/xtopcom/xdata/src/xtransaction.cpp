@@ -12,7 +12,6 @@ bool xtransaction_t::transaction_type_check() const {
         case xtransaction_type_create_user_account:
 #endif
         case xtransaction_type_run_contract:
-        case xtransaction_type_run_contract_new:
         case xtransaction_type_transfer:
         case xtransaction_type_vote:
         case xtransaction_type_abolish_vote:
@@ -30,7 +29,6 @@ std::string xtransaction_t::transaction_type_to_string(uint16_t type) {
     switch (type) {
         case xtransaction_type_create_user_account: return "create_user";
         case xtransaction_type_run_contract:        return "run_contract";
-        case xtransaction_type_run_contract_new:    return "run_contract";
         case xtransaction_type_transfer:            return "transfer";
         case xtransaction_type_vote:                return "vote";
         case xtransaction_type_abolish_vote:        return "abolist_vote";

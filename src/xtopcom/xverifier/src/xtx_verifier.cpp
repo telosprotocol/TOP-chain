@@ -66,7 +66,7 @@ int32_t xtx_verifier::verify_local_tx(data::xtransaction_t const * trx) {
     }
 
     if ( (src_addr != dst_addr)
-        || (trx->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_run_contract && trx->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_run_contract_new)
+        || (trx->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_run_contract)
         || (!trx->get_authorization().empty()) ) {
         xwarn("[global_trace][xtx_verifier][verify_local_tx][fail], tx:%s,invalid local tx", trx->dump().c_str());
         return xverifier_error_local_tx_invalid;

@@ -58,7 +58,7 @@ void xtop_vnode_sniff_proxy::sniff(mbus::xevent_ptr_t const & e) {
         if (event->minor_type != mbus::xevent_store_t::type_block_committed) {
             return;
         }
-        bool is_table_block = (event->blk_level == base::enum_xvblock_level_table) ? true : false;
+        bool is_table_block = event->blk_level == base::enum_xvblock_level_table;
         auto const & vblock = mbus::extract_block_from(event, true, metrics::blockstore_access_from_mbus_contract_db_on_block);  // load mini-block firstly
         assert(vblock != nullptr);
 

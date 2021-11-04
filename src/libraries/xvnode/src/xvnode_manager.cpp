@@ -51,7 +51,7 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                                           txpool,
                                                           election_cache_data_accessor,
                                                           nodesvr),
-                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, logic_timer, router, certauth, txpool, election_cache_data_accessor),
+                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor),
                        top::make_unique<xvnode_sniff_proxy_t>(mbus)
 
     } {
