@@ -379,8 +379,8 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
 
     std::vector<data::xblock_ptr_t> blocks;
 
-    for(int i = enum_transaction_subtype_send; i<= enum_transaction_subtype_confirm; i++) {
-        auto xvblocks = m_sync_store->load_block_objects(hash, (base::enum_transaction_subtype)i);
+    for(int index = enum_transaction_subtype_send; index <= enum_transaction_subtype_confirm; index++) {
+        auto xvblocks = m_sync_store->load_block_objects(hash, (base::enum_transaction_subtype)index);
         xdbg("load_block_objects: %d", xvblocks.size());
         for (uint32_t i = 0; i < xvblocks.size(); i++) {
             std::vector<data::xvblock_ptr_t> blocks_temp = m_sync_store->load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
