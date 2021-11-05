@@ -153,6 +153,7 @@ public:
                                  typename state_accessor::properties::xvalue_type_of_t<PropertyTypeV>::type const & value) {
         std::error_code ec;
         set_property_cell_value<PropertyTypeV>(property_id, key, value, ec);
+        assert(!ec);
         top::error::throw_error(ec);
     }
 
@@ -182,6 +183,7 @@ public:
         typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
         std::error_code ec;
         auto r = get_property_cell_value<PropertyTypeV>(property_id, key, ec);
+        assert(!ec);
         top::error::throw_error(ec);
         return r;
     }
@@ -210,6 +212,7 @@ public:
                                  typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const & key) const {
         std::error_code ec;
         auto r = this->exist_property_cell_key<PropertyTypeV>(property_id, key, ec);
+        assert(!ec);
         top::error::throw_error(ec);
         return r;
     }
@@ -237,6 +240,7 @@ public:
                               typename state_accessor::properties::xkey_type_of_t<PropertyTypeV>::type const& key) const {
         std::error_code ec;
         this->remove_property_cell<PropertyTypeV>(property_id, key, ec);
+        assert(!ec);
         top::error::throw_error(ec);
     }
 
@@ -261,6 +265,7 @@ public:
                       typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type const & value) {
         std::error_code ec;
         set_property<PropertyTypeV>(property_id, value, ec);
+        assert(!ec);
         top::error::throw_error(ec);
     }
 
@@ -283,6 +288,7 @@ public:
     typename state_accessor::properties::xtype_of_t<PropertyTypeV>::type get_property(state_accessor::properties::xtypeless_property_identifier_t const & property_id) const {
         std::error_code ec;
         auto r = get_property<PropertyTypeV>(property_id, ec);
+        assert(!ec);
         top::error::throw_error(ec);
         return r;
     }
@@ -310,6 +316,7 @@ public:
                                                                                       common::xaccount_address_t const & address) const {
         std::error_code ec;
         auto r = get_property<PropertyTypeV>(property_id, address, ec);
+        assert(!ec);
         top::error::throw_error(ec);
         return r;
     }

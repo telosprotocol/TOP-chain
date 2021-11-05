@@ -22,10 +22,13 @@ void xtop_contract_state::set_state(common::xaccount_address_t const & address) 
     assert(m_state_accessor != nullptr);
     std::error_code ec;
     m_state_accessor->set_state(address, ec);
+    assert(!ec);
     top::error::throw_error(ec);
     m_latest_followup_tx_hash = latest_sendtx_hash(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     m_latest_followup_tx_nonce = latest_sendtx_nonce(ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -98,6 +101,7 @@ state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::propertie
 state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount) {
     std::error_code ec;
     auto r = withdraw(property_id, symbol, amount, ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -111,6 +115,7 @@ void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifi
 void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens) {
     std::error_code ec;
     deposit(property_id, std::move(tokens), ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -123,6 +128,7 @@ void xtop_contract_state::create_property(state_accessor::properties::xproperty_
 void xtop_contract_state::create_property(state_accessor::properties::xproperty_identifier_t const & property_id) {
     std::error_code ec;
     create_property(property_id, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -135,6 +141,7 @@ bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_i
 bool xtop_contract_state::property_exist(state_accessor::properties::xproperty_identifier_t const & property_id) const {
     std::error_code ec;
     auto const r = property_exist(property_id, ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -148,6 +155,7 @@ void xtop_contract_state::clear_property(state_accessor::properties::xproperty_i
 void xtop_contract_state::clear_property(state_accessor::properties::xproperty_identifier_t const & property_id) {
     std::error_code ec;
     clear_property(property_id, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -160,6 +168,7 @@ size_t xtop_contract_state::property_size(state_accessor::properties::xproperty_
 size_t xtop_contract_state::property_size(state_accessor::properties::xproperty_identifier_t const & property_id) const {
     std::error_code ec;
     auto r = property_size(property_id, ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -174,6 +183,7 @@ void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_
 void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_identifier_t const & property_id, xbyte_buffer_t code) {
     std::error_code ec;
     deploy_bin_code(property_id, std::move(code), ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -189,6 +199,7 @@ uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_iden
 uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
     std::error_code ec;
     auto const r = balance(property_id, symbol, ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -202,6 +213,7 @@ std::string xtop_contract_state::binlog(std::error_code & ec) const {
 std::string xtop_contract_state::binlog() const {
     std::error_code ec;
     auto r = binlog(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -215,6 +227,7 @@ size_t xtop_contract_state::binlog_size(std::error_code & ec) const {
 size_t xtop_contract_state::binlog_size() const {
     std::error_code ec;
     auto r = binlog_size(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -228,6 +241,7 @@ std::string xtop_contract_state::fullstate_bin(std::error_code & ec) const {
 std::string xtop_contract_state::fullstate_bin() const {
     std::error_code ec;
     auto r = fullstate_bin(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -261,6 +275,7 @@ uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code & ec) const {
 uint256_t xtop_contract_state::latest_sendtx_hash() const {
     std::error_code ec;
     auto r = latest_sendtx_hash(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -277,6 +292,7 @@ void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & e
 void xtop_contract_state::latest_sendtx_hash(uint256_t hash) {
     std::error_code ec;
     latest_sendtx_hash(hash, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -297,6 +313,7 @@ uint64_t xtop_contract_state::latest_sendtx_nonce(std::error_code & ec) const {
 uint64_t xtop_contract_state::latest_sendtx_nonce() const {
     std::error_code ec;
     auto r = latest_sendtx_nonce(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -313,6 +330,7 @@ void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce, std::error_code & 
 void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce) {
     std::error_code ec;
     latest_sendtx_nonce(nonce, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -349,6 +367,7 @@ uint64_t xtop_contract_state::recvtx_num(std::error_code & ec) const {
 uint64_t xtop_contract_state::recvtx_num() const {
     std::error_code ec;
     auto const r = recvtx_num(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -365,6 +384,7 @@ void xtop_contract_state::recvtx_num(uint64_t num, std::error_code & ec) {
 void xtop_contract_state::recvtx_num(uint64_t num) {
     std::error_code ec;
     recvtx_num(num, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -385,6 +405,7 @@ uint64_t xtop_contract_state::unconfirm_sendtx_num(std::error_code & ec) const {
 uint64_t xtop_contract_state::unconfirm_sendtx_num() const {
     std::error_code ec;
     auto const r = unconfirm_sendtx_num(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -401,6 +422,7 @@ void xtop_contract_state::unconfirm_sendtx_num(uint64_t num, std::error_code & e
 void xtop_contract_state::unconfirm_sendtx_num(uint64_t num) {
     std::error_code ec;
     unconfirm_sendtx_num(num, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -506,15 +528,18 @@ bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, u
 
 void xtop_contract_state::transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec) {
     auto withdraw_token = withdraw(from, common::SYMBOL_TOP_TOKEN, amount, ec);
+    assert(!ec);
     top::error::throw_error(ec);
     deposit(to, std::move(withdraw_token), ec);
+    assert(!ec);
     top::error::throw_error(ec);
-    xdbg("[xtop_contract_state::transfer_internal] %s to %s success, amount: " PRIu64, from.full_name().c_str(), to.full_name().c_str(), amount);
+    xdbg("[xtop_contract_state::transfer_internal] %s to %s success, amount: %" PRIu64, from.full_name().c_str(), to.full_name().c_str(), amount);
 }
 
 void xtop_contract_state::transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount) {
     std::error_code ec;
     transfer_internal(from, to, amount, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -546,6 +571,7 @@ std::map<std::string, xstake::xreward_dispatch_task> xtop_contract_state::delay_
 std::map<std::string, xstake::xreward_dispatch_task> xtop_contract_state::delay_followup() const {
     std::error_code ec;
     auto r = delay_followup(ec);
+    assert(!ec);
     top::error::throw_error(ec);
     return r;
 }
@@ -576,6 +602,7 @@ void xtop_contract_state::delay_followup(xstake::xreward_dispatch_task const & t
 void xtop_contract_state::delay_followup(xstake::xreward_dispatch_task const & task) {
     std::error_code ec;
     delay_followup(task, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -611,6 +638,7 @@ void xtop_contract_state::delay_followup(std::vector<xstake::xreward_dispatch_ta
 void xtop_contract_state::delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks) {
     std::error_code ec;
     delay_followup(tasks, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 
@@ -622,6 +650,7 @@ void xtop_contract_state::remove_delay_followup(std::string const & key, std::er
 void xtop_contract_state::remove_delay_followup(std::string const & key) {
     std::error_code ec;
     remove_delay_followup(key, ec);
+    assert(!ec);
     top::error::throw_error(ec);
 }
 

@@ -47,6 +47,7 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
 xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data)
   : bstate_{bstate}, canvas_{make_object_ptr<base::xvcanvas_t>()}, ac_data_{std::move(ac_data)} {
     if (bstate == nullptr) {
+        assert(false);
         top::error::throw_error({error::xerrc_t::invalid_state_backend});
     }
     bstate_pack_.insert(std::make_pair(common::xaccount_address_t{bstate->get_account()}, bstate));
@@ -56,6 +57,7 @@ xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t
 xtop_state_accessor::xtop_state_accessor(std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> const & bstate_pack, xstate_access_control_data_t ac_data)
   : bstate_pack_{bstate_pack}, ac_data_{std::move(ac_data)} {
     if (bstate_pack_.empty()) {
+        assert(false);
         top::error::throw_error({error::xerrc_t::invalid_state_backend});
     }
 }
