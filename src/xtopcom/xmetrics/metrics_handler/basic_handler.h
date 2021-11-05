@@ -15,7 +15,24 @@
 #include <iostream>
 #include <sstream>
 
+using namespace top::base;
+static top::base::xlogger_t *g_metrics_log_instance = nullptr;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+ void metrics_log_init(const char * log_path);
+ void metrics_log_close();
+
+#ifdef __cplusplus
+}
+#endif
+
 NS_BEG3(top, metrics, handler)
+
+
 
 // A workaround to give to use fifo_map as map, we are just ignoring the 'less' compare
 template<class K, class V, class dummy_compare, class A>
@@ -31,11 +48,8 @@ inline std::string get_tag(std::string const & str) {
     return str.substr(str.find("_") + 1);
 }
 
-using namespace top::base;
-void metrics_log_init(std::string log_path);
-void metrics_log_close();
 
-//extern top::base::xlogger_t *g_metrics_log_instance;
+
 
 class xtop_basic_handler {
 public:
@@ -47,13 +61,28 @@ public:
         return (int)(sz / 10 + 1) * 10;
     }
 
-    virtual void dump(std::string const & str, bool is_updated);
- 
+    virtual void dump(std::string const & str, bool is_updated) {
+    bool dump_all{false};
+    XMETRICS_CONFIG_GET("dump_full_unit", dump_all);
+    if (is_updated || dump_all) {
+        if(g_metrics_log_instance){
+              g_metrics_log_instance->kinfo("[metrics]%s", str.c_str());
+        }
+        else{
+            xkinfo("[metrics]%s", str.c_str());
+        }   
+        #ifdef METRICS_UNIT_TEST
+             std::cout << str << std::endl;
+         #endif
+    }
+    }
 
     virtual metrics_variant_ptr init_new_metrics(event_message const & msg) = 0;
     virtual void dump_metrics_info(metrics_variant_ptr const & metrics_ptr) = 0;
     virtual void process_message_event(metrics_variant_ptr & metrics_ptr, event_message const & msg) = 0;
 };
+
+
 
 using xbasic_handler_t = xtop_basic_handler;
 

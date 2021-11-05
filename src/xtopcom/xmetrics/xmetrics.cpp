@@ -603,14 +603,13 @@ std::pair<char const *, std::size_t> array_counter_info(xmetrics_array_tag_t con
 #undef RETURN_METRICS_INFO
 
 
-using namespace top::base;
-using namespace top::metrics::handler;
-
 
 void e_metrics::start() {
     if (running()) {
         return;
     }
+
+
     XMETRICS_CONFIG_GET("dump_interval", m_dump_interval);
     XMETRICS_CONFIG_GET("queue_procss_behind_sleep_time", m_queue_procss_behind_sleep_time);
 
@@ -636,6 +635,7 @@ void e_metrics::start() {
 void e_metrics::stop() {
     assert(running());
     running(false);
+
 }
 
 void e_metrics::run_process() {
@@ -645,6 +645,7 @@ void e_metrics::run_process() {
         update_dump();
     }
     
+  
     metrics_log_close();
   
 }

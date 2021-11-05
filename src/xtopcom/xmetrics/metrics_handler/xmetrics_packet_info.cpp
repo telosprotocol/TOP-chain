@@ -7,8 +7,10 @@ NS_BEG3(top, metrics, handler)
 #define VAL_UNIT_TYPE_INT64 2
 
 
+using namespace top::base;
+using namespace top::metrics::handler; 
+ 
 
-extern top::base::xlogger_t *g_metrics_log_instance;
 
 void metrics_packet_impl(metrics_pack_unit & unit) {
     json res, cont;

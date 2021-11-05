@@ -794,18 +794,20 @@ public:
     microseconds m_timed_out;
 };
 
-#define XMETRICS_INIT(log_path)                                                                                                                                                            \
-    {                                                                                                                                                                              \
-        auto & ins = top::metrics::e_metrics::get_instance();   \
-        top::metrics::handler::metrics_log_init(log_path);                                                                                                                     \
-        ins.start();                                                                                                                                                               \
+
+
+
+#define XMETRICS_INIT(log_path)                       \
+    {                                                   \
+        auto & ins = top::metrics::e_metrics::get_instance();\
+        metrics_log_init(log_path.c_str()); \
+        ins.start();                                          \
     }
 
-
-#define XMETRICS_INIT2()                                                                                                                                                            \
-    {                                                                                                                                                                              \
-        auto & ins = top::metrics::e_metrics::get_instance();   \                                                                                                           \
-        ins.start();                                                                                                                                                               \
+#define XMETRICS_INIT2()                                       \
+    {                                                                                 \
+        auto & ins = top::metrics::e_metrics::get_instance();        \
+        ins.start();                                  \
     }
 
 #define XMETRICS_UNINT()                                                                                                                                                            \
