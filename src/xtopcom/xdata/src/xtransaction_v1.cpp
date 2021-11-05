@@ -82,6 +82,27 @@ xtransaction_v1_t::~xtransaction_v1_t() {
     XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, -1);
 }
 
+void xtransaction_v1_t::construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) {
+    set_tx_type(tx_type);
+    set_expire_duration(expire_duration);
+    set_deposit(deposit);
+    set_premium_price(0);
+    set_last_nonce(nonce);
+    set_fire_timestamp(get_gmttime_s());
+    set_from_ledger_id(0);
+    set_to_ledger_id(0);
+
+    m_source_action.set_account_addr(info.m_source_addr);
+    m_source_action.set_action_name(info.m_source_action_name);
+    m_source_action.set_action_param(info.m_source_action_para);
+
+    m_target_action.set_account_addr(info.m_target_addr);
+    m_target_action.set_action_name(info.m_target_action_name);
+    m_target_action.set_action_param(info.m_target_action_para);
+
+    xtransaction_t::set_action_type_by_tx_type(m_source_action, m_target_action, static_cast<enum_xtransaction_type>(m_transaction_type));
+}
+
 int32_t xtransaction_v1_t::do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
     serialize_write(stream, is_write_without_len);
@@ -251,6 +272,8 @@ int32_t xtransaction_v1_t::make_tx_transfer(const data::xproperty_asset & asset)
 }
 
 int32_t xtransaction_v1_t::make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) {
+    set_from_ledger_id(0);
+    set_to_ledger_id(0);
     set_tx_type(xtransaction_type_run_contract);
     int32_t ret = xaction_asset_out::serialze_to(m_source_action, asset_out);
     if (ret) { return ret; }

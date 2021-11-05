@@ -32,12 +32,6 @@ xtransaction_v2_t::~xtransaction_v2_t() {
     XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, -1);
 }
 
-uint64_t xtransaction_v2_t::get_gmttime_s() {
-    struct timeval val;
-    base::xtime_utl::gettimeofday(&val);
-    return static_cast<uint64_t>(val.tv_sec);
-}
-
 void xtransaction_v2_t::construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) {
     set_tx_type(tx_type);
     set_expire_duration(expire_duration);
@@ -385,56 +379,7 @@ xaction_t & xtransaction_v2_t::get_target_action() {
 }
 
 void xtransaction_v2_t::set_action_type() {
-    switch (get_tx_type())
-    {
-    case xtransaction_type_create_user_account:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_create_user_account);
-        break;
-    
-    case xtransaction_type_run_contract:
-        m_source_action.set_action_type(xaction_type_asset_out);
-        m_target_action.set_action_type(xaction_type_run_contract);
-        break;
-    
-    case xtransaction_type_transfer:
-        m_source_action.set_action_type(xaction_type_asset_out);
-        m_target_action.set_action_type(xaction_type_asset_in);
-        break;
-    
-    case xtransaction_type_vote:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_run_contract);
-        break;
-    
-    case xtransaction_type_abolish_vote:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_run_contract);
-        break;
-    
-    case xtransaction_type_pledge_token_tgas:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_pledge_token);
-        break;
-    
-    case xtransaction_type_redeem_token_tgas:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_redeem_token);
-        break;
-    
-    case xtransaction_type_pledge_token_vote:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_pledge_token_vote);
-        break;
-    
-    case xtransaction_type_redeem_token_vote:
-        m_source_action.set_action_type(xaction_type_source_null);
-        m_target_action.set_action_type(xaction_type_redeem_token_vote);
-        break;
-
-    default:
-        break;
-    }
+    xtransaction_t::set_action_type_by_tx_type(m_source_action, m_target_action, m_transaction_type);
 }
 
 void xtransaction_v2_t::parse_to_json(xJson::Value& result_json, const std::string & tx_version) const {

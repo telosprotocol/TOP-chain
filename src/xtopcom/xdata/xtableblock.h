@@ -64,10 +64,15 @@ class xtable_block_t : public xblock_t {
  private:
     xtable_block_t(const xtable_block_t &);
     xtable_block_t & operator = (const xtable_block_t &);
+    void parse_to_json_v1(xJson::Value & root);
+    void parse_to_json_v2(xJson::Value & root);
  public:
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
+    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
+    virtual std::vector<base::xvaction_t> get_tx_actions();
+    virtual std::vector<xvheader_ptr_t> get_unit_headers();
 
  protected:
     void                    unpack_proposal_units(std::vector<xblock_ptr_t> & units) const;
