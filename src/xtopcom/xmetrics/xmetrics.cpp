@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xmetrics.h"
+#include "xbase/xlog.h"
+
 
 NS_BEG2(top, metrics)
 
@@ -600,6 +602,11 @@ std::pair<char const *, std::size_t> array_counter_info(xmetrics_array_tag_t con
 }
 #undef RETURN_METRICS_INFO
 
+
+using namespace top::base;
+using namespace top::metrics::handler;
+
+
 void e_metrics::start() {
     if (running()) {
         return;
@@ -637,6 +644,9 @@ void e_metrics::run_process() {
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
         update_dump();
     }
+    
+    metrics_log_close();
+  
 }
 
 void e_metrics::process_message_queue() {

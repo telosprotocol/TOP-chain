@@ -6,6 +6,10 @@ NS_BEG3(top, metrics, handler)
 #define VAL_UNIT_TYPE_STR 1
 #define VAL_UNIT_TYPE_INT64 2
 
+
+
+extern top::base::xlogger_t *g_metrics_log_instance;
+
 void metrics_packet_impl(metrics_pack_unit & unit) {
     json res, cont;
     res["category"] = get_category(unit.name);
@@ -21,7 +25,14 @@ void metrics_packet_impl(metrics_pack_unit & unit) {
     res["content"] = cont;
     std::stringstream ss;
     ss << res;
-    xkinfo("[metrics]%s", ss.str().c_str());
+    if (g_metrics_log_instance) {
+         g_metrics_log_instance->kinfo("[metrics]%s", ss.str().c_str());
+    }
+    else{
+        xkinfo("[metrics]%s", ss.str().c_str());
+    }
+    
+  
 }
 
 NS_END3

@@ -6,6 +6,7 @@
 #include "xbasic/xrunnable.h"
 #include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #ifdef ENABLE_METRICS
+#include "metrics_handler/basic_handler.h"
 #include "metrics_handler/array_counter_handler.h"
 #include "metrics_handler/counter_handler.h"
 #include "metrics_handler/flow_handler.h"
@@ -793,9 +794,17 @@ public:
     microseconds m_timed_out;
 };
 
-#define XMETRICS_INIT()                                                                                                                                                            \
+#define XMETRICS_INIT(log_path)                                                                                                                                                            \
     {                                                                                                                                                                              \
-        auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
+        auto & ins = top::metrics::e_metrics::get_instance();   \
+        top::metrics::handler::metrics_log_init(log_path);                                                                                                                     \
+        ins.start();                                                                                                                                                               \
+    }
+
+
+#define XMETRICS_INIT2()                                                                                                                                                            \
+    {                                                                                                                                                                              \
+        auto & ins = top::metrics::e_metrics::get_instance();   \                                                                                                           \
         ins.start();                                                                                                                                                               \
     }
 

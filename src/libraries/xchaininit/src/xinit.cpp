@@ -92,7 +92,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     //using top::elect::xbeacon_xelect_imp;
     auto hash_plugin = new xtop_hash_t();
 
-    XMETRICS_INIT();
+
     g_topchain_init_finish_flag = false;
 
     auto& config_center = top::config::xconfig_register_t::get_instance();
@@ -127,6 +127,9 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     xwarn("=== xbase info: %s ===", xbase_info.c_str());
     std::cout << "=== xtopchain start here ===" << std::endl;
     std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
+
+    //wait log path created,and init metrics
+    XMETRICS_INIT(log_path);
 
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
@@ -343,7 +346,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 #endif
 
 
-    XMETRICS_INIT();
+    XMETRICS_INIT(log_path);
 
 
     std::cout << "xnode config initializing..."  << std::endl;
