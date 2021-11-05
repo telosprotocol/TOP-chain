@@ -45,7 +45,6 @@ public: // tx cache
 
 public:
     void update_node_type(uint32_t combined_node_type) noexcept override;
-
 private:
     bool strategy_permission(common::xbool_strategy_t const & strategy) const noexcept;
 

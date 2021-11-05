@@ -230,4 +230,5 @@ bool xtxstoreimpl::strategy_permission(common::xbool_strategy_t const & strategy
     return false;
 }
 
+
 NS_END2

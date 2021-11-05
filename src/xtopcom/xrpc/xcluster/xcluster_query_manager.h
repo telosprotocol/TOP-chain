@@ -23,7 +23,8 @@ public:
     explicit xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                     observer_ptr<base::xvblockstore_t> block_store,
                                     observer_ptr<base::xvtxstore_t> txstore,
-                                    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service);
+                                    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
+                                    bool archive_flag = false);
     void call_method(xjson_proc_t & json_proc);
     void getAccount(xjson_proc_t & json_proc);
     void getTransaction(xjson_proc_t & json_proc);
@@ -55,5 +56,6 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_service;
     std::unordered_map<std::string, query_method_handler> m_query_method_map;
     chain_info::get_block_handle m_bh;
+    bool m_archive_flag{false};
 };
 NS_END2
