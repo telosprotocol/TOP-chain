@@ -193,17 +193,21 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     // end admin http service
 
     //xmutisig::xmutisig::init_openssl();
-    application::xapplication_t app{
-        user_params.account,
-        xpublic_key_t{ user_params.publickey },
-        user_params.signkey
-    };
+    application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
+    try {
+        app.start();
+    } catch (top::error::xtop_error_t const & eh) {
+        assert(false);
+        xerror("application exit with xtop_error_t %d msg %s", eh.code().value(), eh.what());
+    } catch (std::exception const & eh) {
+        assert(false);
+        xerror("application exit with std::exception msg %s", eh.what());
+    }
 
     if (false == db_migrate(v2_db_path)) {
         return 1;
     }
 
-    app.start();
     xinfo("==== app start done ===");
 
     std::cout << std::endl
@@ -221,8 +225,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     }
     // todo adapter to vnode type
 
-    config_center.clear_loaders();
     app.stop();
+    config_center.clear_loaders();
     delete hash_plugin;
     return 0;
 }

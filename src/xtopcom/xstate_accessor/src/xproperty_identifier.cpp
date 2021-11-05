@@ -16,6 +16,7 @@ xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string
     // if (m_name.front() == category_character(m_category)) {
     //     m_name = m_name.substr(1);
         if (m_name.empty()) {
+            assert(false);
             top::error::throw_error(state_accessor::error::xerrc_t::empty_property_name);
         }
     // }
@@ -69,6 +70,7 @@ xproperty_type_t xtop_property_identifier::type() const noexcept {
 bool xtop_property_identifier::operator==(xtop_property_identifier const & other) const {
     auto const same = xtypeless_property_identifier_t::operator==(other);
     if (same && m_type != other.m_type) {
+        assert(false);
         top::error::throw_error({ error::xerrc_t::invalid_property_type }, "property id: " + full_name() + " type mismatch (" + to_string(m_type) + " vs " + to_string(other.m_type) + ")");
     }
 
