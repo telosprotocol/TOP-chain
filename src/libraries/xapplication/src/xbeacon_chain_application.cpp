@@ -173,13 +173,14 @@ void xtop_beacon_chain_application::load_last_election_data() {
             } };
 
             // only use lightunit
-            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_genesis_connectted_lightunit(m_application->blockstore().get(), addr);
+            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_connectted_light_block(m_application->blockstore().get(), addr);
             if (latest_vblock == nullptr) {
                 xerror("xtop_beacon_chain_application::load_last_election_data has no latest lightunit. addr=%s", addr.c_str());
                 continue;
             }
 
             uint64_t block_height = latest_vblock->get_height();
+            xinfo("xbeacon_chain_application::load_last_election_data load block.addr=%s,height=%ld", addr.c_str(), block_height);
             auto const & last_election_result_store = load_election_data(m_application->blockstore(),
                                                                          common::xaccount_address_t{ addr },
                                                                          block_height,
