@@ -235,7 +235,9 @@ namespace top
         void xvtxstore_t::update_node_type(uint32_t combined_node_type) {
             xassert(false);
         }
-
+        int xvtxstore_t::load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks) {
+            return 0;
+        }
         //----------------------------------------xvblockstore_t----------------------------------------//
         xvblockstore_t::xvblockstore_t(base::xcontext_t & _context,const int32_t target_thread_id)
             :xiobject_t(_context,target_thread_id,(enum_xobject_type)enum_xobject_type_vblockstore)

@@ -516,10 +516,10 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
     }
 }
 
-xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version) {
+//xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & tx_version) {
+int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version, xJson::Value& result_json) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
     base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
-    xJson::Value result_json;
     xJson::Value cons;
     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
         xtransaction_ptr_t tx_ptr;
@@ -544,16 +544,17 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         auto ori_tx_info = parse_tx(tx_ptr.get(), rpc_version);
         result_json["original_tx_info"] = ori_tx_info;
 
-        return result_json;
+        return 0;
     } else {
         if (cons_tx_ptr == nullptr) {
-            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+            //throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+            return 1;
         } else {
             auto ori_tx_info = parse_tx(cons_tx_ptr, rpc_version);
             result_json["original_tx_info"] = ori_tx_info;
             result_json["tx_consensus_state"] = cons;
             result_json["tx_state"] = "queue";
-            return result_json;
+            return 0;
         }
     }
 }
@@ -692,7 +693,10 @@ void get_block_handle::getTransaction() {
     }
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
-        m_js_rsp["value"] = parse_tx(hash, nullptr, version);
+//        m_js_rsp["value"] = parse_tx(hash, nullptr, version);
+        if (parse_tx(hash, nullptr, version, m_js_rsp["value"]) != 0)
+            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+
         base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
         if (tx_store_ptr != nullptr) {
             if (tx_store_ptr->get_raw_tx() != nullptr) {

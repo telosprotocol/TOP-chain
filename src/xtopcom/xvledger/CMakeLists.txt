@@ -8,9 +8,7 @@ if (BUILD_METRICS)
     target_link_libraries(xvledger PRIVATE xmetrics)
 endif()
 
-target_link_libraries(xvledger PRIVATE
-    xxbase
-)
+target_link_libraries(xvledger PRIVATE xxbase)
 
 # if (XENABLE_TESTS)
 #     enable_testing()

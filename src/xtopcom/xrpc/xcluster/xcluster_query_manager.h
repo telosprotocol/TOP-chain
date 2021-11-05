@@ -23,7 +23,8 @@ public:
     explicit xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                     observer_ptr<base::xvblockstore_t> block_store,
                                     observer_ptr<base::xvtxstore_t> txstore,
-                                    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service);
+                                    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
+                                    bool archive_flag = false);
     void call_method(xjson_proc_t & json_proc);
     void getAccount(xjson_proc_t & json_proc);
     void getTransaction(xjson_proc_t & json_proc);
@@ -46,7 +47,7 @@ public:
 private:
     void set_sharding_vote_prop(xjson_proc_t & json_proc, std::string & prop_name);
     void set_sharding_reward_claiming_prop(xjson_proc_t & json_proc, std::string & prop_name);
-
+    int  get_transaction_on_demand(const std::string& account, xtransaction_t * tx_ptr, const string & version, const uint256_t& tx_hash, xJson::Value& result_json);
 private:
     std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t> m_shard_host;
     observer_ptr<store::xstore_face_t> m_store;
@@ -55,5 +56,6 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_service;
     std::unordered_map<std::string, query_method_handler> m_query_method_map;
     chain_info::get_block_handle m_bh;
+    bool m_archive_flag{false};
 };
 NS_END2
