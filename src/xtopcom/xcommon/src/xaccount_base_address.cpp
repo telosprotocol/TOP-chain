@@ -15,22 +15,30 @@ NS_BEG2(top, common)
 
 xtop_account_base_address::xtop_account_base_address(std::string const & base_address) {
     if (base_address.find('@') != std::string::npos) {
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
     }
 
     if (base_address.length() < base::xvaccount_t::enum_vaccount_address_prefix_size) {
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
     }
 
     if (base_address.length() >= base::xvaccount_t::enum_vaccount_address_max_size) {
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
     }
 
     if (base_address.at(0) != 'T') {
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
     }
 
@@ -54,7 +62,9 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         break;
 
     default:
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
         break;
     }
@@ -73,7 +83,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 
     auto account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
     m_ledger_id = xledger_id_t{m_base_address_str.substr(2, 4)};
-    m_default_table_id = static_cast<uint16_t>(account_index % static_cast<uint32_t>(enum_vbucket_has_tables_count));
+    m_default_table_id = xtable_id_t{static_cast<uint16_t>(account_index % static_cast<uint16_t>(enum_vbucket_has_tables_count))};
 }
 
 xtop_account_base_address xtop_account_base_address::build_from(std::string const & input, std::error_code & ec) {
@@ -111,7 +121,7 @@ bool xtop_account_base_address::empty() const noexcept {
 }
 
 void xtop_account_base_address::clear() {
-    m_default_table_id = std::numeric_limits<uint16_t>::max();
+    m_default_table_id.clear();
     m_ledger_id.clear();
     m_account_type = base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid;
     m_base_address_str.clear();
@@ -119,24 +129,13 @@ void xtop_account_base_address::clear() {
 
 base::enum_vaccount_addr_type xtop_account_base_address::type(std::error_code & ec) const {
     if (m_account_type == base::enum_vaccount_addr_type_invalid) {
+#if !defined(XENABLE_TESTS)
+        assert(false);
+#endif
         ec = error::xerrc_t::invalid_account_type;
     }
 
     return m_account_type;
-}
-
-xledger_id_t xtop_account_base_address::ledger_id(std::error_code & ec) const {
-    if (m_ledger_id.empty()) {
-        ec = error::xerrc_t::invalid_ledger_id;
-    }
-    return m_ledger_id;
-}
-
-uint16_t xtop_account_base_address::default_table_id(std::error_code & ec) const {
-    if (m_default_table_id == std::numeric_limits<uint32_t>::max()) {
-        ec = error::xerrc_t::invalid_table_id;
-    }
-    return m_default_table_id;
 }
 
 base::enum_vaccount_addr_type xtop_account_base_address::type() const {
@@ -146,18 +145,12 @@ base::enum_vaccount_addr_type xtop_account_base_address::type() const {
     return r;
 }
 
-xledger_id_t xtop_account_base_address::ledger_id() const {
-    std::error_code ec;
-    auto const r = ledger_id(ec);
-    top::error::throw_error(ec);
-    return r;
+xledger_id_t const & xtop_account_base_address::ledger_id() const noexcept {
+    return m_ledger_id;
 }
 
-uint16_t xtop_account_base_address::default_table_id() const {
-    std::error_code ec;
-    auto const r = default_table_id(ec);
-    top::error::throw_error(ec);
-    return r;
+xtable_id_t const & xtop_account_base_address::default_table_id() const noexcept {
+    return m_default_table_id;
 }
 
 bool xtop_account_base_address::operator==(xtop_account_base_address const & other) const noexcept {

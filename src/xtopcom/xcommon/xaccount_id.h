@@ -8,9 +8,11 @@
 #include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xip.h"
 #include "xcommon/xledger_id.h"
+#include "xcommon/xtable_id.h"
 
 #include <limits>
 #include <string>
+#include <system_error>
 
 NS_BEG2(top, common)
 
@@ -36,6 +38,10 @@ public:
 
     xledger_id_t ledger_id() const;
     xzone_id_t zone_id() const;
+    xtable_id_t table_id() const;
+
+    xvid_t value(std::error_code & ec) const noexcept;
+    xvid_t value() const;
 };
 using xaccount_id_t = xtop_account_id;
 

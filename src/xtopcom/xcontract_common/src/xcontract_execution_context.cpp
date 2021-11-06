@@ -132,9 +132,9 @@ common::xaccount_address_t xtop_contract_execution_context::contract_address() c
 
 common::xaccount_address_t xtop_contract_execution_context::deployed_contract_address() const {
     auto const& recv = recver();
-    xdbg("xtop_contract_execution_context::base_contract_address, base account: %s", recv.base_account().c_str());
+    xdbg("xtop_contract_execution_context::base_contract_address, base account: %s", recv.base_address().c_str());
     if (data::is_sys_sharding_contract_address(recv)) {
-        auto const& base_account = recv.base_account();
+        auto const& base_account = recv.base_address();
         return common::xaccount_address_t{base_account.to_string()};
     }
     return recv;

@@ -7,6 +7,7 @@
 #include "xbase/xmem.h"
 #include "xcommon/xaccount_base_address_fwd.h"
 #include "xcommon/xledger_id.h"
+#include "xcommon/xtable_id.h"
 #include "xvledger/xvaccount.h"
 
 #include <functional>
@@ -27,7 +28,7 @@ class xtop_account_base_address {
     std::string m_base_address_str;
     base::enum_vaccount_addr_type m_account_type{base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid};
     xledger_id_t m_ledger_id;
-    uint16_t m_default_table_id{std::numeric_limits<uint16_t>::max()};
+    xtable_id_t m_default_table_id;
 
 public:
     xtop_account_base_address() = default;
@@ -53,12 +54,10 @@ public:
     void clear();
 
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
-    xledger_id_t ledger_id(std::error_code & ec) const;
-    uint16_t default_table_id(std::error_code & ec) const;
-
     base::enum_vaccount_addr_type type() const;
-    xledger_id_t ledger_id() const;
-    uint16_t default_table_id() const;
+
+    xledger_id_t const & ledger_id() const noexcept;
+    xtable_id_t const & default_table_id() const noexcept;
 
     bool operator==(xtop_account_base_address const & other) const noexcept;
     bool operator<(xtop_account_base_address const & other) const noexcept;

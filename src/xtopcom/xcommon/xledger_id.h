@@ -41,7 +41,8 @@ public:
 
     xzone_id_t zone_id() const noexcept;
 
-    uint16_t value() const noexcept;
+    uint16_t value(std::error_code & ec) const noexcept;
+    uint16_t value() const;
 };
 using xledger_id_t = xtop_ledger_id;
 

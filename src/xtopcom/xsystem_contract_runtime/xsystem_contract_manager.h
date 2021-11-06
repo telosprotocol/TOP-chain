@@ -11,6 +11,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvledger.h"
 
 #include <unordered_map>
 
@@ -97,10 +98,9 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
                                                           xsniff_block_config_t block_config,
                                                           observer_ptr<base::xvblockstore_t> const & blockstore) {
     // must system contract & not deploy yet
-    assert(data::is_sys_contract_address(address));
+    assert(address.type() == base::enum_vaccount_addr_type_native_contract);
     assert(!contains(address));
 
-    auto sys_contract = top::make_unique<system_contract_type>();
     xcontract_deployment_data_t data{node_type, sniff_type, broadcast_config, std::move(timer_config), std::move(block_config)};
 #if !defined(NDEBUG)
     auto r1 = 
@@ -108,18 +108,26 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
     m_system_contract_deployment_data.insert(std::make_pair(address, std::move(data)));
     assert(top::get<bool>(r1));
 
+    if (address.ledger_id().zone_id() == common::xconsensus_zone_id) {
+        for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
+            auto table_address = common::xaccount_address_t{address.base_address(), static_cast<uint16_t>(i)};
+
+            auto sys_contract = top::make_unique<system_contract_type>();
 #if !defined(NDEBUG)
-    auto r2 =
+            auto r2 =
 #endif
-    m_system_contracts.emplace(address, std::move(sys_contract));
-    assert(top::get<bool>(r2));
-
-
-    if (data::is_sys_sharding_contract_address(address)) {
-        for ( auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-            init_system_contract(common::xaccount_address_t{address.value() + "@" + std::to_string(i)}, blockstore);
+            m_system_contracts.emplace(table_address, std::move(sys_contract));
+            assert(top::get<bool>(r2));
+            init_system_contract(table_address, blockstore);
         }
     } else {
+        auto sys_contract = top::make_unique<system_contract_type>();
+#if !defined(NDEBUG)
+        auto r2 =
+#endif
+        m_system_contracts.emplace(address, std::move(sys_contract));
+        assert(top::get<bool>(r2));
+
         init_system_contract(address, blockstore);
     }
 }

@@ -25,19 +25,16 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xhashable.hpp"
-#include "xbasic/xrandomizable.h"
-#include "xbasic/xserializable_based_on.h"
 #include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xaccount_base_address.h"
-#include "xcommon/xledger_id.h"
 #include "xcommon/xaccount_id.h"
+#include "xcommon/xledger_id.h"
+#include "xcommon/xtable_id.h"
 
 #include <cstdint>
 #include <string>
 
 NS_BEG2(top, common)
-class xtop_node_id;
 
 std::int32_t operator <<(top::base::xstream_t & stream, xtop_node_id const & node_id);
 std::int32_t operator >>(top::base::xstream_t & stream, xtop_node_id & node_id);
@@ -46,10 +43,10 @@ std::int32_t operator>>(top::base::xbuffer_t & stream, xtop_node_id & node_id);
 
 class xtop_node_id final {
 private:
+    xaccount_base_address_t m_account_base_address;
+    xtable_id_t m_assigned_table_id;
     std::string m_account_string;
 
-    xaccount_base_address_t m_account_base_address;
-    uint16_t m_assigned_table_id{std::numeric_limits<uint16_t>::max()};
     xaccount_id_t m_account_id{};
 
 public:
@@ -62,11 +59,13 @@ public:
 
     explicit xtop_node_id(std::string const & value);
     explicit xtop_node_id(xaccount_base_address_t base_address);
+    explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value);
+    explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
     bool empty() const noexcept;
     bool has_value() const noexcept;
     std::string const & value() const noexcept;
-    xaccount_base_address_t const & base_account() const noexcept;
+    xaccount_base_address_t const & base_address() const noexcept;
     uint64_t hash() const;
     std::string const & to_string() const noexcept;
     void clear();
@@ -100,11 +99,8 @@ public:
 
     xaccount_id_t const & account_id() const noexcept;
 
-    xledger_id_t ledger_id() const;
-
-    uint16_t table_id(std::error_code & ec) const;
-    uint16_t table_id() const;
-    xaccount_base_address_t const & base_address() const noexcept;
+    xledger_id_t const & ledger_id() const noexcept;
+    xtable_id_t const & table_id() const noexcept;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);

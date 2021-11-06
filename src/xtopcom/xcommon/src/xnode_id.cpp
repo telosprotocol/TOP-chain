@@ -19,9 +19,20 @@ xtop_node_id::xtop_node_id(std::string const & v) : m_account_string{v} {
     parse();
 }
 
-xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)} {
-    m_account_string = m_account_base_address.to_string();
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)}, m_account_string{m_account_base_address.to_string()} {
     parse();
+}
+
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value)
+  : m_account_base_address{std::move(base_address)}
+  , m_assigned_table_id{table_id_value}
+  , m_account_string{m_account_base_address.to_string() + "@" + std::to_string(table_id_value)} {
+}
+
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id)
+  : m_account_base_address{std::move(base_address)}
+  , m_assigned_table_id{table_id}
+  , m_account_string{m_account_base_address.to_string() + "@" + std::to_string(table_id.value())} {
 }
 
 bool xtop_node_id::empty() const noexcept {
@@ -29,14 +40,14 @@ bool xtop_node_id::empty() const noexcept {
 }
 
 bool xtop_node_id::has_value() const noexcept {
-    return !m_account_string.empty();
+    return !empty();
 }
 
 std::string const & xtop_node_id::value() const noexcept {
     return m_account_string;
 }
 
-xaccount_base_address_t const & xtop_node_id::base_account() const noexcept {
+xaccount_base_address_t const & xtop_node_id::base_address() const noexcept {
     return m_account_base_address;
 }
 
@@ -53,7 +64,7 @@ std::string const & xtop_node_id::to_string() const noexcept {
 }
 
 void xtop_node_id::clear() {
-    m_assigned_table_id = std::numeric_limits<uint16_t>::max();
+    m_assigned_table_id.clear();
     m_account_base_address.clear();
     m_account_string.clear();
 }
@@ -123,28 +134,16 @@ xaccount_id_t const & xtop_node_id::account_id() const noexcept {
     return m_account_id;
 }
 
-xledger_id_t xtop_node_id::ledger_id() const {
+xledger_id_t const & xtop_node_id::ledger_id() const noexcept {
     return m_account_base_address.ledger_id();
 }
 
-uint16_t xtop_node_id::table_id(std::error_code & ec) const {
-    assert(!ec);
-    if (m_assigned_table_id != std::numeric_limits<uint16_t>::max()) {
+xtable_id_t const & xtop_node_id::table_id() const noexcept {
+    if (!m_assigned_table_id.empty()) {
         return m_assigned_table_id;
     }
 
-    return m_account_base_address.default_table_id(ec);
-}
-
-uint16_t xtop_node_id::table_id() const {
-    std::error_code ec;
-    auto const r = table_id(ec);
-    top::error::throw_error(ec);
-    return r;
-}
-
-xaccount_base_address_t const & xtop_node_id::base_address() const noexcept {
-    return m_account_base_address;
+    return m_account_base_address.default_table_id();
 }
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
@@ -178,22 +177,21 @@ void xtop_node_id::parse() {
         top::error::throw_error(error::xerrc_t::invalid_account_address);
     }
 
-    m_account_base_address = xaccount_base_address_t::build_from(parts[0]);
+    if (m_account_base_address.empty()) {
+        m_account_base_address = xaccount_base_address_t::build_from(parts[0]);
+    }
+    assert(m_account_base_address == xaccount_base_address_t::build_from(parts[0]));
+
     if (parts.size() > 1) {
         if (!std::all_of(std::begin(parts[1]), std::end(parts[1]), [](char const ch) { return '0' <= ch && ch <= '9'; })) {
             top::error::throw_error(error::xerrc_t::invalid_table_id);
         }
 
         auto assigned_table_id = static_cast<uint16_t>(std::stoi(parts[1]));
-        if (m_assigned_table_id != std::numeric_limits<uint16_t>::max()) {
-            if (m_assigned_table_id != assigned_table_id) {
-                top::error::throw_error(error::xerrc_t::invalid_table_id);
-            }
-        } else {
-            m_assigned_table_id = assigned_table_id;
+        if (m_assigned_table_id.empty()) {
+            m_assigned_table_id = xtable_id_t{assigned_table_id};
         }
-
-        assert(m_assigned_table_id == assigned_table_id);
+        assert(m_assigned_table_id == xtable_id_t{assigned_table_id});
     }
 
     m_account_id = xaccount_id_t{m_account_string};

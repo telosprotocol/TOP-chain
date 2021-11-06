@@ -16,7 +16,6 @@
 #include "xdata/xtransaction_v2.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
 #include "xsystem_contracts/xtransfer_contract.h"
-#include "xvledger/xvledger.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract_new.h"
@@ -172,18 +171,18 @@ bool xtop_system_contract_manager::contains(common::xaccount_address_t const & a
 }
 
 observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const noexcept {
-    common::xaccount_address_t contract_address{address};
+    //common::xaccount_address_t contract_address{address};
 
-    if (address.type() == base::enum_vaccount_addr_type_native_contract && address.ledger_id().zone_id() == common::xconsensus_zone_id) {
-        contract_address = common::xaccount_address_t{address.base_address()};
-    }
+    //if (address.type() == base::enum_vaccount_addr_type_native_contract && address.ledger_id().zone_id() == common::xconsensus_zone_id) {
+    //    contract_address = common::xaccount_address_t{address.base_address()};
+    //}
 
-    auto const it = m_system_contracts.find(contract_address);
+    auto const it = m_system_contracts.find(address);
     if (it != std::end(m_system_contracts)) {
         return top::make_observer(top::get<std::unique_ptr<system_contracts::xbasic_system_contract_t>>(*it).get());
     }
 
-    xdbg("system_contract_manager: contract %s not found", address.value().c_str());
+    xerror("system_contract_manager: contract %s not found", address.c_str());
     return nullptr;
 }
 
