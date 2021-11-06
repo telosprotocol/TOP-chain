@@ -71,14 +71,6 @@ void xcluster_query_manager::getAccount(xjson_proc_t & json_proc) {
     json_proc.m_response_json["data"] = m_bh.parse_account(account);
 }
 
-std::string xcluster_query_manager::tx_exec_status_to_str(uint8_t exec_status) {
-    if (exec_status == enum_xunit_tx_exec_status_success) {
-        return "success";
-    } else {
-        return "failure";
-    }
-}
-
 void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     const string & tx_hash_str = json_proc.m_request_json["params"]["tx_hash"].asString();
@@ -89,13 +81,14 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     xtransaction_cache_data_t cache_data;
     if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, std::make_shared<xtransaction_cache_data_t>(cache_data))) {
     // if (m_transaction_cache != nullptr && m_transaction_cache->tx_get(strHash, std::make_shared<>(cache_data)) == 1) {
-        if (cache_data.jv["send_unit_info"].empty()) {
-            cache_data.jv.removeMember("send_unit_info");
+        const chain_info::xtx_exec_json_key jk(version);
+        if (cache_data.jv[jk.m_send].empty()) {
+            cache_data.jv.removeMember(jk.m_send);
             xdbg("find tx:%s", tx_hash_str.c_str());
             xJson::Value result_json;
             result_json["tx_consensus_state"] = cache_data.jv;
             // xdbg("json1:%s", cache_data.jv.toStyledString().c_str());
-            m_bh.update_tx_state(result_json, cache_data.jv);
+            m_bh.update_tx_state(result_json, cache_data.jv, version);
 
             auto ori_tx_info = m_bh.parse_tx(cache_data.tran.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
@@ -164,10 +157,11 @@ void xcluster_query_manager::get_property(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
+    std::string version = json_proc.m_request_json["version"].asString();
     base::xvaccount_t _owner_vaddress(owner);
     std::string type = "height";
     auto height = json_proc.m_request_json["params"]["height"].asString();
-    xdbg("xcluster_query_manager::getBlock account: %s, height: %s", owner.c_str(), height.c_str());
+    xdbg("xcluster_query_manager::getBlock account: %s, height: %s, version: %s", owner.c_str(), height.c_str(), version.c_str());
 
     if (height == "latest") {
         type = "last";
@@ -179,11 +173,11 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
         xdbg("height: %llu", hi);
         auto vb = m_block_store->load_block_object(_owner_vaddress, hi, 0, true, metrics::blockstore_access_from_rpc_get_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
-        result_json["value"] = m_bh.get_block_json(bp);
+        result_json["value"] = m_bh.get_block_json(bp, version);
     } else if (type == "last") {
         auto vb = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_committed_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
-        result_json["value"] = m_bh.get_block_json(bp);
+        result_json["value"] = m_bh.get_block_json(bp, version);
     }
 
     json_proc.m_response_json["data"] = result_json;

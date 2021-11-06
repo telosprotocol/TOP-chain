@@ -96,6 +96,7 @@ public:
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
+    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) {};
 
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}
