@@ -21,7 +21,7 @@ TEST(account_base_address, valid_construction_2) {
     auto account_base = top::common::xaccount_base_address_t::build_from("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7", ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(account_base.to_string(), "T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7");
-    ASSERT_EQ(account_base.default_table_id(), 21);
+    ASSERT_EQ(account_base.default_table_id().value(), 21);
 }
 
 TEST(account_base_address, valid_construction_3) {
@@ -29,7 +29,7 @@ TEST(account_base_address, valid_construction_3) {
     auto account_base = top::common::xaccount_base_address_t::build_from("T00000LMwyeixuLgjnDysRiStjffyzZtLmDoyBwV", ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(account_base.to_string(), "T00000LMwyeixuLgjnDysRiStjffyzZtLmDoyBwV");
-    ASSERT_EQ(account_base.default_table_id(), 63);
+    ASSERT_EQ(account_base.default_table_id().value(), 63);
 }
 
 TEST(account_base_address, invalid_construction_1) {
@@ -37,8 +37,8 @@ TEST(account_base_address, invalid_construction_1) {
     auto account_base = top::common::xaccount_base_address_t::build_from("", ec);
     ASSERT_TRUE(ec);
     ASSERT_TRUE(account_base.empty());
-    EXPECT_THROW(account_base.default_table_id(), top::error::xtop_error_t);
-    EXPECT_THROW(account_base.ledger_id(), top::error::xtop_error_t);
+    EXPECT_THROW(account_base.default_table_id().value(), top::error::xtop_error_t);
+    EXPECT_THROW(account_base.ledger_id().value(), top::error::xtop_error_t);
     EXPECT_THROW(account_base.type(), top::error::xtop_error_t);
 
     EXPECT_THROW(top::common::xaccount_base_address_t::build_from(""), top::error::xtop_error_t);
@@ -49,8 +49,8 @@ TEST(account_base_address, invalid_construction_2) {
     auto account_base = top::common::xaccount_base_address_t::build_from("", ec);
     ASSERT_TRUE(ec);
     ASSERT_TRUE(account_base.empty());
-    EXPECT_THROW(account_base.default_table_id(), top::error::xtop_error_t);
-    EXPECT_THROW(account_base.ledger_id(), top::error::xtop_error_t);
+    EXPECT_THROW(account_base.default_table_id().value(), top::error::xtop_error_t);
+    EXPECT_THROW(account_base.ledger_id().value(), top::error::xtop_error_t);
     EXPECT_THROW(account_base.type(), top::error::xtop_error_t);
 }
 

@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <cinttypes>
+#include <iomanip>
 
 NS_BEG2(top, contract_common)
 
