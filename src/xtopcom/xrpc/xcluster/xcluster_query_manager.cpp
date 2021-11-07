@@ -121,10 +121,16 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
         }
     }
     xJson::Value result_json;
+    if (get_transaction_on_demand(account, tx_ptr, version, tx_hash, result_json) == 0)
+        json_proc.m_response_json["data"] = result_json;
+    return;
+}
+
+int xcluster_query_manager::get_transaction_on_demand(const std::string& account, xtransaction_t * tx_ptr, const string & version, const uint256_t& tx_hash, xJson::Value& result_json) {
+    std::string strHash((char*)tx_hash.data(), tx_hash.size());
     if (!m_archive_flag) {
         if (m_bh.parse_tx(tx_hash, tx_ptr, version, result_json) == 0) {  // find tx
-            json_proc.m_response_json["data"] = result_json;
-            return;
+            return 0;
         }
         throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
     }
@@ -136,8 +142,7 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     }
     if (result_json["tx_state"] != "pending" && result_json["tx_state"] != "queue")
     {
-        json_proc.m_response_json["data"] = result_json;
-        return;
+        return 0;
     }
 
     struct timeval val;
@@ -148,10 +153,8 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(account, strHash, "unit_lack");
         top::base::xvchain_t::instance().get_xevmbus()->push_event(ev);
     }
-    json_proc.m_response_json["data"] = result_json;
-    return;
+    return 0;
 }
-
 void xcluster_query_manager::get_transactionlist(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     uint32_t start_num = json_proc.m_request_json["params"]["start_num"].asUInt();
