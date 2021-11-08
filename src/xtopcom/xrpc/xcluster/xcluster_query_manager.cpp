@@ -85,16 +85,13 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     xtransaction_cache_data_t cache_data;
     if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, std::make_shared<xtransaction_cache_data_t>(cache_data))) {
         const chain_info::xtx_exec_json_key jk(version);
+        int empty_count = 0;
         if (cache_data.jv[jk.m_send].empty()) {
             cache_data.jv.removeMember(jk.m_send);
-
-        int empty_count = 0;
-        if (cache_data.jv["send_unit_info"].empty()) {
-            cache_data.jv.removeMember("send_unit_info");
             empty_count++;
         }
-        if (cache_data.jv["recv_unit_info"].empty()) {
-            cache_data.jv.removeMember("recv_unit_info");
+        if (cache_data.jv[jk.m_recv].empty()) {
+            cache_data.jv.removeMember(jk.m_recv);
             empty_count++;
         }
         if (empty_count == 2) {
