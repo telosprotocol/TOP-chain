@@ -7,11 +7,15 @@
 #include <string>
 #include "xvblock.h"
 #include "xvtxindex.h"
-#include "xdata/xblock.h"
+#include "xbase/xobject_ptr.h"
 
 namespace top {
 namespace data {
 // fwd
+
+class xblock_t;
+using xblock_ptr_t = xobject_ptr_t<xblock_t>;
+
 struct xtransaction_cache_data_t;
 class xtransaction_t;
 using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
