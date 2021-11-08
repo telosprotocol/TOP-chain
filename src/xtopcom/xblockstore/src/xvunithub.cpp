@@ -797,12 +797,12 @@ namespace top
                     return nullptr;
                 }
                 txstore->set_raw_tx(raw_tx.get());
-                txstore->set_send_unit_info(send_txindex);
+                txstore->set_send_block_info(send_txindex);
                 if(send_txindex->is_self_tx())
                 {
                     xdbg("xvblockstore_impl::query_tx self tx");  //self tx no need query more
-                    txstore->set_recv_unit_info(send_txindex);
-                    txstore->set_confirm_unit_info(send_txindex);
+                    txstore->set_recv_block_info(send_txindex);
+                    txstore->set_confirm_block_info(send_txindex);
                     return txstore;
                 }
             }
@@ -814,7 +814,7 @@ namespace top
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
-                txstore->set_recv_unit_info(txindex);
+                txstore->set_recv_block_info(txindex);
             }
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
             {
@@ -824,7 +824,7 @@ namespace top
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
-                txstore->set_confirm_unit_info(txindex);
+                txstore->set_confirm_block_info(txindex);
             }
 
             return txstore;

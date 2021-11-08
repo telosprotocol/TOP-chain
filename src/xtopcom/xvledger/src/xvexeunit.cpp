@@ -317,7 +317,7 @@ namespace top
             return false;
         }
     
-        xvexeunit_t *   xvexegroup_t::find_child_unit(const std::string & unit_name)
+        xvexeunit_t *   xvexegroup_t::find_child_unit(const std::string & unit_name) const
         {
             std::lock_guard<std::recursive_mutex> locker(m_lock);
             

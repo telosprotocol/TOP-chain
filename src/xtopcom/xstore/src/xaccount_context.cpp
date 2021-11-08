@@ -21,7 +21,7 @@
 #include "xbasic/xutility.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xtransaction_v2.h"
+#include "xdata/xtx_factory.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xutility/xstream_util.hpp"
@@ -1276,7 +1276,11 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
     uint256_t latest_sendtx_hash;
     get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
 
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+#ifdef RPC_V2
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
+#else
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
+#endif
     data::xproperty_asset asset(amount);
     tx->make_tx_transfer(asset);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
@@ -1313,7 +1317,11 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
     uint256_t latest_sendtx_hash;
     get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
 
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+#ifdef RPC_V2
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
+#else
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
+#endif
     data::xproperty_asset asset(0);
     tx->make_tx_run_contract(asset, func_name, func_param);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);

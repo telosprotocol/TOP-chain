@@ -49,9 +49,7 @@ class xblocktool_t {
     static std::string      make_address_user_contract(const std::string & public_key_address);
 
  public:
-    static base::xauto_ptr<base::xvblock_t> get_latest_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account);
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
-    static base::xauto_ptr<base::xvblock_t> get_latest_genesis_connectted_lightunit(base::xvblockstore_t* blockstore, const std::string & account);
     static base::xauto_ptr<base::xvblock_t> get_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height);
     static bool             verify_latest_blocks(const base::xblock_mptrs & latest_blocks);
     static bool             verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);

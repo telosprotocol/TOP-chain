@@ -53,8 +53,6 @@ XINLINE_CONSTEXPR char const* XPROPERTY_CONTRACT_GROUP_ASSOC_KEY     = "@43";
 
 // the corresponding token num of already expired locked vote
 
-XINLINE_CONSTEXPR const char* XPORPERTY_CONTRACT_TIME_KEY                = "@102";
-
 XINLINE_CONSTEXPR uint16_t MAX_NORMAL_CONTRACT_ACCOUNT = 32;
 
 class xproperty_asset {

@@ -63,7 +63,9 @@ namespace top
         };
         
         //group container that hold child exeunits,like vblockstate hold many properties
-        class xvexegroup_t : public xvexeunit_t
+        class 
+        
+        xvexegroup_t : public xvexeunit_t
         {
         protected:
             xvexegroup_t(enum_xdata_type type);
@@ -81,13 +83,13 @@ namespace top
             virtual const xvalue_t  execute(const xvmethod_t & op,xvcanvas_t * canvas) override;//might throw exception for error
             virtual bool            close(bool force_async = false) override;
             //virtual xvexeunit_t*    clone() override;
-            std::recursive_mutex&   get_mutex() {return m_lock;}
+            std::recursive_mutex&   get_mutex() const {return m_lock;}
             
         protected:
             bool                clone_units_from(const xvexegroup_t & source);
             bool                add_child_unit(xvexeunit_t * child);
             bool                remove_child_unit(const std::string & unit_name);
-            xvexeunit_t *       find_child_unit(const std::string & unit_name);
+            xvexeunit_t *       find_child_unit(const std::string & unit_name) const;
             const int           get_childs_count() const {return (int)m_child_units.size();}
             const std::map<std::string,xvexeunit_t*> & get_child_units() const {return m_child_units;}
             virtual void        set_parent_unit(xvexeunit_t * parent_ptr) override;
@@ -95,7 +97,7 @@ namespace top
             virtual int32_t     do_write(xstream_t & stream) override; //allow subclass extend behavior
             virtual int32_t     do_read(xstream_t & stream)  override; //allow subclass extend behavior
         private:
-            std::recursive_mutex               m_lock;
+            mutable std::recursive_mutex m_lock;
             std::map<std::string,xvexeunit_t*> m_child_units;
         };
     

@@ -8,7 +8,7 @@ add_executable(xrpc_test ${xrpc_test_src})
 
 # add_dependencies(xrpc_test xrpc xchaininit xxbase)
 
-target_link_libraries(xrpc_test PRIVATE xrpc xvnetwork xelect_net xchaininit xxbase 
+target_link_libraries(xrpc_test PRIVATE xrpc xvnetwork xelect_net xtxstore xxbase 
                       xdb
                       rocksdb zstd snappy bz2 z 
                       gtest)

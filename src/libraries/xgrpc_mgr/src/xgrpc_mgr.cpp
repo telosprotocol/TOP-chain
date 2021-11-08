@@ -82,7 +82,15 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
     top::chain_info::get_block_handle bh(nullptr, nullptr, nullptr);
     auto bp = block.get();
     xJson::Value j;
+#ifdef RPC_V2
     j["value"] = bh.get_block_json(bp);
+#else
+    if (rpc::rpc_version == rpc::xrpc_version_2) {
+        j["value"] = bh.get_block_json(bp, data::RPC_VERSION_V2);
+    } else {
+        j["value"] = bh.get_block_json(bp, data::RPC_VERSION_V1);
+    }
+#endif
     static std::atomic_int cnt{0};
     j["result"] = cnt++;
 
