@@ -39,7 +39,7 @@ xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block,
         return nullptr;
     }
     
-    xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
+    // xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
@@ -99,11 +99,43 @@ std::string     xfullunit_builder_t::make_binlog(const xblock_ptr_t & prev_block
 }
 
 
+void xfullunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    for (auto & tx : input_txs) {
+        data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
+    }
+}
+
 xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_block,
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
     XMETRICS_TIMER(metrics::cons_unitbuilder_fullunit_tick);
+
+    const std::string & account = prev_block->get_account();
+    std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+    xassert(lightunit_build_para != nullptr);
+
+    const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
+    txexecutor::xbatch_txs_result_t exec_result;
+    int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(prev_block.get(), prev_bstate, cs_para, input_txs, exec_result);
+    xinfo("xlightunit_builder_t::build_block %s,account=%s,height=%ld,exec_ret=%d,succtxs_count=%zu,failtxs_count=%zu,unconfirm_count=%d,binlog_size=%zu,binlog=%ld,state_size=%zu",
+        cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
+        exec_ret, exec_result.m_exec_succ_txs.size(), exec_result.m_exec_fail_txs.size(),
+        exec_result.m_unconfirm_tx_num, exec_result.m_property_binlog.size(), base::xhash64_t::digest(exec_result.m_property_binlog), exec_result.m_full_state.size());
+    // some send txs may execute fail but some recv/confirm txs may execute successfully
+    if (!exec_result.m_exec_fail_txs.empty()) {
+        lightunit_build_para->set_fail_txs(exec_result.m_exec_fail_txs);
+    }
+    if (exec_ret != xsuccess) {
+        build_para->set_error_code(xblockmaker_error_tx_execute);
+        return nullptr;
+    }
+
+    lightunit_build_para->set_tgas_balance_change(exec_result.m_tgas_balance_change);
+    lightunit_build_para->set_pack_txs(exec_result.m_exec_succ_txs);
+    lightunit_build_para->set_unchange_txs(exec_result.m_exec_unchange_txs);
+    xdbg("wish m_exec_unchange_txs size: %zu", exec_result.m_exec_unchange_txs.size());
+
     xfullunit_block_para_t para;
     para.m_property_snapshot = make_binlog(prev_block, prev_bstate, cs_para.get_clock());
     para.m_first_unit_height = prev_bstate->get_last_fullblock_height();
@@ -111,6 +143,16 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     xinfo("xfullunit_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
         para.m_property_snapshot.size(), base::xhash64_t::digest(para.m_property_snapshot));
+
+    // set lightunit para by tx result
+    para.set_input_txs(exec_result.m_exec_succ_txs);
+    para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
+    para.set_fullstate_bin(exec_result.m_full_state);
+    para.set_binlog(exec_result.m_property_binlog);
+
+    std::vector<xcons_transaction_ptr_t> succ_txs{para.get_input_txs()};
+    succ_txs.insert(succ_txs.end(), exec_result.m_exec_unchange_txs.begin(), exec_result.m_exec_unchange_txs.end());
+    alloc_tx_receiptid(succ_txs, lightunit_build_para->get_receiptid_state());
 
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fullunit(para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;

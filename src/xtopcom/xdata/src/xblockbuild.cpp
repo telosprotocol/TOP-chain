@@ -189,10 +189,32 @@ base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
 }
 
+std::string xfullunit_build_t::get_header_extra(const xfullunit_block_para_t & bodypara) const {
+    base::xvtxkey_vec_t txs;
+    for (auto & tx : bodypara.get_input_txs()) {
+        base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
+        txs.push_back(tx_key);
+    }
+    base::xstream_t stream(base::xcontext_t::instance());
+    auto size = txs.do_write(stream);
+    base::xvheader_extra he;
+    he.insert("txs", std::string((char*)stream.data(), stream.size()));
+
+    base::xstream_t stream1(base::xcontext_t::instance());
+    he.do_write(stream1);
+    std::string he_str = std::string((char*)stream1.data(), stream1.size());
+    return he_str;
+}
+
 xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
+
+    if (should_build_version_2(build_para.get_clock(), build_para.get_height())) {
+        build_para.set_extra_data(get_header_extra(bodypara));
+    }
+    
     init_header_qcert(build_para);
     build_block_body(bodypara);
 }
@@ -208,6 +230,14 @@ bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
     // #2 set output entitys and resources
     std::string full_state_bin = para.m_property_snapshot;
     set_output_full_state(full_state_bin);
+
+    xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
+    if (get_header()->get_block_version() == base::enum_xvblock_version_2) {
+        set_output_binlog(para.get_property_binlog());
+        uint32_t unconfirm_tx_num = para.get_account_unconfirm_sendtx_num();
+        std::string unconfirm_tx_num_str = base::xstring_utl::tostring(unconfirm_tx_num);
+        set_output_entity(base::xvoutentity_t::key_name_unconfirm_tx_count(), unconfirm_tx_num_str);
+    }
     return true;
 }
 

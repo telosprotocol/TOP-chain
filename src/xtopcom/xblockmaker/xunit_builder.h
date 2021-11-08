@@ -54,6 +54,7 @@ class xfullunit_builder_t : public xblock_builder_face_t {
                                             const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para) override;
+    void    alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state);
 
     std::string                 make_binlog(const xblock_ptr_t & prev_block,
                                             const xobject_ptr_t<base::xvbstate_t> & prev_bstate,

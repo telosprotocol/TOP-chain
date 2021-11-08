@@ -352,11 +352,24 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
     // secondly try to make full unit
     if (nullptr == proposal_unit && can_make_next_full_block()) {
         XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
+        base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
+        xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
         proposal_unit = m_fullunit_builder->build_block(cert_block,
                                                         get_latest_bstate()->get_bstate(),
                                                         cs_para,
-                                                        m_default_builder_para);
-        result.m_make_block_error_code = m_default_builder_para->get_error_code();
+                                                        build_para);
+        result.m_make_block_error_code = build_para->get_error_code();
+        std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+        result.add_pack_txs(lightunit_build_para->get_pack_txs());
+        result.m_fail_txs = lightunit_build_para->get_fail_txs();
+        result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
+        result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
+        for (auto & tx : lightunit_build_para->get_fail_txs()) {
+            xassert(tx->is_self_tx() || tx->is_send_tx());
+            xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
+            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+            get_txpool()->pop_tx(txinfo);
+        }
     }
 
     // thirdly try to make full unit
@@ -437,6 +450,10 @@ bool xunit_maker_t::must_make_next_full_block() const {
 
 bool xunit_maker_t::can_make_next_full_block() const {
     // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
+    if (m_pending_txs.empty()) {
+        return false;
+    }
+    
     if (is_account_locked()) {
         return false;
     }

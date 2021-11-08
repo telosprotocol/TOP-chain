@@ -477,8 +477,10 @@ namespace top
         }
         bool xvblockmaker_t::set_output_binlog(const std::string & value) {
             if (value.empty() || get_header()->get_block_class() != enum_xvblock_class_light) {
-                xassert(false);
-                return false;
+                if (get_header()->get_block_class() != enum_xvblock_class_full) {
+                    xassert(false);
+                    return false;
+                }
             }
 
             std::string binlog_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
