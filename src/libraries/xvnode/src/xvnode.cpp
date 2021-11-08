@@ -126,10 +126,7 @@ void xtop_vnode::start() {
     assert(m_logic_timer != nullptr);
     assert(m_vhost != nullptr);
 
-    if (m_sync_started)
-        return;
     sync_add_vnet();
-    m_sync_started = true;
 
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
@@ -255,8 +252,6 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    assert(!m_sync_started);
-
     m_sync_obj->add_vnet(vnetwork_driver());
 
     xinfo("vnode (%p) at address %s starts synchronizing", this, address().to_string().c_str());
