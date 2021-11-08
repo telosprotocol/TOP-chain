@@ -1,16 +1,12 @@
 #pragma once
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbase/xobject_ptr.h"
 #include "xbasic/xserializable_based_on.h"
-#include "xbasic/xutility.h"
 #include "xcommon/xaddress.h"
-#include "xdata/xblock.h"
 
-#include <cstdint>
-#include <set>
-#include <sstream>
 #include <vector>
-#include <iomanip>
 
 NS_BEG2(top, data)
 
