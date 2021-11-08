@@ -1,7 +1,8 @@
-#include "xdata/xfulltableblock_account_data.h"
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvledger/xvblock.h"
-#include "xbase/xobject_ptr.h"
+#include "xdata/xfulltableblock_account_data.h"
 
 NS_BEG2(top, data)
 
