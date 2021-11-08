@@ -126,7 +126,7 @@ namespace top
             }
             std::string prophash = txreceipt->get_tx_result_property(propname);
             if (prophash.empty()) {
-                xassert(false);
+                // xassert(false);
                 return nullptr;                
             }
             auto _property = bstate->load_property(propname);

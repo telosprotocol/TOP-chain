@@ -103,7 +103,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
     std::shared_ptr<store::xaccount_context_t> _account_context = nullptr;
     xaccount_ptr_t proposal_state = nullptr;
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = nullptr;
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block);
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block, cs_para.get_clock());
     do {
         // clone new bstate firstly
         proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());

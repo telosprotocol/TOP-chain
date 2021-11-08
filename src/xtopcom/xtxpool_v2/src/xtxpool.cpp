@@ -275,10 +275,17 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zon
     return {};
 }
 
-void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) {
+void xtxpool_t::refresh_table_v1(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) {
     auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {
-        table->refresh_table(refresh_unconfirm_txs);
+        table->refresh_table_v1(refresh_unconfirm_txs);
+    }
+}
+
+void xtxpool_t::refresh_table_v2(uint8_t zone, uint16_t subaddr) {
+    auto table = get_txpool_table(zone, subaddr);
+    if (table != nullptr) {
+        table->refresh_table_v2();
     }
 }
 
@@ -324,13 +331,13 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_co
     return {};
 }
 
-// const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-//     auto table = get_txpool_table(zone, subaddr);
-//     if (table != nullptr) {
-//         return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
-//     }
-//     return {};
-// }
+const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+    auto table = get_txpool_table(zone, subaddr);
+    if (table != nullptr) {
+        return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
+    }
+    return {};
+}
 
 bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
     auto table = get_txpool_table(zone, subaddr);

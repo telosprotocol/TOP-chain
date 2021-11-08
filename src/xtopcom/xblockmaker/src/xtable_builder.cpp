@@ -128,7 +128,7 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     std::shared_ptr<xlighttable_builder_para_t> lighttable_build_para = std::dynamic_pointer_cast<xlighttable_builder_para_t>(build_para);
     xassert(lighttable_build_para != nullptr);
 
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::map<std::string, std::string> property_hashs;  // need put in table self action for prove
@@ -154,11 +154,10 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     return proposal_table;
 }
 
-void xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
+void xfulltable_builder_t::make_binlog(const base::xauto_ptr<base::xvheader_t> & _temp_header,
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                 std::string & property_binlog,
-                                                std::map<std::string, std::string> & property_hashs) {
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+                                                std::map<std::string, std::string> & property_hashs) {    
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_snapshot;
@@ -182,9 +181,11 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     auto & blocks = fulltable_build_para->get_blocks_from_last_full();
     xstatistics_data_t block_statistics = make_block_statistics(blocks);
 
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
+
     std::map<std::string, std::string> property_hashs;
     std::string property_binlog;
-    make_binlog(prev_block, prev_bstate, property_binlog, property_hashs);
+    make_binlog(_temp_header, prev_bstate, property_binlog, property_hashs);
 
     int64_t tgas_balance_change_total = 0;
     for(auto & block : blocks) {

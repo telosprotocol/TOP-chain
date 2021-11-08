@@ -9,6 +9,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xventity.h"
 #include "xvtransact.h"
+#include "xvblock_fork.h"
 
 namespace top
 {
