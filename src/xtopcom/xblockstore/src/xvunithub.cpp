@@ -89,7 +89,6 @@ namespace top
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(account_address);\
 
         #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
-             xinfo("LOAD_BLOCKACCOUNT_PLUGIN entry.");\
             if(is_close())\
             {\
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
@@ -159,8 +158,6 @@ namespace top
             base::xauto_ptr<base::xvactplugin_t> auto_plugin_ptr(auto_account_ptr->get_plugin( base::enum_xvaccount_plugin_blockmgr));
             if(auto_plugin_ptr)
             {
-
-                  xkinfo("get_block_account::auto_plugin_ptr  =%s",account_address.c_str());
                 inout_account_obj.transfer_owner((xblockacct_t*)auto_plugin_ptr.get());
                 return true;
             }
@@ -171,8 +168,6 @@ namespace top
                 timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
             }
             
-              xkinfo("account_address %s plug idle time = %ld",account_address.c_str(),timeout_for_block_plugin);
-
             #ifdef __new_plugin_by_lambda__
             #else
             xblockacct_t * new_plugin =  new xchainacct_t(*auto_account_ptr,timeout_for_block_plugin,m_store_path,m_xvdb_ptr);//replace by new account address;;

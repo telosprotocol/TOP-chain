@@ -308,11 +308,14 @@ bool xbatch_packer::on_pdu_event_up(const base::xvevent_t & event, xcsobject_t *
 bool xbatch_packer::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
     // xunit_info("xbatch_packer::send_out pdu=%s,body_size:%d,this:%p",
     //      packet.dump().c_str(),
-    //      packet.get_msg_body().size(),
+    //      packet.get_msg_body().size(), 
     //      this);
-    XMETRICS_PACKET_INFO("consensus_tableblock",
+    xunit_info("xbatch_packer::send_out,  pdu_send_out=%s,  node_xip=%s",  
+                packet.dump().c_str(), xcons_utl::xip_to_hex(from_addr).c_str());
+    
+    /*XMETRICS_PACKET_INFO("consensus_tableblock",
                         "pdu_send_out", packet.dump(),
-                        "node_xip", xcons_utl::xip_to_hex(from_addr));
+                        "node_xip", xcons_utl::xip_to_hex(from_addr));*/
 
     auto network_proxy = m_para->get_resources()->get_network();
     xassert(network_proxy != nullptr);
@@ -349,13 +352,15 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
 }
 
 bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    XMETRICS_PACKET_INFO("consensus_tableblock",
+    /*XMETRICS_PACKET_INFO("consensus_tableblock",
                         "pdu_recv_in", packet.dump(),
                         // "from_xip", xcons_utl::xip_to_hex(from_addr),
                         // "to_xip", xcons_utl::xip_to_hex(to_addr),
                         "clock", m_last_view_clock,
                         "viewid", m_last_view_id,
-                        "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+                        "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
+    xunit_info("xbatch_packer::recv_in, consensus_tableblock  pdu_recv_in=%s, clock=%llu, viewid=%llu, node_xip=%s.",
+                packet.dump().c_str(), m_last_view_clock, m_last_view_id, xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
@@ -368,10 +373,10 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     if (!valid) {
         xunit_warn("xbatch_packer::recv_in fail-invalid msg,viewid=%ld,pdu=%s,at_node:%s,this:%p",
               m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
-        XMETRICS_PACKET_INFO("consensus_tableblock",
+        /*XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_proposal_invalid", packet.dump(),
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()),
-                            "local_view_id", m_last_view_id);
+                            "local_view_id", m_last_view_id);*/
         return false;
     }
 
@@ -449,30 +454,30 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_fail, 1);
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 0);
         }
-        // xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
-        //     is_leader,
-        //     _evt_obj->get_error_code(),
-        //     _evt_obj->get_target_proposal()->dump().c_str(),
-        //     xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-        XMETRICS_PACKET_INFO("consensus_tableblock",
+         xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
+             is_leader,
+             _evt_obj->get_error_code(),
+             _evt_obj->get_target_proposal()->dump().c_str(),
+             xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+       /* XMETRICS_PACKET_INFO("consensus_tableblock",
                             "proposal_finish_fail", _evt_obj->get_target_proposal()->dump(),
                             "is_leader", is_leader,
                             "error_code", _evt_obj->get_error_code(),
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
     } else {
 
         // reset to 0
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
 
-        // xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
-        //     is_leader,
-        //     _evt_obj->get_target_proposal()->dump().c_str(),
-        //     xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-        XMETRICS_PACKET_INFO("consensus_tableblock",
+        xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
+             is_leader,
+             _evt_obj->get_target_proposal()->dump().c_str(),
+             xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+       /* XMETRICS_PACKET_INFO("consensus_tableblock",
                             "proposal_finish_succ", _evt_obj->get_target_proposal()->dump(),
                             "is_leader", is_leader,
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
         
         if (is_leader) {
             auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();

@@ -6,12 +6,6 @@ NS_BEG3(top, metrics, handler)
 #define VAL_UNIT_TYPE_STR 1
 #define VAL_UNIT_TYPE_INT64 2
 
-
-using namespace top::base;
-using namespace top::metrics::handler; 
- 
-
-
 void metrics_packet_impl(metrics_pack_unit & unit) {
     json res, cont;
     res["category"] = get_category(unit.name);
