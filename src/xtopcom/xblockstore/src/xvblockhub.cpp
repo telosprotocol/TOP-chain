@@ -125,10 +125,13 @@ namespace top
         {
             if(NULL == m_layer2_cache_meta)
             {
+                 xinfo("m_layer2_cache_meta == NULL ");
+
                 base::xblockmeta_t* new_meta_obj = new base::xblockmeta_t(meta.clone_block_meta());
                 m_layer2_cache_meta = new_meta_obj;
                 return true;
             }
+             xinfo("m_layer2_cache_meta == %lp ",m_layer2_cache_meta);
             xassert(NULL == m_layer2_cache_meta);
             return false;
         }
@@ -205,13 +208,29 @@ namespace top
         
         bool   xblockacct_t::recover_meta(const base::xvactmeta_t & account_meta)//recover at plugin level if possible
         {
+            #ifdef XENABLE_TESTS
+                if (account_meta.get_meta_process_id() == base::xvchain_t::instance().get_current_process_id())
+                {
+                   base::xvchain_t::instance().set_current_process_id(base::xvchain_t::instance().get_current_process_id()+1);
+                }
+            #endif
+            
+
             if(  (0 == account_meta.get_meta_process_id())
                ||(account_meta.get_meta_process_id() == base::xvchain_t::instance().get_current_process_id())
                )
             {
+             xwarn("xblockacct_t::recover_meta,addr(%s) recover   block process  id %d  sys id %d ",
+                get_address().c_str(),
+             account_meta.get_meta_process_id(),
+            base::xvchain_t::instance().get_current_process_id() );
+              
                 return false; //nothing need recover since there not reboot yet
             }
             
+             xwarn("xblockacct_t::recover_meta,addr(%s) recover go on",
+                get_address().c_str() );
+
             bool recovered_something = false;
             
             const int64_t min_recover_height = m_meta->_highest_cert_block_height + 1;
@@ -225,6 +244,8 @@ namespace top
                 }
                 else//stop recover if not load any block
                 {
+                 xwarn("xblockacct_t::recover_meta22,recover block at height=% " PRId64 " of account(%s)",i,get_address().c_str());
+               
                     break;
                 }
             }
@@ -1748,11 +1769,11 @@ namespace top
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_mini_block);
-                    xdbg("xblockacct_t::write_block_object_to_db,store object to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), blockobj_bin.size());
+                    xdbg("xblockacct_t::write_block_object_to_db,store object path(%s) to DB for block(%s),bin_size=%zu",blockobj_key.c_str(),index_ptr->dump().c_str(), blockobj_bin.size());
                 }
                 else
                 {
-                    xerror("xblockacct_t::write_block_object_to_db,fail to store header for block(%s)",index_ptr->dump().c_str());
+                    xerror("xblockacct_t::write_block_object_to_db,fail path(%s) to store header for block(%s)",blockobj_key.c_str(),index_ptr->dump().c_str());
                     return false;
                 }
             }

@@ -48,6 +48,8 @@ namespace top
             inline const uint64_t   get_idle_duration()    const {return m_idle_timeout_ms;}
             inline const uint64_t   get_last_access_time() const {return m_last_access_time_ms;} //UTC ms
             void                    set_last_access_time(const uint64_t last_access_time);
+            //rank_ 
+            void                    set_idle_duration(uint64_t idle_ms)    { m_idle_timeout_ms = idle_ms;}
             
             //test whether has been idle status
             inline bool             is_closing() const {return (m_is_closing != 0);}

@@ -15,10 +15,15 @@ using grpc::ServerWriter;
 namespace top { namespace rpc {
 
 extern std::atomic_int rpc_client_num;
+extern std::atomic_int rpc_version;
 extern std::deque<xJson::Value> tableblock_data;
 extern std::mutex tableblock_mtx;
 extern std::condition_variable tableblock_cv;
 
+enum enum_xrpc_version {
+    xrpc_version_1 = 0,
+    xrpc_version_2 = 2
+};
 
 class xrpc_handle_face_t
 {

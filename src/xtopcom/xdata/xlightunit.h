@@ -79,10 +79,13 @@ class xlightunit_block_t : public xblock_t {
  private:
     xlightunit_block_t(const xlightunit_block_t &);
     xlightunit_block_t & operator = (const xlightunit_block_t &);
+    void parse_to_json_v1(xJson::Value & root);
+    void parse_to_json_v2(xJson::Value & root);
  public:
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
+    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
 
  public:  // lightunit special apis
     virtual     std::string     dump_body() const;

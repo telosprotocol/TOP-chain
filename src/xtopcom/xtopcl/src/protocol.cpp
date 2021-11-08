@@ -261,8 +261,11 @@ int protocol::encode_transaction_params(xJson::Value & root, top::data::xtransac
         return -1;
 
     xJson::Value & result_json = root["params"];
+#ifdef RPC_V2
     tx_ptr->parse_to_json(result_json);
-
+#else
+    tx_ptr->parse_to_json(result_json, top::data::RPC_VERSION_V1);
+#endif
     return 0;
 }
 

@@ -99,13 +99,22 @@ namespace top
             enum_units_group_count          = 256,   //same with max subaddr
             enum_max_expire_check_count     = 4096,  //not clean too much at each loop
             
+    
             enum_account_idle_check_interval= 50000,  //check every 50 seconds
-            enum_account_idle_timeout_ms    = 300000, //account change to idle status if not access within 300 seconds
-
+#ifdef XENABLE_TESTS
+            enum_account_idle_timeout_ms= 10000,  //mock test  idle time 10 seconds
+#else 
+            enum_account_idle_timeout_ms= 300000,  //account change to idle status if not access within 300 seconds
+#endif         
             enum_plugin_idle_check_interval = 10000,  //check every 10 seconds
-            enum_plugin_idle_timeout_ms     = 60000,  //idle duration for plugin
-            
-            enum_account_save_meta_interval = 64, //force save meta every 64 modification
+
+#ifdef XENABLE_TESTS
+            enum_plugin_idle_timeout_ms= 10000,  //mock test  idle time 10 seconds
+#else 
+            enum_plugin_idle_timeout_ms= 60000,  //idle duration for plugin
+#endif   
+     
+            enum_account_save_meta_interval = 64, //force save meta every 64 modification   
         };
     
         class xvaccountobj_t : public xiobject_t,public xvaccount_t
@@ -147,7 +156,8 @@ namespace top
             
             bool                    set_latest_deleted_block_height(const uint64_t height);
             const uint64_t          get_latest_deleted_block_height();
-            
+            //rank_
+            void                    set_idle_duration(uint64_t idle_ms)  { m_idle_timeout_ms = idle_ms; }
             bool                    save_meta(bool carry_process_id = true);
             bool                    update_meta(xvactplugin_t * plugin);
         protected:
@@ -189,6 +199,7 @@ namespace top
             uint8_t             m_is_idle; //atomic indicate whether is beeing idle status, 1 = true, 0 = false
             uint8_t             m_is_closing;//status before close but after idle.[normal<=>idle->closing->closed]
             uint8_t             m_is_keep_forever;  //table/book object never be release/close for performance
+            bool                m_is_save;      //check save on/off, mock use flag;
         };
     
         //note: zone_index = bucket_index:range of [0,15], book_index: range of [0,127], table_index: range of [0,7]
@@ -369,6 +380,8 @@ namespace top
             inline const int            get_chain_id()     const {return (int)m_chain_id;}
             inline const int            get_network_id()   const {return (int)m_chain_id;}
             inline const uint32_t       get_current_process_id() const {return m_current_process_id;}
+
+           
  
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
@@ -387,7 +400,9 @@ namespace top
             bool                        set_xstatestore(xvstatestore_t* new_sotre);
             bool                        set_xcontractstore(xvcontractstore_t * new_store);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
-            
+            //rank_
+            void                         set_current_process_id(uint32_t process_id) { m_current_process_id = process_id; }
+
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
             

@@ -1,10 +1,14 @@
 #add_compile_options(-static -Wall -Werror)
 add_compile_options(-static)
 
+ADD_DEFINITIONS(-DDMOCK_SAVE=1)
 
 aux_source_directory(./ xblockstore_test_dir)
 aux_source_directory(tests/mock/xtestdb.cpp xblockstore_test_dir)
 add_executable(xblockstore2_test ${xblockstore_test_dir})
+
+add_definitions(-DXENABLE_TESTS)
+
 
 add_dependencies(xblockstore2_test xblockstore)
 include_directories(src/xtopcom/xblockstore/)

@@ -424,6 +424,8 @@ namespace top
             #else
             m_account_address = _account.get_xvid_str();
             #endif
+
+            xinfo("xvactmeta_t::xvactmeta_t _meta_process_id %d", _meta_process_id);
         }
         
         xvactmeta_t::xvactmeta_t(xvactmeta_t && obj)
@@ -431,7 +433,7 @@ namespace top
         {
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _meta_spec_version = 2;     //version #2 now
-            
+             xinfo("xvactmeta_t::xvactmeta_t _meta_process_id %d", _meta_process_id);
             *this = obj;
         }
     
@@ -440,7 +442,7 @@ namespace top
         {
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _meta_spec_version = 2;     //version #2 now
-            
+              xinfo("xvactmeta_t::xvactmeta_t _meta_process_id %d", _meta_process_id);
             *this = obj;
         }
     
@@ -463,7 +465,7 @@ namespace top
             xstatemeta_t::operator=(obj);
             xsyncmeta_t::operator=(obj);
             xindxmeta_t::operator=(obj);
-            
+              xinfo("xvactmeta_t::xvactmeta_t _meta_process_id %d", _meta_process_id);
             return *this;
         }
     
@@ -471,6 +473,8 @@ namespace top
         {
             if(_meta_process_id != _process_id)
                 _meta_process_id = _process_id;
+
+                  xinfo("xvactmeta_t::xvactmeta_t _meta_process_id %d", _meta_process_id);
         }
     
         //APIs only open for  xvaccountobj_t object
@@ -702,7 +706,7 @@ namespace top
                 stream.read_compact_var(_lowest_execute_block_height);
                 stream.read_compact_var(_lowest_vkey2_block_height);
             }
- 
+          xinfo("xvactmeta_t::xvactmeta_t _meta_process_id %d", _meta_process_id);
             return (begin_size - stream.size());
         }
         

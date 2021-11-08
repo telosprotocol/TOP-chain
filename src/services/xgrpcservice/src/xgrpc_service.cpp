@@ -6,6 +6,7 @@
 
 #include "xbase/xbase.h"
 #include "xbasic/xutility.h"
+#include "xdata/xtransaction.h"
 
 #include <grpcpp/grpcpp.h>
 
@@ -29,6 +30,7 @@ namespace top {
 namespace rpc {
 
 std::atomic_int rpc_client_num{0};
+std::atomic_int rpc_version{xrpc_version_1};
 std::deque<xJson::Value> tableblock_data;
 std::mutex tableblock_mtx;
 std::condition_variable tableblock_cv;
@@ -54,8 +56,14 @@ Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_reques
         xdbg("grpc stream: %s json parse error", req.c_str());
         return Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid request argument: json parse error.");
     }
+    std::string version = js_req["version"].asString();
+    if (version == data::RPC_VERSION_V2) {
+        rpc_version = xrpc_version_2;
+    } else {
+        rpc_version = xrpc_version_1;
+    }
     rpc_client_num++;
-    xdbg("grpc stream: consuming tableblock_data");
+    xdbg("grpc stream: consuming tableblock_data, rpc version: %d", rpc_version.load());
     while (true) {
         std::unique_lock<std::mutex> lck(tableblock_mtx);
         while (tableblock_data.empty()) {
