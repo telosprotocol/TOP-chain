@@ -9,10 +9,27 @@
 #include "xmetrics/xmetrics_config.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/fifo_map.hpp"
+#include "xbase/xlog.h"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+
+using namespace top::base;
+
+extern top::base::xlogger_t *g_metrics_log_instance;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+ void metrics_log_init(const char * log_path);
+ void metrics_log_close();
+
+#ifdef __cplusplus
+}
+#endif
 
 NS_BEG3(top, metrics, handler)
 
@@ -41,14 +58,19 @@ public:
     }
 
     virtual void dump(std::string const & str, bool is_updated) {
-        bool dump_all{false};
-        XMETRICS_CONFIG_GET("dump_full_unit", dump_all);
-        if (is_updated || dump_all) {
-            xkinfo("[metrics]%s", str.c_str());
-#ifdef METRICS_UNIT_TEST
-            std::cout << str << std::endl;
-#endif
+    bool dump_all{false};
+    XMETRICS_CONFIG_GET("dump_full_unit", dump_all);
+    if (is_updated || dump_all) {
+        if(g_metrics_log_instance){
+              g_metrics_log_instance->kinfo("[metrics]%s", str.c_str());
         }
+        else{
+            xkinfo("[metrics]%s", str.c_str());
+        }   
+        #ifdef METRICS_UNIT_TEST
+             std::cout << str << std::endl;
+         #endif
+    }
     }
 
     virtual metrics_variant_ptr init_new_metrics(event_message const & msg) = 0;

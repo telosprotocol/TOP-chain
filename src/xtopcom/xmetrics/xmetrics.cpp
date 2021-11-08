@@ -637,6 +637,9 @@ void e_metrics::run_process() {
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
         update_dump();
     }
+    
+    metrics_log_close();
+  
 }
 
 void e_metrics::process_message_queue() {

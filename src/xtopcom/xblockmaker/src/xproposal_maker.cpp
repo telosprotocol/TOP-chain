@@ -328,9 +328,11 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
 
     base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(base::xvaccount_t(sys_drand_addr), drand_height, 0, true, metrics::blockstore_access_from_blk_mk_proposer_verify_proposal_drand);
     if (_drand_vblock == nullptr) {
-        XMETRICS_PACKET_INFO("consensus_tableblock",
+         xunit_info("xproposal_maker_t::verify_proposal_drand_block, consensus_tableblock  fail_find_drand=%s, drand_height=%llu.",
+                proposal_block->dump().c_str(), drand_height);
+       /* XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_find_drand", proposal_block->dump(),
-                            "drand_height", drand_height);
+                            "drand_height", drand_height);*/
         return false;
     }
 

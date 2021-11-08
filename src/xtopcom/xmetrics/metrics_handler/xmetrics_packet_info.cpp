@@ -21,7 +21,14 @@ void metrics_packet_impl(metrics_pack_unit & unit) {
     res["content"] = cont;
     std::stringstream ss;
     ss << res;
-    xkinfo("[metrics]%s", ss.str().c_str());
+   if (g_metrics_log_instance) {
+         g_metrics_log_instance->kinfo("[metrics]%s", ss.str().c_str());
+    }
+    else{
+        xkinfo("[metrics]%s", ss.str().c_str());
+    }
+    
+  
 }
 
 NS_END3
