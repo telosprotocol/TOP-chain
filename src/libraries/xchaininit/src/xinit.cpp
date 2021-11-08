@@ -129,7 +129,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
 
     //wait log path created,and init metrics
-    XMETRICS_INIT(log_path);
+    XMETRICS_INIT2(log_path);
 
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
@@ -346,7 +346,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 #endif
 
 
-    XMETRICS_INIT(log_path);
+    XMETRICS_INIT2(log_path);
 
 
     std::cout << "xnode config initializing..."  << std::endl;

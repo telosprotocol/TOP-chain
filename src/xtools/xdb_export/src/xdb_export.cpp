@@ -32,7 +32,7 @@ using namespace top::election;
 NS_BEG2(top, db_export)
 
 xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
-    XMETRICS_INIT2();
+    XMETRICS_INIT();
     top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
     top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
     top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
