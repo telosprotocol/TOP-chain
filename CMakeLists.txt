@@ -338,6 +338,10 @@ if (CONSENSUS_SWAP)
     add_definitions(-DCONSENSUS_SWAP)
 endif()
 
+if (XENABLE_P2P_BENDWIDTH)
+    add_definitions(-DXENABLE_P2P_BENDWIDTH)
+endif()
+
 if (NO_TX_BATCH)
     add_definitions(-DNO_TX_BATCH)
 endif()

@@ -408,8 +408,21 @@ void EcNetcard::HandleRumorMessage(
     message.set_msg_hash(msg_hash);
 
     if (IS_BROADCAST(message)) {
+#ifdef XENABLE_P2P_BENDWIDTH
         XMETRICS_PACKET_INFO(
             "p2pbroadcast_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
+#else
+        xinfo("p2pbroadcast_vhostrecv_info src:%s dst:%s hop_num:%d msg_hash:%" PRIu32 " msg_size:%zu is_root:%d is_broadcast:%d packet_size:%d timestamp:%" PRIu64,
+              message.src_node_id().c_str(),
+              message.des_node_id().c_str(),
+              message.hop_num(),
+              message.msg_hash(),
+              message.gossip().block().size(),
+              message.is_root(),
+              message.broadcast(),
+              packet.get_size(),
+              GetCurrentTimeMsec());
+#endif
     }
     if (!vhost_msg.ParseFromString(data)) {
         // new version / not used vhost_msg.

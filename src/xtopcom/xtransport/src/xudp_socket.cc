@@ -177,33 +177,6 @@ int xp2pudp_t::send(xpacket_t& packet)
         TOP_ERROR("Message ParseFromString from string failed!");
         return enum_xcode_successful;
     }
-    auto type = message.type();
-    switch (type) {
-        case kKadHeartbeatRequest:
-        case kKadHeartbeatResponse:
-            XMETRICS_FLOW_COUNT("p2p_transport_heartbeat_packet_send", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_heartbeat_bandwidth_send", packet.get_size());
-            break;
-        case kGossipBlockSyncAsk:
-        case kGossipBlockSyncAck:
-        case kGossipBlockSyncRequest:
-        case kGossipBlockSyncResponse:
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipsync_packet_send", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipsync_bandwidth_send", packet.get_size());
-            break;
-        case kElectVhostRumorP2PMessage:
-            XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_packet_send", 1);
-            XMETRICS_FLOW_COUNT("transport_p2pchain_bandwidth_send", packet.get_size());
-            break;
-        case kElectVhostRumorGossipMessage:
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_packet_send", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_bandwidth_send", packet.get_size());
-            break;
-        default:
-            XMETRICS_FLOW_COUNT("p2p_transport_platsys_packet_send", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_platsys_bandwidth_send", packet.get_size());
-            break;
-    }
 
     if (message.has_broadcast() && message.broadcast()) {
         XMETRICS_FLOW_COUNT("p2p_transport_broadcast_packet_send", 1);
@@ -259,33 +232,6 @@ int32_t xp2pudp_t::recv(
     {
         TOP_ERROR("Message ParseFromString from string failed!");
         return enum_xcode_successful;
-    }
-    auto type = message.type();
-    switch (type) {
-        case kKadHeartbeatRequest:
-        case kKadHeartbeatResponse:
-            XMETRICS_FLOW_COUNT("p2p_transport_heartbeat_packet_recv", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_heartbeat_bandwidth_recv", packet.get_size());
-            break;
-        case kGossipBlockSyncAsk:
-        case kGossipBlockSyncAck:
-        case kGossipBlockSyncRequest:
-        case kGossipBlockSyncResponse:
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipsync_packet_recv", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipsync_bandwidth_recv", packet.get_size());
-            break;
-        case kElectVhostRumorP2PMessage:
-            XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_packet_recv", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_bandwidth_recv", packet.get_size());
-            break;
-        case kElectVhostRumorGossipMessage:
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_packet_recv", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_bandwidth_recv", packet.get_size());
-            break;
-        default:
-            XMETRICS_FLOW_COUNT("p2p_transport_platsys_packet_recv", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_platsys_bandwidth_recv", packet.get_size());
-            break;
     }
 
     if (message.has_broadcast() && message.broadcast()) {
