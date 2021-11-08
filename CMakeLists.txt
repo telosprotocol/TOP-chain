@@ -262,6 +262,10 @@ if (XDISABLE_RATELIMIT)
     add_definitions(-DXDISABLE_RATELIMIT)
 endif()
 
+if (RPC_V2)
+    add_definitions(-DRPC_V2)
+endif()
+
 if (XENABLE_EXCEPTION_AS_ERROR)
     add_definitions(-DXTHROW_ERROR)
 endif()

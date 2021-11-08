@@ -89,6 +89,7 @@ namespace top
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(account_address);\
 
         #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
+             xinfo("LOAD_BLOCKACCOUNT_PLUGIN entry.");\
             if(is_close())\
             {\
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
@@ -158,6 +159,8 @@ namespace top
             base::xauto_ptr<base::xvactplugin_t> auto_plugin_ptr(auto_account_ptr->get_plugin( base::enum_xvaccount_plugin_blockmgr));
             if(auto_plugin_ptr)
             {
+
+                  xkinfo("get_block_account::auto_plugin_ptr  =%s",account_address.c_str());
                 inout_account_obj.transfer_owner((xblockacct_t*)auto_plugin_ptr.get());
                 return true;
             }
@@ -168,6 +171,8 @@ namespace top
                 timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
             }
             
+              xkinfo("account_address %s plug idle time = %ld",account_address.c_str(),timeout_for_block_plugin);
+
             #ifdef __new_plugin_by_lambda__
             #else
             xblockacct_t * new_plugin =  new xchainacct_t(*auto_account_ptr,timeout_for_block_plugin,m_store_path,m_xvdb_ptr);//replace by new account address;;
@@ -792,12 +797,12 @@ namespace top
                     return nullptr;
                 }
                 txstore->set_raw_tx(raw_tx.get());
-                txstore->set_send_unit_info(send_txindex);
+                txstore->set_send_block_info(send_txindex);
                 if(send_txindex->is_self_tx())
                 {
                     xdbg("xvblockstore_impl::query_tx self tx");  //self tx no need query more
-                    txstore->set_recv_unit_info(send_txindex);
-                    txstore->set_confirm_unit_info(send_txindex);
+                    txstore->set_recv_block_info(send_txindex);
+                    txstore->set_confirm_block_info(send_txindex);
                     return txstore;
                 }
             }
@@ -809,7 +814,7 @@ namespace top
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
-                txstore->set_recv_unit_info(txindex);
+                txstore->set_recv_block_info(txindex);
             }
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
             {
@@ -819,7 +824,7 @@ namespace top
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
-                txstore->set_confirm_unit_info(txindex);
+                txstore->set_confirm_block_info(txindex);
             }
 
             return txstore;

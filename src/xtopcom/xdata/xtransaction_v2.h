@@ -71,7 +71,6 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) override;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) override;
     // tx construction by input parameters, except transfer!
-    uint64_t get_gmttime_s();
     virtual void        construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) override ;
 
  public:  // get apis
