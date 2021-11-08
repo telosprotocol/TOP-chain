@@ -53,7 +53,7 @@ private:
     int32_t check(const std::string &account_address, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     bool store_blocks(const std::vector<data::xblock_ptr_t> &blocks); 
-
+    bool check_address(const std::string& str1, const std::string& str2);
 private:
     std::string m_vnode_id;
     observer_ptr<mbus::xmessage_bus_face_t> m_mbus;

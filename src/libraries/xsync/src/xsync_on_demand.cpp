@@ -277,18 +277,27 @@ int xsync_on_demand_t::check(const std::string &account_address) {
 
     return 0;
 }
-
+bool xsync_on_demand_t::check_address(const std::string& str1, const std::string& str2) {
+    std::string::size_type found1 = str1.find_last_of("/");
+    std::string::size_type found2 = str2.find_last_of("/");
+    if (found1 == str1.npos || found2 == str2.npos)
+        return str1 == str2;
+    return str1.substr(0, found1) == str2.substr(0, found2);
+}
 int xsync_on_demand_t::check(const std::string &account_address,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account_address, tracer)) {
+        xdbg("tracer check error.");
         return -1;
     }
     std::map<std::string, std::string> context = tracer.context();
-    if (context["src"] != network_self.to_string()) {
+    if (check_address(context["src"], network_self.to_string()) == false) {
+        xdbg("src check:%s,%s", context["src"].c_str(), network_self.to_string().c_str());
         return -1;
     }
-    if (context["dst"] != to_address.to_string()) {
+    if (check_address(context["dst"], to_address.to_string()) == false) {
+        xdbg("dst check:%s,%s", context["dst"].c_str(), to_address.to_string().c_str());
         return -1;
     }
     return 0;
@@ -326,8 +335,8 @@ void xsync_on_demand_t::on_behind_by_hash_event(const mbus::xevent_ptr_t &e) {
 
     const vnetwork::xvnode_address_t &target_addr = archive_list[0];
 
-    xsync_info("xsync_on_demand_t::on_behind_by_hash_event send sync request(on_demand) %s,hash(%s)",
-        address.c_str(), data::to_hex_str(hash).c_str());
+    xsync_info("xsync_on_demand_t::on_behind_by_hash_event send sync request(on_demand) %s,hash(%s), from %s to %s",
+        address.c_str(), data::to_hex_str(hash).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 
     std::map<std::string, std::string> context;
     context["src"] = self_addr.to_string();
@@ -351,11 +360,6 @@ void xsync_on_demand_t::handle_blocks_by_hash_response(const std::vector<data::x
     }
 
     std::string account = blocks[0]->get_account();
-    int ret = check(account, to_address, network_self);
-    if (ret != 0) {
-        xsync_warn("xsync_on_demand_t::handle_blocks_by_hash_response check the source of message failed %s,ret=%d", account.c_str(), ret);
-        return;
-    }
 
     if (store_blocks(blocks)) {
         on_response_event(account);
@@ -374,11 +378,10 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
         return;
 
     std::vector<data::xblock_ptr_t> blocks;
-    auto xvblocks = m_sync_store -> load_block_objects(hash, enum_transaction_subtype_recv);
-
-    for (uint32_t i = 0; i < xvblocks.size(); i++){
-        blocks.push_back(xblock_t::raw_vblock_to_object_ptr(xvblocks[i].get()));
-    }
+    base::xvchain_t::instance().get_xtxstore()->load_block_by_hash(hash, blocks);
+    xdbg("load_block_objects, all:%d", blocks.size());
+    if (blocks.empty())
+        return;
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);
 }
 
@@ -387,30 +390,31 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
         return true;
     }
 
-    std::string account = blocks[0]->get_account();
-    int ret = check(account);
-    if (ret != 0) {
-        xsync_warn("xsync_on_demand_t::handle_blocks_by_hash_response check failed %s,ret=%d", account.c_str(), ret);
-        return false;
-    }
 
     xblock_ptr_t block = blocks[blocks.size() -1];
 
     if (!check_auth(m_certauth, block)) {
             xsync_info("xsync_on_demand_t::store_blocks auth_failed %s,height=%lu,viewid=%lu,",
-                account.c_str(), block->get_height(), block->get_viewid());
+                block->get_account().c_str(), block->get_height(), block->get_viewid());
             return false;
     }
 
     for (uint32_t i = 0; i< blocks.size(); i++) {
         block = blocks[i];
 
-        if (block->get_account() != account) {
+        std::string account = block->get_account();
+        int ret = check(account);
+        if (ret != 0) {
+            xsync_warn("xsync_on_demand_t::handle_blocks_by_hash_response check failed %s,ret=%d", account.c_str(), ret);
+            return false;
+        }
+
+/*        if (block->get_account() != account) {
             xsync_warn("xsync_on_demand_t::store_blocks receive on_demand_blocks(address error) (%s, %s)",
                 block->get_account().c_str(), account.c_str());
             return false;
         }
-
+*/
         //No.1 safe rule: clean all flags first when sync/replicated one block
         block->reset_block_flags();
         //XTODO,here need check hash to connect the prev authorized block,then set enum_xvblock_flag_authenticated

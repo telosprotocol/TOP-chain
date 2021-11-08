@@ -7,6 +7,7 @@
 #include <string>
 #include "xvblock.h"
 #include "xvtxindex.h"
+#include "xdata/xblock.h"
 
 namespace top {
 namespace data {
@@ -47,7 +48,7 @@ namespace top
 
         public:
             virtual void update_node_type(uint32_t combined_node_type);
-
+            virtual int load_block_by_hash(const std::string& hash, std::vector<data::xblock_ptr_t>& blocks);
         public: //write interface
             virtual bool                store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin);
             virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin);
