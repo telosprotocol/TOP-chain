@@ -45,6 +45,7 @@ class xdatamock_table : public base::xvaccount_t {
     void                                disable_fulltable() {m_config_fulltable_interval = 0;}
     const base::xvaccount_t &           get_vaccount() const {return *this;}
     const xtablestate_ptr_t &           get_table_state() const {return m_table_state;}
+    const xtablestate_ptr_t &           get_commit_table_state() const {return m_table_states.front();}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
     const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}    
     static uint32_t                     get_full_table_interval_count() {return enum_default_full_table_interval_count;}
@@ -223,6 +224,10 @@ class xdatamock_table : public base::xvaccount_t {
             }            
         }
         m_table_state = std::make_shared<xtable_bstate_t>(current_state.get());
+        m_table_states.push_back(m_table_state);
+        if (m_table_states.size() > 3) {
+            m_table_states.pop_front();
+        }
         return true;
     }
 
@@ -287,6 +292,7 @@ class xdatamock_table : public base::xvaccount_t {
 
  private:
     xtablestate_ptr_t               m_table_state{nullptr};
+    std::deque<xtablestate_ptr_t>   m_table_states;  // save cert/lock/commit table states
     std::vector<xblock_ptr_t>       m_history_tables;
     uint32_t                        m_last_generate_send_tx_user_index{0};
     std::vector<xdatamock_unit>     m_mock_units;

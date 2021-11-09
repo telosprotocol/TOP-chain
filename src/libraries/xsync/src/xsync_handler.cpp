@@ -426,6 +426,10 @@ void xsync_handler_t::get_on_demand_blocks(uint32_t msg_size, const vnetwork::xv
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
+    if (m_sync_store->remove_empty_unit_forked()) {
+        xwarn("xsync_handler_t::get_on_demand_blocks forked but recv old on demand request, drop it!");
+        return;
+    }
     XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks, 1);
     XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks_bytes, msg_size);
 
@@ -446,6 +450,11 @@ void xsync_handler_t::get_on_demand_blocks_with_proof(uint32_t msg_size, const v
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
+    if (!m_sync_store->remove_empty_unit_forked()) {
+        xwarn("xsync_handler_t::get_on_demand_blocks_with_proof not forked but recv new on demand request, drop it!");
+        return;
+    }
+
     XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks, 1);
     XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks_bytes, msg_size);
 
@@ -465,6 +474,11 @@ void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
+
+    if (m_sync_store->remove_empty_unit_forked()) {
+        xwarn("xsync_handler_t::on_demand_blocks forked but recv old on demand response, drop it!");
+        return;
+    }
 
     XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks, 1);
     XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks_bytes, msg_size);
@@ -489,6 +503,11 @@ void xsync_handler_t::on_demand_blocks_with_proof(uint32_t msg_size, const vnetw
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
+
+    if (!m_sync_store->remove_empty_unit_forked()) {
+        xwarn("xsync_handler_t::on_demand_blocks_with_proof not forked but recv new on demand response, drop it!");
+        return;
+    }
 
     XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks, 1);
     XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks_bytes, msg_size);

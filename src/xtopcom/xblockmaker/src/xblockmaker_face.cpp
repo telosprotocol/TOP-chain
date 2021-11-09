@@ -18,7 +18,7 @@ xblock_maker_t::~xblock_maker_t() {
     XMETRICS_GAUGE(metrics::dataobject_xblock_maker_t, -1);
 }
 // create the state matching latest block and cache it
-bool xblock_maker_t::update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_block_height) {
+bool xblock_maker_t::update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
     xblock_ptr_t latest_block = latest_blocks.rbegin()->second;
 
     if (m_latest_bstate != nullptr
@@ -36,7 +36,6 @@ bool xblock_maker_t::update_account_state(const std::map<uint64_t, xblock_ptr_t>
 
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blocks,metrics::statestore_access_from_blkmaker_update_account_state);
     if (bstate == nullptr) {
-        lacked_block_height = latest_block->get_height() - 1;
         xwarn("xblock_maker_t::update_account_state fail-get target state. account=%s,height=%ld,viewid=%ld",
             get_account().c_str(), latest_block->get_height(), latest_block->get_viewid());
         return false;
@@ -81,11 +80,42 @@ void xblock_maker_t::reset_latest_cert_block(const xblock_ptr_t & block) {
     set_latest_block(block);
 }
 
-bool xblock_maker_t::load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_block_height) {
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_load_and_cache_enough_blocks");
+    xblock_ptr_t current_block = latest_block;
+    reset_latest_cert_block(latest_block);
+    uint32_t count = 1;
+    while (current_block->get_height() > 0) {
+        if (count >= m_keep_latest_blocks_max) {
+            break;
+        }
+        xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
+        if (prev_block == nullptr) {
+            // only mini-block is enough
+            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_ld_and_cache);
+            if (_block == nullptr) {
+                xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                return false;
+            }
+            prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+            set_latest_block(prev_block);
+        }
+        current_block = prev_block;
+        count++;
+    }
+    clear_old_blocks();
+    xdbg("xblock_maker_t::load_and_cache_enough_blocks succ.account=%s,blocks_size=%d,highest=%ld",
+        get_account().c_str(), m_latest_blocks.size(), get_highest_height_block()->get_height());
+    return true;
+}
+
+bool xblock_maker_t::load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_height_from, uint64_t & lacked_height_to) {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_load_and_cache_enough_blocks");
     xblock_ptr_t current_block = latest_blocks.rbegin()->second;
     reset_latest_cert_block(current_block);
     uint32_t count = 1;
+
+    lacked_height_from = (current_block->get_height() + 1 > m_keep_latest_blocks_max) ? (current_block->get_height() + 1 - m_keep_latest_blocks_max) : 0;
     while (current_block->get_height() > 0) {
         if (count >= m_keep_latest_blocks_max) {
             break;
@@ -101,7 +131,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const std::map<uint64_t, xbloc
                 auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_ld_and_cache);
                 if (_block == nullptr) {
                     xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
-                    lacked_block_height = current_block->get_height() - 1;
+                    lacked_height_to = current_block->get_height() - 1;
                     return false;
                 }
                 prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
@@ -148,14 +178,14 @@ bool xblock_maker_t::check_latest_blocks(const xblock_ptr_t & latest_block) cons
         return false;
     }
 
-    xblock_ptr_t highest_block = get_highest_height_block();
-    if (m_latest_blocks.size() == 1) {
-        if (highest_block->get_height() == 0) {
-            return true;
-        }
-        xassert(0);
-        return false;
-    }
+    // xblock_ptr_t highest_block = get_highest_height_block();
+    // if (m_latest_blocks.size() == 1) {
+    //     if (highest_block->get_height() == 0) {
+    //         return true;
+    //     }
+    //     xassert(0);
+    //     return false;
+    // }
 
     if (m_latest_blocks.size() > m_keep_latest_blocks_max) {
         xassert(0);

@@ -1017,24 +1017,12 @@ namespace top
                             }
                             // store corresponding table proof for latest commit unit block
                             base::xunit_proof_t unit_proof(unit_block->get_height(), unit_block->get_viewid(), cert_blocks.get_vector().at(0)->get_cert());
-                            // xassert(unit_proof.verify_unit_block(unit_block));
                             std::string unit_proof_str;
                             unit_proof.serialize_to(unit_proof_str);
                             if (!set_unit_proof(unit_account, unit_proof_str, unit_block->get_height())) {
                                 xerror("xvblockstore_impl::store_units_to_db account %s,fail to writed into db,block=%s",unit_account.get_address().c_str(), unit_block->dump().c_str());
                                 return false;
                             }
-
-                            // todo(nathan):for test only, should delete!!!!!
-                            // auto unit_proof_str = get_unit_proof(unit_account);
-                            // xassert(!unit_proof_str.empty());
-                            // base::xstream_t stream2(base::xcontext_t::instance(), (uint8_t *)unit_proof_str.c_str(), unit_proof_str.size());
-                            // base::xunit_proof_t unit_proof_tmp;
-                            // unit_proof_tmp.serialize_from(stream2);
-                            // xassert(unit_block->get_height() == unit_proof_tmp.get_height());
-                            // xassert(unit_block->get_viewid() == unit_proof_tmp.get_viewid());
-                            // xassert(unit_proof_tmp.verify_unit_block(unit_block));
-                            // xdbg("xvblockstore_impl::store_units_to_db unit proof verify succ,unit:%s", unit_block->dump().c_str());
                         }
 
                         //update to block'flag acccording table_extract_all_unit_successful

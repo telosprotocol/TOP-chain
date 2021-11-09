@@ -2732,7 +2732,7 @@ namespace top
         }
 
         bool        xblockacct_t::set_unit_proof(const std::string& unit_proof, uint64_t height){
-            const std::string key_path = base::xvdbkey_t::create_unit_proof_key(*this, height);
+            const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*this, height);
             if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, unit_proof)) {
                 xerror("xblockacct_t::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
                 return false;
@@ -2742,7 +2742,7 @@ namespace top
         }
 
         const std::string xblockacct_t::get_unit_proof(uint64_t height){
-            const std::string key_path = base::xvdbkey_t::create_unit_proof_key(*this, height);
+            const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*this, height);
             return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
     };//end of namespace of vstore

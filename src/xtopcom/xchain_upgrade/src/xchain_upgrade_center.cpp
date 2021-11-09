@@ -27,6 +27,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "remove empty unit fork point"},
+        };
 
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
@@ -70,6 +71,8 @@ namespace top {
 
         bool xtop_chain_fork_config_center::is_forked(top::optional<xfork_point_t> const& fork_point, uint64_t target) noexcept {
             if (!fork_point.has_value()) return false;
+
+            xdbg("xtop_chain_fork_config_center::is_forked target:%llu, fork point:%llu", target, fork_point.value().point);
             return  target >= fork_point.value().point;
         }
 

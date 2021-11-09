@@ -23,7 +23,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     virtual xblock_ptr_t        make_proposal(xblock_consensus_para_t & proposal_para) override;
     virtual int                 verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) override;
 
-    bool                        update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para, xtablestate_ptr_t tablestate_commit);
+    bool                        update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para);
  protected:
     const std::string &         get_account() const {return m_table_maker->get_account();}
     base::xvblockstore_t*       get_blockstore() const {return m_table_maker->get_blockstore();}

@@ -74,9 +74,16 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     }
 
     xtablestate_ptr_t tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
-    xtablemaker_para_t table_para(tablestate);
+    if (tablestate_commit == nullptr) {
+        xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,commit_height=%" PRIu64 "", proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->get_height());
+        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
+        return nullptr;
+    }
+
+    xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
-    update_txpool_txs(proposal_para, table_para, tablestate_commit);
+    update_txpool_txs(proposal_para, table_para);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
@@ -203,9 +210,13 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     // update txpool receiptid state
     const xblock_ptr_t & commit_block = cs_para.get_latest_committed_block();
     xtablestate_ptr_t commit_tablestate = get_target_tablestate(commit_block.get());
-    if (commit_tablestate != nullptr) {
-        get_txpool()->update_table_state(commit_tablestate);
+    if (commit_tablestate == nullptr) {
+        xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert=%s", cs_para.dump().c_str(), proposal_prev_block->dump().c_str());
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_state_get, 1);
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
+        return xblockmaker_error_proposal_table_state_clone;
     }
+    get_txpool()->update_table_state(commit_tablestate);
 
     // get tablestate related to latest cert block
     xtablestate_ptr_t tablestate = get_target_tablestate(proposal_prev_block.get());
@@ -216,7 +227,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         return xblockmaker_error_proposal_table_state_clone;
     }
 
-    xtablemaker_para_t table_para(tablestate);
+    xtablemaker_para_t table_para(tablestate, commit_tablestate);
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
@@ -343,16 +354,16 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
     return true;
 }
 
-bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para, xtablestate_ptr_t tablestate_commit) {
+bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
     // std::map<std::string, uint64_t> locked_nonce_map;
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
-        if (nullptr == tablestate_commit) {
+        if (nullptr == table_para.get_commit_tablestate()) {
             xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s,committed_block=%s",
                 proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
             return false;
         }
-        get_txpool()->update_table_state(tablestate_commit);
+        get_txpool()->update_table_state(table_para.get_commit_tablestate());
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
@@ -510,18 +521,9 @@ void xproposal_maker_t::sys_contract_sync(const xtablestate_ptr_t & tablestate) 
 
 void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablestate, const std::string & addr) const {
     base::xvaccount_t _vaddr(addr);
-    uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
-    if (latest_connect_height < accountindex.get_latest_unit_height()) {
-        uint64_t from_height = latest_connect_height + 1;
-        uint32_t sync_num = (uint32_t)(accountindex.get_latest_unit_height() + 1 - from_height);
-        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu", 
-            addr.c_str(), from_height, accountindex.get_latest_unit_height());
-        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            addr, from_height, sync_num, true, "proposal_maker_check", true);
-        base::xvchain_t::instance().get_xevmbus()->push_event(ev);
-    }
+    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, get_blockstore(), "proposal_maker");
 }
 
 

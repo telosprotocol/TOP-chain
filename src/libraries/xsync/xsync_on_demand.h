@@ -56,7 +56,12 @@ private:
     int32_t check(const std::string &account_address);
     int32_t check(const std::string &account_address, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    bool store_blocks(const std::vector<data::xblock_ptr_t> &blocks); 
+    bool basic_check(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    bool check_unit_blocks(const std::vector<data::xblock_ptr_t> &blocks, std::vector<data::xblock_ptr_t> &validated_blocks);
+    bool check_unit_blocks(const std::vector<data::xblock_ptr_t> &blocks, const std::string & unit_proof_str);
+    bool check_unit_blocks(const std::vector<data::xblock_ptr_t> & blocks);
+    bool store_blocks(const std::vector<data::xblock_ptr_t> &blocks);
+    void store_on_demand_sync_blocks(const std::vector<data::xblock_ptr_t> &blocks, const std::string &unit_proof_str);
 
 private:
     std::string m_vnode_id;

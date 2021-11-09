@@ -564,8 +564,8 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     // m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get()); // TODO(jimmy) confirm tx no need origin tx
     base::xauto_ptr<base::xvblock_t> cert_block =
         m_para->get_vblockstore()->load_block_object(_vaccount, unit_height + 2, 0, false, metrics::blockstore_access_from_txpool_create_receipt);
-    if (commit_block == nullptr) {
-        xerror("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
+    if (cert_block == nullptr) {
+        xwarn("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
                base::xstring_utl::to_hex(str_hash).c_str(),
                _vaccount.get_account().c_str(),
                unit_height + 2);

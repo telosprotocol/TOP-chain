@@ -132,7 +132,8 @@ class xtablemaker_para_t {
     xtablemaker_para_t() {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
-    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate) : m_tablestate(tablestate) {
+    xtablemaker_para_t(const data::xtablestate_ptr_t & tablestate, const data::xtablestate_ptr_t & commit_tablestate)
+      : m_tablestate(tablestate), m_commit_tablestate(commit_tablestate) {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
     xtablemaker_para_t(const std::vector<xcons_transaction_ptr_t> & origin_txs)
@@ -165,6 +166,7 @@ class xtablemaker_para_t {
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
     const data::xtablestate_ptr_t &                 get_tablestate() const {return m_tablestate;}
+    const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
     const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
 
  private:
@@ -184,7 +186,8 @@ class xblock_maker_t : public base::xvaccount_t {
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
     void                        reset_latest_cert_block(const xblock_ptr_t & block);
-    bool                        load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_block_height);
+    bool                        load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_height_from, uint64_t & lacked_height_to);
+    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block);
     bool                        check_latest_blocks(const xblock_ptr_t & latest_block) const;
 
  public:
@@ -197,9 +200,10 @@ class xblock_maker_t : public base::xvaccount_t {
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
     const xblock_ptr_t &        get_highest_height_block() const;
     xblock_ptr_t                get_prev_block_from_cache(const xblock_ptr_t & current) const;
+    void                        set_keep_latest_blocks_max(uint32_t keep_latest_blocks_max) {m_keep_latest_blocks_max = keep_latest_blocks_max;}
 
  protected:
-    bool                        update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_block_height);
+    bool                        update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks);
     void                        clear_old_blocks();
 
  private:
