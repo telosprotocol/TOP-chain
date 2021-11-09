@@ -27,49 +27,6 @@ namespace xtxpool_v2 {
 #define table_fail_behind_height_diff_max (5)
 #define table_sync_on_demand_num_max (10)
 
-bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const {
-    // TODO(jimmy) try sync behind account unit, make a new function
-    base::xaccount_index_t account_index;
-    bool ret = m_table_state_cache.get_account_index(account, account_index);
-    if (!ret) {
-        xtxpool_warn("xtxpool_table_t::get_account_basic_info get account index fail account:%s", account.c_str());
-        return false;
-    }
-    base::xvaccount_t _account_vaddress(account);
-    base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
-    if (_block_ptr == nullptr) {
-        xtxpool_warn("xtxpool_table_t::get_account_basic_info get block fail account:%s", account.c_str());
-        return false;
-    }
-    xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
-    if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
-        base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_connected_block(_account_vaddress);
-        if (_block_ptr == nullptr) {
-            xtxpool_error("xtxpool_table_t::get_account_basic_info get connect block fail account:%s", account.c_str());
-            return false;
-        }
-        if (account_index.get_latest_unit_height() > _start_block_ptr->get_height()) {
-            account_index_info.set_sync_height_start(_start_block_ptr->get_height() + 1);
-            account_index_info.set_sync_num(account_index.get_latest_unit_height() - _start_block_ptr->get_height());
-        }
-        return false;
-    }
-
-    base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
-    base::xauto_ptr<base::xvbstate_t> account_bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
-    if (account_bstate == nullptr) {
-        xtxpool_warn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
-        return false;
-    }
-
-    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(account_bstate.get());
-    // account_index_info.set_latest_block(latest_unit);
-    account_index_info.set_latest_state(account_state);
-    account_index_info.set_account_index(account_index);
-    return true;
-}
-
 bool xtxpool_table_t::is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const {
     if (tx->get_tx()->is_send_tx()) {
         // if (m_unconfirmed_tx_num >= table_unconfirm_txs_num_max) {
@@ -451,7 +408,7 @@ void xtxpool_table_t::refresh_table_v2() {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
                 // try sync table block
                 mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block", false);
+                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), false, "lack_of_table_block", false);
                 m_para->get_bus()->push_event(ev);
                 xtxpool_warn("xtxpool_table_t::refresh_table load table block fail:table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), sync_from_height, height);
                 XMETRICS_GAUGE(metrics::txpool_try_sync_table_block, 1);
@@ -657,22 +614,26 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
 }
 
 bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
-    xaccount_basic_info_t account_basic_info;
-    bool result = get_account_basic_info(account_addr, account_basic_info);
-    if (!result) {
-        if (account_basic_info.get_sync_num() > 0) {
-            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
-            m_para->get_bus()->push_event(ev);
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s state fall behind,try sync unit from:%llu,count:%u",
-                         account_addr.c_str(),
-                         account_basic_info.get_sync_height_start(),
-                         account_basic_info.get_sync_num());
-        }
+    base::xaccount_index_t account_index;
+    bool ret = m_table_state_cache.get_account_index(account_addr, account_index);
+    if (!ret) {
+        xtxpool_warn("xtxpool_table_t::get_account_latest_nonce get account index fail account:%s", account_addr.c_str());
+        return false;
+    }
+    base::xvaccount_t _account_vaddress(account_addr);
+
+    xblocktool_t::check_lacking_unit_and_try_sync(_account_vaddress, account_index, m_para->get_vblockstore(), "txpool");
+
+    base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
+    base::xauto_ptr<base::xvbstate_t> account_bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
+    if (account_bstate == nullptr) {
+        xtxpool_warn("xtxpool_table_t::get_account_latest_nonce fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
         return false;
     }
 
-    latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
+    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(account_bstate.get());
+    latest_nonce = account_state->account_send_trans_number();
     return true;
 }
 

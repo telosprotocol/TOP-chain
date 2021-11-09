@@ -148,7 +148,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_table_leader_make_unit_count,
     cons_table_total_process_tx_count,
     cons_table_total_process_unit_count,
-    cons_sync_on_demand_unit,
 
     cons_packtx_succ,
     cons_packtx_sendtx_succ,

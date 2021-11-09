@@ -132,7 +132,6 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_table_leader_make_unit_count);
         RETURN_METRICS_NAME(cons_table_total_process_tx_count);
         RETURN_METRICS_NAME(cons_table_total_process_unit_count);
-        RETURN_METRICS_NAME(cons_sync_on_demand_unit);
 
         RETURN_METRICS_NAME(cons_packtx_succ);
         RETURN_METRICS_NAME(cons_packtx_sendtx_succ);

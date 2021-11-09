@@ -50,7 +50,7 @@ public:
     virtual xsync_store_shadow_t* get_shadow() =  0;
     virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) = 0;
     virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
-    virtual uint64_t get_clock() const = 0;
+    virtual bool remove_empty_unit_forked() = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
 
@@ -112,12 +112,13 @@ public:
     void remove_listener(int major_type, uint32_t id) override;
     bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) override;
     const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
-    uint64_t get_clock() const override;
+    bool remove_empty_unit_forked() override;
     
 private:
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
+    bool m_remove_empty_unit_forked{false};
 };
 
 NS_END2

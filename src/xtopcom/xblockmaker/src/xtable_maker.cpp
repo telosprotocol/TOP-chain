@@ -54,12 +54,8 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     }
 
     m_check_state_success = false;
-    uint64_t lacked_block_height = 0;
     // cache latest block
-
-    std::map<uint64_t, xblock_ptr_t> latest_blocks;
-    latest_blocks[latest_block->get_height()] = latest_block;
-    if (!load_and_cache_enough_blocks(latest_blocks, lacked_block_height)) {
+    if (!load_and_cache_enough_blocks(latest_block)) {
         xwarn("xunit_maker_t::check_latest_state fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
     }
@@ -171,7 +167,9 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         if (need_check_state) {
             base::xaccount_index_t accountindex;
             tablestate->get_account_index(unit_account, accountindex);
-            int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
+            base::xaccount_index_t commit_accountindex;
+            table_para.get_commit_tablestate()->get_account_index(unit_account, commit_accountindex);
+            int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex, m_unit_block_cache);
             account_check_state_ret[unit_account] = (ret != xsuccess) ? false : true;
             if (ret != xsuccess) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
@@ -285,21 +283,25 @@ bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & tabl
         filter_table_count++;
     }
 
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    xdbg("xtable_maker_t::create_non_lightunit_makers remove empty unit:%d", is_forked);
+
     for (auto & unit_account : empty_unit_accounts) {
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
 
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
+        base::xaccount_index_t commit_accountindex;
+        table_para.get_commit_tablestate()->get_account_index(unit_account, commit_accountindex);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex, m_unit_block_cache);
         if (ret != xsuccess) {
             // empty unit maker must create success
             xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return false;
         }
-        auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-        bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
-        xdbg("xtable_maker_t::create_non_lightunit_makers remove empty unit:%d", is_forked);
+
         bool can_make = false;
         if (is_forked) {
             can_make = unitmaker->can_make_next_block_v2();
@@ -317,21 +319,24 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
     const data::xtablestate_ptr_t & tablestate = table_para.get_tablestate();
     const std::vector<std::string> & other_accounts = table_para.get_other_accounts();
 
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    xdbg("xtable_maker_t::create_other_makers remove empty unit:%d", is_forked);
+
     for (auto & unit_account : other_accounts) {
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
 
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, m_unit_block_cache);
+        base::xaccount_index_t commit_accountindex;
+        table_para.get_commit_tablestate()->get_account_index(unit_account, commit_accountindex);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex, m_unit_block_cache);
         if (ret != xsuccess) {
             // other unit maker must create success
-            xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",
+            xwarn("xtable_maker_t::create_other_makers fail-check_latest_state,%s,account=%s,error_code=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return false;
         }
-        auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-        bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
-        xdbg("xtable_maker_t::create_other_makers remove empty unit:%d", is_forked);
         bool can_make = false;
         if (is_forked) {
             can_make = unitmaker->can_make_next_block_v2();
@@ -618,8 +623,8 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
         }
     }
 
-    xinfo("xtable_maker_t::make_proposal succ.%s,proposal=%s,tx_count=%zu,other_accounts_count=%zu",
-        cs_para.dump().c_str(), proposal_block->dump().c_str(), table_para.get_proposal()->get_input_txs().size(), table_para.get_proposal()->get_other_accounts().size());
+    xinfo("xtable_maker_t::make_proposal succ.%s,proposal=%s,tx_count=%zu,other_accounts_count=%zu,remove empty unit forked:%d",
+        cs_para.dump().c_str(), proposal_block->dump().c_str(), table_para.get_proposal()->get_input_txs().size(), table_para.get_proposal()->get_other_accounts().size(), is_forked);
     return proposal_block;
 }
 

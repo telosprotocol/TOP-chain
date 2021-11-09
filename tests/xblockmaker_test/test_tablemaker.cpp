@@ -38,7 +38,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -47,7 +47,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 1);
 
-        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
         int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
         xassert(ret == 0);
@@ -57,7 +57,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -65,7 +65,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 2);
 
-        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
         int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
         xassert(ret == 0);
@@ -75,7 +75,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -83,7 +83,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 3);
 
-        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
         int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
         xassert(ret == 0);
@@ -93,7 +93,7 @@ TEST_F(test_tablemaker, make_proposal_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -434,7 +434,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
         table_para.set_origin_txs(send_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
@@ -449,7 +449,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -462,7 +462,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -475,7 +475,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
         std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(tableblocks[1]);
         xassert(recv_txs.size() == 2);
@@ -499,7 +499,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -512,7 +512,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -525,7 +525,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
         std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(tableblocks[4]);
         xassert(confirm_txs.size() == 2);
@@ -549,7 +549,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -562,7 +562,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -577,7 +577,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
 
     {
         xassert(mocktable.get_table_state()->get_block_height() == 9);
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
         table_para.set_origin_txs(send_txs);
 
@@ -593,7 +593,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -606,7 +606,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -620,7 +620,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     }
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
         std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(tableblocks[10]);
         xassert(recv_txs.size() == 2);
@@ -646,7 +646,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -659,7 +659,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -673,7 +673,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     }
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
         std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(tableblocks[13]);
         xassert(confirm_txs.size() == 2);
@@ -698,7 +698,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     }
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
         std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(tableblocks[13]);
         xassert(confirm_txs.size() == 2);
@@ -722,7 +722,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -735,7 +735,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
