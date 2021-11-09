@@ -371,12 +371,18 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
     if (hash.empty())
         return;
 
-    std::vector<data::xblock_ptr_t> blocks;
+    std::vector<base::xvblock_ptr_t> blocks;
     base::xvchain_t::instance().get_xtxstore()->load_block_by_hash(hash, blocks);
     xdbg("load_block_objects, all:%d", blocks.size());
     if (blocks.empty())
         return;
-    m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);
+
+    std::vector<data::xblock_ptr_t> blocks_temp;
+    for (uint32_t i = 0; i < blocks.size(); i++) {
+        blocks_temp.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks[i].get()));
+    }
+
+    m_sync_sender->send_on_demand_blocks(blocks_temp, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);
 }
 
 bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &blocks) {

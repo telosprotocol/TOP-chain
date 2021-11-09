@@ -259,16 +259,16 @@ std::vector<data::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::str
     return blocks;
 }
 
-int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<data::xblock_ptr_t>& blocks) {
+int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks) {
     base::xauto_ptr<base::xvtxindex_t> index = load_tx_idx(hash, base::enum_transaction_subtype_send);
     if (index->is_self_tx()) {
         auto xvblocks = load_block_objects(hash, (base::enum_transaction_subtype)base::enum_transaction_subtype_self);
         xdbg("self load_block_objects: %d", xvblocks.size());
         for (uint32_t i = 0; i < xvblocks.size(); i++) {
-            std::vector<data::xvblock_ptr_t> blocks_temp = load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
+            std::vector<base::xvblock_ptr_t> blocks_temp = load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
             xdbg("self load_block_objects, table: %d, parent:%s,%d", blocks_temp.size(), base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()).c_str(), xvblocks[i]->get_parent_block_height());
             for (uint32_t j = 0; j < blocks_temp.size(); j++) {
-                blocks.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks_temp[j].get()));
+                blocks.push_back(blocks_temp[j]);
             }
         }
         return 0;
@@ -278,10 +278,10 @@ int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<data::
         auto xvblocks = load_block_objects(hash, (base::enum_transaction_subtype)index);
         xdbg("load_block_objects: %d", xvblocks.size());
         for (uint32_t i = 0; i < xvblocks.size(); i++) {
-            std::vector<data::xvblock_ptr_t> blocks_temp = load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
+            std::vector<base::xvblock_ptr_t> blocks_temp = load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
             xdbg("load_block_objects, table: %d, parent:%s,%d", blocks_temp.size(), base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()).c_str(), xvblocks[i]->get_parent_block_height());
             for (uint32_t j = 0; j < blocks_temp.size(); j++) {
-                blocks.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks_temp[j].get()));
+                blocks.push_back(blocks_temp[j]);
             }
         }
     }    

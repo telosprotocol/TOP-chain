@@ -12,10 +12,6 @@
 namespace top {
 namespace data {
 // fwd
-
-class xblock_t;
-using xblock_ptr_t = xobject_ptr_t<xblock_t>;
-
 struct xtransaction_cache_data_t;
 class xtransaction_t;
 using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
@@ -52,7 +48,7 @@ namespace top
 
         public:
             virtual void update_node_type(uint32_t combined_node_type);
-            virtual int load_block_by_hash(const std::string& hash, std::vector<data::xblock_ptr_t>& blocks);
+            virtual int load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks);
         public: //write interface
             virtual bool                store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin);
             virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin);

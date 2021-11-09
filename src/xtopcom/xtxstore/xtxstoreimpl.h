@@ -45,7 +45,7 @@ public: // tx cache
 
 public:
     void update_node_type(uint32_t combined_node_type) noexcept override;
-    int load_block_by_hash(const std::string& hash, std::vector<data::xblock_ptr_t>& blocks) override;
+    int load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks) override;
 private:
     bool strategy_permission(common::xbool_strategy_t const & strategy) const noexcept;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type);
