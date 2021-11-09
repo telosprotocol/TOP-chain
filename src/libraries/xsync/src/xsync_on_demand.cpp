@@ -64,7 +64,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     context["src"] = self_addr.to_string();
     context["dst"] = target_addr.to_string();
     context["consensus"] = std::to_string(is_consensus);
-    bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count - 1), context);
+    bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count - 1), context, self_addr, target_addr);
     if (permit) {
         m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
@@ -277,13 +277,7 @@ int xsync_on_demand_t::check(const std::string &account_address) {
 
     return 0;
 }
-bool xsync_on_demand_t::check_address(const std::string& str1, const std::string& str2) {
-    std::string::size_type found1 = str1.find_last_of("/");
-    std::string::size_type found2 = str2.find_last_of("/");
-    if (found1 == str1.npos || found2 == str2.npos)
-        return str1 == str2;
-    return str1.substr(0, found1) == str2.substr(0, found2);
-}
+
 int xsync_on_demand_t::check(const std::string &account_address,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     xsync_download_tracer tracer;
@@ -291,13 +285,13 @@ int xsync_on_demand_t::check(const std::string &account_address,
         xdbg("tracer check error.");
         return -1;
     }
-    std::map<std::string, std::string> context = tracer.context();
-    if (check_address(context["src"], network_self.to_string()) == false) {
-        xdbg("src check:%s,%s", context["src"].c_str(), network_self.to_string().c_str());
+
+    if (tracer.get_src_addr().xip2().group_xip2() == network_self.xip2().group_xip2()) {
+        xdbg("xsync_on_demand_t::check, src check:%s,%s", tracer.get_src_addr().to_string().c_str(), network_self.to_string().c_str());
         return -1;
     }
-    if (check_address(context["dst"], to_address.to_string()) == false) {
-        xdbg("dst check:%s,%s", context["dst"].c_str(), to_address.to_string().c_str());
+    if (tracer.get_dst_addr().xip2().group_xip2() == to_address.xip2().group_xip2()) {
+        xdbg("xsync_on_demand_t::check, dst check:%s,%s", tracer.get_dst_addr().to_string().c_str(), to_address.to_string().c_str());
         return -1;
     }
     return 0;
@@ -335,13 +329,13 @@ void xsync_on_demand_t::on_behind_by_hash_event(const mbus::xevent_ptr_t &e) {
 
     const vnetwork::xvnode_address_t &target_addr = archive_list[0];
 
-    xsync_info("xsync_on_demand_t::on_behind_by_hash_event send sync request(on_demand) %s,hash(%s), from %s to %s",
-        address.c_str(), data::to_hex_str(hash).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    xsync_info("xsync_on_demand_t::on_behind_by_hash_event send sync request(on_demand) %s,hash(%s)",
+        address.c_str(), data::to_hex_str(hash).c_str());
 
     std::map<std::string, std::string> context;
     context["src"] = self_addr.to_string();
     context["dst"] = target_addr.to_string();
-    bool permit = m_download_tracer.apply(address, std::make_pair(0, 20), context);
+    bool permit = m_download_tracer.apply(address, std::make_pair(0, 20), context, self_addr, target_addr);
     if (permit) {
         m_sync_sender->send_get_on_demand_by_hash_blocks(address, hash, self_addr, target_addr);
     } else {
