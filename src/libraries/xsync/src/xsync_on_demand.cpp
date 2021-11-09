@@ -409,12 +409,6 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
             return false;
         }
 
-/*        if (block->get_account() != account) {
-            xsync_warn("xsync_on_demand_t::store_blocks receive on_demand_blocks(address error) (%s, %s)",
-                block->get_account().c_str(), account.c_str());
-            return false;
-        }
-*/
         //No.1 safe rule: clean all flags first when sync/replicated one block
         block->reset_block_flags();
         //XTODO,here need check hash to connect the prev authorized block,then set enum_xvblock_flag_authenticated
