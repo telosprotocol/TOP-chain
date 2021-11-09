@@ -286,11 +286,11 @@ int xsync_on_demand_t::check(const std::string &account_address,
         return -1;
     }
 
-    if (tracer.get_src_addr().xip2().group_xip2() == network_self.xip2().group_xip2()) {
+    if (tracer.get_src_addr().xip2().group_xip2() != network_self.xip2().group_xip2()) {
         xdbg("xsync_on_demand_t::check, src check:%s,%s", tracer.get_src_addr().to_string().c_str(), network_self.to_string().c_str());
         return -1;
     }
-    if (tracer.get_dst_addr().xip2().group_xip2() == to_address.xip2().group_xip2()) {
+    if (tracer.get_dst_addr().xip2().group_xip2() != to_address.xip2().group_xip2()) {
         xdbg("xsync_on_demand_t::check, dst check:%s,%s", tracer.get_dst_addr().to_string().c_str(), to_address.to_string().c_str());
         return -1;
     }
