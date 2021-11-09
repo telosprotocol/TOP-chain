@@ -265,7 +265,7 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
         return;
 
     if (!merge_multi_sign(xip_addr, model_block, validators)) {
-        xerror("[xvote_cache_t::add_vote] verify multi_sign failed %s", model_block->dump().c_str());
+        xwarn("[xvote_cache_t::add_vote] verify multi_sign failed %s", model_block->dump().c_str());
         return;
     }
 
