@@ -93,7 +93,7 @@ void xtop_application::start() {
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 
-    chain_upgrade::xtop_chain_fork_config_center::instance().init();
+    chain_upgrade::xtop_chain_fork_config_center::init();
     base::xvblock_fork_t::instance().init(chain_upgrade::xtop_chain_fork_config_center::is_block_forked);
 
     m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));

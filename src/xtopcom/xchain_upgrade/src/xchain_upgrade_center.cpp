@@ -11,6 +11,8 @@
 namespace top {
     namespace chain_upgrade {
 
+        xchain_fork_config_t      xtop_chain_fork_config_center::m_fork_config;
+
 #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
@@ -69,7 +71,7 @@ namespace top {
         }
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
-            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::instance().get_chain_fork_config();
+            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
             return  xtop_chain_fork_config_center::is_forked(_fork_config.block_fork_point, target);
         }
 

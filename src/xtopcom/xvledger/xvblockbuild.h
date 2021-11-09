@@ -74,6 +74,9 @@ namespace top
         class xvblockbuild_t {
         public:
             static xauto_ptr<xvheader_t>    build_proposal_header(xvblock_t* block, uint64_t _clock);
+        
+        protected:
+            static xauto_ptr<xvheader_t>    create_header(const xbbuild_para_t & _para);
         public:
             xvblockbuild_t();  // genesis genesis construct
             xvblockbuild_t(base::xvheader_t* header, base::xvqcert_t* cert);
