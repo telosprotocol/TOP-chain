@@ -600,6 +600,15 @@ std::pair<char const *, std::size_t> array_counter_info(xmetrics_array_tag_t con
 }
 #undef RETURN_METRICS_INFO
 
+
+void e_metrics::start(const std::string& log_path)
+{
+    top::metrics::handler::metrics_log_init(log_path);
+    start();
+}
+
+
+
 void e_metrics::start() {
     if (running()) {
         return;
@@ -637,6 +646,9 @@ void e_metrics::run_process() {
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
         update_dump();
     }
+    
+    top::metrics::handler::metrics_log_close();
+  
 }
 
 void e_metrics::process_message_queue() {

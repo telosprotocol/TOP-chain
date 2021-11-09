@@ -6,6 +6,7 @@
 #include "xbasic/xrunnable.h"
 #include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #ifdef ENABLE_METRICS
+#include "metrics_handler/basic_handler.h"
 #include "metrics_handler/array_counter_handler.h"
 #include "metrics_handler/counter_handler.h"
 #include "metrics_handler/flow_handler.h"
@@ -703,6 +704,7 @@ public:
         return instance;
     }
 
+    void start(const std::string& log_path);
     void start() override;
     void stop() override;
 
@@ -799,6 +801,12 @@ public:
         ins.start();                                                                                                                                                               \
     }
 
+#define XMETRICS_INIT2(log_path)                       \
+    {                                                   \
+        auto & ins = top::metrics::e_metrics::get_instance();\
+        ins.start(log_path);                                          \
+    }
+
 #define XMETRICS_UNINT()                                                                                                                                                            \
     {                                                                                                                                                                              \
         auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
@@ -888,6 +896,7 @@ private:
 
 #else
 #define XMETRICS_INIT()
+#define XMETRICS_INIT2(log_path) 
 #define XMETRICS_UNINT()
 #define XMETRICS_TIME_RECORD(metrics_name)
 #define XMETRICS_TIME_RECORD_KEY(metrics_name, key)
