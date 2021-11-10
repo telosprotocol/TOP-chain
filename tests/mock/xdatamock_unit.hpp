@@ -30,7 +30,7 @@ class xlightunit_builder_mock_t : public blockmaker::xlightunit_builder_t {
 
         const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
 
-        base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+        base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
         xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
         xaccount_ptr_t proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
 

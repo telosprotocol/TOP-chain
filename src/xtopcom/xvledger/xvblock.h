@@ -9,6 +9,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xventity.h"
 #include "xvtransact.h"
+#include "xvblock_fork.h"
 
 namespace top
 {
@@ -98,12 +99,6 @@ namespace top
             enum_xvblock_type_view      = 8, //view block or timeout block
             enum_xvblock_type_election  = 9, //election block from REC/ZEC etc
             enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
-        };
-
-        enum enum_xvblock_version
-        {
-            enum_xvblock_version_1   = 256, // 0.0.1.0, 1 << 8
-            enum_xvblock_version_2   = 512, // 0.0.2.0, 2 << 8
         };
 
         //total 2bits = max 4 definition

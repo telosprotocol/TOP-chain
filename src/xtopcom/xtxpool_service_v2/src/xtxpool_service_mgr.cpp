@@ -18,6 +18,7 @@
 #include "xtxpool_service_v2/xtxpool_service.h"
 #include "xtxpool_v2/xreceipt_resend.h"
 #include "xtxpool_v2/xtxpool_error.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 
 #include <cinttypes>
 
@@ -219,6 +220,11 @@ void xtxpool_service_mgr::on_timer() {
     std::vector<std::shared_ptr<xtxpool_service_face>> pull_lacking_receipts_service_vec;
     std::vector<std::shared_ptr<xtxpool_service_face>> receipts_recender_service_vec;
 
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    auto clock = m_clock->logic_time();
+    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.table_receipt_protocol_fork_point, clock);
+    xdbg("xtxpool_service_mgr::on_timer is_forked:%d,clock:%llu", is_forked, clock);
+
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto & iter : m_service_map) {
@@ -250,21 +256,33 @@ void xtxpool_service_mgr::on_timer() {
         uint32_t back_table_id = std::get<2>(table_boundary);
         bool refresh_unconfirm_txs = std::get<3>(table_boundary);
         xinfo("xtxpool_service_mgr::on_timer, refresh table zone:%d table:%d:%d refresh_unconfirm_txs:%d", zone_id, fount_table_id, back_table_id, refresh_unconfirm_txs);
-        for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
-            m_para->get_txpool()->refresh_table(zone_id, table_id, refresh_unconfirm_txs);
-            // m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
+        if (is_forked) {
+            for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
+                m_para->get_txpool()->refresh_table_v2(zone_id, table_id);
+                // m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
+            }
+        } else {
+            for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
+                m_para->get_txpool()->refresh_table_v1(zone_id, table_id, refresh_unconfirm_txs);
+            }
         }
     }
 
     xcovered_tables_t covered_tables;
-    for (auto & service : pull_lacking_receipts_service_vec) {
-        service->pull_lacking_receipts(now, covered_tables);
-    }
-
-    for (auto & service : receipts_recender_service_vec) {
-        // todo: not resend receipts after a specified clock!!!
-        // service->resend_receipts(now);
-        service->send_receipt_id_state(now);
+    if (is_forked) {
+        for (auto & service : pull_lacking_receipts_service_vec) {
+            service->pull_lacking_receipts_v2(now, covered_tables);
+        }
+        for (auto & service : receipts_recender_service_vec) {
+            service->send_receipt_id_state(now);
+        }
+    } else {
+        for (auto & service : pull_lacking_receipts_service_vec) {
+            service->pull_lacking_receipts_v1(now, covered_tables);
+        }
+        for (auto & service : receipts_recender_service_vec) {
+            service->resend_receipts(now);
+        }
     }
 
     if ((now % print_txpool_statistic_values_freq) == 0) {

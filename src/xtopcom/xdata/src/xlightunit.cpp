@@ -90,12 +90,10 @@ void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
 }
 
 void xlightunit_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
-    if (get_block_version() == base::enum_xvblock_version_1) {
-        if (rpc_version == RPC_VERSION_V1) {
-            parse_to_json_v1(root);
-        } else {
-            parse_to_json_v2(root);
-        }
+    if (rpc_version == RPC_VERSION_V1) {
+        parse_to_json_v1(root);
+    } else {
+        parse_to_json_v2(root);
     }
 }
 

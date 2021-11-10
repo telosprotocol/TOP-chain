@@ -119,21 +119,16 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
 std::vector<base::xvaction_t> xtable_block_t::get_tx_actions() {
     const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
     auto version = get_block_version();
-    if (version == base::enum_xvblock_version_1) {
-        std::vector<base::xvaction_t> tx_actions;
-        uint32_t entitys_count = _table_inentitys.size();
-        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-            const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-            for (auto & action : input_actions) {
-                tx_actions.push_back(base::xvaction_t(action));
-            }
+    std::vector<base::xvaction_t> tx_actions;
+    uint32_t entitys_count = _table_inentitys.size();
+    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+        for (auto & action : input_actions) {
+            tx_actions.push_back(base::xvaction_t(action));
         }
-        return tx_actions;
-    } else {
-        base::xvinentity_t* tx_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[0]);
-        return tx_inentity->get_actions();
     }
+    return tx_actions;
 }
 
 std::vector<xvheader_ptr_t> xtable_block_t::get_unit_headers() {

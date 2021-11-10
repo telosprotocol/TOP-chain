@@ -24,6 +24,14 @@ namespace top {
         public:
             static xchain_fork_config_t const & chain_fork_config() noexcept;
             static bool is_forked(top::optional<xfork_point_t> const& fork_point, uint64_t target) noexcept;
+            static bool is_block_forked(uint64_t target) noexcept;
+
+        public:
+            static void    init();
+            static xchain_fork_config_t const & get_chain_fork_config() noexcept {return m_fork_config;}
+
+        private:
+            static xchain_fork_config_t    m_fork_config;
         };
         using xchain_fork_config_center_t = xtop_chain_fork_config_center;
     }

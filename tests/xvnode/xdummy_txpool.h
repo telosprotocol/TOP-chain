@@ -42,7 +42,9 @@ public:
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) override {
         return {};
     }
-    void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) override {
+    void refresh_table_v1(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) override {
+    }
+    void refresh_table_v2(uint8_t zone, uint16_t subaddr) override {
     }
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
     void update_table_state(const data::xtablestate_ptr_t & table_state) override {
@@ -64,7 +66,7 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override {
         return {};
     }
-    // const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
+    const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override {
         return false;
     }

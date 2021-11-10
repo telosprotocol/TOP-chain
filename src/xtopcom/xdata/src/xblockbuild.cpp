@@ -41,6 +41,18 @@ base::xvaction_t make_block_build_action(const std::string & target_uri, const s
     return _tx_action;
 }
 
+base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string & target_uri, uint32_t block_version, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height) {
+    if (base::xvblock_fork_t::is_block_match_version(block_version, base::enum_xvblock_fork_version_table_prop_prove)) {
+        // xassert(!para.get_property_hashs().empty());  // XTODO maybe empty for only self txs
+        xassert(height > 0);
+        xtableblock_action_t _action(target_uri, property_hashs, tableid, height);       
+        return _action;
+    } else {
+        base::xvaction_t _action = make_block_build_action(target_uri);
+        return _action;
+    }
+}
+
 xlightunit_build_t::xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara) {
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, base::enum_xvblock_level_unit, base::enum_xvblock_class_light, xrootblock_t::get_rootblock_hash());
     init_header_qcert(build_para);
@@ -195,8 +207,9 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
 
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    xtableblock_action_t _action(BLD_URI_LIGHT_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
+    base::xvaction_t _action = make_table_block_action_with_table_prop_prove(BLD_URI_LIGHT_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
+    xdbg("xlighttable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
     for (auto & v : para.get_account_units()) {
@@ -211,7 +224,6 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
-    xdbg("xlighttable_build_t::build_block_body method_uri=%s", _action.get_method_uri().c_str());
     return true;
 }
 
@@ -416,8 +428,9 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
 
 bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    xtableblock_action_t _action(BLD_URI_FULL_TABLE, para.get_property_hashs(), account.get_short_table_id(), height);
+    base::xvaction_t _action = make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
+    xdbg("xfulltable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
     set_output_full_state(full_state_bin);

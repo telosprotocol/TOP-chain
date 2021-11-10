@@ -76,9 +76,8 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     return create_block(prev_block, cs_para, lightunit_para, lightunit_build_para->get_receiptid_state());
 }
 
-std::string     xfullunit_builder_t::make_binlog(const xblock_ptr_t & prev_block,
+std::string     xfullunit_builder_t::make_binlog(const base::xauto_ptr<base::xvheader_t> & _temp_header,
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate) {
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_snapshot;
@@ -94,8 +93,10 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
     XMETRICS_TIMER(metrics::cons_unitbuilder_fullunit_tick);
+
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
     xfullunit_block_para_t para;
-    para.m_property_snapshot = make_binlog(prev_block, prev_bstate);
+    para.m_property_snapshot = make_binlog(_temp_header, prev_bstate);
     para.m_first_unit_height = prev_bstate->get_last_fullblock_height();
     para.m_first_unit_hash = prev_bstate->get_last_fullblock_hash();
     xinfo("xfullunit_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",

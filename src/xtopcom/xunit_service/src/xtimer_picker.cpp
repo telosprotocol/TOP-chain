@@ -12,6 +12,7 @@
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
 #include "xdata/xblockbuild.h"
+#include "xelection/xdata_accessor_error.h"
 
 #include <inttypes.h>
 
@@ -122,14 +123,21 @@ bool xtimer_picker_t::on_create_block_event(const base::xvevent_t & event,xcsobj
 // leader broadcast tc block to all nodes
 bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
 {
+    auto local_xip = get_xip2_addr();
     xconsensus::xcstc_fire const & e = (xconsensus::xcstc_fire const &)event;
     auto tc_block = e.get_tc_block();
     m_latest_cert_clock = tc_block->get_clock();
-    common::xelection_round_t version{0};
+
+    std::error_code ec{election::xdata_accessor_errc_t::success};
+    auto accessor = m_params->get_resources()->get_data_accessor();
+    auto election_epoch = accessor->election_epoch_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
+    if (ec) {
+        xunit_warn("xtimer_picker_t::on_time_cert_event xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        return false;
+    }
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
-    auto local_xip = get_xip2_addr();
     xunit_dbg("[xtimer_picker_t::on_time_cert_event] broadcast timer cert block %s, height %" PRIu64, tc_block->get_account().c_str(), tc_block->get_height());
-    xvip2_t leader_xip = m_leader_selector->get_leader_xip(tc_block->get_viewid(), get_account(), nullptr, local_xip, local_xip, version, enum_rotate_mode_no_rotate);
+    xvip2_t leader_xip = m_leader_selector->get_leader_xip(tc_block->get_viewid(), get_account(), nullptr, local_xip, local_xip, election_epoch, enum_rotate_mode_no_rotate);
     if (xcons_utl::xip_equals(leader_xip, local_xip)) {
         auto    network_proxy = m_params->get_resources()->get_network();
         if (network_proxy != nullptr) {
