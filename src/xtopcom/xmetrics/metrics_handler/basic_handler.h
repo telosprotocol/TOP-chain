@@ -9,12 +9,18 @@
 #include "xmetrics/xmetrics_config.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/fifo_map.hpp"
+#include "xbase/xlog.h"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
 NS_BEG3(top, metrics, handler)
+
+extern top::base::xlogger_t *g_metrics_log_instance;
+
+void metrics_log_init(const std::string& log_path);
+void metrics_log_close();
 
 // A workaround to give to use fifo_map as map, we are just ignoring the 'less' compare
 template<class K, class V, class dummy_compare, class A>
@@ -44,10 +50,15 @@ public:
         bool dump_all{false};
         XMETRICS_CONFIG_GET("dump_full_unit", dump_all);
         if (is_updated || dump_all) {
-            xkinfo("[metrics]%s", str.c_str());
-#ifdef METRICS_UNIT_TEST
-            std::cout << str << std::endl;
-#endif
+            if(g_metrics_log_instance){
+                g_metrics_log_instance->kinfo("[metrics]%s", str.c_str());
+            }
+            else{
+                xkinfo("[metrics]%s", str.c_str());
+            }   
+            #ifdef METRICS_UNIT_TEST
+                std::cout << str << std::endl;
+            #endif
         }
     }
 

@@ -96,7 +96,9 @@ void timer_handler_t::process_message_event(metrics_variant_ptr & metrics_ptr, e
             } else {
                 assert(0);
             }
-            xkinfo("%s", ss.str().c_str());
+            dump(ss.str(), true);
+            //kinfo("%s", ss.str().c_str());
+
         }
         ptr->count++;
         ptr->sum_time += t;
