@@ -185,11 +185,20 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, ec);
     top::error::throw_error(ec);
     auto last_hash = last_hash_bytes.empty() ? uint256_t{} : top::from_bytes<uint256_t>(last_hash_bytes);
-    xinfo("[xtop_account_vm::pack] pack last_nonce: %" PRIu64, last_nonce);
+
+    auto recv_tx_num_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
+        xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, ec);
+    auto recv_tx_num = recv_tx_num_bytes.empty() ? 0 : top::from_bytes<uint64_t>(recv_tx_num_bytes);
+    xinfo("[xtop_account_vm::pack] pack last_nonce: %" PRIu64 ", recv_tx_num: %" PRIu64, last_nonce, recv_tx_num);
+
+    uint64_t recv_tx_num_new = recv_tx_num;
 
     for (size_t i = 0; i < result.transaction_results.size(); i++) {
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
+        if (tx->is_recv_tx()) {
+            recv_tx_num_new++;
+        }
         for (auto const & pair : r.output.fee_change) {
             auto const & option = pair.first;
             auto const & value = pair.second;
@@ -255,6 +264,13 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                 }
             }
         }
+    }
+
+    if (recv_tx_num_new != recv_tx_num) {
+        sa.set_property_cell_value<xproperty_type_t::map>(xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system},
+                                                          data::XPROPERTY_TX_INFO_RECVTX_NUM,
+                                                          top::to_bytes<uint64_t>(recv_tx_num_new),
+                                                          ec);
     }
 
     if (output.success_tx_assemble.empty()) {

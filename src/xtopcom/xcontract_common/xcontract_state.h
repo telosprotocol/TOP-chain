@@ -494,8 +494,6 @@ public:
     void delay_followup(xstake::xreward_dispatch_task const & task);
     void delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks, std::error_code & ec);
     void delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks);
-    void remove_delay_followup(std::string const & key, std::error_code & ec);
-    void remove_delay_followup(std::string const & key);
 
     /* ----------account context interface ---------- */
     void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec);

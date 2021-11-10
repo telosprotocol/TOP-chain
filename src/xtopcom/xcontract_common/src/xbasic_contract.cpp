@@ -357,6 +357,7 @@ void xtop_basic_contract::exec_delay_followup() {
     if (m_associated_execution_context->deployed_contract_address() != common::xaccount_address_t{sys_contract_zec_reward_addr}) {
         return;
     }
+    state_accessor::properties::xtypeless_property_identifier_t property{xstake::XPORPERTY_CONTRACT_TASK_KEY};
     auto tasks = m_associated_execution_context->contract_state()->delay_followup();
     const uint32_t task_num_per_round = 16;
     xinfo("[xtop_basic_contract::exec_delay_followup] tasks size: %lu, task_num_per_round: %u\n", tasks.size(), task_num_per_round);
@@ -399,8 +400,7 @@ void xtop_basic_contract::exec_delay_followup() {
                 transfer(common::xaccount_address_t{issue.first}, issue.second, xfollowup_transaction_schedule_type_t::immediately);
             }
         }
-
-        m_associated_execution_context->contract_state()->remove_delay_followup(id);
+        m_associated_execution_context->contract_state()->remove_property_cell<state_accessor::properties::xproperty_type_t::map>(property, id);
         tasks.erase(it);
     }
 }

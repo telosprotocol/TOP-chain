@@ -643,16 +643,4 @@ void xtop_contract_state::delay_followup(std::vector<xstake::xreward_dispatch_ta
     top::error::throw_error(ec);
 }
 
-void xtop_contract_state::remove_delay_followup(std::string const & key, std::error_code & ec) {
-    state_accessor::properties::xtypeless_property_identifier_t property{xstake::XPORPERTY_CONTRACT_TASK_KEY};
-    remove_property_cell<state_accessor::properties::xproperty_type_t::map>(property, key, ec);
-}
-
-void xtop_contract_state::remove_delay_followup(std::string const & key) {
-    std::error_code ec;
-    remove_delay_followup(key, ec);
-    assert(!ec);
-    top::error::throw_error(ec);
-}
-
 NS_END2

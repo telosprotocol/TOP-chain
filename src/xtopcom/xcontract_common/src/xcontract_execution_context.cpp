@@ -566,8 +566,9 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
         contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1);
         fee_change = execute_default_source_action(ec);
     } else if (stage_ == data::xconsensus_action_stage_t::recv) {
-        auto old_recv_tx_num = contract_state()->recvtx_num();
-        contract_state()->recvtx_num(old_recv_tx_num + 1);
+        // left it in final pack because recv count is special
+        // auto old_recv_tx_num = contract_state()->recvtx_num();
+        // contract_state()->recvtx_num(old_recv_tx_num + 1);
         fee_change = execute_default_target_action(ec);
     } else if (stage_ == data::xconsensus_action_stage_t::confirm) {
         auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
