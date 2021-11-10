@@ -14,8 +14,6 @@
 #include "xdata/xdatautil.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xtransaction_v2.h"
-#include "xsystem_contracts/xsystem_contract_addresses.h"
-#include "xsystem_contracts/xtransfer_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract_new.h"

@@ -20,13 +20,11 @@ public:
     BEGIN_CONTRACT_API()
     DECLARE_API(xtop_transfer_contract::setup);
     DECLARE_API(xtop_transfer_contract::transfer);
-    DECLARE_API(xtop_transfer_contract::follow_up_delay);
     END_CONTRACT_API
 
 private:
     void setup();
     void transfer(uint64_t const amount);
-    void follow_up_delay();
 };
 using xtransfer_contract_t = xtop_transfer_contract;
 
