@@ -59,6 +59,14 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_xvinput,
     dataobject_xvoutput,
     dataobject_xventity,
+    dataobject_xvnode_t,
+    dataobject_xvexestate_t,
+    dataobject_xvnodegroup,
+    dataobject_xcscoreobj_t,
+    dataobject_xblock_maker_t,
+    dataobject_xblockacct_t,
+    dataobject_xtxpool_table_info_t,    
+    dataobject_xacctmeta_t,
     // db bock key, see xvdbkey for specific info
     // 't/', 'i/', 'b/'
     // 'b/.../h', 'b/.../i', 'b/.../ir', 'b/.../o', 'b/.../or', 'b/.../s', 'b/.../d'
@@ -193,16 +201,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_dbsize_block_table_light,
     store_dbsize_block_table_full,
     store_dbsize_block_other,
-
-    // vledger dataobject
-    dataobject_xvnode_t,
-    dataobject_xvexestate_t,
-    dataobject_xvnodegroup,
-    dataobject_xcscoreobj_t,
-    dataobject_xblock_maker_t,
-    dataobject_xblockacct_t,
-    dataobject_xtxpool_table_info_t,
-    dataobject_xacctmeta_t,
 
     // message category
     message_category_begin_contains_duplicate,
@@ -872,6 +870,12 @@ public:
 #define XMETRICS_GAUGE_SET_VALUE(TAG, value) top::metrics::e_metrics::get_instance().gauge_set_value(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
+#ifndef ENABLE_METRICS_DATAOBJECT                                                                             
+    #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)
+#else
+    #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)   XMETRICS_GAUGE(TAG, value) 
+#endif
+
 class simple_metrics_tickcounter {
 public:
     simple_metrics_tickcounter(E_SIMPLE_METRICS_TAG tag) : m_tag(tag) {
@@ -919,6 +923,7 @@ private:
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_PACKET_ALARM(metrics_name, ...)
 #define XMETRICS_GAUGE(TAG, value)
+#define XMETRICS_GAUGE_DATAOBJECT(TAG, value)
 #define XMETRICS_GAUGE_SET_VALUE(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG)
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)

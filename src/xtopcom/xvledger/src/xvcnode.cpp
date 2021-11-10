@@ -22,7 +22,7 @@ namespace top
             m_sign_pubkey             = sign_pub_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
-            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnode_t, 1);
             #ifdef DEBUG  //double check whether public key matched the account addresss
             utl::xecpubkey_t pub_key((uint8_t*)sign_pub_key.data(),(int)sign_pub_key.size());
             xassert(account == pub_key.to_address(get_addr_type(), get_ledger_id()));
@@ -31,7 +31,7 @@ namespace top
         xvnode_t::xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key,const std::string & sign_pri_key)
             :xvaccount_t(account)
         {
-            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnode_t, 1);
             m_sign_pubkey             = sign_pub_key;
             m_sign_prikey             = sign_pri_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
@@ -65,12 +65,12 @@ namespace top
             
             m_node_address.high_addr  = obj.m_node_address.high_addr;
             m_node_address.low_addr   = obj.m_node_address.low_addr;
-            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnode_t, 1);
         }
         
         xvnode_t::~xvnode_t()
         {
-            XMETRICS_GAUGE(metrics::dataobject_xvnode_t, -1);            
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnode_t, -1);            
         }
         
         xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> const & nodes)
@@ -104,7 +104,7 @@ namespace top
                     }
                 }
             }
-            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnodegroup, 1);
         }
         
         xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> const & nodes)
@@ -138,7 +138,7 @@ namespace top
                     }
                 }
             }
-            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnodegroup, 1);
         }
         
         xvnodegroup_t::~xvnodegroup_t()
@@ -150,7 +150,7 @@ namespace top
                     it->release_ref();
                 }
             }
-            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnodegroup, -1);
         }
         
         xvnode_t* xvnodegroup_t::get_node(const xvip2_t & target_node_xip2) const

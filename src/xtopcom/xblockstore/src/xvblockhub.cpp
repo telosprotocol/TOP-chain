@@ -155,7 +155,7 @@ namespace top
              xvaccount_t(parent_obj.get_address())
         {
 #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblockacct_t, 1);
 #endif
             m_meta = NULL;
             m_xvdb_ptr = NULL;
@@ -173,7 +173,7 @@ namespace top
                   get_address().c_str(),get_blockstore_path().c_str(),
                   (int64_t)get_obj_id());
 #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblockacct_t, -1);
 #endif
             close_blocks();
         }

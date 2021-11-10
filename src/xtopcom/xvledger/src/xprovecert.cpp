@@ -12,10 +12,10 @@ namespace top
     namespace base
     {
         xprove_cert_t::xprove_cert_t() {
-            XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_provcert, 1);
         }
         xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, enum_xprove_cert_type prove_type, const std::string & _path) {
-            XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_provcert, 1);
             prove_cert->add_ref();
             m_prove_cert.attach(prove_cert);
             m_prove_type =  prove_type;
@@ -23,7 +23,7 @@ namespace top
         }
 
         xprove_cert_t::~xprove_cert_t() {
-            XMETRICS_GAUGE(metrics::dataobject_provcert, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_provcert, -1);
         }
 
         int32_t xprove_cert_t::do_write(base::xstream_t & stream) {
