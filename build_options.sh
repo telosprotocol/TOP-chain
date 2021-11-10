@@ -125,6 +125,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DCONSENSUS_SWAP=ON"
         echo "BUILD WITH CONSENSUS SWAP"
     ;;
+    p2p_bendwidth)
+        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_P2P_BENDWIDTH=ON"
+        echo "BUILD WITH ENABLE P2P BENDWIDTH"
+    ;;
     no_tx_batch)
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"

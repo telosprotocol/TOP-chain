@@ -20,6 +20,7 @@
 #include "xwrouter/message_handler/xwrouter_xid_handler.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 namespace top {
 
@@ -74,16 +75,21 @@ int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
         uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + bin_data);
         message.set_msg_hash(msg_hash);
     }
-    // }
-    // if (IS_RRS_GOSSIP_MESSAGE(message)) {
-    //     XMETRICS_PACKET_INFO("p2pperf_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
-    // } else {
     if (IS_BROADCAST(message)) {
-        XMETRICS_PACKET_INFO("p2pbroadcast_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
-    }
-    // }
 #ifdef XENABLE_P2P_BENDWIDTH
+        XMETRICS_PACKET_INFO("p2pbroadcast_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+#else
+        xinfo("p2pbroadcast_wroutersend_info src:%s dst:%s hop_num:%d msg_hash:%" PRIu32 " msg_size:%zu is_root:%d is_broadcast:%d timestamp:%" PRIu64,
+              message.src_node_id().c_str(),
+              message.des_node_id().c_str(),
+              message.hop_num(),
+              message.msg_hash(),
+              message.gossip().block().size(),
+              message.is_root(),
+              message.broadcast(),
+              GetCurrentTimeMsec());
 #endif
+    }
     return wxid_handler_->SendPacket(message);
 }
 
@@ -100,15 +106,6 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
         return enum_xerror_code_fail;
     }
 
-#ifdef XENABLE_P2P_BENDWIDTH
-    // if (IS_RRS_GOSSIP_MESSAGE(message)) {
-    //     XMETRICS_PACKET_INFO("p2pperf_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
-    // } else {
-    if (IS_BROADCAST(message)) {
-        XMETRICS_PACKET_INFO("p2pnormal_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
-    }
-    // }
-#endif
     int32_t rcode = wxid_handler_->RecvPacket(message, packet);
     if (rcode == kRecvOwn) {
         return HandleOwnPacket(message, packet);
