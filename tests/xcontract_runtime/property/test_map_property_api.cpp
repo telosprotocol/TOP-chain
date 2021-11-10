@@ -1,18 +1,16 @@
 #define private public
 #define protected public
 #include "gtest/gtest.h"
-
 #include "tests/mock/xvchain_creator.hpp"
 #include "xcontract_common/xbasic_contract.h"
-#include "xsystem_contracts/xbasic_system_contract.h"
 #include "xcontract_common/xproperties/xproperty_map.h"
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
-#include "xsystem_contracts/xsystem_contract_addresses.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
+#include "xsystem_contracts/xbasic_system_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
-
 
 NS_BEG3(top, tests, contract_property)
 
@@ -22,7 +20,7 @@ using namespace top::contract_common;
 using namespace top::system_contracts;
 
 
-common::xaccount_address_t contract_address{top::system_contracts::sys_contract_zec_slash_info_addr};
+common::xaccount_address_t contract_address{sys_contract_zec_slash_info_addr};
 class contract_with_property : public system_contracts::xtop_basic_system_contract {
 public:
     void contract_execution_context(observer_ptr<contract_common::xcontract_execution_context_t> const& exec_context);

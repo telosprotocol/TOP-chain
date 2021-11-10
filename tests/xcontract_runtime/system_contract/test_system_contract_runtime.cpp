@@ -15,7 +15,6 @@
 #include "xstore/xstore_face.h"
 #include "xsystem_contract_runtime/xsystem_action_runtime.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
-#include "xsystem_contracts/xsystem_contract_addresses.h"
 #include "xsystem_contracts/xtransfer_contract.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstate.h"
@@ -30,7 +29,7 @@ NS_BEG3(top, tests, contract_runtime)
 
 using namespace top::contract_common;
 using namespace top::contract_runtime;
-std::string const contract_address = system_contracts::transfer_address;
+std::string const contract_address{"T20000MAZNFs3aSZGDdVNvRvpbvKwhWDWvuXa484"};
 
 
 class test_system_contract_runtime : public testing::Test {

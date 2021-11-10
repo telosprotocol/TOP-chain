@@ -4,7 +4,7 @@
 
 #include "xcontract_common/xserialization/xserialization.h"
 
-#include "xsystem_contracts/xsystem_contract_addresses.h"
+#include "xdata/xnative_contract_address.h"
 
 using namespace top::system_contracts;
 
