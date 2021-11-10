@@ -14,7 +14,7 @@ namespace top
         xvbindex_t::xvbindex_t()
         {
             init();
-            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
 
         xvbindex_t::xvbindex_t(xvblock_t & obj)
@@ -40,7 +40,7 @@ namespace top
             //[8bit:block-flags][8bit:index-bits]
             m_combineflags      = obj.get_block_flags();
             m_block_types       = obj.get_header()->get_block_raw_types();
-            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
     
         xvbindex_t::xvbindex_t(xvbindex_t && obj)
@@ -77,7 +77,7 @@ namespace top
             obj.m_prev_index = NULL;
             obj.m_next_index = NULL;
             obj.m_linked_block = NULL;
-            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
     
         xvbindex_t::xvbindex_t(const xvbindex_t & obj)
@@ -85,7 +85,7 @@ namespace top
         {
             init();
             *this = obj;
-            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
 
         xvbindex_t & xvbindex_t::operator = (const xvbindex_t & obj)
@@ -155,7 +155,7 @@ namespace top
                 
             if(m_linked_block != NULL)
                 m_linked_block->release_ref();
-            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, -1);
         }
   
         void xvbindex_t::init()

@@ -33,7 +33,7 @@ namespace top
                 m_is_keep_forever  = 1;
             
             xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
-            XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccountobj, 1);
         }
     
         xvaccountobj_t::~xvaccountobj_t()
@@ -55,7 +55,7 @@ namespace top
                 m_meta_ptr->release_ref();
             }
             
-            XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccountobj, -1);
         }
         
         const uint64_t  xvaccountobj_t::get_idle_duration() const

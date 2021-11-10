@@ -19,7 +19,7 @@ namespace top
             m_value_ptr = new xvalueobj_t();
             
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_core_function);
-            XMETRICS_GAUGE(metrics::dataobject_xvproperty, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvproperty, 1);
         }
     
         xvproperty_t::xvproperty_t(const std::string & name, const xvalue_t & value,enum_xdata_type type)
@@ -30,7 +30,7 @@ namespace top
             set_unit_name(name);//set unit name
             
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_core_function);
-            XMETRICS_GAUGE(metrics::dataobject_xvproperty, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvproperty, 1);
         }
     
         xvproperty_t::xvproperty_t(const xvproperty_t & const_obj)
@@ -58,7 +58,7 @@ namespace top
             set_unit_name(const_obj.get_name());//copy unit name finally
             
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_core_function);
-            XMETRICS_GAUGE(metrics::dataobject_xvproperty, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvproperty, 1);
         }
 
         xvproperty_t::~xvproperty_t()
@@ -67,7 +67,7 @@ namespace top
             if(m_value_ptr != nullptr) {
                 m_value_ptr->release_ref();
             }
-            XMETRICS_GAUGE(metrics::dataobject_xvproperty, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvproperty, -1);
         }
     
         bool  xvproperty_t::take_snapshot_to(xvcanvas_t & target_canvas) //property create full-snapshot for it'value

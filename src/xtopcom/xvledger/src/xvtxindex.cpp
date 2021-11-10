@@ -75,7 +75,7 @@ namespace top
         xvtxindex_t::xvtxindex_t()
             : xdataunit_t(xdataunit_t::enum_xdata_type_undefine)
         {
-            XMETRICS_GAUGE(metrics::dataobject_xvtxindex, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvtxindex, 1);
             m_raw_tx_obj    = NULL;
             m_block_flags = 0;
             m_block_height = 0;
@@ -88,7 +88,7 @@ namespace top
         xvtxindex_t::xvtxindex_t(xvblock_t & owner, xdataunit_t* raw_tx,const std::string & txhash, enum_transaction_subtype type)
         : xdataunit_t(xdataunit_t::enum_xdata_type_undefine)
         {
-            XMETRICS_GAUGE(metrics::dataobject_xvtxindex, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvtxindex, 1);
             m_raw_tx_obj    = NULL;
             m_block_addr    = owner.get_account();
             m_block_height  = owner.get_height();
@@ -109,7 +109,7 @@ namespace top
             if(m_raw_tx_obj != NULL) {
                 m_raw_tx_obj->release_ref();
             }
-            XMETRICS_GAUGE(metrics::dataobject_xvtxindex, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvtxindex, -1);
         }
 
         void xvtxindex_t::set_tx_hash(std::string const & tx_hash)
