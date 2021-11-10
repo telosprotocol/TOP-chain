@@ -153,6 +153,7 @@ TEST_F(test_get_block, get_property) {
     EXPECT_EQ(0, jres["value"].asString().size());
 }
 
+#if 0
 TEST_F(test_get_block, getGeneralInfos) {
     xJson::Value jr;
     jr["action"] = "getGeneralInfos";
@@ -171,6 +172,7 @@ TEST_F(test_get_block, getGeneralInfos) {
     // auto shard_num = jres["value"]["shard_num"].asUInt64();
     // EXPECT_EQ(shard_num, 2);
 }
+#endif
 
 TEST_F(test_get_block, get_transaction) {
     xJson::Value jr;
