@@ -25,14 +25,14 @@ namespace top
                 reset_input_canvas(input_canvas);
             if(output_canvas != NULL)
                 reset_output_canvas(output_canvas);
-            XMETRICS_GAUGE(metrics::dataobject_xvexecontxt, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvexecontxt, 1);
         }
     
         xvexecontxt_t::~xvexecontxt_t()
         {
             reset_input_canvas(NULL);
             reset_output_canvas(NULL);
-            XMETRICS_GAUGE(metrics::dataobject_xvexecontxt, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvexecontxt, -1);
         }
     
         void   xvexecontxt_t::reset_input_canvas(xvcanvas_t * new_ptr)

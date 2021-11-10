@@ -647,7 +647,7 @@ void e_metrics::run_process() {
         update_dump();
     }
     
-    top::metrics::handler::metrics_log_close();
+   // top::metrics::handler::metrics_log_close();
   
 }
 
@@ -772,7 +772,7 @@ void e_metrics::gauge_set_value(E_SIMPLE_METRICS_TAG tag, int64_t value) {
 int64_t e_metrics::gauge_get_value(E_SIMPLE_METRICS_TAG tag) {
     if (tag >= e_simple_total || tag <= e_simple_begin ) {
         return 0;
-    }
+    }   
     return s_counters[tag].value;
 }
 
@@ -815,7 +815,7 @@ xsimple_merics_category g_cates[] = {
     {message_category_rumor, message_rumor_category_begin, message_rumor_category_end}
 };
 
-bool is_category(E_SIMPLE_METRICS_TAG tag) {
+bool is_category(E_SIMPLE_METRICS_TAG tag) {  
     for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
         if(tag == g_cates[index].category) {
             return true;

@@ -17,7 +17,7 @@ namespace top
         xventity_t::xventity_t(enum_xdata_type type)
             :xdataunit_t(type)
         {
-            XMETRICS_GAUGE(metrics::dataobject_xventity, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xventity, 1);
             m_exe_module = NULL;
             m_entity_index = uint16_t(-1);
         }
@@ -25,14 +25,14 @@ namespace top
         xventity_t::xventity_t(const xventity_t & other)
             :xdataunit_t(other)
         {
-            XMETRICS_GAUGE(metrics::dataobject_xventity, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xventity, 1);
             m_exe_module = NULL;
             m_entity_index = other.m_entity_index;
         }
         
         xventity_t::~xventity_t()
         {
-            XMETRICS_GAUGE(metrics::dataobject_xventity, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xventity, -1);
             if(m_exe_module != NULL)
                 m_exe_module->release_ref();
         }
