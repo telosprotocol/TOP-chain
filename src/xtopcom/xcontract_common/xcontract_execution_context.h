@@ -49,8 +49,8 @@ public:
 
     data::xconsensus_action_stage_t consensus_action_stage() const noexcept;
     void consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept;
-    observer_ptr<xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
-    void system_contract(xcontract_object_cb_t cb) noexcept;
+    // observer_ptr<xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const;
+    // void system_contract(xcontract_object_cb_t cb) noexcept;
     xcontract_execution_result_t const & execution_result() const noexcept;
     void add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type);
     std::vector<xfollowup_transaction_datum_t> const & followup_transaction() const noexcept;
@@ -64,7 +64,6 @@ public:
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;
     common::xaccount_address_t contract_address() const;
-    common::xaccount_address_t deployed_contract_address() const;
 
     data::enum_xtransaction_type transaction_type() const noexcept;
 
@@ -107,8 +106,8 @@ private:
 
     std::string source_action_name() const;
     std::string target_action_name() const;
-    std::string source_action_data() const;
-    std::string target_action_data() const;
+    xbytes_t source_action_data() const;
+    xbytes_t target_action_data() const;
     data::xproperty_asset asset() const;
 };
 using xcontract_execution_context_t = xtop_contract_execution_context;

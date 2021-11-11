@@ -13,12 +13,12 @@
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvledger.h"
 
+#include <system_error>
 #include <unordered_map>
 
 NS_BEG3(top, contract_runtime, system)
 
 struct xtop_contract_deployment_data {
-    // std::shared_ptr<system_contracts::xbasic_system_contract_t> system_contract{nullptr};
     common::xnode_type_t node_type{common::xnode_type_t::invalid};
     xsniff_type_t sniff_type{xsniff_type_t::none};
     xsniff_broadcast_config_t broadcast_config{};
@@ -71,7 +71,8 @@ public:
 
     void deploy(observer_ptr<base::xvblockstore_t> const & blockstore);
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & deployment_data() const noexcept;
-    observer_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const noexcept;
+    observer_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept;
+    observer_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const;
 
 private:
     template <typename system_contract_type>

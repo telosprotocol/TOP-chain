@@ -31,8 +31,8 @@ public:
     explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept;
 
     xconsensus_action_stage_t stage() const noexcept;
-    common::xaccount_address_t from_address() const;
-    common::xaccount_address_t to_address() const;
+    common::xaccount_address_t sender() const;
+    common::xaccount_address_t recver() const;
     common::xaccount_address_t contract_address() const;
     common::xaccount_address_t execution_address() const;
     uint64_t max_gas_amount() const;
@@ -45,11 +45,9 @@ public:
     xbyte_buffer_t target_action_data() const;
     std::map<std::string, xbyte_buffer_t> receipt_data() const;
     xaction_consensus_exec_status action_consensus_result() const;
-    std::string transaction_source_action_data() const;
-    std::string transaction_target_action_data() const;
     data::enum_xtransaction_type transaction_type() const;
-    data::enum_xaction_type transaction_source_action_type() const;
-    data::enum_xaction_type transaction_target_action_type() const;
+    data::enum_xaction_type source_action_type() const;
+    data::enum_xaction_type target_action_type() const;
     uint32_t size() const;
     uint64_t deposit() const;
     std::string digest_hex() const;
@@ -97,14 +95,14 @@ xconsensus_action_stage_t xtop_consensus_action<ActionTypeV>::stage() const noex
 }
 
 template <xtop_action_type_t ActionTypeV>
-common::xaccount_address_t xtop_consensus_action<ActionTypeV>::from_address() const {
+common::xaccount_address_t xtop_consensus_action<ActionTypeV>::sender() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
     return common::xaccount_address_t{ tx->get_source_addr() };
 }
 
 template <xtop_action_type_t ActionTypeV>
-common::xaccount_address_t xtop_consensus_action<ActionTypeV>::to_address() const {
+common::xaccount_address_t xtop_consensus_action<ActionTypeV>::recver() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
     return common::xaccount_address_t{ tx->get_target_addr() };
@@ -218,22 +216,6 @@ xaction_consensus_exec_status xtop_consensus_action<ActionTypeV>::action_consens
 }
 
 template <xtop_action_type_t ActionTypeV>
-std::string xtop_consensus_action<ActionTypeV>::transaction_source_action_data() const {
-    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
-    assert(tx != nullptr);
-
-    return tx->get_transaction()->get_source_action().get_action_param();
-}
-
-template <xtop_action_type_t ActionTypeV>
-std::string xtop_consensus_action<ActionTypeV>::transaction_target_action_data() const {
-    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
-    assert(tx != nullptr);
-
-    return tx->get_transaction()->get_target_action().get_action_param();
-}
-
-template <xtop_action_type_t ActionTypeV>
 data::enum_xtransaction_type xtop_consensus_action<ActionTypeV>::transaction_type() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
@@ -242,7 +224,7 @@ data::enum_xtransaction_type xtop_consensus_action<ActionTypeV>::transaction_typ
 }
 
 template <xtop_action_type_t ActionTypeV>
-data::enum_xaction_type xtop_consensus_action<ActionTypeV>::transaction_source_action_type() const {
+data::enum_xaction_type xtop_consensus_action<ActionTypeV>::source_action_type() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
@@ -250,7 +232,7 @@ data::enum_xaction_type xtop_consensus_action<ActionTypeV>::transaction_source_a
 }
 
 template <xtop_action_type_t ActionTypeV>
-data::enum_xaction_type xtop_consensus_action<ActionTypeV>::transaction_target_action_type() const {
+data::enum_xaction_type xtop_consensus_action<ActionTypeV>::target_action_type() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 

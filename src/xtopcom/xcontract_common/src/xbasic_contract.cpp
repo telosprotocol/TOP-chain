@@ -186,9 +186,11 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
 }
 
 void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_addr,
-                                           std::string const & method_name,
-                                           std::string const & method_params,
-                                           xfollowup_transaction_schedule_type_t type) {
+                                    std::string const & method_name,
+                                    std::string const & method_params,
+                                    xfollowup_transaction_schedule_type_t type) {
+    assert(false);  // not supported yet.
+
     bool valid{false};
     // address type check
     auto const & source_addr = address();
@@ -211,7 +213,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
     // exec
-    auto obj = m_associated_execution_context->system_contract(target_addr);
+    // auto obj = m_associated_execution_context->system_contract(target_addr);
     auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
     ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
@@ -220,19 +222,21 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
         ctx->consensus_action_stage(data::xconsensus_action_stage_t::recv);
     }
 
-    auto result = obj->execute(top::make_observer(ctx));
+    // auto result = obj->execute(top::make_observer(ctx));
     // TODO: follow up of result
-    assert(!result.status.ec);
+    // assert(!result.status.ec);
     // switch address back
     m_associated_execution_context->contract_state(source_addr);
 }
 
 void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_addr,
-                                           std::string const & source_method_name,
-                                           std::string const & source_method_params,
-                                           std::string const & method_name,
-                                           std::string const & method_params,
-                                           xfollowup_transaction_schedule_type_t type) {
+                                    std::string const & source_method_name,
+                                    std::string const & source_method_params,
+                                    std::string const & method_name,
+                                    std::string const & method_params,
+                                    xfollowup_transaction_schedule_type_t type) {
+    assert(false);  // not supported yet.
+
     bool valid{false};
     // address type check
     auto const & source_addr = address();
@@ -257,7 +261,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
     // exec
-    auto obj = m_associated_execution_context->system_contract(target_addr);
+    // auto obj = m_associated_execution_context->system_contract(target_addr);
     auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
     ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
@@ -266,9 +270,9 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
         ctx->consensus_action_stage(data::xconsensus_action_stage_t::recv);
     }
 
-    auto result = obj->execute(top::make_observer(ctx));
+    // auto result = obj->execute(top::make_observer(ctx));
     // TODO: follow up of result
-    assert(!result.status.ec);
+    // assert(!result.status.ec);
     // switch address back
     m_associated_execution_context->contract_state(source_addr);
 }
@@ -354,13 +358,13 @@ void xtop_basic_contract::delay_followup(std::vector<xfollowup_transaction_delay
 
 void xtop_basic_contract::exec_delay_followup() {
     // only for reward contract now
-    if (m_associated_execution_context->deployed_contract_address() != common::xaccount_address_t{sys_contract_zec_reward_addr}) {
+    if (m_associated_execution_context->recver() != common::xaccount_address_t{sys_contract_zec_reward_addr}) {
         return;
     }
     state_accessor::properties::xtypeless_property_identifier_t property{xstake::XPORPERTY_CONTRACT_TASK_KEY};
     auto tasks = m_associated_execution_context->contract_state()->delay_followup();
     const uint32_t task_num_per_round = 16;
-    xinfo("[xtop_basic_contract::exec_delay_followup] tasks size: %lu, task_num_per_round: %u\n", tasks.size(), task_num_per_round);
+    xinfo("[xtop_basic_contract::exec_delay_followup] tasks size: %zu, task_num_per_round: %u", tasks.size(), task_num_per_round);
 
     for (size_t i = 0; i < task_num_per_round; i++) {
         auto it = tasks.begin();

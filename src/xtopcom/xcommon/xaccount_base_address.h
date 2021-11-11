@@ -42,6 +42,9 @@ private:
     explicit xtop_account_base_address(std::string const & base_address);
 
 public:
+    static constexpr size_t LENGTH{46};
+    static constexpr size_t LAGACY_LENGTH{40};
+
     static xtop_account_base_address build_from(std::string const & input, std::error_code & ec);
     static xtop_account_base_address build_from(std::string const & input);
 
