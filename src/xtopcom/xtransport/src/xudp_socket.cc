@@ -242,11 +242,9 @@ int32_t xp2pudp_t::recv(
         return 0;
     }
 
-    /*
-    TOP_DEBUG("Recv size: %d, local address[%s : %d]-[%d : %d],peer address[%s : %d]-[%d : %d]", packet.get_body().size(),
+    TOP_INFO("Recv size: %d, local address[%s : %d]-[%d : %d],peer address[%s : %d]-[%d : %d]", packet.get_body().size(),
              get_local_ip_address().c_str(),get_local_real_port(),get_local_logic_port(),get_local_logic_port_token(),
              get_peer_ip_address().c_str(),get_peer_real_port(),get_peer_logic_port(),get_peer_logic_port_token());
-             */
     
     if (listen_server_ == nullptr) {
         TOP_INFO("listen_server_ is null");
@@ -565,7 +563,7 @@ int XudpSocket::SendDataWithProp(
         TOP_ERROR("send xpacket failed!packet size is :%d\n",packet.get_size());
         return kTransportFailed;
     }
-    TOP_DEBUG("send xpacket packet size:%d src %s:%d dest %s:%d\n",
+    TOP_INFO("send xpacket packet size:%d src %s:%d dest %s:%d\n",
               packet.get_size(),
               packet.get_from_ip_addr().c_str(),
               packet.get_from_ip_port(),
