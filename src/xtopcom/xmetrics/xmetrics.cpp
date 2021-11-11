@@ -66,19 +66,14 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_delete_tick);
 
         // consensus
-        RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
-        RETURN_METRICS_NAME(cons_drand_backup_finish_succ);
-        RETURN_METRICS_NAME(cons_drand_leader_finish_fail);
-        RETURN_METRICS_NAME(cons_drand_backup_finish_fail);
-        RETURN_METRICS_NAME(cons_tableblock_leader_finish_succ);
-        RETURN_METRICS_NAME(cons_tableblock_backup_finish_succ);
-        RETURN_METRICS_NAME(cons_tableblock_leader_finish_fail);
-        RETURN_METRICS_NAME(cons_tableblock_backup_finish_fail);
         RETURN_METRICS_NAME(cons_drand_leader_succ);
         RETURN_METRICS_NAME(cons_drand_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_leader_succ);
         RETURN_METRICS_NAME(cons_tableblock_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_total_succ);
+        RETURN_METRICS_NAME(cons_tableblock_tx_send_succ);
+        RETURN_METRICS_NAME(cons_tableblock_tx_recv_succ);
+        RETURN_METRICS_NAME(cons_tableblock_tx_confirm_succ);
         RETURN_METRICS_NAME(cons_pacemaker_tc_discontinuity);
         
         RETURN_METRICS_NAME(cons_table_leader_make_proposal_succ);

@@ -431,6 +431,33 @@ bool xbatch_packer::set_start_time(const common::xlogic_time_t& start_time) {
     return true;
 }
 
+void xbatch_packer::parse_tx_type_succ_count(base::xvblock_t *vblock) {
+ 
+    if(vblock->is_output_ready(true)){
+        const std::vector<base::xventity_t*> & _table_inentitys = vblock->get_output()->get_entitys();
+        uint32_t entitys_count = _table_inentitys.size();
+        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+            base::xtable_inentity_extend_t extend;
+            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+            const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+            for (auto & action : input_actions) {
+                if (action.get_org_tx_hash().empty()) { 
+                    continue;
+                }
+                xlightunit_action_t txaction(action);
+                if (txaction->is_send_tx()) {
+                    XMETRICS_GAUGE(metrics::cons_tableblock_tx_send_succ, 1);
+                }else if (txaction->is_recv_tx()) {
+                    XMETRICS_GAUGE(metrics::cons_tableblock_tx_recv_succ, 1);
+                }else if (txaction->is_confirm_tx()) {
+                    XMETRICS_GAUGE(metrics::cons_tableblock_tx_confirm_succ, 1);
+                }
+            }
+        }
+    }
+}
+
 bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     xcsaccount_t::on_proposal_finish(event, from_child, cur_thread_id, timenow_ms);
     xconsensus::xproposal_finish * _evt_obj = (xconsensus::xproposal_finish *)&event;
@@ -445,10 +472,10 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
 
         XMETRICS_GAUGE(metrics::cons_tableblock_total_succ, 0);
         if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_fail, 1);
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_succ, 0);
+            auto error_tag = "cons_table_failed_error_code_" + std::to_string(_evt_obj->get_error_code());
+            XMETRICS_COUNTER_INCREMENT(error_tag, 1);  
         } else {
-            XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_fail, 1);
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 0);
         }
          xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
@@ -456,32 +483,15 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
              _evt_obj->get_error_code(),
              _evt_obj->get_target_proposal()->dump().c_str(),
              xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-       /* XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "proposal_finish_fail", _evt_obj->get_target_proposal()->dump(),
-                            "is_leader", is_leader,
-                            "error_code", _evt_obj->get_error_code(),
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
     } else {
 
         // reset to 0
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
-
         xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
              is_leader,
              _evt_obj->get_target_proposal()->dump().c_str(),
              xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-       /* XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "proposal_finish_succ", _evt_obj->get_target_proposal()->dump(),
-                            "is_leader", is_leader,
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
-        
-        if (is_leader) {
-            auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();
-            auto last_height_tag = "cons_table_last_succ_height_" + get_account();
-            XMETRICS_COUNTER_SET( last_viewid_tag , _evt_obj->get_target_proposal()->get_viewid());
-            XMETRICS_COUNTER_SET( last_height_tag , _evt_obj->get_target_proposal()->get_height());
-        }
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
         xassert(vblock->is_input_ready(true));
@@ -492,7 +502,6 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
 
         XMETRICS_GAUGE(metrics::cons_tableblock_total_succ, 1);
         if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_succ, 1);
             if (vblock->get_height() > 2) {
                 base::xauto_ptr<base::xvblock_t> commit_block =
@@ -503,9 +512,12 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                 }
             }
         } else {
-            XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_succ, 1);
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 1);
         }
+        
+#ifdef ENABLE_METRICS        
+        parse_tx_type_succ_count(vblock);
+#endif
     }
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }

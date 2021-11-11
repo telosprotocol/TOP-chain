@@ -69,7 +69,7 @@ private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
-
+    void    parse_tx_type_succ_count(base::xvblock_t *vblock);
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
     base::xtable_index_t                     m_tableid;

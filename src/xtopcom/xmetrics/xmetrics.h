@@ -81,21 +81,16 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_delete_tick,
 
     // consensus
-    cons_drand_leader_finish_succ,// TODO(jimmy) delete future
-    cons_drand_backup_finish_succ,// TODO(jimmy) delete future
-    cons_drand_leader_finish_fail,// TODO(jimmy) delete future
-    cons_drand_backup_finish_fail,// TODO(jimmy) delete future
-    cons_tableblock_leader_finish_succ,  // TODO(jimmy) delete future
-    cons_tableblock_backup_finish_succ, // TODO(jimmy) delete future
-    cons_tableblock_leader_finish_fail, // TODO(jimmy) delete future
-    cons_tableblock_backup_finish_fail, // TODO(jimmy) delete future
     cons_drand_leader_succ,
     cons_drand_backup_succ,
     cons_tableblock_leader_succ,
     cons_tableblock_backup_succ,
     cons_tableblock_total_succ,
+    cons_tableblock_tx_send_succ,
+    cons_tableblock_tx_recv_succ,
+    cons_tableblock_tx_confirm_succ,
     cons_pacemaker_tc_discontinuity,
-
+    
     cons_table_leader_make_proposal_succ,
     cons_fail_make_proposal_table_state,
     cons_fail_make_proposal_consensus_para,
