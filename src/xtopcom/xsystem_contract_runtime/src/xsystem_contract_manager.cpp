@@ -168,20 +168,25 @@ bool xtop_system_contract_manager::contains(common::xaccount_address_t const & a
     return m_system_contract_deployment_data.find(address) != std::end(m_system_contract_deployment_data);
 }
 
-observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const noexcept {
-    //common::xaccount_address_t contract_address{address};
-
-    //if (address.type() == base::enum_vaccount_addr_type_native_contract && address.ledger_id().zone_id() == common::xconsensus_zone_id) {
-    //    contract_address = common::xaccount_address_t{address.base_address()};
-    //}
+observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept {
+    assert(!ec);
 
     auto const it = m_system_contracts.find(address);
     if (it != std::end(m_system_contracts)) {
         return top::make_observer(top::get<std::unique_ptr<system_contracts::xbasic_system_contract_t>>(*it).get());
     }
 
+    ec = error::xerrc_t::contract_not_found;
     xerror("system_contract_manager: contract %s not found", address.c_str());
     return nullptr;
+}
+
+observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const {
+    std::error_code ec;
+    auto r = system_contract(address, ec);
+    assert(!ec);
+    top::error::throw_error(ec);
+    return r;
 }
 
 std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & xtop_system_contract_manager::deployment_data() const noexcept {

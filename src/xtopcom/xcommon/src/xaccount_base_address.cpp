@@ -70,7 +70,11 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
     }
 
     if (m_account_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
-        if (base_address.length() != 46) {
+        if (base_address.length() != LENGTH) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address);
+        }
+    } else if (m_account_type == base::enum_vaccount_addr_type_secp256k1_user_account) {
+        if (base_address.length() != LAGACY_LENGTH) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address);
         }
     }
