@@ -31,7 +31,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xserializable_based_on.h"
 #include "xcommon/xaddress.h"
-#include "xcontract_common/xaction_execution_param.h"
+#include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xstate_accessor/xaccess_control_data.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"

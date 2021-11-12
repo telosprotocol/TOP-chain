@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xcontract_common/xaction_execution_param.h"
+#include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_runtime/xaction_runtime_fwd.h"

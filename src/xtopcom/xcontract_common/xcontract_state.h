@@ -7,7 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xmemory.hpp"
-#include "xcontract_common/xaction_execution_param.h"
+#include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
 #include "xdata/xtransaction.h"
@@ -423,15 +423,19 @@ public:
 
     /// @brief Get the consensus time height from param.
     /// @return Time height.
-    common::xlogic_time_t time() const;
+    common::xlogic_time_t time() const noexcept;
 
     /// @brief Get the consensus timestamp height from param.
     /// @return Timestamp.
-    common::xlogic_time_t timestamp() const;
+    common::xlogic_time_t timestamp() const noexcept;
 
     /// @brief Get total lock tgas of system.
     /// @return Total tgas.
-    uint64_t system_lock_tgas() const;
+    uint64_t system_lock_tgas() const noexcept;
+
+    /// @brief Get random_seed of system.
+    /// @return Random_seed.
+    std::string const & random_seed() const noexcept;
 
     /* ----------special bstate process interface ---------- */
 private:
@@ -440,7 +444,6 @@ private:
 
 public:
     void create_time(std::error_code & ec);
-    std::string const & random_seed() const noexcept;
     // map, string key
     uint256_t latest_sendtx_hash(std::error_code & ec) const;
     uint256_t latest_sendtx_hash() const;

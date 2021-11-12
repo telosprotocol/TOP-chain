@@ -6,7 +6,7 @@
 
 #include "xbase/xlog.h"
 #include "xbasic/xerror/xerror.h"
-#include "xcontract_common/xaction_execution_param.h"
+#include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_runtime/xaction_session.h"
@@ -33,11 +33,11 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     const contract_common::xcontract_execution_param_t param(cs_para);
     xdbg("[xtop_account_vm::execute] tx size: %" PRIu64, result_size);
     xdbg("[xtop_account_vm::execute] param, clock: %" PRIu64 ", timestamp: %" PRIu64 ", table_account: %s, table_height: %" PRIu64 ", total_lock_tgas: %" PRIu64,
-         param.m_clock,
-         param.m_timestamp,
-         param.m_table_account.c_str(),
-         param.m_table_commit_height,
-         param.m_total_lock_tgas_token);
+         param.clock,
+         param.timestamp,
+         param.table_account.c_str(),
+         param.table_commit_height,
+         param.total_lock_tgas_token);
 
     xaccount_vm_execution_result_t result;
     result.transaction_results.reserve(result_size);
@@ -217,24 +217,19 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             }
         }
         if (r.status.ec) {
-            xdbg("xtop_account_vm::pack, fail, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            xdbg("xtop_account_vm::pack, fail, eccode: %d, msg: %s", r.status.ec.value(), r.status.ec.message().c_str());
             xwarn("[xtop_account_vm::pack] tx[%" PRIu64 "] failed, category: %s, msg: %s", i, r.status.ec.category().name(), r.status.ec.message().c_str());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
             if (tx->is_send_tx() || tx->is_self_tx()) {
-                xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] add to failed assemble", i);
+                xwarn("[xtop_account_vm::pack] fail send/self tx[%" PRIu64 "] add to failed assemble", i);
                 output.failed_tx_assemble.emplace_back(tx);
             } else if (tx->is_recv_tx()) {
-                xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] add to success assemble", i);
+                xwarn("[xtop_account_vm::pack] fail recv tx[%" PRIu64 "] add to success assemble", i);
                 output.success_tx_assemble.emplace_back(tx);
             } else {
                 xerror("[xtop_account_vm::pack] invalid tx type: %" PRIi32, tx->get_tx_type());
                 assert(false);
             }
         } else {
-            xdbg("xtop_account_vm::pack, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            xdbg("xtop_account_vm::pack, eccode: %d, msg: %s", ec.value(), ec.message().c_str());
-            xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] success, category: %s, msg: %s!", i, r.status.ec.category().name(), r.status.ec.message().c_str());
             if (!r.output.receipt_data.empty()) {
                 auto const& receipt_data = r.output.receipt_data.at(contract_common::RECEITP_DATA_ASSET_OUT);
                 tx->set_receipt_data(r.output.receipt_data);

@@ -247,16 +247,20 @@ std::string xtop_contract_state::fullstate_bin() const {
     return r;
 }
 
-common::xlogic_time_t xtop_contract_state::time() const {
-    return m_param.m_clock;
+common::xlogic_time_t xtop_contract_state::time() const noexcept {
+    return m_param.clock;
 }
 
-common::xlogic_time_t xtop_contract_state::timestamp() const {
-    return m_param.m_timestamp;
+common::xlogic_time_t xtop_contract_state::timestamp() const noexcept {
+    return m_param.timestamp;
 }
 
-uint64_t xtop_contract_state::system_lock_tgas() const {
-    return m_param.m_total_lock_tgas_token;
+uint64_t xtop_contract_state::system_lock_tgas() const noexcept {
+    return m_param.total_lock_tgas_token;
+}
+
+std::string const & xtop_contract_state::random_seed() const noexcept {
+    return m_param.random_seed;
 }
 
 uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code & ec) const {
@@ -516,10 +520,6 @@ void xtop_contract_state::last_tx_hour(uint64_t hour) {
 }
 
 void xtop_contract_state::create_time(std::error_code& ec) {
-}
-
-std::string const & xtop_contract_state::random_seed() const noexcept {
-    return m_param.m_random_seed;
 }
 
 bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, uint64_t height) const {

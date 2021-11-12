@@ -79,19 +79,25 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     xassert(lightunit_build_para != nullptr);
 
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
+    xassert(!input_txs.empty());
 
-    bool new_vm{true};
+    bool has_run_contract_tx{false};
+    bool has_other_tx{false};
     for (auto const & tx : input_txs) {
-        if (tx->get_tx_type() != enum_xtransaction_type::xtransaction_type_run_contract) {
-            new_vm = false;
+        if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
+            has_run_contract_tx = true;
+        } else {
+            has_other_tx == true;
         }
     }
-    if (new_vm) {
+    if (has_run_contract_tx && has_other_tx) {
+        xerror("[xlightunit_builder_t::build_block] has run_contract_tx and other_tx same time!");
+        return nullptr;
+    }
+
+    if (has_run_contract_tx) {
         for (auto const & tx : input_txs) {
             xdbg("------>new vm, %s, %s, %d\n", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
-            assert(!tx->get_transaction()->get_source_action().get_action_param().empty());
-            xdbg("------>new vm, %s, %zu, %s\n", tx->get_transaction()->get_source_action().get_action_name().c_str(), tx->get_transaction()->get_source_action().get_action_param().size(),
-                                                 tx->get_transaction()->get_source_action().get_action_param().c_str());
         }
 
         xassert(!cs_para.get_table_account().empty());
