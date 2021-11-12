@@ -436,7 +436,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
         if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
-            auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            auto handler = [this, self=shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
                 this->on_message_push_receipt_received(para->m_sender, para->m_message);
                 return true;
@@ -445,7 +445,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             base::xcall_t asyn_call(handler, para.get());
             m_para->get_fast_dispatcher()->dispatch(asyn_call);
         } else {
-            auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            auto handler = [this, self=shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
                 this->on_message_unit_receipt(para->m_sender, para->m_message);
                 return true;
@@ -467,7 +467,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             return;
         }
 
-        auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+        auto handler = [this, self=shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
             if (para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt || para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2) {
                 this->on_message_pull_receipt_received(para->m_sender, para->m_message);
