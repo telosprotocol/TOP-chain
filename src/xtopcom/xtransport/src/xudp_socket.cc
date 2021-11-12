@@ -74,21 +74,23 @@ int xp2pudp_t::add_linkrefcount()
 }
 int xp2pudp_t::release_linkrefcount()
 {
-    const int new_count = --m_link_refcount;
-    if(new_count <= 0)
-    {
-        close(true); //truely close it
-        if(listen_server_ != nullptr)
-        {
-            listen_server_->CloseXudp(this);
-        } else {
-            TOP_INFO("listen_server_ is null,xudp:%p", this);
-        }
-    }
     TOP_DBG_INFO("release_linkrefcount,xudp:%p, m_link_refcount:%d, get_refcount:%d", this, m_link_refcount.load(), get_refcount());
-    if (m_link_refcount < 0)
-        m_link_refcount = 0;
-    return new_count;
+    return --m_link_refcount;
+    // const int new_count = --m_link_refcount;
+    // if(new_count <= 0)
+    // {
+    //     close(true); //truely close it
+    //     if(listen_server_ != nullptr)
+    //     {
+    //         listen_server_->CloseXudp(this);
+    //     } else {
+    //         TOP_INFO("listen_server_ is null,xudp:%p", this);
+    //     }
+    // }
+    // TOP_DBG_INFO("release_linkrefcount,xudp:%p, m_link_refcount:%d, get_refcount:%d", this, m_link_refcount.load(), get_refcount());
+    // if (m_link_refcount < 0)
+    //     m_link_refcount = 0;
+    // return new_count;
 }
 
 //notify the child endpont is ready to use when receive on_endpoint_open of error_code = enum_xcode_successful
@@ -361,6 +363,7 @@ void XudpSocket::Stop() {
         }
     }
     xudp_client_map.clear();
+    XMETRICS_COUNTER_SET("xtransport_xudp_num", 0);
 }
 
 int XudpSocket::SendToLocal(base::xpacket_t& packet) {
@@ -463,6 +466,7 @@ int XudpSocket::SendDataWithProp(
         peer_xudp_socket->connect_xudp(packet.get_to_ip_addr(), packet.get_to_ip_port(), this);
 
         xudp_client_map[to_addr] = peer_xudp_socket;
+        XMETRICS_COUNTER_INCREMENT("xtransport_xudp_num", 1);
         TOP_DEBUG("conn %s:%p", to_addr.c_str(), peer_xudp_socket);
         AddToRatelimitMap(to_addr);
     } else {
@@ -480,6 +484,7 @@ int XudpSocket::SendDataWithProp(
             peer_xudp_socket->close(true);
             peer_xudp_socket->release_ref();
             xudp_client_map.erase(iter);
+            XMETRICS_COUNTER_INCREMENT("xtransport_xudp_num", -1);
 
             if ((ret = CheckRatelimitMap(to_addr)) != enum_xcode_successful) {
                 TOP_ERROR("reach xudp connection rate limit2, drop this packet:%s, ret:%d", to_addr.c_str(), ret);
@@ -495,6 +500,7 @@ int XudpSocket::SendDataWithProp(
             peer_xudp_socket->connect_xudp(packet.get_to_ip_addr(), packet.get_to_ip_port(), this);
 
             xudp_client_map[to_addr] = peer_xudp_socket;
+            XMETRICS_COUNTER_INCREMENT("xtransport_xudp_num", 1);
             AddToRatelimitMap(to_addr);
             TOP_INFO("reconn %s:%p", to_addr.c_str(), peer_xudp_socket);
         }
@@ -564,6 +570,7 @@ bool XudpSocket::CloseXudp(xp2pudp_t* xudpobj_ptr)
             return false;
         }
         xudp_client_map.erase(it);  // wait for UdpProperty destruction (remove from routing_table)
+        XMETRICS_COUNTER_INCREMENT("xtransport_xudp_num", -1);
     }
 
     TOP_DBG_INFO("close xudp: find in map:%p, get_refcount:%d.call release_ref. close ip:%s:%d",
@@ -615,6 +622,7 @@ int XudpSocket::AddXudp(const std::string& ip_port, xp2pudp_t* new_xudp) {
         } else {
             new_xudp->add_ref();
             xudp_client_map[ip_port] = new_xudp;
+            XMETRICS_COUNTER_INCREMENT("xtransport_xudp_num", 1);
             TOP_DBG_INFO("conn ok %s:%p.call add_ref:%d", ip_port.c_str(), new_xudp, new_xudp->get_refcount());
             return enum_xcode_successful;
         }
