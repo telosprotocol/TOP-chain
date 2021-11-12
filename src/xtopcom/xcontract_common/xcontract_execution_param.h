@@ -12,6 +12,7 @@ NS_BEG2(top, contract_common)
 struct xtop_contract_execution_param {
     common::xlogic_time_t clock{0};
     common::xlogic_time_t timestamp{0};
+    common::xlogic_time_t timeofday{0};
     std::string random_seed;
     std::string table_account;
     uint64_t table_commit_height{0};
@@ -21,6 +22,7 @@ struct xtop_contract_execution_param {
     xtop_contract_execution_param(data::xblock_consensus_para_t const & cs_para) {
         clock = cs_para.get_clock();
         timestamp = cs_para.get_timestamp();
+        timeofday = cs_para.get_gettimeofday_s();
         random_seed = cs_para.get_random_seed();
         table_account = cs_para.get_table_account();
         table_commit_height = cs_para.get_table_proposal_height() >= 3 ? cs_para.get_table_proposal_height() - 3 : 0;

@@ -255,6 +255,10 @@ common::xlogic_time_t xtop_contract_state::timestamp() const noexcept {
     return m_param.timestamp;
 }
 
+common::xlogic_time_t xtop_contract_state::time_of_day() const noexcept {
+    return m_param.timeofday;
+}
+
 uint64_t xtop_contract_state::system_lock_tgas() const noexcept {
     return m_param.total_lock_tgas_token;
 }

@@ -429,6 +429,10 @@ public:
     /// @return Timestamp.
     common::xlogic_time_t timestamp() const noexcept;
 
+    /// @brief Get the time of day second from param.
+    /// @return Timestamp.
+    common::xlogic_time_t time_of_day() const noexcept;
+
     /// @brief Get total lock tgas of system.
     /// @return Total tgas.
     uint64_t system_lock_tgas() const noexcept;
