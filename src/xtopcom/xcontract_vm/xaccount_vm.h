@@ -64,10 +64,11 @@ public:
 
 private:
     contract_runtime::xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                     state_accessor::xstate_accessor_t & ac,
-                                                                     contract_common::xcontract_execution_param_t const & param);
+                                                                     contract_common::xcontract_execution_param_t const & param,
+                                                                     state_accessor::xstate_accessor_t & ac);
     xaccount_vm_output_t pack(std::vector<data::xcons_transaction_ptr_t> const & txs,
                               xaccount_vm_execution_result_t const & result,
+                              contract_common::xcontract_execution_param_t const & param,
                               state_accessor::xstate_accessor_t & ac);
     void abort(const size_t start_index, const size_t size, xaccount_vm_execution_result_t & result);
 };

@@ -50,7 +50,19 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
-            auto action_result = execute_action(std::move(actions[i]), sa, param);
+            // calc delay time collection
+            {
+                auto delay_time = txs[i]->get_transaction()->get_delay_from_fire_timestamp(cs_para.get_gettimeofday_s());
+                if (txs[i]->is_self_tx() || txs[i]->is_send_tx()) {
+                    XMETRICS_GAUGE(metrics::txdelay_from_client_to_sendtx_exec, delay_time);
+                } else if (txs[i]->is_recv_tx()) {
+                    XMETRICS_GAUGE(metrics::txdelay_from_client_to_recvtx_exec, delay_time);
+                } else if (txs[i]->is_confirm_tx()) {
+                    XMETRICS_GAUGE(metrics::txdelay_from_client_to_confirmtx_exec, delay_time);
+                }
+            }
+
+            auto action_result = execute_action(std::move(actions[i]), param, sa);
             if (action_result.status.ec) {
                 xwarn("[xtop_account_vm::execute] tx[%" PRIu64 "] failed, category: %s, msg: %s, abort all txs after!",
                       i,
@@ -84,12 +96,12 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
         result.status.ec = error::xerrc_t::transaction_execution_abort;
     }
 
-    return pack(txs, result, sa);
+    return pack(txs, result, param, sa);
 }
 
 contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                                  state_accessor::xstate_accessor_t & sa,
-                                                                                  contract_common::xcontract_execution_param_t const & param) {
+                                                                                  contract_common::xcontract_execution_param_t const & param,
+                                                                                  state_accessor::xstate_accessor_t & sa) {
     contract_runtime::xtransaction_execution_result_t result;
 
     switch (action->type()) {
@@ -97,6 +109,11 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
         auto const * cons_action = static_cast<data::xsystem_consensus_action_t const *>(action.get());
         contract_common::xcontract_state_t contract_state{cons_action->contract_address(), make_observer(std::addressof(sa)), param};
         result = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(std::move(action));
+
+        XMETRICS_GAUGE(metrics::txexecutor_total_system_contract_count, 1);
+        if (result.status.ec) {
+            XMETRICS_GAUGE(metrics::txexecutor_system_contract_failed_count, 1);
+        }
         break;
     }
 
@@ -128,7 +145,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
         if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (followup_tx.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);
-                auto followup_result = execute_action(std::move(followup_action), sa, param);
+                auto followup_result = execute_action(std::move(followup_action), param, sa);
                 if (followup_result.status.ec) {
                     xwarn("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, category: %s, msg: %s, break!",
                           i,
@@ -170,6 +187,7 @@ void xtop_account_vm::abort(const size_t start_index, const size_t size, xaccoun
 
 xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_ptr_t> const & txs,
                                            xaccount_vm_execution_result_t const & result,
+                                           contract_common::xcontract_execution_param_t const & param,
                                            state_accessor::xstate_accessor_t & sa) {
     xaccount_vm_output_t output;
     std::vector<data::xcons_transaction_ptr_t> output_txs(txs);
@@ -188,6 +206,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
 
     auto recv_tx_num_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
         xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, ec);
+    top::error::throw_error(ec);
     auto recv_tx_num = recv_tx_num_bytes.empty() ? 0 : top::from_bytes<uint64_t>(recv_tx_num_bytes);
     xinfo("[xtop_account_vm::pack] pack last_nonce: %" PRIu64 ", recv_tx_num: %" PRIu64, last_nonce, recv_tx_num);
 
@@ -239,6 +258,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             output.success_tx_assemble.emplace_back(tx);
             for (auto & follow_up : r.output.followup_transaction_data) {
                 auto const & follow_up_tx = follow_up.followed_transaction;
+                follow_up_tx->set_push_pool_timestamp(param.timeofday);
                 if (follow_up.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
                     // followup_tx of success tx is success
                     xdbg("[xtop_account_vm::pack] immediately followup_tx of tx[%" PRIu64 "] add to success assemble", i);
@@ -260,12 +280,23 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             }
         }
     }
-
+    // set recv num
     if (recv_tx_num_new != recv_tx_num) {
         sa.set_property_cell_value<xproperty_type_t::map>(xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system},
                                                           data::XPROPERTY_TX_INFO_RECVTX_NUM,
                                                           top::to_bytes<uint64_t>(recv_tx_num_new),
                                                           ec);
+    }
+    // set create time
+    xtypeless_property_identifier_t time_property{data::XPROPERTY_ACCOUNT_CREATE_TIME, xproperty_category_t::system};
+    auto time_property_exist = sa.property_exist(xproperty_identifier_t{time_property, xproperty_type_t::uint64}, ec);
+    top::error::throw_error(ec);
+    if (!time_property_exist) {
+        auto create_time = param.clock == 0 ? base::TOP_BEGIN_GMTIME : param.clock;
+        sa.create_property(xproperty_identifier_t{time_property, xproperty_type_t::uint64}, ec);
+        top::error::throw_error(ec);
+        sa.set_property<xproperty_type_t::uint64>(time_property, create_time, ec);
+        top::error::throw_error(ec);
     }
 
     if (output.success_tx_assemble.empty()) {
