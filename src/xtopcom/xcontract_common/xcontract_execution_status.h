@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
 #include "xcontract_common/xerror/xerror.h"
 
 #include <string>

@@ -5,7 +5,31 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xcontract_common/xcontract_api_params.h"
+#include "xbasic/xmemory.hpp"
+#include "xstate_accessor/xstate_accessor.h"
+
+#include <string>
+
+using top::observer_ptr;
+using top::state_accessor::xstate_accessor_t;
+struct erc20_params {
+    observer_ptr<xstate_accessor_t> contract_state;
+    std::string code;
+    std::string symbol;
+    std::string total_supply;
+
+    std::vector<top::xbyte_buffer_t> const call_param;
+
+    erc20_params(observer_ptr<xstate_accessor_t> contract_state, std::string const & code, std::string const & symbol, std::string const & total_supply)
+      :
+                contract_state(contract_state), code(code), symbol(symbol), total_supply(total_supply){
+    }
+    erc20_params(observer_ptr<xstate_accessor_t> contract_state, std::vector<top::xbyte_buffer_t> const param) : contract_state(contract_state), call_param(param) {
+    }
+
+    erc20_params(observer_ptr<xstate_accessor_t> _contract_state, std::string _code) : contract_state{_contract_state}, code{_code} {
+    }
+};
 
 struct Erc20_Instance;
 extern "C" Erc20_Instance * get_erc20_instance(uint8_t * s, uint32_t size);

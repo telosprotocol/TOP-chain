@@ -7,17 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcodec/xmsgpack_codec.hpp"
 
-#include "xsystem_contracts/xbasic_system_contract.h"
-#include "xcontract_common/xproperties/xproperty_bytes.h"
-
-#include <string>
-
 NS_BEG3(top, contract_common, serialization)
-
-extern std::map<common::xaccount_address_t, std::string> const sys_addr_to_metrics_enum_get_property_time;
-extern std::map<common::xaccount_address_t, std::string> const sys_addr_to_metrics_enum_set_property_time;
-extern std::map<common::xaccount_address_t, std::string> const sys_addr_to_metrics_enum_get_property_size;
-extern std::map<common::xaccount_address_t, std::string> const sys_addr_to_metrics_enum_set_property_size;
 
 template <typename T>
 struct xtop_msgpack final {
