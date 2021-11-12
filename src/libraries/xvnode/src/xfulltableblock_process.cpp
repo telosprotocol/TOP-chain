@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 
 NS_BEG3(top, vnode, components)
@@ -9,7 +13,7 @@ data::xfulltableblock_statistic_accounts xfulltableblock_process_t::fulltableblo
 
     // process one full tableblock statistic data
     for (auto const & statistic_item: block_statistic_data.detail) {
-        auto elect_statistic = statistic_item.second;
+        auto const& elect_statistic = statistic_item.second;
         xfulltableblock_group_data_t res_group_data;
         for (auto const & group_item: elect_statistic.group_statistics_data) {
             xgroup_related_statistics_data_t const& group_account_data = group_item.second;
