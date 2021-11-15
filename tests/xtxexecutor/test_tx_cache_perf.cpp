@@ -91,28 +91,28 @@ void cache_test_func() {
     std::string tx_hash;
     clock_t start,ends;
     start=clock();
-    for (uint64_t i=1000000;i<2000000;i++) {
+    for (uint64_t i=200000;i<300000;i++) {
         tx_hash = std::to_string(i) + "1234567890123456789012345";
         g_transaction_cache->tx_add(tx_hash, tx);
     }
     ends=clock();
-    std::cout<<"add time2:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;
+    std::cout<<"add time2:"<<ends-start<<"," << 100000/((ends-start)*1.0/1000000)<<std::endl;
 
     start=clock();
-    for (uint64_t i=1000000;i<2000000;i++) {
+    for (uint64_t i=200000;i<300000;i++) {
         tx_hash = std::to_string(i) + "1234567890123456789012345";
         EXPECT_EQ(g_transaction_cache->tx_find(tx_hash), 1);
     }
     ends=clock();
-    std::cout<<"find time2:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;
+    std::cout<<"find time2:"<<ends-start<<"," << 100000/((ends-start)*1.0/1000000)<<std::endl;
 
     start=clock();
-    for (uint64_t i=1000000;i<2000000;i++) {
+    for (uint64_t i=200000;i<300000;i++) {
         tx_hash = std::to_string(i) + "1234567890123456789012345";
         g_transaction_cache->tx_erase(tx_hash);
     }
     ends=clock();
-    std::cout<<"delete time2:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;    
+    std::cout<<"delete time2:"<<ends-start<<"," << 100000/((ends-start)*1.0/1000000)<<std::endl;    
 }
 TEST_F(test_tx_cache_perf, test_cache_thread_BENCH) {
     //g_transaction_cache = std::make_shared<data::xtransaction_cache_t>();
@@ -129,27 +129,27 @@ TEST_F(test_tx_cache_perf, test_cache_thread_BENCH) {
     std::string tx_hash;
     clock_t start,ends;
     start=clock();
-    for (uint64_t i=1000000;i<2000000;i++) {
+    for (uint64_t i=100000;i<200000;i++) {
         tx_hash = std::to_string(i) + "1234567890123456789012345";
         g_transaction_cache->tx_add(tx_hash, tx);
     }
     ends=clock();
-    std::cout<<"add time:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;
+    std::cout<<"add time:"<<ends-start<<"," << 100000/((ends-start)*1.0/1000000)<<std::endl;
 
     start=clock();
-    for (uint64_t i=1000000;i<2000000;i++) {
+    for (uint64_t i=100000;i<200000;i++) {
         tx_hash = std::to_string(i) + "1234567890123456789012345";
         EXPECT_EQ(g_transaction_cache->tx_find(tx_hash), 1);
     }
     ends=clock();
-    std::cout<<"find time:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;
+    std::cout<<"find time:"<<ends-start<<"," << 100000/((ends-start)*1.0/1000000)<<std::endl;
 
     start=clock();
-    for (uint64_t i=1000000;i<2000000;i++) {
+    for (uint64_t i=100000;i<200000;i++) {
         tx_hash = std::to_string(i) + "1234567890123456789012345";
         g_transaction_cache->tx_erase(tx_hash);
     }
     ends=clock();
-    std::cout<<"delete time:"<<ends-start<<"," << 1000000/((ends-start)*1.0/1000000)<<std::endl;    
+    std::cout<<"delete time:"<<ends-start<<"," << 100000/((ends-start)*1.0/1000000)<<std::endl;    
     cache_thread.join();
 }
