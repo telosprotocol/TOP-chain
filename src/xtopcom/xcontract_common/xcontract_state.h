@@ -421,6 +421,19 @@ public:
     /// @return The token object.
     state_accessor::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount);
 
+    /// @brief Transfer tokens from one property the other property in same account state. Throw xtop_error_t exception when any error occurs.
+    /// @param from From property.
+    /// @param to To property.
+    /// @param amount Tranfer amount.
+    /// @param ec Log the error code in the call.
+    void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec);
+
+    /// @brief Transfer tokens from one property the other property in same account state.
+    /// @param from From property.
+    /// @param to To property.
+    /// @param amount Tranfer amount.
+    void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount);
+
     /// @brief Get the consensus time height from param.
     /// @return Time height.
     common::xlogic_time_t time() const noexcept;
@@ -447,7 +460,6 @@ private:
     uint256_t m_latest_followup_tx_hash{};
 
 public:
-    void create_time(std::error_code & ec);
     // map, string key
     uint256_t latest_sendtx_hash(std::error_code & ec) const;
     uint256_t latest_sendtx_hash() const;
@@ -464,11 +476,6 @@ public:
     // map, string key
     uint64_t latest_followup_tx_nonce() const;
     void latest_followup_tx_nonce(uint64_t nonce);
-    // map, string key
-    uint64_t recvtx_num(std::error_code & ec) const;
-    uint64_t recvtx_num() const;
-    void recvtx_num(uint64_t num, std::error_code & ec);
-    void recvtx_num(uint64_t num);
     // map, string key
     uint64_t unconfirm_sendtx_num(std::error_code & ec) const;
     uint64_t unconfirm_sendtx_num() const;
@@ -501,10 +508,6 @@ public:
     void delay_followup(xstake::xreward_dispatch_task const & task);
     void delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks, std::error_code & ec);
     void delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks);
-
-    /* ----------account context interface ---------- */
-    void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec);
-    void transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount);
 };
 using xcontract_state_t = xtop_contract_state;
 

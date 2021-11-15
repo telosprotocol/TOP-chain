@@ -197,7 +197,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
     auto last_nonce_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
         xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, ec);
     top::error::throw_error(ec);
-    auto last_nonce = last_nonce_bytes.empty() ? 0 : top::from_bytes<uint64_t>(last_nonce_bytes);
+    auto last_nonce = last_nonce_bytes.empty() ? 0 : top::from_string<uint64_t>(top::from_bytes<std::string>(last_nonce_bytes));
 
     auto last_hash_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
         xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, ec);
@@ -207,10 +207,10 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
     auto recv_tx_num_bytes = sa.get_property_cell_value<xproperty_type_t::map>(
         xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system}, data::XPROPERTY_TX_INFO_RECVTX_NUM, ec);
     top::error::throw_error(ec);
-    auto recv_tx_num = recv_tx_num_bytes.empty() ? 0 : top::from_bytes<uint64_t>(recv_tx_num_bytes);
+    auto recv_tx_num = recv_tx_num_bytes.empty() ? 0 : top::from_string<uint64_t>(top::from_bytes<std::string>(recv_tx_num_bytes));
     xinfo("[xtop_account_vm::pack] pack last_nonce: %" PRIu64 ", recv_tx_num: %" PRIu64, last_nonce, recv_tx_num);
 
-    uint64_t recv_tx_num_new = recv_tx_num;
+    uint64_t recv_tx_num_new{0};
 
     for (size_t i = 0; i < result.transaction_results.size(); i++) {
         auto const & r = result.transaction_results[i];
@@ -281,10 +281,10 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
         }
     }
     // set recv num
-    if (recv_tx_num_new != recv_tx_num) {
+    if (recv_tx_num_new != 0) {
         sa.set_property_cell_value<xproperty_type_t::map>(xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, xproperty_category_t::system},
                                                           data::XPROPERTY_TX_INFO_RECVTX_NUM,
-                                                          top::to_bytes<uint64_t>(recv_tx_num_new),
+                                                          top::to_bytes<std::string>(top::to_string(recv_tx_num_new + recv_tx_num)),
                                                           ec);
     }
     // set create time
@@ -293,8 +293,6 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
     top::error::throw_error(ec);
     if (!time_property_exist) {
         auto create_time = param.clock == 0 ? base::TOP_BEGIN_GMTIME : param.clock;
-        sa.create_property(xproperty_identifier_t{time_property, xproperty_type_t::uint64}, ec);
-        top::error::throw_error(ec);
         sa.set_property<xproperty_type_t::uint64>(time_property, create_time, ec);
         top::error::throw_error(ec);
     }

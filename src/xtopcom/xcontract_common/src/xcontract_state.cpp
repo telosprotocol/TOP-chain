@@ -274,11 +274,7 @@ uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code & ec) const {
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
         ec);
 
-    if (r.empty()) {
-        return uint256_t{};
-    } else {
-        return top::from_bytes<uint256_t>(r);
-    }
+    return r.empty() ? uint256_t{} : top::from_bytes<uint256_t>(r);
 }
 
 uint256_t xtop_contract_state::latest_sendtx_hash() const {
@@ -294,7 +290,7 @@ void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & e
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
-        top::to_bytes<uint256_t>(hash),
+        top::to_bytes<std::string>(std::string{reinterpret_cast<char *>(hash.data()), static_cast<uint32_t>(hash.size())}),
         ec);
 }
 
@@ -312,11 +308,7 @@ uint64_t xtop_contract_state::latest_sendtx_nonce(std::error_code & ec) const {
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM,
         ec);
 
-    if (r.empty()) {
-        return uint64_t(0);
-    } else {
-        return top::from_bytes<uint64_t>(r);
-    }
+    return r.empty() ? 0 : top::from_string<uint64_t>(top::from_bytes<std::string>(r));
 }
 
 uint64_t xtop_contract_state::latest_sendtx_nonce() const {
@@ -332,7 +324,7 @@ void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce, std::error_code & 
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM,
-        top::to_bytes<uint64_t>(nonce),
+        top::to_bytes<std::string>(top::to_string(nonce)),
         ec);
 }
 
@@ -359,44 +351,6 @@ void xtop_contract_state::latest_followup_tx_nonce(uint64_t nonce) {
     m_latest_followup_tx_nonce = nonce;
 }
 
-uint64_t xtop_contract_state::recvtx_num(std::error_code & ec) const {
-    assert(!ec);
-    auto r = get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
-        data::XPROPERTY_TX_INFO_RECVTX_NUM,
-        ec);
-    
-    if (r.empty()) {
-        return uint64_t(0);
-    } else {
-        return top::from_bytes<uint64_t>(r);
-    }
-}
-
-uint64_t xtop_contract_state::recvtx_num() const {
-    std::error_code ec;
-    auto const r = recvtx_num(ec);
-    assert(!ec);
-    top::error::throw_error(ec);
-    return r;
-}
-
-void xtop_contract_state::recvtx_num(uint64_t num, std::error_code & ec) {
-    assert(!ec);
-    set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
-        data::XPROPERTY_TX_INFO_RECVTX_NUM,
-        top::to_bytes<uint64_t>(num),
-        ec);
-}
-
-void xtop_contract_state::recvtx_num(uint64_t num) {
-    std::error_code ec;
-    recvtx_num(num, ec);
-    assert(!ec);
-    top::error::throw_error(ec);
-}
-
 uint64_t xtop_contract_state::unconfirm_sendtx_num(std::error_code & ec) const {
     assert(!ec);
     auto r = get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
@@ -404,11 +358,7 @@ uint64_t xtop_contract_state::unconfirm_sendtx_num(std::error_code & ec) const {
         data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,
         ec);
 
-    if (r.empty()) {
-        return uint64_t(0);
-    } else {
-        return top::from_bytes<uint64_t>(r);
-    }
+    return r.empty() ? 0 : top::from_string<uint64_t>(top::from_bytes<std::string>(r));
 }
 
 uint64_t xtop_contract_state::unconfirm_sendtx_num() const {
@@ -424,7 +374,7 @@ void xtop_contract_state::unconfirm_sendtx_num(uint64_t num, std::error_code & e
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,
-        top::to_bytes<uint64_t>(num),
+        top::to_bytes<std::string>(top::to_string(num)),
         ec);
 }
 
@@ -437,27 +387,33 @@ void xtop_contract_state::unconfirm_sendtx_num(uint64_t num) {
 
 uint64_t xtop_contract_state::used_tgas(std::error_code & ec) const {
     assert(!ec);
-    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}, ec));
+    auto r = get_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}, ec);
+    
+    return r.empty() ? 0 : top::from_string<uint64_t>(r);
 }
 
 uint64_t xtop_contract_state::used_tgas() const {
-    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system}));
+    std::error_code ec;
+    auto const r = used_tgas(ec);
+    assert(!ec);
+    top::error::throw_error(ec);
+    return r;
 }
 
 void xtop_contract_state::used_tgas(uint64_t amount, std::error_code & ec) {
     assert(!ec);
     set_property<state_accessor::properties::xproperty_type_t::string>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system},
-        base::xstring_utl::tostring(amount),
+        top::to_string(amount),
         ec);
 }
 
 void xtop_contract_state::used_tgas(uint64_t amount) {
-    set_property<state_accessor::properties::xproperty_type_t::string>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_USED_TGAS_KEY, state_accessor::properties::xproperty_category_t::system},
-        base::xstring_utl::tostring(amount));
+    std::error_code ec;
+    used_tgas(amount, ec);
+    assert(!ec);
+    top::error::throw_error(ec);
 }
 
 uint64_t xtop_contract_state::lock_tgas(std::error_code & ec) const {
@@ -467,8 +423,11 @@ uint64_t xtop_contract_state::lock_tgas(std::error_code & ec) const {
 }
 
 uint64_t xtop_contract_state::lock_tgas() const {
-    return get_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LOCK_TGAS, state_accessor::properties::xproperty_category_t::system});
+    std::error_code ec;
+    auto const r = lock_tgas(ec);
+    assert(!ec);
+    top::error::throw_error(ec);
+    return r;
 }
 
 void xtop_contract_state::lock_tgas(uint64_t amount, std::error_code & ec) {
@@ -478,8 +437,10 @@ void xtop_contract_state::lock_tgas(uint64_t amount, std::error_code & ec) {
 }
 
 void xtop_contract_state::lock_tgas(uint64_t amount) {
-    set_property<state_accessor::properties::xproperty_type_t::uint64>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LOCK_TGAS, state_accessor::properties::xproperty_category_t::system}, amount);
+    std::error_code ec;
+    lock_tgas(amount, ec);
+    assert(!ec);
+    top::error::throw_error(ec);
 }
 
 uint64_t xtop_contract_state::disk(std::error_code & ec) const {
@@ -500,30 +461,33 @@ void xtop_contract_state::disk(uint64_t amount) {
 
 uint64_t xtop_contract_state::last_tx_hour(std::error_code & ec) const {
     assert(!ec);
-    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system}, ec));
+    auto r = get_property<state_accessor::properties::xproperty_type_t::string>(
+        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system}, ec);
+
+    return r.empty() ? 0 : top::from_string<uint64_t>(r);
 }
 
 uint64_t xtop_contract_state::last_tx_hour() const {
-    return base::xstring_utl::touint64(get_property<state_accessor::properties::xproperty_type_t::string>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system}));
+    std::error_code ec;
+    auto const r = last_tx_hour(ec);
+    assert(!ec);
+    top::error::throw_error(ec);
+    return r;
 }
 
 void xtop_contract_state::last_tx_hour(uint64_t hour, std::error_code & ec) {
     assert(!ec);
     set_property<state_accessor::properties::xproperty_type_t::string>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system},
-        base::xstring_utl::tostring(hour),
+        top::to_string(hour),
         ec);
 }
 
 void xtop_contract_state::last_tx_hour(uint64_t hour) {
-    set_property<state_accessor::properties::xproperty_type_t::string>(
-        state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_LAST_TX_HOUR_KEY, state_accessor::properties::xproperty_category_t::system},
-        base::xstring_utl::tostring(hour));
-}
-
-void xtop_contract_state::create_time(std::error_code& ec) {
+    std::error_code ec;
+    last_tx_hour(hour, ec);
+    assert(!ec);
+    top::error::throw_error(ec);
 }
 
 bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, uint64_t height) const {
@@ -590,7 +554,7 @@ void xtop_contract_state::delay_followup(xstake::xreward_dispatch_task const & t
     if (tasks.size() > 0) {
         auto it = tasks.end();
         it--;
-        task_id = base::xstring_utl::touint32(it->first);
+        task_id = top::from_string<uint32_t>(it->first);
         task_id++;
     }
 
@@ -620,7 +584,7 @@ void xtop_contract_state::delay_followup(std::vector<xstake::xreward_dispatch_ta
     if (prev_tasks.size() > 0) {
         auto it = prev_tasks.end();
         it--;
-        task_id = base::xstring_utl::touint32(it->first);
+        task_id = top::from_string<uint32_t>(it->first);
         task_id++;
     }
 
