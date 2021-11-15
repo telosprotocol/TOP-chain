@@ -161,7 +161,7 @@ protected:
         return r;
     }
 
-    xbyte_buffer_t const & receipt_data(std::string const & key, std::error_code & ec) const override final;
+    xbyte_buffer_t const receipt_data(std::string const & key) const override final;
     void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) override final;
     void call(common::xaccount_address_t const & target_addr,
               std::string const & method_name,

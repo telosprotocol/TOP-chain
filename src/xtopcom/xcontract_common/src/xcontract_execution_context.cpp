@@ -45,27 +45,20 @@ std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_conte
     return m_execution_result.output.followup_transaction_data;
 }
 
-void xtop_contract_execution_context::input_receipt_data(std::map<std::string, xbyte_buffer_t> receipt_data) {
-    m_receipt_data = std::move(receipt_data);
+void xtop_contract_execution_context::input_receipt_data(std::map<std::string, xbyte_buffer_t>const& receipt_data) {
+    m_receipt_data.receipt_data(receipt_data);
 }
 
-std::map<std::string, xbyte_buffer_t> & xtop_contract_execution_context::input_receipt_data() noexcept {
-    return m_receipt_data;
-}
-
-std::map<std::string, xbyte_buffer_t> & xtop_contract_execution_context::output_receipt_data() noexcept {
+xreceipt_data_store_t& xtop_contract_execution_context::output_receipt_data() noexcept {
     return m_execution_result.output.receipt_data;
 }
 
-xbyte_buffer_t const & xtop_contract_execution_context::input_receipt_data(std::string const & key, std::error_code & ec) const noexcept {
-    static xbyte_buffer_t const empty;
-    auto const it = m_receipt_data.find(key);
-    if (it != std::end(m_receipt_data)) {
-        return top::get<xbyte_buffer_t>(*it);
-    }
+xbyte_buffer_t xtop_contract_execution_context::input_receipt_data(std::string const & key) const {
+    return m_receipt_data.receipt_data_item(key);
+}
 
-    ec = error::xerrc_t::receipt_data_not_found;
-    return empty;
+void xtop_contract_execution_context::remove_input_receipt_data(std::string const & key) {
+    m_receipt_data.remove_item(key);
 }
 
 //observer_ptr<xbasic_contract_t> xtop_contract_execution_context::system_contract(common::xaccount_address_t const & address) const noexcept {

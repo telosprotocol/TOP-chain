@@ -8,6 +8,7 @@
 #include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state_fwd.h"
+#include "xcontract_common/xreceipt_data_store.h"
 #include "xcontract_runtime/xaction_runtime_fwd.h"
 #include "xcontract_runtime/xaction_session_fwd.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
