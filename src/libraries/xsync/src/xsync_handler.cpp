@@ -87,7 +87,7 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_ondemand_chain_snapshot_response, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_get_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::get_on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-
+    register_handler(xmessage_id_sync_archive_height, std::bind(&xsync_handler_t::recv_archive_height, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -919,6 +919,41 @@ void xsync_handler_t::on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork
         return;
 
     m_sync_on_demand->handle_blocks_by_hash_response(blocks, from_address, network_self);
+}
+
+void xsync_handler_t::recv_archive_height(uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time) {
+
+    XMETRICS_GAUGE(metrics::xsync_recv_archive_height, 1);
+
+    auto ptr = make_object_ptr<xchain_state_info_t>();
+    ptr->serialize_from(stream);
+    xsync_dbg("recv_archive_height: %s,%llu", ptr->address.c_str(), ptr->end_height);
+
+    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
+    if (latest_end_block_height < ptr->end_height + 50)  // not send blocks within 50 blocks
+        return;
+
+    uint32_t count = 3;
+    uint32_t start_height = ptr->end_height + 1;
+    std::vector<xblock_ptr_t> vector_blocks;
+    for (uint32_t height = start_height; height < start_height + count ; height++) {
+        auto blocks = m_sync_store->load_block_objects(ptr->address, height);
+        if (blocks.empty()) {
+            break;
+        }
+        for (uint32_t j = 0; j < blocks.size(); j++){
+            vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
+        }
+    }
+    xsync_info("recv_archive_height, send blocks: %d, %d", start_height, vector_blocks.size());
+    XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
+    m_sync_sender->send_blocks(xsync_msg_err_code_t::succ, ptr->address, vector_blocks, network_self, from_address);
 }
 
 int64_t xsync_handler_t::get_time() {

@@ -227,6 +227,13 @@ void xsync_sender_t::send_get_on_demand_by_hash_blocks(const std::string &addres
     send_message(body, xmessage_id_sync_get_on_demand_by_hash_blocks, "get_on_demand_by_hash_blocks", self_addr, target_addr);
 }
 
+void xsync_sender_t::send_archive_height(const xchain_state_info_t& info,
+    const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
+    auto body = make_object_ptr<xchain_state_info_t>(info);
+    send_message(body, xmessage_id_sync_archive_height, "archive_height", self_addr, target_addr);
+    xsync_dbg("xsync_sender_t send_archive_height: %s, %llu, src %s dst %s", info.address.c_str(), info.end_height, self_addr.to_string().c_str(), target_addr.to_string().c_str());
+}
+
 bool xsync_sender_t::send_message(
             const xobject_ptr_t<basic::xserialize_face_t> serializer,
             const common::xmessage_id_t msgid, 

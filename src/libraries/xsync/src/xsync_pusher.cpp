@@ -12,7 +12,9 @@ NS_BEG2(top, sync)
 
 using namespace data;
 
-// map dst to src, return my mapping
+// src_count < dst_count, one to many
+// src_count == dst_count, one to one
+// src_count > dst_count , (null or one) to one
 std::vector<uint32_t>  calc_push_mapping(uint32_t src_count, uint32_t dst_count, uint32_t src_self_position, uint32_t random) {
 
     if (src_count == 0 || dst_count == 0)
@@ -135,6 +137,10 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
+        if (block->get_height() % 5 ==  0 && block->get_account().substr(0,7) == "Ta0000@") {
+            xsync_dbg("push_newblock_to_archive, skip block: %s,%d", block->get_account().c_str(), block->get_height());
+            return;
+        }
         std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
         xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
             push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
@@ -151,61 +157,6 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
 
-    #if 0
-    if(common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-        // push archive node
-        overlap_quota = 3;
-
-        if (overlap_quota > archive_list.size()) {
-            overlap_quota = archive_list.size();
-        } else {
-            uint32_t tmp = archive_list.size() / 3;
-            if (tmp >= overlap_quota) {
-                overlap_quota = tmp;
-            }
-        }
-
-        for (auto neighbor = all_neighbors.begin(); (neighbor != all_neighbors.end()) && (overlap_count < overlap_quota); ++neighbor) {
-            for (auto archive_addr:archive_list) {
-                if (neighbor->account_address() == archive_addr.account_address()) {
-                    overlap_count++;
-                    break;
-                }
-            }
-        }
-    } else if (common::has<common::xnode_type_t::zec>(self_addr.type()) || common::has<common::xnode_type_t::rec>(self_addr.type())) {
-        overlap_count = overlap_quota - 1;
-    } else {
-        overlap_count = overlap_quota + 1;
-    }
-
-
-    xsync_dbg("push_newblock_to_archive overlap_count over overlap_quota %u", overlap_quota <= overlap_count);
-
-    if (!archive_list.empty() && (overlap_count < overlap_quota)) {
-        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
-        xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
-            push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
-        for (auto &dst_idx: push_arcs) {
-            vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
-            bool found = false;
-            for (auto neighbor:all_neighbors) {
-                if (neighbor.account_address() == target_addr.account_address()) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                xsync_dbg("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
-                    self_addr.to_string().c_str(),
-                    target_addr.to_string().c_str(),
-                    block->get_height());
-                m_sync_sender->push_newblock(block, self_addr, target_addr);
-            }
-        }
-    }
-    #endif
     // push edge archive
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {
