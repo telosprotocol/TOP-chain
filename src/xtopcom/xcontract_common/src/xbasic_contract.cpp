@@ -50,18 +50,6 @@ state_accessor::xtoken_t xtop_basic_contract::withdraw(std::uint64_t amount) {
     return m_balance.withdraw(amount);
 }
 
-state_accessor::xtoken_t xtop_basic_contract::state_withdraw(std::uint64_t amount) {
-    state_accessor::properties::xproperty_identifier_t balance_property_id{
-                data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-    return contract_state()->withdraw(balance_property_id, common::xsymbol_t{"TOP"}, amount);
-}
-
-void xtop_basic_contract::state_deposit(state_accessor::xtoken_t token) {
-    state_accessor::properties::xproperty_identifier_t balance_property_id{
-                data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
-    return contract_state()->deposit(balance_property_id, std::move(token));
-}
-
 void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
     assert(m_balance.symbol() == token.symbol());
     m_balance.deposit(std::move(token));

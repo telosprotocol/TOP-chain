@@ -38,7 +38,7 @@ uint64_t xtop_token_property::amount() const {
 }
 
 state_accessor::xtoken_t xtop_token_property::withdraw(std::uint64_t amount) {
-    xproperty_utl_t::property_assert(amount > this->amount(),  error::xerrc_t::token_not_enough, "[xtop_token_property::withdraw]withdraw amount overflow, amount: " + std::to_string(amount));
+    xproperty_utl_t::property_assert(this->amount() > amount,  error::xerrc_t::token_not_enough, "[xtop_token_property::withdraw]withdraw amount overflow, amount: " + std::to_string(amount));
     return associated_state()->withdraw(id(), m_symbol, amount);
 }
 
