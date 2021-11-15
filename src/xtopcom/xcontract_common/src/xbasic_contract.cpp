@@ -326,7 +326,7 @@ void xtop_basic_contract::delay_followup(xfollowup_transaction_delay_param_t con
     if (task.action == xstake::XTRANSFER_ACTION) {
         std::map<std::string, uint64_t> map;
         base::xstream_t stream(base::xcontext_t::instance());
-        map.emplace(task.contract, base::xstring_utl::touint64(task.params));
+        map.emplace(task.contract, top::from_string<uint64_t>(task.params));
         stream << map;
         task.params = std::string((char *)stream.data(), stream.size());
     } else {
@@ -345,7 +345,7 @@ void xtop_basic_contract::delay_followup(std::vector<xfollowup_transaction_delay
         if (task.action == xstake::XTRANSFER_ACTION) {
             std::map<std::string, uint64_t> map;
             base::xstream_t stream(base::xcontext_t::instance());
-            map.emplace(task.contract, base::xstring_utl::touint64(param.method_params));
+            map.emplace(task.contract, top::from_string<uint64_t>(param.method_params));
             stream << map;
             task.params = std::string((char *)stream.data(), stream.size());
         } else {

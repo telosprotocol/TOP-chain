@@ -87,7 +87,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
             has_run_contract_tx = true;
         } else {
-            has_other_tx == true;
+            has_other_tx = true;
         }
     }
     if (has_run_contract_tx && has_other_tx) {

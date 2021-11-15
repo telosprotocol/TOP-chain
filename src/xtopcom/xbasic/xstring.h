@@ -60,6 +60,9 @@ template <>
 int from_string<int>(std::string const & input);
 
 template <>
+unsigned int from_string<unsigned int>(std::string const & input);
+
+template <>
 long from_string<long>(std::string const & input);
 
 template <>
