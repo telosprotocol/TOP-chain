@@ -77,8 +77,6 @@ public:
 
     uint64_t balance() const override;
     state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
-    state_accessor::xtoken_t state_withdraw(std::uint64_t amount);
-    void state_deposit(state_accessor::xtoken_t token);
     void deposit(state_accessor::xtoken_t token) override;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept override;
