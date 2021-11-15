@@ -278,7 +278,7 @@ void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & e
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
-        top::to_bytes<uint256_t>(hash),
+        top::to_bytes<std::string>(std::string{reinterpret_cast<char *>(hash.data()), static_cast<uint32_t>(hash.size())}),
         ec);
 }
 
