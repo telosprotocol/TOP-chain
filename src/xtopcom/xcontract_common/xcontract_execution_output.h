@@ -6,6 +6,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xcontract_common/xcontract_execution_fee.h"
+#include "xcontract_common/xreceipt_data_store.h"
 #include "xcontract_common/xfollowup_transaction_datum.h"
 
 #include <map>
@@ -16,7 +17,7 @@ NS_BEG2(top, contract_common)
 
 struct xtop_contract_execution_output {
     xcontract_execution_fee_t fee_change;
-    std::map<std::string, xbyte_buffer_t> receipt_data;
+    xreceipt_data_store_t receipt_data;
     std::vector<xfollowup_transaction_datum_t> followup_transaction_data;
     std::string binlog;
     std::string contract_state_snapshot;

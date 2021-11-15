@@ -101,13 +101,11 @@ xbyte_buffer_t xtop_basic_contract::action_data() const {
 state_accessor::xtoken_t xtop_basic_contract::last_action_asset(std::error_code & ec) const {
     assert(!ec);
 
-    auto& receipt_data = m_associated_execution_context->input_receipt_data();
+    auto const& receipt_data = m_associated_execution_context->input_receipt_data(RECEITP_DATA_ASSET_OUT);
     state_accessor::xtoken_t token;
-    // assert(receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end());
-    if (receipt_data.find(RECEITP_DATA_ASSET_OUT) != receipt_data.end()) {
-        auto const src_asset_data = receipt_data.at(RECEITP_DATA_ASSET_OUT);
-        receipt_data.erase(RECEITP_DATA_ASSET_OUT);
-        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)src_asset_data.data(), src_asset_data.size());
+    if (!receipt_data.empty()) {
+        m_associated_execution_context->remove_input_receipt_data(RECEITP_DATA_ASSET_OUT);
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)receipt_data.data(), receipt_data.size());
         token.move_from(stream);
     }
     return std::move(token);
@@ -421,18 +419,18 @@ observer_ptr<properties::xproperty_initializer_t const> xtop_basic_contract::pro
     return make_observer(std::addressof(m_property_initializer));
 }
 
-xbyte_buffer_t const & xtop_basic_contract::receipt_data(std::string const & key, std::error_code & ec) const {
-    return m_associated_execution_context->input_receipt_data(key, ec);
+xbyte_buffer_t const xtop_basic_contract::receipt_data(std::string const & key) const {
+    return m_associated_execution_context->input_receipt_data(key);
 }
+
 void xtop_basic_contract::write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) {
     auto& receipt_data = m_associated_execution_context->output_receipt_data();
-    auto const it = receipt_data.find(key);
-    if (it != std::end(receipt_data)) {
+    if (receipt_data.item_exist(key)) {
         ec = error::xerrc_t::receipt_data_already_exist;
         return;
     }
 
-    receipt_data.emplace(key, std::move(value));
+    receipt_data.add_item(key, value);
 }
 
 common::xlogic_time_t xtop_basic_contract::time() const {
