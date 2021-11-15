@@ -292,8 +292,6 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
     top::error::throw_error(ec);
     if (!time_property_exist) {
         auto create_time = param.clock == 0 ? base::TOP_BEGIN_GMTIME : param.clock;
-        sa.create_property(xproperty_identifier_t{time_property, xproperty_type_t::uint64}, ec);
-        top::error::throw_error(ec);
         sa.set_property<xproperty_type_t::uint64>(time_property, create_time, ec);
         top::error::throw_error(ec);
     }
