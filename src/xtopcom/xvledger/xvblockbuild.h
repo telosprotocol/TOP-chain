@@ -36,6 +36,9 @@ namespace top
                                         const std::string & _justify_hash);
             // some optional parameters
             void    set_extra_data(const std::string & _extra_data) {m_extra_data = _extra_data;}
+            // std::string get_header_extra(const xlightunit_block_para_t & bodypara) const;
+            uint64_t get_clock() const {return m_clock;}
+            uint64_t get_height() const {return m_height;}
 
         private:
             void    set_default_qcert();

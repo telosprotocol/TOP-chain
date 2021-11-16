@@ -43,10 +43,12 @@ class xlightunit_builder_mock_t : public blockmaker::xlightunit_builder_t {
             } else if (tx->is_recv_tx()) {
                 _account_context->top_token_transfer_in(1);  // TODO(jimmy)
             }
+            tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
         }
         _account_context->finish_exec_all_txs(input_txs);
         xtransaction_result_t result;
         _account_context->get_transaction_result(result);
+        lightunit_build_para->set_pack_txs(input_txs);
 
         xlightunit_block_para_t lightunit_para;
         // set lightunit para by tx result
@@ -147,15 +149,15 @@ class xdatamock_unit {
 
     void push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
         for (auto & tx : txs) {
-            push_tx(tx);
+            push_tx(tx, m_raw_txs);
         }
     }
-    void push_tx(const xcons_transaction_ptr_t & tx) {
+    void push_tx(const xcons_transaction_ptr_t & tx, const std::map<std::string, xtransaction_ptr_t> & raw_txs) {
         std::string account = tx->get_account_addr();
         xassert(account == get_account());
         if (tx->is_confirm_tx()) {
-            auto iter = m_raw_txs.find(tx->get_tx_hash());
-            if (iter == m_raw_txs.end()) {
+            auto iter = raw_txs.find(tx->get_tx_hash());
+            if (iter == raw_txs.end()) {
                 xassert(false);
             } else {
                 tx->set_raw_tx(iter->second.get());
@@ -163,6 +165,9 @@ class xdatamock_unit {
         }
         m_current_txs.push_back(tx);
     }
+
+    void clear_exec_txs() {m_exec_txs.clear();}
+    const std::vector<xcons_transaction_ptr_t> & get_exec_txs() const {return m_exec_txs;}
 
     xblock_ptr_t generate_unit(const base::xreceiptid_state_ptr_t & receiptid_state, const data::xblock_consensus_para_t & cs_para) {
         xblock_ptr_t prev_block = get_cert_block();
@@ -174,6 +179,8 @@ class xdatamock_unit {
         } else if (!m_current_txs.empty()) {
             xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
             proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);
+            std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+            m_exec_txs = lightunit_build_para->get_pack_txs();
         } else {
             if (get_cert_block()->get_height() != 0
                 && (get_cert_block()->get_block_class() == base::enum_xvblock_class_light || get_lock_block()->get_block_class() == base::enum_xvblock_class_light) ) {
@@ -253,6 +260,7 @@ class xdatamock_unit {
     std::string                             m_account;
     xaccount_ptr_t                          m_unit_bstate{nullptr};
     std::vector<xcons_transaction_ptr_t>    m_current_txs;
+    std::vector<xcons_transaction_ptr_t>    m_exec_txs;
     std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     std::vector<xblock_ptr_t>               m_history_units;
     xblock_builder_face_ptr_t               m_fullunit_builder;

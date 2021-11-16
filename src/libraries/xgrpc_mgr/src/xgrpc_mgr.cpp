@@ -96,9 +96,12 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
 
 #ifdef DEBUG
     // adding push tx log info
-    std::vector<xlightunit_action_ptr_t> txactions = bp->get_lighttable_tx_actions();
+    auto txactions = bp->get_tx_actions();
     for (auto & action : txactions) {
-        xdbg("grpc stream tx hash: tx_key=%s", action->get_tx_dump_key().c_str());
+        if (!action.get_org_tx_hash().empty()) {
+            xlightunit_action_t txaction(action);
+            xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
+        }
     }
 #endif
 

@@ -17,15 +17,18 @@ NS_BEG2(top, data)
 
 class xlightunit_build_t : public base::xvblockmaker_t {
  public:
+    static bool should_build_no_txaction_unit(const uint64_t clock, const uint64_t height);
     xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara);
     xlightunit_build_t(base::xvblock_t* prev_block, const xlightunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
     xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
+    std::string get_header_extra(const xlightunit_block_para_t & bodypara) const ;
 
- private:
+    static base::xvaction_t make_action(const xcons_transaction_ptr_t & tx);
+
+private:
     bool build_block_body(const xlightunit_block_para_t & para);
-    base::xvaction_t make_action(const xcons_transaction_ptr_t & tx);
 };
 
 class xemptyblock_build_t : public base::xvblockmaker_t {

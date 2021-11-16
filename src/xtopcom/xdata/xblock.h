@@ -47,6 +47,7 @@
 NS_BEG2(top, data)
 
 using base::xaccount_index_t;
+using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
 class xblock_consensus_para_t;
 
 class xblockheader_extra_data_t : public xserializable_based_on<void> {
@@ -74,7 +75,7 @@ class xblock_t : public base::xvblock_t {
  public:
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
-    static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
+    static void  txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & txs_info, base::xreceiptid_check_t & receiptid_check);
     static std::string dump_header(base::xvheader_t* header);
     static void  register_object(base::xcontext_t & _context);
 public:
@@ -97,7 +98,6 @@ public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
     virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) {};
-
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}
     inline base::enum_xvblock_class get_block_class() const {return get_header()->get_block_class();}
@@ -118,8 +118,7 @@ public:
     std::string     dump_cert(base::xvqcert_t* qcert) const;
 
  public:
-    virtual std::vector<xlightunit_action_ptr_t>    get_lighttable_tx_actions() const;
-    virtual const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const { return m_empty_txs;}
+    virtual const std::vector<xlightunit_tx_info_ptr_t> get_txs() const { return m_empty_txs;}
     virtual xlightunit_tx_info_ptr_t    get_tx_info(const std::string & txhash) const;
     virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}
     virtual uint32_t                    get_txs_count() const {return 0;}
@@ -140,12 +139,10 @@ public:
     static uint256_t                               m_empty_uint256;
     static std::string                             m_empty_string;
     static std::vector<xobject_ptr_t<xblock_t>>    m_empty_blocks;
-
 };
 
 using xblock_ptr_t = xobject_ptr_t<xblock_t>;
 using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
-using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
 class xblock_consensus_para_t {
  public:
     xblock_consensus_para_t() = default;
@@ -174,6 +171,7 @@ class xblock_consensus_para_t {
     void    set_justify_cert_hash(const std::string & justify_cert_hash) const {m_justify_cert_hash = justify_cert_hash;}
     void    set_parent_height(uint64_t height) const {m_parent_height = height;}
     void    set_timeofday_s(uint64_t now) {m_timeofday_s = now;}
+    void    set_clock(uint64_t clock) {m_clock = clock;}
 
  public:
     const std::string &     get_extra_data() const {return m_extra_data;}

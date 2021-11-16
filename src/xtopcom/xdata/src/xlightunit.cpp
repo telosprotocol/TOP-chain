@@ -6,7 +6,6 @@
 #include "xbase/xobject_ptr.h"
 #include "xbase/xhash.h"
 #include "xbase/xatom.h"
-#include "xvledger/xvtxindex.h"
 #include "xvledger/xvblockbuild.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xlightunit.h"
@@ -61,31 +60,68 @@ void * xlightunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
+std::vector<base::xvtxkey_t> xlightunit_block_t::get_txkeys() const {
+    auto & extra_str = get_header()->get_extra_data();
+    base::xvheader_extra he;
+    he.serialize_from_string(extra_str);
+
+    auto txs_str = he.get_val(base::HEADER_KEY_TXS);
+    if (txs_str.empty()) {
+        xdbg("empty header, account:%s", get_account().c_str());
+        return std::vector<base::xvtxkey_t>{};
+    }
+
+    base::xvtxkey_vec_t txs;
+    txs.serialize_from_string(txs_str);
+    return txs.get_txkeys();
+}
+
 void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
-    auto & txs = get_txs();
     xJson::Value ji;
-    for (auto & tx : txs) {
-        xJson::Value jv;
-        jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
-        jv["send_tx_lock_gas"] = static_cast<unsigned long long>(tx->get_send_tx_lock_tgas());
-        jv["used_gas"] = tx->get_used_tgas();
-        jv["used_tx_deposit"] = tx->get_used_deposit();
-        jv["used_disk"] = tx->get_used_disk();
-        jv["tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
-        xJson::Value jtx;
-        jtx["0x" + tx->get_tx_hex_hash()] = jv;
-        ji["txs"].append(jtx);
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+        auto txs = get_txs();
+        for (auto & tx : txs) {
+            xJson::Value jv;
+            jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
+            jv["send_tx_lock_gas"] = static_cast<unsigned long long>(tx->get_send_tx_lock_tgas());
+            jv["used_gas"] = tx->get_used_tgas();
+            jv["used_tx_deposit"] = tx->get_used_deposit();
+            jv["used_disk"] = tx->get_used_disk();
+            jv["tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
+            xJson::Value jtx;
+            jtx["0x" + tx->get_tx_hex_hash()] = jv;
+            ji["txs"].append(jtx);
+        }
+    } else {
+        auto tx_vec = get_txkeys();
+        for (auto & tx : tx_vec) {
+            xJson::Value jv;
+            jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+            xJson::Value jtx;
+            jtx["0x" + tx.get_tx_hex_hash()] = jv;
+            ji["txs"].append(jtx);
+        }
     }
     root["lightunit"]["lightunit_input"] = ji;
 }
 
 void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
-    auto & txs = get_txs();
-    for (auto & tx : txs) {
-        xJson::Value jv;
-        jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
-        jv["tx_hash"] = "0x" + tx->get_tx_hex_hash();
-        root["lightunit"]["lightunit_input"].append(jv);
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+        auto txs = get_txs();
+        for (auto & tx : txs) {
+            xJson::Value jv;
+            jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
+            jv["tx_hash"] = "0x" + tx->get_tx_hex_hash();
+            root["lightunit"]["lightunit_input"].append(jv);
+        }
+    } else {
+        auto tx_vec = get_txkeys();
+        for (auto & tx : tx_vec) {
+            xJson::Value jv;
+            jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+            jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
+            root["lightunit"]["lightunit_input"].append(jv);
+        }
     }
 }
 
@@ -106,7 +142,7 @@ std::string xlightunit_block_t::dump_body() const {
     return ss.str();
 }
 
-const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() const {
+const std::vector<xlightunit_tx_info_ptr_t> xlightunit_block_t::get_txs() const {
     return get_lightunit_body().get_txs();
 }
 
@@ -136,6 +172,9 @@ void xlightunit_block_t::load_body() const {
     }
     const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
     for (auto & action : actions) {
+        if (action.get_org_tx_hash().empty()) {
+            continue;
+        }
         xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
         xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(action, raw_tx.get());
         m_cache_body.add_tx_info(txinfo);
