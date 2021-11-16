@@ -6,6 +6,8 @@
 
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvaccount.h"
+#include "xbasic/xmodule_type.h"
 
 namespace top
 {
@@ -24,5 +26,8 @@ namespace top
     
         bool                   install_block_recycler(base::xvdbstore_t* xvdb_ptr);
         bool                   enable_block_recycler(bool enable);//off as default
+        bool                   refresh_block_recycler_rule(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj, const uint64_t permit_prune_upper_boundary);
+        bool                   watch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj);
+        bool                   unwatch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj);
     };//end of namespace of xledger
 };//end of namespace of top
