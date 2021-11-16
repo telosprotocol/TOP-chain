@@ -933,9 +933,9 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
 
     auto ptr = make_object_ptr<xchain_state_info_t>();
     ptr->serialize_from(stream);
-    xsync_dbg("recv_archive_height: %s,%llu", ptr->address.c_str(), ptr->end_height);
 
     uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
+    xsync_dbg("recv_archive_height: %s, %llu, %llu", ptr->address.c_str(), ptr->end_height, latest_end_block_height);
     if (latest_end_block_height < ptr->end_height + 50)  // not send blocks within 50 blocks
         return;
 
@@ -951,7 +951,7 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
             vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
         }
     }
-    xsync_info("recv_archive_height, send blocks: %d, %d", start_height, vector_blocks.size());
+    xsync_info("recv_archive_height, send blocks: %s, %d, %d", ptr->address.c_str(), start_height, vector_blocks.size());
     XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
     m_sync_sender->send_blocks(xsync_msg_err_code_t::succ, ptr->address, vector_blocks, network_self, from_address);
 }
