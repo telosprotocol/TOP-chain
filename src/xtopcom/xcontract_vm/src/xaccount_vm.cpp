@@ -286,15 +286,6 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                                                           top::to_bytes<std::string>(top::to_string(recv_tx_num_new + recv_tx_num)),
                                                           ec);
     }
-    // set create time
-    xtypeless_property_identifier_t time_property{data::XPROPERTY_ACCOUNT_CREATE_TIME, xproperty_category_t::system};
-    auto time_property_exist = sa.property_exist(xproperty_identifier_t{time_property, xproperty_type_t::uint64}, ec);
-    top::error::throw_error(ec);
-    if (!time_property_exist) {
-        auto create_time = param.clock == 0 ? base::TOP_BEGIN_GMTIME : param.clock;
-        sa.set_property<xproperty_type_t::uint64>(time_property, create_time, ec);
-        top::error::throw_error(ec);
-    }
 
     if (output.success_tx_assemble.empty()) {
         output.status.ec = error::xenum_errc::transaction_all_failed;
