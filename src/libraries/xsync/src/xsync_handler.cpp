@@ -88,6 +88,7 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_get_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::get_on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_archive_height, std::bind(&xsync_handler_t::recv_archive_height, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_archive_blocks, std::bind(&xsync_handler_t::recv_archive_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -953,9 +954,58 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
     }
     xsync_info("recv_archive_height, send blocks: %s, %d, %d", ptr->address.c_str(), start_height, vector_blocks.size());
     XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
-    m_sync_sender->send_blocks(xsync_msg_err_code_t::succ, ptr->address, vector_blocks, network_self, from_address);
+    m_sync_sender->send_archive_blocks(xsync_msg_err_code_t::succ, ptr->address, vector_blocks, network_self, from_address);
 }
+void xsync_handler_t::recv_archive_blocks(uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time) {
+    XMETRICS_GAUGE(metrics::xsync_recv_archive_blocks, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_archive_blocks_size, msg_size);
 
+    auto ptr = make_object_ptr<xsync_message_blocks_t>();
+    ptr->serialize_from(stream);
+
+    std::vector<data::xblock_ptr_t> &blocks = ptr->blocks;
+
+    uint32_t count = blocks.size();
+
+    if (count == 0) {
+        xsync_info("xsync_handler receive arc blocks %" PRIx64 " wait(%ldms) count(%u) code(%u) %s",
+            msg_hash, get_time()-recv_time, count, header->code, from_address.to_string().c_str());
+
+        return;
+    }
+
+    XMETRICS_GAUGE(metrics::xsync_handler_blocks, count);
+
+    xsync_info("xsync_handler receive arc blocks %" PRIx64 " wait(%ldms) %s count(%u) code(%u) %s",
+        msg_hash, get_time()-recv_time, blocks[0]->get_account().c_str(), count, header->code, from_address.to_string().c_str());
+
+    // check continuous
+    xvblock_t *successor = nullptr;
+    std::vector<data::xblock_ptr_t>::reverse_iterator rit = blocks.rbegin();
+    for (;rit!=blocks.rend(); rit++) {
+        xblock_ptr_t &block = *rit;
+        if (successor != nullptr) {
+            if (block->get_account() != successor->get_account()) {
+                xsync_warn("xsync_handler receive blocks(address error) (%s, %s)",
+                    block->get_account().c_str(), successor->get_account().c_str());
+                return;
+            }
+        }
+        successor = block.get();
+    }
+
+    if (data::is_unit_address(common::xaccount_address_t{successor->get_account()}))
+        return;
+
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_archive_blocks_t>(blocks, network_self, from_address);
+    m_downloader->push_event(e);        
+}
 int64_t xsync_handler_t::get_time() {
     return base::xtime_utl::gmttime_ms();
 }

@@ -7,9 +7,10 @@ NS_BEG2(top, sync)
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_blocks, 0x1);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_blocks, 0x2);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_push_newblock, 0x3);
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_height, 0x4);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_gossip, 0x5);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_frozen_gossip, 0x6);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_height, 0x7);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_blocks, 0x8);
 #if 0
 // discard
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_latest_block_info, 0x7);

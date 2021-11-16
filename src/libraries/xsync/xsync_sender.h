@@ -39,6 +39,7 @@ public:
     void send_frozen_gossip_to_target(const std::vector<xgossip_chain_info_ptr_t> &info_list, const xbyte_buffer_t &bloom_data, const vnetwork::xvnode_address_t& self_xip, const vnetwork::xvnode_address_t& target);
     bool send_get_blocks(const std::string &address, uint64_t start_height, uint32_t count, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
+    void send_archive_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
 
     void send_get_on_demand_blocks(const std::string &address, uint64_t start_height, uint32_t count, bool is_consensus, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_on_demand_blocks(const std::vector<data::xblock_ptr_t> &blocks, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);

@@ -104,6 +104,11 @@ void xsync_sender_t::send_blocks(xsync_msg_err_code_t code, const std::string &a
     send_message(body, xmessage_id_sync_blocks, "blocks", self_addr, target_addr);
 }
 
+void xsync_sender_t::send_archive_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
+    auto body = make_object_ptr<xsync_message_blocks_t>(address, blocks);
+    send_message(body, xmessage_id_sync_archive_blocks, "archive_blocks", self_addr, target_addr);
+}
+
 void xsync_sender_t::send_get_on_demand_blocks(const std::string &address,
             uint64_t start_height, uint32_t count, bool is_consensus,
             const vnetwork::xvnode_address_t &self_addr,
