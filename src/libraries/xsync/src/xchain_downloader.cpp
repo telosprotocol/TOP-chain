@@ -254,6 +254,7 @@ enum_result_code xchain_downloader_t::pre_handle_block(
 enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
     if (is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
+            xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
             return enum_result_code::auth_failed;
         }
     }
@@ -262,6 +263,7 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_
     auto vbindex = m_sync_store->load_block_object(block->get_block_owner(), block->get_height(), false, block->get_viewid());
     if (vbindex == nullptr) {
     //XTODO,need doublecheck whether allow set flag of authenticated without verify signature
+        xsync_dbg("xchain_downloader_t::handle_block, store_block: %s,%d", block->get_account().c_str(), block->get_height());
         block->set_block_flag(enum_xvblock_flag_authenticated);
         
         base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
@@ -271,6 +273,7 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_
             return enum_result_code::failed;
         }
     } else {
+        xsync_dbg("xchain_downloader_t::handle_block, update: %s,%d", block->get_account().c_str(), block->get_height());
         if (vbindex->check_block_flag(enum_xvblock_flag_committed)) {
             m_sync_store->get_shadow()->on_chain_event(block->get_block_owner(), block->get_height());
         } else {
