@@ -36,7 +36,7 @@ void xtransaction_exec_state_t::set_sender_confirmed_receipt_id(uint64_t receipt
 void xtransaction_exec_state_t::set_receipt_data(xreceipt_data_t data) {
     if (!data.empty()) {
         base::xstream_t stream(base::xcontext_t::instance());
-        MAP_SERIALIZE_SIMPLE(stream, data);
+        data.serialize_to(stream);
         set_value(XTX_RECEIPT_DATA, std::string{(char*)stream.data(), (uint32_t)stream.size()});
     }
 }
@@ -47,7 +47,7 @@ xreceipt_data_t  xtransaction_exec_state_t::get_receipt_data() const {
 
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)res.data(), (int32_t)res.size());
     xreceipt_data_t data;
-    MAP_DESERIALIZE_SIMPLE(stream, data);
+    data.serialize_from(stream);
     return data;
 }
 

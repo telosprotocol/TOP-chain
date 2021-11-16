@@ -6,12 +6,13 @@
 
 #include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xserializable_based_on.h"
 
 #include <map>
 
-NS_BEG2(top, contract_common)
+NS_BEG2(top, data)
 
-class xtop_receipt_data_store {
+class xtop_receipt_data_store: public xserializable_based_on<void>  {
 public:
     xtop_receipt_data_store() =  default;
     xtop_receipt_data_store(xtop_receipt_data_store const&) = default;
@@ -29,6 +30,10 @@ public:
 
     bool  item_exist(std::string const& key) const;
     bool  empty() const;
+
+private:
+    int32_t do_read(base::xstream_t & stream) override;
+    int32_t do_write(base::xstream_t & stream) const override;
 
 
 private:

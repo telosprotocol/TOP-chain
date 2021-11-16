@@ -267,7 +267,7 @@ data::xreceipt_data_t   xcons_transaction_t::get_last_action_receipt_data() cons
         }
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)value.data(), (int32_t)value.size());
         xreceipt_data_t data;
-        MAP_DESERIALIZE_SIMPLE(stream, data);
+        data.serialize_from(stream);
         return data;
     }
 

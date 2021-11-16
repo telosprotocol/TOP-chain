@@ -11,7 +11,7 @@
 #include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_execution_result.h"
 #include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xreceipt_data_store.h"
+#include "xdata/xreceipt_data_store.h"
 #include "xdata/xconsensus_action.h"
 #include "xdata/xtop_action.h"
 #include "xdata/xtransaction.h"
@@ -55,7 +55,7 @@ public:
     void add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type);
     std::vector<xfollowup_transaction_datum_t> const & followup_transaction() const noexcept;
 
-    void input_receipt_data(std::map<std::string, xbyte_buffer_t>const& receipt_data);
+    void input_receipt_data(xreceipt_data_store_t const& receipt_data);
     xreceipt_data_store_t& output_receipt_data() noexcept;
     xbyte_buffer_t input_receipt_data(std::string const & key) const;
     void remove_input_receipt_data(std::string const & key);
