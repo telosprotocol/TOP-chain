@@ -12,9 +12,9 @@ void xtop_receipt_data_store::receipt_data(std::map<std::string, xbyte_buffer_t>
     m_receipt_data = receipt_data;
 }
 
-std::map<std::string, xbyte_buffer_t>   xtop_receipt_data_store::receipt_data() const {
-    return m_receipt_data;
-}
+// std::map<std::string, xbyte_buffer_t>   xtop_receipt_data_store::receipt_data() const {
+//     return m_receipt_data;
+// }
 
 xbyte_buffer_t xtop_receipt_data_store::receipt_data_item(std::string const& key) const {
     xbyte_buffer_t empty;

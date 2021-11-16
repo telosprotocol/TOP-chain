@@ -44,7 +44,7 @@ public:
 protected:
     xtop_contract_face() = default;
 
-    virtual xbyte_buffer_t const receipt_data(std::string const & key) const = 0;
+    virtual xbyte_buffer_t receipt_data(std::string const & key) const = 0;
     // virtual state_accessor::xtoken_t retrive_received_asset(std::string const & asset_id) const = 0;
     virtual void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) = 0;
     virtual void call(common::xaccount_address_t const & target_addr,
