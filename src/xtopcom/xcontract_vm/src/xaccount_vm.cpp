@@ -24,10 +24,10 @@ xtop_account_vm::xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_
 }
 
 xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
-                                              std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> state_pack,
+                                              observer_ptr<base::xvbstate_t> const & state,
                                               data::xblock_consensus_para_t const & cs_para) {
     assert(txs.size() > 0);
-    assert(state_pack.size() > 0);
+    assert(state != nullptr);
     const size_t result_size = txs.size();
     const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);
     const contract_common::xcontract_execution_param_t param(cs_para);
@@ -43,7 +43,7 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     result.transaction_results.reserve(result_size);
 
     state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
-    state_accessor::xstate_accessor_t sa{state_pack, ac_data};
+    state_accessor::xstate_accessor_t sa{state, ac_data};
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
 
@@ -76,9 +76,9 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
                 break;
             } else {
                 std::error_code ec;
-                result.binlog_pack = sa.binlog_pack(ec);
+                result.binlog = sa.binlog(ec);
                 top::error::throw_error(ec);
-                result.bincode_pack = sa.fullstate_bin_pack(ec);
+                result.bincode = sa.fullstate_bin(ec);
                 top::error::throw_error(ec);
                 result.transaction_results.emplace_back(action_result);
                 assert(result.transaction_results.size() == (i + 1));
@@ -287,31 +287,16 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                                                           top::to_bytes<std::string>(top::to_string(recv_tx_num_new + recv_tx_num)),
                                                           ec);
     }
-    // set create time
-    xtypeless_property_identifier_t time_property{data::XPROPERTY_ACCOUNT_CREATE_TIME, xproperty_category_t::system};
-    auto time_property_exist = sa.property_exist(xproperty_identifier_t{time_property, xproperty_type_t::uint64}, ec);
-    top::error::throw_error(ec);
-    if (!time_property_exist) {
-        auto create_time = param.clock == 0 ? base::TOP_BEGIN_GMTIME : param.clock;
-        sa.set_property<xproperty_type_t::uint64>(time_property, create_time, ec);
-        top::error::throw_error(ec);
-    }
 
     if (output.success_tx_assemble.empty()) {
         output.status.ec = error::xenum_errc::transaction_all_failed;
         return output;
     }
 
-    output.binlog_pack = result.binlog_pack;
-    output.bincode_pack = result.bincode_pack;
-    assert(!output.binlog_pack.empty());
-    for (auto const & pair : output.binlog_pack) {
-        assert(!pair.second.empty());
-    }
-    assert(!output.bincode_pack.empty());
-    for (auto const & pair : output.bincode_pack) {
-        assert(!pair.second.empty());
-    }
+    output.binlog = result.binlog;
+    output.bincode = result.bincode;
+    assert(!output.binlog.empty());
+    assert(!output.bincode.empty());
 
     return output;
 }

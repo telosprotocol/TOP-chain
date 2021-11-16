@@ -58,7 +58,11 @@ TEST_F(test_contract_vm, test_send_tx) {
     const uint256_t last_hash{12345678};
     const uint64_t recv_num{1};
     const uint64_t unconfirm_num{1};
+#ifndef XENABLE_MOCK_ZEC_STAKE
+    const uint64_t start_balance{10000000000 + 100000000};
+#else
     const uint64_t start_balance{100000000};
+#endif
 
     m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
         common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
@@ -120,7 +124,7 @@ TEST_F(test_contract_vm, test_send_tx) {
         auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
         auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
         {
-            auto value = top::to_bytes<uint64_t>(last_nonce);
+            auto value = top::to_bytes<std::string>(top::to_string(last_nonce));
             map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
             map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
@@ -130,21 +134,18 @@ TEST_F(test_contract_vm, test_send_tx) {
             map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(recv_num);
+            auto value = top::to_bytes<std::string>(top::to_string(recv_num));
             map_property->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
             map_property_cmp->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(unconfirm_num);
+            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num));
             map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
             map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
     }
-    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
-    state_pack.insert(std::make_pair(common::xaccount_address_t{user_address}, make_observer(bstate.get())));
-
     xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, state_pack, cs_para);
+    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
 
     EXPECT_EQ(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 1);
@@ -153,11 +154,11 @@ TEST_F(test_contract_vm, test_send_tx) {
     EXPECT_EQ(result.failed_tx_assemble.size(), 0);
     EXPECT_EQ(result.delay_tx_assemble.size(), 0);
 
-    auto const & state_out = state_pack[common::xaccount_address_t{user_address}];
+    auto const & state_out = bstate;
     {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, last_nonce + 1);
         }
         {
@@ -167,15 +168,21 @@ TEST_F(test_contract_vm, test_send_tx) {
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, recv_num);
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, unconfirm_num + 1);
         }
         { EXPECT_EQ(false, state_out->find_property(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)); }
+#ifndef XENABLE_MOCK_ZEC_STAKE
+        {
+            auto value = state_out->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
+            EXPECT_EQ(value, 100000000);
+        }
+#endif
         {
             auto string = state_out->load_string_var(XPROPERTY_USED_TGAS_KEY)->query();
             EXPECT_EQ(string, std::string{"708"});
@@ -190,35 +197,36 @@ TEST_F(test_contract_vm, test_send_tx) {
         }
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
-            EXPECT_EQ(value, start_balance - 100000);
+            EXPECT_EQ(value, 10000000000 - 100000);
         }
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
             EXPECT_EQ(value, 100000);
         }
+        {
+            auto value = state_out->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->get();
+            EXPECT_EQ(value, 5796740);
+        }
     }
-    EXPECT_EQ(result.bincode_pack.size(), 1);
-    EXPECT_EQ(result.binlog_pack.size(), 1);
     {
         std::string bincode;
         bstate_cmp->take_snapshot(bincode);
-        EXPECT_NE(result.bincode_pack[common::xaccount_address_t{user_address}], bincode);
+        EXPECT_NE(result.bincode, bincode);
     }
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
+        bstate_cmp->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{0}, canvas.get());
+        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{5796740}, canvas.get());
         auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
-        {
-            auto value = top::to_bytes<uint64_t>(last_nonce + 1);
-            map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-        }
-        {
-            auto value = top::to_bytes<uint256_t>(tx_hash);
-            map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
-        }
-        {
-            auto value = top::to_bytes<uint64_t>(unconfirm_num + 1);
-            map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-        }
+        map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, top::to_string(last_nonce + 1), canvas.get());
+        auto value = top::to_bytes<uint256_t>(tx_hash);
+        map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
+        map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, top::to_string(unconfirm_num + 1), canvas.get());
+#ifndef XENABLE_MOCK_ZEC_STAKE
+        bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->withdraw(static_cast<base::vtoken_t>(100000000), canvas.get());
+        bstate_cmp->load_token_var(XPROPERTY_BALANCE_BURN)->deposit(static_cast<base::vtoken_t>(100000000), canvas.get());
+#endif
         bstate_cmp->new_string_var(XPROPERTY_LAST_TX_HOUR_KEY, canvas.get());
         bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{}, canvas.get());
         bstate_cmp->new_string_var(XPROPERTY_USED_TGAS_KEY, canvas.get());
@@ -235,8 +243,8 @@ TEST_F(test_contract_vm, test_send_tx) {
         bstate_cmp->take_snapshot(bincode);
         std::string binlog;
         canvas->encode(binlog);
-        EXPECT_EQ(result.bincode_pack[common::xaccount_address_t{user_address}], bincode);
-        EXPECT_EQ(result.binlog_pack[common::xaccount_address_t{user_address}], binlog);
+        EXPECT_EQ(result.bincode, bincode);
+        EXPECT_EQ(result.binlog, binlog);
     }
 }
 
@@ -272,11 +280,8 @@ TEST_F(test_contract_vm, test_send_tx_balance_not_enough) {
 
     xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
 
-    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
-    state_pack.insert(std::make_pair(common::xaccount_address_t{user_address}, make_observer(bstate.get())));
-
     xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, state_pack, cs_para);
+    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
 
     EXPECT_NE(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 0);
@@ -322,11 +327,9 @@ TEST_F(test_contract_vm, test_send_tx_deposit_not_enough) {
         bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
         bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(100000), canvas.get());
     }
-    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
-    state_pack.insert(std::make_pair(common::xaccount_address_t{user_address}, make_observer(bstate.get())));
 
     xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, state_pack, cs_para);
+    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
 
     EXPECT_NE(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 0);
@@ -334,7 +337,7 @@ TEST_F(test_contract_vm, test_send_tx_deposit_not_enough) {
     EXPECT_EQ(result.failed_tx_assemble[0]->get_transaction(), tx.get());
     EXPECT_EQ(result.delay_tx_assemble.size(), 0);
 }
-
+#if 0
 TEST_F(test_contract_vm, test_recv_tx) {
     const uint64_t last_nonce{10};
     const uint256_t last_hash{12345678};
@@ -400,11 +403,8 @@ TEST_F(test_contract_vm, test_recv_tx) {
     }
     xvbstate_t bstate_cmp(*(bstate.get()));
 
-    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
-    state_pack.insert(std::make_pair(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, make_observer(bstate.get())));
-
     xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, state_pack, cs_para);
+    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
     EXPECT_EQ(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 1);
     EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
@@ -412,7 +412,7 @@ TEST_F(test_contract_vm, test_recv_tx) {
     EXPECT_EQ(result.failed_tx_assemble.size(), 0);
     EXPECT_EQ(result.delay_tx_assemble.size(), 0);
 
-    auto const & state_out = state_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}];
+    auto const & state_out = bstate;
     {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
@@ -440,12 +440,10 @@ TEST_F(test_contract_vm, test_recv_tx) {
             EXPECT_EQ(string, property_string);
         }
     }
-    EXPECT_EQ(result.bincode_pack.size(), 1);
-    EXPECT_EQ(result.binlog_pack.size(), 1);
     {
         std::string bincode;
         bstate_cmp.take_snapshot(bincode);
-        EXPECT_NE(result.bincode_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}], bincode);
+        EXPECT_NE(result.bincode, bincode);
     }
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
@@ -460,11 +458,11 @@ TEST_F(test_contract_vm, test_recv_tx) {
         bstate_cmp.take_snapshot(bincode);
         std::string binlog;
         canvas->encode(binlog);
-        EXPECT_EQ(result.bincode_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}], bincode);
-        EXPECT_EQ(result.binlog_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}], binlog);
+        EXPECT_EQ(result.bincode, bincode);
+        EXPECT_EQ(result.binlog, binlog);
     }
 }
-
+#if 0
 TEST_F(test_contract_vm, test_sync_call) {
     const uint64_t last_nonce{10};
     const uint256_t last_hash{12345678};
@@ -676,7 +674,7 @@ TEST_F(test_contract_vm, test_sync_call) {
         EXPECT_EQ(result.binlog_pack[common::xaccount_address_t{sys_contract_rec_registration_addr}], binlog);
     }
 }
-
+#endif
 TEST_F(test_contract_vm, test_async_call) {
     const uint64_t last_nonce{10};
     const uint256_t last_hash{12345678};
@@ -756,11 +754,8 @@ TEST_F(test_contract_vm, test_async_call) {
         EXPECT_EQ(bincode1, bincode2);
     }
 
-    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
-    state_pack.insert(std::make_pair(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, make_observer(bstate.get())));
-
     xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, state_pack, cs_para);
+    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
     EXPECT_EQ(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 2);
     EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
@@ -794,7 +789,7 @@ TEST_F(test_contract_vm, test_async_call) {
         followup_hash = cons_tx->get_tx_hash_256();
     }
 
-    auto const & state_out = state_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}];
+    auto const & state_out = bstate;
     {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
@@ -822,11 +817,10 @@ TEST_F(test_contract_vm, test_async_call) {
             EXPECT_EQ(string, "call_a_to_b");
         }
     }
-    EXPECT_EQ(result.bincode_pack.size(), 1);
     {
         std::string bincode;
         bstate_cmp.take_snapshot(bincode);
-        EXPECT_NE(result.bincode_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}], bincode);
+        EXPECT_NE(result.bincode, bincode);
     }
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
@@ -853,8 +847,8 @@ TEST_F(test_contract_vm, test_async_call) {
         bstate_cmp.take_snapshot(bincode);
         std::string binlog;
         canvas->encode(binlog);
-        EXPECT_EQ(result.bincode_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}], bincode);
-        EXPECT_EQ(result.binlog_pack[common::xaccount_address_t{sys_contract_rec_standby_pool_addr}], binlog);
+        EXPECT_EQ(result.bincode, bincode);
+        EXPECT_EQ(result.binlog, binlog);
     }
 }
 
@@ -1065,5 +1059,5 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
 //         EXPECT_EQ(nonce++, tx_nonce);
 //     }
 // }
-
+#endif
 NS_END3

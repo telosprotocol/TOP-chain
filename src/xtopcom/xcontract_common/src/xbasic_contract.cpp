@@ -215,7 +215,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // exec
     // auto obj = m_associated_execution_context->system_contract(target_addr);
     auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
-    ctx->contract_state(target_addr);
+    // ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
         ctx->consensus_action_stage(data::xconsensus_action_stage_t::self);
     } else {
@@ -226,7 +226,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // TODO: follow up of result
     // assert(!result.status.ec);
     // switch address back
-    m_associated_execution_context->contract_state(source_addr);
+    // m_associated_execution_context->contract_state(source_addr);
 }
 
 void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_addr,
@@ -263,7 +263,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // exec
     // auto obj = m_associated_execution_context->system_contract(target_addr);
     auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
-    ctx->contract_state(target_addr);
+    // ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
         ctx->consensus_action_stage(data::xconsensus_action_stage_t::self);
     } else {
@@ -274,7 +274,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // TODO: follow up of result
     // assert(!result.status.ec);
     // switch address back
-    m_associated_execution_context->contract_state(source_addr);
+    // m_associated_execution_context->contract_state(source_addr);
 }
 
 void xtop_basic_contract::transfer(common::xaccount_address_t const & target_addr, uint64_t amount, xfollowup_transaction_schedule_type_t type, std::error_code & ec) {

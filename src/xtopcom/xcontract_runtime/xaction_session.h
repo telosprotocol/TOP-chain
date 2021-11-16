@@ -71,23 +71,6 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     } };
 
     execution_context->consensus_action_stage(execution_context->action_stage());
-    switch (execution_context->consensus_action_stage()) {
-    case data::xenum_consensus_action_stage::send:
-    case data::xenum_consensus_action_stage::confirm:
-    case data::xenum_consensus_action_stage::self:
-        xdbg("[xtop_action_session::xtop_action_session] stage %d, set state address sender: %s", execution_context->consensus_action_stage(), execution_context->sender().value().c_str());
-        execution_context->contract_state(execution_context->sender());
-        break;
-
-    case data::xenum_consensus_action_stage::recv:
-        xdbg("[xtop_action_session::xtop_action_session] stage %d, set state address recver: %s", execution_context->consensus_action_stage(), execution_context->recver().value().c_str());
-        execution_context->contract_state(execution_context->recver());
-        break;
-
-    default:
-        assert(false);
-        break;
-    }
 
     auto observed_exectx = top::make_observer(execution_context.get());
     std::error_code ec;

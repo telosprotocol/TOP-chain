@@ -50,16 +50,6 @@ xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t
         assert(false);
         top::error::throw_error({error::xerrc_t::invalid_state_backend});
     }
-    bstate_pack_.insert(std::make_pair(common::xaccount_address_t{bstate->get_account()}, bstate));
-    canvas_pack_.insert(std::make_pair(common::xaccount_address_t{bstate->get_account()}, canvas_));
-}
-
-xtop_state_accessor::xtop_state_accessor(std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> const & bstate_pack, xstate_access_control_data_t ac_data)
-  : bstate_pack_{bstate_pack}, ac_data_{std::move(ac_data)} {
-    if (bstate_pack_.empty()) {
-        assert(false);
-        top::error::throw_error({error::xerrc_t::invalid_state_backend});
-    }
 }
 
 xtop_state_accessor::xtop_state_accessor(common::xaccount_address_t const & account_address)
@@ -102,31 +92,6 @@ std::unique_ptr<xtop_state_accessor> xtop_state_accessor::build_from(common::xac
     }
 
     return {};
-}
-
-void xtop_state_accessor::set_state(common::xaccount_address_t const & address, std::error_code & ec) {
-    assert(!ec);
-    if (bstate_ != nullptr && canvas_ != nullptr && bstate_->get_address() == address.value()) {
-        return;
-    }
-    {
-        auto it = bstate_pack_.find(address);
-        if (it == bstate_pack_.end()) {
-            ec = error::xenum_errc::load_account_state_failed;
-            return;
-        } else {
-            bstate_ = top::get<observer_ptr<base::xvbstate_t>>(*it);
-        }
-    }
-    {
-        auto it = canvas_pack_.find(address);
-        if (it == canvas_pack_.end()) {
-            canvas_ = make_object_ptr<base::xvcanvas_t>();
-            canvas_pack_.insert(std::make_pair(address, canvas_));
-        } else {
-            canvas_ = top::get<xobject_ptr_t<base::xvcanvas_t>>(*it);
-        }
-    }
 }
 
 uint64_t xtop_state_accessor::nonce(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
@@ -1044,20 +1009,6 @@ std::string xtop_state_accessor::binlog(std::error_code & ec) const {
     return r;
 }
 
-std::map<common::xaccount_address_t, std::string> xtop_state_accessor::binlog_pack(std::error_code & ec) const {
-    std::map<common::xaccount_address_t, std::string> r;
-    for (auto const & pair : canvas_pack_) {
-        std::string binlog;
-        if (pair.second->encode(binlog) < 0) {
-            ec = error::xerrc_t::get_binlog_failed;
-            return {};
-        } else {
-            r.insert(std::make_pair(pair.first, binlog));
-        }
-    }
-    return r;
-}
-
 size_t xtop_state_accessor::binlog_size(std::error_code & ec) const {
     assert(!ec);
     assert(canvas_ != nullptr);
@@ -1073,18 +1024,6 @@ std::string xtop_state_accessor::fullstate_bin(std::error_code & ec) const {
     bstate_->take_snapshot(fullstate_bin);
 
     return fullstate_bin;
-}
-
-std::map<common::xaccount_address_t, std::string> xtop_state_accessor::fullstate_bin_pack(std::error_code & ec) const {
-    std::map<common::xaccount_address_t, std::string> r;
-    for (auto const & pair : canvas_pack_) {
-        std::string fullstate_bin;
-        auto it = bstate_pack_.find(pair.first);
-        assert(it != bstate_pack_.end());
-        it->second->take_snapshot(fullstate_bin);
-        r.insert(std::make_pair(pair.first, fullstate_bin));
-    }
-    return r;
 }
 
 void xtop_state_accessor::do_create_string_property(std::string const & property_name, std::error_code & ec) {

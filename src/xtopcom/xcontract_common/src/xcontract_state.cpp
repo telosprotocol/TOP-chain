@@ -17,20 +17,8 @@ xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_accou
                                          observer_ptr<state_accessor::xstate_accessor_t> sa,
                                          xcontract_execution_param_t const & execution_param)
   : m_action_account_address{std::move(action_account_addr)}, m_state_accessor{sa}, m_param{execution_param} {
-}
-
-void xtop_contract_state::set_state(common::xaccount_address_t const & address) {
-    assert(m_state_accessor != nullptr);
-    std::error_code ec;
-    m_state_accessor->set_state(address, ec);
-    assert(!ec);
-    top::error::throw_error(ec);
-    m_latest_followup_tx_hash = latest_sendtx_hash(ec);
-    assert(!ec);
-    top::error::throw_error(ec);
-    m_latest_followup_tx_nonce = latest_sendtx_nonce(ec);
-    assert(!ec);
-    top::error::throw_error(ec);
+    m_latest_followup_tx_hash = latest_sendtx_hash();
+    m_latest_followup_tx_nonce = latest_sendtx_nonce();
 }
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
@@ -290,7 +278,7 @@ void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & e
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
-        top::to_bytes<std::string>(std::string{reinterpret_cast<char *>(hash.data()), static_cast<uint32_t>(hash.size())}),
+        top::to_bytes<uint256_t>(hash),
         ec);
 }
 

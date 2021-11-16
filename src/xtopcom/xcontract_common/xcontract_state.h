@@ -79,10 +79,6 @@ public:
     static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address, uint64_t const height);
     static std::unique_ptr<xtop_contract_state> build_from(common::xaccount_address_t const & account_address, uint64_t const height, std::error_code & ec);
 
-    /// @brief Set previous state and canvas.
-    /// @param address State address.
-    void set_state(common::xaccount_address_t const & address);
-
     /// @brief Get state account address.
     /// @return State account address.
     common::xaccount_address_t state_account_address() const;

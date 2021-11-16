@@ -59,7 +59,7 @@ public:
     explicit xtop_account_vm(observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & system_contract_manager);
 
     xaccount_vm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs,
-                                 std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> state_pack,
+                                 observer_ptr<base::xvbstate_t> const & state_pack,
                                  data::xblock_consensus_para_t const & cs_para);
 
 private:
