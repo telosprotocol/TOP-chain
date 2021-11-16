@@ -306,13 +306,8 @@ bool xbatch_packer::on_pdu_event_up(const base::xvevent_t & event, xcsobject_t *
 }
 
 bool xbatch_packer::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    xunit_info("xbatch_packer::send_out pdu=%s,body_size:%d,this:%p",
-                packet.dump().c_str(), packet.get_msg_body().size(),
-                xcons_utl::xip_to_hex(from_addr).c_str(), this);
-    
-    /*XMETRICS_PACKET_INFO("consensus_tableblock",
-                        "pdu_send_out", packet.dump(),
-                        "node_xip", xcons_utl::xip_to_hex(from_addr));*/
+    xunit_info("xbatch_packer::send_out pdu=%s,body_size:%d,node_xip=%s,this:%p",
+                packet.dump().c_str(), packet.get_msg_body().size(), xcons_utl::xip_to_hex(from_addr).c_str(), this);
 
     auto network_proxy = m_para->get_resources()->get_network();
     xassert(network_proxy != nullptr);
@@ -349,13 +344,6 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
 }
 
 bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    /*XMETRICS_PACKET_INFO("consensus_tableblock",
-                        "pdu_recv_in", packet.dump(),
-                        // "from_xip", xcons_utl::xip_to_hex(from_addr),
-                        // "to_xip", xcons_utl::xip_to_hex(to_addr),
-                        "clock", m_last_view_clock,
-                        "viewid", m_last_view_id,
-                        "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
     xunit_info("xbatch_packer::recv_in, consensus_tableblock  pdu_recv_in=%s, clock=%llu, viewid=%llu, node_xip=%s.",
                 packet.dump().c_str(), m_last_view_clock, m_last_view_id, xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
@@ -370,15 +358,8 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     if (!valid) {
         xunit_warn("xbatch_packer::recv_in fail-invalid msg,viewid=%ld,pdu=%s,at_node:%s,this:%p",
               m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
-        /*XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "fail_proposal_invalid", packet.dump(),
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()),
-                            "local_view_id", m_last_view_id);*/
         return false;
     }
-
-    // xunit_dbg_info("xbatch_packer::recv_in succ-valid msg,viewid=%ld,pdu=%s,at_node:%s,this:%p",
-    //         m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
     return xcsaccount_t::recv_in(from_addr, to_addr, packet, cur_thread_id, timenow_ms);
 }
 
@@ -456,11 +437,6 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
              _evt_obj->get_error_code(),
              _evt_obj->get_target_proposal()->dump().c_str(),
              xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-       /* XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "proposal_finish_fail", _evt_obj->get_target_proposal()->dump(),
-                            "is_leader", is_leader,
-                            "error_code", _evt_obj->get_error_code(),
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
     } else {
 
         // reset to 0
@@ -471,10 +447,6 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
              is_leader,
              _evt_obj->get_target_proposal()->dump().c_str(),
              xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-       /* XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "proposal_finish_succ", _evt_obj->get_target_proposal()->dump(),
-                            "is_leader", is_leader,
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));*/
         
         if (is_leader) {
             auto last_viewid_tag = "cons_table_last_succ_viewid_" + get_account();

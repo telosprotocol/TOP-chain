@@ -625,6 +625,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cpu_ca_verify_multi_sign_tc,
     cpu_ca_verify_multi_sign_blockstore,
 
+    //bft
+    bft_verify_vote_msg_fail,
+
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;

@@ -1305,6 +1305,10 @@ namespace top
                                         xerror("xBFTdriver_t::fire_verify_vote_job,fail-verify_muti_sign for _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
                                 }
                             }
+                            else
+                            {
+                                XMETRICS_GAUGE(metrics::bft_verify_vote_msg_fail, 1);
+                            }
                         }
                         else
                             xerror("xBFTdriver_t::fire_verify_vote_job,fail-verify_sign for replica_cert=%s,at node=0x%llx",replica_cert->dump().c_str(),get_xip2_low_addr());

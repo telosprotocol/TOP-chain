@@ -26,10 +26,6 @@ bool xcons_unorder_cache::filter_event(uint64_t account_viewid, const xvip2_t &f
     if (viewid < account_viewid || viewid > account_viewid + unorder_pdu_max_view_num) {
         xunit_warn("xcons_unorder_cache::filter_event drop invalid viewid event.account_viewid=%ld,packet=%s,node_xip=%s.",
                  account_viewid, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str());
-       /* XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "fail_proposal_pdu_unorder_viewid", packet.dump(),
-                            "account_viewid", account_viewid,
-                            "node_xip", xcons_utl::xip_to_hex(to_addr));*/
         return false;
     }
 
@@ -62,8 +58,6 @@ void xcons_unorder_cache::clear_old_unorder_event(uint64_t account_viewid) {
         if (iter->first < account_viewid) {
             xunit_warn("cons_unorder_cache::clear_old_unorder_event erase old event.account_viewid=%ld,old packet=%s",
                        account_viewid, iter->second->_packet.dump().c_str());
-          /*  XMETRICS_PACKET_INFO("consensus_tableblock", "fail_proposal_pdu_unorder_viewid", iter->second->_packet.dump(), 
-            "account_viewid", std::to_string(account_viewid));*/
             iter->second->release_ref();
             iter = m_unorder_events.erase(iter);
             continue;
