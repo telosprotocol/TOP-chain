@@ -15,16 +15,16 @@ namespace top
     {
         xtx_receipt_t::xtx_receipt_t()
         : m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
-            XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction, base::xvqcert_t* prove_cert, const std::string & path, enum_xprove_cert_type type)
         : m_tx_action(txaction) {
             m_tx_action_prove = make_object_ptr<xprove_cert_t>(prove_cert, type, path);
-            XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
 
         xtx_receipt_t::~xtx_receipt_t() {
-            XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, -1);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, -1);
         }
 
         int32_t xtx_receipt_t::do_write(base::xstream_t & stream) {

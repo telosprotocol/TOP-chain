@@ -11,18 +11,18 @@
 NS_BEG2(top, base)
 
 xreceiptid_pair_t::xreceiptid_pair_t() {
-    XMETRICS_GAUGE(metrics::dataobject_xreceiptid_pair_t, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, 1);
 }
 
 xreceiptid_pair_t::~xreceiptid_pair_t() {
-    XMETRICS_GAUGE(metrics::dataobject_xreceiptid_pair_t, -1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, -1);
 }
 
 xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid) {
     set_sendid_max(sendid);
     set_confirmid_max(confirmid);
     set_recvid_max(recvid);
-    XMETRICS_GAUGE(metrics::dataobject_xreceiptid_pair_t, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, 1);
 }
 
 int32_t xreceiptid_pair_t::do_write(base::xstream_t & stream) const {

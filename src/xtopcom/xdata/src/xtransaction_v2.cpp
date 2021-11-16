@@ -24,12 +24,12 @@ using namespace top::base;
 
 xtransaction_v2_t::xtransaction_v2_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
-    XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, 1);
 }
 
 xtransaction_v2_t::~xtransaction_v2_t() {
     MEMCHECK_REMOVE_TRACE(this);
-    XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, -1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, -1);
 }
 
 void xtransaction_v2_t::construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) {

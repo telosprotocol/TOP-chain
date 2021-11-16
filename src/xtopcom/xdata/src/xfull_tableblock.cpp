@@ -19,14 +19,14 @@ xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, c
 
 xfull_tableblock_t::xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
-    XMETRICS_GAUGE(metrics::dataobject_block_fulltable, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fulltable, 1);
 }
 xfull_tableblock_t::xfull_tableblock_t()
 : xblock_t((enum_xdata_type)object_type_value) {
-    XMETRICS_GAUGE(metrics::dataobject_block_fulltable, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fulltable, 1);
 }
 xfull_tableblock_t::~xfull_tableblock_t() {
-    XMETRICS_GAUGE(metrics::dataobject_block_fulltable, -1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fulltable, -1);
 }
 
 base::xobject_t * xfull_tableblock_t::create_object(int type) {

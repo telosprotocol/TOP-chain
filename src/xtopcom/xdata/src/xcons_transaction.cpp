@@ -11,13 +11,13 @@
 namespace top { namespace data {
 
 xcons_transaction_t::xcons_transaction_t() {
-    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_cons_transaction, 1);
 }
 
 xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     tx->add_ref();
     m_tx.attach(tx);
-    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_cons_transaction, 1);
     update_transation();
 }
 
@@ -26,12 +26,12 @@ xcons_transaction_t::xcons_transaction_t(const base::xfull_txreceipt_t & full_tx
         xtransaction_t::set_tx_by_serialized_data(m_tx, full_txreceipt.get_tx_org_bin());
     }
     m_receipt = full_txreceipt.get_txreceipt();
-    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_cons_transaction, 1);
     update_transation();
 }
 
 xcons_transaction_t::~xcons_transaction_t() {
-    XMETRICS_GAUGE(metrics::dataobject_cons_transaction, -1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_cons_transaction, -1);
 }
 
 bool xcons_transaction_t::set_raw_tx(xtransaction_t* raw_tx) {

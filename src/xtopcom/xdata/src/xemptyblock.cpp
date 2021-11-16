@@ -13,16 +13,16 @@ NS_BEG2(top, data)
 
 xemptyblock_t::xemptyblock_t(base::xvheader_t & header, base::xvqcert_t & cert)
 : xblock_t(header, cert, (enum_xdata_type)object_type_value) {
-    XMETRICS_GAUGE(metrics::dataobject_block_empty, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_empty, 1);
 }
 
 xemptyblock_t::xemptyblock_t()
 : xblock_t((enum_xdata_type)object_type_value) {
-    XMETRICS_GAUGE(metrics::dataobject_block_empty, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_empty, 1);
 }
 
 xemptyblock_t::~xemptyblock_t() {
-    XMETRICS_GAUGE(metrics::dataobject_block_empty, -1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_empty, -1);
 }
 
 base::xobject_t * xemptyblock_t::create_object(int type) {
