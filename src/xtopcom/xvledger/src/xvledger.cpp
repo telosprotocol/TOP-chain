@@ -384,7 +384,7 @@ namespace top
                 return m_meta_ptr;
                    
             XMETRICS_GAUGE(metrics::store_block_meta_read, 1);
-            const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
+            const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key_old(*this);
             const std::string meta_content = xvchain_t::instance().get_xdbstore()->get_value(full_meta_path);
    
             xvactmeta_t* new_meta_ptr = xvactmeta_t::load(*this,meta_content);
@@ -419,7 +419,7 @@ namespace top
             if(vmeta_bin.empty() == false)
             {
                 XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
-                const std::string full_meta_path = xvactmeta_t::get_meta_path(*this);
+                const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key_old(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
                     #ifdef DEBUG_XVLEDGER

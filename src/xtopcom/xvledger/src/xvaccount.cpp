@@ -400,19 +400,6 @@ namespace top
             return meta_ptr;
         }
         
-        const std::string  xvactmeta_t::get_meta_path(xvaccount_t & _account)
-        {
-            std::string meta_path;
-            meta_path.reserve(256);
-            meta_path += "/";
-            meta_path += xstring_utl::tostring(_account.get_chainid());
-            meta_path += "/";
-            meta_path += _account.get_account();
-            meta_path += "/meta";
-            
-            return meta_path;
-        }
-        
         xvactmeta_t::xvactmeta_t(xvaccount_t & _account)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
