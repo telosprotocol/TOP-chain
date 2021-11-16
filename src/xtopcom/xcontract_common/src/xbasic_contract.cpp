@@ -407,7 +407,7 @@ observer_ptr<properties::xproperty_initializer_t const> xtop_basic_contract::pro
     return make_observer(std::addressof(m_property_initializer));
 }
 
-xbyte_buffer_t const xtop_basic_contract::receipt_data(std::string const & key) const {
+xbyte_buffer_t xtop_basic_contract::receipt_data(std::string const & key) const {
     return m_associated_execution_context->input_receipt_data(key);
 }
 

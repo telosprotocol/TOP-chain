@@ -21,7 +21,7 @@ public:
     ~xtop_receipt_data_store() =  default;
 
     void receipt_data(std::map<std::string, xbyte_buffer_t> const& receipt_data);
-    std::map<std::string, xbyte_buffer_t>  receipt_data() const;
+    // std::map<std::string, xbyte_buffer_t>  receipt_data() const;
 
     xbyte_buffer_t  receipt_data_item(std::string const& key) const;
     void remove_item(std::string const& key);
