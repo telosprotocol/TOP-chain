@@ -404,7 +404,6 @@ namespace top
         {
             std::string meta_path;
             meta_path.reserve(256);
-            meta_path += "/";
             meta_path += xstring_utl::tostring(_account.get_chainid());
             meta_path += "/";
             meta_path += _account.get_account();
