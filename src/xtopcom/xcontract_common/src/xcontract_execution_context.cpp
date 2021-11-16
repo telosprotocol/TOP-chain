@@ -21,10 +21,6 @@ observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state(
     return m_contract_state;
 }
 
-void xtop_contract_execution_context::contract_state(common::xaccount_address_t const & address) noexcept {
-    contract_state()->set_state(address);
-}
-
 void xtop_contract_execution_context::contract_state(observer_ptr<xcontract_state_t> new_state) noexcept {
     m_contract_state = new_state;
 }
@@ -541,6 +537,15 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
     auto const last_nonce_ = last_nonce();
     auto const nonce_ = nonce();
     auto const hash_ = hash();
+
+    // set create time
+    state_accessor::properties::xtypeless_property_identifier_t time_property{data::XPROPERTY_ACCOUNT_CREATE_TIME, state_accessor::properties::xproperty_category_t::system};
+    auto time_property_exist =
+        contract_state()->property_exist(state_accessor::properties::xproperty_identifier_t{time_property, state_accessor::properties::xproperty_type_t::uint64});
+    if (!time_property_exist) {
+        auto create_time = contract_state()->time() == 0 ? base::TOP_BEGIN_GMTIME : contract_state()->time();
+        contract_state()->set_property<state_accessor::properties::xproperty_type_t::uint64>(time_property, create_time);
+    }
 
     // update nonce
     if (stage_ == data::xconsensus_action_stage_t::send || stage_ == data::xconsensus_action_stage_t::self) {

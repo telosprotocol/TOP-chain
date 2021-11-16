@@ -28,11 +28,7 @@ public:
     static constexpr size_t property_name_min_length{ 2 };
 
 private:
-    std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> bstate_pack_;
-    std::map<common::xaccount_address_t, xobject_ptr_t<base::xvcanvas_t>> canvas_pack_;
-
     top::xobject_ptr_t<top::base::xvbstate_t> bstate_owned_{nullptr};
-
     top::observer_ptr<top::base::xvbstate_t> bstate_;
     top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
     xstate_access_control_data_t ac_data_{};
@@ -45,7 +41,6 @@ public:
     ~xtop_state_accessor() = default;
 
     explicit xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
-    xtop_state_accessor(std::map<common::xaccount_address_t, observer_ptr<base::xvbstate_t>> const & bstate_pack, xstate_access_control_data_t ac_data);
 
 private:
     explicit xtop_state_accessor(common::xaccount_address_t const & account_address);
@@ -75,11 +70,6 @@ public:
     /// @param ec Log the error code.
     /// @return The state accessor object.
     static std::unique_ptr<xtop_state_accessor> build_from(common::xaccount_address_t const & account_address, std::uint64_t const height, std::error_code & ec);
-
-    /// @brief Set previous state and canvas.
-    /// @param address State address.
-    /// @param ec Log the error code in the operation.
-    void set_state(common::xaccount_address_t const & address, std::error_code & ec);
 
     /// @brief Withdraw token.
     /// @param property_id Property ID.
@@ -214,11 +204,6 @@ public:
     /// @return The binlog data stored in string object.
     std::string binlog(std::error_code & ec) const;
 
-    /// @brief Get the state change binlog pack.
-    /// @param ec Log the error code in getting binlog.
-    /// @return Map of state change binlog pack.
-    std::map<common::xaccount_address_t, std::string> binlog_pack(std::error_code & ec) const;
-
     /// @brief Get the size of state change binlog.
     /// @param ec Log the error code in getting binlog.
     /// @return The binlog data size.
@@ -228,11 +213,6 @@ public:
     /// @param ec Log the error code in getting the data.
     /// @return The full state binary data stored in the string object.
     std::string fullstate_bin(std::error_code & ec) const;
-
-    /// @brief Get the fullstate binary data pack.
-    /// @param ec Log the error code in getting the data.
-    /// @return The full state binary data pack.
-    std::map<common::xaccount_address_t, std::string> fullstate_bin_pack(std::error_code & ec) const;
 
     /// @brief Get state associated account address.
     /// @return The state associated account address.
