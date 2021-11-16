@@ -11,6 +11,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
 #include "xdata/xconsensus_action_stage.h"
+#include "xdata/xreceipt_data_store.h"
 #include "xdata/xtop_action.h"
 
 #include <cstdint>
@@ -43,7 +44,7 @@ public:
     std::string target_action_name() const;
     xbyte_buffer_t source_action_data() const;
     xbyte_buffer_t target_action_data() const;
-    std::map<std::string, xbyte_buffer_t> receipt_data() const;
+    xreceipt_data_store_t receipt_data() const;
     xaction_consensus_exec_status action_consensus_result() const;
     data::enum_xtransaction_type transaction_type() const;
     data::enum_xaction_type source_action_type() const;
@@ -202,7 +203,7 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::target_action_data() const {
 }
 
 template <xtop_action_type_t ActionTypeV>
-std::map<std::string, xbyte_buffer_t> xtop_consensus_action<ActionTypeV>::receipt_data() const {
+xreceipt_data_store_t xtop_consensus_action<ActionTypeV>::receipt_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
     return tx->get_last_action_receipt_data();

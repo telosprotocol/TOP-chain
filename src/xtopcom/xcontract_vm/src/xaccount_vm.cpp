@@ -250,7 +250,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
             }
         } else {
             if (!r.output.receipt_data.empty()) {
-                tx->set_receipt_data(r.output.receipt_data.receipt_data());
+                tx->set_receipt_data(r.output.receipt_data);
             }
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
             xdbg("[xtop_account_vm::pack] tx[%" PRIu64 "] add to success assemble", i);

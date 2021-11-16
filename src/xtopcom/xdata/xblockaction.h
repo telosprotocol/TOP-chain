@@ -9,15 +9,17 @@
 #include <vector>
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
+#include "xdata/xblock_paras.h"
+#include "xdata/xreceipt_data_store.h"
+#include "xdata/xtransaction.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xventity.h"
-#include "xdata/xtransaction.h"
-#include "xdata/xblock_paras.h"
+
 namespace top { namespace data {
 
-using xreceipt_data_t = std::map<std::string, xbyte_buffer_t>;
+using xreceipt_data_t = xreceipt_data_store_t;
 // lightunit action is wrap for vaction, should not cache any members
 class xlightunit_action_t : public base::xvaction_t {
  protected:

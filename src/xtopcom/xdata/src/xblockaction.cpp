@@ -73,7 +73,7 @@ xreceipt_data_t   xlightunit_action_t::get_receipt_data() const {
 
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)value.data(), (int32_t)value.size());
     xreceipt_data_t data;
-    MAP_DESERIALIZE_SIMPLE(stream, data);
+    data.serialize_from(stream);
     return data;
 
 }
