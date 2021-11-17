@@ -315,7 +315,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_response_event(uint32_t idx, cons
 xchain_downloader_face_ptr_t xdownloader_t::on_archive_blocks(uint32_t idx, const mbus::xevent_ptr_t &e) {
     //xsync_dbg("downloader on_response_event");
 
-    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
 
     const std::string &address = bme->blocks[0]->get_account();
 
