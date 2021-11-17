@@ -58,7 +58,7 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
     common::xzone_id_t zid{common::xconsensus_zone_id};
     common::xcluster_id_t cid{common::xdefault_cluster_id};
     common::xgroup_id_t gid{common::xauditor_group_id_begin};
-    std::string node_id_prefix = "TEST_SHRINK  ";
+    std::string node_id_prefix = "T00000LMZLAYy";
     add_nodes_to_standby(30, node_type, node_id_prefix);
     for (auto index = 0; index < 30; ++index) {
         re[index] = std::vector<common::xnode_id_t>{};
@@ -80,7 +80,8 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
 
     std::printf("delete nodes 1-20 :\n");
     for (auto index = 1; index <= 20; ++index) {
-        delete_standby_node(node_type, common::xnode_id_t{node_id_prefix + std::to_string(index)});
+
+        delete_standby_node(node_type, build_account_address(node_id_prefix,index));
     }
     ELECT(group_size_range);
     ELECT(group_size_range);

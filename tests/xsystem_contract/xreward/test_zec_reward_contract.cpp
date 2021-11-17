@@ -32,6 +32,16 @@ using namespace top::xstake;
 using namespace top::contract;
 
 NS_BEG3(top, tests, reward)
+
+static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
+    auto account_string = account_prefix + std::to_string(index);
+    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_LENGTH - account_string.length(), 'x');
+    }
+    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_LENGTH);
+    return common::xaccount_address_t{account_string};
+}
+
 class xtop_test_reward_contract : public xzec_reward_contract, public testing::Test {
     using xbase_t = xzec_reward_contract;
 
@@ -105,7 +115,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
     // deposit zero archive 7, deposit > vote 14, deposit <= vote 21,
     // deposit zero consensus 8, valid > vote 16,
     for(int i = 0; i < 5+10; i++){
-        std::string name = "edge" + std::to_string(i+1); 
+        auto name = build_account_address("T00000LEdge", i + 1);
         xreg_node_info node;
         node.miner_type(common::xminer_type_t::edge);
         node.m_vote_amount = 0;
@@ -114,10 +124,10 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
         }else{
             node.m_account_mortgage = 10*TOP_UNIT;
         }
-        map_nodes.insert({common::xaccount_address_t{name}, node});
+        map_nodes.insert({name, node});
     }
     for(int i = 0; i < 7+14+21; i++){
-        std::string name = "archive" + std::to_string(i+1); 
+        auto name = build_account_address("T00000LArchive", i + 1);
         xreg_node_info node;
         node.miner_type(common::xminer_type_t::archive);
         if(i < 7){
@@ -130,10 +140,10 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
             node.m_vote_amount = 15;
             node.m_account_mortgage = 10*TOP_UNIT;            
         }
-        map_nodes.insert({common::xaccount_address_t{name}, node});
+        map_nodes.insert({name, node});
     }
     for(int i = 0; i < 6+12+18; i++){
-        std::string name = "advance" + std::to_string(i+1); 
+        auto name = build_account_address("T00000Advance",i + 1);
         xreg_node_info node;
         node.miner_type(common::xminer_type_t::advance);
         if(i < 6){
@@ -146,10 +156,10 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
             node.m_vote_amount = 15;
             node.m_account_mortgage = 10*TOP_UNIT;            
         }
-        map_nodes.insert({common::xaccount_address_t{name}, node});
+        map_nodes.insert({name, node});
     }
     for(int i = 0; i < 8+16; i++){
-        std::string name = "consensus" + std::to_string(i+1); 
+        auto name = build_account_address("T00000Consensus", i + 1);
         xreg_node_info node;
         node.miner_type(common::xminer_type_t::validator);
         node.m_vote_amount = 0;
@@ -158,7 +168,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
         }else{
             node.m_account_mortgage = 10*TOP_UNIT;
         }
-        map_nodes.insert({common::xaccount_address_t{name}, node});
+        map_nodes.insert({name, node});
     }
 
     role_nums = calc_role_nums(map_nodes, false);
@@ -229,7 +239,7 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
         // valid nodes
         for(int i = 0; i < 4; i++){
             std::pair<common::xaccount_address_t, xreg_node_info> node;
-            node.first = common::xaccount_address_t{"node1_" + std::to_string(i+1)};
+            node.first = build_account_address("T00000node1_", i + 1);
             node.second.m_account = common::xaccount_address_t{node.first};
             if(role == 0){
                 node.second.miner_type(common::xminer_type_t::advance);
@@ -243,7 +253,7 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
         // invalid nodes
         for(int i = 0; i < 3; i++){
             std::pair<common::xaccount_address_t, xreg_node_info> node;
-            node.first = common::xaccount_address_t{"node2_" + std::to_string(i+1)};
+            node.first = build_account_address("T00000node2_", i + 1);
             node.second.m_account = common::xaccount_address_t{node.first};
             if(i < 1){
                 node.second.m_vote_amount = 15;
@@ -277,7 +287,7 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
             group.second.cluster_total_workload = 100;
             for(int i = 0; i < 5; i++){
                 std::pair<std::string, uint32_t> work;
-                work.first = "node" + std::to_string(j+1) + "_" +std::to_string(i+1);
+                work.first = build_account_address("T00000node" + std::to_string(j + 1) + "_", i + 1).value();
                 work.second = 20;
                 group.second.m_leader_count.insert(work);
             }
@@ -297,10 +307,10 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
         // 5 nodes 100 total workload, invalid node of 20 workload erase, left 4 nodes, left 80 workload 
         EXPECT_EQ(workloads_detail[group1].cluster_total_workload, 80);
         EXPECT_EQ(workloads_detail[group1].m_leader_count.size(), 4);
-        EXPECT_EQ(workloads_detail[group1].m_leader_count.count("node1_1"), 1);
-        EXPECT_EQ(workloads_detail[group1].m_leader_count.count("node1_2"), 1);
-        EXPECT_EQ(workloads_detail[group1].m_leader_count.count("node1_3"), 1);
-        EXPECT_EQ(workloads_detail[group1].m_leader_count.count("node1_4"), 1);
+        EXPECT_EQ(workloads_detail[group1].m_leader_count.count(build_account_address("T00000node1_", 1).value()), 1);
+        EXPECT_EQ(workloads_detail[group1].m_leader_count.count(build_account_address("T00000node1_", 2).value()), 1);
+        EXPECT_EQ(workloads_detail[group1].m_leader_count.count(build_account_address("T00000node1_", 3).value()), 1);
+        EXPECT_EQ(workloads_detail[group1].m_leader_count.count(build_account_address("T00000node1_", 4).value()), 1);
     }
 }
 
@@ -357,7 +367,7 @@ TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
         group.second.cluster_total_workload = 100;
         for(int i = 0; i < 5; i++){
             std::pair<std::string, uint32_t> work;
-            work.first = "node" + std::to_string(j+1) + "_" +std::to_string(i+1);
+            work.first = build_account_address("T00000node" + std::to_string(j + 1) + "_", i + 1).value();
             work.second = 20;
             group.second.m_leader_count.insert(work);
         }
@@ -365,7 +375,7 @@ TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
     }
     // node 
     xreg_node_info node;
-    node.m_account = common::xaccount_address_t{"node1_1"};
+    node.m_account = build_account_address("T00000node1_", 1);
     node.miner_type(common::xminer_type_t::validator);
     node.m_account_mortgage = 100; 
     calc_validator_workload_rewards(
@@ -377,11 +387,11 @@ TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
             node, validator_num, validator_workloads_detail, validator_group_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
     node.m_account_mortgage = 100;
-    node.m_account = common::xaccount_address_t{"node1_0"};
+    node.m_account = build_account_address("T00000node1_", 0);
     calc_validator_workload_rewards(
             node, validator_num, validator_workloads_detail, validator_group_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
-    node.m_account = common::xaccount_address_t{"node1_1"};
+    node.m_account = build_account_address("T00000node1_", 1);
     calc_validator_workload_rewards(
             node, validator_num, validator_workloads_detail, validator_group_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 10);
@@ -400,7 +410,7 @@ TEST_F(xtest_reward_contract_t, test_calc_auditor_worklaod_rewards) {
         group.second.cluster_total_workload = 100;
         for(int i = 0; i < 5; i++){
             std::pair<std::string, uint32_t> work;
-            work.first = "node" + std::to_string(j+1) + "_" +std::to_string(i+1);
+            work.first = build_account_address("T00000node" + std::to_string(j + 1) + "_", i + 1).value();
             work.second = 20;
             group.second.m_leader_count.insert(work);
         }
@@ -409,7 +419,7 @@ TEST_F(xtest_reward_contract_t, test_calc_auditor_worklaod_rewards) {
     // node 
     xreg_node_info node;
     node.m_vote_amount = 0;
-    node.m_account = common::xaccount_address_t{"node1_1"};
+    node.m_account = build_account_address("T00000node1_", 1);
     node.miner_type(common::xminer_type_t::advance);
     node.m_account_mortgage = 100; 
     calc_auditor_workload_rewards(
@@ -421,11 +431,11 @@ TEST_F(xtest_reward_contract_t, test_calc_auditor_worklaod_rewards) {
             node, auditor_num, auditor_workloads_detail, auditor_group_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
     node.m_account_mortgage = 100;
-    node.m_account = common::xaccount_address_t{"node1_0"};
+    node.m_account = build_account_address("T00000node1_", 0);
     calc_auditor_workload_rewards(
             node, auditor_num, auditor_workloads_detail, auditor_group_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
-    node.m_account = common::xaccount_address_t{"node1_1"};
+    node.m_account = build_account_address("T00000node1_", 1);
     calc_auditor_workload_rewards(
             node, auditor_num, auditor_workloads_detail, auditor_group_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
@@ -459,7 +469,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     for(int table = 0; table < 4; table++){
         for(int node_idx = 0; node_idx < 64; node_idx++){
             xreg_node_info node;
-            node.m_account = common::xaccount_address_t{std::string("node") + std::to_string(node_idx+1 + table*64)};
+            node.m_account = build_account_address("T00000node", node_idx + 1 + table * 64);
             node.m_vote_amount = 1000;
             node.m_support_ratio_numerator = 20;
             node.m_support_ratio_denominator = 100;
@@ -478,7 +488,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
             }else{ // validator
                 node.miner_type(common::xminer_type_t::validator);
             } 
-            property_param.map_nodes.insert(std::make_pair(common::xaccount_address_t{"node" + std::to_string(node_idx+1 + table*64)}, node));
+            property_param.map_nodes.insert(std::make_pair(build_account_address("T00000node", node_idx + 1 + table * 64), node));
         }
     }
     // make property_param votes_detail
@@ -491,17 +501,17 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
         }
         for(int node_idx = 0; node_idx < 64; node_idx++){
             if(node_idx < 4+20){ 
-                string voter = "node" + std::to_string(node_idx+1 + table*64);
+                string voter = build_account_address("T00000node", node_idx + 1 + table * 64).value();
                 std::map<common::xaccount_address_t, uint64_t> vote_detail;
                 uint64_t vote = 1;
                 common::xaccount_address_t account1;
                 common::xaccount_address_t account2;
                 if(node_idx%2 == 0){
-                    account1 = common::xaccount_address_t{"node" + std::to_string(node_idx+1 + base*64)};
-                    account2 = common::xaccount_address_t{"node" + std::to_string(node_idx+1+1 + base*64)};
+                    account1 = build_account_address("T00000node", node_idx + 1 + base * 64);
+                    account2 = build_account_address("T00000node", node_idx + 1 + 1 + base * 64);
                 }else{
-                    account1 = common::xaccount_address_t{"node" + std::to_string(node_idx+1-1 + base*64)};
-                    account2 = common::xaccount_address_t{"node" + std::to_string(node_idx+1 + base*64)};
+                    account1 = build_account_address("T00000node", node_idx+1-1 + base*64);
+                    account2 = build_account_address("T00000node", node_idx+1 + base*64);
                 }
                 vote_detail.insert(std::make_pair(account1, vote));
                 vote_detail.insert(std::make_pair(account2, vote));
@@ -520,7 +530,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
         }
         for(int node_idx = 0; node_idx < 64; node_idx++){
             if(node_idx >= 4 && node_idx < 2+2+20){
-                string node = "node" + std::to_string(node_idx+1 + table*64);
+                string node = build_account_address("T00000node", node_idx + 1 + table * 64).value();
                 if(table != 3){
                     workload.m_leader_count.insert(std::make_pair(node, 10));
                 }else{
@@ -529,7 +539,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
             }      
         }
         for(int node_idx = 0; node_idx < 20; node_idx++){
-            string node = "unregisterd_auditor_node" + std::to_string(node_idx+1 + table*64);
+            string node = build_account_address("T00000unregisterd_auditor_node", node_idx + 1 + table * 64).value();
             workload.m_leader_count.insert(std::make_pair(node, 10));
         }
         auto group = common::xgroup_address_t{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{table+1}};
@@ -545,7 +555,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
         }
         for(int node_idx = 0; node_idx < 64; node_idx++){
             if(node_idx >= 2+2+20){
-                string node = "node" + std::to_string(node_idx+1 + table*64);
+                string node = build_account_address("T00000node", node_idx + 1 + table * 64).value();
                 if(table != 3){
                     workload.m_leader_count.insert(std::make_pair(node, 10));
                 }else{
@@ -557,7 +567,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
             }      
         }
         for(int node_idx = 0; node_idx < 40; node_idx++){
-            string node = "unregisterd_validator_node" + std::to_string(node_idx+1 + table*64);
+            string node = build_account_address("T00000unregisterd_validator_node", node_idx + 1 + table * 64).value();
             if(table != 3){
                 workload.m_leader_count.insert(std::make_pair(node, 10));
             }else{
@@ -623,14 +633,14 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     calc_votes(property_param.votes_detail, property_param.map_nodes, account_votes);
     for(auto reward : node_reward_detail){
-        std::string table_address = std::to_string(stoi(reward.first.to_string().substr(4)) / 64);
+        std::string table_address = build_account_address("T00000", stoi(reward.first.to_string().substr(10)) / 64).value();
         calc_table_node_reward_detail(common::xaccount_address_t{table_address}, reward.first, reward.second, table_total_rewards, table_node_reward_detail);
     }
     for(auto reward : node_dividend_detail){
         for (auto & vote_detail : property_param.votes_detail){
             auto const & voter = vote_detail.first;
             auto const & votes = vote_detail.second;
-            std::string table_address = std::to_string(stoi(voter.to_string().substr(4)) / 64);
+            std::string table_address = build_account_address("T00000", stoi(voter.to_string().substr(10)) / 64).value();
             calc_table_node_dividend_detail(common::xaccount_address_t{table_address}, reward.first, reward.second, account_votes[reward.first], votes, table_total_rewards, table_node_dividend_detail);
         }
     }
@@ -647,21 +657,26 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
             if(table != "3"){
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], top::xstake::uint128_t("304000886236994246"));
+                        EXPECT_EQ(table_node_dividend_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table) + 1) * 64 + i + 1)],
+                                  top::xstake::uint128_t("304000886236994246"));
                     }else{
                         if(table == "2"){
-                            EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], top::xstake::uint128_t("729602126968786192"));
+                            EXPECT_EQ(table_node_dividend_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table) + 1) * 64 + i + 1)],
+                                      top::xstake::uint128_t("729602126968786192"));
                         }else{
-                            EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], top::xstake::uint128_t("1033603013205780440"));
+                            EXPECT_EQ(table_node_dividend_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table) + 1) * 64 + i + 1)],
+                                      top::xstake::uint128_t("1033603013205780440"));
                         }
                     }
                 }
             }else{
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string(i+1)}], top::xstake::uint128_t("304000886236994246"));
+                        EXPECT_EQ(table_node_dividend_detail[build_account_address("T00000", idx)][build_account_address("T00000node", i + 1)],
+                                  top::xstake::uint128_t("304000886236994246"));
                     }else{
-                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string(i+1)}], top::xstake::uint128_t("1033603013205780440"));
+                        EXPECT_EQ(table_node_dividend_detail[build_account_address("T00000", idx)][build_account_address("T00000node", i + 1)],
+                                  top::xstake::uint128_t("1033603013205780440"));
                     }
                 }
             }
@@ -672,32 +687,39 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
         for(int idx = 0; idx < 4; idx++){
             std::string table = std::to_string(idx);
             if(table == "0" || table == "1" ){
-                EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 32);
+                EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)].size(), 32);
                 for(int i = 0; i < 64; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("1216003544947976988"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("1216003544947976988"));
                     }else if(i < 24){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("4134412052823121760"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("4134412052823121760"));
                     }else{
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("4560013293554913706"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("4560013293554913706"));
                     }
                 }
             }else if(table == "2" ){
-                EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 12);
+                EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)].size(), 12);
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("1216003544947976988"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("1216003544947976988"));
                     }else if(i < 24){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("4134412052823121760"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("4134412052823121760"));
                     }
                 }                
             }else if(table == "3" ){
-                EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 12);
+                EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)].size(), 12);
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("1216003544947976988"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("1216003544947976988"));
                     }else if(i < 24){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xstake::uint128_t("2918408507875144772"));
+                        EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)][build_account_address("T00000node", (std::stoi(table)) * 64 + i + 1)],
+                                  top::xstake::uint128_t("2918408507875144772"));
                     }
                 }
             } 
@@ -705,58 +727,84 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     }
     {
         EXPECT_EQ(table_total_rewards.size(), 4);
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"0"}], top::xstake::uint128_t("145920425393757238588"));
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"1"}], top::xstake::uint128_t("145920425393757238588"));
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"2"}], top::xstake::uint128_t("51680150660289021988"));
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"3"}], top::xstake::uint128_t("42560124073179194588"));
+        EXPECT_EQ(table_total_rewards[build_account_address("T00000", 0)], top::xstake::uint128_t("145920425393757238588"));
+        EXPECT_EQ(table_total_rewards[build_account_address("T00000", 1)], top::xstake::uint128_t("145920425393757238588"));
+        EXPECT_EQ(table_total_rewards[build_account_address("T00000", 2)], top::xstake::uint128_t("51680150660289021988"));
+        EXPECT_EQ(table_total_rewards[build_account_address("T00000", 3)], top::xstake::uint128_t("42560124073179194588"));
     }
     {
         for(int idx = 0; idx < 4; idx++){
             std::string table = std::to_string(idx);
             if(table == "0" || table == "1" ){
-                EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 32);
+                EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)].size(), 32);
                 for(int i = 0; i < 64; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xstake::uint128_t("1520004431184971235"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_edge_reward,
+                                  top::xstake::uint128_t("1520004431184971235"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_archive_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_validator_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_auditor_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_vote_reward,
+                                  top::xstake::uint128_t("0"));
                     }else if(i < 24){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xstake::uint128_t("608001772473988494"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xstake::uint128_t("1520004431184971235"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xstake::uint128_t("3040008862369942471"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_edge_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_archive_reward,
+                                  top::xstake::uint128_t("608001772473988494"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_validator_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_auditor_reward,
+                                  top::xstake::uint128_t("1520004431184971235"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_vote_reward,
+                                  top::xstake::uint128_t("3040008862369942471"));
                     }else{
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xstake::uint128_t("4560013293554913706"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_edge_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_archive_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_validator_reward,
+                                  top::xstake::uint128_t("4560013293554913706"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_auditor_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_vote_reward,
+                                  top::xstake::uint128_t("0"));
                     }
                 }
             }else if(table == "2" || table == "3" ){
-                EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 12);
+                EXPECT_EQ(table_node_reward_detail[build_account_address("T00000", idx)].size(), 12);
                 for(int i = 0; i < 64; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xstake::uint128_t("1520004431184971235"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_edge_reward,
+                                  top::xstake::uint128_t("1520004431184971235"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_archive_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_validator_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_auditor_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_vote_reward,
+                                  top::xstake::uint128_t("0"));
                     }else if(i < 24){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xstake::uint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xstake::uint128_t("608001772473988494"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_edge_reward,
+                                  top::xstake::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_archive_reward,
+                                  top::xstake::uint128_t("608001772473988494"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_validator_reward,
+                                  top::xstake::uint128_t("0"));
                         if(table == "2"){
-                            EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xstake::uint128_t("1520004431184971235"));
+                            EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_auditor_reward,
+                                      top::xstake::uint128_t("1520004431184971235"));
                         }else if(table == "3"){
-                            EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xstake::uint128_t("0"));
+                            EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_auditor_reward,
+                                      top::xstake::uint128_t("0"));
                         }
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xstake::uint128_t("3040008862369942471"));
+                        EXPECT_EQ(issue_detail.m_node_rewards[build_account_address("T00000node", idx * 64 + i + 1).value()].m_vote_reward,
+                                  top::xstake::uint128_t("3040008862369942471"));
                     }
-                }              
+                }
             }
         }
     }

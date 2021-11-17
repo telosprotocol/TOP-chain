@@ -556,7 +556,7 @@ static std::vector<std::string> test_account = {
 
 class xtop_test_table_contract : public testing::Test {
 public:
-    xtop_test_table_contract() : m_table_contract(common::xnetwork_id_t{255}), node_serv{common::xaccount_address_t{"mocked_nodesvr"}, "null"} {
+    xtop_test_table_contract() : m_table_contract(common::xnetwork_id_t{255}), node_serv{common::xaccount_address_t{"T00000LVwBxzPTQxKKhuxjjhmces35SZcYcZJnXq"}, "MbtRS6k1n0qQI4hqBhwPxXFj+s34lO+58JCxmc9znUo="} {
         nodeservice_add_group(1, m_group_xip1, test_account, 256);
         nodeservice_add_group(1, m_group_xip2, test_account, 512);
     }
