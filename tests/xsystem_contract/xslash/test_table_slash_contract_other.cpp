@@ -43,6 +43,15 @@ using json = nlohmann::json;
 
 std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
 
+static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
+    auto account_string = account_prefix + std::to_string(index);
+    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_LENGTH - account_string.length(), 'x');
+    }
+    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_LENGTH);
+    return common::xaccount_address_t{account_string};
+}
+
 class test_table_slash_contract_other: public xtable_statistic_info_collection_contract, public testing::Test {
 public:
     test_table_slash_contract_other(): xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}{};
@@ -273,8 +282,8 @@ TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
         xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;
         node_content.subset_count = i + 1;
-        node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
-        node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
+        node_info.auditor_info[build_account_address("T00000auditor", i)] = node_content;
+        node_info.validator_info[build_account_address("T00000validator", i)] = node_content;
     }
 
     using namespace top::mock;

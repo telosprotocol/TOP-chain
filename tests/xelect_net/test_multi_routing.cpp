@@ -65,7 +65,7 @@ TEST_F(xtop_test_elect_net_fixture, TOP_4008) {
     auto const gid = common::xdefault_group_id;
     auto const slot_id = common::xslot_id_t{7};
     std::size_t node_size = 10;
-    add_nodes_to_election_result(node_size, node_type, cid, gid, "test_node_prefix");
+    add_nodes_to_election_result(node_size, node_type, cid, gid, "T00000LMZLAYynftsjQiKZ5W7TQnc");
     auto const election_result = election_network_result;
     data::election::xelection_result_store_t e;
     e.result_of(net_id) = election_network_result;

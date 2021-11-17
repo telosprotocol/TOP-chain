@@ -9,7 +9,7 @@
 NS_BEG3(top, tests, election)
 
 TEST(mocked_vnode_service, create) {
-    xobject_ptr_t<tests::election::xmocked_vnodesvr_t> mocked = make_object_ptr<tests::election::xmocked_vnodesvr_t>(common::xaccount_address_t{ "T0000xyz" }, std::string{"xxxx"});
+    xobject_ptr_t<tests::election::xmocked_vnodesvr_t> mocked = make_object_ptr<tests::election::xmocked_vnodesvr_t>(common::xaccount_address_t{ "T00000LZT7WQrkLfTjLq2BwLJDSa2i5ZjjvkD3Qe" }, std::string{"Cz4xEwkrfpWikZHVUc+4hkiIOKPMYvZ1AWXcMdENQFM="});
 }
 
 NS_END3

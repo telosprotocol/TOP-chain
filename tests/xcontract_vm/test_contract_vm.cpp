@@ -197,7 +197,7 @@ TEST_F(test_contract_vm, test_send_tx) {
         }
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
-            EXPECT_EQ(value, 10000000000 - 100000);
+            EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
         }
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
