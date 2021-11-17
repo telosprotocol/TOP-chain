@@ -142,6 +142,30 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         }
     }
 }
+enum_result_code xchain_downloader_t::handle_archive_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
+    if (is_elect_chain) {
+        if (!check_auth(m_certauth, block)) {
+            xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
+            return enum_result_code::auth_failed;
+        }
+    }
+
+    auto vbindex = m_sync_store->load_block_object(block->get_block_owner(), block->get_height(), false, block->get_viewid());
+    if (vbindex == nullptr) {
+    //XTODO,need doublecheck whether allow set flag of authenticated without verify signature
+        xsync_dbg("xchain_downloader_t::handle_block, store_block: %s,%d", block->get_account().c_str(), block->get_height());
+        block->set_block_flag(enum_xvblock_flag_authenticated);
+        
+        base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
+        bool ret = m_sync_store->store_block(vblock);
+        if (!ret) {
+            return enum_result_code::failed;
+        }
+    } else {
+    }
+
+    return enum_result_code::success;
+}
 void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
     uint32_t count = blocks.size();
     if (count == 0) {
@@ -168,22 +192,11 @@ void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blo
         }
     }
 
-    enum_chain_sync_policy sync_policy;
-    if (!m_sync_range_mgr.get_sync_policy(sync_policy)) {
-        xsync_info("chain_downloader on_archive_blocks(not behind) %s,", m_address.c_str());
-        return;
-    }
-
-    if (m_sync_range_mgr.get_current_sync_start_height() != blocks.begin()->get()->get_height()) {
-        xsync_info("chain_downloader on_archive_blocks expect height is %llu, but real height is %llu", m_sync_range_mgr.get_current_sync_start_height(), blocks.begin()->get()->get_height());
-        return;
-    }
-
     auto next_block = blocks[blocks.size() - 1];
  
     for (uint32_t i = 0; i < count; i++) {
         xblock_ptr_t &block = blocks[i];
-        enum_result_code ret = handle_block(block, is_elect_chain, next_block->get_height());
+        enum_result_code ret = handle_archive_block(block, is_elect_chain, next_block->get_height());
 
         if (ret == enum_result_code::success) {
             xsync_dbg("chain_downloader on_archive_blocks(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",

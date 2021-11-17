@@ -146,6 +146,7 @@ private:
     void wait_committed_event_group(uint64_t height, uint64_t quota_height);
     bool notify_committed_event_group(uint64_t height);
     bool notified_committed_event_group();
+    enum_result_code handle_archive_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height);
 protected:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store;
