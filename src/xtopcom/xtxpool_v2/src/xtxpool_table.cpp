@@ -18,6 +18,7 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
+#include "xvledger/xvcontract.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -232,47 +233,40 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 }
 
 void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool update_txmgr) {
-    const std::vector<base::xventity_t *> & _table_inentitys = table_block->get_input()->get_entitys();
-    uint32_t entitys_count = _table_inentitys.size();
     std::vector<xtx_id_height_info> tx_id_height_infos;
-
     std::vector<update_id_state_para> update_id_state_para_vec;
-    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        base::xvinentity_t * _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
-        base::xtable_inentity_extend_t extend;
-        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+    auto tx_actions = table_block->get_tx_actions();
+    
+    for (auto & action : tx_actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
+        }
 
-        const std::vector<base::xvaction_t> & input_actions = _table_unit_inentity->get_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                continue;
+        xlightunit_action_t txaction(action);
+        if (update_txmgr) {
+            const std::string uri = txaction.get_contract_uri();
+            const std::string & account = base::xvcontract_t::get_contract_address(uri);
+            tx_info_t txinfo(account, txaction.get_tx_hash_256(), txaction.get_tx_subtype());
+            uint64_t txnonce = 0;
+            xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
+            if (_rawtx != nullptr) {
+                txnonce = _rawtx->get_tx_nonce();
             }
 
-            xlightunit_action_t txaction(action);
-            if (update_txmgr) {
-                tx_info_t txinfo(_unit_header->get_account(), txaction.get_tx_hash_256(), txaction.get_tx_subtype());
-                uint64_t txnonce = 0;
-                xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
-                if (_rawtx != nullptr) {
-                    txnonce = _rawtx->get_tx_nonce();
-                }
+            update_id_state_para_vec.push_back(update_id_state_para(txinfo, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce));
+        }
 
-                update_id_state_para_vec.push_back(update_id_state_para(txinfo, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce));
-            }
+        if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_recv) {
+            tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id()));
 
-            if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_recv) {
-                tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id()));
-
-                xtxpool_info(
-                    "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
-                    m_xtable_info.get_account().c_str(),
-                    txaction.get_receipt_id_peer_tableid(),
-                    txaction.get_tx_subtype(),
-                    txaction.get_receipt_id(),
-                    txaction.get_sender_confirmed_receipt_id(),
-                    table_block->get_height());
-            }
+            xtxpool_info(
+                "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
+                m_xtable_info.get_account().c_str(),
+                txaction.get_receipt_id_peer_tableid(),
+                txaction.get_tx_subtype(),
+                txaction.get_receipt_id(),
+                txaction.get_sender_confirmed_receipt_id(),
+                table_block->get_height());
         }
     }
 

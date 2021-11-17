@@ -6,6 +6,7 @@
 #include "xdata/xblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xblockbuild.h"
 #include "xdata/xcons_transaction.h"
 #include "xstore/xstore_face.h"
 #include "xblockmaker/xtable_builder.h"
@@ -116,19 +117,24 @@ class xdatamock_table : public base::xvaccount_t {
     void    push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {        
         for (auto & tx : txs) {
             push_tx(tx);
+                xtransaction_ptr_t raw_tx_ptr;
+                auto raw_tx = tx->get_transaction();
+                raw_tx->add_ref();
+                raw_tx_ptr.attach(raw_tx);
+                m_raw_txs[tx->get_tx_hash()] = raw_tx_ptr;
         }
     }
     void    push_tx(const xcons_transaction_ptr_t & tx) {
         auto account_addr = tx->get_account_addr();
         for (auto & mockunit : m_mock_units) {
             if (account_addr == mockunit.get_account()) {
-                mockunit.push_tx(tx);
+                mockunit.push_tx(tx, m_raw_txs);
                 return;
             }
         }
         xdatamock_unit datamock_unit(account_addr, xdatamock_unit::enum_default_init_balance);
         m_mock_units.push_back(datamock_unit);
-        datamock_unit.push_tx(tx);
+        datamock_unit.push_tx(tx, m_raw_txs);
     }
     xblock_ptr_t    generate_one_table() {
         xblock_ptr_t block = generate_tableblock();
@@ -275,17 +281,25 @@ class xdatamock_table : public base::xvaccount_t {
         receiptid_state->clear_pair_modified();
 
         std::vector<xblock_ptr_t>   units;
+        std::vector<xlightunit_tx_info_ptr_t> txs_info;
         for (auto & mockunit : m_mock_units) {
             xblock_ptr_t unit = mockunit.generate_unit(receiptid_state, cs_para);
             if (unit != nullptr) {
                 units.push_back(unit);
             }
+            auto txs = mockunit.get_exec_txs();
+            for (auto & tx : txs) {
+                base::xvaction_t _action = data::xlightunit_build_t::make_action(tx);
+                xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
+                txs_info.push_back(txinfo);
+            }
+            mockunit.clear_exec_txs();
         }
         xassert(units.size() > 0);
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
-        xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(units, m_default_resources);
+        xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(units, m_default_resources, txs_info);
         xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
         return proposal_block;
     }
@@ -311,6 +325,7 @@ class xdatamock_table : public base::xvaccount_t {
     }
 
  private:
+    std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     xtablestate_ptr_t               m_table_state{nullptr};
     std::deque<xtablestate_ptr_t>   m_table_states;  // save cert/lock/commit table states
     std::vector<xblock_ptr_t>       m_history_tables;

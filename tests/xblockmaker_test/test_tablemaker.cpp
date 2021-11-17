@@ -2,6 +2,10 @@
 
 #include "test_common.hpp"
 #include "xblockmaker/xtable_maker.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "tests/mock/xvchain_creator.hpp"
+#include "tests/mock/xdatamock_table.hpp"
+#include "tests/mock/xdatamock_address.hpp"
 
 using namespace top;
 using namespace top::base;
@@ -14,6 +18,8 @@ using namespace top::blockmaker;
 class test_tablemaker : public testing::Test {
 protected:
     void SetUp() override {
+        chain_upgrade::xtop_chain_fork_config_center::init();
+        base::xvblock_fork_t::instance().init(chain_upgrade::xtop_chain_fork_config_center::is_block_forked);
     }
 
     void TearDown() override {
@@ -776,4 +782,216 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     std::cout << "all_pairs=" << all_pairs->dump() << std::endl;
     }
 
+}
+
+TEST_F(test_tablemaker, version_1) {
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+
+    const uint32_t tx_cnt = 2;
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(100);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        auto txs = proposal_block->get_txs();
+        EXPECT_EQ(txs.size(), tx_cnt);
+        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_table_prop_prove);
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+
+        {
+            xJson::Value jv1;
+            proposal_block->parse_to_json(jv1, RPC_VERSION_V1);
+            auto j_txs = jv1["tableblock"]["units"][from_addr]["lightunit_input"];
+            auto tx_hashes = j_txs.getMemberNames();
+            for(auto hash : tx_hashes) {
+                auto sender = j_txs[hash]["sender"].asString();
+                EXPECT_EQ(sender, from_addr);
+                auto receiver = j_txs[hash]["receiver"].asString();
+                EXPECT_EQ(receiver, to_addr);
+                auto tx_consensus_phase = j_txs[hash]["tx_consensus_phase"].asString();
+                EXPECT_EQ(tx_consensus_phase, "send");
+            }
+            auto unit_height = jv1["tableblock"]["units"][from_addr]["unit_height"].asUInt64();
+            EXPECT_EQ(unit_height, 1);
+        } 
+        
+        {
+            xJson::Value jv2;
+            proposal_block->parse_to_json(jv2, RPC_VERSION_V2);
+            auto j_txs = jv2["tableblock"]["txs"];
+            for(auto tx : j_txs) {
+                auto tx_consensus_phase = tx["tx_consensus_phase"].asString();
+                EXPECT_EQ(tx_consensus_phase, "send");
+            }
+            auto units = jv2["tableblock"]["units"];
+            for (auto & unit : units) {
+                auto unit_height = unit["unit_height"].asUInt64();
+                EXPECT_EQ(unit_height, 1);
+                auto account = unit["account"].asString();
+                EXPECT_EQ(account, from_addr);
+            }
+        }
+
+        auto units = proposal_block->get_tableblock_units(false);
+        EXPECT_EQ(units.size(), 1);
+        for (auto & unit : units) {
+            auto txs = unit->get_txs();
+            EXPECT_EQ(txs.size(), tx_cnt);
+
+            {
+                xJson::Value jv1;
+                unit->parse_to_json(jv1, RPC_VERSION_V1);
+                auto j_txs = jv1["lightunit"]["lightunit_input"]["txs"];
+                for(auto tx : j_txs) {
+                    auto hashes = tx.getMemberNames();
+                    for (auto & hash : hashes) {
+                        auto tx_consensus_phase = tx[hash]["tx_consensus_phase"].asString();
+                        EXPECT_EQ(tx_consensus_phase, "send");
+                        auto tx_exec_status = tx[hash]["tx_exec_status"].asString();
+                        EXPECT_EQ(tx_exec_status, "success");
+                    }
+                }
+            }
+
+            {
+                xJson::Value jv2;
+                unit->parse_to_json(jv2, RPC_VERSION_V2);
+                auto txs = jv2["lightunit"]["lightunit_input"];
+                for (auto & tx : txs) {
+                    auto tx_consensus_phase = tx["tx_consensus_phase"].asString();
+                    EXPECT_EQ(tx_consensus_phase, "send");
+                }
+            }
+         }
+
+        auto headers = proposal_block->get_sub_block_headers();
+        EXPECT_EQ(headers.size(), 1);
+        for (auto & header : headers) {
+            EXPECT_EQ(header->get_extra_data().empty(), true);
+            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_table_prop_prove);
+        }
+    }
+}
+
+TEST_F(test_tablemaker, version_2) {
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+
+    const uint32_t tx_cnt = 2;
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+    EXPECT_EQ(send_txs.size(), tx_cnt);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(10000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        auto txs = proposal_block->get_txs();
+        EXPECT_EQ(txs.size(), tx_cnt);
+        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt);
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+
+        {
+            xJson::Value jv1;
+            proposal_block->parse_to_json(jv1, RPC_VERSION_V1);
+            auto j_txs = jv1["tableblock"]["units"][from_addr]["lightunit_input"];
+            auto tx_hashes = j_txs.getMemberNames();
+            EXPECT_EQ(tx_hashes.empty(), true);
+            auto unit_height = jv1["tableblock"]["units"][from_addr]["unit_height"].asUInt64();
+            EXPECT_EQ(unit_height, 1);
+        }
+        
+        {
+            xJson::Value jv2;
+            proposal_block->parse_to_json(jv2, RPC_VERSION_V2);
+            auto j_txs = jv2["tableblock"]["txs"];
+            for(auto tx : j_txs) {
+                auto tx_consensus_phase = tx["tx_consensus_phase"].asString();
+                EXPECT_EQ(tx_consensus_phase, "send");
+            }
+            auto units = jv2["tableblock"]["units"];
+            for (auto & unit : units) {
+                auto unit_height = unit["unit_height"].asUInt64();
+                EXPECT_EQ(unit_height, 1);
+                auto account = unit["account"].asString();
+                EXPECT_EQ(account, from_addr);
+            }
+        }
+
+        auto units = proposal_block->get_tableblock_units(false);
+        EXPECT_EQ(units.size(), 1);
+        for (auto & unit : units) {
+            auto txs = unit->get_txs();
+            EXPECT_EQ(txs.size(), 0);
+            
+            {
+                xJson::Value jv1;
+                unit->parse_to_json(jv1, RPC_VERSION_V1);
+                auto j_txs = jv1["lightunit"]["lightunit_input"]["txs"];
+                for(auto tx : j_txs) {
+                    auto hashes = tx.getMemberNames();
+                    for (auto & hash : hashes) {
+                        auto tx_consensus_phase = tx[hash]["tx_consensus_phase"].asString();
+                        EXPECT_EQ(tx_consensus_phase, "send");
+                    }
+                }
+            }
+
+            {
+                xJson::Value jv2;
+                unit->parse_to_json(jv2, RPC_VERSION_V2);
+                auto txs = jv2["lightunit"]["lightunit_input"];
+                for (auto & tx : txs) {
+                    auto tx_consensus_phase = tx["tx_consensus_phase"].asString();
+                    EXPECT_EQ(tx_consensus_phase, "send");
+                }
+            }
+        }
+
+        auto headers = proposal_block->get_sub_block_headers();
+        EXPECT_EQ(headers.size(), 1);
+        for (auto & header : headers) {
+            EXPECT_EQ(header->get_extra_data().empty(), false);
+            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt);
+        }
+    }
 }

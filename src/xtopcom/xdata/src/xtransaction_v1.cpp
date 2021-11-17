@@ -559,7 +559,6 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
         }
         tx_parse_data.m_function_name = target_action.m_function_name;
         tx_parse_data.m_function_para = target_action.m_para;
-        xdbg("wish v1 target_action_name:%s", tx_parse_data.m_function_name.c_str());
     }
 
     if (target_type == xaction_type_pledge_token) {

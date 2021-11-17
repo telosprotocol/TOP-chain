@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include "xvledger/xdataobj_base.hpp"
+#include "xvledger/xvtxindex.h"
 #include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xlightunit_info.h"
@@ -79,6 +80,7 @@ class xlightunit_block_t : public xblock_t {
  private:
     xlightunit_block_t(const xlightunit_block_t &);
     xlightunit_block_t & operator = (const xlightunit_block_t &);
+    std::vector<base::xvtxkey_t> get_txkeys() const;
     void parse_to_json_v1(xJson::Value & root);
     void parse_to_json_v2(xJson::Value & root);
  public:
@@ -91,7 +93,7 @@ class xlightunit_block_t : public xblock_t {
     virtual     std::string     dump_body() const;
  public:  // override base block api
     bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
-    const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
+    const std::vector<xlightunit_tx_info_ptr_t> get_txs() const override;
     uint32_t                    get_txs_count() const override {return (uint32_t)get_input()->get_entitys().size();}
     uint32_t                    get_unconfirm_sendtx_num() const override;
 
