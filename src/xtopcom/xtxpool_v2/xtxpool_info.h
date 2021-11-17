@@ -340,11 +340,11 @@ public:
     xtxpool_table_info_t(const xtxpool_table_info_t &) = delete;
     xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic, xtable_state_cache_t *table_state_cache, std::set<base::xtable_shortid_t> * all_table_sids = nullptr)
       : base::xvaccount_t(address), m_statistic(statistic), m_table_state_cache(table_state_cache), m_all_table_sids(all_table_sids) {
-        XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, 1);
+        XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtxpool_table_info_t, 1);
         m_shards.push_back(shard);
     }
     ~xtxpool_table_info_t() {
-        XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, -1);
+        XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtxpool_table_info_t, -1);
         m_statistic->dec_push_tx_send_cur_num(m_counter.get_send_tx_count());
         m_statistic->dec_push_tx_recv_cur_num(m_counter.get_recv_tx_count());
         m_statistic->dec_push_tx_confirm_cur_num(m_counter.get_conf_tx_count());

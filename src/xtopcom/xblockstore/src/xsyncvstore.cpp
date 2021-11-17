@@ -45,9 +45,9 @@ namespace top
                 xwarn("xsyncvstore_t::store_block,not allow sync genesis block for unit block,which must be generated from local");
             }
             
-            #ifdef ENABLE_METRICS
+            
             XMETRICS_TIME_RECORD_KEY("blockstore_sync_store_block_time", target_block->get_account() + ":" + std::to_string(target_block->get_height()));
-            #endif
+            
 
             base::xvaccount_t target_account(target_block->get_account());
             #ifndef __PRE_CHECK_AUTH_BEFORE_SYNC_STORE__
@@ -81,9 +81,9 @@ namespace top
            
             auto res = get_vblockstore()->store_block(target_account,target_block);//store block with cert status and to let consensus know it first
             xdbg("xsyncvstore_t::store_block %s result:%d", target_block->dump().c_str(), res);
-            #ifdef ENABLE_METRICS
+           
             XMETRICS_COUNTER_INCREMENT("blockstore_sync_store_block", 1);
-            #endif
+           
             return res;
         }
 

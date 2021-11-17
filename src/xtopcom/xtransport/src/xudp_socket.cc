@@ -816,9 +816,7 @@ int XudpSocket::send_ping_packet(
     _packet.set_process_flag(enum_xpacket_process_flag_compress); //ask compress
 
     _pdu.serialize_to(_packet);
-#ifdef ENABLE_METRICS
-    //TransportFilter::Instance()->AddTrafficData(true, 0, _packet.get_size());
-#endif
+
     return write_packet(_packet, 0, 0);
 }
 
@@ -850,9 +848,7 @@ int32_t XudpSocket::on_ping_packet_recv(
     TransportFilter::Instance()->AddTrafficData(packet.get_size(), packet.get_from_ip_addr());
 #endif
 
-#ifdef ENABLE_METRICS
-    //TransportFilter::Instance()->AddTrafficData(false, 0, packet.get_size());
-#endif
+
 
     multi_thread_message_handler_->HandleMessage(packet);
     return enum_xcode_successful;

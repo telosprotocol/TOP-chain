@@ -173,6 +173,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DRPC_V2=ON"
         echo "Build RPC V2"
     ;;
+    metrics_dataobject) 
+        CMAKE_EXTRA_OPTIONS+=" -DENABLE_METRICS_DATAOBJECT=ON"
+        echo "BUILD WITH ENABLE_METRICS_DATAOBJECT"
+    ;;
     *)
         CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
     ;;

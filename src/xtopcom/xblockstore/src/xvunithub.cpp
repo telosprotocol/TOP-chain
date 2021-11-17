@@ -206,16 +206,16 @@ namespace top
             {
                 bool loaded_new_block = false;
                 if(target_index->get_this_block() == NULL) {  // load from db
-                    #ifdef ENABLE_METRICS
+                  
                     XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
                     XMETRICS_GAUGE(metrics::blockstore_blk_load, 0);
-                    #endif                                        
+                                                        
                     loaded_new_block = target_account->load_block_object(target_index, atag);
                 } else {  // load from cache
-                    #ifdef ENABLE_METRICS
+                  
                     XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
                     XMETRICS_GAUGE(metrics::blockstore_blk_load, 1);
-                    #endif
+                    
                 }
 
                 if(ask_full_load)

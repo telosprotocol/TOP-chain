@@ -154,9 +154,9 @@ namespace top
             :xvblockplugin_t(parent_obj,timeout_ms),
              xvaccount_t(parent_obj.get_address())
         {
-#ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, 1);
-#endif
+
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblockacct_t, 1);
+
             m_meta = NULL;
             m_xvdb_ptr = NULL;
             m_xvdb_ptr = xvdb_ptr;//ptr never released,so here just keep it
@@ -172,9 +172,9 @@ namespace top
             xinfo("xblockacct_t::destroy,account=%s at blockstore=%s,objectid=% " PRId64 " ",
                   get_address().c_str(),get_blockstore_path().c_str(),
                   (int64_t)get_obj_id());
-#ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, -1);
-#endif
+
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblockacct_t, -1);
+
             close_blocks();
         }
 
@@ -286,9 +286,7 @@ namespace top
                     if(old_height_it->second.empty()) //clean empty first if have
                     {
                         m_all_blocks.erase(old_height_it);
-                        #ifdef ENABLE_METRICS
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
-                        #endif
                         continue;
                     }
 
@@ -322,9 +320,9 @@ namespace top
                         }
                         //erase the this iterator finally
                         m_all_blocks.erase(old_height_it);
-                        #ifdef ENABLE_METRICS
+
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1 * erase_count);
-                        #endif
+
                     }
                     else //clean raw block for those reserved index
                     {
@@ -345,9 +343,9 @@ namespace top
                     if(old_height_it->second.empty()) //clean empty first if have
                     {
                         m_all_blocks.erase(old_height_it);
-                        #ifdef ENABLE_METRICS
+                        
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
-                        #endif
+                        
                         continue;
                     }
 
@@ -414,9 +412,9 @@ namespace top
                         view_it->second->release_ref();
                     }
                 }
-                #ifdef ENABLE_METRICS
+
                 XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1 * m_all_blocks.size());
-                #endif
+
                 m_all_blocks.clear();
             }
         }
@@ -928,9 +926,9 @@ namespace top
 
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
-                    #ifdef ENABLE_METRICS
+                   
                     XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
-                    #endif
+                    
                     return (int)_indexes.size();
                 }
                 //genesis block but dont have data at DB, create it ondemand
@@ -951,9 +949,9 @@ namespace top
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height
             {
-                #ifdef ENABLE_METRICS
+
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
-                #endif
+
                 std::vector<base::xvbindex_t*> _indexes(read_index_from_db(target_height));
                 if(_indexes.empty() == false) //found index at db
                 {
@@ -966,9 +964,9 @@ namespace top
 
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
-                    #ifdef ENABLE_METRICS
+                    
                     XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
-                    #endif
+                    
                     return (int)_indexes.size();
                 }
                 //genesis block but dont have data at DB, create it ondemand
@@ -978,9 +976,9 @@ namespace top
                     return 0;
                 }
             }
-            #ifdef ENABLE_METRICS
+
             XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
-            #endif
+
             return (int)it->second.size(); //found existing ones
         }
 
@@ -994,18 +992,18 @@ namespace top
             base::xvbindex_t* target_block = query_index(target_height, view_id);
             if(target_block != NULL) //the ptr has been add reference by query_index
             {
-                #ifdef ENABLE_METRICS
+              
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
-                #endif
+               
                 return target_block;//found at cache layer
             }
             else
             {
-                #ifdef ENABLE_METRICS
+              
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
-                #endif
+              
             }
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, view_id);//query again after loaded
@@ -1026,18 +1024,18 @@ namespace top
             base::xvbindex_t* target_block = query_index(target_height, block_hash);
             if(target_block != NULL) //the ptr has been add reference by query_index
             {
-                #ifdef ENABLE_METRICS
+               
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
-                #endif
+
                 return target_block;//found at cache layer
             }
             else
             {
-                #ifdef ENABLE_METRICS
+                
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
-                #endif
+               
             }
 
             if(load_index(target_height) > 0)//load from db
@@ -1060,18 +1058,17 @@ namespace top
 
             if(target_block != NULL)//the ptr has been add reference by query_index
             {
-                #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
-                #endif
+              
                 return target_block;//found at cache layer
             }
             else
             {
-                #ifdef ENABLE_METRICS
+               
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
                 XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
-                #endif
+               
             }
 
             if(load_index(target_height) > 0)//load from db
@@ -1097,16 +1094,16 @@ namespace top
 
             if(index_ptr->get_this_block() != NULL)
             {
-                #ifdef ENABLE_METRICS
+
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
-                #endif
+             
                 return true;
             }
             else
             {
-                #ifdef ENABLE_METRICS
+              
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
-                #endif
+               
             }
 
             return read_block_object_from_db(index_ptr);
@@ -1168,9 +1165,9 @@ namespace top
         {
             if(nullptr == new_raw_block)
                 return false;
-#if defined(ENABLE_METRICS)
+
             XMETRICS_GAUGE(metrics::store_block_call, 1);
-#endif
+
 
             base::xauto_ptr<base::xvbindex_t> exist_cert( query_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
             if(exist_cert) //found duplicated ones
@@ -1216,9 +1213,9 @@ namespace top
             }
 
             xdbg("xblockacct_t::store_block,prepare for block=%s,cache_size:%zu,dump=%s",new_raw_block->dump().c_str(), m_all_blocks.size(), dump().c_str());
-            #ifdef ENABLE_METRICS
+          
             XMETRICS_TIME_RECORD_KEY("blockstore_store_block_time", new_raw_block->get_account() + ":" + std::to_string(new_raw_block->get_height()));
-            #endif
+           
 
             //#1:cache_block() ->link neighbor -> mark_connect_flag() -> update metric
             //#2:connect_block() ->process_block()
@@ -1268,9 +1265,9 @@ namespace top
 
             if(block_ptr->get_height() == 0)
                 return false; //not allow delete genesis block
-#if defined(ENABLE_METRICS)
+
             XMETRICS_GAUGE(metrics::store_block_delete, 1);
-#endif
+
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
 
             if(false == m_all_blocks.empty())
@@ -1293,9 +1290,9 @@ namespace top
                     if(view_map.empty())
                     {
                         m_all_blocks.erase(height_it);
-                        #ifdef ENABLE_METRICS
+
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
-                        #endif
+
                     }
 
                 }
@@ -1320,9 +1317,9 @@ namespace top
                     if(view_map.empty())
                     {
                         m_all_blocks.erase(height_it);
-                        #ifdef ENABLE_METRICS
+                        
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
-                        #endif
+                      
                     }
                     else
                     {
@@ -1447,9 +1444,9 @@ namespace top
                     //since found the duplicated one, we need let caller know this fact,so tranfer flag of stored to new index
                     *this_block = *existing_block; //transfer all existing info into new one
 
-                    #ifdef ENABLE_METRICS
+
                     XMETRICS_GAUGE(metrics::blockstore_cache_block_total, 1);
-                    #endif
+
                     xdbg("xblockacct_t::cache_index,finally update block=%s of account=%s", this_block->dump().c_str(), m_meta->ddump().c_str());
 
                     return existing_block;//indicate at least has changed flags
@@ -1464,9 +1461,9 @@ namespace top
 
                 link_neighbor(this_block); //link as neighbor first
 
-                #ifdef ENABLE_METRICS
+               
                 XMETRICS_GAUGE(metrics::blockstore_cache_block_total, 1);
-                #endif
+                
                 xdbg("xblockacct_t::cache_index,finally cached block=%s of account=%s", this_block->dump().c_str(), m_meta->ddump().c_str());
                 return this_block;
             }
@@ -1874,9 +1871,9 @@ namespace top
                 if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
-#if defined(ENABLE_METRICS)
+
                     XMETRICS_GAUGE(metrics::store_block_input_read, 1);
-#endif
+
                     //which means resource are stored at seperatedly
                     const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
 
@@ -1973,9 +1970,9 @@ namespace top
                 if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
-#if defined(ENABLE_METRICS)
+
                     XMETRICS_GAUGE(metrics::store_block_output_read, 1);
-#endif
+
                     //which means resource are stored at seperatedly
                     const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
 
@@ -2154,9 +2151,9 @@ namespace top
 
         base::xvbindex_t*   xblockacct_t::read_index_from_db(const std::string & index_db_key_path)
         {
-#if defined(ENABLE_METRICS)
+
             XMETRICS_GAUGE(metrics::store_block_index_read, 1);
-#endif
+
             const std::string index_bin = get_xdbstore()->get_value(index_db_key_path);
             if(index_bin.empty())
             {

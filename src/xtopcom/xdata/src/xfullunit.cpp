@@ -12,16 +12,16 @@ NS_BEG2(top, data)
 
 xfullunit_block_t::xfullunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
-    XMETRICS_GAUGE(metrics::dataobject_block_fullunit, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fullunit, 1);
 }
 
 xfullunit_block_t::xfullunit_block_t()
 : xblock_t((enum_xdata_type)object_type_value) {
-    XMETRICS_GAUGE(metrics::dataobject_block_fullunit, 1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fullunit, 1);
 }
 
 xfullunit_block_t::~xfullunit_block_t() {
-    XMETRICS_GAUGE(metrics::dataobject_block_fullunit, -1);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fullunit, -1);
 }
 
 base::xobject_t * xfullunit_block_t::create_object(int type) {

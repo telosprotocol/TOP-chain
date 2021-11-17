@@ -45,6 +45,15 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_xvinput);
         RETURN_METRICS_NAME(dataobject_xvoutput);
         RETURN_METRICS_NAME(dataobject_xventity);
+        // vledger dataobject
+        RETURN_METRICS_NAME(dataobject_xvnode_t);
+        RETURN_METRICS_NAME(dataobject_xvexestate_t);
+        RETURN_METRICS_NAME(dataobject_xvnodegroup);
+        RETURN_METRICS_NAME(dataobject_xcscoreobj_t);
+        RETURN_METRICS_NAME(dataobject_xblock_maker_t);
+        RETURN_METRICS_NAME(dataobject_xblockacct_t);
+        RETURN_METRICS_NAME(dataobject_xtxpool_table_info_t);
+        RETURN_METRICS_NAME(dataobject_xacctmeta_t);
 
         // dbkeys
         RETURN_METRICS_NAME(db_key_tx);
@@ -176,16 +185,6 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_dbsize_block_table_light);
         RETURN_METRICS_NAME(store_dbsize_block_table_full);
         RETURN_METRICS_NAME(store_dbsize_block_other);
-
-        // vledger dataobject
-        RETURN_METRICS_NAME(dataobject_xvnode_t);
-        RETURN_METRICS_NAME(dataobject_xvexestate_t);
-        RETURN_METRICS_NAME(dataobject_xvnodegroup);
-        RETURN_METRICS_NAME(dataobject_xcscoreobj_t);
-        RETURN_METRICS_NAME(dataobject_xblock_maker_t);
-        RETURN_METRICS_NAME(dataobject_xblockacct_t);
-        RETURN_METRICS_NAME(dataobject_xtxpool_table_info_t);
-        RETURN_METRICS_NAME(dataobject_xacctmeta_t);
 
         // message category
         RETURN_METRICS_NAME(message_category_consensus_contains_duplicate);
