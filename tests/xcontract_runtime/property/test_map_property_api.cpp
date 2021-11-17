@@ -66,7 +66,7 @@ TEST_F(test_property_api, map_prop_api) {
     system_contract_manager_->deploy_system_contract<contract_property::contract_with_property>(
         common::xaccount_address_t{contract_address.value()}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(blockstore));
 
-    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address.value());
+    auto latest_vblock = data::xblocktool_t::get_latest_connectted_light_block(blockstore, contract_address.value());
     assert(latest_vblock);
     xobject_ptr_t<base::xvbstate_t> bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
     assert(bstate_ != nullptr);

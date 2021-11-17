@@ -75,7 +75,7 @@ TEST_F(test_system_contract_runtime, run_system_contract) {
     system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(
         common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {}, make_observer(blockstore));
 
-    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address);
+    auto latest_vblock = data::xblocktool_t::get_latest_connectted_light_block(blockstore, contract_address);
     bstate_ = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
     assert(bstate_ != nullptr);
     state_accessor::properties::xproperty_identifier_t propety_identifier("balance", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xenum_property_category::system);
@@ -121,7 +121,7 @@ TEST_F(test_system_contract_runtime, deploy_system_contract) {
     system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(
         common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {}, make_observer(blockstore));
 
-    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(blockstore, contract_address);
+    auto latest_vblock = data::xblocktool_t::get_latest_connectted_light_block(blockstore, contract_address);
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
     assert(bstate != nullptr);
 
