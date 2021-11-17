@@ -546,7 +546,6 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
-            static const std::string  get_meta_path(xvaccount_t & _account);
             
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;

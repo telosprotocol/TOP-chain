@@ -86,6 +86,17 @@ namespace top
             const std::string key_path = "c/" + account.get_xvid_str() + "/s/" + xstring_utl::uint642hex(height);
             return key_path;
         }
+
+        const std::string  xvdbkey_t::create_account_meta_key_old(const xvaccount_t & account)
+        {
+            std::string meta_path;
+            meta_path.reserve(256);
+            meta_path += xstring_utl::tostring(account.get_chainid());
+            meta_path += "/";
+            meta_path += account.get_account();
+            meta_path += "/meta";
+            return meta_path;
+        }
  
         //-------------------------------new key style for block,index,meta---------------------------------//
         const std::string  xvdbkey_t::create_account_meta_key(const xvaccount_t & account)
