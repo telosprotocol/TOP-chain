@@ -148,7 +148,7 @@ void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blo
         return;
     }
 
-    xsync_info("chain_downloader on_archive_blocks, %s count(%u) cost(%ldms) %s",
+    xsync_info("chain_downloader on_archive_blocks, %s count(%u) %s",
         m_address.c_str(), count, from_addr.to_string().c_str());
 
     bool is_elect_chain = false;
