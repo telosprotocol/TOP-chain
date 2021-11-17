@@ -613,7 +613,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         if (_proposal_unit_header->get_account() != _local_unit_header->get_account()
             || _proposal_unit_header->get_height() != _local_unit_header->get_height()
             || _proposal_unit_header->get_block_class() != _local_unit_header->get_block_class()) {
-            xerror("xtable_maker_t::verify_proposal_with_local fail-unit entity not match. %s,leader=%s,local=%s",
+            xwarn("xtable_maker_t::verify_proposal_with_local fail-unit entity not match. %s,leader=%s,local=%s",
                 proposal_block->dump().c_str(),
                 data::xblock_t::dump_header(_proposal_unit_header.get()).c_str(), data::xblock_t::dump_header(_local_unit_header.get()).c_str());
             return false;
