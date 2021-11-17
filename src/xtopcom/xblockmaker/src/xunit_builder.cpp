@@ -109,7 +109,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         contract_vm::xaccount_vm_t vm(make_observer(system_contract_manager));
 
         auto tx_address = common::xaccount_address_t{prev_block->get_account()};
-        auto _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+        auto _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
         auto proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
         auto result = vm.execute(input_txs, make_observer(proposal_bstate.get()), cs_para);
 
