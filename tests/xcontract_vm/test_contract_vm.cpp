@@ -337,7 +337,7 @@ TEST_F(test_contract_vm, test_send_tx_deposit_not_enough) {
     EXPECT_EQ(result.failed_tx_assemble[0]->get_transaction(), tx.get());
     EXPECT_EQ(result.delay_tx_assemble.size(), 0);
 }
-#if 0
+
 TEST_F(test_contract_vm, test_recv_tx) {
     const uint64_t last_nonce{10};
     const uint256_t last_hash{12345678};
@@ -380,12 +380,16 @@ TEST_F(test_contract_vm, test_recv_tx) {
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
+        if (bstate->find_property(XPROPERTY_ACCOUNT_CREATE_TIME) == false) {
+            bstate->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+            bstate->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{0}, canvas.get());
+        }
         if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
             bstate->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
         }
         auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
         {
-            auto value = top::to_bytes<uint64_t>(last_nonce);
+            auto value = top::to_bytes<std::string>(top::to_string(last_nonce));
             map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
@@ -393,11 +397,11 @@ TEST_F(test_contract_vm, test_recv_tx) {
             map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(recv_num);
+            auto value = top::to_bytes<std::string>(top::to_string(recv_num));
             map_property->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(unconfirm_num);
+            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num));
             map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
     }
@@ -416,7 +420,7 @@ TEST_F(test_contract_vm, test_recv_tx) {
     {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, last_nonce);
         }
         {
@@ -426,12 +430,12 @@ TEST_F(test_contract_vm, test_recv_tx) {
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, recv_num + 1);
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, unconfirm_num);
         }
         {
@@ -729,7 +733,7 @@ TEST_F(test_contract_vm, test_async_call) {
         }
         auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
         {
-            auto value = top::to_bytes<uint64_t>(last_nonce);
+            auto value = top::to_bytes<std::string>(top::to_string(last_nonce));
             map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
@@ -737,11 +741,11 @@ TEST_F(test_contract_vm, test_async_call) {
             map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(recv_num);
+            auto value = top::to_bytes<std::string>(top::to_string(recv_num));
             map_property->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(unconfirm_num);
+            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num));
             map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
     }
@@ -793,7 +797,7 @@ TEST_F(test_contract_vm, test_async_call) {
     {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, last_nonce + 1);
         }
         {
@@ -803,12 +807,12 @@ TEST_F(test_contract_vm, test_async_call) {
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, recv_num + 1);
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
-            auto value = top::from_bytes<uint64_t>({std::begin(string), std::end(string)});
+            auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, unconfirm_num + 1);
         }
         {
@@ -826,13 +830,13 @@ TEST_F(test_contract_vm, test_async_call) {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         auto map_property_cmp = bstate_cmp.load_string_map_var(XPROPERTY_TX_INFO);
         {
-            auto value = top::to_bytes<uint64_t>(recv_num + 1);
+            auto value = top::to_bytes<std::string>(top::to_string(recv_num + 1));
             map_property_cmp->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         auto string_property_cmp = bstate_cmp.load_string_var(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
         { string_property_cmp->reset("call_a_to_b", canvas.get()); }
         {
-            auto value = top::to_bytes<uint64_t>(last_nonce + 1);
+            auto value = top::to_bytes<std::string>(top::to_string(last_nonce + 1));
             map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
@@ -840,7 +844,7 @@ TEST_F(test_contract_vm, test_async_call) {
             map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
         }
         {
-            auto value = top::to_bytes<uint64_t>(unconfirm_num + 1);
+            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num + 1));
             map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
         std::string bincode;
@@ -1006,7 +1010,6 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
         }
     }
 }
-#endif
 
 // TEST_F(test_contract_vm, test_follow_up_delay) {
 //     mock::xvchain_creator creator;

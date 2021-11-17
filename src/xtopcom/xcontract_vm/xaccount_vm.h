@@ -70,6 +70,7 @@ private:
                               xaccount_vm_execution_result_t const & result,
                               contract_common::xcontract_execution_param_t const & param,
                               state_accessor::xstate_accessor_t & ac);
+    void preprocess(std::vector<data::xcons_transaction_ptr_t> const & txs, state_accessor::xstate_accessor_t & sa);
     void abort(const size_t start_index, const size_t size, xaccount_vm_execution_result_t & result);
 };
 using xaccount_vm_t = xtop_account_vm;
