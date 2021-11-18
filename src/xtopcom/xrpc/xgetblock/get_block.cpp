@@ -1004,6 +1004,11 @@ void get_block_handle::set_redeem_token_num(xaccount_ptr_t ac, xJson::Value & va
 void get_block_handle::set_shared_info(xJson::Value & root, xblock_t * bp) {
     root["owner"] = bp->get_block_owner();
     root["height"] = static_cast<unsigned long long>(bp->get_height());
+    if (bp->is_unitblock()) {
+        root["table_height"] = static_cast<unsigned long long>(bp->get_parent_block_height());    
+    } else {
+        root["table_height"] = static_cast<unsigned long long>(bp->get_height());    
+    }
     root["hash"] = bp->get_block_hash_hex_str();
     root["prev_hash"] = to_hex_str(bp->get_last_block_hash());
     root["timestamp"] = static_cast<unsigned long long>(bp->get_timestamp());
@@ -1438,9 +1443,6 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp, const std::string &
     }
 
     set_shared_info(root, bp);
-    if (rpc_version == RPC_VERSION_V2) {
-        root["parent_height"] = static_cast<unsigned long long>(bp->get_parent_block_height());    
-    }
     
     xJson::Value header;
     set_header_info(header, bp);
