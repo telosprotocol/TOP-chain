@@ -181,7 +181,11 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
     auto & params = json_proc.m_request_json["params"];
 
     auto version = params["tx_structure_version"].asUInt();
+#ifdef RPC_V2
     CONDTION_FAIL_THROW((version == data::xtransaction_version_1) || (version == data::xtransaction_version_2), enum_xrpc_error_code::rpc_param_param_error, "tx_structure_version invalid");
+#else
+    CONDTION_FAIL_THROW((version == data::xtransaction_version_1), enum_xrpc_error_code::rpc_param_param_error, "tx_structure_version invalid");
+#endif
     if (version == data::xtransaction_version_2) {
         CONDTION_FAIL_THROW(params["sender_account"].isString() && !params["sender_account"].asString().empty(),
                             enum_xrpc_error_code::rpc_param_param_lack,

@@ -773,6 +773,12 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return xtxpool_v2::xtxpool_error_service_not_running;
     }
 
+#ifndef RPC_V2
+    if (tx->get_tx_version() != xtransaction_version_1) {
+        return xtxpool_v2::xtxpool_error_tx_version_invalid;
+    }
+#endif
+
     int32_t ret = xverifier::xtx_verifier::verify_send_tx_source(tx.get(), local);
     if (ret) {
         xwarn("[global_trace][xtxpool_service]tx=%s,account=%s verify send tx source fail", tx->get_digest_hex_str().c_str(), tx->get_source_addr().c_str());
