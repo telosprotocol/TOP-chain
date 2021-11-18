@@ -23,6 +23,10 @@ using namespace top::data;
 
 // const uint16_t AUDITOR_ACCOUNT_ADDR_NUM = 64;
 // const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 128;
+const std::string node_serv_addr = "T00000LWFRL7WM2B4q2imD5LAor7H6eGaAmLdi4g";
+const std::string auditor_account_base = "T00000LKFLmHxWvHRD8wL6GWFobyZwPNQMvoof5k";
+const std::string validator_account_base = "T00000LSnuh9nNSU1pppuccM3ASupiDS46PyJnqc";
+
 const uint16_t AUDITOR_ACCOUNT_ADDR_NUM = 4;
 const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 8;
 
@@ -69,14 +73,16 @@ void test_runtime_statistic_data::create_account_addrs(uint32_t auditor_account_
     validator_account_addrs.resize(validator_account_num);
 
     for (uint32_t i = 0; i < auditor_account_num; ++i) {
-        auditor_account_addrs[i] = build_account_address("T00000auditor_account__", i);
+        auto auditor_str = auditor_account_base + std::string{"@"} + std::to_string(i);
+        auditor_account_addrs[i] = common::xaccount_address_t{auditor_str};
         // top::utl::xecprikey_t prikey;
         // auditor_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
 
     }
 
     for (uint32_t i = 0; i < validator_account_num; ++i) {
-        validator_account_addrs[i] = build_account_address("T00000validator_account__", i);
+        auto validator_str = validator_account_base + std::string{"@"} + std::to_string(i);
+        validator_account_addrs[i] = common::xaccount_address_t{validator_str};
         // top::utl::xecprikey_t prikey;
         // validator_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
 
