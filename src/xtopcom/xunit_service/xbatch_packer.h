@@ -94,6 +94,8 @@ private:
 
     // fade xip. fade version should not make new proposal
     xvip2_t                                  m_faded_xip2{};
+    // record last xip in case of consensus success but leader xip changed.
+    xvip2_t                                  m_last_xip2{};
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;
