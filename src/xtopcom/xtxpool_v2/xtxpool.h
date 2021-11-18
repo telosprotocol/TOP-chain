@@ -50,6 +50,7 @@ public:
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
     void print_statistic_values() const override;
     void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override;
+    std::map<std::string, uint64_t> get_min_keep_heights() const override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;

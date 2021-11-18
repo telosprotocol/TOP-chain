@@ -624,5 +624,17 @@ void xtxpool_table_t::unconfirm_cache_status(uint32_t & sender_cache_size, uint3
     m_unconfirm_id_height.cache_status(sender_cache_size, receiver_cache_size, height_record_size);
 }
 
+void xtxpool_table_t::get_min_keep_height(std::string & table_addr, uint64_t & height) const {
+    bool need_sync = true;
+    bool ret = m_unconfirm_id_height.get_min_height(m_para->get_receiptid_state_cache(), m_xtable_info.get_all_table_sids(), height, need_sync);
+    table_addr = m_xtable_info.get_address();
+    if (ret) {
+        xtxpool_info("xtxpool_table_t::get_min_keep_height table:%s,height:%llu", table_addr.c_str(), height);
+    } else {
+        height = 0;
+        xtxpool_info("xtxpool_table_t::get_min_keep_height fail table:%s", m_xtable_info.get_address().c_str());
+    }
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top

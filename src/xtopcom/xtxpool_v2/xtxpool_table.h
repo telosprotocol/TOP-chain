@@ -118,6 +118,8 @@ public:
     }
     void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
 
+    void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
+
 private:
     bool is_account_need_update(const std::string & account_addr) const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
@@ -136,7 +138,7 @@ private:
     xtable_state_cache_t m_table_state_cache;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
-    mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table
+    mutable std::mutex m_mgr_mutex;        // lock m_txmgr_table
 
     xunconfirm_id_height m_unconfirm_id_height;
 
