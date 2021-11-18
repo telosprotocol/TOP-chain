@@ -28,6 +28,7 @@ NS_BEG2(top, xtxpool_service_v2)
 #define slow_thread_mailbox_size_max (8192)
 
 #define print_txpool_statistic_values_freq (300)  // print txpool statistic values every 5 minites
+#define refresh_block_recycler_rule_for_txpool_freq (300)
 
 xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t> & store,
                                          const observer_ptr<base::xvblockstore_t> & blockstore,
@@ -272,6 +273,17 @@ void xtxpool_service_mgr::on_timer() {
 
     if ((now % print_txpool_statistic_values_freq) == 0) {
         m_para->get_txpool()->print_statistic_values();
+    }
+
+    if ((now % refresh_block_recycler_rule_for_txpool_freq) == 0) {
+        auto min_keep_heights = m_para->get_txpool()->get_min_keep_heights();
+        for (auto table_height : min_keep_heights) {
+            base::xvaccount_t _vaccount(table_height.first);
+            uint64_t height = table_height.second;
+            if (height > 0) {
+                store::refresh_block_recycler_rule(chainbase::enum_xmodule_type::xmodule_type_xtxpool, _vaccount, height - 1);
+            }
+        }
     }
 }
 

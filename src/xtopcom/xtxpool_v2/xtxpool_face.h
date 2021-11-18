@@ -257,6 +257,7 @@ public:
     virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
     virtual void print_statistic_values() const = 0;
     virtual void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
+    virtual std::map<std::string, uint64_t> get_min_keep_heights() const = 0;
 };
 
 class xtxpool_instance {
