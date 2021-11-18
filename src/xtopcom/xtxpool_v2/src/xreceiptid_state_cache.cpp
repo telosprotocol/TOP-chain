@@ -3,8 +3,15 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xtxpool_v2/xreceiptid_state_cache.h"
+#include "xtxpool_v2/xtxpool_log.h"
 
 NS_BEG2(top, xtxpool_v2)
+
+xreceiptid_state_cache_t::xreceiptid_state_cache_t() {
+    base::xtable_index_t tableindex(base::enum_chain_zone_zec_index, 2);
+    base::xreceiptid_state_ptr_t receiptid_state = std::make_shared<base::xreceiptid_state_t>();
+    m_receiptid_state_map[tableindex.to_table_shortid()] = receiptid_state;
+}
 
 void xreceiptid_state_cache_t::update_table_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     auto table_id = receiptid_state->get_self_tableid();
@@ -16,7 +23,7 @@ void xreceiptid_state_cache_t::update_table_receiptid_state(const base::xreceipt
             return;
         }
     }
-    xdbg("xreceiptid_state_cache_t::update_table_receiptid_state table:%d,height:%llu,pairs:%s",
+    xinfo("xreceiptid_state_cache_t::update_table_receiptid_state table:%d,height:%llu,pairs:%s",
          receiptid_state->get_self_tableid(),
          receiptid_state->get_block_height(),
          receiptid_state->get_all_receiptid_pairs()->dump().c_str());
