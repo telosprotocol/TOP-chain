@@ -930,8 +930,9 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
         return;
     }
     XMETRICS_TIME_RECORD("txpool_on_message_pull_receipt_received");
+    auto & table_addr = is_pull_recv ? pulled_receipt.m_tx_from_account : pulled_receipt.m_tx_to_account;
     auto cluster_addr =
-        m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_from_account}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
+        m_router->sharding_address_from_account(common::xaccount_address_t{table_addr}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
     if (cluster_addr != m_vnet_driver->address().cluster_address()) {
         xdbg("xtxpool_service::on_message_pull_receipt_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());
         // m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
