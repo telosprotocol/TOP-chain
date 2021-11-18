@@ -177,6 +177,9 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     xassert(static_registered_flag == 1);
 #endif
 
+    auto lambda_new_rootblock= [](const int type)->xobject_t*{
+        return new xrootblock_t();
+    };
     auto lambda_new_fullunit= [](const int type)->xobject_t*{
         return new xfullunit_block_t();
     };
@@ -207,6 +210,7 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     auto lambda_new_property_prove = [](const int type)->xobject_t*{
         return new base::xvproperty_prove_t();
     };
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xrootblock_t::get_object_type(),lambda_new_rootblock);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xfullunit_block_t::get_object_type(),lambda_new_fullunit);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xlightunit_block_t::get_object_type(),lambda_new_lightunit);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xcons_transaction_t::get_object_type(),lambda_new_cons_transaction);

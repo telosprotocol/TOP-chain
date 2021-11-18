@@ -60,11 +60,11 @@ class xrootblock_t : public xblock_t {
  public:
     static bool init(const xrootblock_para_t & para);
  public:
+    xrootblock_t();
     xrootblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
     virtual ~xrootblock_t();
  private:
-    xrootblock_t();
     xrootblock_t(const xrootblock_t &) = delete;
     xrootblock_t & operator = (const xrootblock_t &) = delete;
 
