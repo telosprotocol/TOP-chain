@@ -46,7 +46,7 @@ base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string
         // xassert(!para.get_property_hashs().empty());  // XTODO maybe empty for only self txs
         xassert(height > 0);
         xtableblock_action_t _action(target_uri, property_hashs, tableid, height);       
-        return _action;
+        return static_cast<base::xvaction_t>(_action);
     } else {
         base::xvaction_t _action = make_block_build_action(target_uri);
         return _action;
