@@ -197,7 +197,11 @@ TEST_F(test_contract_vm, test_send_tx) {
         }
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
+#ifndef XENABLE_MOCK_ZEC_STAKE
+            EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit) - 100000000);
+#else
             EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+#endif
         }
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
@@ -370,7 +374,7 @@ TEST_F(test_contract_vm, test_recv_tx) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
+    auto vblock = xblocktool_t::get_latest_connectted_light_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
@@ -718,7 +722,7 @@ TEST_F(test_contract_vm, test_async_call) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
+    auto vblock = xblocktool_t::get_latest_connectted_light_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
     EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
@@ -889,7 +893,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto latest_vblock = xblocktool_t::get_latest_committed_lightunit(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
+    auto latest_vblock = xblocktool_t::get_latest_connectted_light_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get());
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
@@ -944,8 +948,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     xvbstate_t bstate_cmp(*(bstate.get()));
 
     contract_vm::xaccount_vm_t vm(make_observer(m_manager));
-    std::map<common::xaccount_address_t, observer_ptr<xvbstate_t>> state_pack;
-    state_pack.insert(std::make_pair(common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, make_observer(bstate.get())));
+    observer_ptr<xvbstate_t> state_pack = make_observer(bstate.get());
     auto result = vm.execute(input_txs, state_pack, cs_para);
     EXPECT_EQ(result.status.ec.value(), 0);
     EXPECT_EQ(result.success_tx_assemble.size(), 2);

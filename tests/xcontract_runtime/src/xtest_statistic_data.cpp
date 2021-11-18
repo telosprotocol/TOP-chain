@@ -28,7 +28,7 @@ const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 8;
 
 class test_runtime_statistic_data: public system_contracts::xtable_statistic_info_collection_contract_new, public testing::Test {
 public:
-    test_runtime_statistic_data(): node_serv{common::xaccount_address_t{"mocked_nodesvr"}, "null"}{};
+    test_runtime_statistic_data(): node_serv{common::xaccount_address_t{"T00000LVwBxzPTQxKKhuxjjhmces35SZcYcZJnXq"}, "MbtRS6k1n0qQI4hqBhwPxXFj+s34lO+58JCxmc9znUo="}{};
 
     void SetUp(){
         create_account_addrs(AUDITOR_ACCOUNT_ADDR_NUM, VALIDATOR_ACCOUNT_ADDR_NUM);
@@ -55,20 +55,28 @@ public:
     xmocked_vnodesvr_t node_serv;
 };
 
+static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
+    auto account_string = account_prefix + std::to_string(index);
+    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_LENGTH - account_string.length(), 'x');
+    }
+    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_LENGTH);
+    return common::xaccount_address_t{account_string};
+}
 
 void test_runtime_statistic_data::create_account_addrs(uint32_t auditor_account_num, uint32_t validator_account_num) {
     auditor_account_addrs.resize(auditor_account_num);
     validator_account_addrs.resize(validator_account_num);
 
     for (uint32_t i = 0; i < auditor_account_num; ++i) {
-        auditor_account_addrs[i] = common::xaccount_address_t{std::string{"auditor_account__"} + std::to_string(i)};
+        auditor_account_addrs[i] = build_account_address("T00000auditor_account__", i);
         // top::utl::xecprikey_t prikey;
         // auditor_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
 
     }
 
     for (uint32_t i = 0; i < validator_account_num; ++i) {
-        validator_account_addrs[i] = common::xaccount_address_t{std::string{"validator_account__"} + std::to_string(i)};
+        validator_account_addrs[i] = build_account_address("T00000validator_account__", i);
         // top::utl::xecprikey_t prikey;
         // validator_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
 

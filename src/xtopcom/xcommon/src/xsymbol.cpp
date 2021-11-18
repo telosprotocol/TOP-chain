@@ -6,7 +6,7 @@
 
 NS_BEG2(top, common)
 
-xsymbol_t const SYMBOL_TOP_TOKEN{"TOP"};
+xsymbol_t const SYMBOL_TOP_TOKEN{""};
 
 xtop_symbol::xtop_symbol(std::string symbol) noexcept : symbol_{std::move(symbol)} {
 }
