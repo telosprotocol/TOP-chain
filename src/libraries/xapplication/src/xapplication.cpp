@@ -69,6 +69,8 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
     // genesis blocks should init imediately after db created
+    m_genesis_manager = make_unique<xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
         exit(0);
