@@ -7,6 +7,7 @@
 #include "xapplication/xapplication_face.h"
 #include "xapplication/xapplication_fwd.h"
 #include "xapplication/xchain_application.h"
+#include "xapplication/xgenesis_manager.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xtimer_driver.h"
@@ -18,8 +19,8 @@
 #include "xdata/xblocktool.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
-#include "xmbus/xmessage_bus.h"
 #include "xelect_net/include/elect_vhost_face.h"
+#include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
@@ -95,6 +96,7 @@ private:
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
     std::vector<std::unique_ptr<xchain_application_t>> m_chain_applications{};
+    std::unique_ptr<xgenesis_manager_t> m_genesis_manager;
 
 public:
     xtop_application(xtop_application const &) = delete;

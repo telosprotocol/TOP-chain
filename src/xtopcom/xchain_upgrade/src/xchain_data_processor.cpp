@@ -70,6 +70,16 @@ namespace top
             }
         }
 
+        std::map<common::xaccount_address_t, data_processor_t> xtop_chain_data_processor::get_all_user_data() {
+            std::map<common::xaccount_address_t, data_processor_t> result;
+            std::vector<data_processor_t> data_vec;
+            get_all_user_data(data_vec);
+            for (auto const & data : data_vec) {
+                result.insert(std::make_pair(common::xaccount_address_t{data.address}, data));
+            }
+            return result;
+        }
+
         void xtop_chain_data_processor::get_user_data(common::xaccount_address_t const &addr, data_processor_t & data) {
             std::string account = addr.to_string();
             auto it = user_property_json_parse.find(account);

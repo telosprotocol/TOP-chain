@@ -32,6 +32,7 @@ namespace top
 
             static void get_user_data(common::xaccount_address_t const &addr, data_processor_t & reset_data);
             static void get_all_user_data(std::vector<data_processor_t> & reset_data);
+            static std::map<common::xaccount_address_t, data_processor_t> get_all_user_data();
 
             static void get_contract_data(common::xaccount_address_t const &addr, data_processor_t & reset_data);
             static void get_all_contract_data(std::vector<data_processor_t> & reset_data);
