@@ -34,6 +34,7 @@ enum enum_xtxpool_error_type {
     xtxpool_error_account_not_in_charge,
     xtxpool_error_account_state_fall_behind,
     xtxpool_error_service_not_running,
+    xtxpool_error_tx_version_invalid,
     xtxpool_error_max,
 };
 
@@ -59,7 +60,8 @@ inline std::string xtxpool_error_to_string(int32_t code) {
                                    XTXPOOL_TO_STR(xtxpool_error_tx_invalid_type),
                                    XTXPOOL_TO_STR(xtxpool_error_account_not_in_charge),
                                    XTXPOOL_TO_STR(xtxpool_error_account_state_fall_behind),
-                                   XTXPOOL_TO_STR(xtxpool_error_service_not_running)};
+                                   XTXPOOL_TO_STR(xtxpool_error_service_not_running),
+                                   XTXPOOL_TO_STR(xtxpool_error_tx_version_invalid)};
 
     return names[code - xtxpool_error_base - 1];
 }
