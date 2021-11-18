@@ -330,9 +330,6 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
     if (_drand_vblock == nullptr) {
          xunit_info("xproposal_maker_t::verify_proposal_drand_block, consensus_tableblock  fail_find_drand=%s, drand_height=%llu.",
                 proposal_block->dump().c_str(), drand_height);
-       /* XMETRICS_PACKET_INFO("consensus_tableblock",
-                            "fail_find_drand", proposal_block->dump(),
-                            "drand_height", drand_height);*/
         return false;
     }
 

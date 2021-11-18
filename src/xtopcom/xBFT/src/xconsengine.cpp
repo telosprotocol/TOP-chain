@@ -324,6 +324,14 @@ namespace top
                 {
                     if(get_cert()->is_validator(voter_xip))
                     {
+                        //NOTE: following code ask nodes of validtor and auditor with SAME election round
+                        if(get_network_height_from_xip2(get_cert()->get_validator())
+                           != get_network_height_from_xip2(voter_xip) )
+                        {
+                            xwarn("xproposal_t::add_voted_cert,fail-received vote from different election round.leader'validator=%llu vs voter_xip=%llu",get_cert()->get_validator().high_addr, voter_xip.high_addr);
+                            return false;
+                        }
+                        
                         const std::string& signature = qcert_ptr->get_verify_signature();
                         auto set_res = m_all_voted_cert.emplace(signature);//emplace do test whether item already in set
                         if(set_res.second)//return true when it is a new element
@@ -345,6 +353,14 @@ namespace top
                     }
                     else if(get_cert()->is_auditor(voter_xip))
                     {
+                        //NOTE: following code ask nodes of validtor and auditor with SAME election round
+                        if(get_network_height_from_xip2(get_cert()->get_auditor())
+                           != get_network_height_from_xip2(voter_xip) )
+                        {
+                            xwarn("xproposal_t::add_voted_cert,fail-received vote from different election round.leader'auditor=%llu vs voter_xip=%llu",get_cert()->get_auditor().high_addr, voter_xip.high_addr);
+                            return false;
+                        }
+                        
                         const std::string& signature = qcert_ptr->get_audit_signature();
                         auto set_res = m_all_voted_cert.emplace(signature);//emplace do test whether item already in set
                         if(set_res.second)//return true when it is a new element
