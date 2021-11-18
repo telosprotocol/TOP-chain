@@ -74,6 +74,9 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         return;
 
     const std::string address = block->get_block_owner();
+    vnetwork::xvnode_address_t self_addr;
+    xsync_dbg("push_newblock_to_archive: %s", address.c_str());
+
     bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
     if (!is_table_address) {
         xsync_warn("xsync_pusher_t push_newblock_to_archive is not table %s", block->dump().c_str());
@@ -98,7 +101,6 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     // check table id
-    vnetwork::xvnode_address_t self_addr;
     if (!m_role_xips_mgr->get_self_addr(node_type, table_id, self_addr)) {
         xsync_warn("xsync_pusher_t push_newblock_to_archive get self addr failed %s", block->dump().c_str());
         return;
@@ -142,7 +144,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
             vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
             auto found = validator_auditor_neighbours.find(target_addr.account_address());
             if (found == validator_auditor_neighbours.end()) {
-                xsync_dbg("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                xsync_dbg("push_newblock_to_archive,send, src=%s dst=%s, block_height = %llu",
                     self_addr.to_string().c_str(),
                     target_addr.to_string().c_str(),
                     block->get_height());
@@ -206,6 +208,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
     #endif
+
     // push edge archive
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {

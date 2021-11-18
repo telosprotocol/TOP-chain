@@ -139,7 +139,7 @@ xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t
 
 
 xevent_ptr_t  xmessage_bus_t::create_event_for_store_committed_block(base::xvbindex_t * target_index) {
-    if (target_index->get_block_level() == base::enum_xvblock_level_table) {
+    if (target_index->get_block_level() == base::enum_xvblock_level_table || target_index->get_block_level() == base::enum_xvblock_level_root) {
         return  make_object_ptr<mbus::xevent_store_block_committed_t>(target_index->get_address(), target_index, true);
     } else {
         return nullptr;
