@@ -4,24 +4,15 @@
 
 #pragma once
 
-#include "xtransaction_v1.h"
-#include "xtransaction_v2.h"
+#include "xtransaction.h"
+// #include "xtransaction_v2.h"
 namespace top { namespace data {
 
 class xtx_factory {
 public:
-    static xtransaction_ptr_t create_tx(const enum_xtransaction_version tx_version = xtransaction_version_2) {
-        switch (tx_version)
-        {
-        case xtransaction_version_1:
-            return make_object_ptr<xtransaction_v1_t>();
-            break;
-        
-        default:
-            return make_object_ptr<xtransaction_v2_t>();
-            break;
-        }
-    }
+    static xtransaction_ptr_t create_tx(const enum_xtransaction_version tx_version = xtransaction_version_2);
+    static xtransaction_ptr_t create_genesis_tx_with_balance(const std::string & account, int64_t top_balance);
+    static xtransaction_ptr_t create_genesis_tx_with_sys_contract(const std::string & account);
 };
 
 }  // namespace data
