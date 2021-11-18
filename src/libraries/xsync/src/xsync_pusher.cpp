@@ -137,7 +137,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-        if (block->get_height() % 5 ==  0 && block->get_account().substr(0,7) == "Ta0000@") {
+        if (block->get_height() % 30 ==  0 && block->get_account().substr(0,7) == "Ta0000@") {
             xsync_dbg("push_newblock_to_archive, skip block: %s,%d", block->get_account().c_str(), block->get_height());
             return;
         }
@@ -168,5 +168,83 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
 }
+void xsync_pusher_t::on_timer() {
+    if (m_time_rejecter.reject()){
+        return;
+    }
+    
+    m_counter++;
+    if (m_counter % 60 != 0)
+        return;
 
+    common::xnode_type_t node_type = common::xnode_type_t::invalid;
+    std::string address_prefix;
+    uint32_t table_id = 0;
+
+    if (!data::xdatautil::extract_parts(m_address, address_prefix, table_id))
+        return;
+
+    if (address_prefix == sys_contract_beacon_table_block_addr) {
+        node_type = common::xnode_type_t::rec;
+    } else if (address_prefix == sys_contract_zec_table_block_addr) {
+        node_type = common::xnode_type_t::zec;
+    } else if (address_prefix == sys_contract_sharding_table_block_addr) {
+        node_type = common::xnode_type_t::consensus;
+    } else {
+        assert(0);
+    }
+
+    vnetwork::xvnode_address_t self_addr;
+    if (!m_role_xips_mgr->get_self_addr(node_type, table_id, self_addr)) {
+        xsync_warn("xsync_pusher_t push_newblock_to_archive get self addr failed %s", block->dump().c_str());
+        return;
+    }
+
+    std::vector<vnetwork::xvnode_address_t> all_neighbors = m_role_xips_mgr->get_all_neighbors(self_addr);
+    all_neighbors.push_back(self_addr);
+    std::sort(all_neighbors.begin(), all_neighbors.end());
+    uint32_t neighbor_number = all_neighbors.size();
+
+    int32_t self_position = -1;
+    for (uint32_t i=0; i<all_neighbors.size(); i++) {
+        if (all_neighbors[i] == self_addr) {
+            self_position = i;
+            break;
+        }
+    }
+
+    uint32_t random = vrf_value(block->get_block_hash());
+    uint32_t overlap_count = 0;
+    uint32_t overlap_quota = 3;
+    std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
+
+    std::unordered_set<common::xaccount_address_t> validator_auditor_neighbours;
+    for (auto neighbor:all_neighbors) {
+        validator_auditor_neighbours.insert(neighbor.account_address());
+    }
+
+    if(common::has<common::xnode_type_t::validator>(self_addr.type())) {
+        std::vector<vnetwork::xvnode_address_t> parents = m_role_xips_mgr->get_rand_parents(self_addr, 0xffffffff);
+        for (auto neighbor:parents) {
+            validator_auditor_neighbours.insert(neighbor.account_address());
+        }
+    }
+
+    if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
+        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
+        xsync_dbg("xsync_pusher_t, send_query_archive_height src=%u dst=%u push_arcs=%u src %s, %s", neighbor_number, archive_list.size(),
+            push_arcs.size(), self_addr.to_string().c_str(), m_address.c_str());
+        for (auto &dst_idx: push_arcs) {
+            vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
+            auto found = validator_auditor_neighbours.find(target_addr.account_address());
+            if (found == validator_auditor_neighbours.end()) {
+                xsync_dbg("xsync_pusher_t, send_query_archive_height src=%s dst=%s, %s",
+                    self_addr.to_string().c_str(), target_addr.to_string().c_str(), m_address.c_str());
+                xsync_query_height_t info;
+                info.address = m_address;
+                m_sync_sender->send_archive_query_height(info, self_addr, target_addr);
+            }
+        }
+    }
+}
 NS_END2

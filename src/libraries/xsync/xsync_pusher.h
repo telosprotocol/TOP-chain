@@ -9,6 +9,7 @@
 #include "xsync/xsync_sender.h"
 #include "xdata/xblock.h"
 #include "xsync/xrole_xips_manager.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -19,11 +20,13 @@ class xsync_pusher_t {
 public:
     xsync_pusher_t(std::string vnode_id, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender);
     void push_newblock_to_archive(const data::xblock_ptr_t &block);
-
+    void on_timer();
 private:
     std::string m_vnode_id;
     xrole_xips_manager_t *m_role_xips_mgr;
     xsync_sender_t *m_sync_sender;
+    xsync_time_rejecter_t m_time_rejecter{900};
+    int m_counter{0};    
 };
 
 NS_END2

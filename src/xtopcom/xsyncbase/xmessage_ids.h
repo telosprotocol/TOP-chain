@@ -11,12 +11,8 @@ XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_gossip, 0x5);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_frozen_gossip, 0x6);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_height, 0x7);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_archive_blocks, 0x8);
-#if 0
-// discard
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_latest_block_info, 0x7);
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_latest_blocks, 0x8);
-XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_latest_blocks, 0x9);
-#endif
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_query_archive_height, 0x9);
+
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_on_demand_blocks, 0xa);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_on_demand_blocks, 0xb);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_broadcast_chain_state, 0xc);

@@ -284,6 +284,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_archive_height_blocks);
         RETURN_METRICS_NAME(xsync_recv_archive_blocks);
         RETURN_METRICS_NAME(xsync_recv_archive_blocks_size);
+        RETURN_METRICS_NAME(xsync_recv_query_archive_height);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
