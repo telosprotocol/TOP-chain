@@ -67,8 +67,8 @@ TEST_F(test_contract_framework_api, test_asset_out) {
     uint64_t token_amount = 10000000;
     data::xproperty_asset asset_out{data::XPROPERTY_ASSET_TOP, token_amount};
     base::xstream_t stream(base::xcontext_t::instance());
-    stream << asset_out.m_token_name;
     stream << asset_out.m_amount;
+    stream << asset_out.m_token_name;
     auto src_asset_data = std::string{(char*)stream.data(), stream.size()};
 
     std::map<std::string, xbyte_buffer_t> for_receipt_data;
@@ -89,10 +89,10 @@ TEST_F(test_contract_framework_api, test_asset_out) {
     EXPECT_EQ(token.symbol().to_string(), data::XPROPERTY_ASSET_TOP);
     token.clear();
 
-    // second call will trigger assert
+    // second call empty token
     ec.clear();
-    // contract_handle.last_action_asset(ec);
-    ASSERT_DEATH(contract_handle.last_action_asset(ec), "");
+    token = contract_handle.last_action_asset(ec);
+    EXPECT_EQ(token.amount(), 0);
 }
 
 NS_END3
