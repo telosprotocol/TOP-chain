@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -424,6 +424,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     int64_t tgas_balance_change = 0;
     std::vector<xblock_ptr_t> batch_units;
     std::vector<xlightunit_tx_info_ptr_t> txs_info;
+    uint32_t unchange_tx_only_unit_num = 0;
     // try to make unit for unitmakers
     for (auto & v : unitmakers) {
         xunit_maker_ptr_t & unitmaker = v.second;
@@ -440,19 +441,27 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         }
         if (proposal_unit == nullptr) {
             xwarn("xtable_maker_t::make_light_table fail-make unit.is_leader=%d,%s,account=%s", is_leader, cs_para.dump().c_str(), unitmaker->get_account().c_str());
+            // if the txs to be packed won't change unit state, then no need to create unit, but table is still needed 
+            if (unit_result.m_make_block_error_code == xblockmaker_error_no_need_make_unit) {
+                unchange_tx_only_unit_num++;
+                for (auto & tx : unit_result.m_unchange_txs) {
+                    txs_info.push_back(build_tx_info(tx));
+                }
+            }
             continue;
         }
+
         batch_units.push_back(proposal_unit);
+
         if (proposal_unit->get_block_class() == base::enum_xvblock_class_full || proposal_unit->get_block_class() == base::enum_xvblock_class_nil) {
             table_para.get_proposal()->set_other_account(proposal_unit->get_account());
         }
 
-        std::vector<base::xvaction_t> input_actions;
         for (auto & tx : unit_result.m_pack_txs) {
-            base::xvaction_t _action = data::xlightunit_build_t::make_action(tx);
-            input_actions.push_back(_action);
-            xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
-            txs_info.push_back(txinfo);
+            txs_info.push_back(build_tx_info(tx));
+        }
+        for (auto & tx : unit_result.m_unchange_txs) {
+            txs_info.push_back(build_tx_info(tx));
         }
     }
 
@@ -466,10 +475,12 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     }
 
     if (unitmakers.empty() || batch_units.empty()) {
-        table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-        xdbg("xtable_maker_t::make_light_table fail-make table.is_leader=%d,%s,unitmaker_size=%zu",
-            is_leader, cs_para.dump().c_str(), unitmakers.size());
-        return nullptr;
+        if (unchange_tx_only_unit_num == 0) {
+            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+            xdbg("xtable_maker_t::make_light_table fail-make table.is_leader=%d,%s,unitmaker_size=%zu",
+                is_leader, cs_para.dump().c_str(), unitmakers.size());
+            return nullptr;
+        }
     }
 
     base::xreceiptid_check_t receiptid_check;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -30,9 +30,12 @@ void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transactio
 }
 
 xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state) {
-    alloc_tx_receiptid(lightunit_para.get_input_txs(), receiptid_state);
+    alloc_tx_receiptid(lightunit_para.get_succ_txs(), receiptid_state);
+    
+    if (lightunit_para.get_input_txs().empty() && !lightunit_para.get_unchange_txs().empty()) {
+        return nullptr;
+    }
 
-    xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
@@ -51,9 +54,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
     txexecutor::xbatch_txs_result_t exec_result;
     int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(prev_block.get(), prev_bstate, cs_para, input_txs, exec_result);
-    xinfo("xlightunit_builder_t::build_block %s,account=%s,height=%ld,exec_ret=%d,succtxs_count=%zu,failtxs_count=%zu,unconfirm_count=%d,binlog_size=%zu,binlog=%ld,state_size=%zu",
+    xinfo("xlightunit_builder_t::build_block %s,account=%s,height=%ld,exec_ret=%d,succtxs_count=%zu,unchangetxs_count=%zu,failtxs_count=%zu,unconfirm_count=%d,binlog_size=%zu,binlog=%ld,state_size=%zu",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
-        exec_ret, exec_result.m_exec_succ_txs.size(), exec_result.m_exec_fail_txs.size(),
+        exec_ret, exec_result.m_exec_succ_txs.size(), exec_result.m_exec_unchange_txs.size(), exec_result.m_exec_fail_txs.size(),
         exec_result.m_unconfirm_tx_num, exec_result.m_property_binlog.size(), base::xhash64_t::digest(exec_result.m_property_binlog), exec_result.m_full_state.size());
     // some send txs may execute fail but some recv/confirm txs may execute successfully
     if (!exec_result.m_exec_fail_txs.empty()) {
@@ -66,10 +69,13 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     lightunit_build_para->set_tgas_balance_change(exec_result.m_tgas_balance_change);
     lightunit_build_para->set_pack_txs(exec_result.m_exec_succ_txs);
+    lightunit_build_para->set_unchange_txs(exec_result.m_exec_unchange_txs);
 
+    
     xlightunit_block_para_t lightunit_para;
     // set lightunit para by tx result
     lightunit_para.set_input_txs(exec_result.m_exec_succ_txs);
+    lightunit_para.set_unchange_txs(exec_result.m_exec_unchange_txs);
     lightunit_para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
     lightunit_para.set_fullstate_bin(exec_result.m_full_state);
     lightunit_para.set_binlog(exec_result.m_property_binlog);

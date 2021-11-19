@@ -10,6 +10,25 @@
 #include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, blockmaker)
+
+void xtablemaker_result_t::add_unit_result(const xunitmaker_result_t & unit_result) {
+    m_total_unit_num++;
+    if(unit_result.m_block == nullptr) {
+        m_fail_unit_num++;
+    } else {
+        m_succ_unit_num++;
+        if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_full) m_full_unit_num++;
+        if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_light) m_light_unit_num++;
+        if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_nil) m_empty_unit_num++;
+    }
+    m_total_tx_num += (unit_result.m_self_tx_num + unit_result.m_send_tx_num + unit_result.m_recv_tx_num + unit_result.m_confirm_tx_num);
+    m_self_tx_num += unit_result.m_self_tx_num;
+    m_send_tx_num += unit_result.m_send_tx_num;
+    m_recv_tx_num += unit_result.m_recv_tx_num;
+    m_confirm_tx_num += unit_result.m_confirm_tx_num;
+    m_unchange_txs.insert(m_unchange_txs.end(), unit_result.m_unchange_txs.begin(), unit_result.m_unchange_txs.end());
+}
+
 xblock_maker_t::xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max)
     : base::xvaccount_t(account), m_resources(resources), m_keep_latest_blocks_max(latest_blocks_max) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblock_maker_t, 1);

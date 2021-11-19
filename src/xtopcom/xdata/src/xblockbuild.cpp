@@ -54,11 +54,36 @@ base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string
     }
 }
 
+base::xvaction_t make_action(const xcons_transaction_ptr_t & tx) {
+    std::string caller_addr;  // empty means version0, no caller addr
+    std::string contract_addr = tx->get_account_addr();
+    std::string contract_name; // empty means version0, default contract
+    uint32_t    contract_version = 0;
+    std::string target_uri = base::xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
+    std::string method_name = xtransaction_t::transaction_type_to_string(tx->get_tx_type());
+    if (tx->is_recv_tx()) {  // set origin tx source addr for recv tx, confirm tx need know source addr without origin tx
+        caller_addr = tx->get_source_addr();
+    }
+
+    base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
+    base::xvaction_t _tx_action(tx->get_tx_hash(), caller_addr, target_uri, method_name);
+    _tx_action.set_org_tx_action_id(tx->get_tx_subtype());
+    _tx_action.copy_result(_action_result);
+    return _tx_action;
+}
+
+xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
+    base::xvaction_t _action = data::make_action(tx);
+    xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
+    return txinfo;
+}
+
 std::string xlightunit_build_t::get_header_extra(const xlightunit_block_para_t & bodypara) const {
     base::xvtxkey_vec_t txs;
     for (auto & tx : bodypara.get_input_txs()) {
         base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
         txs.push_back(tx_key);
+        xdbg("xlightunit_build_t::get_header_extra tx hash:%s, type:%s", tx->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
     }
     std::string str;
     txs.serialize_to_string(str);
@@ -100,24 +125,6 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xlight
 xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
 : base::xvblockmaker_t(header, input, output) {
 
-}
-
-base::xvaction_t xlightunit_build_t::make_action(const xcons_transaction_ptr_t & tx) {
-    std::string caller_addr;  // empty means version0, no caller addr
-    std::string contract_addr = tx->get_account_addr();
-    std::string contract_name; // empty means version0, default contract
-    uint32_t    contract_version = 0;
-    std::string target_uri = base::xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
-    std::string method_name = xtransaction_t::transaction_type_to_string(tx->get_tx_type());
-    if (tx->is_recv_tx()) {  // set origin tx source addr for recv tx, confirm tx need know source addr without origin tx
-        caller_addr = tx->get_source_addr();
-    }
-
-    base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
-    base::xvaction_t _tx_action(tx->get_tx_hash(), caller_addr, target_uri, method_name);
-    _tx_action.set_org_tx_action_id(tx->get_tx_subtype());
-    _tx_action.copy_result(_action_result);
-    return _tx_action;
 }
 
 bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) {
@@ -248,11 +255,10 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
     base::xvaction_t _action = make_table_block_action_with_table_prop_prove(BLD_URI_LIGHT_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
+    xdbg("xlighttable_build_t::build_block_body. account=%s,height=%ld,version=%ld,tx size:%zu", account.get_account().c_str(), height, get_header()->get_block_version(), para.get_txs().size());
     if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
         set_input_entity(_action);
-        xdbg("xlighttable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
     } else {
-        xdbg("xlighttable_build_t::build_block_body new version action. account=%s,height=%ld,version=%ld", account.get_account().c_str(), height, get_header()->get_block_version());
         std::vector<base::xvaction_t> input_actions;
         input_actions.push_back(_action);
         for(auto & tx : para.get_txs()) {
@@ -415,7 +421,7 @@ std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_fr
 
     const std::vector<base::xventity_t*> & _table_inentitys = _tableblock->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _table_outentitys = _tableblock->get_output()->get_entitys();
-    if (_table_inentitys.size() <= 1 || _table_inentitys.size() != _table_outentitys.size()) {
+    if (_table_inentitys.size() <= 0 || _table_inentitys.size() != _table_outentitys.size()) {
         xassert(false);
         return {};
     }

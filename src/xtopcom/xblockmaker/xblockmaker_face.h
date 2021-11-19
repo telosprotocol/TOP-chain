@@ -71,6 +71,7 @@ struct xunitmaker_result_t {
     int32_t                                 m_make_block_error_code{0};
     std::vector<xcons_transaction_ptr_t>    m_pack_txs;
     std::vector<xcons_transaction_ptr_t>    m_fail_txs;
+    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
     int64_t                                 m_tgas_balance_change{0};
     uint32_t                                m_self_tx_num{0};
     uint32_t                                m_send_tx_num{0};
@@ -91,23 +92,7 @@ struct xunitmaker_para_t {
 
 class xtablemaker_result_t {
  public:
-    void    add_unit_result(const xunitmaker_result_t & unit_result) {
-        m_total_unit_num++;
-        if(unit_result.m_block == nullptr) {
-            m_fail_unit_num++;
-        } else {
-            m_succ_unit_num++;
-            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_full) m_full_unit_num++;
-            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_light) m_light_unit_num++;
-            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_nil) m_empty_unit_num++;
-        }
-
-        m_total_tx_num += (unit_result.m_self_tx_num + unit_result.m_send_tx_num + unit_result.m_recv_tx_num + unit_result.m_confirm_tx_num);
-        m_self_tx_num += unit_result.m_self_tx_num;
-        m_send_tx_num += unit_result.m_send_tx_num;
-        m_recv_tx_num += unit_result.m_recv_tx_num;
-        m_confirm_tx_num += unit_result.m_confirm_tx_num;
-    }
+    void add_unit_result(const xunitmaker_result_t & unit_result);
  public:
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
@@ -125,6 +110,7 @@ class xtablemaker_result_t {
     uint32_t                                m_empty_unit_num{0};
     uint32_t                                m_light_unit_num{0};
     uint32_t                                m_full_unit_num{0};
+    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
 };
 
 class xtablemaker_para_t {
@@ -236,7 +222,7 @@ class xblock_builder_para_face_t {
     virtual void                        set_error_code(int32_t error_code) {m_error_code = error_code;}
     int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
     void set_tgas_balance_change(const int64_t amount) { m_tgas_balance_change = amount; }
-    const std::vector<xlightunit_tx_info_ptr_t> & get_txs() {return m_txs_info;}
+    const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs_info;}
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};

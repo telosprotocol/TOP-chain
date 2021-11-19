@@ -156,7 +156,6 @@ const std::vector<xblock_ptr_t> & xtable_block_t::get_tableblock_units(bool need
 
 void xtable_block_t::unpack_proposal_units(std::vector<xblock_ptr_t> & units) const {
     std::vector<xobject_ptr_t<base::xvblock_t>> _units = xlighttable_build_t::unpack_units_from_table(this);
-    xassert(!_units.empty());
     for (auto & v : _units) {  // TODO(jimmy)
         units.push_back(dynamic_xobject_ptr_cast<xblock_t>(v));
     }
@@ -203,7 +202,6 @@ int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
 
 bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {
     const std::vector<xblock_ptr_t> & subblocks = get_tableblock_units(true);
-    xassert(!subblocks.empty());
     for (auto & v : subblocks) {
         sub_blocks.push_back(v);
     }
@@ -235,7 +233,7 @@ const std::vector<xlightunit_tx_info_ptr_t> xtable_block_t::get_txs() const {
 
 bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
     auto tx_actions = get_tx_actions();
-    xdbg("wish tx_action size:%zu, account:%s, height:%llu", tx_actions.size(), get_account().c_str(), get_height());
+    xdbg("xtable_block_t::extract_sub_txs tx_action size:%zu, account:%s, height:%llu", tx_actions.size(), get_account().c_str(), get_height());
     for (auto & tx : tx_actions) {
         xtransaction_ptr_t raw_tx = query_raw_transaction(tx.get_org_tx_hash());
         if (!tx.get_org_tx_hash().empty()) {

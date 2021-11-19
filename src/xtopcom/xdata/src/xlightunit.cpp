@@ -33,6 +33,17 @@ void xlightunit_block_para_t::set_one_input_tx(const xcons_transaction_ptr_t & i
 void xlightunit_block_para_t::set_input_txs(const std::vector<xcons_transaction_ptr_t> & input_txs) {
     xassert(m_raw_txs.empty());
     m_raw_txs = input_txs;
+    m_succ_txs.insert(m_succ_txs.end(), m_raw_txs.begin(), m_raw_txs.end());
+}
+
+void xlightunit_block_para_t::set_unchange_txs(const std::vector<xcons_transaction_ptr_t> & unchange_txs) {
+    xassert(m_unchange_txs.empty());
+    m_unchange_txs = unchange_txs;
+    m_succ_txs.insert(m_succ_txs.end(), m_unchange_txs.begin(), m_unchange_txs.end());
+}
+
+std::vector<xcons_transaction_ptr_t> const & xlightunit_block_para_t::get_succ_txs() const {
+    return m_succ_txs;
 }
 
 xlightunit_block_t::xlightunit_block_t()

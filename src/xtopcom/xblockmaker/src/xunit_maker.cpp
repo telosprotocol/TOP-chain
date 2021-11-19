@@ -346,6 +346,10 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         result.add_pack_txs(lightunit_build_para->get_pack_txs());
         result.m_fail_txs = lightunit_build_para->get_fail_txs();
         result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
+        result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
+        if (lightunit_build_para->get_pack_txs().empty() && !lightunit_build_para->get_unchange_txs().empty()) {
+            result.m_make_block_error_code = xblockmaker_error_no_need_make_unit;
+        }
         for (auto & tx : lightunit_build_para->get_fail_txs()) {
             xassert(tx->is_self_tx() || tx->is_send_tx());
             xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());

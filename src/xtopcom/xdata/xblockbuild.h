@@ -15,6 +15,9 @@
 
 NS_BEG2(top, data)
 
+base::xvaction_t make_action(const xcons_transaction_ptr_t & tx);
+xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx);
+
 class xlightunit_build_t : public base::xvblockmaker_t {
  public:
     static bool should_build_no_txaction_unit(const uint64_t clock, const uint64_t height);
@@ -24,9 +27,6 @@ class xlightunit_build_t : public base::xvblockmaker_t {
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
     std::string get_header_extra(const xlightunit_block_para_t & bodypara) const ;
-
-    static base::xvaction_t make_action(const xcons_transaction_ptr_t & tx);
-
 private:
     bool build_block_body(const xlightunit_block_para_t & para);
 };

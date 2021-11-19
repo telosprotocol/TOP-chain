@@ -289,7 +289,7 @@ class xdatamock_table : public base::xvaccount_t {
             }
             auto txs = mockunit.get_exec_txs();
             for (auto & tx : txs) {
-                base::xvaction_t _action = data::xlightunit_build_t::make_action(tx);
+                base::xvaction_t _action = data::make_action(tx);
                 xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
                 txs_info.push_back(txinfo);
             }
