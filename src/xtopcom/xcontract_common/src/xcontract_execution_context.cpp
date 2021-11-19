@@ -70,7 +70,7 @@ void xtop_contract_execution_context::remove_input_receipt_data(std::string cons
 //}
 
 data::xaction_consensus_exec_status xtop_contract_execution_context::action_consensus_result() const noexcept {
-    data::xaction_consensus_exec_status ret;
+    data::xaction_consensus_exec_status ret{data::xaction_consensus_exec_status::enum_xunit_tx_exec_status_fail};
     switch (m_action->type()) {
     case data::xtop_action_type_t::system: {
         ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->action_consensus_result();
@@ -208,7 +208,7 @@ data::enum_xaction_type xtop_contract_execution_context::action_type() const {
 }
 
 data::enum_xaction_type xtop_contract_execution_context::source_action_type() const {
-    data::enum_xaction_type ret;
+    data::enum_xaction_type ret{data::enum_xaction_type::xaction_type_asset_out};
     switch (m_action->type()) {
     case data::xtop_action_type_t::system: {
         ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->source_action_type();
@@ -224,7 +224,7 @@ data::enum_xaction_type xtop_contract_execution_context::source_action_type() co
 }
 
 data::enum_xaction_type xtop_contract_execution_context::target_action_type() const {
-    data::enum_xaction_type ret;
+    data::enum_xaction_type ret{data::enum_xaction_type::xaction_type_asset_out};
     switch (m_action->type()) {
     case data::xtop_action_type_t::system: {
         ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->target_action_type();

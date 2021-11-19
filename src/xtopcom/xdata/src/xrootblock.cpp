@@ -208,7 +208,9 @@ const std::vector<std::string>& xrootblock_t::get_tcc_initial_committee_addr() {
 
 const std::vector<node_info_t> & xrootblock_t::get_seed_nodes() {
     xassert(m_instance != nullptr);
+#if !defined(XENABLE_TESTS)
     xassert(!m_instance->get_rootblock_input()->get_seed_nodes().empty());
+#endif
     return m_instance->get_rootblock_input()->get_seed_nodes();
 }
 

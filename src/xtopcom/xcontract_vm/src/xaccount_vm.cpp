@@ -52,6 +52,8 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
+
+#if defined(ENABLE_METRICS)
             // calc delay time collection
             {
                 auto delay_time = txs[i]->get_transaction()->get_delay_from_fire_timestamp(cs_para.get_gettimeofday_s());
@@ -63,6 +65,7 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
                     XMETRICS_GAUGE(metrics::txdelay_from_client_to_confirmtx_exec, delay_time);
                 }
             }
+#endif
 
             auto action_result = execute_action(std::move(actions[i]), param, sa);
             if (action_result.status.ec) {
@@ -195,7 +198,7 @@ void xtop_account_vm::preprocess(std::vector<data::xcons_transaction_ptr_t> cons
             data::XPROPERTY_TX_INFO_RECVTX_NUM,
             ec);
         top::error::throw_error(ec);
-        auto recv_tx_num = recv_tx_num_bytes.empty() ? 0 : top::from_string<uint64_t>(top::from_bytes<std::string>(recv_tx_num_bytes));
+        auto recv_tx_num = recv_tx_num_bytes.empty() ? 0 : top::from_bytes<uint64_t>(recv_tx_num_bytes);
         sa.set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
             data::XPROPERTY_TX_INFO_RECVTX_NUM,

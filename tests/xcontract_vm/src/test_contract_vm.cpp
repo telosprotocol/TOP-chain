@@ -1,6 +1,9 @@
 #define private public
 #define protected public
-#include "tests/mock/xvchain_creator.hpp"
+
+#include "tests/xcontract_vm/xaccount_vm_fixture.h"
+#include "tests/xcontract_vm/xdemo_contract/xdemo_contract_a.h"
+#include "tests/xcontract_vm/xdemo_contract/xdemo_contract_b.h"
 #include "xbase/xobject_ptr.h"
 #include "xcontract_common/xserialization/xserialization.h"
 #include "xcontract_vm/xaccount_vm.h"
@@ -9,16 +12,13 @@
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xtransaction_v2.h"
-#include "xdemo_contract/xdemo_contract_a.h"
-#include "xdemo_contract/xdemo_contract_b.h"
 #include "xpbase/base/top_utils.h"
-#include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
 #include <gtest/gtest.h>
 
-NS_BEG3(top, tests, contract_runtime)
+NS_BEG3(top, tests, contract_vm)
 
 using namespace top::base;
 using namespace top::contract_common;
@@ -27,27 +27,6 @@ using namespace top::contract_vm;
 using namespace top::data;
 using namespace top::mock;
 using namespace top::xstake;
-
-xvchain_creator creator;
-
-class test_contract_vm : public testing::Test {
-public:
-    void SetUp() override {
-        m_blockstore = creator.get_blockstore();
-        m_manager = new system::xsystem_contract_manager_t();
-        cs_para.m_clock = 5796740;
-        cs_para.m_total_lock_tgas_token = 0;
-        cs_para.m_proposal_height = 7;
-        cs_para.m_account = "Ta0001@0";
-        cs_para.m_random_seed = xstring_utl::base64_decode("ODI3OTg4ODkxOTMzOTU3NDk3OA==");
-    }
-    void TearDown() override {
-    }
-
-    xvblockstore_t * m_blockstore;
-    system::xsystem_contract_manager_t * m_manager{nullptr};
-    xblock_consensus_para_t cs_para;
-};
 
 static const std::string user_address{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
 static const std::string public_key{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
@@ -860,7 +839,7 @@ TEST_F(test_contract_vm, test_async_call) {
     }
 }
 
-#if defined XENABLE_MOCK_ZEC_STAKE
+#if defined(XENABLE_MOCK_ZEC_STAKE)
 TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     const uint64_t last_nonce{10};
     const uint256_t last_hash{12345678};

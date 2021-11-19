@@ -78,7 +78,6 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
 
     result.output.fee_change = observed_exectx->action_preprocess(ec);
     if (ec) {
-        assert(ec);
         xwarn("[xtop_action_session::xtop_action_session] action_preprocess failed, category: %s, msg: %s", ec.category().name(), ec.message().c_str());
         result.status.ec = ec;
         return result;

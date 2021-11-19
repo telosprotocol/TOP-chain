@@ -33,6 +33,9 @@ T from_string(std::string const & input) {
 }
 
 template <>
+std::string to_string(short const & input);
+
+template <>
 std::string to_string<int>(int const & input);
 
 template <>
@@ -57,33 +60,30 @@ template <>
 std::string to_string<xbytes_t>(xbytes_t const & input);
 
 template <>
-int from_string<int>(std::string const & input);
+short int from_string<short int>(std::string const & input, std::error_code & ec);
 
 template <>
-unsigned int from_string<unsigned int>(std::string const & input);
+int from_string<int>(std::string const & input, std::error_code & ec);
 
 template <>
-long from_string<long>(std::string const & input);
+long from_string<long>(std::string const & input, std::error_code & ec);
 
 template <>
-long long from_string<long long>(std::string const & input);
+long long from_string<long long>(std::string const & input, std::error_code & ec);
 
 template <>
-unsigned long from_string<unsigned long>(std::string const & input);
+unsigned short int from_string<unsigned short int>(std::string const & input, std::error_code & ec);
 
 template <>
-unsigned long long from_string<unsigned long long>(std::string const & input);
+unsigned int from_string<unsigned int>(std::string const & input, std::error_code & ec);
 
 template <>
-float from_string<float>(std::string const & input);
+unsigned long from_string<unsigned long>(std::string const & input, std::error_code & ec);
 
 template <>
-double from_string<double>(std::string const & input);
-
-template <>
-long double from_string<long double>(std::string const & input);
+unsigned long long from_string<unsigned long long>(std::string const & input, std::error_code & ec);
 
 template<>
-xbytes_t from_string<xbytes_t>(std::string const & input);
+xbytes_t from_string<xbytes_t>(std::string const & input, std::error_code & ec);
 
 NS_END1
