@@ -4,7 +4,6 @@
 
 #include "xbase/xlog.h"
 #include "xbasic/xthreading/xutility.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xelection/xcache/xnetwork_element.h"

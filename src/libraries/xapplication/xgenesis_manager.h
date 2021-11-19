@@ -19,12 +19,14 @@ public:
     xtop_genesis_manager & operator=(xtop_genesis_manager &&) = default;
     ~xtop_genesis_manager() = default;
 
-    /// @brief Create genesis block of accounts in different types necessary when application start. Throws xtop_error_t when any error occurs.
-    void init_genesis_block();
+    /// @brief Create genesis block of accounts in different types necessary when application start.
+    /// @param ec Log the error code.
+    void init_genesis_block(std::error_code & ec);
 
     /// @brief Create genesis block of the specific account.
     /// @param account Account which need to create genesis block.
-    void create_genesis_block(base::xvaccount_t const & account);
+    /// @param ec Log the error code.
+    void create_genesis_block(base::xvaccount_t const & account, std::error_code & ec);
 
 private:
     /// @brief Create genesis block of root account.
@@ -54,10 +56,17 @@ private:
     /// @param ec Log the error code.
     void create_genesis_of_common_account(base::xvaccount_t const & account, std::error_code & ec);
 
+    /// @brief Load accounts of different types.
+    void load_accounts();
+
+    /// @brief Release resources by load_accounts.
+    void release_accounts();
+
     observer_ptr<base::xvblockstore_t> m_blockstore;
     observer_ptr<store::xstore_face_t> m_store;
+    bool m_init_finish{false};
+    bool m_root_finish{false};
     std::mutex m_lock;
-    bool init_finish{false};
 
     common::xaccount_address_t m_root_account;
     std::set<common::xaccount_address_t> m_contract_accounts;
