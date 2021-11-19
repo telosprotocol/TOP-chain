@@ -181,6 +181,7 @@ class xcons_service_face {
 public:
     virtual common::xmessage_category_t get_msg_category() = 0;
     virtual bool                        start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
+    virtual bool                        fade(const xvip2_t & xip) = 0;
     virtual bool                        unreg(const xvip2_t & xip) = 0;
     virtual bool                        destroy(const xvip2_t & xip) = 0;
 };
@@ -209,6 +210,8 @@ public:
 
     // start
     virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
+
+    virtual bool fade(const xvip2_t & xip) = 0;
 
     virtual bool unreg(const xvip2_t & xip) = 0;
 
@@ -263,6 +266,8 @@ public:
 
     // init reference data
     virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
+
+    virtual bool fade(const xvip2_t & xip) = 0;
 
     // uninit reference data
     virtual bool unreg(const xvip2_t & xip) = 0;

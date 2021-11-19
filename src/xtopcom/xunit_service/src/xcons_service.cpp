@@ -38,6 +38,10 @@ bool xcons_service_t::start(const xvip2_t & xip, const common::xlogic_time_t& st
     return m_running;
 }
 
+bool xcons_service_t::fade(const xvip2_t & xip) {
+    return m_dispatcher->fade(xip);
+}
+
 bool xcons_service_t::unreg(const xvip2_t & xip) {
     // TODO(justin): add fade implement
     // 1. get elect data from election data

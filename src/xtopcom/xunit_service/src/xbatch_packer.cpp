@@ -187,6 +187,12 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_leader_packed = false;
     xdbg_info("xbatch_packer::on_view_fire account=%s,clock=%ld,viewid=%ld,start_time=%ld", get_account().c_str(), view_ev->get_clock(), view_ev->get_viewid(), m_start_time);
 
+    auto local_xip = get_xip2_addr();
+    if (xcons_utl::xip_equals(m_faded_xip2, local_xip)) {
+        xdbg_info("xbatch_packer::on_view_fire local_xip equal m_fade_xip2 %s . fade round should not make proposal", xcons_utl::xip_to_hex(m_faded_xip2).c_str());
+        return false;
+    }
+
     // fix: viewchange on different rounds
     if (view_ev->get_clock() < m_start_time) {
         xunit_warn("xbatch_packer::on_view_fire fail-clock expired less than start time.account=%s,viewid=%ld,clock=%ld,start_time=%ld",
@@ -224,7 +230,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto accessor = m_para->get_resources()->get_data_accessor();
     auto leader_election = m_para->get_resources()->get_election();
     auto node_account = m_para->get_resources()->get_account();
-    auto local_xip = get_xip2_addr();
+
     auto zone_id = get_zone_id_from_xip2(local_xip);
     if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index) {
         xerror("xbatch_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
@@ -404,6 +410,12 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
     xunit_dbg("xbatch_packer::reset_xip_addr %s node:%s this:%p", xcons_utl::xip_to_hex(new_addr).c_str(), m_para->get_resources()->get_account().c_str(), this);
     return xcsaccount_t::reset_xip_addr(new_addr);
+}
+
+bool xbatch_packer::set_fade_xip_addr(const xvip2_t & new_addr) {
+    xdbg("xbatch_packer::set_fade_xip_addr set fade xip from %s to %s", xcons_utl::xip_to_hex(m_faded_xip2).c_str(), xcons_utl::xip_to_hex(new_addr).c_str());
+    m_faded_xip2 = new_addr;
+    return true;
 }
 
 bool xbatch_packer::set_start_time(const common::xlogic_time_t& start_time) {

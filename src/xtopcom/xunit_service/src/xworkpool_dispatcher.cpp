@@ -121,6 +121,47 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
     return false;
 }
 
+bool xworkpool_dispatcher::fade(const xvip2_t & xip) {
+    xunit_info("xworkpool_dispatcher::fade %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    auto election_face = m_para->get_resources()->get_election();
+    auto elect_face = election_face->get_election_cache_face();
+    if (elect_face != nullptr) {
+        std::vector<base::xtable_index_t> tables;
+        elect_face->get_tables(xip, &tables);
+
+        auto pool = m_para->get_resources()->get_workpool();
+        auto pool_thread_ids = pool->get_thread_ids();
+        xbatch_packers fade_packers;
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            for (size_t index = 0; index < tables.size(); index++) {
+                // get account info
+                auto table_id = tables[index];
+                auto iter = m_packers.find(table_id);
+                if (iter != m_packers.end()) {
+                    fade_packers.push_back(iter->second);
+                }
+            }
+        }
+
+        // for each packer reset xip address async
+        if (!fade_packers.empty()) {
+            for (auto packer_ptr : fade_packers) {
+                xbatch_packer * packer = packer_ptr.get();
+                auto async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+                    auto packer = dynamic_cast<xbatch_packer *>(call.get_param1().get_object());
+                    packer->set_fade_xip_addr(xip);
+                    return true;
+                };
+                base::xcall_t asyn_call(async_reset, packer_ptr.get());
+                packer->send_call(asyn_call);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 bool xworkpool_dispatcher::unreg(const xvip2_t & xip) {
     // do nothing
     xunit_info("xworkpool_dispatcher::unreg %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
