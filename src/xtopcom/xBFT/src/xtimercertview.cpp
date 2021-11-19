@@ -7,6 +7,7 @@
 #include "xbase/xutl.h"
 #include "xmetrics/xmetrics.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvblock_fork.h"
 
 #include <inttypes.h>
 
@@ -220,6 +221,13 @@ bool xconspacemaker_t::on_receive_timeout(xvip2_t const & from_addr, base::xcspd
         return true;
     }
 
+    uint32_t expect_version = base::xvblock_fork_t::instance().is_forked(msg->block->get_clock()) ? base::xvblock_fork_t::get_block_fork_new_version() : base::xvblock_fork_t::get_block_fork_old_version();
+    if (msg->block->get_block_version() != expect_version) {
+        xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} version unmatch clock %" PRIu64" block:%s,expect_version=0x%x,actual_version=0x%x",
+            from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str(), expect_version, msg->block->get_block_version());
+        return true;
+    }
+
     XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_tc, 1);
     if (get_vcertauth()->verify_sign(from_addr, (base::xvblock_t *)msg->block) != base::enum_vcert_auth_result::enum_successful) {
         xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} verify failed clock %" PRIu64" block:%s",
@@ -258,8 +266,8 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
 
     const std::map<xvip2_t,std::string,xvip2_compare> &validators = m_vote_cache.get_clock_votes(clock);
 
-    xdbg("[xconspacemaker_t::add_vote] xip {%" PRIx64 ", %" PRIx64 "}, clock %" PRIu64", validators %d, threshold %d",
-            xip_addr.high_addr, xip_addr.low_addr, clock, validators.size(), model_block->get_cert()->get_validator_threshold());
+    xinfo("[xconspacemaker_t::add_vote] xip {%" PRIx64 ", %" PRIx64 "}, clock %" PRIu64", version=0x%x,validators %d, threshold %d",
+            xip_addr.high_addr, xip_addr.low_addr, clock, model_block->get_block_version(), validators.size(), model_block->get_cert()->get_validator_threshold());
 
     if (validators.size() < model_block->get_cert()->get_validator_threshold())
         return;
