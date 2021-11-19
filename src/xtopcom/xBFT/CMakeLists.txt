@@ -10,6 +10,7 @@ add_library(xBFT STATIC ${src_dir})
 #add_dependencies(xBFT xxbase)
 
 target_link_libraries(xBFT PRIVATE
+    xvledger
     xxbase
 )
 
