@@ -90,6 +90,7 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_archive_height, std::bind(&xsync_handler_t::recv_archive_height, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_query_archive_height, std::bind(&xsync_handler_t::recv_query_archive_height, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_archive_blocks, std::bind(&xsync_handler_t::recv_archive_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_archive_height_list, std::bind(&xsync_handler_t::recv_archive_height_list, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -923,7 +924,7 @@ void xsync_handler_t::on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork
 
     m_sync_on_demand->handle_blocks_by_hash_response(blocks, from_address, network_self);
 }
-
+// val recv height from arc
 void xsync_handler_t::recv_archive_height(uint32_t msg_size,
         const vnetwork::xvnode_address_t &from_address,
         const vnetwork::xvnode_address_t &network_self,
@@ -958,6 +959,7 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
     XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
     m_sync_sender->send_archive_blocks(xsync_msg_err_code_t::succ, ptr->address, vector_blocks, network_self, from_address);
 }
+// arc recv blocks from val
 void xsync_handler_t::recv_archive_blocks(uint32_t msg_size,
         const vnetwork::xvnode_address_t &from_address,
         const vnetwork::xvnode_address_t &network_self,
@@ -1008,6 +1010,7 @@ void xsync_handler_t::recv_archive_blocks(uint32_t msg_size,
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_archive_blocks_t>(blocks, network_self, from_address);
     m_downloader->push_event(e);        
 }
+// arc recv query from val on_timer
 void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
         const vnetwork::xvnode_address_t &from_address,
         const vnetwork::xvnode_address_t &network_self,
@@ -1021,14 +1024,101 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
     auto ptr = make_object_ptr<xsync_query_height_t>();
     ptr->serialize_from(stream);
 
-    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
-    xsync_info("recv_query_archive_height %s,%llu", ptr->address.c_str(), latest_end_block_height);
+    xsync_roles_t roles = m_role_chains_mgr->get_roles();
+    for (const auto &role_it: roles) {
+        const vnetwork::xvnode_address_t &self_addr = role_it.first;
+        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
+        common::xnode_type_t node_type = self_addr.type();
 
-    xchain_state_info_t info;
-    info.address = ptr->address;
-    info.end_height = latest_end_block_height;
-    m_sync_sender->send_archive_height(info, network_self, from_address);    
+        if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
+            common::has<common::xnode_type_t::consensus>(node_type)) {
+        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
+            continue;
+        } else {
+            continue;
+        }
+
+        std::vector<xchain_state_info_t> info_list;
+        const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
+        for (const auto & it : chains) {
+            const std::string & address = it.first;
+            const xchain_info_t & chain_info = it.second;
+
+            xchain_state_info_t info;
+            info.address = address;
+            info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
+            info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+            info_list.push_back(info);
+        }
+
+        xsync_info("recv_query_archive_height, send height info %s %s count(%d)", self_addr.to_string().c_str(), network_self.to_string().c_str(), info_list.size());
+        if (info_list.empty()) {
+            continue;
+        }
+
+        m_sync_sender->send_archive_height_list(info_list, network_self, from_address);
+    }   
+    //m_sync_sender->send_archive_height(info, network_self, from_address);    
 }
+// val recv height list from arc
+void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time) {
+    XMETRICS_GAUGE(metrics::xsync_recv_archive_height_list, 1);
+    auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
+    ptr->serialize_from(stream);
+
+    std::vector<xchain_state_info_t> &info_list = ptr->info_list;
+    xsync_info("xsync_handler receive recv_archive_height_list %" PRIx64 " wait(%ldms) count:%u %s",
+        msg_hash, get_time()-recv_time, (uint32_t)info_list.size(), from_address.to_string().c_str());
+
+    if (info_list.size() > 500) {
+        return;
+    }
+
+    std::shared_ptr<xrole_chains_t> role_chains = m_role_chains_mgr->get_role(network_self);
+    if (role_chains == nullptr) {
+        xsync_dbg("xsync_handler recv_archive_height_list network address %s is not exist", network_self.to_string().c_str());
+        return;
+    }
+
+    const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
+    std::vector<xchain_state_info_t> rsp_info_list;
+    for (auto &it: info_list) {
+        const std::string &address = it.address;
+        auto it2 = chains.find(address);
+        if (it2 == chains.end()) {
+            xsync_dbg("xsync_handler recv_archive_height_list chain address %s not exist", address.c_str());
+            continue;
+        }
+
+        uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+        xsync_dbg("recv_archive_height_list: %s, %llu, %llu", address.c_str(), it.end_height, latest_end_block_height);
+        if (latest_end_block_height < it.end_height + 50)  // not send blocks within 50 blocks
+            return;
+
+        uint32_t count = 3;
+        uint32_t start_height = it.end_height + 1;
+        std::vector<xblock_ptr_t> vector_blocks;
+        for (uint32_t height = start_height; height < start_height + count; height++) {
+            auto blocks = m_sync_store->load_block_objects(address, height);
+            if (blocks.empty()) {
+                break;
+            }
+            for (uint32_t j = 0; j < blocks.size(); j++) {
+                vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
+            }
+        }
+        xsync_info("recv_archive_height_list, send blocks: %d", vector_blocks.size());
+        XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
+        m_sync_sender->send_archive_blocks(xsync_msg_err_code_t::succ, it.address, vector_blocks, network_self, from_address);
+    }
+}
+
 int64_t xsync_handler_t::get_time() {
     return base::xtime_utl::gmttime_ms();
 }

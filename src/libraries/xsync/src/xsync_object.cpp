@@ -29,7 +29,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     m_sync_sender(top::make_unique<sync::xsync_sender_t>(m_instance, vhost, m_role_xips_mgr.get())),
     m_sync_ratelimit(top::make_unique<sync::xsync_ratelimit_t>(sync_thread, (uint32_t)100)),
     m_peerset(top::make_unique<sync::xsync_peerset_t>(m_instance)),
-    m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get(), m_role_chains_mgr.get())),
     m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_peerset.get(), m_sync_sender.get())),
     m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_chains_mgr.get(),
         m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get(), m_store_shadow.get())),

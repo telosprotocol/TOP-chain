@@ -63,10 +63,11 @@ std::set<uint32_t>  calc_push_select(uint32_t dst_count, uint32_t random) {
 }
 
 xsync_pusher_t::xsync_pusher_t(std::string vnode_id,
-    xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender):
+    xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender, xrole_chains_mgr_t *role_chains_mgr):
 m_vnode_id(vnode_id),
 m_role_xips_mgr(role_xips_mgr),
-m_sync_sender(sync_sender) {
+m_sync_sender(sync_sender),
+m_role_chains_mgr(role_chains_mgr) {
 
 }
 
@@ -120,6 +121,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     uint32_t random = vrf_value(block->get_block_hash());
+    m_vrf_random = random;
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
     std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
@@ -177,26 +179,26 @@ void xsync_pusher_t::on_timer() {
     if (m_counter % 60 != 0)
         return;
 
-    common::xnode_type_t node_type = common::xnode_type_t::invalid;
-    std::string address_prefix;
-    uint32_t table_id = 0;
-
-    if (!data::xdatautil::extract_parts(m_address, address_prefix, table_id))
-        return;
-
-    if (address_prefix == sys_contract_beacon_table_block_addr) {
-        node_type = common::xnode_type_t::rec;
-    } else if (address_prefix == sys_contract_zec_table_block_addr) {
-        node_type = common::xnode_type_t::zec;
-    } else if (address_prefix == sys_contract_sharding_table_block_addr) {
-        node_type = common::xnode_type_t::consensus;
-    } else {
-        assert(0);
-    }
-
+    std::string address;
+    xsync_roles_t roles = m_role_chains_mgr->get_roles();
     vnetwork::xvnode_address_t self_addr;
-    if (!m_role_xips_mgr->get_self_addr(node_type, table_id, self_addr)) {
-        xsync_warn("xsync_pusher_t push_newblock_to_archive get self addr failed %s", block->dump().c_str());
+    common::xnode_type_t node_type;
+    for (const auto &role_it: roles) {
+        self_addr = role_it.first;
+        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
+        node_type = self_addr.type();
+
+        if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
+            common::has<common::xnode_type_t::consensus>(node_type)) {
+            address = self_addr.to_string();
+        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
+            continue;
+        } else {
+            continue;
+        }
+    }
+    if (address.empty()) {
+        xsync_info("xsync_pusher_t::on_timer, not find self_addr");
         return;
     }
 
@@ -213,7 +215,7 @@ void xsync_pusher_t::on_timer() {
         }
     }
 
-    uint32_t random = vrf_value(block->get_block_hash());
+    //uint32_t random = vrf_value(block->get_block_hash());
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
     std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
@@ -231,18 +233,20 @@ void xsync_pusher_t::on_timer() {
     }
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
+        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, m_vrf_random);
         xsync_dbg("xsync_pusher_t, send_query_archive_height src=%u dst=%u push_arcs=%u src %s, %s", neighbor_number, archive_list.size(),
-            push_arcs.size(), self_addr.to_string().c_str(), m_address.c_str());
+            push_arcs.size(), self_addr.to_string().c_str(), address.c_str());
+        if (push_arcs.size() == 1 && archive_list.size() > 1)  // mapping to 2 arc
+            push_arcs.push_back((push_arcs[0] + 1) % archive_list.size());
+
         for (auto &dst_idx: push_arcs) {
             vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
             auto found = validator_auditor_neighbours.find(target_addr.account_address());
             if (found == validator_auditor_neighbours.end()) {
-                xsync_dbg("xsync_pusher_t, send_query_archive_height src=%s dst=%s, %s",
-                    self_addr.to_string().c_str(), target_addr.to_string().c_str(), m_address.c_str());
+                xsync_dbg("xsync_pusher_t, send_query_archive_height src=%s dst=%s",
+                    self_addr.to_string().c_str(), target_addr.to_string().c_str());
                 xsync_query_height_t info;
-                info.address = m_address;
-                m_sync_sender->send_archive_query_height(info, self_addr, target_addr);
+                m_sync_sender->send_query_archive_height(info, self_addr, target_addr);
             }
         }
     }

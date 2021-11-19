@@ -10,6 +10,7 @@
 #include "xdata/xblock.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_time_rejecter.h"
+#include "xsync/xrole_chains_mgr.h"
 
 NS_BEG2(top, sync)
 
@@ -18,7 +19,7 @@ extern std::set<uint32_t> calc_push_select(uint32_t dst_count, uint32_t random);
 
 class xsync_pusher_t {
 public:
-    xsync_pusher_t(std::string vnode_id, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender);
+    xsync_pusher_t(std::string vnode_id, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender, xrole_chains_mgr_t *role_chains_mgr);
     void push_newblock_to_archive(const data::xblock_ptr_t &block);
     void on_timer();
 private:
@@ -26,7 +27,9 @@ private:
     xrole_xips_manager_t *m_role_xips_mgr;
     xsync_sender_t *m_sync_sender;
     xsync_time_rejecter_t m_time_rejecter{900};
-    int m_counter{0};    
+    int m_counter{0};
+    xrole_chains_mgr_t *m_role_chains_mgr;
+    uint32_t m_vrf_random{0};
 };
 
 NS_END2

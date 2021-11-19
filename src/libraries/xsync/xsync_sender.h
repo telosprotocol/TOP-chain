@@ -64,6 +64,7 @@ public:
     void send_on_demand_by_hash_blocks(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_archive_height(const xchain_state_info_t& info, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_query_archive_height(const xsync_query_height_t& info, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_archive_height_list(const std::vector<xchain_state_info_t>& info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 
     bool send_message(xobject_ptr_t<basic::xserialize_face_t> serializer, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 protected:
