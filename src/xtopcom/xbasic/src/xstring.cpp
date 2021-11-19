@@ -4,6 +4,8 @@
 
 #include "xbasic/xstring.h"
 
+#include <cassert>
+
 NS_BEG1(top)
 
 template <>
@@ -47,52 +49,136 @@ std::string to_string<xbytes_t>(xbytes_t const & input) {
 }
 
 template <>
-int from_string<int>(std::string const & input) {
-    return std::stoi(input);
+short int from_string<short int>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        do {
+            auto i = std::stoi(input);
+            if (i > static_cast<int>(std::numeric_limits<short int>::max()) || i < static_cast<int>(std::numeric_limits<short int>::min())) {
+                ec = std::make_error_code(std::errc::result_out_of_range);
+                break;
+            }
+
+            return static_cast<short int>(i);
+        } while (false);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const &) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-unsigned int from_string<unsigned int>(std::string const & input) {
-    return static_cast<unsigned int>(std::stoi(input));
+int from_string<int>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        return std::stoi(input);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const &) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-long from_string<long>(std::string const & input) {
-    return std::stol(input);
+long from_string<long>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        return std::stol(input);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const &) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-long long from_string<long long>(std::string const & input) {
-    return std::stoll(input);
+long long from_string<long long>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        return std::stoll(input);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const & eh) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-unsigned long from_string<unsigned long>(std::string const & input) {
-    return std::stoul(input);
+unsigned short int from_string<unsigned short int>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        do {
+            auto i = std::stoul(input);
+            if (i > static_cast<unsigned long>(std::numeric_limits<unsigned short int>::max()) || i < static_cast<unsigned long>(std::numeric_limits<unsigned short int>::min())) {
+                ec = std::make_error_code(std::errc::result_out_of_range);
+                break;
+            }
+
+            return static_cast<unsigned short int>(i);
+        } while (false);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const &) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-unsigned long long from_string<unsigned long long>(std::string const & input) {
-    return std::stoull(input);
+unsigned int from_string<unsigned int>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        do {
+            auto i = std::stoul(input);
+            if (i > static_cast<unsigned long>(std::numeric_limits<unsigned int>::max()) || i < static_cast<unsigned long>(std::numeric_limits<unsigned int>::min())) {
+                ec = std::make_error_code(std::errc::result_out_of_range);
+                break;
+            }
+
+            return static_cast<unsigned int>(i);
+        } while (false);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const &) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-float from_string<float>(std::string const & input) {
-    return std::stof(input);
+unsigned long from_string<unsigned long>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        return std::stoul(input);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const & eh) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+
+    return {};
 }
 
 template <>
-double from_string<double>(std::string const & input) {
-    return std::stod(input);
+unsigned long long from_string<unsigned long long>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    try {
+        return std::stoull(input);
+    } catch (std::invalid_argument const &) {
+        ec = std::make_error_code(std::errc::invalid_argument);
+    } catch (std::out_of_range const & eh) {
+        ec = std::make_error_code(std::errc::result_out_of_range);
+    }
+    return {};
 }
 
 template <>
-long double from_string<long double>(std::string const & input) {
-    return std::stold(input);
-}
-
-template <>
-xbytes_t from_string<xbytes_t>(std::string const & input) {
+xbytes_t from_string<xbytes_t>(std::string const & input, std::error_code & /*ec*/) {
     return {input.begin(), input.end()};
 }
 

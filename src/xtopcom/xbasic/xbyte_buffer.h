@@ -77,36 +77,36 @@ template <>
 xbytes_t to_bytes<uint256_t>(uint256_t const & input);
 
 template <>
-xbytes_t from_bytes<xbytes_t>(xbytes_t const & input);
+xbytes_t from_bytes<xbytes_t>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-std::string from_bytes<std::string>(xbytes_t const & input);
+std::string from_bytes<std::string>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-uint256_t from_bytes<uint256_t>(xbytes_t const & input);
+uint256_t from_bytes<uint256_t>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-char from_bytes<char>(xbytes_t const & input);
+char from_bytes<char>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-int from_bytes<int>(xbytes_t const & input);
+int from_bytes<int>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-long from_bytes<long>(xbytes_t const & input);
+long from_bytes<long>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-long long from_bytes<long long>(xbytes_t const & input);
+long long from_bytes<long long>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-unsigned char from_bytes<unsigned char>(xbytes_t const & input);
+unsigned char from_bytes<unsigned char>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-unsigned int from_bytes<unsigned int>(xbytes_t const & input);
+unsigned int from_bytes<unsigned int>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-unsigned long from_bytes<unsigned long>(xbytes_t const & input);
+unsigned long from_bytes<unsigned long>(xbytes_t const & input, std::error_code & ec);
 
 template <>
-unsigned long long from_bytes<unsigned long long>(xbytes_t const & input);
+unsigned long long from_bytes<unsigned long long>(xbytes_t const & input, std::error_code & ec);
 
 NS_END1
