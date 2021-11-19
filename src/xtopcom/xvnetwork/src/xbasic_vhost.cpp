@@ -5,7 +5,6 @@
 #include "xvnetwork/xbasic_vhost.h"
 
 #include "xbasic/xcrypto_key.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
