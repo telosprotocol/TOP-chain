@@ -95,6 +95,7 @@ bool xdb_mem_t::erase(const std::string& key) {
     }
 
     m_meta.m_erase_count++;
+    xdbg("xdb_mem_t::erase key=%s", key.c_str());
     return true;
 }
 
@@ -110,6 +111,7 @@ bool xdb_mem_t::erase(const std::vector<std::string>& keys) {
             m_values.erase(key);  
         }
         m_meta.m_erase_count++;
+        xdbg("xdb_mem_t::erase key=%s", key.c_str());
     }
     return true;
 }

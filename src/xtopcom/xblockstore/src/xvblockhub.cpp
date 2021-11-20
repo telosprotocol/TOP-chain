@@ -1266,13 +1266,12 @@ namespace top
             if(nullptr == block_ptr)
                 return false;
 
-            if(block_ptr->get_height() == 0)
-                return false; //not allow delete genesis block
 #if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_delete, 1);
 #endif
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
 
+            load_index(block_ptr->get_height());
             if(false == m_all_blocks.empty())
             {
                 auto height_it = m_all_blocks.find(block_ptr->get_height());
@@ -1305,11 +1304,10 @@ namespace top
 
         bool    xblockacct_t::delete_block(const uint64_t height)//return error code indicate what is result
         {
-            if(height == 0)
-                return false; //not allow delete genesis block
 
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ") at store(%s)",get_chainid(),get_account().c_str(),height,get_blockstore_path().c_str());
 
+            load_index(height);
             //allow delete outdated blocks
             if(false == m_all_blocks.empty())
             {
@@ -2191,6 +2189,7 @@ namespace top
         }
         bool                xblockacct_t::store_value_by_path(const std::string & full_path_as_key,const std::string & value)
         {
+            xassert(!value.empty());
             if(value.empty())
                 return true;
 
