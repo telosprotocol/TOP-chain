@@ -12,7 +12,7 @@
 namespace top {
     namespace chain_fork {
 
-        xchain_fork_config_t      xtop_chain_fork_config_center::m_fork_config;
+        xchain_fork_config_t xtop_chain_fork_config_center::m_fork_config;
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT)
     #if defined(XBUILD_CI)
@@ -26,6 +26,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable new system contract framework"},
             };
 
             // !!!change!!! fork time for galileo
@@ -34,6 +35,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable new system contract framework"},
            };
 
             xchain_fork_config_t default_chain_config {
@@ -41,6 +43,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable new system contract framework"},
             };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
@@ -48,6 +51,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 15000000, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 16000000, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 17000000, "enable new system contract framework"},
         };
 
         // !!!change!!! fork time for galileo
@@ -56,6 +60,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 15000000, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 16000000, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 17000000, "enable new system contract framework"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -64,6 +69,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 15000000, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 16000000, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 17000000, "enable new system contract framework"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {

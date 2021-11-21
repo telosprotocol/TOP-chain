@@ -5,6 +5,7 @@
 #include "xblockmaker/xunit_builder.h"
 
 #include "xblockmaker/xblockmaker_error.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 #include "xcontract_vm/xaccount_vm.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xblocktool.h"
@@ -70,9 +71,9 @@ xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block,
 }
 
 xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_block,
-                                                    const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
-                                                    const data::xblock_consensus_para_t & cs_para,
-                                                    xblock_builder_para_ptr_t & build_para) {
+                                                      const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                                      const data::xblock_consensus_para_t & cs_para,
+                                                      xblock_builder_para_ptr_t & build_para) {
     XMETRICS_TIMER(metrics::cons_unitbuilder_lightunit_tick);
     const std::string & account = prev_block->get_account();
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
@@ -83,24 +84,27 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     bool has_run_contract_tx{false};
     bool has_other_tx{false};
-    for (auto const & tx : input_txs) {
-        if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
-            has_run_contract_tx = true;
-        } else {
-            has_other_tx = true;
+
+    auto const & chain_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
+    if (chain_upgrade::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_timestamp())) {
+        for (auto const & tx : input_txs) {
+            if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
+                has_run_contract_tx = true;
+            } else {
+                has_other_tx = true;
+            }
         }
     }
+
     if (has_run_contract_tx && has_other_tx) {
         xerror("[xlightunit_builder_t::build_block] has run_contract_tx and other_tx same time!");
         return nullptr;
     }
 
     if (has_run_contract_tx) {
-#if defined(DEBUG)
         for (auto const & tx : input_txs) {
             xdbg("------>new vm, %s, %s, %d", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
-#endif
 
         xassert(!cs_para.get_table_account().empty());
         xassert(!cs_para.get_random_seed().empty());
@@ -134,11 +138,10 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         proposal_unit.attach((data::xblock_t *)_proposal_block);
         return proposal_unit;
     } else {
-#if defined(DEBUG)
         for (auto const & tx : input_txs) {
             xdbg("------>old vm, %s, %s, %d", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
-#endif
+
         txexecutor::xbatch_txs_result_t exec_result;
         auto exec_ret = construct_block_builder_para(prev_block, prev_bstate, cs_para, build_para, exec_result);
         if (exec_ret != xsuccess) {
