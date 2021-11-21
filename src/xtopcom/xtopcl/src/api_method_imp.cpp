@@ -13,10 +13,12 @@
 #include "xdata/xtransaction.h"
 #include "xrpc/xuint_format.h"
 #include "xvm/xvm_define.h"
-
-#include <stdio.h>
+#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xbase/xutl.h"
+#include "xvledger/xvblock.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <memory>
 
 using namespace top::utl;
@@ -706,7 +708,13 @@ bool api_method_imp::registerNode(const user_info & uinfo,
 #else
     std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
 #endif
-    std::string source_action_name = "source_withdraw";
+    std::string source_action_name;
+    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+        source_action_name = "mortgage";
+    }
+
     xaction_asset_param asset_param(this, "", mortgage);
     std::string param = asset_param.create();
     auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
@@ -728,7 +736,13 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
-    std::string source_action_name = "source_withdraw";
+    std::string source_action_name;
+    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+        source_action_name = "mortgage";
+    }
+
     xaction_asset_param asset_param(this, "", 0);
     std::string param_s = asset_param.create();
 
@@ -793,7 +807,14 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     if (type == 2) {
         transfer_amount = 0;
     }
-    std::string source_action_name = "source_withdraw";
+
+    std::string source_action_name;
+    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+        source_action_name = "mortgage";
+    }
+
     xaction_asset_param asset_param(this, "", transfer_amount);
     std::string param = asset_param.create();
 
