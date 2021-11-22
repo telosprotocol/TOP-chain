@@ -408,7 +408,8 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 }
 
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
-    xunit_dbg("xbatch_packer::reset_xip_addr %s node:%s this:%p", xcons_utl::xip_to_hex(new_addr).c_str(), m_para->get_resources()->get_account().c_str(), this);
+    m_last_xip2 = get_xip2_addr();
+    xunit_dbg("xbatch_packer::reset_xip_addr %s,last xip:%s node:%s this:%p", xcons_utl::xip_to_hex(new_addr).c_str(), xcons_utl::xip_to_hex(m_last_xip2).c_str(), m_para->get_resources()->get_account().c_str(), this);
     return xcsaccount_t::reset_xip_addr(new_addr);
 }
 
@@ -429,7 +430,9 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
     xconsensus::xproposal_finish * _evt_obj = (xconsensus::xproposal_finish *)&event;
     auto xip = get_xip2_addr();
     bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_validator())
-                  || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
+                  || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor())
+                  || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_validator())
+                  || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
 
         // accumulated table failed value
