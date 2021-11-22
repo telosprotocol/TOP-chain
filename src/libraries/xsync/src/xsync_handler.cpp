@@ -1020,6 +1020,7 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
         int64_t recv_time) {
 
     XMETRICS_GAUGE(metrics::xsync_recv_query_archive_height, 1);
+    xsync_dbg("recv_query_archive_height.");
 
     auto ptr = make_object_ptr<xsync_query_height_t>();
     ptr->serialize_from(stream);
@@ -1032,8 +1033,8 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
 
         if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
             common::has<common::xnode_type_t::consensus>(node_type)) {
-        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
             continue;
+        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
         } else {
             continue;
         }
@@ -1097,7 +1098,7 @@ void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
         }
 
         uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
-        xsync_dbg("recv_archive_height_list: %s, %llu, %llu", address.c_str(), it.end_height, latest_end_block_height);
+        xsync_dbg("recv_archive_height: %s, %llu, %llu", address.c_str(), it.end_height, latest_end_block_height);
         if (latest_end_block_height < it.end_height + 50)  // not send blocks within 50 blocks
             return;
 
