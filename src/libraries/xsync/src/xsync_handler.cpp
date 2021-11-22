@@ -1098,9 +1098,9 @@ void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
         }
 
         uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
-        xsync_dbg("recv_archive_height: %s, %llu, %llu", address.c_str(), it.end_height, latest_end_block_height);
+        xsync_dbg("recv_archive_height_list: %s, %llu, %llu", address.c_str(), it.end_height, latest_end_block_height);
         if (latest_end_block_height < it.end_height + 50)  // not send blocks within 50 blocks
-            return;
+            continue;
 
         uint32_t count = 3;
         uint32_t start_height = it.end_height + 1;
