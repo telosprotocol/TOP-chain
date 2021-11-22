@@ -190,6 +190,7 @@ void xsync_pusher_t::on_timer() {
         if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
             common::has<common::xnode_type_t::consensus>(node_type)) {
             address = self_addr.to_string();
+            break;
         } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
             continue;
         } else {
