@@ -121,7 +121,6 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     uint32_t random = vrf_value(block->get_block_hash());
-    m_vrf_random = random;
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
     std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
@@ -215,7 +214,6 @@ void xsync_pusher_t::on_timer() {
         }
     }
 
-    //uint32_t random = vrf_value(block->get_block_hash());
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
     std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
@@ -233,7 +231,7 @@ void xsync_pusher_t::on_timer() {
     }
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, m_vrf_random);
+        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, 0);
         xsync_dbg("xsync_pusher_t, send_query_archive_height src=%u dst=%u push_arcs=%u src %s, %s", neighbor_number, archive_list.size(),
             push_arcs.size(), self_addr.to_string().c_str(), address.c_str());
         if (push_arcs.size() == 1 && archive_list.size() > 1)  // mapping to 2 arc

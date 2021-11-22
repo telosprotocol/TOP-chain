@@ -29,7 +29,6 @@ private:
     xsync_time_rejecter_t m_time_rejecter{900};
     int m_counter{0};
     xrole_chains_mgr_t *m_role_chains_mgr;
-    uint32_t m_vrf_random{0};
 };
 
 NS_END2
