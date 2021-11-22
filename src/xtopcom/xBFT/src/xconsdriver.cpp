@@ -451,7 +451,7 @@ namespace top
                 else if(_peer_block->get_height() != (get_lock_block()->get_height() + 2))//if prev_prev NOT point to current locked block
                 {
                     base::xvblock_t * prev_prev_block = find_cert_block(prev_block->get_height() - 1, prev_block->get_last_block_hash());
-                    if(prev_prev_block != NULL)
+                    if(prev_prev_block == NULL)
                     {
                         send_sync_request(get_xip2_addr(),peer_addr, (prev_block->get_height() - 1),prev_block->get_last_block_hash(),new_proposal->get_last_block_cert(),(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
                         //sync missed locked block
