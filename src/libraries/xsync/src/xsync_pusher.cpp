@@ -230,6 +230,8 @@ void xsync_pusher_t::on_timer() {
             validator_auditor_neighbours.insert(neighbor.account_address());
         }
     }
+    for (auto n:validator_auditor_neighbours)
+        xsync_dbg("xsync_pusher_t, neighbours:%s", n.to_string().c_str());
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
         std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, 0);
@@ -242,10 +244,13 @@ void xsync_pusher_t::on_timer() {
             vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
             auto found = validator_auditor_neighbours.find(target_addr.account_address());
             if (found == validator_auditor_neighbours.end()) {
-                xsync_dbg("xsync_pusher_t, send_query_archive_height src=%s dst=%s",
+                xsync_dbg("xsync_pusher_t, send_query_archive_height, send, src=%s dst=%s",
                     self_addr.to_string().c_str(), target_addr.to_string().c_str());
                 xsync_query_height_t info;
                 m_sync_sender->send_query_archive_height(info, self_addr, target_addr);
+            } else {
+                xsync_dbg("xsync_pusher_t, send_query_archive_height, not find, src=%s dst=%s",
+                    self_addr.to_string().c_str(), target_addr.to_string().c_str());
             }
         }
     }
