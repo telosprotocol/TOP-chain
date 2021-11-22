@@ -41,6 +41,7 @@ enum enum_xverifier_error_type: std::int32_t {
     xverifier_error_tx_whitelist_invalid,
     xverifier_error_local_tx_invalid,
     xverifier_error_burn_tx_invalid,
+    xverifier_error_tx_blacklist_invalid,
 
     xverifier_error_max
 };
@@ -79,7 +80,8 @@ inline std::string xverifier_error_to_string(int32_t code) {
         XVERIFIER_ERROR_TO_STR(xverifier_error_tx_basic_validation_invalid),
         XVERIFIER_ERROR_TO_STR(xverifier_error_tx_whitelist_invalid),
         XVERIFIER_ERROR_TO_STR(xverifier_error_local_tx_invalid),
-        XVERIFIER_ERROR_TO_STR(xverifier_error_burn_tx_invalid)
+        XVERIFIER_ERROR_TO_STR(xverifier_error_burn_tx_invalid),
+        XVERIFIER_ERROR_TO_STR(xverifier_error_tx_blacklist_invalid),
     };
     return names[code - xverifier_error_base - 1];
 }
