@@ -188,7 +188,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             unitmakers[unit_account] = unitmaker;
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for fullunit but make fullunit,%s,account=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
-            continue;
+            // continue;
         }
 
         // 3.then check if tx is invalid

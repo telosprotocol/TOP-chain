@@ -206,7 +206,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
         // all_pack_txs.push_back(tx);
     }
 
-    if (all_pack_txs.empty() && unchange_confirm_txs.empty()) {
+    if (!txs.empty() && all_pack_txs.empty() && unchange_confirm_txs.empty()) {
         xassert(error_code != xsuccess);
         return error_code;
     }
@@ -214,7 +214,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
     // update tx related propertys and other default propertys
     std::vector<xcons_transaction_ptr_t> succ_txs{all_pack_txs};
     succ_txs.insert(succ_txs.end(), unchange_confirm_txs.begin(), unchange_confirm_txs.end());
-    if (false == _account_context->finish_exec_all_txs(succ_txs)) {
+    if (!succ_txs.empty() && false == _account_context->finish_exec_all_txs(succ_txs)) {
         xerror("xtransaction_executor::exec_batch_txs fail-update tx info. %s,account=%s,height=%ld,origin_txs=%zu,all_txs=%zu",
             cs_para.dump().c_str(), _temp_header->get_account().c_str(), _temp_header->get_height(), txs.size(), all_pack_txs.size());
         return -1;

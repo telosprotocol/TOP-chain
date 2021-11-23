@@ -49,6 +49,7 @@ class xfullunit_build_t : public base::xvblockmaker_t {
     xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
+    std::string get_header_extra(const xfullunit_block_para_t & bodypara) const ;
 
  private:
     bool build_block_body(const xfullunit_block_para_t & para);

@@ -195,7 +195,6 @@ class xdatamock_table : public base::xvaccount_t {
         if (block->get_block_class() == base::enum_xvblock_class_light) {
             std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
             block->extract_sub_blocks(sub_blocks);
-            xassert(sub_blocks.size() > 0);
             for (auto & unit : sub_blocks) {
                 on_unit_finish(unit);
             }
@@ -288,6 +287,9 @@ class xdatamock_table : public base::xvaccount_t {
                 units.push_back(unit);
             }
             auto txs = mockunit.get_exec_txs();
+            // if (unit != nullptr && unit->get_block_class() == enum_xvblock_class_full) {
+            //     EXPECT_EQ(txs.size(), 1);
+            // }
             for (auto & tx : txs) {
                 base::xvaction_t _action = data::make_action(tx);
                 xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());

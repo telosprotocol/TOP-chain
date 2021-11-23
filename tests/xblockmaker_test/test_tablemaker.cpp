@@ -995,3 +995,28 @@ TEST_F(test_tablemaker, version_2) {
         }
     }
 }
+
+TEST_F(test_tablemaker, fullunit) {
+    uint64_t count = 25;
+    mock::xdatamock_table mocktable;
+    mocktable.genrate_table_chain(count);
+
+    auto & tables = mocktable.get_history_tables();
+    auto & fullunit_table = tables[23];
+    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+    fullunit_table->extract_sub_blocks(sub_blocks);
+    for(auto & unit : sub_blocks) {
+        EXPECT_EQ(unit->get_block_class(), enum_xvblock_class_full);
+        auto fullunit = dynamic_cast<xfullunit_block_t*>(unit.get());
+        if (fullunit != nullptr) {
+            xJson::Value jv;
+            fullunit->parse_to_json(jv, RPC_VERSION_V2);
+            auto txs = jv["fullunit"]["txs"];
+            for (auto tx : txs) {
+                auto tx_hash = tx["tx_hash"].asString();
+                std::cout << tx_hash << std::endl;
+                EXPECT_EQ(tx_hash.empty(), false);
+            }
+        }
+    }
+}

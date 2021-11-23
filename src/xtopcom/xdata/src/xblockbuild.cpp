@@ -214,10 +214,32 @@ base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
 }
 
+std::string xfullunit_build_t::get_header_extra(const xfullunit_block_para_t & bodypara) const {
+    base::xvtxkey_vec_t txs;
+    for (auto & tx : bodypara.get_input_txs()) {
+        base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
+        txs.push_back(tx_key);
+    }
+    std::string str;
+    txs.serialize_to_string(str);
+
+    base::xvheader_extra he;
+    he.insert(base::HEADER_KEY_TXS, str);
+
+    std::string he_str;
+    he.serialize_to_string(he_str);
+    return he_str;
+}
+
 xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
+
+    if (xlightunit_build_t::should_build_no_txaction_unit(build_para.get_clock(), build_para.get_height())) {
+        build_para.set_extra_data(get_header_extra(bodypara));
+    }
+    
     init_header_qcert(build_para);
     build_block_body(bodypara);
 }
@@ -231,8 +253,17 @@ bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
     base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_UNIT);
     set_input_entity(_action);
     // #2 set output entitys and resources
-    std::string full_state_bin = para.m_property_snapshot;
+    std::string full_state_bin = para.get_fullstate_bin();
     set_output_full_state(full_state_bin);
+
+    xdbg("fullunit block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
+    if (!base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+        // set_output_binlog(para.get_property_binlog());
+        // uint32_t unconfirm_tx_num = para.get_account_unconfirm_sendtx_num();
+        // std::string unconfirm_tx_num_str = base::xstring_utl::tostring(unconfirm_tx_num);
+        // set_output_entity(base::xvoutentity_t::key_name_unconfirm_tx_count(), unconfirm_tx_num_str);
+    }
+
     return true;
 }
 

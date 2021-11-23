@@ -192,7 +192,10 @@ class xdatamock_unit {
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         if (prev_block->is_lightunit() && prev_block->get_height() > (prev_block->get_last_full_block_height() + enum_default_fullunit_interval_unit_count)) {
-            proposal_block = m_fullunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, m_default_builder_para); // no need xblock_builder_para_ptr_t
+            xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
+            proposal_block = m_fullunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para); // no need xblock_builder_para_ptr_t
+            std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+            m_exec_txs = lightunit_build_para->get_pack_txs();
         } else if (!m_current_txs.empty()) {
             xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
             proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);

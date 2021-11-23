@@ -14,9 +14,31 @@
 NS_BEG2(top, data)
 
 struct xfullunit_block_para_t {
+    void    set_account_unconfirm_sendtx_num(uint32_t num) {m_account_unconfirm_sendtx_num = num;}
+    void    set_input_txs(const std::vector<xcons_transaction_ptr_t> & input_txs);
+    void    set_unchange_txs(const std::vector<xcons_transaction_ptr_t> & unchange_txs);
+
+    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
+    void    set_binlog(const std::string & binlog) {m_property_binlog = binlog;}
+
+    const   std::vector<xcons_transaction_ptr_t> & get_input_txs() const {return m_raw_txs;}
+    const   std::vector<xcons_transaction_ptr_t> & get_unchange_txs() const {return m_unchange_txs;}
+    std::vector<xcons_transaction_ptr_t> const & get_succ_txs() const;
+    uint32_t get_account_unconfirm_sendtx_num() const {return m_account_unconfirm_sendtx_num;}
+    const std::string &     get_property_binlog() const {return m_property_binlog;}
+    const std::string &     get_fullstate_bin() const {return m_fullstate_bin;}
+    
     std::string                         m_property_snapshot;
     uint64_t                            m_first_unit_height{0};
     std::string                         m_first_unit_hash;
+
+    uint32_t                                m_account_unconfirm_sendtx_num{0};
+    // input
+    std::vector<xcons_transaction_ptr_t>    m_raw_txs;
+    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
+    std::vector<xcons_transaction_ptr_t>    m_succ_txs;
+    std::string                             m_fullstate_bin;
+    std::string                             m_property_binlog;
 };
 class xfullunit_block_t : public xblock_t {
  protected:
