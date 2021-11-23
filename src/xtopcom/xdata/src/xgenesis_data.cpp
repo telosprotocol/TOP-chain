@@ -49,6 +49,10 @@ bool is_black_hole_address(common::xaccount_address_t const & addr)  {
     return check_address_type(addr, base::enum_vaccount_addr_type_black_hole);
 }
 
+bool is_drand_address(common::xaccount_address_t const & addr)  {
+    return check_address_type(addr, base::enum_vaccount_addr_type_drand);
+}
+
 bool is_user_contract_address(common::xaccount_address_t const & addr) {
     return check_address_type(addr, base::enum_vaccount_addr_type_custom_contract);
 }

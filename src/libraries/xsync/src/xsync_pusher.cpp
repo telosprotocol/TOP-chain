@@ -74,34 +74,42 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         return;
 
     const std::string address = block->get_block_owner();
-    bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
-    if (!is_table_address) {
-        xsync_warn("xsync_pusher_t push_newblock_to_archive is not table %s", block->dump().c_str());
-        return;
-    }
-
-    common::xnode_type_t node_type = common::xnode_type_t::invalid;
-    std::string address_prefix;
-    uint32_t table_id = 0;
-
-    if (!data::xdatautil::extract_parts(address, address_prefix, table_id))
-        return;
-
-    if (address_prefix == sys_contract_beacon_table_block_addr) {
-        node_type = common::xnode_type_t::rec;
-    } else if (address_prefix == sys_contract_zec_table_block_addr) {
-        node_type = common::xnode_type_t::zec;
-    } else if (address_prefix == sys_contract_sharding_table_block_addr) {
-        node_type = common::xnode_type_t::consensus;
-    } else {
-        assert(0);
-    }
-
-    // check table id
     vnetwork::xvnode_address_t self_addr;
-    if (!m_role_xips_mgr->get_self_addr(node_type, table_id, self_addr)) {
-        xsync_warn("xsync_pusher_t push_newblock_to_archive get self addr failed %s", block->dump().c_str());
-        return;
+
+    if (data::is_drand_address(common::xaccount_address_t{address})) {
+        if (!m_role_xips_mgr->get_self_addr(self_addr)) {
+            xsync_warn("xsync_pusher_t push_newblock_to_archive, drand, get self addr failed %s", block->dump().c_str());
+            return;
+        }
+    } else {
+        bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
+        if (!is_table_address) {
+            xsync_warn("xsync_pusher_t push_newblock_to_archive is not table %s", block->dump().c_str());
+            return;
+        }
+
+        common::xnode_type_t node_type = common::xnode_type_t::invalid;
+        std::string address_prefix;
+        uint32_t table_id = 0;
+
+        if (!data::xdatautil::extract_parts(address, address_prefix, table_id))
+            return;
+
+        if (address_prefix == sys_contract_beacon_table_block_addr) {
+            node_type = common::xnode_type_t::rec;
+        } else if (address_prefix == sys_contract_zec_table_block_addr) {
+            node_type = common::xnode_type_t::zec;
+        } else if (address_prefix == sys_contract_sharding_table_block_addr) {
+            node_type = common::xnode_type_t::consensus;
+        } else {
+            assert(0);
+        }
+
+        // check table id
+        if (!m_role_xips_mgr->get_self_addr(node_type, table_id, self_addr)) {
+            xsync_warn("xsync_pusher_t push_newblock_to_archive get self addr failed %s", block->dump().c_str());
+            return;
+        }
     }
 
     std::vector<vnetwork::xvnode_address_t> all_neighbors = m_role_xips_mgr->get_all_neighbors(self_addr);
@@ -206,6 +214,10 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
     #endif
+
+    if (data::is_drand_address(common::xaccount_address_t{address}))
+        return;
+
     // push edge archive
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {
