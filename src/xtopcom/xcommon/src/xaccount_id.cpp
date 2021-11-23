@@ -47,7 +47,9 @@ xvid_t xtop_account_id::value(std::error_code & ec) const noexcept {
 xvid_t xtop_account_id::value() const {
     std::error_code ec;
     auto r = value(ec);
+#if !defined(XENABLE_TESTS)
     assert(!ec);
+#endif
     top::error::throw_error(ec);
     return r;
 }

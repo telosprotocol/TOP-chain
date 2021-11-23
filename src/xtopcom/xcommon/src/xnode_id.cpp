@@ -19,20 +19,17 @@ xtop_node_id::xtop_node_id(std::string const & v) : m_account_string{v} {
     parse();
 }
 
-xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)}, m_account_string{m_account_base_address.to_string()} {
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_string {base_address.to_string()}, m_account_base_address{std::move(base_address)} {
     parse();
 }
 
-xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value)
-  : m_account_base_address{std::move(base_address)}
-  , m_assigned_table_id{table_id_value}
-  , m_account_string{m_account_base_address.to_string() + "@" + std::to_string(table_id_value)} {
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value) : xtop_node_id{std::move(base_address), xtable_id_t{table_id_value}} {
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id)
-  : m_account_base_address{std::move(base_address)}
-  , m_assigned_table_id{table_id}
-  , m_account_string{m_account_base_address.to_string() + "@" + std::to_string(table_id.value())} {
+  : m_account_string{base_address.to_string() + "@" + top::to_string(table_id)}
+  , m_account_base_address{std::move(base_address)}
+  , m_assigned_table_id{table_id} {
 }
 
 bool xtop_node_id::empty() const noexcept {
@@ -167,13 +164,17 @@ int32_t xtop_node_id::serialize_from(base::xbuffer_t & buffer) {
 void xtop_node_id::parse() {
     if (m_account_string.length() < static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
         m_account_string.length() >= static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_address);
     }
 
     std::vector<std::string> parts;
     if (base::xstring_utl::split_string(m_account_string, '@', parts) > 2) {
+#if !defined(XENABLE_TESTS)
         assert(false);
+#endif
         top::error::throw_error(error::xerrc_t::invalid_account_address);
     }
 
@@ -182,8 +183,19 @@ void xtop_node_id::parse() {
     }
     assert(m_account_base_address == xaccount_base_address_t::build_from(parts[0]));
 
+    assert(parts.size() == 1 || parts.size() == 2);
     if (parts.size() > 1) {
+        if (parts[1].length() > 2) {
+#if !defined(XENABLE_TESTS)
+            assert(false);
+#endif
+            top::error::throw_error(error::xerrc_t::invalid_table_id);
+        }
+
         if (!std::all_of(std::begin(parts[1]), std::end(parts[1]), [](char const ch) { return '0' <= ch && ch <= '9'; })) {
+#if !defined(XENABLE_TESTS)
+            assert(false);
+#endif
             top::error::throw_error(error::xerrc_t::invalid_table_id);
         }
 
@@ -192,6 +204,13 @@ void xtop_node_id::parse() {
             m_assigned_table_id = xtable_id_t{assigned_table_id};
         }
         assert(m_assigned_table_id == xtable_id_t{assigned_table_id});
+    } else {
+        if (m_account_string.find('@') != std::string::npos) {
+#if !defined(XENABLE_TESTS)
+            assert(false);
+#endif
+            top::error::throw_error(error::xerrc_t::invalid_account_address);
+        }
     }
 
     m_account_id = xaccount_id_t{m_account_string};

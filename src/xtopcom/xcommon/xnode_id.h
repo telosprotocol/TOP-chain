@@ -43,9 +43,9 @@ std::int32_t operator>>(top::base::xbuffer_t & stream, xtop_node_id & node_id);
 
 class xtop_node_id final {
 private:
+    std::string m_account_string;
     xaccount_base_address_t m_account_base_address;
     xtable_id_t m_assigned_table_id;
-    std::string m_account_string;
 
     xaccount_id_t m_account_id{};
 
