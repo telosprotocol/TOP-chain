@@ -85,6 +85,8 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_parents(c
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_archives(uint32_t max_peers) {
+    if (m_vnetwork_driver == nullptr)
+        return {};
     xip_vector_ptr archive_xips{};
     archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), m_self_xip);
 
@@ -93,6 +95,8 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_archives(
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_archive_list() {
+    if (m_vnetwork_driver == nullptr)
+        return {};
     xip_vector_ptr archive_xips{};
     archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), m_self_xip);
 
@@ -108,6 +112,8 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_archive_list()
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_edge_archive_list() {
+    if (m_vnetwork_driver == nullptr)
+        return {};
     xip_vector_ptr edge_archive_xips{};
     edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), m_self_xip);
 

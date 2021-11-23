@@ -49,18 +49,7 @@ public:
         m_unicast_cb(src, dst, message);
     }
 
-    void
-    broadcast(vnetwork::xmessage_t const & message,
-              xvnode_address_t const & src) override {
-        // ???
-        //m_unicast_cb(m_address, dst, message);
-    }
-
-    void
-    forward_broadcast_message(vnetwork::xmessage_t const & message,
-                              xvnode_address_t const & src,
-                              xvnode_address_t const & dst) override {
-        m_unicast_cb(src, dst, message);                        
+    void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override {
     }
 
 public:
