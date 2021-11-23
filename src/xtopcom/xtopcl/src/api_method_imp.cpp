@@ -1131,10 +1131,17 @@ bool api_method_imp::submitProposal(const user_info & uinfo,
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, target, value, type, effective_timer_height);
 
+    std::string source_action_name;
+    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+        source_action_name = "charge";
+    }
+
     xaction_asset_param asset_param(this, "", deposit);
     std::string param_s = asset_param.create();
 
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_tcc_addr, "submitProposal", param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param_s, top::sys_contract_rec_tcc_addr, "submitProposal", param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
