@@ -16,6 +16,9 @@ std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate
     common::xaccount_address_t const target_address{ tx->get_transaction()->get_target_addr() };
     switch (target_address.type()) {
     case base::enum_vaccount_addr_type_native_contract:
+    // just for followup transfer tx
+    case base::enum_vaccount_addr_type_secp256k1_user_account:
+    case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
         return top::make_unique<data::xsystem_consensus_action_t>(tx);
 
     case base::enum_vaccount_addr_type_custom_contract:

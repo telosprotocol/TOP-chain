@@ -696,8 +696,6 @@ TEST_F(test_contract_vm, test_async_call) {
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
     cons_tx->set_tx_subtype(enum_transaction_subtype_recv);
 
-    const uint256_t tx_hash = cons_tx->get_tx_hash_256();
-
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
@@ -837,6 +835,81 @@ TEST_F(test_contract_vm, test_async_call) {
         EXPECT_EQ(result.bincode, bincode);
         EXPECT_EQ(result.binlog, binlog);
     }
+}
+
+TEST_F(test_contract_vm, test_followup_transfer) {
+    const uint64_t last_nonce{10};
+    const uint256_t last_hash{12345678};
+    const uint64_t recv_num{1};
+    const uint64_t unconfirm_num{1};
+
+    m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
+        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
+
+    // tx
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+    xstream_t param_stream(xcontext_t::instance());
+    param_stream << uint64_t(100000000);
+    param_stream << contract_common::xfollowup_transaction_schedule_type_t::immediately;
+    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+    tx->make_tx_run_contract("test_followup_transfer_to_user", param);
+    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_fire_and_expire_time(600);
+    tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+    tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+    tx->set_digest();
+    utl::xecprikey_t pri_key_obj((uint8_t *)(DecodePrivateString(sign_key).data()));
+    utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
+    auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+    tx->set_authorization(signature);
+    tx->set_len();
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    cons_tx->set_tx_subtype(enum_transaction_subtype_recv);
+
+    std::vector<xcons_transaction_ptr_t> input_txs;
+    input_txs.emplace_back(cons_tx);
+
+    auto vblock = xblocktool_t::get_latest_connectted_light_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
+    auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    {
+        xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
+        if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
+            bstate->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
+        }
+        auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
+        {
+            auto value = top::to_bytes<std::string>(top::to_string(last_nonce));
+            map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+        }
+        {
+            auto value = top::to_bytes<uint256_t>(last_hash);
+            map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
+        }
+        {
+            auto value = top::to_bytes<std::string>(top::to_string(recv_num));
+            map_property->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+        }
+        {
+            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num));
+            map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+        }
+    }
+    xaccount_vm_t vm(make_observer(m_manager));
+    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
+    EXPECT_EQ(result.status.ec.value(), 0);
+    EXPECT_EQ(result.success_tx_assemble.size(), 2);
+    EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
+    EXPECT_EQ(result.success_tx_assemble[0]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_source_addr(), std::string{sys_contract_rec_standby_pool_addr});
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_addr(), user_address);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_tx_type(), enum_xtransaction_type::xtransaction_type_transfer);
+    auto action_param = result.success_tx_assemble[1]->get_transaction()->get_target_action().get_action_param();
+    base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t*)action_param.data(), (uint32_t)action_param.size());
+    data::xproperty_asset asset{0};
+    stream >> asset.m_token_name;
+    stream >> asset.m_amount;
+    EXPECT_EQ(asset.m_amount, 100000000);
 }
 
 #if defined(XENABLE_MOCK_ZEC_STAKE)

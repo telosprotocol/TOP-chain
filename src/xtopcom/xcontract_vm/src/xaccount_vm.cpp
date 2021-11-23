@@ -45,7 +45,7 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     state_accessor::xstate_access_control_data_t ac_data;  // final get from config or program initialization start
     state_accessor::xstate_accessor_t sa{state, ac_data};
 
-    preprocess(txs, sa);
+    preprocess(txs, sa, result);
 
     auto actions = contract_runtime::xaction_generator_t::generate(txs_for_actions);
 
@@ -143,10 +143,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     xdbg("[xtop_account_vm::execute] followup_tx size: %" PRIu64, result.output.followup_transaction_data.size());
     for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
         auto & followup_tx = result.output.followup_transaction_data[i];
-        xdbg("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, schedule_type: %" PRIu64 ", execute_type: %" PRIu64,
-             i,
-             followup_tx.schedule_type,
-             followup_tx.execute_type);
+        xdbg("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] schedule_type: %" PRIu64 ", execute_type: %" PRIu64 "", i, followup_tx.schedule_type, followup_tx.execute_type);
         if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (followup_tx.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);
@@ -181,8 +178,9 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     return result;
 }
 
-void xtop_account_vm::preprocess(std::vector<data::xcons_transaction_ptr_t> const & txs, state_accessor::xstate_accessor_t & sa) {
+void xtop_account_vm::preprocess(std::vector<data::xcons_transaction_ptr_t> const & txs, state_accessor::xstate_accessor_t & sa, xaccount_vm_execution_result_t & r) {
     uint64_t recv_tx_num_new{0};
+    std::error_code ec;
 
     for (size_t i = 0; i < txs.size(); i++) {
         auto const & tx = txs[i];
@@ -192,7 +190,6 @@ void xtop_account_vm::preprocess(std::vector<data::xcons_transaction_ptr_t> cons
     }
     // set recv num
     if (recv_tx_num_new != 0) {
-        std::error_code ec;
         auto recv_tx_num_bytes = sa.get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
             state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
             data::XPROPERTY_TX_INFO_RECVTX_NUM,
@@ -207,6 +204,11 @@ void xtop_account_vm::preprocess(std::vector<data::xcons_transaction_ptr_t> cons
         top::error::throw_error(ec);
         xinfo("[xtop_account_vm::preprocess] recv_tx_num add: %" PRIu64 " + %" PRIu64 " = %" PRIu64, recv_tx_num, recv_tx_num_new, recv_tx_num_new + recv_tx_num);
     }
+
+    r.binlog = sa.binlog(ec);
+    top::error::throw_error(ec);
+    r.bincode = sa.fullstate_bin(ec);
+    top::error::throw_error(ec);
 }
 
 void xtop_account_vm::abort(const size_t start_index, const size_t size, xaccount_vm_execution_result_t & result) {

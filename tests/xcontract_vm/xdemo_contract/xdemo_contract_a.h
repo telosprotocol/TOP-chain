@@ -28,6 +28,7 @@ public:
         DECLARE_API(xdemo_contract_a::test_set_map_property);
         DECLARE_API(xdemo_contract_a::test_sync_call);
         DECLARE_API(xdemo_contract_a::test_async_call);
+        DECLARE_API(xdemo_contract_a::test_followup_transfer_to_user);
     END_CONTRACT_API
 
     void setup() {
@@ -58,6 +59,11 @@ public:
         param_stream << method_params;
         call(target_addr, method_name, std::string{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())}, type);
         m_string_prop.set("call_a_to_b");
+    }
+
+    void test_followup_transfer_to_user(uint64_t amount, contract_common::xfollowup_transaction_schedule_type_t type) {
+        auto user = sender();
+        transfer(user, amount, type);
     }
 
 private:

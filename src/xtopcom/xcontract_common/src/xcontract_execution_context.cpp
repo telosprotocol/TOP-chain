@@ -581,6 +581,11 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().value().c_str(), recver().value().c_str());
 
     xcontract_execution_fee_t fee_change;
+    if (data::is_sys_contract_address(sender()) && data::is_account_address(recver())) {
+        xdbg("[xtop_contract_execution_context::execute_default_source_action] contract to user, ignore");
+        return fee_change;
+    }
+
     state_accessor::properties::xproperty_identifier_t balance_prop{
         data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
     state_accessor::properties::xproperty_identifier_t burn_balance_prop{
