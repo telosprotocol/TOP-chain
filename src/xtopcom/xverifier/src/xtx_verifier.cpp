@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xverifier/xtx_verifier.h"
 
+#include "xbase/xutl.h"
 #include "xbasic/xmodule_type.h"
 #include "xchain_upgrade/xchain_upgrade_center.h"
 #include "xdata/xgenesis_data.h"
@@ -11,6 +12,7 @@
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
+#include "xvledger/xvblock.h"
 
 #include <cinttypes>
 
@@ -309,25 +311,22 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
 }
 
 int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr, observer_ptr<store::xstore_face_t> const & store) {
-    static bool is_forked = false;
     int32_t ret = verify_tx_signature(trx_ptr, store);
     if (ret) {
         return ret;
     }
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    if (!is_forked) {
-        auto clock_height = store->get_blockchain_height(top::sys_contract_beacon_timer_addr);
-        xdbg("[xtx_verifier::verify_send_tx_legitimacy] check blacklist fork point time, clock height: %" PRIu64, clock_height);
-        if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, clock_height)) is_forked = true;
-    }
-
-    if (is_forked) {
+    auto const& fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
+        xdbg("[xtx_verifier::verify_send_tx_legitimacy] in blacklist fork point time, clock height: %" PRIu64, logic_clock);
         if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_target_addr())
             || xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
             xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
             return xverifier_error::xverifier_error_tx_blacklist_invalid;
         }
+    } else {
+        xdbg("[xtx_verifier::verify_send_tx_legitimacy] not up to blacklist fork point time, clock height: %" PRIu64, logic_clock);
     }
 
     if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
