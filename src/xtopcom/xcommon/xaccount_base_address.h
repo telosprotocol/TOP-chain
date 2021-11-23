@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbase/xmem.h"
 #include "xcommon/xaccount_base_address_fwd.h"
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
@@ -15,14 +14,6 @@
 #include <system_error>
 
 NS_BEG2(top, common)
-
-class xtop_account_base_address;
-using xaccount_base_address_t = xtop_account_base_address;
-
-int32_t operator>>(base::xstream_t & stream, xaccount_base_address_t & account_base_address);
-int32_t operator>>(base::xbuffer_t & buffer, xaccount_base_address_t & account_base_address);
-int32_t operator<<(base::xstream_t & stream, xaccount_base_address_t const & account_base_address);
-int32_t operator<<(base::xbuffer_t & buffer, xaccount_base_address_t const & account_base_address);
 
 class xtop_account_base_address {
     std::string m_base_address_str;
@@ -42,8 +33,10 @@ private:
     explicit xtop_account_base_address(std::string const & base_address);
 
 public:
-    static constexpr size_t LENGTH{46};
-    static constexpr size_t LAGACY_LENGTH{40};
+    static constexpr size_t LENGTH{46};                 // ETH-style account
+    static constexpr size_t LAGACY_LENGTH{40};          // lagacy TOP account
+    static constexpr size_t SPECIAL_ACCOUNT_LENGTH{41}; // special account in lagacy form
+    static constexpr size_t TABLE_ACCOUNT_LENGTH{6};    // table account length
 
     static xtop_account_base_address build_from(std::string const & input, std::error_code & ec);
     static xtop_account_base_address build_from(std::string const & input);
@@ -68,18 +61,6 @@ public:
     bool operator<=(xtop_account_base_address const & other) const noexcept;
     bool operator>=(xtop_account_base_address const & other) const noexcept;
     bool operator!=(xtop_account_base_address const & other) const noexcept;
-
-    int32_t serialize_to(base::xstream_t & stream) const;
-    int32_t serialize_from(base::xstream_t & stream);
-
-    friend int32_t operator>>(base::xstream_t & stream, xaccount_base_address_t & account_base_address);
-    friend int32_t operator>>(base::xbuffer_t & buffer, xaccount_base_address_t & account_base_address);
-    friend int32_t operator<<(base::xstream_t & stream, xaccount_base_address_t const & account_base_address);
-    friend int32_t operator<<(base::xbuffer_t & buffer, xaccount_base_address_t const & account_base_address);
-
-private:
-    int32_t do_write(base::xstream_t & stream) const;
-    int32_t do_read(base::xstream_t & stream);
 };
 using xaccount_base_address_t = xtop_account_base_address;
 
