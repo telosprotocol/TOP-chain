@@ -8,12 +8,13 @@
 #include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state_fwd.h"
-#include "xdata/xreceipt_data_store.h"
 #include "xcontract_runtime/xaction_runtime_fwd.h"
 #include "xcontract_runtime/xaction_session_fwd.h"
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
+#include "xdata/xgenesis_data.h"
+#include "xdata/xreceipt_data_store.h"
 
 #include <cinttypes>
 
@@ -81,6 +82,13 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
         xwarn("[xtop_action_session::xtop_action_session] action_preprocess failed, category: %s, msg: %s", ec.category().name(), ec.message().c_str());
         result.status.ec = ec;
         return result;
+    }
+
+    // temporary for contract transfer to user in followup
+    if (observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::send) {
+        if (data::is_sys_contract_address(observed_exectx->sender()) && data::is_account_address(observed_exectx->recver())) {
+            return result;
+        }
     }
 
     if (observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::recv) {
