@@ -9,7 +9,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xtable_bstate.h"
-#include "xdata/xtransaction_v1.h"
+#include "xdata/xtx_factory.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstate.h"
 
@@ -30,16 +30,7 @@ base::xvblock_t*  xblocktool_t::create_genesis_empty_table(const std::string & a
 }
 
 base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & account, int64_t top_balance) {
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
-    data::xproperty_asset asset(top_balance);
-    tx->make_tx_transfer(asset);
-    // genesis transfer tx is a special transaction
-    tx->set_same_source_target_address(account);
-    tx->set_fire_timestamp(0);
-    tx->set_expire_duration(0);
-    tx->set_deposit(0);
-    tx->set_digest();
-    tx->set_len();
+    xtransaction_ptr_t tx = xtx_factory::create_genesis_tx_with_balance(account, top_balance);
 
     xtransaction_result_t result;
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
@@ -74,16 +65,7 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
 }
 
 base::xvblock_t * xblocktool_t::create_genesis_lightunit(std::string const & account, chain_data::data_processor_t const & data) {
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
-    data::xproperty_asset asset(data.top_balance);
-    tx->make_tx_transfer(asset);
-    // genesis transfer tx is a special transaction
-    tx->set_same_source_target_address(account);
-    tx->set_fire_timestamp(0);
-    tx->set_expire_duration(0);
-    tx->set_deposit(0);
-    tx->set_digest();
-    tx->set_len();
+    xtransaction_ptr_t tx = xtx_factory::create_genesis_tx_with_balance(account, data.top_balance);
 
     xtransaction_result_t result;
     xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);

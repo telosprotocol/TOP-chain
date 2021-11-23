@@ -1276,21 +1276,7 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
     uint256_t latest_sendtx_hash;
     get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
 
-#ifdef RPC_V2
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-#else
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-#endif
-    data::xproperty_asset asset(amount);
-    tx->make_tx_transfer(asset);
-    tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
-    tx->set_different_source_target_address(get_address(), receiver);
-    tx->set_fire_timestamp(m_timestamp);
-    tx->set_expire_duration(0);
-    uint32_t deposit = 0;
-    tx->set_deposit(deposit);
-    tx->set_digest();
-    tx->set_len();
+    xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_transfer(get_address(), receiver, latest_sendtx_nonce, latest_sendtx_hash, amount, m_timestamp);
     xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());
 
     uint32_t contract_call_contracts_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
@@ -1301,8 +1287,8 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
     }
     m_contract_txs.push_back(constx);
     update_latest_create_nonce_hash(constx);
-    xdbg_info("xaccount_context_t::create_transfer_tx tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld,deposit:%d",
-        tx->get_digest_hex_str().c_str(), get_address().c_str(), receiver.c_str(), amount, tx->get_tx_nonce(), deposit);
+    xdbg_info("xaccount_context_t::create_transfer_tx tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld",
+        tx->get_digest_hex_str().c_str(), get_address().c_str(), receiver.c_str(), amount, tx->get_tx_nonce());
     return xstore_success;
 }
 
@@ -1317,20 +1303,7 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
     uint256_t latest_sendtx_hash;
     get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
 
-#ifdef RPC_V2
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-#else
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-#endif
-    data::xproperty_asset asset(0);
-    tx->make_tx_run_contract(asset, func_name, func_param);
-    tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
-    tx->set_different_source_target_address(get_address(), target_addr);
-    tx->set_fire_timestamp(m_timestamp);
-    tx->set_expire_duration(0);
-    tx->set_deposit(0);
-    tx->set_digest();
-    tx->set_len();
+    xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_call_contract(get_address(), target_addr, latest_sendtx_nonce, latest_sendtx_hash, func_name, func_param, m_timestamp);
     xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());
     uint32_t contract_call_contracts_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
     if (m_contract_txs.size() >= contract_call_contracts_num) {
