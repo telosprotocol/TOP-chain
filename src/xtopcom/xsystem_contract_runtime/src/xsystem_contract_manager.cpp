@@ -22,6 +22,7 @@
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract_new.h"
+#include "xvm/xsystem_contracts/tcc/xrec_proposal_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
@@ -91,6 +92,15 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         xsniff_type_t::broadcast | xsniff_type_t::timer,
         xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_block_type_t::all_block},
         xsniff_timer_config_t{config::xedge_election_interval_onchain_goverance_parameter_t::name, "on_timer", xtimer_strategy_type_t::normal},
+        {},
+        blockstore);
+    // rec proposal
+    deploy_system_contract<system_contracts::xrec_tcc_contract_new_t>(
+        common::xaccount_address_t{sys_contract_rec_tcc_addr},
+        common::xnode_type_t::rec,
+        xsniff_type_t::broadcast,
+        xsniff_broadcast_config_t{xsniff_broadcast_type_t::all, xsniff_block_type_t::all_block},
+        {},
         {},
         blockstore);
     // zec elect consensus

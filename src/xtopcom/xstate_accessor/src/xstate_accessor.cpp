@@ -126,7 +126,7 @@ xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const 
         return xtoken_t{};
     }
 
-    if (static_cast<base::vtoken_t>(amount) <= 0) {
+    if (static_cast<base::vtoken_t>(amount) < 0) { // allow with zero
         ec = error::xerrc_t::property_value_out_of_range;
         return xtoken_t{};
     }
@@ -156,7 +156,7 @@ xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const 
     }
 
     auto const new_balance = token_property->withdraw(static_cast<base::vtoken_t>(amount), canvas_.get());
-    assert(new_balance < balance);
+    assert(new_balance <= balance); // allow with zero
     return xtoken_t{ amount, symbol };
 }
 
