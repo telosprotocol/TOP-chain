@@ -20,9 +20,9 @@ enum class xenum_errc {
     load_election_data_missing_property,
     load_election_data_missing_state,
 
+    genesis_root_has_not_ready,
     genesis_block_store_failed,
     genesis_set_data_state_failed,
-    genesis_root_has_not_created,
 };
 using xerrc_t = xenum_errc;
 
