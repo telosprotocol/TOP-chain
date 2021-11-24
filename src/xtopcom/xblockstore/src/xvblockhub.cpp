@@ -870,9 +870,13 @@ namespace top
                 //genesis block but dont have data at DB, create it ondemand
                 if(0 == target_height)
                 {
-                    base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
-                    store_block(generis_block.get());
-                    return 1; //genesis always be 1 block at height(0)
+                    std::error_code ec;
+                    store::get_vblockstore()->create_genesis_block(base::xvaccount_t{get_account()}, ec);
+                    if (ec) {
+                        xwarn("xblockacct_t::store_block, create_genesis_block error, category: %s, msg: %s!", ec.category().name(), ec.message().c_str());
+                    } else {
+                        return 1; //genesis always be 1 block at height(0)
+                    }
                 }
                 xdbg("xblockacct_t::load_index(),fail found index for addr=%s at height=%" PRIu64 "", get_account().c_str(), target_height);
                 return 0;
@@ -1165,8 +1169,12 @@ namespace top
                 base::xauto_ptr<base::xvbindex_t> genesis_index(query_index(0, 0));
                 if(!genesis_index)//if not existing at cache
                 {
-                    base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
-                    store_block(generis_block.get());
+                    std::error_code ec;
+                    store::get_vblockstore()->create_genesis_block(base::xvaccount_t{get_account()}, ec);
+                    if (ec) {
+                        xwarn("xblockacct_t::store_block, create_genesis_block error, category: %s, msg: %s!", ec.category().name(), ec.message().c_str());
+                        return false;
+                    }
                 }
             }
 

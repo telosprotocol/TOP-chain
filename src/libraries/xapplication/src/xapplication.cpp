@@ -76,21 +76,20 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
         exit(0);
     }
 
-    if (!check_rootblock()) {
-        throw std::logic_error{"creating rootblock failed"};
-    }
-
-    if (!create_genesis_accounts()) {
-        throw std::logic_error{"creating genesis accounts failed"};
-    }
-
+    // prepare system contract data only
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
-    contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
+    contract::xcontract_manager_t::instance().register_address();
+
+    // create all genesis block in one interface
+    std::error_code ec;
+    m_genesis_manager->init_genesis_block(ec);
+    top::error::throw_error(ec);
 }
 
 void xtop_application::start() {
-    chain_data::xchain_data_processor_t::release();
+
+
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);

@@ -1179,6 +1179,16 @@ namespace top
             return (nullptr != target_block);
         }
 
+        void xvblockstore_impl::create_genesis_block(const base::xvaccount_t & account, std::error_code & ec)
+        {
+            m_create_genesis_block_cb(account, ec);
+        }
+
+        void xvblockstore_impl::register_create_genesis_callback(std::function<void(base::xvaccount_t const &, std::error_code &)> cb)
+        {
+            m_create_genesis_block_cb = cb;
+        }
+
         bool xvblockstore_impl::set_genesis_height(const base::xvaccount_t & account, const std::string &height)
         {
             const std::string key_path = base::xvdbkey_t::create_account_span_genesis_height_key(account);
