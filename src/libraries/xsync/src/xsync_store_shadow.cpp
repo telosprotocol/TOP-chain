@@ -439,12 +439,13 @@ xsync_store_shadow_t::~xsync_store_shadow_t() {
 
 void xsync_store_shadow_t::xsync_event_cb(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
+        xdbg("xsync_event_cb type error: %s", e->minor_type);
         return;
     }
 
     mbus::xevent_store_block_committed_ptr_t block_event = 
         dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
-    if (block_event->blk_level != base::enum_xvblock_level_table && block_event->owner != sys_drand_addr) {
+    if (block_event->blk_level != base::enum_xvblock_level_table && block_event->blk_level != base::enum_xvblock_level_root) {
         xdbg("xsync_event_cb check fail: %s", block_event->owner.c_str());
         return;
     }
