@@ -444,7 +444,8 @@ void xsync_store_shadow_t::xsync_event_cb(mbus::xevent_ptr_t e) {
 
     mbus::xevent_store_block_committed_ptr_t block_event = 
         dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
-    if (block_event->blk_level != base::enum_xvblock_level_table) {
+    if (block_event->blk_level != base::enum_xvblock_level_table && block_event->owner != sys_drand_addr) {
+        xdbg("xsync_event_cb check fail: %s", block_event->owner.c_str());
         return;
     }
 
