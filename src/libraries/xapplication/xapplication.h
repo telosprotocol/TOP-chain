@@ -152,15 +152,6 @@ public:
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;
 
-    bool check_rootblock();
-    bool create_genesis_accounts();
-
-    bool create_genesis_account(std::string const & address, uint64_t const init_balance);
-
-    bool create_genesis_account(std::string const & address, chain_data::data_processor_t const & data);
-
-    bool preprocess_accounts_data();
-
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 
     void create_thread_pools();
