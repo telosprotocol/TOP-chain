@@ -68,6 +68,8 @@ public:
     }
     std::map<std::string, uint64_t> get_min_keep_heights() const override {
         return {};
+    xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const override {
+        return nullptr;
     }
 };
 
