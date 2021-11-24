@@ -6,6 +6,7 @@
 
 #include "xbase/xbase.h"
 #include "xcommon/xaccount_address_fwd.h"
+#include "xcommon/xaccount_base_address_fwd.h"
 #include "xcommon/xip.h"
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
@@ -37,7 +38,7 @@ public:
     bool empty() const noexcept;
 
     xledger_id_t ledger_id() const;
-    xzone_id_t zone_id() const;
+    // xzone_id_t zone_id() const;
     xtable_id_t table_id() const;
 
     xvid_t value(std::error_code & ec) const noexcept;
