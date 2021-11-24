@@ -54,6 +54,23 @@ base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string
     }
 }
 
+std::string get_header_extra(const xlightunit_block_para_t & bodypara) {
+    base::xvtxkey_vec_t txs;
+    for (auto & tx : bodypara.get_input_txs()) {
+        base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
+        txs.push_back(tx_key);
+        xdbg("xlightunit_build_t::get_header_extra tx hash:%s, type:%s", tx->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
+    }
+    std::string str;
+    txs.serialize_to_string(str);
+
+    base::xvheader_extra he;
+    he.insert(base::HEADER_KEY_TXS, str);
+    std::string he_str;
+    he.serialize_to_string(he_str);
+    return he_str;
+}
+
 base::xvaction_t make_action(const xcons_transaction_ptr_t & tx) {
     std::string caller_addr;  // empty means version0, no caller addr
     std::string contract_addr = tx->get_account_addr();
@@ -76,23 +93,6 @@ xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
     base::xvaction_t _action = data::make_action(tx);
     xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
     return txinfo;
-}
-
-std::string xlightunit_build_t::get_header_extra(const xlightunit_block_para_t & bodypara) const {
-    base::xvtxkey_vec_t txs;
-    for (auto & tx : bodypara.get_input_txs()) {
-        base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
-        txs.push_back(tx_key);
-        xdbg("xlightunit_build_t::get_header_extra tx hash:%s, type:%s", tx->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
-    }
-    std::string str;
-    txs.serialize_to_string(str);
-
-    base::xvheader_extra he;
-    he.insert(base::HEADER_KEY_TXS, str);
-    std::string he_str;
-    he.serialize_to_string(he_str);
-    return he_str;
 }
 
 bool xlightunit_build_t::should_build_no_txaction_unit(const uint64_t clock, const uint64_t height) {
@@ -212,23 +212,6 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvheader_t* header)
 
 base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
-}
-
-std::string xfullunit_build_t::get_header_extra(const xfullunit_block_para_t & bodypara) const {
-    base::xvtxkey_vec_t txs;
-    for (auto & tx : bodypara.get_input_txs()) {
-        base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
-        txs.push_back(tx_key);
-    }
-    std::string str;
-    txs.serialize_to_string(str);
-
-    base::xvheader_extra he;
-    he.insert(base::HEADER_KEY_TXS, str);
-
-    std::string he_str;
-    he.serialize_to_string(he_str);
-    return he_str;
 }
 
 xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {

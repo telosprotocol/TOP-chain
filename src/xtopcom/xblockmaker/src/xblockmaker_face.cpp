@@ -227,4 +227,10 @@ bool xblock_maker_t::check_latest_blocks(const xblock_ptr_t & latest_block) cons
     return true;
 }
 
+void xblock_builder_face_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    for (auto & tx : input_txs) {
+        data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
+    }
+}
+
 NS_END2

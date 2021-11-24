@@ -71,22 +71,6 @@ void * xlightunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-std::vector<base::xvtxkey_t> xlightunit_block_t::get_txkeys() const {
-    auto & extra_str = get_header()->get_extra_data();
-    base::xvheader_extra he;
-    he.serialize_from_string(extra_str);
-
-    auto txs_str = he.get_val(base::HEADER_KEY_TXS);
-    if (txs_str.empty()) {
-        xdbg("empty header, account:%s", get_account().c_str());
-        return std::vector<base::xvtxkey_t>{};
-    }
-
-    base::xvtxkey_vec_t txs;
-    txs.serialize_from_string(txs_str);
-    return txs.get_txkeys();
-}
-
 void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
     xJson::Value ji;
     if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {

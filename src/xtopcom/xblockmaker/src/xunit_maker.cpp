@@ -303,6 +303,32 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     return proposal_block;
 }
 
+// same for light unit & full unit, full unit now 
+void xunit_maker_t::make_light_block(xblock_ptr_t & proposal_unit, xblock_builder_face_ptr_t & block_builder, const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
+    const xblock_ptr_t & cert_block = get_highest_height_block();
+    base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
+    xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
+    proposal_unit = block_builder->build_block(cert_block,
+                                                    get_latest_bstate()->get_bstate(),
+                                                    cs_para,
+                                                    build_para);
+    result.m_make_block_error_code = build_para->get_error_code();
+    std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+    result.add_pack_txs(lightunit_build_para->get_pack_txs());
+    result.m_fail_txs = lightunit_build_para->get_fail_txs();
+    result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
+    result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
+    if (lightunit_build_para->get_pack_txs().empty() && !lightunit_build_para->get_unchange_txs().empty()) {
+        result.m_make_block_error_code = xblockmaker_error_no_need_make_unit;
+    }
+    for (auto & tx : lightunit_build_para->get_fail_txs()) {
+        xassert(tx->is_self_tx() || tx->is_send_tx());
+        xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
+        xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+        get_txpool()->pop_tx(txinfo);
+    }
+}
+
 xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
     xblock_ptr_t proposal_unit = nullptr;
 
@@ -335,54 +361,14 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
     if (can_make_next_full_block()) {
         XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
         xwarn("xunit_maker_t::make_next_block full block. account=%s,pending_txs:%zu,cs_para:%s", get_account().c_str(), m_pending_txs.size(), cs_para.dump().c_str());
-        base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
-        xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
-        proposal_unit = m_fullunit_builder->build_block(cert_block,
-                                                        get_latest_bstate()->get_bstate(),
-                                                        cs_para,
-                                                        build_para);
-        result.m_make_block_error_code = build_para->get_error_code();
-        std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-        result.add_pack_txs(lightunit_build_para->get_pack_txs());
-        result.m_fail_txs = lightunit_build_para->get_fail_txs();
-        result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
-        result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
-        if (lightunit_build_para->get_pack_txs().empty() && !lightunit_build_para->get_unchange_txs().empty()) {
-            result.m_make_block_error_code = xblockmaker_error_no_need_make_unit;
-        }
-        for (auto & tx : lightunit_build_para->get_fail_txs()) {
-            xassert(tx->is_self_tx() || tx->is_send_tx());
-            xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
-            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            get_txpool()->pop_tx(txinfo);
-        }
+        make_light_block(proposal_unit, m_fullunit_builder, unit_para, cs_para, result);
     }
 
     // firstly should process txs and try to make lightunit
     if (nullptr == proposal_unit && result.m_make_block_error_code != xblockmaker_error_no_need_make_unit && can_make_next_light_block()) {
         XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
         XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
-        base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
-        xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
-        proposal_unit = m_lightunit_builder->build_block(cert_block,
-                                                        get_latest_bstate()->get_bstate(),
-                                                        cs_para,
-                                                        build_para);
-        result.m_make_block_error_code = build_para->get_error_code();
-        std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-        result.add_pack_txs(lightunit_build_para->get_pack_txs());
-        result.m_fail_txs = lightunit_build_para->get_fail_txs();
-        result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
-        result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
-        if (lightunit_build_para->get_pack_txs().empty() && !lightunit_build_para->get_unchange_txs().empty()) {
-            result.m_make_block_error_code = xblockmaker_error_no_need_make_unit;
-        }
-        for (auto & tx : lightunit_build_para->get_fail_txs()) {
-            xassert(tx->is_self_tx() || tx->is_send_tx());
-            xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
-            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            get_txpool()->pop_tx(txinfo);
-        }
+        make_light_block(proposal_unit, m_lightunit_builder, unit_para, cs_para, result);
     }
 
     if (!is_forked) {

@@ -127,6 +127,7 @@ public:
     virtual uint32_t                    get_unconfirm_sendtx_num() const {return 0;}
     xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;
     uint32_t                            query_tx_size(const std::string & txhash) const;
+    std::vector<base::xvtxkey_t>        get_txkeys() const;
 
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}

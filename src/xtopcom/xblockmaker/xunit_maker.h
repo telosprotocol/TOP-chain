@@ -30,6 +30,7 @@ class xunit_maker_t : public xblock_maker_t {
     bool                    must_make_next_full_block() const;
 
  protected:
+    void                    make_light_block(xblock_ptr_t & proposal_unit, xblock_builder_face_ptr_t & blockbuilder, const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     xblock_ptr_t            make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     bool                    can_make_next_light_block() const;
     bool                    is_account_locked() const;

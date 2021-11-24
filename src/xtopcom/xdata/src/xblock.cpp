@@ -435,4 +435,20 @@ uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
     return value.size();
 }
 
+std::vector<base::xvtxkey_t> xblock_t::get_txkeys() const {
+    auto & extra_str = get_header()->get_extra_data();
+    base::xvheader_extra he;
+    he.serialize_from_string(extra_str);
+
+    auto txs_str = he.get_val(base::HEADER_KEY_TXS);
+    if (txs_str.empty()) {
+        xdbg("empty header, account:%s", get_account().c_str());
+        return std::vector<base::xvtxkey_t>{};
+    }
+
+    base::xvtxkey_vec_t txs;
+    txs.serialize_from_string(txs_str);
+    return txs.get_txkeys();
+}
+
 NS_END2
