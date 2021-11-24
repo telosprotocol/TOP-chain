@@ -172,15 +172,13 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     // on demand load origin tx for execute
     if (tx->get_transaction() == nullptr) {
         xassert(tx->is_confirm_tx()); // only confirmtx support on demand load
-        // TODO(jimmy) only load origin tx
-        base::xvtransaction_store_ptr_t tx_store = get_blockstore()->query_tx(tx->get_tx_hash(), base::enum_transaction_subtype_send);
-        if (tx_store == nullptr || tx_store->get_raw_tx() == nullptr) {
+        auto raw_tx = get_txpool()->get_raw_tx(get_account(), tx->get_peer_tableid(), tx->get_last_action_receipt_id());
+        if (raw_tx == nullptr) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_load_origintx, 1);
             xwarn("xunit_maker_t::push_tx fail-load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
             return false;
         }
-        xtransaction_t * raw_tx = dynamic_cast<xtransaction_t *>(tx_store->get_raw_tx());
-        if (false == tx->set_raw_tx(raw_tx)) {
+        if (false == tx->set_raw_tx(raw_tx.get())) {
             xerror("xunit_maker_t::push_tx fail-set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
             return false;
         }

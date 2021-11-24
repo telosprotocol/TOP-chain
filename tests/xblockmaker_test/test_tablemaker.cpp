@@ -116,6 +116,8 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[1];
 
+    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::auditor);
+
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {
         resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
@@ -123,6 +125,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
+    xblock_ptr_t first_table_block = nullptr;
     {
         xtablemaker_para_t table_para(mocktable.get_table_state());
         std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
@@ -137,6 +140,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        first_table_block = proposal_block;
     }
     {
         xtablemaker_para_t table_para(mocktable.get_table_state());
@@ -163,6 +167,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        resources->get_txpool()->on_block_confirmed(first_table_block.get());
     }
     {
         xtablemaker_para_t table_para(mocktable.get_table_state());
@@ -281,6 +286,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        first_table_block = proposal_block;
     }
     {
         xtablemaker_para_t table_para(mocktable.get_table_state());
@@ -307,6 +313,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        resources->get_txpool()->on_block_confirmed(first_table_block.get());
     }
 
     {
