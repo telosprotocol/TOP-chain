@@ -45,10 +45,10 @@ std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic
 
 static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
     auto account_string = account_prefix + std::to_string(index);
-    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_LENGTH) {
-        account_string.append(top::common::xaccount_base_address_t::LAGACY_LENGTH - account_string.length(), 'x');
+    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH - account_string.length(), 'x');
     }
-    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_LENGTH);
+    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH);
     return common::xaccount_address_t{account_string};
 }
 

@@ -581,7 +581,8 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().value().c_str(), recver().value().c_str());
 
     xcontract_execution_fee_t fee_change;
-    if (data::is_sys_contract_address(sender()) && data::is_account_address(recver())) {
+    if (sender().type() == base::enum_vaccount_addr_type_native_contract &&
+        (recver().type() == base::enum_vaccount_addr_type_secp256k1_eth_user_account || recver().type() == base::enum_vaccount_addr_type_secp256k1_user_account)) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] contract to user, ignore");
         return fee_change;
     }

@@ -52,7 +52,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_clock:
         XATTRIBUTE_FALLTHROUGH;
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_drand:
-        if (base_address.length() != SPECIAL_ACCOUNT_LENGTH) {
+        if (base_address.length() != SPECIAL_SYS_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)
             assert(false);
 #endif
@@ -63,9 +63,18 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         break;
 
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account:
-        XATTRIBUTE_FALLTHROUGH;
+        if (base_address.length() != LAGACY_USER_ACCOUNT_LENGTH) {
+#if !defined(XENABLE_TESTS)
+            assert(false);
+#endif
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address);
+        }
+        m_account_type = t;
+
+        break;
+
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_native_contract:
-        if (base_address.length() != LAGACY_LENGTH) {
+        if (base_address.length() != LAGACY_SYS_CONTRACT_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)
             assert(false);
 #endif
@@ -76,7 +85,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         break;
 
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account:
-        if (base_address.length() != LENGTH) {
+        if (base_address.length() != USER_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)
             assert(false);
 #endif
