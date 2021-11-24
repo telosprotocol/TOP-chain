@@ -86,7 +86,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     bool has_other_tx{false};
 
     auto const & chain_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (chain_upgrade::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_timestamp())) {
+    if (chain_upgrade::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_clock())) {
         for (auto const & tx : input_txs) {
             if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
                 has_run_contract_tx = true;

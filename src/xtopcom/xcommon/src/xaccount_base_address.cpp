@@ -42,6 +42,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         top::error::throw_error(error::xerrc_t::invalid_account_base_address);
     }
 
+    m_ledger_id = xledger_id_t{base_address.substr(2, 4)};
     auto const & prefix = base_address.substr(1, 4);  // "Tx000yblabla" => "x000"
     auto const t = static_cast<base::enum_vaccount_addr_type>(prefix.at(0));
     switch (t) {
@@ -74,11 +75,20 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         break;
 
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_native_contract:
-        if (base_address.length() != LAGACY_SYS_CONTRACT_ACCOUNT_LENGTH) {
+        if (m_ledger_id.zone_id() == common::xconsensus_zone_id) {
+            if (base_address.length() != LAGACY_SYS_TABLE_CONTRACT_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)
-            assert(false);
+                assert(false);
 #endif
-            top::error::throw_error(error::xerrc_t::invalid_account_base_address);
+                top::error::throw_error(error::xerrc_t::invalid_account_base_address);
+            }
+        } else {
+            if (base_address.length() != LAGACY_SYS_BEACON_CONTRACT_ACCOUNT_LENGTH) {
+#if !defined(XENABLE_TESTS)
+                assert(false);
+#endif
+                top::error::throw_error(error::xerrc_t::invalid_account_base_address);
+            }
         }
         m_account_type = t;
 
@@ -124,7 +134,6 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
     m_base_address_str = base_address;
 
     auto account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
-    m_ledger_id = xledger_id_t{m_base_address_str.substr(2, 4)};
     if (m_account_type == base::enum_vaccount_addr_type_secp256k1_user_account || m_account_type == base::enum_vaccount_addr_type_native_contract ||
         m_account_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
         m_default_table_id = xtable_id_t{static_cast<uint16_t>(account_index % static_cast<uint16_t>(enum_vbucket_has_tables_count))};
