@@ -33,11 +33,12 @@ private:
     explicit xtop_account_base_address(std::string const & base_address);
 
 public:
-    static constexpr size_t USER_ACCOUNT_LENGTH{46};                // ETH-style account
-    static constexpr size_t LAGACY_USER_ACCOUNT_LENGTH{40};         // lagacy TOP account
-    static constexpr size_t LAGACY_SYS_CONTRACT_ACCOUNT_LENGTH{41}; // lagacy TOP system account
-    static constexpr size_t SPECIAL_SYS_ACCOUNT_LENGTH{41};         // special account in lagacy form
-    static constexpr size_t TABLE_ACCOUNT_LENGTH{6};                // table account length
+    static constexpr size_t USER_ACCOUNT_LENGTH{46};                        // ETH-style account
+    static constexpr size_t LAGACY_USER_ACCOUNT_LENGTH{40};                 // lagacy TOP account
+    static constexpr size_t LAGACY_SYS_BEACON_CONTRACT_ACCOUNT_LENGTH{41};  // lagacy TOP system account
+    static constexpr size_t LAGACY_SYS_TABLE_CONTRACT_ACCOUNT_LENGTH{40};   // lagacy TOP system table account
+    static constexpr size_t SPECIAL_SYS_ACCOUNT_LENGTH{41};                 // special account in lagacy form
+    static constexpr size_t TABLE_ACCOUNT_LENGTH{6};                        // table account length
 
     static xtop_account_base_address build_from(std::string const & input, std::error_code & ec);
     static xtop_account_base_address build_from(std::string const & input);
