@@ -17,6 +17,7 @@ TEST(account_base_address, valid_construction_1) {
         ASSERT_TRUE(!ec);
         ASSERT_EQ(account_base.to_string(), "Ta0000");
         ASSERT_TRUE(account_base.default_table_id().empty());
+        ASSERT_EQ(account_base.ledger_id().value(), 0);
     }
 
     {
@@ -25,6 +26,7 @@ TEST(account_base_address, valid_construction_1) {
         ASSERT_TRUE(!ec);
         ASSERT_EQ(account_base.to_string(), "Ta0001");
         ASSERT_TRUE(account_base.default_table_id().empty());
+        ASSERT_EQ(account_base.ledger_id().value(), 1);
     }
 
     {
@@ -33,23 +35,28 @@ TEST(account_base_address, valid_construction_1) {
         ASSERT_TRUE(!ec);
         ASSERT_EQ(account_base.to_string(), "Ta0002");
         ASSERT_TRUE(account_base.default_table_id().empty());
+        ASSERT_EQ(account_base.ledger_id().value(), 2);
     }
 }
 
 TEST(account_base_address, valid_construction_2) {
+    std::string const account_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
     std::error_code ec;
-    auto account_base = top::common::xaccount_base_address_t::build_from("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7", ec);
+    auto account_base = top::common::xaccount_base_address_t::build_from(account_string, ec);
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(account_base.to_string(), "T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7");
-    ASSERT_EQ(account_base.default_table_id().value(), 21);
+    ASSERT_EQ(account_base.to_string(), account_string);
+    ASSERT_EQ(account_base.default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
+    ASSERT_EQ(account_base.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_string));
 }
 
 TEST(account_base_address, valid_construction_3) {
+    std::string const account_string{"T00000LMwyeixuLgjnDysRiStjffyzZtLmDoyBwV"};
     std::error_code ec;
-    auto account_base = top::common::xaccount_base_address_t::build_from("T00000LMwyeixuLgjnDysRiStjffyzZtLmDoyBwV", ec);
+    auto account_base = top::common::xaccount_base_address_t::build_from(account_string, ec);
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(account_base.to_string(), "T00000LMwyeixuLgjnDysRiStjffyzZtLmDoyBwV");
-    ASSERT_EQ(account_base.default_table_id().value(), 63);
+    ASSERT_EQ(account_base.to_string(), account_string);
+    ASSERT_EQ(account_base.default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
+    ASSERT_EQ(account_base.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_string));
 }
 
 TEST(account_base_address, valid_construction_4) {
@@ -58,6 +65,7 @@ TEST(account_base_address, valid_construction_4) {
     ASSERT_TRUE(!ec);
     ASSERT_EQ(account_base.to_string(), black_hole_addr);
     ASSERT_TRUE(account_base.default_table_id().empty());
+    ASSERT_EQ(account_base.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(black_hole_addr));
 }
 
 TEST(account_base_address, valid_construction_5) {
@@ -66,6 +74,7 @@ TEST(account_base_address, valid_construction_5) {
     ASSERT_TRUE(!ec);
     ASSERT_EQ(account_base.to_string(), genesis_root_addr_main_chain);
     ASSERT_TRUE(account_base.default_table_id().empty());
+    ASSERT_EQ(account_base.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(genesis_root_addr_main_chain));
 }
 
 TEST(account_base_address, valid_construction_6) {
@@ -74,6 +83,7 @@ TEST(account_base_address, valid_construction_6) {
     ASSERT_TRUE(!ec);
     ASSERT_EQ(account_base.to_string(), sys_contract_beacon_timer_addr);
     ASSERT_TRUE(account_base.default_table_id().empty());
+    ASSERT_EQ(account_base.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(sys_contract_beacon_timer_addr));
 }
 
 TEST(account_base_address, valid_construction_7) {
@@ -82,6 +92,7 @@ TEST(account_base_address, valid_construction_7) {
     ASSERT_TRUE(!ec);
     ASSERT_EQ(account_base.to_string(), sys_drand_addr);
     ASSERT_TRUE(account_base.default_table_id().empty());
+    ASSERT_EQ(account_base.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(sys_drand_addr));
 }
 
 TEST(account_base_address, invalid_construction_1) {

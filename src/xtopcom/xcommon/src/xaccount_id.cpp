@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,9 +18,9 @@ xledger_id_t xtop_account_id::ledger_id() const {
     return xledger_id_t{static_cast<uint16_t>(get_vledger_ledger_id(m_value))};
 }
 
-xzone_id_t xtop_account_id::zone_id() const {
-    return xzone_id_t{static_cast<uint8_t>(get_vledger_zone_index(m_value))};
-}
+//xzone_id_t xtop_account_id::zone_id() const {
+//    return xzone_id_t{static_cast<uint8_t>(get_vledger_zone_index(m_value))};
+//}
 
 xtable_id_t xtop_account_id::table_id() const {
     return xtable_id_t{*this};
