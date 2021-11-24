@@ -13,6 +13,7 @@
 #include "xtxpool_v2/xtxpool_info.h"
 #include "xtxpool_v2/xtxpool_resources_face.h"
 #include "xtxpool_v2/xunconfirm_id_height.h"
+#include "xtxpool_v2/xunconfirm_raw_txs.h"
 
 #include <map>
 #include <set>
@@ -90,7 +91,8 @@ public:
       , m_table_state_cache(para, table_addr)
       , m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set)
       , m_txmgr_table(&m_xtable_info, para)
-      , m_unconfirm_id_height(m_xtable_info.get_short_table_id()) {
+      , m_unconfirm_id_height(m_xtable_info.get_short_table_id())
+      , m_unconfirm_raw_txs(m_xtable_info.get_short_table_id()) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
@@ -117,6 +119,7 @@ public:
         return m_xtable_info.get_short_table_id();
     }
     void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
+    xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
@@ -139,6 +142,7 @@ private:
     mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table
 
     xunconfirm_id_height m_unconfirm_id_height;
+    xunconfirm_raw_txs m_unconfirm_raw_txs;
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
