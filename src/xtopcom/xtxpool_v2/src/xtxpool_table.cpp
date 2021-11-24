@@ -278,6 +278,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
     const std::vector<base::xventity_t *> & _table_inentitys = table_block->get_input()->get_entitys();
     uint32_t entitys_count = _table_inentitys.size();
     std::vector<xtx_id_height_info> tx_id_height_infos;
+    std::vector<xraw_tx_info> raw_txs;
 
     std::vector<update_id_state_para> update_id_state_para_vec;
     for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
@@ -293,14 +294,25 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
             }
 
             xlightunit_action_t txaction(action);
-            if (update_txmgr) {
-                tx_info_t txinfo(_unit_header->get_account(), txaction.get_tx_hash_256(), txaction.get_tx_subtype());
-                uint64_t txnonce = 0;
+            uint64_t txnonce = 0;
+            if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send) {
                 xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
                 if (_rawtx != nullptr) {
                     txnonce = _rawtx->get_tx_nonce();
+                    raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
+                } else {
+                    xtxpool_info(
+                        "xtxpool_table_t::deal_commit_table_block get raw tx fail table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
+                        m_xtable_info.get_account().c_str(),
+                        txaction.get_receipt_id_peer_tableid(),
+                        txaction.get_tx_subtype(),
+                        txaction.get_receipt_id(),
+                        txaction.get_sender_confirmed_receipt_id(),
+                        table_block->get_height());
                 }
-
+            }
+            if (update_txmgr) {
+                tx_info_t txinfo(_unit_header->get_account(), txaction.get_tx_hash_256(), txaction.get_tx_subtype());
                 update_id_state_para_vec.push_back(update_id_state_para(txinfo, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce));
             }
 
@@ -323,6 +335,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
         update_id_state(update_id_state_para_vec);
     }
     m_unconfirm_id_height.update_unconfirm_id_height(table_block->get_height(), table_block->get_cert()->get_gmtime(), tx_id_height_infos);
+    m_unconfirm_raw_txs.add_raw_txs(raw_txs);
 }
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
@@ -389,6 +402,8 @@ void xtxpool_table_t::refresh_table_v1(bool refresh_unconfirm_txs) {
         }
         xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
         update_table_state(tablestate);
+        
+        m_unconfirm_raw_txs.refresh(tablestate->get_receiptid_state());
 
         if (refresh_unconfirm_txs) {
             std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
@@ -417,6 +432,8 @@ void xtxpool_table_t::refresh_table_v2() {
         }
         xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
         update_table_state(tablestate);
+
+        m_unconfirm_raw_txs.refresh(tablestate->get_receiptid_state());
     }
 
     {
@@ -777,6 +794,10 @@ void xtxpool_table_t::build_confirm_tx(base::xtable_shortid_t peer_table_sid,
 
 void xtxpool_table_t::unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const {
     m_unconfirm_id_height.cache_status(sender_cache_size, receiver_cache_size, height_record_size);
+}
+
+xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
+    return m_unconfirm_raw_txs.get_raw_tx(peer_table_sid, receipt_id);
 }
 
 }  // namespace xtxpool_v2

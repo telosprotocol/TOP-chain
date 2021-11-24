@@ -56,6 +56,7 @@ public:
     // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override;
+    xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;
