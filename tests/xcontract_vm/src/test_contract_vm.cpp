@@ -164,11 +164,11 @@ TEST_F(test_contract_vm, test_send_tx) {
 #endif
         {
             auto string = state_out->load_string_var(XPROPERTY_USED_TGAS_KEY)->query();
-            EXPECT_EQ(string, std::string{"708"});
+            EXPECT_EQ(string, std::to_string(3 * tx->get_tx_len()));
         }
         {
             auto string = state_out->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->query();
-            EXPECT_EQ(string, std::string{"5796740"});
+            EXPECT_EQ(string, std::to_string(cs_para.m_clock));
         }
         {
             auto value = state_out->load_uint64_var(XPROPERTY_LOCK_TGAS)->get();
@@ -188,7 +188,7 @@ TEST_F(test_contract_vm, test_send_tx) {
         }
         {
             auto value = state_out->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->get();
-            EXPECT_EQ(value, 5796740);
+            EXPECT_EQ(value, cs_para.m_clock);
         }
     }
     {
@@ -200,7 +200,7 @@ TEST_F(test_contract_vm, test_send_tx) {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         bstate_cmp->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
         bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{0}, canvas.get());
-        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{5796740}, canvas.get());
+        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(cs_para.m_clock, canvas.get());
         auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
         map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, top::to_string(last_nonce + 1), canvas.get());
         auto value = top::to_bytes<uint256_t>(tx_hash);
@@ -214,8 +214,8 @@ TEST_F(test_contract_vm, test_send_tx) {
         bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{}, canvas.get());
         bstate_cmp->new_string_var(XPROPERTY_USED_TGAS_KEY, canvas.get());
         bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::string{}, canvas.get());
-        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::string{"708"}, canvas.get());
-        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{"5796740"}, canvas.get());
+        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::to_string(3 * tx->get_tx_len()), canvas.get());
+        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::to_string(cs_para.m_clock), canvas.get());
         bstate_cmp->new_uint64_var(XPROPERTY_LOCK_TGAS, canvas.get());
         bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{0}, canvas.get());
         bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{5000}, canvas.get());
