@@ -362,6 +362,15 @@ void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t 
     m_para->get_receiptid_state_cache().update_table_receiptid_state(receiptid_state);
 }
 
+xtransaction_ptr_t xtxpool_t::get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
+    auto table = get_txpool_table_by_addr(account_addr);
+    if (table == nullptr) {
+        return nullptr;
+    }
+
+    return table->get_raw_tx(peer_table_sid, receipt_id);
+}
+
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,
                               base::xtable_shortid_t to_table_sid,
                               std::vector<uint64_t> receiptids,
