@@ -26,10 +26,10 @@ common::xaccount_address_t build_account_address(size_t const i) {
     std::string account_address_prefix = "T00000LMZLAYynftsjQiKZ5W7TQncDL";
 
     std::string account_string = account_address_prefix + std::to_string(i);
-    if (account_string.size() < top::common::xaccount_base_address_t::LAGACY_LENGTH) {
-        account_string.append(top::common::xaccount_base_address_t::LAGACY_LENGTH - account_string.size(), 'x');
+    if (account_string.size() < top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH - account_string.size(), 'x');
     }
-    assert(account_string.size() == top::common::xaccount_base_address_t::LAGACY_LENGTH);
+    assert(account_string.size() == top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH);
 
     return common::xaccount_address_t{account_string};
 }
