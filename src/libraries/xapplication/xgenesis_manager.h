@@ -12,7 +12,7 @@ NS_BEG2(top, application)
 
 class xtop_genesis_manager {
 public:
-    explicit xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore, observer_ptr<store::xstore_face_t> const & store);
+    xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore, observer_ptr<store::xstore_face_t> const & store);
     xtop_genesis_manager(xtop_genesis_manager const &) = delete;
     xtop_genesis_manager & operator=(xtop_genesis_manager const &) = delete;
     xtop_genesis_manager(xtop_genesis_manager &&) = default;

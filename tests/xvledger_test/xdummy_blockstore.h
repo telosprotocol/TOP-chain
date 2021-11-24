@@ -177,6 +177,12 @@ public:
     bool exist_genesis_block(base::xvaccount_t const & account,const int atag = 0) override {
         return false;
     }
+
+    void create_genesis_block(base::xvaccount_t const & account, std::error_code & ec) override {
+    }
+
+    void register_create_genesis_callback(std::function<void(base::xvaccount_t const &, std::error_code &)> cb) override {
+    }
     
     // genesis connected  blocks
     bool set_genesis_height(const base::xvaccount_t & account, const std::string &height) override {

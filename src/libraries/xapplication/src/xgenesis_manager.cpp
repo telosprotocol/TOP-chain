@@ -1,5 +1,6 @@
 #include "xapplication/xgenesis_manager.h"
 
+#include "xblockstore/src/xvgenesis.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xrootblock.h"
@@ -31,6 +32,7 @@ xtop_genesis_manager::xtop_genesis_manager(observer_ptr<base::xvblockstore_t> co
   : m_blockstore{blockstore}, m_store{store} {
     xassert(m_blockstore != nullptr);
     xassert(store != nullptr);
+    m_blockstore->register_create_genesis_callback(std::bind(&xgenesis_manager_t::create_genesis_block, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void xtop_genesis_manager::load_accounts() {
@@ -196,7 +198,8 @@ void xtop_genesis_manager::create_genesis_of_common_account(base::xvaccount_t co
         return;
     }
     // create
-    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_empty_block(account.get_account());
+    base::xauto_ptr<base::xvblock_t> genesis_block = store::xgenesis_block::create_genesis_block(account.get_account());
+    // data::xblocktool_t::create_genesis_empty_block(account.get_account());
     xassert(genesis_block != nullptr);
     // store block
     if (false == m_blockstore->store_block(account, genesis_block.get())) {
@@ -235,39 +238,40 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
         create_genesis_of_genesis_account(base::xvaccount_t{pair.first.value()}, pair.second, ec);
         CHECK_EC_RETURN(ec);
     }
-    // step5.1: release resource used by step2 and step3
+    // step5: set finish flag
+    m_init_finish = true;
+    // step6: release resource used by step2 and step3
     chain_data::xchain_data_processor_t::release();
-    // release_accounts();
+    release_accounts();
 }
 
 void xtop_genesis_manager::create_genesis_block(base::xvaccount_t const & account, std::error_code & ec) {
-    // if (m_blockstore->exist_genesis_block(account)) {
-    //     xwarn("[xtop_genesis_manager::create_genesis_block] account: %s, genesis block already exists", account.get_account().c_str());
-    //     // should not enter if already existed
-    //     xassert(false);
-    //     return;
-    // }
     if (!m_root_finish) {
-        SET_EC_RETURN(ec, error::xenum_errc::genesis_root_has_not_created);
+        SET_EC_RETURN(ec, error::xenum_errc::genesis_root_has_not_ready);
     }
     if (!m_init_finish) {
         common::xaccount_address_t account_address{account.get_account()};
         if (account.is_contract_address()) {
             // check system contract account(reset)
             create_genesis_of_contract_account(account, ec);
+            CHECK_EC_RETURN(ec);
         } else if (m_user_accounts_data.count(account_address)) {
             // check user account with data(reset)
             create_genesis_of_datauser_account(account, m_user_accounts_data[account_address], ec);
+            CHECK_EC_RETURN(ec);
         } else if (m_genesis_accounts_data.count(account_address)) {
             // check genesis account
             create_genesis_of_genesis_account(account, m_genesis_accounts_data[account_address], ec);
+            CHECK_EC_RETURN(ec);
         } else {
             // common account => empty genesis block
             create_genesis_of_common_account(account, ec);
+            CHECK_EC_RETURN(ec);
         }
     } else {
         // empty genesis block
         create_genesis_of_common_account(account, ec);
+        CHECK_EC_RETURN(ec);
     }
 }
 
