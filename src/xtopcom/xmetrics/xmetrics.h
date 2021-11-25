@@ -622,6 +622,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cpu_ca_verify_multi_sign_xbft,
     cpu_ca_verify_multi_sign_tc,
     cpu_ca_verify_multi_sign_blockstore,
+    cpu_merkle_hash_calc,
 
     //bft
     bft_verify_vote_msg_fail,

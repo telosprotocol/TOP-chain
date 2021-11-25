@@ -265,7 +265,8 @@ namespace top
             {
                 h.reset();
                 h.update(value);
-
+                XMETRICS_GAUGE(metrics::cpu_merkle_hash_calc, 1);
+                
                 _Tv v;
                 if (!h.get_hash(v)) return std::string();
 
@@ -283,6 +284,7 @@ namespace top
                 h.reset();
                 h.update(left);
                 h.update(right);
+                XMETRICS_GAUGE(metrics::cpu_merkle_hash_calc, 1);
 
                 _Tv v;
                 if (!h.get_hash(v)) return std::string();

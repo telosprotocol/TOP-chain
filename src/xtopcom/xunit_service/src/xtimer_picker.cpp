@@ -229,13 +229,10 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
 
 #ifdef ENABLE_METRICS
         if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_drand_leader_finish_succ, 1);
             XMETRICS_GAUGE(metrics::cons_drand_leader_succ, 1);
         } else {
-            XMETRICS_GAUGE(metrics::cons_drand_backup_finish_succ, 1);
             XMETRICS_GAUGE(metrics::cons_drand_backup_succ, 1);
-        }
-        
+        }        
         XMETRICS_COUNTER_SET("cons_drand_highqc_height", high_qc->get_height());
         XMETRICS_COUNTER_SET("cons_drand_highqc_viewid", high_qc->get_viewid());
 #endif
@@ -253,10 +250,8 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
     } else {
 #ifdef ENABLE_METRICS
         if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_drand_leader_finish_fail, 1);
             XMETRICS_GAUGE(metrics::cons_drand_leader_succ, 0);
         } else {
-            XMETRICS_GAUGE(metrics::cons_drand_backup_finish_fail, 1);
             XMETRICS_GAUGE(metrics::cons_drand_backup_succ, 0);
         }
 #endif
