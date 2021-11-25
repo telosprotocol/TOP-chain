@@ -107,10 +107,17 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
                                                     xblock_builder_para_ptr_t & build_para) {
     XMETRICS_TIMER(metrics::cons_unitbuilder_fullunit_tick);
 
+    std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+
     txexecutor::xbatch_txs_result_t exec_result;
-    auto exec_ret = xlightunit_builder_t::construct_block_builder_para(prev_block, prev_bstate, cs_para, build_para, exec_result);
-    if (exec_ret != xsuccess) {
-        return nullptr;
+    // under old rules, build_para is not xlightunit_builder_para_t, full unit build para contains no tx
+    if (nullptr != lightunit_build_para) {
+        xdbg("fullunit origin txs:%zu, clock:%llu", lightunit_build_para->get_origin_txs().size(), cs_para.get_clock());
+        // if (!lightunit_build_para->get_origin_txs().empty()) {
+        auto exec_ret = xlightunit_builder_t::construct_block_builder_para(prev_block, prev_bstate, cs_para, build_para, exec_result);
+        if (exec_ret != xsuccess) {
+            return nullptr;
+        }
     }
 
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
@@ -122,18 +129,20 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
         para.m_property_snapshot.size(), base::xhash64_t::digest(para.m_property_snapshot));
 
-    // set lightunit para by tx result
-    para.set_input_txs(exec_result.m_exec_succ_txs);
-    para.set_unchange_txs(exec_result.m_exec_unchange_txs);
-    // para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
-    para.set_fullstate_bin(exec_result.m_full_state);
-    para.set_binlog(exec_result.m_property_binlog);
+    if (nullptr != lightunit_build_para) {
+        xdbg("fullunit origin txs:%zu, clock:%llu", lightunit_build_para->get_origin_txs().size(), cs_para.get_clock());
+    // if (!lightunit_build_para->get_origin_txs().empty()) {
+        // set lightunit para by tx result
+        para.set_input_txs(exec_result.m_exec_succ_txs);
+        para.set_unchange_txs(exec_result.m_exec_unchange_txs);
+        // para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
+        para.set_fullstate_bin(exec_result.m_full_state);
+        para.set_binlog(exec_result.m_property_binlog);
 
-    std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-    xassert(lightunit_build_para != nullptr);
-    alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state());
-    if (para.get_input_txs().empty() && !para.get_unchange_txs().empty()) {
-        return nullptr;
+        alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state());
+        if (para.get_input_txs().empty() && !para.get_unchange_txs().empty()) {
+            return nullptr;
+        }
     }
 
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fullunit(para, prev_block.get(), cs_para);

@@ -1407,12 +1407,12 @@ void get_block_handle::set_fullunit_state(xJson::Value & j_fu, data::xblock_t * 
     xassert(bstate != nullptr);
     data::xunit_bstate_t unitstate(bstate.get());
 
-    j_fu["latest_send_trans_number"] = static_cast<unsigned int>(unitstate.account_send_trans_number());
+    j_fu["latest_send_trans_number"] = static_cast<unsigned long long>(unitstate.account_send_trans_number());
     j_fu["latest_send_trans_hash"] = to_hex_str(unitstate.account_send_trans_hash());
-    j_fu["latest_recv_trans_number"] = static_cast<unsigned int>(unitstate.account_recv_trans_number());
-    j_fu["account_balance"] = static_cast<unsigned int>(unitstate.balance());
-    j_fu["burned_amount_change"] = static_cast<unsigned int>(unitstate.burn_balance());
-    j_fu["account_create_time"] = static_cast<unsigned int>(unitstate.get_account_create_time());
+    j_fu["latest_recv_trans_number"] = static_cast<unsigned long long>(unitstate.account_recv_trans_number());
+    j_fu["account_balance"] = static_cast<unsigned long long>(unitstate.balance());
+    j_fu["burned_amount_change"] = static_cast<unsigned long long>(unitstate.burn_balance());
+    j_fu["account_create_time"] = static_cast<unsigned long long>(unitstate.get_account_create_time());
 }
 
 void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp, const std::string & rpc_version) {

@@ -21,7 +21,7 @@ std::string get_header_extra(const xlightunit_block_para_t & bodypara);
 
 class xlightunit_build_t : public base::xvblockmaker_t {
  public:
-    static bool should_build_no_txaction_unit(const uint64_t clock, const uint64_t height);
+    static bool should_build_unit_opt(const uint64_t clock, const uint64_t height);
     xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara);
     xlightunit_build_t(base::xvblock_t* prev_block, const xlightunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
     xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);

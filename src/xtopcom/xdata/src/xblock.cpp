@@ -437,6 +437,9 @@ uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
 
 std::vector<base::xvtxkey_t> xblock_t::get_txkeys() const {
     auto & extra_str = get_header()->get_extra_data();
+    if (extra_str.empty()) {
+        return {};
+    }
     base::xvheader_extra he;
     he.serialize_from_string(extra_str);
 

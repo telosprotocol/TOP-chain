@@ -36,14 +36,14 @@ void * xfullunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
 }
 
 void xfullunit_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
-    if (rpc_version == RPC_VERSION_V1) {
-        return;
-    }
-
     xJson::Value j_fu;
     j_fu["latest_full_unit_number"] = static_cast<unsigned int>(get_height());
     j_fu["latest_full_unit_hash"] = to_hex_str(get_block_hash());
     root["fullunit"] = j_fu;
+
+    if (rpc_version == RPC_VERSION_V1) {
+        return;
+    }
 
     auto tx_vec = get_txkeys();
     for (auto & tx : tx_vec) {

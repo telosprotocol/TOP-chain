@@ -95,7 +95,7 @@ xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
     return txinfo;
 }
 
-bool xlightunit_build_t::should_build_no_txaction_unit(const uint64_t clock, const uint64_t height) {
+bool xlightunit_build_t::should_build_unit_opt(const uint64_t clock, const uint64_t height) {
     // genesis block never fork
     if (height > 0 && base::xvblock_fork_t::instance().is_forked(clock)) {
         return true;
@@ -105,7 +105,7 @@ bool xlightunit_build_t::should_build_no_txaction_unit(const uint64_t clock, con
 
 xlightunit_build_t::xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara) {
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, base::enum_xvblock_level_unit, base::enum_xvblock_class_light, xrootblock_t::get_rootblock_hash());
-    if (should_build_no_txaction_unit(build_para.get_clock(), build_para.get_height())) {
+    if (should_build_unit_opt(build_para.get_clock(), build_para.get_height())) {
         build_para.set_extra_data(get_header_extra(bodypara));
     }
     init_header_qcert(build_para);
@@ -116,7 +116,7 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xlight
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_txs);
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                   para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
-    if (should_build_no_txaction_unit(build_para.get_clock(), build_para.get_height())) {
+    if (should_build_unit_opt(build_para.get_clock(), build_para.get_height())) {
         build_para.set_extra_data(get_header_extra(bodypara));
     }
     init_header_qcert(build_para);
@@ -219,13 +219,14 @@ xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfulluni
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
 
-    if (xlightunit_build_t::should_build_no_txaction_unit(build_para.get_clock(), build_para.get_height())) {
+    if (xlightunit_build_t::should_build_unit_opt(build_para.get_clock(), build_para.get_height())) {
         build_para.set_extra_data(get_header_extra(bodypara));
     }
     
     init_header_qcert(build_para);
     build_block_body(bodypara);
 }
+
 xfullunit_build_t::xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
 : base::xvblockmaker_t(header, input, output) {
 
@@ -235,12 +236,15 @@ bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
     // #1 set input entitys and resources
     base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_UNIT);
     set_input_entity(_action);
-    // #2 set output entitys and resources
-    std::string full_state_bin = para.get_fullstate_bin();
-    set_output_full_state(full_state_bin);
 
     xdbg("fullunit block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
-    if (!base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+    // #2 set output entitys and resources
+    if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+        std::string full_state_bin = para.m_property_snapshot;
+        set_output_full_state(full_state_bin);
+    } else {
+        std::string full_state_bin = para.get_fullstate_bin();
+        set_output_full_state(full_state_bin);
         // set_output_binlog(para.get_property_binlog());
         // uint32_t unconfirm_tx_num = para.get_account_unconfirm_sendtx_num();
         // std::string unconfirm_tx_num_str = base::xstring_utl::tostring(unconfirm_tx_num);

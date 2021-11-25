@@ -151,13 +151,16 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
 
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
 
+    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
-            // return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(), is_forked);
+            if (!is_forked)
+                return false;
         }
     }
 
@@ -165,9 +168,10 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_recv_tx()) {
         if (is_match_account_fullunit_recv_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
-            // return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(),is_forked);
+            if (!is_forked)
+                return false;
         }
     }
 
@@ -357,18 +361,34 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         m_default_builder_para->set_error_code(xsuccess);
     }
 
-    // secondly try to make full unit
-    if (can_make_next_full_block()) {
-        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
-        xwarn("xunit_maker_t::make_next_block full block. account=%s,pending_txs:%zu,cs_para:%s", get_account().c_str(), m_pending_txs.size(), cs_para.dump().c_str());
-        make_light_block(proposal_unit, m_fullunit_builder, unit_para, cs_para, result);
-    }
+    XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
+    XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
+    bool is_forked_unit_opt = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+    if (is_forked_unit_opt) {
+        // firstly try to make full unit and process txs
+        if (can_make_next_full_block(is_forked_unit_opt)) {
+            xwarn("xunit_maker_t::make_next_block full block. account=%s,pending_txs:%zu,cs_para:%s", get_account().c_str(), m_pending_txs.size(), cs_para.dump().c_str());
+            make_light_block(proposal_unit, m_fullunit_builder, unit_para, cs_para, result);
+        }
 
-    // firstly should process txs and try to make lightunit
-    if (nullptr == proposal_unit && result.m_make_block_error_code != xblockmaker_error_no_need_make_unit && can_make_next_light_block()) {
-        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
-        XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
-        make_light_block(proposal_unit, m_lightunit_builder, unit_para, cs_para, result);
+        // secondly try to make lightunit and process txs
+        if (nullptr == proposal_unit && result.m_make_block_error_code != xblockmaker_error_no_need_make_unit && can_make_next_light_block()) {
+            make_light_block(proposal_unit, m_lightunit_builder, unit_para, cs_para, result);
+        }
+    } else {
+        // firstly should process txs and try to make lightunit
+        if (can_make_next_light_block()) {
+            make_light_block(proposal_unit, m_lightunit_builder, unit_para, cs_para, result);
+        }
+
+        // secondly try to make full unit
+        if (nullptr == proposal_unit && can_make_next_full_block(is_forked_unit_opt)) {
+            proposal_unit = m_fullunit_builder->build_block(cert_block,
+                                                            get_latest_bstate()->get_bstate(),
+                                                            cs_para,
+                                                            m_default_builder_para);
+            result.m_make_block_error_code = m_default_builder_para->get_error_code();
+        }
     }
 
     if (!is_forked) {
@@ -383,9 +403,11 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         }
     }
 
-    if ((nullptr == proposal_unit) && (result.m_make_block_error_code == 0)) {
-        xdbg("wish null unit account:%s,cs_para:%s,make_block_error_code:%d", get_account().c_str(),cs_para.dump().c_str(),result.m_make_block_error_code);
-        result.m_make_block_error_code = xblockmaker_error_null_unit;
+    if (is_forked_unit_opt) {
+        if ((nullptr == proposal_unit) && (result.m_make_block_error_code == 0)) {
+            xdbg("wish null unit account:%s,cs_para:%s,make_block_error_code:%d", get_account().c_str(),cs_para.dump().c_str(),result.m_make_block_error_code);
+            result.m_make_block_error_code = xblockmaker_error_null_unit;
+        }
     }
 
     result.m_block = proposal_unit;
@@ -399,8 +421,8 @@ bool xunit_maker_t::can_make_next_block() const {
     return false;
 }
 
-bool xunit_maker_t::can_make_next_block_v2() const {
-    if (can_make_next_light_block() || can_make_next_full_block()) {
+bool xunit_maker_t::can_make_next_block_v2(bool is_forked_unit_opt) const {
+    if (can_make_next_light_block() || can_make_next_full_block(is_forked_unit_opt)) {
         return true;
     }
     return false;
@@ -462,12 +484,14 @@ bool xunit_maker_t::must_make_next_full_block() const {
     return false;
 }
 
-bool xunit_maker_t::can_make_next_full_block() const {
+bool xunit_maker_t::can_make_next_full_block(bool is_forked_unit_opt) const {
     // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
-    xwarn("xunit_maker_t::can_make_next_full_block lightunit.account=%s,current_height=%ld,pending_txs=%zu,locked=%d",
-        get_account().c_str(), get_latest_bstate()->get_block_height(), m_pending_txs.size(), is_account_locked());
-    if (m_pending_txs.empty()) {
-        return false;
+    xwarn("xunit_maker_t::can_make_next_full_block lightunit.account=%s,current_height=%ld,pending_txs=%zu,locked=%d,forked%d",
+        get_account().c_str(), get_latest_bstate()->get_block_height(), m_pending_txs.size(), is_account_locked(), is_forked_unit_opt);
+    if (is_forked_unit_opt) {
+        if (m_pending_txs.empty()) {
+            return false;
+        }
     }
     
     if (is_account_locked()) {

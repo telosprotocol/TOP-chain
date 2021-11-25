@@ -461,10 +461,10 @@ namespace top
         }
         bool xvblockmaker_t::set_output_binlog(const std::string & value) {
             if (value.empty() || get_header()->get_block_class() != enum_xvblock_class_light) {
-                if (get_header()->get_block_class() != enum_xvblock_class_full) {
+                // if (get_header()->get_block_class() != enum_xvblock_class_full) {
                     xassert(false);
                     return false;
-                }
+                // }
             }
 
             std::string binlog_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
@@ -678,12 +678,12 @@ namespace top
                     xassert(false);
                     return false;
                 }
-                if (target_block->get_block_level() == enum_xvblock_level_table) {
+                // if (target_block->get_block_level() == enum_xvblock_level_table) {
                     if (!target_block->get_binlog_hash().empty()) {
                         xassert(false);
                         return false;
                     }
-                }
+                // }
                 // full-table not has state
                 if (target_block->get_block_level() == enum_xvblock_level_table && !target_block->get_full_state().empty()) {
                     xassert(false);
@@ -695,12 +695,12 @@ namespace top
                     return false;
                 }
                 // full-blcok not has binlog
-                if (target_block->get_block_level() == enum_xvblock_level_table) {
+                // if (target_block->get_block_level() == enum_xvblock_level_table) {
                     if (!target_block->get_binlog().empty()) {
                         xassert(false);
                         return false;
                     }
-                }
+                // }
             }
             if (_class == enum_xvblock_class_light) {
                 // light-block has state hash and binlog hash
