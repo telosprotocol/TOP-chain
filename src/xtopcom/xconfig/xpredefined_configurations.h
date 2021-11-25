@@ -299,7 +299,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_proposal_expire_time, std::uint32_t, n
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_member, char const *, critical, "", "", "");
 
 // whitelist
-#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, false, false, true); // testnets defaults to close
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, true, false, true); // mainnet defaults to open
