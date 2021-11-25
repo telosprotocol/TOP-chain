@@ -224,7 +224,7 @@ namespace top
             return acount_keys;
         }
 
-        std::map<xvnode_address_t, xcrypto_key_t<pub>>  xvnetwork_test::parent_crypto_keys(common::xrole_type_t const parent_type ) const
+        std::map<xvnode_address_t, xcrypto_key_t<pub>>  xvnetwork_test::parent_crypto_keys(common::xminer_type_t const parent_type ) const
         {
             std::map<xvnode_address_t, xcrypto_key_t<pub>>  parent_keys;
             //parent_keys[(*shard_nodes.begin())->address()] = xcrypto_key_t<pub>(m_public_key);
@@ -356,7 +356,7 @@ namespace top
             return _network->neighbor_crypto_keys();
         }
 
-        std::map<xvnode_address_t, xcrypto_key_t<pub>>  xvnetwork_node_t::parent_crypto_keys(common::xrole_type_t const parent_type ) const
+        std::map<xvnode_address_t, xcrypto_key_t<pub>>  xvnetwork_node_t::parent_crypto_keys(common::xminer_type_t const parent_type ) const
         {
             return _network->parent_crypto_keys(parent_type);
         }

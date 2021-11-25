@@ -232,7 +232,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
 // void
 // set_node_type(const uint32_t role_type) {
 //     auto& user_params = data::xuser_params::get_instance();
-//     user_params.node_role_type = static_cast<top::common::xrole_type_t>(role_type);
+//     user_params.node_role_type = static_cast<top::common::xminer_type_t>(role_type);
 // }
 
 bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result) {

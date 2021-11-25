@@ -22,7 +22,7 @@ class xtop_basic_vhost : public xvhost_base_t {
 
 protected:
     common::xnetwork_id_t m_network_id;
-    common::xrole_type_t m_role;  // the role specified when the program launched.
+    common::xminer_type_t m_role;  // the role specified when the program launched.
 
     mutable std::mutex m_crypto_keys_mutex{};
     std::unordered_map<common::xnode_id_t, xcrypto_key_t<pub>> m_crypto_keys{};
