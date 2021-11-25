@@ -27,7 +27,7 @@ public:
 
     bool update_reg_info(xstake::xreg_node_info const & node_info);
 
-    void change_role_type(common::xnode_id_t const & node_id, common::xrole_type_t const & new_role_type);
+    void change_role_type(common::xnode_id_t const & node_id, common::xminer_type_t const & new_role_type);
 
     void change_account_mortgage(common::xnode_id_t const & node_id, uint64_t new_account_mortgage);
 
@@ -39,7 +39,7 @@ public:
 
     // std::string m_account{""};
     // uint64_t m_account_mortgage{0};
-    // common::xrole_type_t m_registered_role{common::xrole_type_t::invalid};
+    // common::xminer_type_t m_registered_role{common::xminer_type_t::invalid};
     // uint64_t m_vote_amount{0};
     // uint64_t m_auditor_credit_numerator{0};
     // uint64_t m_auditor_credit_denominator{1000000};

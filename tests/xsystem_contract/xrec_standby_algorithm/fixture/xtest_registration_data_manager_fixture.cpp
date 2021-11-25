@@ -18,7 +18,7 @@ bool xtop_test_registration_data_manager_fixture::update_reg_info(xstake::xreg_n
     return true;
 }
 
-void xtop_test_registration_data_manager_fixture::change_role_type(common::xnode_id_t const & node_id, common::xrole_type_t const & new_role_type) {
+void xtop_test_registration_data_manager_fixture::change_role_type(common::xnode_id_t const & node_id, common::xminer_type_t const & new_role_type) {
     assert(m_registration_data.find(node_id) != m_registration_data.end());
     m_registration_data[node_id].m_registered_role = new_role_type;
 }
