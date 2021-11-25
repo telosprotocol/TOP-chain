@@ -570,6 +570,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_xbft);
         RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_tc);
         RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_blockstore);
+        RETURN_METRICS_NAME(cpu_merkle_hash_calc);
 
         //bft
         RETURN_METRICS_NAME(bft_verify_vote_msg_fail);

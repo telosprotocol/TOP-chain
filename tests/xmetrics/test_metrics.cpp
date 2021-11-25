@@ -55,11 +55,13 @@ TEST(test_metrics, config) {
 
 TEST_F(metrics_test, basic_function) {
     SLEEP_SECOND(1);
-    std::size_t test_basic_size = 1000;
+    std::size_t test_basic_size = 100;
     for (std::size_t index = 0; index < test_basic_size; ++index) {
         XMETRICS_ARRCNT_SET(top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_commit, rand() % 64, 999);
         XMETRICS_COUNTER_INCREMENT("test_count_metrics1", static_cast<uint64_t>((100 + rand()) % 10000));
-        XMETRICS_COUNTER_INCREMENT("test_count_metrics2", static_cast<uint64_t>((100 + rand()) % 10000));
+        XMETRICS_COUNTER_INCREMENT("test_count_metrics2", static_cast<uint64_t>((100 + rand()) % 10000));  
+        auto fork_tag = "test_error_code_num_" + std::to_string(enum_xerror_code_bad_channelid);
+        XMETRICS_COUNTER_INCREMENT( fork_tag , 1);  
         SLEEP_NANOSECOND(rand() % 10);
         XMETRICS_ARRCNT_INCR(top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_commit, rand() % 64, 100);
         XMETRICS_TIME_RECORD("test_time_metrics");

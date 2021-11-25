@@ -295,6 +295,7 @@ namespace top
         bool    xsha2_256_t::get_hash(uint256_t & hash) //raw hash as 256bit
         {
             c_sha2_256_final(_context, hash.raw_uint8);
+            XMETRICS_GAUGE(metrics::cpu_hash_256_calc, 1);
             return true;
         }
         uint256_t  xsha2_256_t::digest(const void* data, size_t numBytes)
@@ -303,9 +304,6 @@ namespace top
             uint256_t   output;
             hasher.update(data, numBytes);
             hasher.get_hash(output);
-#ifdef ENABLE_HASH_METRICS
-            XMETRICS_GAUGE(metrics::cpu_hash_256_calc, 1);
-#endif
             return output;
         }
         uint256_t  xsha2_256_t::digest(const std::string & text)
@@ -314,9 +312,6 @@ namespace top
             uint256_t   output;
             hasher.update(text);
             hasher.get_hash(output);
-#ifdef ENABLE_HASH_METRICS
-            XMETRICS_GAUGE(metrics::cpu_hash_256_calc, 1);
-#endif
             return output;
         }
         ////////////////////////////////////xsha2_512_t////////////////////////////////////////////////
