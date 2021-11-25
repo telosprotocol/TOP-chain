@@ -367,7 +367,7 @@ public:
         for (size_t i = 0; i < account_num; i++) {
             xstake::xreg_node_info node;
             node.m_account = common::xaccount_address_t{test_accounts[i]};
-            node.m_registered_role = common::xrole_type_t::advance;
+            node.m_registered_role = common::xminer_type_t::advance;
             node.m_vote_amount = 10;
             node.m_account_mortgage = 10*TOP_UNIT; 
             map_nodes.insert({node.m_account, node});
@@ -486,7 +486,7 @@ public:
         for (size_t i = 0; i < account_num; i++) {
             xstake::xreg_node_info node;
             node.m_account = common::xaccount_address_t{test_accounts[i]};
-            node.m_registered_role = common::xrole_type_t::advance;
+            node.m_registered_role = common::xminer_type_t::advance;
             node.m_vote_amount = 10;
             node.m_account_mortgage = 10*TOP_UNIT; 
             map_nodes.insert({node.m_account, node});
@@ -648,7 +648,7 @@ TEST_F(xtest_reward_algorithm_t, test_stake) {
         standby_node_info.stake_container.insert({common::xnode_type_t::consensus_auditor, (100 + index) * 10000});
         standby_node_info.stake_container.insert({common::xnode_type_t::consensus_validator, (100 + index) * 10000});
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = (m_node_type == common::xnode_type_t::validator) ? common::xrole_type_t::validator : common::xrole_type_t::advance;
+        standby_node_info.user_request_role = (m_node_type == common::xnode_type_t::validator) ? common::xminer_type_t::validator : common::xminer_type_t::advance;
 #endif
         standby_network_result.result_of(m_node_type).insert({node_id, standby_node_info}).second;
     }

@@ -9,4 +9,4 @@
 
 #include <msgpack.hpp>
 
-MSGPACK_ADD_ENUM(top::common::xrole_type_t)
+MSGPACK_ADD_ENUM(top::common::xminer_type_t)

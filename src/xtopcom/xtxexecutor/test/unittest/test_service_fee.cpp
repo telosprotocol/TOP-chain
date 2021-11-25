@@ -48,7 +48,7 @@ TEST_F(test_service_fee, registerNode) {
     data::xaction_run_contract run_con;
     base::xstream_t stream(base::xcontext_t::instance());
     stream << m_source_account;
-    auto role = common::xrole_type_t::edge;
+    auto role = common::xminer_type_t::edge;
     stream << static_cast<uint64_t>(role);
     std::string value = std::string((const char*)stream.data(), stream.size());
     run_con.serialze_to(m_trans->get_transaction()->get_target_action(), "registerNode", value);
@@ -88,7 +88,7 @@ TEST_F(test_service_fee, node_register_not_enough_balance) {
     data::xaction_run_contract run_con;
     base::xstream_t stream(base::xcontext_t::instance());
     stream << m_source_account;
-    auto role = common::xrole_type_t::edge;
+    auto role = common::xminer_type_t::edge;
     stream << static_cast<uint64_t>(role);
     std::string value = std::string((const char*)stream.data(), stream.size());
     run_con.serialze_to(m_trans->get_transaction()->get_target_action(), "registerNode", value);
