@@ -11,7 +11,7 @@
 
 NS_BEG2(top, common)
 
-enum class xenum_old_node_type : std::uint32_t {
+enum class xenum_lagacy_node_type : std::uint32_t {
     /**
      * @brief Invalid node type.
      */
@@ -91,7 +91,7 @@ enum class xenum_old_node_type : std::uint32_t {
      */
     all = 0x0000FFFF,
 };
-using xold_node_type_t = xenum_old_node_type;
+using xlagacy_node_type_t = xenum_lagacy_node_type;
 
 /**
  * @brief Node type.  The type is devided into two parts, the real part and the virtual part.

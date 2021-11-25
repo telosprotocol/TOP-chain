@@ -41,7 +41,7 @@ TEST_F(xtest_msgpack, msgpack_big_size) {
     for (int i = 0; i < 1000000; ++i) {
         xstandby_node_info_t new_node_info;
 #if defined (XENABLE_MOCK_ZEC_STAKE)
-        new_node_info.user_request_role = common::xrole_type_t::advance;
+        new_node_info.user_request_role = common::xminer_type_t::advance;
 #endif
         new_node_info.consensus_public_key = xpublic_key_t{};
         common::xnode_id_t xnode_id{"T-00000000000000000000000000000" + std::to_string(i)};
@@ -57,13 +57,13 @@ TEST_F(xtest_msgpack, msgpack_big_size) {
 
         common::xnode_id_t xnode_id2{"T-00000000000000000000000000001" + std::to_string(i)};
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-        new_node_info.user_request_role = common::xrole_type_t::edge;
+        new_node_info.user_request_role = common::xminer_type_t::edge;
 #endif
         standby_result_store.result_of(common::xtopchain_network_id).insert({xnode_id2, new_node_info});
 
         common::xnode_id_t xnode_id3{"T-00000000000000000000000000002" + std::to_string(i)};
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-        new_node_info.user_request_role = common::xrole_type_t::validator;
+        new_node_info.user_request_role = common::xminer_type_t::validator;
 #endif
         standby_result_store.result_of(common::xtopchain_network_id).insert({xnode_id3, new_node_info});
     }

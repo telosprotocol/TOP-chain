@@ -107,7 +107,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
     for(int i = 0; i < 5+10; i++){
         std::string name = "edge" + std::to_string(i+1); 
         xreg_node_info node;
-        node.m_registered_role = common::xrole_type_t::edge;
+        node.m_registered_role = common::xminer_type_t::edge;
         node.m_vote_amount = 0;
         if(i < 5){
             node.m_account_mortgage = 0;
@@ -119,7 +119,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
     for(int i = 0; i < 7+14+21; i++){
         std::string name = "archive" + std::to_string(i+1); 
         xreg_node_info node;
-        node.m_registered_role = common::xrole_type_t::archive;
+        node.m_registered_role = common::xminer_type_t::archive;
         if(i < 7){
             node.m_account_mortgage = 0;
             node.m_vote_amount = 0;
@@ -135,7 +135,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
     for(int i = 0; i < 6+12+18; i++){
         std::string name = "advance" + std::to_string(i+1); 
         xreg_node_info node;
-        node.m_registered_role = common::xrole_type_t::advance;
+        node.m_registered_role = common::xminer_type_t::advance;
         if(i < 6){
             node.m_account_mortgage = 0;
             node.m_vote_amount = 0;
@@ -151,7 +151,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
     for(int i = 0; i < 8+16; i++){
         std::string name = "consensus" + std::to_string(i+1); 
         xreg_node_info node;
-        node.m_registered_role = common::xrole_type_t::validator;
+        node.m_registered_role = common::xminer_type_t::validator;
         node.m_vote_amount = 0;
         if(i < 8){
             node.m_account_mortgage = 0;
@@ -232,9 +232,9 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
             node.first = common::xaccount_address_t{"node1_" + std::to_string(i+1)};
             node.second.m_account = common::xaccount_address_t{node.first};
             if(role == 0){
-                node.second.m_registered_role = common::xrole_type_t::advance;
+                node.second.m_registered_role = common::xminer_type_t::advance;
             }else{
-                node.second.m_registered_role = common::xrole_type_t::validator;
+                node.second.m_registered_role = common::xminer_type_t::validator;
             }
             node.second.m_vote_amount = 15;
             node.second.m_account_mortgage = 10*TOP_UNIT; 
@@ -249,23 +249,23 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
                 node.second.m_vote_amount = 15;
                 node.second.m_account_mortgage = 0; 
                 if(role == 0){
-                    node.second.m_registered_role = common::xrole_type_t::advance;
+                    node.second.m_registered_role = common::xminer_type_t::advance;
                 }else{
-                    node.second.m_registered_role = common::xrole_type_t::validator;
+                    node.second.m_registered_role = common::xminer_type_t::validator;
                 }
             }else if(i < 2){
                 node.second.m_vote_amount = 5;
                 if(role == 0){
-                    node.second.m_registered_role = common::xrole_type_t::advance;
+                    node.second.m_registered_role = common::xminer_type_t::advance;
                     node.second.m_account_mortgage = 10*TOP_UNIT; 
                 }else{
-                    node.second.m_registered_role = common::xrole_type_t::validator;
+                    node.second.m_registered_role = common::xminer_type_t::validator;
                     node.second.m_account_mortgage = 0; 
                 }
             }else if(i < 3){
                 node.second.m_vote_amount = 15;
                 node.second.m_account_mortgage = 10*TOP_UNIT; 
-                node.second.m_registered_role = common::xrole_type_t::archive;
+                node.second.m_registered_role = common::xminer_type_t::archive;
             }
             map_nodes.insert(node);
         } 
@@ -306,7 +306,7 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
 
 TEST_F(xtest_reward_contract_t, test_calc_edger_worklaod_rewards) { 
     xreg_node_info node;
-    node.m_registered_role = common::xrole_type_t::edge;
+    node.m_registered_role = common::xminer_type_t::edge;
     node.m_account_mortgage = 0;
     std::vector<uint32_t> edger_num{10, 0, 3};
     top::xstake::uint128_t edge_workload_rewards = 70;
@@ -324,7 +324,7 @@ TEST_F(xtest_reward_contract_t, test_calc_edger_worklaod_rewards) {
 
 TEST_F(xtest_reward_contract_t, test_calc_archiver_worklaod_rewards) { 
     xreg_node_info node;
-    node.m_registered_role = common::xrole_type_t::archive;
+    node.m_registered_role = common::xminer_type_t::archive;
     node.m_account_mortgage = 0;
     node.m_vote_amount = 0;
     std::vector<uint32_t> archiver_num{10, 0, 3};
@@ -366,7 +366,7 @@ TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
     // node 
     xreg_node_info node;
     node.m_account = common::xaccount_address_t{"node1_1"};
-    node.m_registered_role = common::xrole_type_t::validator;
+    node.m_registered_role = common::xminer_type_t::validator;
     node.m_account_mortgage = 100; 
     calc_validator_workload_rewards(
             node, validator_num, validator_workloads_detail, validator_group_workload_rewards, reward_to_self);
@@ -410,7 +410,7 @@ TEST_F(xtest_reward_contract_t, test_calc_auditor_worklaod_rewards) {
     xreg_node_info node;
     node.m_vote_amount = 0;
     node.m_account = common::xaccount_address_t{"node1_1"};
-    node.m_registered_role = common::xrole_type_t::advance;
+    node.m_registered_role = common::xminer_type_t::advance;
     node.m_account_mortgage = 100; 
     calc_auditor_workload_rewards(
             node, auditor_num, auditor_workloads_detail, auditor_group_workload_rewards, reward_to_self);
@@ -469,14 +469,14 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
                 node.m_account_mortgage = 0;
             }
             if(node_idx < 4){ // edger
-                node.m_registered_role = common::xrole_type_t::edge;
+                node.m_registered_role = common::xminer_type_t::edge;
             }else if(node_idx < 4+20){ // auditor
-                node.m_registered_role = common::xrole_type_t::advance;
+                node.m_registered_role = common::xminer_type_t::advance;
                 if(node.m_account_mortgage == 0){
                     node.m_account_mortgage = 1e9;
                 }
             }else{ // validator
-                node.m_registered_role = common::xrole_type_t::validator;
+                node.m_registered_role = common::xminer_type_t::validator;
             } 
             property_param.map_nodes.insert(std::make_pair(common::xaccount_address_t{"node" + std::to_string(node_idx+1 + table*64)}, node));
         }
@@ -1939,7 +1939,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         ss << std::setw(40) << std::setfill('0') << 1;
         node.m_account = ss.str();
         node.m_account_mortgage = 0;
-        node.m_registered_role = common::xrole_type_t::advance;
+        node.m_registered_role = common::xminer_type_t::advance;
         map_nodes[ss.str()] = node;
     }
     preprocess_workload(true, auditor_clusters_workloads2, map_nodes, cluster_zero_workload, shard_zero_workload);
@@ -1953,7 +1953,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         ss << std::setw(40) << std::setfill('0') << 1;
         node.m_account = ss.str();
         node.m_account_mortgage = ASSET_TOP(1000);
-        node.m_registered_role = common::xrole_type_t::advance;
+        node.m_registered_role = common::xminer_type_t::advance;
         node.m_vote_amount = 900;
         map_nodes[ss.str()] = node;
     }
@@ -1970,7 +1970,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         ss << std::setw(40) << std::setfill('0') << 1;
         node.m_account = ss.str();
         node.m_account_mortgage = 1000;
-        node.m_registered_role = common::xrole_type_t::edge;
+        node.m_registered_role = common::xminer_type_t::edge;
         node.m_vote_amount = 1900;
         map_nodes[ss.str()] = node;
     }
@@ -1988,7 +1988,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         node_account = ss.str();
         node.m_account = ss.str();
         node.m_account_mortgage = ASSET_TOP(1000);
-        node.m_registered_role = common::xrole_type_t::advance;
+        node.m_registered_role = common::xminer_type_t::advance;
         node.m_vote_amount = 1900;
         map_nodes[ss.str()] = node;
     }
@@ -2021,7 +2021,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         ss << std::setw(40) << std::setfill('0') << 101;
         node.m_account = ss.str();
         node.m_account_mortgage = 0;
-        node.m_registered_role = common::xrole_type_t::consensus;
+        node.m_registered_role = common::xminer_type_t::consensus;
         node.m_vote_amount = 900;
         map_nodes[ss.str()] = node;
     }
@@ -2038,7 +2038,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         ss << std::setw(40) << std::setfill('0') << 101;
         node.m_account = ss.str();
         node.m_account_mortgage = 10000;
-        node.m_registered_role = common::xrole_type_t::edge;
+        node.m_registered_role = common::xminer_type_t::edge;
         node.m_vote_amount = 900;
         map_nodes[ss.str()] = node;
     }
@@ -2056,7 +2056,7 @@ TEST_F(test_suite_zec_reward_contract_t, preprocess_workload) {
         node_account = ss.str();
         node.m_account = ss.str();
         node.m_account_mortgage = 10000;
-        node.m_registered_role = common::xrole_type_t::consensus;
+        node.m_registered_role = common::xminer_type_t::consensus;
         node.m_vote_amount = 900;
         map_nodes[ss.str()] = node;
     }
@@ -2309,7 +2309,7 @@ TEST_F(test_suite_zec_reward_contract_t, test_issue_model) {
         for (auto j = 0; j < 2; j++) {
             xreg_node_info node;
             node.m_account = node_accounts[j];
-            node.m_registered_role = common::xrole_type_t::advance;
+            node.m_registered_role = common::xminer_type_t::advance;
             node.m_account_mortgage = node.get_required_min_deposit();
             node.m_support_ratio_denominator = 50;
             node.m_auditor_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
@@ -2330,7 +2330,7 @@ TEST_F(test_suite_zec_reward_contract_t, test_issue_model) {
         for (auto j = 0; j < 2; j++) {
             xreg_node_info node;
             node.m_account = node_accounts[j];
-            node.m_registered_role = common::xrole_type_t::consensus;
+            node.m_registered_role = common::xminer_type_t::consensus;
             node.m_account_mortgage = node.get_required_min_deposit();
             node.m_support_ratio_denominator = 50;
             node.m_validator_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
@@ -2348,7 +2348,7 @@ TEST_F(test_suite_zec_reward_contract_t, test_issue_model) {
             node_accounts = generate_accounts(i, 1);
             xreg_node_info node;
             node.m_account = node_accounts[0];
-            node.m_registered_role = common::xrole_type_t::edge;
+            node.m_registered_role = common::xminer_type_t::edge;
             node.m_account_mortgage = node.get_required_min_deposit();
             node.nickname = std::string("edge_") + base::xstring_utl::tostring(i);
             table_nodes.push_back(node);

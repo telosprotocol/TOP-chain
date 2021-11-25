@@ -36,7 +36,7 @@ public:
     std::string                           publickey;                 // node public key(hex)
     std::string                           signkey;                 // node private key(hex)
 #if defined XENABLE_MOCK_ZEC_STAKE
-    common::xrole_type_t                  node_role_type;
+    common::xminer_type_t                  node_role_type;
 #endif
 private:
     xuser_params() = default;
