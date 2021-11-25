@@ -75,7 +75,6 @@ protected:
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
-    bool m_is_forked{false}; // for blacklist fork
 };
 
 class xedge_http_method : public xedge_method_base<xedge_http_handler> {
@@ -201,7 +200,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         xdbg_rpc("[sendTransaction_method] in blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
 
         // filter out black list transaction
-        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_target_addr()) || xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
+        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
             xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};

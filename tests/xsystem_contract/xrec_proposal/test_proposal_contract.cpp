@@ -14,12 +14,12 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xstake/xstake_algorithm.h"
 #include "xconfig/xconfig_update_parameter_action.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 
 #define private public
+#include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include "xdata/xgenesis_data.h"
@@ -315,6 +315,25 @@ TEST_F(test_proposal_contract, test_incremental_utl) {
         ASSERT_EQ(function_string, target_string);
     }
 
+
+}
+
+TEST_F(test_proposal_contract, test_check_bwlist) {
+    xrec_proposal_contract api{common::xnetwork_id_t{1}};
+
+    {
+        auto addr_list = "T00000LMcqLyTzsk3HB8dhF51i6xEcVEuyX1Vx6p,T00000LRoHe2yUmmv5mkpcBhpeeypr24ZmSVVDfw,T80000bf73b170b3a14ec992e4c7a05625008e31b04161";
+        EXPECT_NO_THROW(api.check_bwlist_proposal(addr_list));
+    }
+
+    {
+        auto addr_list = "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh";
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = "Ta0001";
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
 
 }
 

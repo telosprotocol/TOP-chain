@@ -320,8 +320,7 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
     auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
     if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
         xdbg("[xtx_verifier::verify_send_tx_legitimacy] in blacklist fork point time, clock height: %" PRIu64, logic_clock);
-        if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_target_addr())
-            || xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+        if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
             xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
             return xverifier_error::xverifier_error_tx_blacklist_invalid;
         }
