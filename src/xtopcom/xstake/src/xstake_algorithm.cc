@@ -172,83 +172,83 @@ int32_t xrefund_info::do_read(base::xstream_t & stream) {
 }
 
 template <>
-uint64_t minimal_deposit_of<common::xrole_type_t::edge>() {
+uint64_t minimal_deposit_of<common::xminer_type_t::edge>() {
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_edge_deposit);
 }
 
 template <>
-uint64_t minimal_deposit_of<common::xrole_type_t::archive>() {
+uint64_t minimal_deposit_of<common::xminer_type_t::archive>() {
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit);
 }
 
 template <>
-uint64_t minimal_deposit_of<common::xrole_type_t::full_node>() {
+uint64_t minimal_deposit_of<common::xminer_type_t::full_node>() {
     return 0;
 }
 
 template <>
-uint64_t minimal_deposit_of<common::xrole_type_t::advance>() {
+uint64_t minimal_deposit_of<common::xminer_type_t::advance>() {
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_deposit);
 }
 
 template <>
-uint64_t minimal_deposit_of<common::xrole_type_t::validator>() {
+uint64_t minimal_deposit_of<common::xminer_type_t::validator>() {
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_deposit);
 }
 
 template <>
-bool could_be<common::xnode_type_t::rec>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::advance>(miner_type);
+bool could_be<common::xnode_type_t::rec>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::zec>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::advance>(miner_type);
+bool could_be<common::xnode_type_t::zec>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::consensus_auditor>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::advance>(miner_type);
+bool could_be<common::xnode_type_t::consensus_auditor>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::auditor>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::advance>(miner_type);
+bool could_be<common::xnode_type_t::auditor>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::consensus_validator>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::validator>(miner_type) || common::has<common::xrole_type_t::advance>(miner_type);
+bool could_be<common::xnode_type_t::consensus_validator>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::validator>(miner_type) || common::has<common::xminer_type_t::advance>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::validator>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::validator>(miner_type) || common::has<common::xrole_type_t::advance>(miner_type);
+bool could_be<common::xnode_type_t::validator>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::validator>(miner_type) || common::has<common::xminer_type_t::advance>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::storage_archive>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::archive>(miner_type);
+bool could_be<common::xnode_type_t::storage_archive>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::archive>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::archive>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::archive>(miner_type);
+bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::archive>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::storage_full_node>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::full_node>(miner_type);
+bool could_be<common::xnode_type_t::storage_full_node>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::full_node>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::full_node>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::full_node>(miner_type);
+bool could_be<common::xnode_type_t::full_node>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::full_node>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::edge>(common::xrole_type_t const miner_type) {
-    return common::has<common::xrole_type_t::edge>(miner_type);
+bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::edge>(miner_type);
 }
 
 bool xreg_node_info::could_be_rec() const noexcept {
@@ -313,24 +313,24 @@ uint64_t xreg_node_info::deposit() const noexcept {
 
 uint64_t xreg_node_info::get_required_min_deposit() const noexcept {
     uint64_t min_deposit = 0;
-    if (miner_type_has<common::xrole_type_t::edge>()) {
-        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::edge>());
+    if (miner_type_has<common::xminer_type_t::edge>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::edge>());
     }
 
-    if (miner_type_has<common::xrole_type_t::validator>()) {
-        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::validator>());
+    if (miner_type_has<common::xminer_type_t::validator>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::validator>());
     }
 
-    if (miner_type_has<common::xrole_type_t::advance>()) {
-        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::advance>());
+    if (miner_type_has<common::xminer_type_t::advance>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::advance>());
     }
 
-    if (miner_type_has<common::xrole_type_t::archive>()) {
-        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::archive>());
+    if (miner_type_has<common::xminer_type_t::archive>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::archive>());
     }
 
-    if (miner_type_has<common::xrole_type_t::full_node>()) {
-        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xrole_type_t::full_node>());
+    if (miner_type_has<common::xminer_type_t::full_node>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::full_node>());
     }
 
     return min_deposit;

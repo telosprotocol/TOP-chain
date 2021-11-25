@@ -26,33 +26,33 @@ class xtop_vhost_fixture : public xnetwork_driver_fixture_t<N, TimerDriverCount,
 
 protected:
 
-    std::array<common::xrole_type_t, N> m_roles{};
+    std::array<common::xminer_type_t, N> m_roles{};
     std::unique_ptr<xvhost_manager_t<N>> m_vhost_manager{};
     std::atomic<std::size_t> m_counter{ 0 };
 
-    //std::array<common::xrole_type_t, 4> const predefined_roles{
-    //        common::xrole_type_t::edge,
-    //        common::xrole_type_t::advance,
-    //        common::xrole_type_t::validator,
-    //        common::xrole_type_t::archive
+    //std::array<common::xminer_type_t, 4> const predefined_roles{
+    //        common::xminer_type_t::edge,
+    //        common::xminer_type_t::advance,
+    //        common::xminer_type_t::validator,
+    //        common::xminer_type_t::archive
     //};
 
 public:
     xtop_vhost_fixture() {
         for (auto i = 0u; i < 2; ++i) {
-            m_roles[i] = common::xrole_type_t::edge;
+            m_roles[i] = common::xminer_type_t::edge;
         }
 
         for (auto i = 2u; i < 3 * N / 8; ++i) {
-            m_roles[i] = common::xrole_type_t::advance;
+            m_roles[i] = common::xminer_type_t::advance;
         }
 
         for (auto i = 3 * N / 8; i < 5 * N / 8; ++i) {
-            m_roles[i] = common::xrole_type_t::archive;
+            m_roles[i] = common::xminer_type_t::archive;
         }
 
         for (auto i = 5 * N / 8; i < N; ++i) {
-            m_roles[i] = common::xrole_type_t::validator;
+            m_roles[i] = common::xminer_type_t::validator;
         }
 
         m_vhost_manager = top::make_unique<xvhost_manager_t<N>>(std::addressof(this->m_io_manager),
@@ -78,7 +78,7 @@ protected:
     }
 
     void
-    reset_vhost_manager(std::array<common::xrole_type_t, N> const & roles) {
+    reset_vhost_manager(std::array<common::xminer_type_t, N> const & roles) {
         m_vhost_manager->stop();
         m_roles = roles;
         m_vhost_manager.reset();
