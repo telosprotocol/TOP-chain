@@ -11,6 +11,7 @@
 #include <cmath>
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -244,12 +245,12 @@ namespace top
                 _Tv v;
                 h.reset();
                 h.update(value);
-                if (!h.get_hash(v)) return std::string();
+                if (!get_hash(h, v)) return std::string();
 
                 for(int i=1;i<times;i++) {
                     h.reset();
                     h.update(v.data(), v.size());
-                    if (!h.get_hash(v)) return std::string();
+                    if (!get_hash(h, v)) return std::string();
                 }
 
                 return std::string((char*) v.data(), v.size());
@@ -267,7 +268,7 @@ namespace top
                 h.update(value);
 
                 _Tv v;
-                if (!h.get_hash(v)) return std::string();
+                if (!get_hash(h, v)) return std::string();
 
                 return std::string((char*) v.data(), v.size());
             }
@@ -285,9 +286,15 @@ namespace top
                 h.update(right);
 
                 _Tv v;
-                if (!h.get_hash(v)) return std::string();
+                if (!get_hash(h, v)) return std::string();
 
                 return std::string((char*) v.data(), v.size());
+            }
+
+            bool get_hash(_Th &h, _Tv &v)
+            {   
+                XMETRICS_GAUGE(metrics::cpu_merkle_hash_calc, 1);
+                return h.get_hash(v);
             }
 
             bool hash_list(std::vector<std::string>& nodes)
