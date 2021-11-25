@@ -215,6 +215,11 @@ void xsync_pusher_t::on_timer() {
         }
     }
 
+    if (self_position < 0) {
+        xsync_info("xsync_pusher_t::on_timer, not this validator, %s", self_addr.to_string().c_str());
+        return;
+    }
+
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
     std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
