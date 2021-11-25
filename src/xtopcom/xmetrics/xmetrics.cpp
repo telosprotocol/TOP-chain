@@ -322,7 +322,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_push_send_fail_account_not_in_charge);
         RETURN_METRICS_NAME(txpool_push_send_fail_nonce_expired);
         RETURN_METRICS_NAME(txpool_push_send_fail_nonce_duplicate);
-         RETURN_METRICS_NAME(txpool_push_send_fail_other);
+        RETURN_METRICS_NAME(txpool_push_send_fail_replaced);
+        RETURN_METRICS_NAME(txpool_push_send_fail_other);
         RETURN_METRICS_NAME(txpool_send_tx_timeout);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_send);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_recv);

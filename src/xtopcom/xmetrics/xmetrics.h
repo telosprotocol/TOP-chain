@@ -349,6 +349,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_push_send_fail_account_not_in_charge,
     txpool_push_send_fail_nonce_expired,
     txpool_push_send_fail_nonce_duplicate,
+    txpool_push_send_fail_replaced,
     txpool_push_send_fail_other,
     txpool_send_tx_timeout,
     txpool_tx_delay_from_push_to_pack_send,

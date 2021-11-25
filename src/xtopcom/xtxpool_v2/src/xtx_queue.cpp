@@ -179,6 +179,7 @@ int32_t xcontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         m_send_tx_queue_internal->erase_ready_tx(m_txs[try_replace_idx]->get_tx()->get_tx_hash_256());
         m_txs.at(try_replace_idx) = tx_ent;
         m_send_tx_queue_internal->insert_ready_tx(tx_ent);
+        XMETRICS_GAUGE(metrics::txpool_push_send_fail_replaced, 1);
     }
     return xsuccess;
 }
@@ -233,6 +234,7 @@ int32_t xuncontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         } else {
             m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256());
             m_txs.erase(it);
+            XMETRICS_GAUGE(metrics::txpool_push_send_fail_replaced, 1);
         }
     }
     m_send_tx_queue_internal->insert_non_ready_tx(tx_ent);
