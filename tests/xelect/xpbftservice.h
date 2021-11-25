@@ -109,9 +109,9 @@ namespace top
 
             virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  neighbor_crypto_keys() const;
 
-            virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  parent_crypto_keys(common::xrole_type_t const parent_type ) const;
+            virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  parent_crypto_keys(common::xminer_type_t const parent_type ) const;
 
-            virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  child_crypto_keys(common::xcluster_id_t const & cid, common::xrole_type_t const child_type) const
+            virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  child_crypto_keys(common::xcluster_id_t const & cid, common::xminer_type_t const child_type) const
             {
                 return std::map<xvnode_address_t, xcrypto_key_t<pub>>();
             }
@@ -121,13 +121,13 @@ namespace top
                 return xvnode_address_t();
             }
 
-            virtual std::vector<xvnode_address_t>   parent_addresses(common::xrole_type_t const parent_type = common::xrole_type_t::advance) const
+            virtual std::vector<xvnode_address_t>   parent_addresses(common::xminer_type_t const parent_type = common::xminer_type_t::advance) const
             {
                 //printf("xvnetwork_driver_face::parent_addresses \n");
                 return std::vector<xvnode_address_t>();
             }
 
-            virtual std::vector<xvnode_address_t>   child_addresses(common::xcluster_id_t const & cid, common::xrole_type_t const child_type) const
+            virtual std::vector<xvnode_address_t>   child_addresses(common::xcluster_id_t const & cid, common::xminer_type_t const child_type) const
             {
                 printf("xvnetwork_driver_face::child_addresses \n");
                 return std::vector<xvnode_address_t>();
@@ -135,7 +135,7 @@ namespace top
 
             virtual std::vector<xvnode_address_t>   neighbor_addresses() const;
 //
-//            virtual std::vector<xvnode_address_t>   child_addresses(common::xrole_type_t const child_type = common::xrole_type_t::validator) const
+//            virtual std::vector<xvnode_address_t>   child_addresses(common::xminer_type_t const child_type = common::xminer_type_t::validator) const
 //            {
 //                printf("xvnetwork_driver_face::child_addresses \n");
 //                return std::vector<xvnode_address_t>();
@@ -187,7 +187,7 @@ namespace top
 
             virtual std::vector<xvnode_address_t>                   neighbor_addresses();
             virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  neighbor_crypto_keys();
-            virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  parent_crypto_keys(common::xrole_type_t const parent_type ) const;
+            virtual std::map<xvnode_address_t, xcrypto_key_t<pub>>  parent_crypto_keys(common::xminer_type_t const parent_type ) const;
         private:
             std::vector<xvnetwork_node_t*> shard_nodes;
             std::string                    m_public_key;

@@ -64,7 +64,7 @@ void xchain_params::load_user_config() {
         assert(0);
     }
     user_params.node_role_type = common::to_role_type(role_type);
-    if (user_params.node_role_type == common::xrole_type_t::invalid) {
+    if (user_params.node_role_type == common::xminer_type_t::invalid) {
         xerror("[user config] node_type invalid");
         throw std::logic_error{"node_type invalid"};
     }

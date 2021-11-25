@@ -22,7 +22,7 @@ public:
     xpublic_key_t consensus_public_key{};  // public key for consensus business
 
 #if defined XENABLE_MOCK_ZEC_STAKE
-    common::xrole_type_t user_request_role{common::xrole_type_t::invalid};
+    common::xminer_type_t user_request_role{common::xminer_type_t::invalid};
 #endif
     std::string program_version{};
     bool is_genesis_node{false};
