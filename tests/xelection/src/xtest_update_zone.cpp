@@ -44,7 +44,7 @@ TEST(xtest_update_committee_zone, _) {
         standby_node_info.stake(xnode_type_t::rec, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
 
@@ -107,7 +107,7 @@ TEST(xtest_update_zec_zone, _) {
         standby_node_info.stake(xnode_type_t::zec, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
 
@@ -170,7 +170,7 @@ TEST(xtest_update_edge_zone, _) {
         standby_node_info.stake(xnode_type_t::edge, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
 
@@ -233,7 +233,7 @@ TEST(xtest_update_archive_zone, _) {
         standby_node_info.stake(xnode_type_t::storage_archive, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
@@ -306,7 +306,7 @@ TEST(xtest_update_consensus_zone, _) {
         standby_node_info.stake(xnode_type_t::consensus_auditor, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
 
@@ -328,7 +328,7 @@ TEST(xtest_update_consensus_zone, _) {
         standby_node_info.stake(xnode_type_t::consensus_validator, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::validator;
+        standby_node_info.user_request_role = top::common::xminer_type_t::validator;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
@@ -396,7 +396,7 @@ TEST(xtest_update_committee_zone, update_twice) {
         standby_node_info.stake(zone_type, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
 
@@ -435,7 +435,7 @@ TEST(xtest_update_committee_zone, update_twice) {
         standby_node_info.stake(zone_type, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::advance;
+        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
 #endif
         standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
 

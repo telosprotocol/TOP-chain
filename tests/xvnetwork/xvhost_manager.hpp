@@ -42,7 +42,7 @@ public:
     xtop_vhost_manager(network::tests::xobject_manager_t<xasio_io_context_wrapper_t> * io_manager,
                        network::tests::xobject_manager_t<xtimer_driver_t> * timer_driver_manager,
                        network::tests::xobject_manager_t<network::xnetwork_driver_face_t> * network_driver_manager,
-                       std::array<common::xrole_type_t, N> const & roles,
+                       std::array<common::xminer_type_t, N> const & roles,
                        common::xnetwork_id_t const & network_id)
         : m_io_manager{ make_observer(io_manager) }
         , m_timer_driver_manager{ make_observer(timer_driver_manager) }

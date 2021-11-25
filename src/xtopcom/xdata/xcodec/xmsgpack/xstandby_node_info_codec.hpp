@@ -67,7 +67,7 @@ struct convert<top::data::election::xstandby_node_info_t> final {
 
 #if defined XENABLE_MOCK_ZEC_STAKE
         case xstandby_node_info_user_request_role_index: {
-            node_info.user_request_role = o.via.array.ptr[xstandby_node_info_user_request_role_index].as<top::common::xrole_type_t>();
+            node_info.user_request_role = o.via.array.ptr[xstandby_node_info_user_request_role_index].as<top::common::xminer_type_t>();
             XATTRIBUTE_FALLTHROUGH;
         }
 #endif
