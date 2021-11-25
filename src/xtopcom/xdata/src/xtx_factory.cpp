@@ -5,6 +5,7 @@
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtx_factory.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 
 namespace top { namespace data {
 
@@ -54,11 +55,13 @@ xtransaction_ptr_t xtx_factory::create_contract_subtx_transfer(const std::string
                                                                 uint64_t amount,
                                                                 uint64_t timestamp) {
     // XTODO if enable RPC_V2, should add fork time future
-#ifdef RPC_V2
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-#else
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-#endif
+    xtransaction_ptr_t tx;
+    if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(timestamp)) {
+        tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
+    } else {
+        tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
+    }
+
     data::xproperty_asset asset(amount);
     tx->make_tx_transfer(asset);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
@@ -79,11 +82,12 @@ xtransaction_ptr_t xtx_factory::create_contract_subtx_call_contract(const std::s
                                                                     const std::string& func_param,
                                                                     uint64_t timestamp) {
     // XTODO if enable RPC_V2, should add fork time future
-#ifdef RPC_V2
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-#else
-    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-#endif
+    xtransaction_ptr_t tx;
+    if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(timestamp)) {
+        tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
+    } else {
+        tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
+    }
     data::xproperty_asset asset(0);
     tx->make_tx_run_contract(asset, func_name, func_param);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);

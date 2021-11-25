@@ -19,13 +19,7 @@ namespace xChainSDK {
 
     class task_info {
     public:
-        task_info() : use_transaction(false) {
-#ifdef RPC_V2
-            trans_action = top::data::xtx_factory::create_tx();
-#else
-            trans_action = top::data::xtx_factory::create_tx(top::data::xtransaction_version_1);
-#endif
-        }
+        task_info();
         virtual ~task_info() {
         //    std::cout << "destory task_info" << std::endl;
         }

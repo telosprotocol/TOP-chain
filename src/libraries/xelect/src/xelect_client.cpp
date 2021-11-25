@@ -15,6 +15,7 @@
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtx_factory.h"
@@ -84,11 +85,15 @@ void xelect_client_imp::bootstrap_node_join() {
                 auto account_info_response = client.request("POST", "/", account_info_request);
                 const auto& account_info_response_str = account_info_response->content.string();
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
-#ifdef RPC_V2
-                xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-#else
-                xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-#endif
+
+                xtransaction_ptr_t tx;
+                auto fire_time = tx->get_gmttime_s();
+                if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(fire_time)) {
+                    tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
+                } else {
+                    tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
+                }
+
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
                 param_stream << user_params.account;
                 param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
@@ -128,11 +133,12 @@ void xelect_client_imp::bootstrap_node_join() {
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;
                 xJson::Value tx_json;
-#ifdef RPC_V2
-                tx->parse_to_json(tx_json["params"]);
-#else
-                tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V1);
-#endif
+                if (tx->get_tx_version() == xtransaction_version_2) {
+                    tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V2);
+                } else {
+                    tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V1);
+                }
+
                 tx_json["params"]["authorization"] = data::uint_to_str(tx->get_authorization().data(), tx->get_authorization().size());
                 xdbg("tx_json: %s", writer.write(tx_json).c_str());
                 send_tx_request += "&body=" + SimpleWeb::Percent::encode(writer.write(tx_json));

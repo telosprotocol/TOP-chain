@@ -25,6 +25,7 @@ namespace top {
             static xchain_fork_config_t const & chain_fork_config() noexcept;
             static bool is_forked(top::optional<xfork_point_t> const& fork_point, uint64_t target) noexcept;
             static bool is_block_forked(uint64_t target) noexcept;
+            static bool is_tx_forked(uint64_t fire_timestamp) noexcept;
 
         public:
             static void    init();

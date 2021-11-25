@@ -18,6 +18,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fork point"},
         };
 
         // !!!change!!! fork time for galileo
@@ -25,6 +26,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fork point"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -32,12 +34,14 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fork point"},
         };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 6456525, "tx v2 fork point"},
         };
 
         // !!!change!!! fork time for galileo
@@ -45,6 +49,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 6456525, "tx v2 fork point"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -52,6 +57,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "block fork point for table receipt"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table receipt protocol fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 6456525, "tx v2 fork point"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
 
@@ -73,6 +79,14 @@ namespace top {
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
             xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
             return  xtop_chain_fork_config_center::is_forked(_fork_config.block_fork_point, target);
+        }
+
+        bool xtop_chain_fork_config_center::is_tx_forked(uint64_t fire_timestamp) noexcept {
+            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
+            auto clock = _fork_config.tx_v2_fork_point.value().point;
+            constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
+            auto clock_time_stamp = clock * 10 + TOP_BEGIN_GMTIME;
+            return fire_timestamp >= clock_time_stamp;
         }
 
         void xtop_chain_fork_config_center::init() {
