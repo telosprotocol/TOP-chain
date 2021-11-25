@@ -14,30 +14,36 @@ namespace top {
 #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "enable archive miner type"},
         };
 
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "enable archive miner type"},
         };
 
         // !!!change!!! fork time for local develop net
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "enable archive miner type"},
         };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable archive miner type"},
         };
 
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable archive miner type"},
         };
 
         // !!!change!!! fork time for local develop net
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "table statistic info fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable archive miner type"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
 
