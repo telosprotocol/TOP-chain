@@ -814,6 +814,7 @@ void xdb_export_tools_t::read_info_from_table_block(const data::xblock_t * block
 #endif
 
     auto unit_headers = block->get_sub_block_headers();
+    table_info.total_unit_block_num += unit_headers.size();
     for (auto & _unit_header : unit_headers) {
         if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
             table_info.empty_unit_block_num++;
