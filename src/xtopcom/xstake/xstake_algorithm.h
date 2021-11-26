@@ -102,7 +102,7 @@ constexpr uint64_t TIMER_BLOCK_HEIGHT_PER_YEAR = 3155815;
  * @return true
  * @return false
  */
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes);
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const enable_archive_miner);
 
 /*#if defined(__LINUX_PLATFORM__) || defined(__MAC_PLATFORM__)
 typedef __uint128_t top::xstake::uint128_t;
@@ -350,6 +350,9 @@ public:
     /// @brief Check to see if this node could be an archive based on miner type.
     bool could_be_archive() const noexcept;
 
+    /// @brief Check to see if this node could be an archive based on minter type.
+    bool legacy_could_be_archive() const noexcept;
+
     /// @brief Check to see if this node could be an edge based on miner type.
     bool could_be_edge() const noexcept;
 
@@ -370,6 +373,9 @@ public:
 
     /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_archive() const noexcept;
+
+    /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool legacy_can_be_archive() const noexcept;
 
     /// @brief Check to see if this node can be an edge based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_edge() const noexcept;
@@ -395,16 +401,6 @@ public:
      */
     bool is_genesis_node() const noexcept {
         return m_genesis_node;
-    }
-
-    /**
-     * @brief Get the deposit
-     *
-     * @return true
-     * @return false
-     */
-    uint64_t get_deposit() const noexcept {
-        return m_account_mortgage;
     }
 
     uint64_t deposit() const noexcept;
