@@ -1,14 +1,15 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xstake/xstake_algorithm.h"
 
 #include "xbasic/xutility.h"
 #include "xdata/xnative_contract_address.h"
+#include "xchain_upgrade/xchain_upgrade_center.h"
 
 NS_BEG2(top, xstake)
 
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes) {
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const enable_archive_miner) {
     uint32_t auditor_num = 0;
     uint32_t validator_num = 0;
     uint32_t archive_num = 0;
@@ -29,7 +30,7 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
              reg_node_info.m_account.c_str(),
              reg_node_info.can_be_auditor(),
              reg_node_info.can_be_validator(),
-             reg_node_info.can_be_archive(),
+             enable_archive_miner ? reg_node_info.can_be_archive() : reg_node_info.legacy_can_be_archive(),
              reg_node_info.can_be_edge(),
              reg_node_info.m_vote_amount);
 
@@ -42,9 +43,17 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         if (reg_node_info.can_be_validator()) {
             validator_num++;
         }
-        if (reg_node_info.can_be_archive()) {
-            archive_num++;
+
+        if (enable_archive_miner) {
+            if (reg_node_info.can_be_archive()) {
+                archive_num++;
+            }
+        } else {
+            if (reg_node_info.legacy_can_be_archive()) {
+                archive_num++;
+            }
         }
+        
         if (reg_node_info.can_be_edge()) {
             edge_num++;
         }
@@ -271,6 +280,10 @@ bool xreg_node_info::could_be_archive() const noexcept {
     return could_be<common::xnode_type_t::storage_archive>(m_registered_role);
 }
 
+bool xreg_node_info::legacy_could_be_archive() const noexcept {
+    return could_be_auditor();
+}
+
 bool xreg_node_info::could_be_edge() const noexcept {
     return could_be<common::xnode_type_t::edge>(m_registered_role);
 }
@@ -293,6 +306,10 @@ bool xreg_node_info::can_be_edge() const noexcept {
 
 bool xreg_node_info::can_be_archive() const noexcept {
     return could_be_archive();
+}
+
+bool xreg_node_info::legacy_can_be_archive() const noexcept {
+    return can_be_auditor();
 }
 
 bool xreg_node_info::can_be_auditor() const noexcept {
@@ -487,9 +504,7 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
         if (m_auditor_credit_numerator < config_min) {
             m_auditor_credit_numerator = config_min;
         }
-
     }
-
 }
 
 void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
@@ -512,13 +527,11 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
             return;
         }
     }
-
-
 }
 
 xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr) {
     std::string value_str;
-    int         ret = store->map_get(top::sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+    int ret = store->map_get(top::sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
 
     if (ret != store::xstore_success || value_str.empty()) {
         xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
@@ -530,8 +543,6 @@ xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, co
 
     node_info.serialize_from(stream);
     return node_info;
-
-
 }
 
 std::string xissue_detail::to_string() const {
