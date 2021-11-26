@@ -94,6 +94,6 @@ std::string
 to_string(xminer_type_t const role);
 
 common::xminer_type_t
-to_role_type(std::string const & node_types);
+to_miner_type(std::string const & node_types);
 
 NS_END2
