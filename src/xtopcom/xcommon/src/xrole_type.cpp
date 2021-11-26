@@ -59,7 +59,7 @@ bool has(xminer_type_t const target, xminer_type_t const input) noexcept {
     return target == (target & input);
 }
 
-common::xminer_type_t to_role_type(std::string const & node_type) {
+common::xminer_type_t to_miner_type(std::string const & node_type) {
     common::xminer_type_t role_type = common::xminer_type_t::invalid;
 
     if (node_type == XMINER_TYPE_EDGE) {

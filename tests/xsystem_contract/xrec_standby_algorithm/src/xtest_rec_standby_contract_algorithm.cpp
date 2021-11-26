@@ -80,7 +80,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_1);
     EXPECT_TRUE(standby_node_info.is_genesis_node == false);
 
-#define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record)
+#define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record, 0)
 
     EXPECT_FALSE(rec_standby_on_timer_update);
 
