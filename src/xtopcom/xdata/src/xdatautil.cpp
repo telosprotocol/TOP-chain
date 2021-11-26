@@ -13,6 +13,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xblock.h"
+#include "xdata/xnative_contract_address.h"
 
 namespace top { namespace data {
 
@@ -34,6 +35,8 @@ bool xdatautil::extract_table_id_from_address(const std::string & address, uint3
 }
 
 bool xdatautil::extract_parts(const std::string& address, std::string& base_addr, uint32_t& table_id) {
+    if (address == sys_drand_addr)
+        return false;
     return deserialize_owner_str(address, base_addr, table_id);
 }
 
