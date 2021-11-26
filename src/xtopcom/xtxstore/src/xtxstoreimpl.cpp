@@ -17,7 +17,8 @@ using common::xstrategy_value_enum_t;
 xtxstoreimpl::xtxstoreimpl(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
   : base::xvtxstore_t()
   , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
-                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})}
+                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::normal},
+                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::high})}
   , m_tx_prepare_mgr{std::make_shared<txexecutor::xtransaction_prepare_mgr>(mbus, timer_driver)}
   , m_tx_cache_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
                                                      xnode_type_strategy_t{xnode_type_t::full_node, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
@@ -79,6 +80,7 @@ base::xauto_ptr<base::xdataunit_t> xtxstoreimpl::load_tx_obj(const std::string &
 
 bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
     if (!strategy_permission(m_txstore_strategy)) {
+        xdbg("xtxstoreimpl::store_txs strategy_permission failed . don't store txs");
         return false;
     }
 
@@ -199,7 +201,7 @@ bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_
 
 bool xtxstoreimpl::tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data_ptr) {
     if (strategy_permission(m_tx_cache_strategy)) {
-        return m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get()); // todo change tx_get interface.
+        return m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get());  // todo change tx_get interface.
     }
     return false;
 }
