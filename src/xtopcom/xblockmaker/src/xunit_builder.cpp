@@ -85,14 +85,11 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     bool has_run_contract_tx{false};
     bool has_other_tx{false};
 
-    auto const & chain_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (chain_upgrade::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_clock())) {
-        for (auto const & tx : input_txs) {
-            if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
-                has_run_contract_tx = true;
-            } else {
-                has_other_tx = true;
-            }
+    for (auto const & tx : input_txs) {
+        if (tx->get_tx_type() == enum_xtransaction_type::xtransaction_type_run_contract) {
+            has_run_contract_tx = true;
+        } else {
+            has_other_tx = true;
         }
     }
 
@@ -101,7 +98,27 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
         return nullptr;
     }
 
-    if (has_run_contract_tx) {
+    bool run_new_vm{has_run_contract_tx};
+    if (run_new_vm) {
+        auto const & chain_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
+        if (!chain_upgrade::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_clock())) {
+            bool registration_or_tcc{false};
+            for (auto const & tx : input_txs) {
+                if (!registration_or_tcc) {
+                    if (tx->get_target_addr() == sys_contract_rec_registration_addr || tx->get_target_addr() == sys_contract_rec_tcc_addr) {
+                        registration_or_tcc = true;
+                    }
+                } else {
+                    break;
+                }
+            }
+            if (registration_or_tcc) {
+                run_new_vm = false;
+            }
+        }
+    }
+
+    if (run_new_vm) {
         for (auto const & tx : input_txs) {
             xdbg("------>new vm, %s, %s, %d", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_tx_subtype());
         }
