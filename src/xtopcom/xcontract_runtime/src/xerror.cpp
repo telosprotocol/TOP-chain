@@ -34,6 +34,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::invalid_timer_interval:
         return "invalid timer interval";
 
+    case xerrc_t::account_state_not_changed:
+        return "account state not changed";
+
     case xerrc_t::enum_vm_code_is_exist:
         return "contract code exist";
 

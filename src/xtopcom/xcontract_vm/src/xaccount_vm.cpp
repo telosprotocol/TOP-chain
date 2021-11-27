@@ -140,6 +140,10 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
     }
 
+    if (result.status.ec) {
+        return result;
+    }
+
     xdbg("[xtop_account_vm::execute] followup_tx size: %" PRIu64, result.output.followup_transaction_data.size());
     for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
         auto & followup_tx = result.output.followup_transaction_data[i];
@@ -149,13 +153,15 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
                 auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);
                 auto followup_result = execute_action(std::move(followup_action), param, sa);
                 if (followup_result.status.ec) {
-                    xwarn("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, category: %s, msg: %s, break!",
-                          i,
-                          followup_result.status.ec.category().name(),
-                          followup_result.status.ec.message().c_str());
-                    result.status.ec = followup_result.status.ec;
-                    result.output.followup_transaction_data.clear();
-                    break;
+                    if (followup_result.status.ec != make_error_code(contract_runtime::error::xerrc_t::account_state_not_changed)) {
+                        xwarn("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, category: %s, msg: %s, break!",
+                              i,
+                              followup_result.status.ec.category().name(),
+                              followup_result.status.ec.message().c_str());
+                        result.status.ec = followup_result.status.ec;
+                        result.output.followup_transaction_data.clear();
+                        break;
+                    }
                 }
                 followup_tx.execute_type = contract_common::xfollowup_transaction_execute_type_t::success;
                 // TODO: not support double follow up now
