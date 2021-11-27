@@ -34,13 +34,14 @@ xtransaction_execution_result_t xtop_action_runtime<data::xsystem_consensus_acti
 
         auto start_bin_size = exe_ctx->contract_state()->binlog_size();
         result = system_contract->execute(exe_ctx);
+        if (exe_ctx->consensus_action_stage() == data::xconsensus_action_stage_t::send || exe_ctx->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
+            system_contract->exec_delay_followup();
+        }
         auto end_bin_size = exe_ctx->contract_state()->binlog_size();
         xdbg("[xtop_action_session::xtop_action_session] op code size, %" PRIu64 " -> %" PRIu64, start_bin_size, end_bin_size);
         if (exe_ctx->consensus_action_stage() == data::xconsensus_action_stage_t::send || exe_ctx->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
             if (start_bin_size == end_bin_size) {
-                // not a fatal error
-                xwarn("[xtop_action_session::xtop_action_session] op code not changed");
-                system_contract->exec_delay_followup();
+                result.status.ec = error::xerrc_t::vm_vote_proposal_exist_error;
             }
         }
 
