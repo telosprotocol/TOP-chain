@@ -163,6 +163,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
 
+    clock_aggregate_height,
+    clock_leader_broadcast_height,
+    clock_received_height,
+
     // store
     store_state_read,
     store_state_table_write,
