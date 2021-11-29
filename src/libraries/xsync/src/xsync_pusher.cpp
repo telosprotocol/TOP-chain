@@ -138,10 +138,10 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-        if (block->get_height() % 30 ==  0 && block->get_account().substr(0,7) == "Ta0000@") {
+/*        if (block->get_height() % 30 ==  0 && block->get_account().substr(0,7) == "Ta0000@") {
             xsync_dbg("push_newblock_to_archive, skip block: %s,%d", block->get_account().c_str(), block->get_height());
             return;
-        }
+        }*/
         std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
         xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
             push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
