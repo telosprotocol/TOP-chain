@@ -152,8 +152,9 @@ bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobjec
     if (xcons_utl::xip_equals(leader_xip, local_xip)) {
         auto    network_proxy = m_params->get_resources()->get_network();
         if (network_proxy != nullptr) {
-            xunit_dbg("[timer_picker::on_time_cert_event] sendout on_time_cert_event src %" PRIx64 ".%" PRIx64 " dst %" PRIx64 ".%" PRIx64, get_xip2_addr().low_addr, get_xip2_addr().high_addr, to_addr.low_addr, to_addr.high_addr);
+            xunit_info("[timer_picker::on_time_cert_event] sendout on_time_cert_event src %" PRIx64 ".%" PRIx64 " dst %" PRIx64 ".%" PRIx64, get_xip2_addr().low_addr, get_xip2_addr().high_addr, to_addr.low_addr, to_addr.high_addr);
             network_proxy->send_out(contract::xmessage_block_broadcast_id, local_xip, to_addr, tc_block);
+            XMETRICS_GAUGE_SET_VALUE(metrics::clock_leader_broadcast_height, tc_block->get_height());
         }
     }
 

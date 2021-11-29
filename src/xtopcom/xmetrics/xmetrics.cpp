@@ -147,6 +147,10 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_packtx_fail_transfer_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_load_origintx);
 
+        RETURN_METRICS_NAME(clock_aggregate_height);
+        RETURN_METRICS_NAME(clock_leader_broadcast_height);
+        RETURN_METRICS_NAME(clock_received_height);
+
         // store
         RETURN_METRICS_NAME(store_state_read);
         RETURN_METRICS_NAME(store_state_table_write);
@@ -322,7 +326,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_push_send_fail_account_not_in_charge);
         RETURN_METRICS_NAME(txpool_push_send_fail_nonce_expired);
         RETURN_METRICS_NAME(txpool_push_send_fail_nonce_duplicate);
-         RETURN_METRICS_NAME(txpool_push_send_fail_other);
+        RETURN_METRICS_NAME(txpool_push_send_fail_replaced);
+        RETURN_METRICS_NAME(txpool_push_send_fail_other);
         RETURN_METRICS_NAME(txpool_send_tx_timeout);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_send);
         RETURN_METRICS_NAME(txpool_tx_delay_from_push_to_pack_recv);

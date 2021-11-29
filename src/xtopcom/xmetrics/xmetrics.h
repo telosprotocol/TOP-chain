@@ -163,6 +163,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
 
+    clock_aggregate_height,
+    clock_leader_broadcast_height,
+    clock_received_height,
+
     // store
     store_state_read,
     store_state_table_write,
@@ -349,6 +353,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_push_send_fail_account_not_in_charge,
     txpool_push_send_fail_nonce_expired,
     txpool_push_send_fail_nonce_duplicate,
+    txpool_push_send_fail_replaced,
     txpool_push_send_fail_other,
     txpool_send_tx_timeout,
     txpool_tx_delay_from_push_to_pack_send,

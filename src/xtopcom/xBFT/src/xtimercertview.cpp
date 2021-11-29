@@ -289,6 +289,8 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
     m_latest_cert = model_block;
     m_latest_cert->add_ref();
 
+    XMETRICS_GAUGE_SET_VALUE(metrics::clock_aggregate_height, m_latest_cert->get_height());
+
     xinfo("[xconspacemaker_t::add_vote] tc_aggregate_success %p view %" PRIu64" clock %" PRIu64, m_latest_cert, m_latest_cert->get_viewid(), m_latest_cert->get_clock());
 
     m_vote_cache.clear();
