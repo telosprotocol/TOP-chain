@@ -1,0 +1,71 @@
+{
+    "ip": "192.168.50.228",
+    "node_id": "T800005eea83cedad7d1fed2682932ffb773caa5c3cd0f",
+    "http_port": 19081,
+    "grpc_port": 19082,
+    "ws_port": 19085,
+    "log_level": 0,
+    "log_path": "/tmp/topio/log",
+    "db_path": "/tmp/topio/db",
+    "node_type": "archive",
+    "public_key": "BN8um6c3uTEwG6kJdwuBF1hbigMYKTQkemqnlLW9iiBiMH70x2USOCOPfLMVznQV6LQD1WyJT+lUsJJSeMfiCRw=",
+    "sign_key": "6d92844bf18a158c0187d23adc91176dcb4aa419a73b97021e50e79297263f32",
+    "auditor_group_count":2,
+    "validator_group_count":4,
+    "min_election_committee_size":15,
+    "max_election_committee_size":15,
+    "min_auditor_group_size":3,
+    "max_auditor_group_size":4,
+    "min_validator_group_size":3,
+    "max_validator_group_size":4,
+    "rec_election_interval":300,
+    "zec_election_interval":300,
+    "zone_election_trigger_interval":5,
+    "cluster_election_interval":150,
+    "cross_reading_rec_standby_pool_contract_logic_timeout_limitation":11,
+    "edge_election_interval":17,
+    "archive_election_interval":13,
+    "genesis": {
+          "accounts": {
+              "tcc": {
+                  "T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB": {
+                      "balance": "1000000000"
+                  },
+                  "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy": {
+                      "balance": "1000000000"
+                  },
+                  "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo": {
+                      "balance": "1000000000"
+                  }
+              },
+              "genesis_funds_account": {
+                  "T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73": {
+                      "balance": "2999997000000000"
+                  },
+                  "T00000LTHfpc9otZwKmNcXA24qiA9A6SMHKkxwkg": {
+                      "balance": "6000000000000000"
+                  },
+                  "T00000Ldf7KcME5YaNvtFsr6jCFwNU9i7NeZ1b5a": {
+                      "balance": "3400000000000000"
+                  }
+              }
+          },
+          "seedNodes": {"T00000LSLtv1sKjw94buRJq97yW5uDbJ1foAdRCU":"BDWqTPPRGgbDv3rKZdrhf2/Rhhfawr424ud/zQ7Itwvjw5/SWq1uw7gQ5R6uT10i7Jr/VC+iBcXyALes2kTNsoU=","T00000LgBQmbDgPQn2k9Z7E2ZmxwcuHjJZDzSpsm":"BIT0oOJ0DgB/T24S5d0QMRWE+1Hw7Z1ix9fqHSSx8uU4+9QaOkHU6ZW15LDvMCN2EZaPtxBy2kb8UsbKzvOm4+U=","T00000LcdBvpeAeeNQnJe1fwMpqfjyToLmZaxoKV":"BP654heYFQ9cc3yhw57LNh8TBDbdVLT+JlMo+/KXmX4e1zsktgLRwNs6z+6g74ulOGWrL+m+MYIgr9e4x6Rtemw=","T00000LSXrshxr9P2pxWNqww26ARKpfNWybZXPFH":"BO87Wo8sSfO7ACRmP6wvkbjpCCdDdZz44V9WJMqursf8uyEHEg6SdaKK1WybGSNB+5JmMIbWzI2LfwB+YIukfbY=","T00000LWpEW9ePV2sX6TxXZfF135MrhvgRup3wQr":"BDduf7bhFis2Xc6e6lhXW5Y+M6LgUgMGxG6bjAKGcfoN1GkaIeiUe2gxh2WASCjHLPqkPnGDr4UZKi8I090PEzw=","T00000LdCLnU73jSdvvUjfo8MjiTKEkV5ZMg1arX":"BLEMqkew+z3NXhimOmKo1XHj4cchMKK4+dCj2HSp80bGXeri1/ZVCTC7IDKF/eQQ0F9fDgJP0MeWlvaw4mVYepI=","T00000LML9ceB1AAM9xTaNN7C74vfB2SupQD5PRE":"BM8I0EPRHZBgsABVwGHVfu8cm6Phy4zUdA5FmGeJbXwmaTCcnCTghnvI0ogHCqpduS/TiG0yXaSP+eEoBycQ7Io=","T00000LW6D1i5NdYKzUazhB7XKTPonah4RQKWJNb":"BLSiOSRQL5jBYXbfKpxG07Ur1iwv27W19YbnMoYpfXq2kuXY5sSS2VF/L/crCddPQaWcfJoxmA+DUHEW771BH4Q=","T00000LfcGNutuPgReZfyp3WTJ2iHxVBJGJS3sS7":"BGzgvD2Jn4Jc8z+bjh+FRWlj/EWXAcvwxulJ62jJ8PpOjITTDmHRblgV2ov4fREp8bHkMqoSgf8Z4KxlEmDpMxc=","T00000LNTDuidk61rwmmopV6mpwooi9nEmfGtK2X":"BD14+6p0LAXrz4KRqEYRNU6N4ooYUZ7OF2o0muFZCMhnaWtm11n8MqgRHfSS05EesZHdvPvQPwDEvtoALRAMF2U=","T00000LTgNMoQgC3TgkSu2EFZ3uGu7Zr8PDMWY1w":"BPDOBQT9HykLZB1UxJLmA2hH9FYfDAgXbFF8xdsX2rBcBoj7L0XFoXXGWA03ZKhKuXza75oqYJmvcCbUd6DlAUQ=","T00000LXKBuxg18FXdwUkUpCaTUsG1RP1ivCZTzY":"BHE1iqkRmeL83NQ4EqL8IWkYef/StvQPCToMX/zLFuHAdNzVr/cJGn8z1VC0WAj6Qzm3T36t7WYUcIuwsT3erAE=","T00000LL7o62EFPeW7c5HrnruGPofdF5a5AQspRn":"BNF2MSAJTrHI/3zkcRx6GqtKCZ+mtQU3e7iPdge4u+shqP8LO/eFLUG1nn4tqpkTnzjllFBw894c3br/Xyk6BME=","T00000LQSp93ix7sPa45fdoMPWaiVv8pD6SRukSa":"BAFjYmkbhwGZ+HriuSXIq+k7weDuTVsnIUi95heF44AetpazkB21lIXu3BdMfuhvy0iin268YoE/gpMwkV1Cbco=","T00000LQG84rrEUUULzhX4m42qSSixAfTe2NyGED":"BAQw/n8iCmHzXdlz/SJ6uDRBuuegTDQ/lHjOjIx/1ztE+KPQqSs5xBHhO1bxQJer+w9LED6g5gioodQSnr1iNUo="},
+          "timestamp": 1599555555
+    },
+    "chain_name": "galileo",
+    "static_waste_time":20,
+    "zec_start_nodes":"",
+    "edge_start_nodes":"",
+    "archive_start_nodes":"",
+    "consensus_start_nodes":"",
+    "standby_start_nodes": "",
+    "platform":{
+      "first_node":false,
+      "business_port": 9999,
+      "public_endpoints": "192.168.50.83:9999,192.168.50.48:9999,192.168.50.49:9999,192.168.50.51:9999,192.168.50.53:9999,192.168.50.54:9999,192.168.50.55:9999,192.168.50.63:9999,192.168.50.56:9999,192.168.50.57:9999,192.168.50.58:9999,192.168.50.29:9999",
+      "show_cmd": false,
+      "url_endpoints": ""
+    },
+    "root_hash": ""
+  }

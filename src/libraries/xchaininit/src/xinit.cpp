@@ -114,7 +114,10 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     auto& config_center = top::config::xconfig_register_t::get_instance();
     auto offchain_loader = std::make_shared<loader::xconfig_offchain_loader_t>(config_file, config_extra);
     config_center.add_loader(offchain_loader);
-    config_center.load();
+    if (!config_center.load()) {
+        xwarn("parse config %s failed!", config_file.c_str());
+        return -1;
+    }
     config_center.remove_loader(offchain_loader);
     config_center.init_static_config();
 
@@ -145,6 +148,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     auto xbase_info = base::xcontext_t::get_xbase_info();
     xwarn("=== xtopchain start here ===");
     xwarn("=== xbase info: %s ===", xbase_info.c_str());
+    config_center.log_dump();
     std::cout << "=== xtopchain start here ===" << std::endl;
     std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
 

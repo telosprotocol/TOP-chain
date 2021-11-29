@@ -1201,17 +1201,12 @@ int StartNodeWithConfig(config_t& config) {
         std::cout << "empty config_file for topio(xtopchain mode)" << std::endl;
         return -1;
     }
-    std::cout << "###################start topio with xtopchain mode##################" << std::endl;
+    std::cout << "======================================================start topio in xtopchain mode===================================================================" << std::endl;
     config.so_func_name = "init_component";
     return load_lib(config);
 }
 
 int StartNode(config_t& config) {
-    if (!config.config_file.empty()) {
-        // xtopchain mode
-        return StartNodeWithConfig(config);
-    }
-
     if (check_process_running(config.pid_file)) {
         std::cout << "topio already running, Aborting!" << std::endl;
         return -1;
@@ -1247,6 +1242,21 @@ int StartNode(config_t& config) {
         }
     }
 
+    generate_extra_config(config);
+
+    // judge if using config file
+    if (!config.config_file.empty()) {
+        // using config
+        int res = StartNodeWithConfig(config);
+        if (res != 0) {
+            std::cout << "Start node failed!\n";
+            return res;
+        }
+
+        std::cout << "Start node successfully.\n";
+        return 0;
+    }
+
     if (config.daemon) {
         std::cout << "Start node successfully." << std::endl;
         // start as daemon process
@@ -1269,8 +1279,6 @@ int StartNode(config_t& config) {
     out_pid.flush();
     out_pid.close();
     pid_file = config.pid_file;
-
-    generate_extra_config(config);
 
     config.so_func_name = "init_noparams_component";
     if (!config.multiple_process) {

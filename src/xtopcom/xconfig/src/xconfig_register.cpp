@@ -151,6 +151,17 @@ void xconfig_register_t::dump() {
     std::cout << "=======config dump end======" << std::endl;
 }
 
+ void xconfig_register_t::log_dump() {
+    xinfo("xconfig_register_t::log_dump");
+    xinfo("=======================current load config dump start=============================");
+    m_param_lock.lock_read();
+    for (const auto& entry : m_params_map) {
+        xinfo("%s : %s", entry.first.c_str(), entry.second.c_str());
+    }
+    m_param_lock.release_read();
+    xinfo("=======================current load config dump end=============================");
+ }
+
 size_t xconfig_register_t::size() {
     m_param_lock.lock_read();
     size_t s = m_params_map.size();
