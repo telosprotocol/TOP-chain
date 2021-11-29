@@ -453,7 +453,6 @@ XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnet.see
 XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79ccdbcddb3226a1c042a1020be6d3fc29f2");
 #endif
 
-XDECLARE_CONFIGURATION(platform_first_node, bool, false);
 XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");

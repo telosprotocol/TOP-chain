@@ -565,7 +565,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     startnode->add_option("--admin_http_port", "admin http server port(default: 8000).");
     startnode->add_option("--bootnodes", "Comma separated endpoints(ip:port) for P2P  discovery bootstrap.");
     startnode->add_option("--net_port", "p2p network listening port (default: 9000).");
-    startnode->add_option("-c,--config", "start with config file.");
+    // startnode->add_option("-c,--config", "start with config file.");
     startnode->add_flag("--nodaemon", "start as no daemon.");
     startnode->callback([&]() {});
     // stopnode

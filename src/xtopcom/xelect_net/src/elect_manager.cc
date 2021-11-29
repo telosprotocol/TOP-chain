@@ -103,11 +103,6 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
         return;
     }
 
-    if (!config.Set("node", "first_node", false)) {
-        TOP_ERROR("set config node first_node [%d] failed!", true);
-        return;
-    }
-
     std::shared_ptr<top::kadmlia::ElectRoutingTable> routing_table_ptr;
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key);
 

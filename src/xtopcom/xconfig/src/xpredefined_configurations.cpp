@@ -182,7 +182,6 @@ XDEFINE_CONFIGURATION(ip);
 /* end of development parameters */
 
 /* end of offchain parameters */
-XDEFINE_CONFIGURATION(platform_first_node);
 XDEFINE_CONFIGURATION(platform_business_port);
 XDEFINE_CONFIGURATION(platform_public_endpoints);
 XDEFINE_CONFIGURATION(platform_show_cmd);

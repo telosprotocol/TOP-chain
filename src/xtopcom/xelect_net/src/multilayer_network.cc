@@ -228,12 +228,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
         return 1;
     }
 
-    std::string first_node_str = (platform_param.first_node ? "true" : "false");
-    if (!edge_config.Set("node", "first_node", first_node_str)) {
-        xerror("set config failed [node][first_node][%s]", first_node_str.c_str());
-        return 1;
-    }
-
     std::string show_cmd_str = (platform_param.show_cmd ? "true" : "false");
     if (!edge_config.Set("node", "show_cmd", show_cmd_str)) {
         xerror("set config failed [node][show_cmd][%s]", show_cmd_str.c_str());
@@ -354,14 +348,6 @@ bool MultilayerNetwork::ResetEdgeConfig(top::ArgsParser & args_parser, top::base
     if (args_parser.GetParam("P", local_port) == top::kadmlia::kKadSuccess) {
         if (!edge_config.Set("node", "local_port", local_port)) {
             xwarn("set config failed [node][local_port][%d]", local_port);
-            return false;
-        }
-    }
-
-    int first_node = 0;
-    if (args_parser.GetParam("f", first_node) == top::kadmlia::kKadSuccess) {
-        if (!edge_config.Set("node", "first_node", first_node)) {
-            xwarn("set config failed [node][first_node][%d]", first_node);
             return false;
         }
     }

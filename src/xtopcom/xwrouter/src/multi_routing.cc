@@ -71,14 +71,6 @@ int MultiRouting::CreateRootRouting(std::shared_ptr<transport::Transport> transp
         root_routing_table_ = routing_table_ptr;
     }
 
-    bool first_node = false;
-    if (config.Get("node", "first_node", first_node)) {
-        if (first_node) {
-            TOP_INFO("first node started!");
-            return kKadSuccess;
-        }
-    }
-
     if (public_endpoints_config.empty()) {
         TOP_FATAL("node join must has bootstrap endpoints!");
         return kKadFailed;

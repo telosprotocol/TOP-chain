@@ -32,6 +32,7 @@ public:
 
     bool load();
     void dump();
+    void log_dump() const;
     size_t size();
     /**
      * Update parameter. Please note that add a new parameter is possible.

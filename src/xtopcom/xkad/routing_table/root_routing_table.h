@@ -191,6 +191,9 @@ protected:
     std::mutex node_hash_map_mutex_;
     std::mutex bootstrap_mutex_;
     std::condition_variable bootstrap_cond_;
+
+    std::set<std::string> m_endpoint_ip_port;
+
     std::mutex joined_mutex_;
     std::atomic<bool> joined_;
     std::string bootstrap_id_;

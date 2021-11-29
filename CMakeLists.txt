@@ -407,6 +407,10 @@ if (DISABLE_CORE_SIGNAL_CAPTURE)
     add_definitions(-DDISABLE_CORE_SIGNAL_CAPTURE)
 endif()
 
+if (${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+    add_definitions(-DRELEASEDEBINFO)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 
