@@ -14,6 +14,7 @@
 #include "xdata/xdatautil.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xtransaction_v2.h"
+#include "xvm/xsystem_contracts/tcc/xrec_proposal_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract_new.h"
@@ -22,10 +23,10 @@
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract_new.h"
-#include "xvm/xsystem_contracts/tcc/xrec_proposal_contract_new.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract_new.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
+#include "xvm/xsystem_contracts/xreward/xzec_vote_contract_new.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract_new.h"
 #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract_new.h"
 #include "xvm/xsystem_contracts/xworkload/xzec_workload_contract_new.h"
@@ -148,6 +149,13 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
         xsniff_timer_config_t{config::xpunish_collection_interval_onchain_goverance_parameter_t::name, "do_unqualified_node_slash", xtimer_strategy_type_t::normal},
         {},
         blockstore);
+    deploy_system_contract<system_contracts::xzec_vote_contract_new>(common::xaccount_address_t{sys_contract_zec_vote_addr},
+                                                                     common::xnode_type_t::zec,
+                                                                     xsniff_type_t::none,
+                                                                     xsniff_broadcast_config_t{},
+                                                                     xsniff_timer_config_t{},
+                                                                     xsniff_block_config_t{},
+                                                                     blockstore);
     // zec group association
     deploy_system_contract<system_contracts::xgroup_association_contract_new_t>(common::xaccount_address_t{sys_contract_zec_group_assoc_addr},
                                                                                 common::xnode_type_t::zec,
@@ -169,6 +177,7 @@ void xtop_system_contract_manager::deploy(observer_ptr<base::xvblockstore_t> con
                               "on_collect_statistic_info",
                               xsniff_block_type_t::full_block},
         blockstore);
+
     // table reward claim
     deploy_system_contract<system_contracts::xtable_reward_claiming_contract_new_t>(
         common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, common::xnode_type_t::consensus_validator, {}, {}, {}, {}, blockstore);
@@ -205,10 +214,10 @@ std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> cons
 
 void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address, observer_ptr<base::xvblockstore_t> const & blockstore) {
     if (blockstore->exist_genesis_block(contract_address.value())) {
-        xdbg("xtop_system_contract_manager::init_contract_chain contract account %s genesis block exist", contract_address.c_str());
+        xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block exist", contract_address.c_str());
         return;
     }
-    xdbg("xtop_system_contract_manager::init_contract_chain contract account %s genesis block not exist", contract_address.c_str());
+    xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block not exist", contract_address.c_str());
 
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset_out{0};
@@ -247,7 +256,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
         xerror("xtop_system_contract_manager::init_contract_chain %s genesis block fail", contract_address.c_str());
         return;
     }
-    xdbg("xtop_system_contract_manager::init_contract_chain contract_adress: %s, %s", contract_address.c_str(), ret ? "SUCC" : "FAIL");
+    xwarn("xtop_system_contract_manager::init_contract_chain contract_adress: %s, %s", contract_address.c_str(), ret ? "SUCC" : "FAIL");
 }
 
 NS_END3
