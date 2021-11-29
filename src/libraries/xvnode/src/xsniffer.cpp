@@ -118,26 +118,27 @@ bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock
 
 bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) const {
     assert(common::xaccount_address_t{vblock->get_account()} == common::xaccount_address_t{sys_contract_beacon_timer_addr});
-    auto const height = vblock->get_height();
+    auto const logic_time = vblock->get_height();
     auto const timestamp = vblock->get_cert()->get_gmtime();
+
     for (auto & role_data_pair : m_config_map) {
         auto const & contract_address = top::get<common::xaccount_address_t const>(role_data_pair);
         auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
 
         if (!contract_runtime::has<contract_runtime::xsniff_type_t::timer>(config.sniff_type)) {
-            xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", height, contract_address.c_str());
+            xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", logic_time, contract_address.c_str());
             continue;
         }
 
-        xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s", height, contract_address.c_str());
-        auto const valid = is_valid_timer_call(contract_address, top::get<xrole_config_t>(role_data_pair), height);
+        xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s", logic_time, contract_address.c_str());
+        auto const valid = is_valid_timer_call(contract_address, top::get<xrole_config_t>(role_data_pair), logic_time);
         // xdbg("xtop_sniffer::sniff_timer: contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
         if (!valid) {
             continue;
         }
 
         base::xstream_t stream(base::xcontext_t::instance());
-        stream << height;
+        stream << logic_time;
         std::string action_params = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
         xdbg("[xtop_sniffer::sniff_timer] make tx, action: %s, params size: %zu", config.timer_config.action.c_str(), action_params.size());
 
@@ -148,7 +149,7 @@ bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) co
 
 
             case top::contract_runtime::xtimer_strategy_type_t::table:
-                table_timer_func(contract_address, config.timer_config, action_params, timestamp, height);
+                table_timer_func(contract_address, config.timer_config, action_params, timestamp, logic_time);
                 break;
 
             default:
@@ -164,6 +165,7 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
     auto const & block_address = vblock->get_account();
     auto const height = vblock->get_height();
     xdbg("[xtop_vnode::sniff_block begin]  block: %s, height: %llu",  block_address.c_str(), height);
+
     for (auto & role_data_pair : m_config_map) {
         auto const & contract_address = role_data_pair.first;
         auto const & config = role_data_pair.second.role_data;
