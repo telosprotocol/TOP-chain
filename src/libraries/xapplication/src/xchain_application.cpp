@@ -148,7 +148,7 @@ void xtop_chain_application::on_election_data_updated(data::election::xelection_
             m_txpool_service_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
         }
         if (zid != common::xfrozen_zone_id) {
-            m_application->elect_manager()->OnElectUpdated(election_result_store, zid);
+            m_application->elect_manager()->OnElectUpdated(election_result_store, zid, associated_blk_height);
         }
     } else {
         xinfo("[xchain_application] network %" PRIu32 " empty election data.  it may be from synchronization", static_cast<std::uint32_t>(m_network_id.value()));

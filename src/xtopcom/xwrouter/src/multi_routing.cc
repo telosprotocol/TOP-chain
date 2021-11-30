@@ -275,8 +275,9 @@ kadmlia::ElectRoutingTablePtr MultiRouting::GetLastRoundRoutingTable(base::Servi
 
 kadmlia::ElectRoutingTablePtr MultiRouting::GetElectRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    auto another_ver_service_type = transform_service_type(service_type);
     for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {
-        if (riter->first == service_type) {
+        if (riter->first == service_type || riter->first == another_ver_service_type) {
             return riter->second;
         }
     }
@@ -363,6 +364,40 @@ void MultiRouting::CheckElectRoutingTable(base::ServiceType service_type) {
         }
         routing_table->HandleElectionNodesInfoFromRoot(res_nodes);
     }
+}
+
+void MultiRouting::add_routing_table_info(common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info) {
+    routing_table_info_mgr.add_routing_table_info(group_xip, routing_table_info.first, routing_table_info.second);
+}
+
+void MultiRouting::delete_routing_table_info(common::xip2_t const & group_xip, uint64_t version_or_blk_height) {
+    routing_table_info_mgr.delete_routing_table_info(group_xip, version_or_blk_height);
+}
+
+base::ServiceType MultiRouting::transform_service_type(base::ServiceType const & service_type) {
+    auto res = service_type;
+    auto ver = service_type.ver();
+
+    if (routing_table_info_mgr.exist_routing_table_info(service_type.group_xip2(), ver, service_type.height())) {
+        auto p = routing_table_info_mgr.get_routing_table_info(service_type.group_xip2(), ver, service_type.height());
+        if (p.first == 0 && p.second == 0)
+            return res;
+        if (ver == base::service_type_height_use_version) {
+            if (p.first == service_type.height()) {
+                res.set_ver(base::service_type_height_use_blk_height);
+                res.set_height(p.second);
+                return res;
+            }
+        } else if (ver == base::service_type_height_use_blk_height) {
+            if (p.second == service_type.height()) {
+                res.set_ver(base::service_type_height_use_version);
+                res.set_height(p.first);
+                return res;
+            }
+        }
+    }
+
+    return res;
 }
 
 void MultiRouting::CheckElectRoutingTableTimer() {
