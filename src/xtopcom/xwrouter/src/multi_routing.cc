@@ -266,7 +266,7 @@ void MultiRouting::HandleCacheElectNodesResponse(transport::protobuf::RoutingMes
 kadmlia::ElectRoutingTablePtr MultiRouting::GetLastRoundRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
     for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {
-        if (service_type.IsNewer(riter->first, 1)) {
+        if (service_type.IsNewer(riter->first)) {
             return riter->second;
         }
     }

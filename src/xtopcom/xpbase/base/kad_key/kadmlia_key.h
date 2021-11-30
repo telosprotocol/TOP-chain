@@ -21,7 +21,7 @@ enum service_type_ver {
     service_type_height_use_blk_height = 1,
 };
 
-static const service_type_ver now_service_type_ver = service_type_ver::service_type_height_use_version;
+static const service_type_ver now_service_type_ver = service_type_ver::service_type_height_use_blk_height;
 
 class ServiceType {
 public:
@@ -32,7 +32,7 @@ public:
     bool operator!=(ServiceType const &other) const;
     bool operator<(ServiceType const &other) const;
 
-    bool IsNewer(ServiceType const &other, int _value = 1) const;
+    bool IsNewer(ServiceType const &other) const;
 
     // for edge && archive node routing table. The height is always the same. 
     // The P2P net should have only one round of working node.

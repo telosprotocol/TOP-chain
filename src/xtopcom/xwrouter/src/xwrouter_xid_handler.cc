@@ -52,8 +52,8 @@ kadmlia::ElectRoutingTablePtr WrouterXidHandler::FindElectRoutingTable(base::Ser
     // when recv a message. it not possible to duduce service ver from dst xip.
     // thus at version 1 (NOT 2). should add compatablity with two version. 
     if (!routing_table) {
-        // service_type.set_ver(base::service_type_height_use_version);// version two
-        service_type.set_ver(base::service_type_height_use_blk_height); // version one
+        service_type.set_ver(base::service_type_height_use_version);// version two
+        // service_type.set_ver(base::service_type_height_use_blk_height); // version one
         routing_table = MultiRouting::Instance()->GetElectRoutingTable(service_type);
     }
     return routing_table;

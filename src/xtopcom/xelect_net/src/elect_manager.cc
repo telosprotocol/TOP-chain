@@ -102,9 +102,11 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(self_wrouter_nodes.m_xip2);
     base::ServiceType service_type = kad_key->GetServiceType();
 
-    if (service_type.IsBroadcastService()) {
-        wrouter::MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
-    } else if (wrouter::MultiRouting::Instance()->GetElectRoutingTable(service_type) != nullptr) {
+    assert(service_type.IsBroadcastService() == false); // use blk_height , dont have broadcast height any more.
+    // if (service_type.IsBroadcastService()) {
+    //     wrouter::MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
+    // } else 
+    if (wrouter::MultiRouting::Instance()->GetElectRoutingTable(service_type) != nullptr) {
         xinfo("ElectManager::UpdateRoutingTable get repeated routing table info xip2: service_type:%s", self_wrouter_nodes.m_xip2.to_string().c_str(), service_type.info().c_str());
         return;
     }
