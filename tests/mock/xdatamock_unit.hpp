@@ -122,6 +122,23 @@ class xdatamock_unit {
         tx->set_len();
         return tx;
     }
+    
+    static xtransaction_ptr_t make_fixed_transfer_tx(const std::string & from, const std::string & to, uint64_t last_nonce) {
+        xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
+        data::xproperty_asset asset(100);
+        tx->make_tx_transfer(asset);
+        tx->set_last_nonce(last_nonce);
+        tx->set_last_hash(100);
+        tx->set_different_source_target_address(from, to);
+        tx->set_fire_timestamp(10000);
+        tx->set_expire_duration(100);
+        tx->set_deposit(100000);
+        tx->set_digest();
+        std::string signature = "fixed for block hash";
+        tx->set_authorization(signature);
+        tx->set_len();
+        return tx;
+    }
 
     std::vector<xcons_transaction_ptr_t> generate_transfer_tx(const std::string & to, uint32_t count) {
         struct timeval val;

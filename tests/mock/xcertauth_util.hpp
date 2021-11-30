@@ -8,6 +8,7 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xcertauth/xcertauth_face.h"
+#include "xrpc/xuint_format.h"
 
 #include <random>
 #include <cinttypes>
@@ -85,8 +86,15 @@ public:
         return m_consensus_nodes[0]->get_xip2_addr();
     }
 
-    void do_multi_sign(base::xvblock_t* block) {
+    void do_multi_sign(base::xvblock_t* block, bool is_fixed = false) {
         xassert(block != nullptr);
+        if (is_fixed) {
+            std::string hex_sig = "0x740000005800000002000000000000002100025701e98c80198da9c2c620866ec4eff40ff81512bd09e86993621a7a10fe2ea3200086e97a10412fd226d2fa066a981cb7877d6931490f4fc089c1e89e159eeed60b04000f";
+            std::string muti_signature = xrpc::hex_to_uint8_str(hex_sig);
+            block->set_verify_signature(muti_signature);
+            block->set_block_flag(base::enum_xvblock_flag_authenticated);
+            return;
+        }
 #if 0
         std::random_device rd;
         std::uniform_int_distribution<size_t> dist(1, m_node_count - 1);
@@ -112,6 +120,7 @@ public:
         }
 
         std::string muti_signature = get_certauth().merge_muti_sign(nodes_xvip2, nodes_signatures, block->get_cert());
+        // std::cout << "muti_signature " << to_hex_str(muti_signature) << std::endl;
         block->set_verify_signature(muti_signature);
 
         xassert(base::enum_vcert_auth_result::enum_successful == get_certauth().verify_muti_sign(block->get_cert(),block->get_account()));
