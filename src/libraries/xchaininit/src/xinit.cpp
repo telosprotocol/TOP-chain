@@ -75,8 +75,16 @@ static bool create_rootblock(const std::string & config_file) {
     return true;
 }
 
-
-
+bool set_auto_prune_switch(const std::string& prune)
+{
+    std::string prune_enable = prune;
+    top::base::xstring_utl::tolower_string(prune_enable);
+    if (prune_enable == "on")
+        base::xvchain_t::instance().enable_auto_prune(true);
+    else
+        base::xvchain_t::instance().enable_auto_prune(false);
+    return true;
+}
 
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
@@ -131,6 +139,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     //wait log path created,and init metrics
     XMETRICS_INIT2(log_path);
 
+    //init data_path into xvchain instance
+    //init auto_prune feature
+    set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
+    xkinfo("topchain_init init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
+        
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
         return 1;
@@ -418,6 +431,12 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("=== xtopchain start here with noparams ===");
     std::cout << "xnode start begin..." << std::endl;
 
+    //init data_path into xvchain instance
+    base::xvchain_t::instance().set_data_dir_path(datadir);
+    //init auto_prune feature
+    set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
+    xkinfo("topchain_noparams_init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
+        
     // load bwlist
     std::map<std::string, std::string> bwlist;
     auto ret = load_bwlist_content(bwlist_path, bwlist);

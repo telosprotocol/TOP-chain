@@ -16,6 +16,11 @@ namespace top
         //manage to prune blocks
         class xvblockprune_impl : public base::xblockrecycler_t
         {
+            enum
+            {
+               enum_reserved_blocks_count           = 8,  //reserved blocks even it is qualified to recycel
+               enum_min_batch_recycle_blocks_count  = 64, //min blocks to recyce each time
+            };
         public:
             xvblockprune_impl(base::xvdbstore_t & xdb_api);
         protected:
@@ -34,6 +39,8 @@ namespace top
         protected:
             base::xvdbstore_t *  get_xvdb() const {return m_xvdb_ptr;}
             
+            //manage to prune contract blocks
+            bool  recycle_contract(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
             //mange to prune table blocks
             bool  recycle_table(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
             //mange to prune unit blocks

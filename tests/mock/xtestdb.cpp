@@ -140,10 +140,5 @@ namespace top
             return std::string();
         }
 
-        bool  xstoredb_t::find_values(const std::string & key,std::vector<std::string> & values)//support wild search
-        {
-            return false;
-        }
-
     };
 };

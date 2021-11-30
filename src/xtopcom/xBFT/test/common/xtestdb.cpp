@@ -4,6 +4,8 @@
 
 #include "xtestdb.hpp"
 
+//#define __delete_db_data__
+
 namespace top
 {
     namespace test
@@ -135,60 +137,17 @@ namespace top
                 m_meta_store[key] = value;
             }
             else if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+               || (key.find("3axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
                || (key.find("71c216d000013404") != std::string::npos)
                || (key.find("71c216d000010404") != std::string::npos) )
             {
-                if(0 == (m_cur_clock_store % 2))
-                {
-                    m_clock_store[key] = value;
-                    if(m_clock_store.size() >= 128)
-                    {
-                        if(m_clock_store2.empty() == false)
-                            m_clock_store2.clear();
-                    }
-                    if(m_clock_store.size() >= 256)
-                        m_cur_clock_store += 1;
-                    
-                    xdbg("xstoredb_t::store clock key(%s) at store#1",key.c_str());
-                }
-                else
-                {
-                    m_clock_store2[key] = value;
-                    if(m_clock_store2.size() >= 128)
-                    {
-                        if(m_clock_store.empty() == false)
-                            m_clock_store.clear();
-                    }
-                    if(m_clock_store2.size() >= 256)
-                        m_cur_clock_store += 1;
-                    
-                    xdbg("xstoredb_t::store clock key(%s) at store#2",key.c_str());
-                }
+                m_clock_store[key] = value;
+                xdbg("xstoredb_t::store clock key(%s)",key.c_str());
             }
             else
             {
                 //xdbg("xstoredb_t::store block key(%s)",key.c_str());
-                
-                if(0 == (m_cur_data_store % 2))
-                {
-                    m_dumy_store[key] = value;
-                    if(m_dumy_store.size() >= 128)
-                    {
-                        m_dumy_store2.clear();
-                    }
-                    if(m_dumy_store.size() >= 256)
-                        m_cur_data_store += 1;
-                }
-                else
-                {
-                    m_dumy_store2[key] = value;
-                    if(m_dumy_store2.size() >= 128)
-                    {
-                        m_dumy_store.clear();
-                    }
-                    if(m_dumy_store2.size() >= 256)
-                        m_cur_data_store += 1;
-                }
+                m_dumy_store[key] = value;
             }
             
             return true;
@@ -196,6 +155,7 @@ namespace top
         bool             xstoredb_t::delete_value(const std::string & key)
         {
             if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+               || (key.find("3axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
                || (key.find("71c216d000013404") != std::string::npos)
                || (key.find("71c216d000010404") != std::string::npos) )
             {
@@ -204,14 +164,6 @@ namespace top
                 {
                     m_clock_store.erase(it);
                     xdbg("xstoredb_t::delete clock key(%s) at store#1",key.c_str());
-                    return true;
-                }
-                
-                auto it2 = m_clock_store2.find(key);
-                if(it2 != m_clock_store2.end())
-                {
-                    m_clock_store2.erase(it2);
-                    xdbg("xstoredb_t::delete clock key(%s) at store#2",key.c_str());
                     return true;
                 }
             }
@@ -224,16 +176,7 @@ namespace top
                     xdbg("xstoredb_t::delete raw key(%s) at store#1",key.c_str());
                     return true;
                 }
-                
-                auto it2 = m_dumy_store2.find(key);
-                if(it2 != m_dumy_store2.end())
-                {
-                    m_dumy_store2.erase(it2);
-                    xdbg("xstoredb_t::delete raw key(%s) at store#1",key.c_str());
-                }
             }
-
-            
             return true;
         }
         const std::string  xstoredb_t::get_value(const std::string & key) const
@@ -249,75 +192,97 @@ namespace top
                     return it->second;
             }
             else if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+               || (key.find("3axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
                || (key.find("71c216d000013404") != std::string::npos)
                || (key.find("71c216d000010404") != std::string::npos) )
             {
-                if(0 == (m_cur_clock_store % 2))//search from store#1 first
+                auto it = m_clock_store.find(key);
+                if(it != m_clock_store.end())
                 {
-                    auto it = m_clock_store.find(key);
-                    if(it != m_clock_store.end())
-                    {
-                        xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
-                        return it->second;
-                    }
-                    
-                    auto it2 = m_clock_store2.find(key);
-                    if(it2 != m_clock_store2.end())
-                    {
-                        xdbg("xstoredb_t::get_value clock key(%s) at store#2",key.c_str());
-                        return it2->second;
-                    }
+                    xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
+                    return it->second;
                 }
-                else //search from store#2 first
-                {
-                    auto it2 = m_clock_store2.find(key);
-                    if(it2 != m_clock_store2.end())
-                    {
-                        xdbg("xstoredb_t::get_value clock key(%s) at store#2",key.c_str());
-                        return it2->second;
-                    }
-                    
-                    auto it = m_clock_store.find(key);
-                    if(it != m_clock_store.end())
-                    {
-                        xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
-                        return it->second;
-                    }
-                }
-             
                 xdbg("xstoredb_t::get_value faild to find clock key(%s)",key.c_str());
             }
             else
             {
-                if(0 == (m_cur_data_store % 2)) //search from store#1 first
-                {
-                    auto it = m_dumy_store.find(key);
-                    if(it != m_dumy_store.end())
-                        return it->second;
-                    
-                    auto it2 = m_dumy_store2.find(key);
-                    if(it2 != m_dumy_store2.end())
-                        return it2->second;
-                }
-                else //search from store#2 first
-                {
-                    auto it2 = m_dumy_store2.find(key);
-                    if(it2 != m_dumy_store2.end())
-                        return it2->second;
-                    
-                    auto it = m_dumy_store.find(key);
-                    if(it != m_dumy_store.end())
-                        return it->second;
-                }
-
+                auto it = m_dumy_store.find(key);
+                if(it != m_dumy_store.end())
+                    return it->second;
             }
             
             return std::string();
         }
     
-        bool  xstoredb_t::find_values(const std::string & key,std::vector<std::string> & values)//support wild search
+        bool  xstoredb_t::delete_values(std::vector<std::string> & to_deleted_keys)
         {
-            return false;
+            for(auto & key : to_deleted_keys)
+            {
+                delete_value(key);
+            }
+            return true;
+        }
+        
+        //prefix must start from first char of key
+        bool  xstoredb_t::read_range(const std::string& prefix, std::vector<std::string>& values)
+        {
+            for(auto it = m_dumy_store.begin(); it != m_dumy_store.end(); ++it)
+            {
+                if(it->first.find(prefix) != std::string::npos)
+                {
+                    values.push_back(it->second);
+                }
+            }
+            return (values.empty() == false);
+        }
+ 
+        //note:begin_key and end_key must has same style(first char of key)
+        bool  xstoredb_t::delete_range(const std::string & begin_key,const std::string & end_key)
+        {
+            auto start_pos = m_dumy_store.end();
+            auto end_pos   = m_dumy_store.end();
+            for(auto it = m_dumy_store.begin(); it != m_dumy_store.end(); ++it)
+            {
+                if(start_pos == m_dumy_store.end())
+                {
+                    if(it->first.find(begin_key) != std::string::npos)
+                    {
+                        start_pos = it;
+                    }
+                }
+                else if(end_pos == m_dumy_store.end())
+                {
+                    if(it->first.find(end_key) != std::string::npos)
+                    {
+                        end_pos = it;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+            if(start_pos == m_dumy_store.end())
+            {
+                xwarn("xstoredb_t::delete_range faild to find key(%s)",begin_key.c_str());
+                return false;
+            }
+            
+            if(end_pos == m_dumy_store.end())
+            {
+                xwarn("xstoredb_t::delete_range faild to find key(%s)",end_key.c_str());
+                return false;
+            }
+            
+            m_dumy_store.erase(start_pos, end_pos);//[first,last)
+            xinfo("xstoredb_t::delete_range,now size=%d after erase[%s - %s)",(int)m_dumy_store.size(),begin_key.c_str(),end_key.c_str());
+            return true;
+        }
+        
+        bool  xstoredb_t::single_delete(const std::string & target_key)//key must be readonly(never update after PUT),otherwise the behavior is undefined
+        {
+            return delete_value(target_key);
         }
     
         void   xveventbus_impl::push_event(const mbus::xevent_ptr_t& e)

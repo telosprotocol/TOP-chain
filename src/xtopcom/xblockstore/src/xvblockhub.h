@@ -7,112 +7,25 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "xvledger/xvbindex.h"
-#include "xvledger/xvledger.h"
-#include "xblockstore/xblockstore_face.h"
+#include "xvblockdb.h"
+#include "xbkstoreutl.h"
 
 namespace top
 {
     namespace store
     {
-        enum enum_blockstore_event
-        {
-            enum_blockstore_event_committed  = 1, //block is committed
-            enum_blockstore_event_revoke     = 2, //block is revoke and removed by consensus
-            enum_blockstore_event_stored     = 4, //block is stored persistedly
-        };
-
-        enum enum_blockstore_metrics_type
-        {
-            enum_blockstore_metrics_type_block_index        = 1,
-            enum_blockstore_metrics_type_block_object       = 2,
-            enum_blockstore_metrics_type_block_input_res    = 3,
-            enum_blockstore_metrics_type_block_output_res   = 4,
-        };
-        class xblockevent_t
-        {
-        public:
-            xblockevent_t(enum_blockstore_event type,base::xvbindex_t* target)
-            {
-                _event_type     = type;
-                _target_index   = target;
-                if(target != NULL)
-                    target->add_ref();
-            }
-            xblockevent_t(xblockevent_t && obj)
-            {
-                _event_type     = obj._event_type;
-                _target_index   = obj._target_index;
-                obj._target_index = NULL;
-            }
-            xblockevent_t(const xblockevent_t & obj)
-            {
-                _event_type     = obj._event_type;
-                _target_index   = obj._target_index;
-                if(_target_index != NULL)
-                    _target_index->add_ref();
-            }
-            xblockevent_t & operator = (const xblockevent_t & obj)
-            {
-                base::xvbindex_t* old_ptr = _target_index;
-
-                _event_type     = obj._event_type;
-                _target_index   = obj._target_index;
-                if(_target_index != NULL)
-                    _target_index->add_ref();
-
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-
-                return *this;
-            }
-            ~xblockevent_t()
-            {
-                if(_target_index != NULL)
-                    _target_index->release_ref();
-            }
-        private:
-            xblockevent_t();
-        public:
-            inline enum_blockstore_event get_type() const {return _event_type;}
-            inline base::xvbindex_t*     get_index()const {return _target_index;}
-        protected:
-            enum_blockstore_event   _event_type;
-            base::xvbindex_t*       _target_index;
-        };
-        
-        class xvblockplugin_t : public base::xvactplugin_t
-        {
-        protected:
-            xvblockplugin_t(base::xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms);
-            virtual ~xvblockplugin_t();
-        private:
-            xvblockplugin_t();
-            xvblockplugin_t(xvblockplugin_t &&);
-            xvblockplugin_t(const xvblockplugin_t &);
-            xvblockplugin_t & operator = (const xvblockplugin_t &);
-        protected:
-            //only allow call once
-            virtual bool                    init_meta(const base::xvactmeta_t & meta) override;
-            
-        protected:
-            virtual const base::xblockmeta_t*     get_block_meta() const override;
-            virtual bool                    save_meta()  override; //peristen meta
-            virtual bool                    update_meta() override;//update meta into cache
-        private:
-            base::xblockmeta_t*   m_layer2_cache_meta; //L2 cache for plugin,and account ' meta is L1 cache
-        };
-
         //each account has own virtual store
-        class xblockacct_t : public xvblockplugin_t,public base::xvaccount_t
+        class xblockacct_t : public xvblockplugin_t
         {
         protected:
             enum{enum_max_cached_blocks = 32};
         public:
+            uint64_t            get_latest_cert_block_height() const {return m_meta->_highest_cert_block_height;}
+
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
         public:
-            xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
+            xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
         protected:
             virtual ~xblockacct_t();
         private:
@@ -124,17 +37,31 @@ namespace top
         public://indicated the last block who is connected allway to genesis block
             virtual bool           close(bool force_async = true) override;
             virtual std::string    dump() const override;  //just for debug purpose
+            
+            virtual base::xvbindex_t*              create_index(base::xvblock_t & new_raw_block) = 0;
+            virtual std::vector<base::xvbindex_t*> read_index(const uint64_t target_height) = 0;
+            virtual bool           write_index(base::xvbindex_t* this_index) = 0;
+            
+            virtual bool           write_block(base::xvbindex_t* index_ptr) = 0;
+            virtual bool           write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr) = 0;
+            
+            virtual bool           store_block(base::xvblock_t* new_raw_block);
+            //better performance with batch mode
+            virtual bool           store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks);
+            
+            virtual bool           delete_block(base::xvblock_t* target_block);
+            virtual bool           delete_block(const uint64_t target_height);
+            
+            xvblockdb_t*           get_blockdb_ptr() const {return m_blockdb_ptr;}
+        public:
             const int              get_max_cache_size() const;
+            const int              get_cached_size() const;
             bool                   clean_caches(bool clean_all,bool force_release_unused_block); //clean unsed caches of account to recall memory
-            base::xvdbstore_t*     get_xdbstore();
             
             //inline const std::string&   get_address() const {return m_account_ptr->get_address();}
             //inline const std::string&   get_account() const {return m_account_ptr->get_account();}
-
-            const int              get_cache_size();
             inline int             get_block_level() const {return m_meta->_block_level;}
-            inline const std::string &   get_blockstore_path()   const {return m_blockstore_path;};
-
+           
             const std::deque<xblockevent_t> move_events(); //move /transfer all events to outside
             bool                            process_events();
             bool                            process_events(const std::deque<xblockevent_t> & events);
@@ -169,28 +96,7 @@ namespace top
             base::xvbindex_t*      load_index(const uint64_t target_height,const std::string & block_hash, const int atag = 0);
             base::xvbindex_t*      load_index(const uint64_t target_height,base::enum_xvblock_flag request_flag, const int atag = 0);
             std::vector<base::xvbindex_t*>  load_indexes(const uint64_t target_height);//load indexes from db for height
-
-            bool                   load_block_object(base::xvbindex_t* index_ptr, const int atag = 0);
-            bool                   load_index_input(base::xvbindex_t* target_block);
-            bool                   load_index_output(base::xvbindex_t* target_block);
             size_t                 load_index_by_height(const uint64_t target_height);
-            bool                   delete_block_from_db(base::xvbindex_t* index_ptr);
-
-        public://operated for raw block
-            bool                   store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance
-            bool                   store_block(base::xvblock_t* new_raw_block);
-            bool                   delete_block(base::xvblock_t* target_block);//return error code indicate what is result
-            bool                   delete_block(const uint64_t target_height);//return error code indicate what is result
-            bool                   load_block_input(base::xvblock_t* target_block);
-            bool                   load_block_output(base::xvblock_t* target_block);
-            bool                   load_block_flags(base::xvblock_t* target_block);//update block'flags
-        public:
-            // genesis connected information
-            bool        set_genesis_height(const std::string &height);
-            const std::string    get_genesis_height();
-            bool        set_block_span(const uint64_t height,  const std::string &span);
-            bool        delete_block_span(const uint64_t height);
-            const std::string get_block_span(const uint64_t height);
 
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
@@ -212,33 +118,14 @@ namespace top
             bool                full_connect_to(base::xvbindex_t* this_block);//connect to all the way to fullblock or geneis
             bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
 
-
-            bool                write_block_to_db(base::xvbindex_t* index_ptr);
-            bool                write_block_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * linked_block_ptr);
-
-            bool                write_block_object_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
-            bool                read_block_object_from_db(base::xvbindex_t* index_ptr);
-
-            bool                write_block_input_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
-            bool                read_block_input_from_db(base::xvbindex_t* index_ptr);
-            bool                read_block_input_from_db(base::xvblock_t* block_ptr);
-
-            bool                write_block_output_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
-            bool                read_block_output_from_db(base::xvbindex_t* index_ptr);
-            bool                read_block_output_from_db(base::xvblock_t * block_ptr);
-
-            bool                write_index_to_db(const uint64_t target_height);
-            bool                write_index_to_db(std::map<uint64_t,base::xvbindex_t*> & indexes);
-            bool                write_index_to_db(base::xvbindex_t* index_obj);
-            base::xvbindex_t*   read_index_from_db(const std::string & index_db_key_path);
-            //return map sorted by viewid from lower to high,caller respond to release ptr later
-            std::vector<base::xvbindex_t*> read_index_from_db(const uint64_t target_height);
-
             //connect this_block to prev_block and next_block
             //connect_blockmay call load_block -->call connect again to get prev-block, reenter_allow_count decide how many times can reenter
             virtual bool        process_index(base::xvbindex_t* this_block){return false;}
             virtual bool        connect_index(base::xvbindex_t* this_block){return false;}
 
+            //compatible for old version,e.g read meta and other stuff
+            bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
+            
         private:
             virtual bool        init_meta(const base::xvactmeta_t & meta) override;
             bool                recover_meta(const base::xvactmeta_t & _meta);//recover at plugin level if possible;
@@ -247,18 +134,10 @@ namespace top
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_revoked(base::xvbindex_t* index_ptr);
             bool                on_block_committed(base::xvbindex_t* index_ptr);
-            bool                store_txs_to_db(base::xvbindex_t* index_ptr);
-
-        protected: //compatible for old version,e.g read meta and other stuff
-            const std::string   load_value_by_path(const std::string & full_path_as_key);
-            bool                store_value_by_path(const std::string & full_path_as_key,const std::string & value);
-            bool                delete_value_by_path(const std::string & full_path_as_key);
-            bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
-        private:
-            std::string         m_blockstore_path;
+            
         protected:
             base::xblockmeta_t * m_meta;
-            base::xvdbstore_t  * m_xvdb_ptr;
+            xvblockdb_t*         m_blockdb_ptr;
             std::deque<xblockevent_t> m_events_queue;  //stored event
             std::map<uint64_t,std::map<uint64_t,base::xvbindex_t*> > m_all_blocks;  // < height#, <view#,block*> > sort from lower to higher
         };
@@ -267,7 +146,7 @@ namespace top
         class xchainacct_t : public xblockacct_t
         {
         public:
-            xchainacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
+            xchainacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
         protected:
             virtual ~xchainacct_t();
         private:
@@ -280,6 +159,50 @@ namespace top
             virtual bool    connect_index(base::xvbindex_t* this_block) override;
         private:
             uint64_t  _lowest_commit_block_height;  //clean committed blocks first
+        };
+    
+        class xunitbkplugin : public xchainacct_t
+        {
+        public:
+            xunitbkplugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
+        protected:
+            virtual ~xunitbkplugin();
+        private:
+            xunitbkplugin();
+            xunitbkplugin(const xunitbkplugin &);
+            xunitbkplugin & operator = (const xunitbkplugin &);
+        protected:
+            virtual base::xvbindex_t*  create_index(base::xvblock_t& new_raw_block) override;
+            
+            virtual std::vector<base::xvbindex_t*> read_index(const uint64_t target_height) override;
+            virtual bool   write_index(base::xvbindex_t* this_block) override;
+            
+            virtual bool   write_block(base::xvbindex_t* index_ptr) override;
+            virtual bool   write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr) override;
+            
+            virtual bool   store_block(base::xvblock_t* new_raw_block) override;
+        };
+    
+        class xtablebkplugin : public xchainacct_t
+        {
+        public:
+            xtablebkplugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
+        protected:
+            virtual ~xtablebkplugin();
+        private:
+            xtablebkplugin();
+            xtablebkplugin(const xtablebkplugin &);
+            xtablebkplugin & operator = (const xtablebkplugin &);
+        protected:
+            virtual base::xvbindex_t*  create_index(base::xvblock_t& new_raw_block) override;
+            
+            virtual std::vector<base::xvbindex_t*> read_index(const uint64_t target_height) override;
+            virtual bool   write_index(base::xvbindex_t* this_index) override;
+                 
+            virtual bool   write_block(base::xvbindex_t* index_ptr) override;
+            virtual bool   write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr) override;
+            
+            virtual bool   store_block(base::xvblock_t* new_raw_block) override;
         };
 
     };//end of namespace of vstore

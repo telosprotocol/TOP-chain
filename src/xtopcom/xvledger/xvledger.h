@@ -14,6 +14,7 @@
 #include "xvtxstore.h"
 #include "xveventbus.h"
 #include "xvdrecycle.h"
+#include "xbase/xlock.h"
 
 namespace top
 {
@@ -24,58 +25,7 @@ namespace top
         class xvledger_t;
         class xvchain_t;
  
-        struct xspinlock_t
-        {
-            std::atomic<bool> lock_ = {0};
-            
-            void lock() noexcept {
-                for (;;) {
-                    // Optimistically assume the lock is free on the first try
-                    if (!lock_.exchange(true, std::memory_order_acquire)) {
-                        return;
-                    }
-                    // Wait for lock to be released without generating cache misses
-                    while (lock_.load(std::memory_order_relaxed)) {
-                        // Issue X86 PAUSE or ARM YIELD instruction to reduce contention between
-                        // hyper-threads
-                        __builtin_ia32_pause();
-                    }
-                }
-            }
-            
-            bool try_lock() noexcept {
-                // First do a relaxed load to check if lock is free in order to prevent
-                // unnecessary cache misses if someone does while(!try_lock())
-                return !lock_.load(std::memory_order_relaxed) &&
-                       !lock_.exchange(true, std::memory_order_acquire);
-            }
-            
-            void unlock() noexcept {
-                lock_.store(false, std::memory_order_release);
-            }
-        };
 
-        template<typename T>
-        class xauto_lock
-        {
-        public:
-            xauto_lock(T & locker)
-                :m_raw_locker(&locker)
-            {
-                m_raw_locker->lock();
-            }
-            ~xauto_lock()
-            {
-                m_raw_locker->unlock();
-            }
-        private:
-            xauto_lock();
-            xauto_lock(xauto_lock &&);
-            xauto_lock(const xauto_lock &);
-            xauto_lock & operator = (const xauto_lock &);
-        private:
-            T *   m_raw_locker;
-        };
     
         /*
         XID/xvvid  definition as total 64bit =
@@ -144,12 +94,9 @@ namespace top
             bool                    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
             bool                    get_latest_executed_block(uint64_t & block_height,std::string & block_hash);
             const uint64_t          get_latest_executed_block_height();
-            
-            bool                    set_latest_deleted_block_height(const uint64_t height);
-            const uint64_t          get_latest_deleted_block_height();
-            
+
             bool                    save_meta(bool carry_process_id = true);
-            bool                    update_meta(xvactplugin_t * plugin);
+            bool                    update_block_meta(xvactplugin_t * plugin);
         protected:
             std::recursive_mutex&   get_table_lock();
             xspinlock_t&            get_spin_lock()  {return m_spin_lock;}
@@ -369,7 +316,10 @@ namespace top
             inline const int            get_chain_id()     const {return (int)m_chain_id;}
             inline const int            get_network_id()   const {return (int)m_chain_id;}
             inline const uint32_t       get_current_process_id() const {return m_current_process_id;}
- 
+            inline const uint64_t       get_process_start_time() const {return m_proces_start_time;}//gmt
+            inline const std::string&   get_data_dir_path()      const {return m_data_dir_path;}
+            inline bool                 is_auto_prune_enable()   const {return (m_is_auto_prune != 0);}
+            
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
             xvtxstore_t*                get_xtxstore();   //global shared xvtxstore_t instance
@@ -388,22 +338,29 @@ namespace top
             bool                        set_xcontractstore(xvcontractstore_t * new_store);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
             
+            bool                        set_data_dir_path(const std::string & dir_path);
+            void                        enable_auto_prune(bool enable);
+            
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
             
             virtual bool                save_all(); //save all unsaved data and meta etc
             virtual bool                on_process_close();//send process_close event to every objects
+            uint16_t                    get_round_number() {return m_round_number;}
+            void                        add_round_number() {m_round_number++;}
         protected:
             virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
             bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);
         private:
             std::recursive_mutex    m_lock;
-            uint8_t                 m_reserved_1;
+            uint8_t                 m_is_auto_prune;//1 means on,0 means off
             uint8_t                 m_reserved_2;
-            uint16_t                m_reserved_3;
+            uint16_t                m_round_number;
             uint32_t                m_chain_id;//aka network_id
             uint32_t                m_current_node_roles;//multiple roles
             uint32_t                m_current_process_id;
+            uint64_t                m_proces_start_time; //GMT times as seconds
+            std::string             m_data_dir_path;
         protected:
             xvledger_t*   m_ledgers[enum_vchain_has_buckets_count];
         private:

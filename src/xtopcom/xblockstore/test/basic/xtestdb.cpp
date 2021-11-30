@@ -144,10 +144,38 @@ namespace top
             
             return std::string();
         }
-    
-        bool  xstoredb_t::find_values(const std::string & key,std::vector<std::string> & values)//support wild search
+        
+        bool  xstoredb_t::delete_values(std::vector<std::string> & to_deleted_keys)
         {
-            return false;
+            for(auto & key : to_deleted_keys)
+            {
+                delete_value(key);
+            }
+            return true;
+        }
+ 
+        //prefix must start from first char of key
+        bool  xstoredb_t::read_range(const std::string& prefix, std::vector<std::string>& values)
+        {
+            for(auto it = m_dumy_store.begin(); it != m_dumy_store.end(); ++it)
+            {
+                if(it->first.find(prefix) != std::string::npos)
+                {
+                    values.push_back(it->second);
+                }
+            }
+            return (values.empty() == false);
+        }
+
+        //note:begin_key and end_key must has same style(first char of key)
+        bool  xstoredb_t::delete_range(const std::string & begin_key,const std::string & end_key)
+        {
+            return true;
+        }
+    
+        bool  xstoredb_t::single_delete(const std::string & target_key)//key must be readonly(never update after PUT),otherwise the behavior is undefined
+        {
+            return delete_value(target_key);
         }
     
         void   xveventbus_impl::push_event(const mbus::xevent_ptr_t& e)

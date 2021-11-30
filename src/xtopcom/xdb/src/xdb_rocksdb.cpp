@@ -148,9 +148,11 @@ class xdb::xdb_impl final{
     bool erase(const std::string& key);
     bool erase(const std::vector<std::string>& keys);
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys);
-    bool read_range(const std::string& prefix, std::vector<std::string>& values) const;
-    xdb_transaction_t* begin_transaction();
+    bool read_range(const std::string& prefix, std::vector<std::string>& values);
 
+    bool single_delete(const std::string& key);
+    bool delete_range(const std::string& begin_key,const std::string& end_key);
+    
     static void destroy(const std::string& m_db_name);
 
  private:
@@ -316,11 +318,45 @@ bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string>& objs,
     return s.ok();
 }
 
+bool xdb::xdb_impl::single_delete(const std::string& key)
+{
+    if(key.empty() || (NULL == m_db))
+        return false;
+ 
+    rocksdb::Status res = m_db->SingleDelete(rocksdb::WriteOptions(), m_handles[0], rocksdb::Slice(key));
+    if (!res.ok())
+    {
+        if (res.IsNotFound()) //possible case
+            return true;
+        
+        handle_error(res);
+        return false;
+    }
+    return true;
+}
+
+bool xdb::xdb_impl::delete_range(const std::string& begin_key,const std::string& end_key)
+{
+    if(begin_key.empty() || end_key.empty() || (NULL == m_db))
+        return false;
+    
+    rocksdb::Status res = m_db->DeleteRange(rocksdb::WriteOptions(),m_handles[0],rocksdb::Slice(begin_key), rocksdb::Slice(end_key));
+    if (!res.ok())
+    {
+        if (res.IsNotFound()) //possible case
+            return true;
+        
+        handle_error(res);
+        return false;
+    }
+    return true;
+}
+
 void xdb::xdb_impl::destroy(const std::string& m_db_name) {
     rocksdb::DestroyDB(m_db_name, rocksdb::Options());
 }
 
-bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::string>& values) const {
+bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::string>& values) {
     bool ret = false;
     auto iter = m_db->NewIterator(rocksdb::ReadOptions(), m_handles[0]);
 
@@ -330,16 +366,6 @@ bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::strin
     }
     delete iter;
     return ret;
-}
-
-xdb_transaction_t* xdb::xdb_impl::begin_transaction() {
-    rocksdb::WriteOptions write_options;
-    rocksdb::TransactionOptions txn_options;
-
-    // Start a transaction
-    rocksdb::Transaction* txn = m_db->BeginTransaction(write_options);
-
-    return new xdb_rocksdb_transaction_t(txn);
 }
 
 xdb::xdb(const std::string& name)
@@ -412,15 +438,28 @@ void xdb::destroy(const std::string& m_db_name) {
     rocksdb::DestroyDB(m_db_name, rocksdb::Options());
 }
 
-bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values) const {
+bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values)
+{
     XMETRICS_TIMER(metrics::db_read_tick);
     auto ret =  m_db_impl->read_range(prefix, values);
     XMETRICS_GAUGE(metrics::db_read, ret ? 1 : 0);
     return ret;
 }
 
-xdb_transaction_t* xdb::begin_transaction() {
-    return m_db_impl->begin_transaction();
+bool xdb::delete_range(const std::string& begin_key,const std::string& end_key)
+{
+    XMETRICS_TIMER(metrics::db_delete_tick);
+    auto ret = m_db_impl->delete_range(begin_key, end_key);
+    XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
+    return ret;
+}
+
+bool xdb::single_delete(const std::string& key)
+{
+    XMETRICS_TIMER(metrics::db_delete_tick);
+    auto ret =  m_db_impl->single_delete(key);
+    XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
+    return ret;
 }
 
 }  // namespace ledger

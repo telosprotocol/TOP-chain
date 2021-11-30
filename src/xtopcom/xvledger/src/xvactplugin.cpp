@@ -43,6 +43,16 @@ namespace top
             xinfo("xvactplugin_t::close,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
             return xobject_t::close(force_async);
         }
+    
+        const xvid_t         xvactplugin_t::get_xvid()    const
+        {
+            return m_account_obj->get_xvid();
+        }
+    
+        const std::string&   xvactplugin_t::get_xvid_str()const
+        {
+            return m_account_obj->get_xvid_str();
+        }
         
         const std::string &  xvactplugin_t::get_account_address()  const
         {

@@ -38,9 +38,17 @@ namespace top
             virtual bool                set_value(const std::string & key, const std::string& value) override;
             virtual bool                delete_value(const std::string & key) override;
             virtual const std::string   get_value(const std::string & key) const override;
-            virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search
+            virtual bool                delete_values(std::vector<std::string> & to_deleted_keys) override;
             
             virtual bool                execute_block(base::xvblock_t* block);
+            
+        public:
+            //prefix must start from first char of key
+            virtual bool             read_range(const std::string& prefix, std::vector<std::string>& values) override;
+
+            //note:begin_key and end_key must has same style(first char of key)
+            virtual bool             delete_range(const std::string & begin_key,const std::string & end_key) override;
+            virtual bool             single_delete(const std::string & target_key) override;//key must be readonly(never update after PUT),otherwise the behavior is undefined
             
         public:
             virtual std::string         get_store_path() const  override {return m_store_path;}
