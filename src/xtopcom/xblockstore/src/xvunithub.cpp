@@ -1136,7 +1136,7 @@ namespace top
                 if(!index_ptr->check_store_flag(base::enum_index_store_flag_transactions))
                 {
                     xdbg("xvblockstore_impl::store_txs_to_db,index=%s",index_ptr->dump().c_str());
-                    base::xauto_ptr<base::xvblock_t> target_block = load_block_from_index_for_raw_index(target_account, index_ptr, index_ptr->get_height(), true); // TODO(jimmy) false
+                    base::xauto_ptr<base::xvblock_t> target_block = load_block_from_index_for_raw_index(target_account, index_ptr, index_ptr->get_height(), false); // TODO(jimmy) false
                     // target_account->load_block_object(index_ptr);
                     // target_account->load_block_input(index_ptr->get_this_block());
                     // target_account->load_block_output(index_ptr->get_this_block());

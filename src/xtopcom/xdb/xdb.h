@@ -43,6 +43,9 @@ class xdb : public xdb_face_t {
     //key must be readonly(never update after PUT),otherwise the behavior is undefined
     bool single_delete(const std::string& key) override;
     
+    //iterator each key of prefix.note: go throuh whole db if prefix is empty
+    bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie) override;
+    
     xdb_meta_t  get_meta() override {return xdb_meta_t();}  // XTODO no need implement
 
  private:

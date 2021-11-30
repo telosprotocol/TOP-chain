@@ -34,6 +34,8 @@ public:
     virtual bool erase(const std::string& key) = 0;
 };
 
+typedef bool (*xdb_iterator_callback)(const std::string& key, const std::string& value,void*cookie);
+
 class xdb_face_t {
  public:
     virtual bool open() = 0;
@@ -56,6 +58,8 @@ class xdb_face_t {
     virtual bool delete_range(const std::string& begin_key,const std::string& end_key) = 0;
     //key must be readonly(never update after PUT),otherwise the behavior is undefined
     virtual bool single_delete(const std::string& key) = 0;
+    //iterator each key of prefix.note: go throuh whole db if prefix is empty
+    virtual bool read_range(const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie) = 0;
 };
 
 }  // namespace ledger
