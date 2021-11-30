@@ -26,7 +26,7 @@ class xdatamock_table : public base::xvaccount_t {
         enum_default_full_table_state_count = 2,
     };
  public:
-    explicit xdatamock_table(uint16_t tableid = 1, uint32_t user_count = 4)
+    explicit xdatamock_table(uint16_t tableid = 1, uint32_t user_count = 4, bool is_fixed = false)
     : base::xvaccount_t(xblocktool_t::make_address_shard_table_account(tableid)) {
         m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
         m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
@@ -34,13 +34,32 @@ class xdatamock_table : public base::xvaccount_t {
         xblock_ptr_t _block = build_genesis_table_block();
         on_table_finish(_block);
 
-        for (uint32_t i = 0; i < user_count; i++) {
-            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
-            xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
-            m_mock_units.push_back(datamock_unit);
+        if (is_fixed) {
+            // two account is enough as reference block
+            {
+                xaddress_key_pair_t addr_pair;
+                addr_pair.m_address = send_account;
+                xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
+                m_mock_units.push_back(datamock_unit);
+            }
+            {
+                xaddress_key_pair_t addr_pair;
+                addr_pair.m_address = recv_account;
+                xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
+                m_mock_units.push_back(datamock_unit);
+            }
+        } else {
+            for (uint32_t i = 0; i < user_count; i++) {
+                xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
+                xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
+                m_mock_units.push_back(datamock_unit);
+            }
         }
         xassert(m_mock_units.size() == user_count);
     }
+
+    const std::string send_account{"T00000LZbJfje6hW6MmG43h6EaTkme3ZqggGoUvF"};
+    const std::string recv_account{"T00000LS5oCNzqoCFe5MTkGBJDyCHCM2wCkfFBLM"};
 
     void                                disable_fulltable() {m_config_fulltable_interval = 0;}
     const base::xvaccount_t &           get_vaccount() const {return *this;}
@@ -126,18 +145,19 @@ class xdatamock_table : public base::xvaccount_t {
         }
     }
 
-    xblock_consensus_para_t  init_consensus_para() {
+    xblock_consensus_para_t  init_consensus_para(uint64_t clock = 10000000) {
         xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), get_cert_block().get());
         cs_para.update_latest_cert_block(get_cert_block());
         cs_para.update_latest_lock_block(get_lock_block());
         cs_para.update_latest_commit_block(get_commit_block());
         cs_para.set_tableblock_consensus_para(1,"1",1,"1");
+        cs_para.set_clock(clock);
         return cs_para;
     }
 
-    void    do_multi_sign(const xblock_ptr_t & proposal_block) {
+    void    do_multi_sign(const xblock_ptr_t & proposal_block, bool is_fixed = false) {
         if (proposal_block != nullptr) {
-            xcertauth_util::instance().do_multi_sign(proposal_block.get());
+            xcertauth_util::instance().do_multi_sign(proposal_block.get(), is_fixed);
         }        
     }
 
