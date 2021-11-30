@@ -130,10 +130,6 @@ public:
         return false;
     }
 
-    bool load_block_flags(const base::xvaccount_t & account, base::xvblock_t* block,const int atag = 0) override {
-        return false;
-    }
-
     bool store_block(const base::xvaccount_t & account, base::xvblock_t * block,const int atag = 0) override {
         return false;
     }

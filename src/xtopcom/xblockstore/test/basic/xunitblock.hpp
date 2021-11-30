@@ -111,8 +111,6 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(const base::xvaccount_t & account,const int atag = 0)  override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(const base::xvaccount_t & account,const int atag = 0)   override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(const base::xvaccount_t & account,const int atag = 0)override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_executed_block(const base::xvaccount_t & account,const int atag = 0) override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account,const int atag = 0)override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const base::xvaccount_t & account,const int atag = 0);
             
             //mostly used for query cert-only block

@@ -7,12 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9941DB1C26EB436E00CF4688 /* libxvledger.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9941DB1B26EB436E00CF4688 /* libxvledger.a */; };
+		9941DBBA26EB47C300CF4688 /* libxblockstore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9941DBB926EB47C300CF4688 /* libxblockstore.a */; };
 		998DBCF02461E7580048BF49 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 998DBCEF2461E7580048BF49 /* main.cpp */; };
 		998DBCF52461E8250048BF49 /* libxbase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 998DBCF22461E8250048BF49 /* libxbase.a */; };
-		998DBCF62461E8250048BF49 /* libxblockstore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 998DBCF32461E8250048BF49 /* libxblockstore.a */; };
 		998DBCF72461E8250048BF49 /* libxcertauth.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 998DBCF42461E8250048BF49 /* libxcertauth.a */; };
 		998DBCFA2461E8A60048BF49 /* xunitblock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 998DBCF82461E8A60048BF49 /* xunitblock.cpp */; };
 		998DBCFD2461E8CF0048BF49 /* xtestca.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 998DBCFB2461E8CF0048BF49 /* xtestca.cpp */; };
+		99B21339270ABB3200D10174 /* xtestrocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99B21337270ABB3200D10174 /* xtestrocks.cpp */; };
+		99B21364270AE28D00D10174 /* librocksdb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 99B2135E270AE28D00D10174 /* librocksdb.a */; };
+		99B21365270AE28D00D10174 /* libsnappy.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 99B2135F270AE28D00D10174 /* libsnappy.a */; };
+		99B21366270AE28D00D10174 /* liblz4.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 99B21360270AE28D00D10174 /* liblz4.a */; };
+		99B21367270AE28D00D10174 /* libzstd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 99B21361270AE28D00D10174 /* libzstd.a */; };
+		99B21368270AE28D00D10174 /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 99B21362270AE28D00D10174 /* libz.a */; };
+		99B21369270AE28D00D10174 /* libbz2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 99B21363270AE28D00D10174 /* libbz2.a */; };
 		99D6F947247217C600FF7392 /* xtestdb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99D6F945247217C600FF7392 /* xtestdb.cpp */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +37,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9941DB1B26EB436E00CF4688 /* libxvledger.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libxvledger.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		9941DBB926EB47C300CF4688 /* libxblockstore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libxblockstore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		998DBCE52461E6750048BF49 /* xblockstore-basic-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "xblockstore-basic-test"; sourceTree = BUILT_PRODUCTS_DIR; };
 		998DBCEF2461E7580048BF49 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		998DBCF22461E8250048BF49 /* libxbase.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxbase.a; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/xtopcom-ajajxyvvzkhyzsersovaaixrqafq/Build/Products/Debug/libxbase.a"; sourceTree = "<group>"; };
@@ -38,6 +48,17 @@
 		998DBCF92461E8A60048BF49 /* xunitblock.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = xunitblock.hpp; sourceTree = "<group>"; };
 		998DBCFB2461E8CF0048BF49 /* xtestca.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xtestca.cpp; sourceTree = "<group>"; };
 		998DBCFC2461E8CF0048BF49 /* xtestca.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = xtestca.hpp; sourceTree = "<group>"; };
+		99B2132B270AA89F00D10174 /* libxdb.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libxdb.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		99B21337270ABB3200D10174 /* xtestrocks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = xtestrocks.cpp; sourceTree = "<group>"; };
+		99B21338270ABB3200D10174 /* xtestrocks.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = xtestrocks.hpp; sourceTree = "<group>"; };
+		99B2135E270AE28D00D10174 /* librocksdb.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librocksdb.a; path = ../../../xdepends/libs/mac/librocksdb.a; sourceTree = "<group>"; };
+		99B2135F270AE28D00D10174 /* libsnappy.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsnappy.a; path = ../../../xdepends/libs/mac/libsnappy.a; sourceTree = "<group>"; };
+		99B21360270AE28D00D10174 /* liblz4.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblz4.a; path = ../../../xdepends/libs/mac/liblz4.a; sourceTree = "<group>"; };
+		99B21361270AE28D00D10174 /* libzstd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzstd.a; path = ../../../xdepends/libs/mac/libzstd.a; sourceTree = "<group>"; };
+		99B21362270AE28D00D10174 /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libz.a; path = ../../../xdepends/libs/mac/libz.a; sourceTree = "<group>"; };
+		99B21363270AE28D00D10174 /* libbz2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbz2.a; path = ../../../xdepends/libs/mac/libbz2.a; sourceTree = "<group>"; };
+		99CB240226EB41B2007214F7 /* libxblockstore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libxblockstore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		99CB240426EB42DD007214F7 /* libxblockstore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libxblockstore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		99D6F945247217C600FF7392 /* xtestdb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xtestdb.cpp; sourceTree = "<group>"; };
 		99D6F946247217C600FF7392 /* xtestdb.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = xtestdb.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -47,9 +68,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				99B21364270AE28D00D10174 /* librocksdb.a in Frameworks */,
+				99B21365270AE28D00D10174 /* libsnappy.a in Frameworks */,
+				99B21366270AE28D00D10174 /* liblz4.a in Frameworks */,
+				99B21367270AE28D00D10174 /* libzstd.a in Frameworks */,
+				99B21368270AE28D00D10174 /* libz.a in Frameworks */,
+				99B21369270AE28D00D10174 /* libbz2.a in Frameworks */,
 				998DBCF52461E8250048BF49 /* libxbase.a in Frameworks */,
-				998DBCF62461E8250048BF49 /* libxblockstore.a in Frameworks */,
 				998DBCF72461E8250048BF49 /* libxcertauth.a in Frameworks */,
+				9941DBBA26EB47C300CF4688 /* libxblockstore.a in Frameworks */,
+				9941DB1C26EB436E00CF4688 /* libxvledger.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +87,8 @@
 		998DBCDC2461E6750048BF49 = {
 			isa = PBXGroup;
 			children = (
+				99B21337270ABB3200D10174 /* xtestrocks.cpp */,
+				99B21338270ABB3200D10174 /* xtestrocks.hpp */,
 				99D6F945247217C600FF7392 /* xtestdb.cpp */,
 				99D6F946247217C600FF7392 /* xtestdb.hpp */,
 				998DBCFB2461E8CF0048BF49 /* xtestca.cpp */,
@@ -82,6 +112,17 @@
 		998DBCF12461E8250048BF49 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				99B21363270AE28D00D10174 /* libbz2.a */,
+				99B21360270AE28D00D10174 /* liblz4.a */,
+				99B2135E270AE28D00D10174 /* librocksdb.a */,
+				99B2135F270AE28D00D10174 /* libsnappy.a */,
+				99B21362270AE28D00D10174 /* libz.a */,
+				99B21361270AE28D00D10174 /* libzstd.a */,
+				99B2132B270AA89F00D10174 /* libxdb.a */,
+				9941DBB926EB47C300CF4688 /* libxblockstore.a */,
+				9941DB1B26EB436E00CF4688 /* libxvledger.a */,
+				99CB240426EB42DD007214F7 /* libxblockstore.a */,
+				99CB240226EB41B2007214F7 /* libxblockstore.a */,
 				998DBCF22461E8250048BF49 /* libxbase.a */,
 				998DBCF32461E8250048BF49 /* libxblockstore.a */,
 				998DBCF42461E8250048BF49 /* libxcertauth.a */,
@@ -129,6 +170,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 998DBCDC2461E6750048BF49;
@@ -150,6 +192,7 @@
 				998DBCF02461E7580048BF49 /* main.cpp in Sources */,
 				99D6F947247217C600FF7392 /* xtestdb.cpp in Sources */,
 				998DBCFD2461E8CF0048BF49 /* xtestca.cpp in Sources */,
+				99B21339270ABB3200D10174 /* xtestrocks.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,7 +296,7 @@
 				HEADER_SEARCH_PATHS = ../../../xdepends/include;
 				LIBRARY_SEARCH_PATHS = ../../../xdepends/libs/mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "../../../ ../../../xdepends/include";
+				USER_HEADER_SEARCH_PATHS = "../../../ ../../../xdepends/include ../../../../../";
 			};
 			name = Debug;
 		};
@@ -263,7 +306,7 @@
 				HEADER_SEARCH_PATHS = ../../../xdepends/include;
 				LIBRARY_SEARCH_PATHS = ../../../xdepends/libs/mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "../../../ ../../../xdepends/include";
+				USER_HEADER_SEARCH_PATHS = "../../../ ../../../xdepends/include ../../../../../";
 			};
 			name = Release;
 		};

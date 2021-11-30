@@ -146,9 +146,9 @@ int start_monitor_thread() {
 }
 
 int main(int argc, char * argv[]) {
-
+#if 0  // TODO(jimmy) for debug
     catch_system_signals();//setup and hook system signals
-    
+#endif
     // use this to join or quit network, config show_cmd = false will come here
     // auto elect_mgr = elect_main.elect_manager();
     try {

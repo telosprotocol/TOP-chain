@@ -43,7 +43,12 @@ namespace top
             
         public:
             enum_xvaccount_plugin_type get_plugin_type()   const {return m_plugin_type;}
-            const std::string &     get_account_address()  const ;
+            const xvid_t            get_xvid()    const;
+            const std::string&      get_xvid_str()const;
+            const std::string &     get_account_address()  const;
+            inline const std::string&   get_address() const {return get_account_address();}
+            inline const std::string&   get_account() const {return get_account_address();}
+
             xvaccountobj_t*         get_account_obj()      const {return m_account_obj;}
             inline const uint64_t   get_idle_duration()    const {return m_idle_timeout_ms;}
             inline const uint64_t   get_last_access_time() const {return m_last_access_time_ms;} //UTC ms

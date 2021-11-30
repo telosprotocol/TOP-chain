@@ -3,11 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xvnode/xvnode.h"
-
 #include "xmbus/xevent_role.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvnetwork_driver.h"
 #include "xvnode/xerror/xerror.h"
+#include "xblockstore/xblockstore_face.h"
 
 NS_BEG2(top, vnode)
 
@@ -69,6 +69,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
     } else {
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
+    m_prune_data = make_unique<components::prune_data::xprune_data>();
 }
 
 xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
@@ -188,7 +189,9 @@ void xtop_vnode::new_driver_added() {
     // update_tx_cache_service();
     update_rpc_service();
     update_contract_manager(false);
-    update_block_prune();
+    
+    update_auto_prune_control(m_the_binding_driver->type(), m_store.get());
+    xkinfo("new_driver_added node type:%s", common::to_string(m_the_binding_driver->type()).c_str());
 }
 
 void xtop_vnode::driver_removed() {
@@ -200,24 +203,55 @@ void xtop_vnode::driver_removed() {
     // }
     sync_remove_vnet();
 }
-void xtop_vnode::update_block_prune() {
-    xdbg("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
-    if (XGET_CONFIG(auto_prune_data) == "off")
-        return;
-    if (common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
-        return;
+
+bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type, base::xvdbstore_t* xvdb_ptr)
+{
+    xinfo("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
+    if(base::xvchain_t::instance().is_auto_prune_enable() == false)
+        return false;//not allow change anymore
+    
+    if (common::has<common::xnode_type_t::frozen>(node_type)) {
+        return false;
     }
-    if (!common::has<common::xnode_type_t::storage>(m_the_binding_driver->type())) {
-        if (top::store::install_block_recycler(m_store.get()))
-            xdbg("install_block_recycler ok.");
+    if (!common::has<common::xnode_type_t::storage>(node_type)) {
+        // if (base::xvchain_t::instance().get_round_number() < 5) {
+        //     xdbg("wait to start enable_block_recycler: %d", base::xvchain_t::instance().get_round_number());
+        //     base::xvchain_t::instance().add_round_number();
+        //     return true;
+        // }
+        // uint64_t now = base::xvchain_t::instance().get_time_now();
+        // if (base::xvchain_t::instance().get_start_time() + 5 * 60 * 1000000 < now) {
+        //     xdbg("wait for enough time to start prune data: %" PRIu64 ",%" PRIu64, base::xvchain_t::instance().get_start_time(), now);
+        //     return true;
+        // }
+        if (top::store::install_block_recycler(xvdb_ptr))
+            xinfo("install_block_recycler ok.");
         else
-            xdbg("install_block_recycler fail.");
-        if (top::store::enable_block_recycler())
-            xdbg("enable_block_recycler ok.");
+            xerror("install_block_recycler fail.");
+        
+        if (top::store::enable_block_recycler(true))
+            xinfo("enable_block_recycler ok.");
         else
-            xdbg("enable_block_recycler fail.");
+            xerror("enable_block_recycler fail.");
+        return true;
     }
+    
+    //detect it is archive node
+    if (top::store::enable_block_recycler(false))
+        xinfo("disable_block_recycler ok.");
+    else
+        xerror("disable_block_recycler fail.");
+    
+    //force to turn off auto_prune for archive node
+    base::xvchain_t::instance().enable_auto_prune(false);
+    
+    //froce to turn off it at config file
+    std::string prune_off("off");
+    m_prune_data->update_prune_config_file(prune_off);
+    
+    return true;
 }
+
 void xtop_vnode::update_rpc_service() {
     xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
     if (!common::has<common::xnode_type_t::storage_archive>(m_the_binding_driver->type()) &&
@@ -241,17 +275,6 @@ void xtop_vnode::update_rpc_service() {
                                                            m_election_cache_data_accessor);
     }
 }
-// void xtop_vnode::update_tx_cache_service() {
-//     xdbg("try update tx cache service. node type %s, %p", common::to_string(m_the_binding_driver->type()).c_str(), m_timer_driver.get());
-//     if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type())) {
-//         xdbg("[virtual node] update tx cache service with node type %s address %s",
-//              common::to_string(m_the_binding_driver->type()).c_str(),
-//              m_the_binding_driver->address().to_string().c_str());
-//         m_transaction_cache = std::make_shared<data::xtransaction_cache_t>();
-//         m_tx_prepare_mgr = std::make_shared<txexecutor::xtransaction_prepare_mgr>(m_bus, m_timer_driver, make_observer(m_transaction_cache));
-//         m_tx_prepare_mgr->start();
-//     }
-// }
 
 void xtop_vnode::update_contract_manager(bool destory) {
     // TODO(justin): remove unit_services temp

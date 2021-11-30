@@ -544,9 +544,9 @@ namespace top
                 }
                 
                 xstrmap_t * old_ptr = xatomic_t::xexchange(m_resources_obj, map_ptr);
-                if(old_ptr != NULL){
-                    old_ptr->release_ref();
-                    old_ptr = NULL;
+                if(old_ptr != NULL)
+                {
+                    xcontext_t::instance().delay_release_object(old_ptr);
                 }
             }
             return true;

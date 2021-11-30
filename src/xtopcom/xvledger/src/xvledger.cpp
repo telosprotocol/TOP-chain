@@ -188,7 +188,7 @@ namespace top
         }
         
         //fetch and update together
-        bool   xvaccountobj_t::update_meta(xvactplugin_t * plugin)
+        bool   xvaccountobj_t::update_block_meta(xvactplugin_t * plugin)
         {
             if(is_close())//not allow write anymore at closed status
                 return false;
@@ -348,31 +348,7 @@ namespace top
             const uint64_t atom_copy = base::xatomic_t::xload( meta_ptr->get_state_meta()._highest_execute_block_height);
             return atom_copy;
         }
-    
-        bool   xvaccountobj_t::set_latest_deleted_block_height(const uint64_t height)
-        {
-            if(is_close())//not allow write anymore at closed status
-                return false;
-            
-            xauto_lock<xspinlock_t> locker(get_spin_lock());
-            xvactmeta_t * meta_ptr = get_meta();
-            if(height > meta_ptr->get_block_meta()._highest_deleted_block_height)
-            {
-                base::xatomic_t::xstore(meta_ptr->get_block_meta()._highest_deleted_block_height,height);
-                meta_ptr->add_modified_count();
-                return true;
-            }
-            return false;
-        }
-    
-        const uint64_t  xvaccountobj_t::get_latest_deleted_block_height()
-        {
-            //note:meta_ptr never be destroy,it is safe to get it without lock
-            xvactmeta_t * meta_ptr = get_meta();
-            const uint64_t atom_copy = base::xatomic_t::xload( meta_ptr->get_block_meta()._highest_deleted_block_height);
-            return atom_copy;
-        }
-    
+      
         bool   xvaccountobj_t::recover_meta(xvactmeta_t & _meta)//recover at account level if possible
         {
             return false;//default do nothing at account level
@@ -418,7 +394,7 @@ namespace top
         {
             if(vmeta_bin.empty() == false)
             {
-                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
+                XMETRICS_GAUGE(metrics::store_block_meta_write, vmeta_bin.size());
                 const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key_old(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
@@ -1328,17 +1304,19 @@ namespace top
             :xionode_t(xcontext_t::instance(),thread_id,enum_xobject_type_vchain)
         {
             //initialize
-            m_reserved_1 = 0;
+            m_is_auto_prune = 0;//init as disabled status
             m_reserved_2 = 0;
-            m_reserved_3 = 0;
+            m_round_number = 0;
             m_chain_id = 0;
             m_current_node_roles = 0;
             m_current_process_id = 0;
+            m_proces_start_time  = 0;
             //end of initialize
             
             m_chain_id = chain_id;
             memset(m_ledgers,0,sizeof(m_ledgers));
             m_current_process_id = base::xsys_utl::get_sys_process_id();
+            m_proces_start_time = xtime_utl::gmttime_ms();
             
             //build default stores
             xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
@@ -1576,6 +1554,23 @@ namespace top
                 return false;
             
             return register_plugin(new_mgr,enum_xvchain_plugin_recycle_mgr);
+        }
+        
+        bool  xvchain_t::set_data_dir_path(const std::string & dir_path)
+        {
+            if(m_data_dir_path.empty() == false)//not allow overwrited
+                return false;
+            
+            m_data_dir_path = dir_path;
+            return true;
+        }
+    
+        void  xvchain_t::enable_auto_prune(bool enable)
+        {
+            if(enable)
+                m_is_auto_prune = 1;
+            else
+                m_is_auto_prune = 0;
         }
     
     };//end of namespace of base

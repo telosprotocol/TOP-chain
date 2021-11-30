@@ -174,12 +174,6 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         base::xauto_ptr<base::xvbindex_t> index(sync_store->get_vblockstore()->load_block_index(test_account_obj, it->get_height(), 0,0));
         if(false == index->check_block_flag(base::enum_xvblock_flag_committed))
             printf("block is not commit as detail=%s \n",index->dump().c_str());
- 
-        if(false == index->check_block_flag(base::enum_xvblock_flag_connected))
-            printf("block is not connected as detail=%s \n",index->dump().c_str());
-        
-        if(false == index->check_block_flag(base::enum_xvblock_flag_executed))
-            printf("block is not executed as detail=%s \n",index->dump().c_str());
         
         it->release_ref();
     }

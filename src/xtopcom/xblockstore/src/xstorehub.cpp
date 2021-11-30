@@ -51,7 +51,7 @@ namespace top
                 return _static_blockstore;
 
             base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
-            _static_blockstore = new xvblockstore_impl(xvdb_ptr->get_store_path(),*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id(),xvdb_ptr);
+            _static_blockstore = new xvblockstore_impl(*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id(),xvdb_ptr);
 
             //set into global management
             base::xvchain_t::instance().set_xblockstore(_static_blockstore);
@@ -63,7 +63,7 @@ namespace top
             if(NULL == xvdb_ptr)
                 xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
 
-            xvblockstore_impl * _blockstore = new xvblockstore_impl(xvdb_ptr->get_store_path(),*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id(),xvdb_ptr);
+            xvblockstore_impl * _blockstore = new xvblockstore_impl(*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id(),xvdb_ptr);
             return _blockstore;
         }
 
@@ -93,9 +93,12 @@ namespace top
             return base::xvchain_t::instance().get_xrecyclemgr()->set_block_recycler(*recycler);
         }
     
-        bool enable_block_recycler()
+        bool enable_block_recycler(bool enable)
         {
-            return base::xvchain_t::instance().get_xrecyclemgr()->turn_on_recycler(base::enum_vdata_recycle_type_block);
+            if (enable)
+                return base::xvchain_t::instance().get_xrecyclemgr()->turn_on_recycler(base::enum_vdata_recycle_type_block);
+            else
+                return base::xvchain_t::instance().get_xrecyclemgr()->turn_off_recycler(base::enum_vdata_recycle_type_block);
         }
 
     };//end of namespace of vstore

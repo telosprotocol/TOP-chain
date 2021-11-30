@@ -52,7 +52,6 @@ namespace top
             inline const uint64_t       get_viewtoken()  const {return m_block_viewtoken;}
             inline const std::string &  get_block_hash()      const {return m_block_hash;}
             inline const std::string &  get_last_block_hash() const {return m_last_block_hash;}
-            inline const std::string &  get_last_full_block_hash()    const {return m_last_fullblock_hash;}
             inline const uint64_t       get_last_full_block_height()  const {return m_last_fullblock_height;}
             
             inline const int32_t        get_next_viewid_offset() const {return m_next_viewid_offset;}
@@ -101,13 +100,16 @@ namespace top
 
 
             inline xvblock_t*           get_this_block() const {return m_linked_block;}
-            bool                        reset_this_block(xvblock_t* _block_ptr);
+            bool                        reset_this_block(xvblock_t* _block_ptr,bool delay_release_existing_one = false);
 
             void                        reset_next_viewid_offset(const int32_t next_viewid_offset);
         public:
             inline bool        check_modified_flag() const { return (m_modified != 0);}
             void               set_modified_flag();
             void               reset_modify_flag();
+            
+            //only allow reset it when index has empty address
+            bool               reset_account_addr(const xvaccount_t & addr);
 
             bool               is_close() const { return (m_closed != 0);}
             bool               close(); //force close object and release linked objects
@@ -137,21 +139,23 @@ namespace top
             std::string     m_last_fullblock_hash; //point to last full-block'hash
             uint64_t        m_last_fullblock_height;//height of m_last_full_block
             
+            std::string     m_extend_cert;
+            std::string     m_extend_data;
+            
             uint64_t        m_parent_block_height;//height of container(e.gtableblock) that may carry this block
             uint64_t        m_parent_block_viewid;//viewid of container(e.gtableblock) that may carry this block
             uint32_t        m_parent_block_entity_id{0};//entity id at parent block
-            std::string     m_extend_cert;
-            std::string     m_extend_data;
+
+            //(m_block_viewid + m_next_viewid_offset)point the block at same height but different viewid
+            int32_t         m_next_viewid_offset;
+            std::string     m_reserved;  //for future
             
             uint16_t        m_combineflags;     //[8bit:block-flags][1bit][7bit:store-bits]
             //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
             uint16_t        m_block_types;
             uint8_t         m_closed;           //indicated whether closed or not
             uint8_t         m_modified;         //indicated whether has any change that need persist again
-            
-            //(m_block_viewid + m_next_viewid_offset)point the block at same height but different viewid
-            int32_t         m_next_viewid_offset;
-            std::string     m_reserved;  //for future
+            uint8_t         m_version;          //version of data format
         };
 
         class xvbindex_vector

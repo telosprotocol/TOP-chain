@@ -13,7 +13,15 @@
 #include "xunitblock.hpp"
 #include "xtestshard.hpp"
 
+#include "xblockstore/xblockstore_face.h"
+
 #include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <signal.h>
+#include <unistd.h>
 
 using namespace top;
 using namespace top::test;
@@ -42,6 +50,98 @@ namespace top
 
 }
 
+#define SIGTERM_MSG "SIGTERM received.\n"
+
+void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
+{
+    switch(signum)
+    {
+        //signals to generate core dump
+        case SIGSEGV:
+        case SIGILL:
+        case SIGFPE:
+        case SIGABRT:
+        {
+            printf("on_sys_signal_callback:capture core_signal(%d)\n",signum);
+            xwarn("on_sys_signal_callback:capture core_signal(%d)",signum);
+            
+            //trigger save data before coredump
+            top::base::xvchain_t::instance().on_process_close();
+            
+            //forward to default handler
+            signal(signum, SIG_DFL);//restore to default handler
+            kill(getpid(), signum); //send signal again to genereate core dump by default hander
+        }
+        break;
+        
+        //signal to terminate process
+        case SIGHUP:
+        case SIGINT:
+        case SIGTERM:
+        {
+            printf("on_sys_signal_callback:capture terminate_signal(%d) \n",signum);
+            xwarn("on_sys_signal_callback:capture terminate_signal(%d)",signum);
+            
+            //trigger save data before terminate
+            top::base::xvchain_t::instance().on_process_close();
+            
+            //forward to default handler
+            signal(signum, SIG_DFL);//restore to default handler
+            kill(getpid(), signum); //send signal again to default handler
+        }
+        break;
+        
+        case SIGUSR1:
+        case SIGUSR2:
+        {
+            printf("on_sys_signal_callback:capture user_signal(%d)\n",signum);
+            xwarn("on_sys_signal_callback:capture user_signal(%d)",signum);
+        
+            if(signum == SIGUSR1)
+            {
+                int * ptr = 0;
+                *ptr = 6; //triggger crash ->generate core dump
+            }
+            else
+            {
+                //trigger save data
+                top::base::xvchain_t::instance().save_all();
+            }
+        }
+        break;
+        
+        default:
+        {
+            printf("on_sys_signal_callback:capture other_signal(%d) \n",signum);
+            xwarn("on_sys_signal_callback:capture other_signal(%d)",signum);
+        }
+    }
+}
+
+void catch_system_signals()
+{
+    static struct sigaction _sys_sigact;
+    memset(&_sys_sigact, 0, sizeof(_sys_sigact));
+    
+    _sys_sigact.sa_sigaction = on_sys_signal_callback;
+    _sys_sigact.sa_flags = SA_SIGINFO;
+ 
+    //config signal of termine
+    sigaction(SIGTERM, &_sys_sigact, NULL);
+    signal(SIGINT, SIG_IGN); //disable INT signal
+    signal(SIGHUP, SIG_IGN); //disable HUP signal
+    
+    //config signal of cores
+    sigaction(SIGSEGV, &_sys_sigact, NULL);
+    sigaction(SIGILL, &_sys_sigact, NULL);
+    sigaction(SIGFPE, &_sys_sigact, NULL);
+    sigaction(SIGABRT, &_sys_sigact, NULL);
+    
+    //config user 'signal
+    sigaction(SIGUSR1, &_sys_sigact, NULL);
+    sigaction(SIGUSR2, &_sys_sigact, NULL);
+}
+ 
 //#define __network_simulator_test__
 //#define __network_outoforder_test__
 int main(int argc, const char * argv[])
@@ -122,8 +222,32 @@ int main(int argc, const char * argv[])
     base::xworkerpool_t_impl<1> *global_worker_pool = new base::xworkerpool_t_impl<1>(top::base::xcontext_t::instance());
     xtestshard * test_shard = new xtestshard(*global_worker_pool,nodes_list);
  
+    top::store::enable_block_recycler(true);
+    top::store::install_block_recycler(NULL);
+    top::base::xvchain_t::instance().enable_auto_prune(true);
+    
+    catch_system_signals();
     sleep(2); //let xtestshard finish initialization
 
+    base::xvaccount_t test_account_obj(test_account_address);
+    base::xvactmeta_t acct_met_out(test_account_obj);
+    base::xvactmeta_t acct_met_in(test_account_obj);
+    
+    base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+    int writed_bytes = acct_met_out.serialize_to(_stream);
+    int read_bytes = acct_met_in.serialize_from(_stream);
+    xassert(writed_bytes == read_bytes);
+    
+    _stream.reset();
+    base::xvbindex_t vindx_in;
+    base::xvbindex_t vbindx_out;
+    vbindx_out.reset_account_addr(test_account_obj);
+    
+    writed_bytes = vbindx_out.serialize_to(_stream);
+    read_bytes = vindx_in.serialize_from(_stream);
+    vindx_in.reset_account_addr(test_account_obj);
+    xassert(writed_bytes == read_bytes);
+    
     int total_txs = 0;
     bool stop_test = false;
     while(stop_test == false)
@@ -131,6 +255,7 @@ int main(int argc, const char * argv[])
         //deliver one tx per 2 seconds
         ++total_txs;
         test_shard->on_txs_recv(test_account_address,test_account_txs);
+
         
         if(total_txs > 1000)
             sleep(100);

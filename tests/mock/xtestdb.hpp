@@ -38,7 +38,6 @@ namespace top
             virtual bool                set_value(const std::string & key, const std::string& value) override;
             virtual bool                delete_value(const std::string & key) override;
             virtual const std::string   get_value(const std::string & key) const override;
-            virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search
 
         public:
             virtual std::string         get_store_path() const  override {return m_store_path;}

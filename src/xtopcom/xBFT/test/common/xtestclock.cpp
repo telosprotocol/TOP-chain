@@ -4,6 +4,7 @@
 
 #include "xtestclock.hpp"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvledger.h"
 #include "xdata/xnative_contract_address.h"
 
 #ifdef __MAC_PLATFORM__
@@ -23,7 +24,12 @@ namespace top
  
 #ifdef __MAC_PLATFORM__
             const std::string  default_path = std::string("/");
-            xstoredb_t* _persist_db = new xstoredb_t(default_path);
+            xstoredb_t* _persist_db = NULL;
+            if(base::xvchain_t::instance().get_xdbstore() == NULL)
+            {
+                _persist_db = new xstoredb_t(default_path);
+                base::xvchain_t::instance().set_xdbstore(_persist_db);
+            }
             //m_blockstore = store::get_vblockstore();
             m_blockstore = store::create_vblockstore(_persist_db);
 #else

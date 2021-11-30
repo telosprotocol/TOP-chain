@@ -531,7 +531,7 @@ namespace top
             uint16_t        m_account_flag;  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
         };
     
-        class xvactmeta_t : public xdataobj_t,public xblockmeta_t,public xstatemeta_t,public xindxmeta_t,public xsyncmeta_t
+        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xindxmeta_t,protected xsyncmeta_t
         {
             friend class xvaccountobj_t;
             enum {enum_obj_type = xdataunit_t::enum_xdata_type_vaccountmeta};

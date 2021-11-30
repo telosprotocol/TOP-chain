@@ -10,6 +10,16 @@ namespace top
 {
     namespace base
     {
+        //assemble the full uint64(8 bytes = 16 hex char) string that helpful for key-order in DB
+        const std::string  uint64_to_full_hex(const uint64_t uint64value)        //unint64 to string of hex format
+        {
+            char szBuff[32] = {0};
+            const int inBufLen = sizeof(szBuff);
+            //snprintf(szBuff,inBufLen,"%16llx",uint64value);
+            snprintf(szBuff,inBufLen,"%16llx", (long long unsigned int)uint64value);
+            return std::string(szBuff);
+        }
+    
         const std::string  xvdbkey_t::create_tx_key(const std::string & org_tx_hash) //where the raw tx are placed
         {
             const std::string key_path = "t/" + org_tx_hash;
@@ -123,21 +133,21 @@ namespace top
         const std::string  xvdbkey_t::create_prunable_block_height_key(const xvaccount_t & account,const uint64_t target_height)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height);
             return key_path;
         }
     
         const std::string  xvdbkey_t::create_prunable_block_index_key(const xvaccount_t & account,const uint64_t target_height)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height) + "/h";//h for index/header
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/h";//h for index/header
             return key_path;
         }
         
         const std::string  xvdbkey_t::create_prunable_block_index_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height) + "/h/" + xstring_utl::uint642hex(target_viewid);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/h/" + xstring_utl::uint642hex(target_viewid);
             return key_path;
         }
         
@@ -145,42 +155,42 @@ namespace top
         const std::string  xvdbkey_t::create_prunable_block_object_key(const xvaccount_t & account,const uint64_t target_heigh)//prunable block object that include input/output as well
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_heigh) + "/b";//b for block
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_heigh) + "/b";//b for block
             return key_path;
         }
     
         const std::string  xvdbkey_t::create_prunable_block_object_key(const xvaccount_t & account,const uint64_t target_heigh,const uint64_t target_viewid)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_heigh) + "/b/" + xstring_utl::uint642hex(target_viewid);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_heigh) + "/b/" + xstring_utl::uint642hex(target_viewid);
             return key_path;
         }
     
         const std::string  xvdbkey_t::create_prunable_block_input_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height) + "/i/" + xstring_utl::uint642hex(target_viewid);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/i/" + xstring_utl::uint642hex(target_viewid);
             return key_path;
         }
         
         const std::string  xvdbkey_t::create_prunable_block_input_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height) + "/ir/" + xstring_utl::uint642hex(target_viewid);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/ir/" + xstring_utl::uint642hex(target_viewid);
             return key_path;
         }
         
         const std::string  xvdbkey_t::create_prunable_block_output_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height) + "/o/" + xstring_utl::uint642hex(target_viewid);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/o/" + xstring_utl::uint642hex(target_viewid);
             return key_path;
         }
         
         const std::string  xvdbkey_t::create_prunable_block_output_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + xstring_utl::uint642hex(target_height) + "/or/" + xstring_utl::uint642hex(target_viewid);
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/or/" + xstring_utl::uint642hex(target_viewid);
             return key_path;
         }
 

@@ -1687,6 +1687,23 @@ namespace top
             return {};
 #endif
         }
+    
+        xauto_ptr<xvblock_t> xvblock_t::clone_block() const
+        {
+            xobject_t* object = xcontext_t::create_xobject((enum_xobject_type)get_obj_type());
+            xassert(object != NULL);
+            if(object != NULL)
+            {
+                xvblock_t * block_obj = (xvblock_t*)object->query_interface(enum_xobject_type_vblock);
+                xassert(block_obj != NULL);
+                if(block_obj != NULL)
+                {
+                    *block_obj = *this;
+                    return block_obj; //transfer ownership to xauto_ptr
+                }
+            }
+            return nullptr;
+        }
         
         bool  xvblock_t::close(bool force_async)  //close and release this node only
         {

@@ -205,8 +205,6 @@ namespace top
             genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
             genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_locked);
             genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_committed);
-            genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_executed);
-            genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_connected);
             genesis_block_ptr->reset_modified_count();
             
             return genesis_block_ptr;
@@ -267,8 +265,6 @@ namespace top
                 genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
                 genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_locked);
                 genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_committed);
-                genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_executed);
-                genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_connected);
                 genesis_block_ptr->reset_modified_count();
             }
             genesis_block_ptr->add_ref();
@@ -322,7 +318,7 @@ namespace top
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
             {
                 base::xvblock_t* block_ptr = it->second;
-                if(block_ptr->check_block_flag(base::enum_xvblock_flag_executed))
+                if(block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
                 {
                     block_ptr->add_ref();
                     return block_ptr;
@@ -337,7 +333,7 @@ namespace top
             for(auto it = _account_blocks.rbegin(); it != _account_blocks.rend(); ++it)
             {
                 base::xvblock_t* block_ptr = it->second;
-                if(block_ptr->check_block_flag(base::enum_xvblock_flag_executed))
+                if(block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
                 {
                     block_ptr->add_ref();
                     return block_ptr;
@@ -607,14 +603,7 @@ namespace top
         {
             return get_latest_committed_block(account.get_address());
         }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_executed_block(const base::xvaccount_t & account,const int atag)
-        {
-            return get_latest_executed_block(account.get_address());
-        }
-        base::xauto_ptr<base::xvblock_t>    xunitblockstore_t::get_latest_connected_block(const base::xvaccount_t & account,const int atag)
-        {
-            return get_latest_connected_block(account.get_address());
-        }
+
         base::xauto_ptr<base::xvblock_t>  xunitblockstore_t::get_latest_full_block(const base::xvaccount_t & account,const int atag)
         {
             return get_latest_full_block(account.get_address());

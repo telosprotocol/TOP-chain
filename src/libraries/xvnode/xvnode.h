@@ -26,6 +26,7 @@
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xbasic_vnode.h"
 #include "xvnode/xvnode_face.h"
+#include "xvnode/xcomponents/xprune_data/xprune_data.h"
 
 #include <memory>
 
@@ -55,7 +56,7 @@ private:
 
     // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
-
+    std::unique_ptr<components::prune_data::xprune_data> m_prune_data;
 public:
     xtop_vnode(xtop_vnode const &) = delete;
     xtop_vnode & operator=(xtop_vnode const &) = delete;
@@ -115,8 +116,7 @@ private:
     void update_contract_manager(bool destory);
     void sync_add_vnet();
     void sync_remove_vnet();
-    // void update_tx_cache_service();
-    void update_block_prune();
+    bool update_auto_prune_control(top::common::xnode_type_t node_type, base::xvdbstore_t* xvdb_ptr);
 };
 
 using xvnode_t = xtop_vnode;
