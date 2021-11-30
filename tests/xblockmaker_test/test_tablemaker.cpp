@@ -1,12 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "test_common.hpp"
-
-#include "xvledger/xvpropertyprove.h"
 #include "xblockmaker/xtable_maker.h"
-#include "tests/mock/xvchain_creator.hpp"
-#include "tests/mock/xdatamock_table.hpp"
-#include "tests/mock/xdatamock_address.hpp"
 
 using namespace top;
 using namespace top::base;
