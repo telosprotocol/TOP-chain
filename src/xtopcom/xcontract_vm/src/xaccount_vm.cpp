@@ -146,8 +146,12 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
 
     xdbg("[xtop_account_vm::execute] followup_tx size: %" PRIu64, result.output.followup_transaction_data.size());
     for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
+        auto const & data = result.output.followup_transaction_data[i];
+        xdbg("dump followup tx [%u], tx: %s, %d, %d", i, base::xstring_utl::to_hex(data.followed_transaction->get_tx_hash()).c_str(), data.schedule_type, data.execute_type);
+    }
+    for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
         auto & followup_tx = result.output.followup_transaction_data[i];
-        xdbg("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] schedule_type: %" PRIu64 ", execute_type: %" PRIu64 "", i, followup_tx.schedule_type, followup_tx.execute_type);
+        xdbg("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] schedule_type: %" PRIi32 ", execute_type: %" PRIi32, i, followup_tx.schedule_type, followup_tx.execute_type);
         if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (followup_tx.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);

@@ -39,6 +39,11 @@ xcontract_execution_result_t const & xtop_contract_execution_context::execution_
 
 void xtop_contract_execution_context::add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type) {
     m_execution_result.output.followup_transaction_data.emplace_back(std::move(tx), type);
+    xdbg("xtop_contract_execution_context::add_followup_transaction add followup tx, now size: %zu", m_execution_result.output.followup_transaction_data.size());
+    for (size_t i = 0; i < m_execution_result.output.followup_transaction_data.size(); i++) {
+        auto const & data = m_execution_result.output.followup_transaction_data[i];
+        xdbg("dump followup tx: %u, %s, %d, %d", i, base::xstring_utl::to_hex(data.followed_transaction->get_tx_hash()).c_str());
+    }
 }
 
 std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_context::followup_transaction() const noexcept {
@@ -517,10 +522,12 @@ data::enum_xunit_tx_exec_status xtop_contract_execution_context::last_action_exe
 
 data::xproperty_asset xtop_contract_execution_context::asset() const {
     auto const & asset_param = source_action_data();
+    xdbg("[xtop_contract_execution_context::asset] parse asset");
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)asset_param.data(), (size_t)asset_param.size());
     data::xproperty_asset asset_out{0};
     stream >> asset_out.m_token_name;
     stream >> asset_out.m_amount;
+    xdbg("[xtop_contract_execution_context::asset] asset: %" PRIu64, asset_out.m_amount);
     return asset_out;
 }
 
@@ -612,8 +619,11 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     }
 #endif
     auto const tx_deposit = deposit();
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] deposit: %" PRIu64, tx_deposit);
     auto const asset_ = asset();
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] asset: %" PRIu64, asset_.m_amount);
     auto const balance = contract_state()->balance(balance_prop, common::SYMBOL_TOP_TOKEN);
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] balance: %" PRIu64, balance);
     if (balance < asset_.m_amount + tx_deposit) {
         xwarn("[xtop_contract_execution_context::execute_default_source_action] balance not enough, balance: %" PRIu64 ", asset: %" PRIu64 ", deposit: %" PRIu64,
               balance,
@@ -623,6 +633,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
         return {};
     }
     if (!data::is_sys_contract_address(sender())) {
+        xdbg("sender not system contract, do tags calc!");
         update_tgas_disk_sender(true, fee_change, ec);
         if (ec) {
             xwarn("[xtop_contract_execution_context::execute_default_source_action] update_tgas_disk_sender failed, catagory: %s, msg: %s",
@@ -632,9 +643,10 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
         }
     }
     if (tx_deposit > 0) {
+        xdbg("[xtop_contract_execution_context::execute_default_source_action] do deposit to lock: %" PRIu64, tx_deposit);
         contract_state()->transfer_internal(balance_prop, lock_balance_prop, tx_deposit);
     }
-    xdbg("[xtop_contract_execution_context::execute_default_source_action] deposit to lock: %" PRIu64, tx_deposit);
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] deposit to lock ok: %" PRIu64, tx_deposit);
 
     return fee_change;
 }

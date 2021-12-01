@@ -131,6 +131,8 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
         contract_state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
         contract_state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
+        xdbg_info("xtop_basic_contract::call tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld",
+            tx->get_digest_hex_str().c_str(), address().value().c_str(), target_addr.value().c_str(), tx->get_tx_nonce());
     } else {
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     }
