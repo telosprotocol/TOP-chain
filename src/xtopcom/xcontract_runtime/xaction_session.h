@@ -73,6 +73,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     } };
 
     execution_context->consensus_action_stage(execution_context->action_stage());
+    xdbg("execution context consensus stage %" PRIu16, static_cast<uint16_t>(execution_context->consensus_action_stage()));
 
     auto observed_exectx = top::make_observer(execution_context.get());
     std::error_code ec;
