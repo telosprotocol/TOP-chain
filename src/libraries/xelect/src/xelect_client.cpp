@@ -84,11 +84,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 auto account_info_response = client.request("POST", "/", account_info_request);
                 const auto& account_info_response_str = account_info_response->content.string();
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
-#ifdef RPC_V2
-                xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-#else
-                xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-#endif
+
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
                 param_stream << user_params.account;
                 param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
@@ -99,40 +95,34 @@ void xelect_client_imp::bootstrap_node_join() {
 #endif
                 param_stream << PROGRAM_VERSION;
                 std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
-                tx->make_tx_run_contract("nodeJoinNetwork2", param);
-                tx->set_different_source_target_address(user_params.account.value(), sys_contract_rec_standby_pool_addr);
-                tx->set_fire_and_expire_time(600);
-                tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
 
+                uint64_t nonce = 0;
+                uint64_t last_hash = 0;
                 xJson::Value account_info_response_json;
                 if (!reader.parse(account_info_response_str, account_info_response_json) || account_info_response_json[xrpc::RPC_ERRNO].asInt() != xrpc::RPC_OK_CODE) {
                     xwarn("account_info_response_json error");
-                    tx->set_last_trans_hash_and_nonce({}, 0);
                 } else {
-                    tx->set_last_nonce(account_info_response_json["data"]["nonce"].asUInt64());
+                    nonce = account_info_response_json["data"]["nonce"].asUInt64();
                     std::string last_trans_hash = account_info_response_json["data"]["latest_tx_hash_xxhash64"].asString();
-                    tx->set_last_hash(data::hex_to_uint64(last_trans_hash));
+                    last_hash = data::hex_to_uint64(last_trans_hash);
                 }
-                tx->set_digest();
 
                 // get private key and sign
-                std::string sign_key;
                 // xinfo("xelect_client_imp::bootstrap_node_join,user_params.signkey: %s", user_params.signkey.c_str());
-                sign_key = DecodePrivateString(user_params.signkey);    
-                utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
-                utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
-                auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-                tx->set_authorization(signature);
-                tx->set_len();
+                std::string sign_key = DecodePrivateString(user_params.signkey);
+
+                uint32_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
+                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.value(), nonce, last_hash, param, deposit, sign_key);
 
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;
                 xJson::Value tx_json;
-#ifdef RPC_V2
-                tx->parse_to_json(tx_json["params"]);
-#else
-                tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V1);
-#endif
+                if (tx->get_tx_version() == xtransaction_version_2) {
+                    tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V2);
+                } else {
+                    tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V1);
+                }
+
                 tx_json["params"]["authorization"] = data::uint_to_str(tx->get_authorization().data(), tx->get_authorization().size());
                 xdbg("tx_json: %s", writer.write(tx_json).c_str());
                 send_tx_request += "&body=" + SimpleWeb::Percent::encode(writer.write(tx_json));
