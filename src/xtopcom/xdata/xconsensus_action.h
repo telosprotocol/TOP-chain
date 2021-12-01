@@ -191,7 +191,12 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::source_action_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return { std::begin(tx->get_transaction()->get_source_action().get_action_param()), std::end(tx->get_transaction()->get_source_action().get_action_param()) };
+    auto const & transaction = tx->get_transaction();
+    auto const & src_action = transaction->get_source_action();
+    auto const & action_param = src_action.get_action_param();
+    xdbg("action param size %zu", action_param.size());
+
+    return {std::begin(action_param), std::end(action_param)};
 }
 
 template <xtop_action_type_t ActionTypeV>
@@ -199,7 +204,11 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::target_action_data() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return { std::begin(tx->get_transaction()->get_target_action().get_action_param()), std::end(tx->get_transaction()->get_target_action().get_action_param()) };
+    auto const & transaction = tx->get_transaction();
+    auto const & dst_action = transaction->get_target_action();
+    auto const & action_param = dst_action.get_action_param();
+
+    return { std::begin(action_param), std::end(action_param) };
 }
 
 template <xtop_action_type_t ActionTypeV>

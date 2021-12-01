@@ -25,12 +25,15 @@
 namespace top { namespace data {
 
 bool check_address_type(common::xaccount_address_t const & addr, base::enum_vaccount_addr_type type) {
-    return type == base::xvaccount_t::get_addrtype_from_account(addr.value());
+    assert(base::xvaccount_t::get_addrtype_from_account(addr.value()) == addr.type());
+    return type == addr.type();
 }
+
 bool check_address_type_and_zone(common::xaccount_address_t const & addr, base::enum_vaccount_addr_type type, base::enum_xchain_zone_index zone) {
-    auto              xid = base::xvaccount_t::get_xid_from_account(addr.value());
-    uint8_t           zone_index = get_vledger_zone_index(xid);
-    return type == base::xvaccount_t::get_addrtype_from_account(addr.value()) && zone == zone_index;
+    assert(common::xzone_id_t{static_cast<uint8_t>(get_vledger_zone_index(base::xvaccount_t::get_xid_from_account(addr.value())))} == addr.ledger_id().zone_id());
+    // auto              xid = base::xvaccount_t::get_xid_from_account(addr.value());
+    // uint8_t           zone_index = get_vledger_zone_index(xid);
+    return check_address_type(addr, type) && common::xzone_id_t{zone} == addr.ledger_id().zone_id();
 }
 
 bool is_account_address(common::xaccount_address_t const & addr) {
