@@ -91,6 +91,7 @@ namespace top
             std::string _merkle_leaf;
             m_property->serialize_to_string(_merkle_leaf);
             uint256_t hash = utl::xsha2_256_t::digest(_merkle_leaf);
+            XMETRICS_GAUGE(metrics::cpu_hash_256_xvproperty_prove_t_leafs_calc, 1);
             std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
             std::string propname = m_property->get_name();
 
@@ -138,6 +139,7 @@ namespace top
             std::string property_bin;
             _property->serialize_to_string(property_bin);
             uint256_t hash = utl::xsha2_256_t::digest(property_bin);
+            XMETRICS_GAUGE(metrics::cpu_hash_256_xvproperty_property_bin_calc, 1);
             std::string prophash2 = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
             if (prophash != prophash2) {
                 xassert(false);

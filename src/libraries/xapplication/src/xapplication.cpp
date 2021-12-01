@@ -389,6 +389,7 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
     // check node_sign to verify node
     utl::xkeyaddress_t xaddr{node_addr};
     uint256_t          hash_value = utl::xsha2_256_t::digest(node_addr);
+    XMETRICS_GAUGE(metrics::cpu_hash_256_handle_register_node_calc, 1);
 
     utl::xecdsasig_t sig{(const uint8_t *)node_sign.data()};
 

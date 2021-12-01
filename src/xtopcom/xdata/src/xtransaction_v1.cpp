@@ -168,6 +168,7 @@ void xtransaction_v1_t::set_digest() {
     base::xstream_t stream(base::xcontext_t::instance());
     do_write_without_hash_signature(stream, true);
     m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
+    XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v1_calc, 1);
 }
 
 void xtransaction_v1_t::set_len() {
@@ -187,6 +188,7 @@ bool xtransaction_v1_t::digest_check() const {
     base::xstream_t stream(base::xcontext_t::instance());
     do_write_without_hash_signature(stream, true);
     uint256_t hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
+    XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v1_calc, 1);
     if (hash != m_transaction_hash) {
         xwarn("xtransaction_v1_t::digest_check fail. %s %s",
             to_hex_str(hash).c_str(), to_hex_str(m_transaction_hash).c_str());

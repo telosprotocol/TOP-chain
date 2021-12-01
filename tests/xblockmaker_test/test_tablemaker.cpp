@@ -102,6 +102,321 @@ TEST_F(test_tablemaker, make_proposal_1) {
     }    
 }
 
+
+TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
+#ifdef ENABLE_METRICS
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 100);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 100);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+
+        int64_t last_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after last_hash_count, " << last_hash_count << " count " << (last_hash_count - cur_hash_count)<< std::endl;
+
+    }
+#endif
+}
+
+
+TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
+#ifdef ENABLE_METRICS
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 100);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+
+    int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+    std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 4);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+        
+        int64_t table_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
+         << (table_make_hash_count - cur_hash_count)<< std::endl;
+      
+        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        table_para2.set_origin_txs(send_txs);
+        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
+        xassert(ret == 0);
+
+        int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
+        << (verify_make_hash_count - table_make_hash_count)<< std::endl;
+          
+       int64_t before_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+     
+        int64_t last_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
+
+
+    }
+#endif
+}
+
+
+TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
+#ifdef ENABLE_METRICS
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 100);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+
+    int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+    std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+
+    int account_count = 4;
+    int transaction_count = 100;
+    std::vector<xcons_transaction_ptr_t> all_txs;
+    std::string to_addr = unit_addrs[0];
+    for (int i = 1; i < account_count; i++)
+    {
+       std::string from_addr = unit_addrs[i];
+       std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, transaction_count);
+       all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
+    }
+    std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state());
+        table_para.set_origin_txs(all_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+        
+        int64_t table_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
+         << (table_make_hash_count - cur_hash_count)<< std::endl;
+      
+        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        table_para2.set_origin_txs(all_txs);
+        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
+        xassert(ret == 0);
+
+        int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
+        << (verify_make_hash_count - table_make_hash_count)<< std::endl;
+          
+        int64_t before_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+     
+        int64_t last_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
+    }
+#endif
+}
+
+
+TEST_F(test_tablemaker, make_receipt_hash_count) {
+#ifdef ENABLE_METRICS
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 100);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+    
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+         int account_count = 64;
+        int transaction_count = 4;
+        std::vector<xcons_transaction_ptr_t> all_txs;
+        std::string to_addr = unit_addrs[0];
+        for (int i = 1; i <= account_count; i++)
+        {
+            std::string from_addr = unit_addrs[i];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, transaction_count);
+            all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
+        }
+
+         std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+          xtablemaker_para_t table_para(mocktable.get_table_state());
+        table_para.set_origin_txs(all_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+
+    for(int block_index = 2 ; block_index < 4; block_index++){
+
+            xtablemaker_para_t table_para(mocktable.get_table_state());
+            xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+            xtablemaker_result_t table_result;
+            xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+            xassert(proposal_block != nullptr);
+           // xassert(proposal_block->get_height() == block_index);
+
+            mocktable.do_multi_sign(proposal_block);
+            mocktable.on_table_finish(proposal_block);
+            resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state());
+        auto tableblocks = mocktable.get_history_tables();
+
+        int64_t before_receipt_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "before_receipt_hash_count " << before_receipt_hash_count << std::endl;
+        xinfo("before_receipt_hash_count %d ",before_receipt_hash_count);
+        std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(tableblocks[1]);
+        int64_t last_receipt_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
+        std::cout << "after last_receipt_hash_count  " << last_receipt_hash_count << ", count "\
+         << (last_receipt_hash_count - before_receipt_hash_count) << std::endl;
+ 
+      //  xassert(recv_txs.size() == 2);
+        std::cout << "recv_txs[0]->get_last_action_receipt_id() " << recv_txs[0]->get_last_action_receipt_id() << std::endl;
+        std::cout << "recv_txs[0]->get_last_action_sender_confirmed_receipt_id() " << recv_txs[0]->get_last_action_sender_confirmed_receipt_id() << std::endl;
+        std::cout << "recv_txs[1]->get_last_action_receipt_id() " << recv_txs[1]->get_last_action_receipt_id() << std::endl;
+        std::cout << "recv_txs[1]->get_last_action_sender_confirmed_receipt_id() " << recv_txs[1]->get_last_action_sender_confirmed_receipt_id() << std::endl;    
+       // xassert(recv_txs[0]->get_last_action_receipt_id() == 1);
+       // xassert(recv_txs[1]->get_last_action_receipt_id() == 2);
+
+        table_para.set_origin_txs(recv_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 4);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+#endif
+}
+
+
+TEST_F(test_tablemaker, make_receipt_hash_new_count) {
+#ifdef ENABLE_METRICS  
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 100);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
+    for (auto & v : all_gene_units) {
+        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
+    }
+    
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+         int account_count = 64;
+        int transaction_count = 4;
+        std::vector<xcons_transaction_ptr_t> all_txs;
+        std::string to_addr = unit_addrs[0];
+        for (int i = 1; i <= account_count; i++)
+        {
+            std::string from_addr = unit_addrs[i];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, transaction_count);
+            all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
+        }
+
+         std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+          xtablemaker_para_t table_para(mocktable.get_table_state());
+        table_para.set_origin_txs(all_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+
+    for(int block_index = 2 ; block_index < 4; block_index++){
+
+            xtablemaker_para_t table_para(mocktable.get_table_state());
+            xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+            xtablemaker_result_t table_result;
+            xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+            xassert(proposal_block != nullptr);
+         
+            mocktable.do_multi_sign(proposal_block);
+            mocktable.on_table_finish(proposal_block);
+            resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+#endif
+}
+
+
 TEST_F(test_tablemaker, receipt_id_check_1) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 

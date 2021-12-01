@@ -628,6 +628,16 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cpu_ca_verify_multi_sign_tc,
     cpu_ca_verify_multi_sign_blockstore,
     cpu_merkle_hash_calc,
+    cpu_hash_256_xecprikey_calc,
+    cpu_hash_256_XudpSocket_calc,
+    cpu_hash_256_GetRootKadmliaKey_calc,
+    cpu_hash_256_handle_register_node_calc,
+    cpu_hash_256_xtransaction_v1_calc,
+    cpu_hash_256_xtransaction_v2_calc,
+    cpu_hash_256_receiptid_bin_calc,
+    cpu_hash_256_xvproperty_prove_t_leafs_calc,
+    cpu_hash_256_xvproperty_property_bin_calc,
+    cpu_hash_256_xhashplugin_t_calc,
 
     //bft
     bft_verify_vote_msg_fail,

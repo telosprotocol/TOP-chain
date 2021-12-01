@@ -9,6 +9,7 @@
 #include "xcrypto/xckey.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
+#include "xmetrics/xmetrics.h"
 
 extern "C"
 {
@@ -449,6 +450,7 @@ namespace top
             hasher.update(&time_seed,sizeof(time_seed));
             hasher.update(m_private_key, sizeof(m_private_key));
             hasher.get_hash(hash_value);
+            XMETRICS_GAUGE(metrics::cpu_hash_256_xecprikey_calc, 1);
 
             const int over_size = std::min((int)hash_value.size(),(int)sizeof(m_private_key));
             for(int i = 0; i < over_size; ++i)
@@ -475,6 +477,7 @@ namespace top
             hasher.update(rand_seed);
             hasher.update(m_private_key, sizeof(m_private_key));
             hasher.get_hash(hash_value);
+            XMETRICS_GAUGE(metrics::cpu_hash_256_xecprikey_calc, 1);
 
             const int over_size = std::min((int)hash_value.size(),(int)sizeof(m_private_key));
             for(int i = 0; i < over_size; ++i)

@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <ostream>
 #include <sstream>
+#include "xmetrics/xmetrics.h"
 namespace top {
 
 namespace base {
@@ -101,6 +102,7 @@ base::KadmliaKeyPtr GetRootKadmliaKey(std::string const &node_id) {
     h.reset();
     h.update(node_id);
     h.get_hash(v);
+    XMETRICS_GAUGE(metrics::cpu_hash_256_GetRootKadmliaKey_calc, 1);
     std::string node_id_hash_32((char *)v.data(), v.size());
     uint64_t high, low;
     std::string _h = node_id_hash_32.substr(0, 8);
