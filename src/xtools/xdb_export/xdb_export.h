@@ -30,8 +30,13 @@ public:
     void query_block_info(std::string const & account, std::string const & param);
     // query block basic info
     void query_block_basic(std::string const & account, std::string const & param);
+    void query_block_basic(std::vector<std::string> const & account_vec, std::string const & param);
     // query state basic info
     void query_state_basic(std::string const & account, std::string const & param);
+    void query_state_basic(std::vector<std::string> const & account_vec, std::string const & param);
+    // query meta info
+    void query_meta(std::string const & account);
+    void query_meta(std::vector<std::string> const & account_vec);
     // query table state and its all units state
     void query_table_unit_state(std::string const & table);
     // query contract property(use contract manager interface)

@@ -34,6 +34,7 @@ void usage() {
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
     std::cout << "        - check_block_basic <account> <height|last|all>" << std::endl;
     std::cout << "        - check_state_basic <account> <height|last|all>" << std::endl;
+    std::cout << "        - check_meta <account>" << std::endl;
     std::cout << "        - check_table_unit_state <table>" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
@@ -169,6 +170,12 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_state_basic(argv[3], argv[4]);
+    } else if (function_name == "check_meta") {
+        if (argc < 4) {
+            usage();
+            return -1;
+        }
+        tools.query_meta(argv[3]);
     } else if (function_name == "check_table_unit_state") {
         if (argc < 4) {
             usage();
@@ -193,40 +200,6 @@ int main(int argc, char ** argv) {
     } else {
         usage();
     }
-
-    // if (function_name == "check_db_reset") {
-    //     std::string file = "all_account.json";
-    //     if (access(file.c_str(), 0) != 0) {
-    //         std::cout << file << " not exist!" << std::endl;
-    //         return -1;
-    //     }
-    //     std::ifstream file_stream(file);
-    //     json j;
-    //     file_stream >> j;
-    //     if (j.empty()) {
-    //         std::cout << file << " not exist!" << std::endl;
-    //         return -1;
-    //     }
-    //     db_reset_t reset(tools);
-    //     reset.generate_reset_check_file(tools.get_db_unit_accounts());
-    // } else if (function_name == "verify") {
-    //     if (argc < 4) {
-    //         usage();
-    //         return -1;
-    //     }
-    //     std::string file{argv[3]};
-    //     if (access(file.c_str(), 0) != 0) {
-    //         std::cout << "file: " << file << " not found" << std::endl;
-    //         return -1;
-    //     }
-    //     json contract;
-    //     json user;
-    //     std::ifstream file_stream(file);
-    //     file_stream >> contract;
-    //     file_stream >> user;
-    //     db_reset_t reset(tools);
-    //     reset.verify(contract, user);
-    // }
 
     return 0;
 }

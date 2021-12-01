@@ -340,6 +340,13 @@ void xdb_export_tools_t::query_block_info(std::string const & account, std::stri
     }
 }
 
+void xdb_export_tools_t::query_block_basic(std::vector<std::string> const & account_vec, std::string const & param) {
+    mkdir("all_block_basic_info", 0750);
+    for (auto const & account : account_vec) {
+        query_block_basic(account, param);
+    }
+}
+
 void xdb_export_tools_t::query_block_basic(std::string const & account, std::string const & param) {
     json root;
     if (param == "last") {
@@ -369,10 +376,17 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, std::str
             query_block_basic(account, i, j);
             root["height" + std::to_string(i)] = j;
         }
-        std::string filename = account + "_all_block_basic.json";
+        std::string filename = "./all_block_basic_info/" + account + "_all_block_basic.json";
         std::ofstream out_json(filename);
         out_json << std::setw(4) << root;
         std::cout << "===> " << filename << " generated success!" << std::endl;
+    }
+}
+
+void xdb_export_tools_t::query_state_basic(std::vector<std::string> const & account_vec, std::string const & param) {
+    mkdir("all_state_basic_info", 0750);
+    for (auto const & account : account_vec) {
+        query_state_basic(account, param);
     }
 }
 
@@ -405,11 +419,28 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, std::str
             query_state_basic(account, i, j);
             root["height" + std::to_string(i)] = j;
         }
-        std::string filename = account + "_all_state_basic.json";
+        std::string filename = "./all_state_basic_info/" + account + "_all_state_basic.json";
         std::ofstream out_json(filename);
         out_json << std::setw(4) << root;
         std::cout << "===> " << filename << " generated success!" << std::endl;
     }
+}
+
+void xdb_export_tools_t::query_meta(std::vector<std::string> const & account_vec) {
+    json root;
+    for (auto const & account : account_vec) {
+        query_meta(account, root[account]);
+    }
+    std::string filename = "all_meta_data.json";
+    std::ofstream out_json(filename);
+    out_json << std::setw(4) << root;
+    std::cout << "===> " << filename << " generated success!" << std::endl;
+}
+
+void xdb_export_tools_t::query_meta(std::string const & account) {
+    json root;
+    query_meta(account, root);
+    std::cout << root << std::endl;
 }
 
 void xdb_export_tools_t::query_table_unit_state(std::string const & table) {
@@ -1098,6 +1129,44 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, const ui
             result["last_hash"] = xstring_utl::to_hex(bstate->get_last_block_hash());
         }
     }
+}
+
+void xdb_export_tools_t::query_meta(std::string const & account, json & result) {
+    base::xvaccount_t account_vid{account};
+    auto target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid());
+    if (target_table == nullptr) {
+        std::cerr << "account " << account << " invalid!" << std::endl;
+        return;
+    }
+    auto accountobj = target_table->get_account(account_vid);
+    if (target_table == nullptr) {
+        std::cerr << "account " << account << " not found!" << std::endl;
+        return;
+    }
+    auto meta_data = accountobj->get_full_meta();
+    auto block_meta = meta_data.clone_block_meta();
+    result["block_meta"]["lowest_vkey2_block_height"] = block_meta._lowest_vkey2_block_height;
+    result["block_meta"]["highest_deleted_block_height"] = block_meta._highest_deleted_block_height;
+    result["block_meta"]["highest_cert_block_height"] = block_meta._highest_cert_block_height;
+    result["block_meta"]["highest_lock_block_height"] = block_meta._highest_lock_block_height;
+    result["block_meta"]["highest_commit_block_height"] = block_meta._highest_commit_block_height;
+    result["block_meta"]["highest_full_block_height"] = block_meta._highest_full_block_height;
+    result["block_meta"]["highest_connect_block_height"] = block_meta._highest_connect_block_height;
+    result["block_meta"]["highest_connect_block_hash"] = block_meta._highest_connect_block_hash;
+    result["block_meta"]["block_level"] = block_meta._block_level;
+    auto state_meta = meta_data.clone_state_meta();
+    result["state_meta"]["lowest_execute_block_height"] = state_meta._lowest_execute_block_height;
+    result["state_meta"]["highest_execute_block_height"] = state_meta._highest_execute_block_height;
+    result["state_meta"]["highest_execute_block_hash"] = state_meta._highest_execute_block_hash;
+    auto index_meta = meta_data.clone_index_meta();
+    result["index_meta"]["latest_unit_height"] = index_meta.m_latest_unit_height;
+    result["index_meta"]["latest_unit_viewid"] = index_meta.m_latest_unit_viewid;
+    result["index_meta"]["latest_tx_nonce"] = index_meta.m_latest_tx_nonce;
+    result["index_meta"]["account_flag"] = index_meta.m_account_flag;
+    auto sync_meta = meta_data.clone_sync_meta();
+    result["sync_meta"]["highest_genesis_connect_height"] = sync_meta._highest_genesis_connect_height;
+    result["sync_meta"]["highest_genesis_connect_hash"] = sync_meta._highest_genesis_connect_hash;
+    result["sync_meta"]["highest_sync_height"] = sync_meta._highest_sync_height;
 }
 
 void xdb_export_tools_t::query_table_unit_state(std::string const & table, json & root) {
