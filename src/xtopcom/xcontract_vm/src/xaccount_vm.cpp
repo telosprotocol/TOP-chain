@@ -123,11 +123,13 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
 
     case data::xtop_action_type_t::user: {
+        assert(false);
         // TODO: we don't support user action yet.
         break;
     }
 
     case data::xtop_action_type_t::event: {
+        assert(false);
         // TODO: we don't have event action either. this is just a placeholder.
         break;
     }
@@ -151,14 +153,14 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
     for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
         auto & followup_tx = result.output.followup_transaction_data[i];
-        xdbg("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] schedule_type: %" PRIi32 ", execute_type: %" PRIi32, i, followup_tx.schedule_type, followup_tx.execute_type);
+        xdbg("[xtop_account_vm::execute] followup_tx[%zu] schedule_type: %" PRIi32 ", execute_type: %" PRIi32, i, followup_tx.schedule_type, followup_tx.execute_type);
         if (followup_tx.schedule_type == contract_common::xfollowup_transaction_schedule_type_t::immediately) {
             if (followup_tx.execute_type == contract_common::xenum_followup_transaction_execute_type::unexecuted) {
                 auto followup_action = contract_runtime::xaction_generator_t::generate(followup_tx.followed_transaction);
                 auto followup_result = execute_action(std::move(followup_action), param, sa);
                 if (followup_result.status.ec) {
                     if (followup_result.status.ec != make_error_code(contract_runtime::error::xerrc_t::account_state_not_changed)) {
-                        xwarn("[xtop_account_vm::execute] followup_tx[%" PRIu64 "] failed, category: %s, msg: %s, break!",
+                        xwarn("[xtop_account_vm::execute] followup_tx[%zu] failed, category: %s, msg: %s, break!",
                               i,
                               followup_result.status.ec.category().name(),
                               followup_result.status.ec.message().c_str());

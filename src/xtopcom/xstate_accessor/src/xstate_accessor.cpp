@@ -1048,16 +1048,16 @@ void xtop_state_accessor::do_create_map_property(std::string const & property_na
     }
 }
 
-#define CREATE_INT_PROPERTY(INT_TYPE)\
-    template <>\
-    void xtop_state_accessor::do_create_int_property<properties::xproperty_type_t::INT_TYPE>(std::string const & property_name, std::error_code & ec) {\
-        assert(!ec);\
-        assert(property_name_min_length <= property_name.length() && property_name.length() < property_name_max_length);\
-        auto const int_property = bstate_->new_##INT_TYPE##_var(property_name, canvas_.get());\
-        if (int_property == nullptr) {\
-            ec = error::xerrc_t::create_property_failed;\
-            return;\
-        }\
+#define CREATE_INT_PROPERTY(INT_TYPE)                                                                                                                   \
+    template <>                                                                                                                                         \
+    void xtop_state_accessor::do_create_int_property<properties::xproperty_type_t::INT_TYPE>(std::string const & property_name, std::error_code & ec) { \
+        assert(!ec);                                                                                                                                    \
+        assert(property_name_min_length <= property_name.length() && property_name.length() < property_name_max_length);                                \
+        auto const int_property = bstate_->new_##INT_TYPE##_var(property_name, canvas_.get());                                                          \
+        if (int_property == nullptr) {                                                                                                                  \
+            ec = error::xerrc_t::create_property_failed;                                                                                                \
+            return;                                                                                                                                     \
+        }                                                                                                                                               \
     }
 
 CREATE_INT_PROPERTY(int64)
