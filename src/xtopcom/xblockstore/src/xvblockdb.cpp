@@ -427,6 +427,8 @@ namespace top
                 index_entry = read_index_from_db(other_entry_key);
                 if(index_entry == NULL)
                     break;
+                //NOTE:rebind account address into xvbindex
+                index_entry->reset_account_addr(account);
                 
                 if(prunable_block)//verification
                 {
