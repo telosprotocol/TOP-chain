@@ -27,7 +27,7 @@
 #include "xutility/xstream_util.hpp"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xstake/xstake_algorithm.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 using namespace top::base;
 

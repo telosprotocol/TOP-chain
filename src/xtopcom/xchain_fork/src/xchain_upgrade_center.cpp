@@ -3,14 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xchain_names.h"
 #include "xvledger/xvblock.h"
 
 namespace top {
-    namespace chain_upgrade {
+    namespace chain_fork {
 
         xchain_fork_config_t      xtop_chain_fork_config_center::m_fork_config;
 
@@ -82,7 +82,7 @@ namespace top {
             return  xtop_chain_fork_config_center::is_forked(_fork_config.block_fork_point, target);
         }
 
-        bool xtop_chain_fork_config_center::is_tx_forked(uint64_t fire_timestamp) noexcept {
+        bool xtop_chain_fork_config_center::is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept {
             xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
             auto clock = _fork_config.tx_v2_fork_point.value().point;
             auto clock_time_stamp = clock * 10 + base::TOP_BEGIN_GMTIME;

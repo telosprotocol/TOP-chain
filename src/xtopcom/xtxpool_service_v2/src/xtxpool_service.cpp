@@ -4,7 +4,7 @@
 
 #include "xtxpool_service_v2/xtxpool_service.h"
 
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcommon/xmessage_id.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xtableblock.h"

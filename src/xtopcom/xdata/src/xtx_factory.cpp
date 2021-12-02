@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xcrypto/xckey.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
@@ -56,7 +56,7 @@ xtransaction_ptr_t xtx_factory::create_contract_subtx_transfer(const std::string
                                                                 uint64_t amount,
                                                                 uint64_t timestamp) {
     xtransaction_ptr_t tx;
-    if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(timestamp)) {
+    if (top::chain_fork::xtop_chain_fork_config_center::is_tx_forked_by_timestamp(timestamp)) {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     } else {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
@@ -82,7 +82,7 @@ xtransaction_ptr_t xtx_factory::create_contract_subtx_call_contract(const std::s
                                                                     const std::string& func_param,
                                                                     uint64_t timestamp) {
     xtransaction_ptr_t tx;
-    if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(timestamp)) {
+    if (top::chain_fork::xtop_chain_fork_config_center::is_tx_forked_by_timestamp(timestamp)) {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     } else {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
@@ -108,7 +108,7 @@ xtransaction_ptr_t xtx_factory::create_sys_contract_call_self_tx(const std::stri
                                                                  const uint16_t expire_duration) {
     // XTODO if enable RPC_V2, should add fork time future
     xtransaction_ptr_t tx;
-    if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(timestamp)) {
+    if (top::chain_fork::xtop_chain_fork_config_center::is_tx_forked_by_timestamp(timestamp)) {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     } else {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
@@ -133,7 +133,7 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
                                                    const std::string & sign_key) {
     xtransaction_ptr_t tx;
     auto fire_time = xtransaction_t::get_gmttime_s();
-    if (top::chain_upgrade::xtop_chain_fork_config_center::is_tx_forked(fire_time)) {
+    if (top::chain_fork::xtop_chain_fork_config_center::is_tx_forked_by_timestamp(fire_time)) {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     } else {
         tx = data::xtx_factory::create_tx(data::xtransaction_version_1);

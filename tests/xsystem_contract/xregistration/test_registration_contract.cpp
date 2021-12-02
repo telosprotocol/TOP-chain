@@ -22,7 +22,7 @@
 #include "xloader/xconfig_offchain_loader.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 using namespace top;
 using namespace top::xvm;

@@ -9,7 +9,7 @@
 #include "xbasic/xoptional.hpp"
 
 namespace top {
-    namespace chain_upgrade {
+    namespace chain_fork {
        /**
          * @brief chain fork point type
          *

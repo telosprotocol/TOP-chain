@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xconfig/xconfig_register.h"
 
 
