@@ -551,6 +551,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
     if (stage_ == data::xconsensus_action_stage_t::send || stage_ == data::xconsensus_action_stage_t::self) {
         auto state_nonce = contract_state()->latest_sendtx_nonce();
         if (state_nonce != last_nonce_) {
+            xwarn("account nonce not matched. last nonce %" PRIu64 " state stored last noce %" PRIu64, last_nonce_, state_nonce);
             ec = error::xerrc_t::nonce_mismatch;
             return {};
         }
