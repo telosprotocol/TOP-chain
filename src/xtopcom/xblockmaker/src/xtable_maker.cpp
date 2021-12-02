@@ -11,7 +11,7 @@
 #include "xdata/xblockbuild.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -188,8 +188,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             unitmakers[unit_account] = unitmaker;
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for fullunit but make fullunit,%s,account=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
-            auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-            bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+            auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+            bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
             if (!is_forked)
                 continue;
         }
@@ -239,8 +239,8 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         }
 
         if (false == unitmaker->push_tx(cs_para, tx)) {
-            auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-            bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+            auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+            bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
             xdbg("xtable_maker_t::create_lightunit_makers remove empty unit:%d", is_forked);
             if (is_forked && unitmaker->can_make_next_full_block()) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
@@ -287,10 +287,10 @@ bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & tabl
         filter_table_count++;
     }
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
     xdbg("xtable_maker_t::create_non_lightunit_makers remove empty unit:%d", is_forked);
-    bool is_forked_unit_opt = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+    bool is_forked_unit_opt = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
 
     for (auto & unit_account : empty_unit_accounts) {
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
@@ -324,10 +324,10 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
     const data::xtablestate_ptr_t & tablestate = table_para.get_tablestate();
     const std::vector<std::string> & other_accounts = table_para.get_other_accounts();
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
     xdbg("xtable_maker_t::create_other_makers remove empty unit:%d", is_forked);
-    bool is_forked_unit_opt = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+    bool is_forked_unit_opt = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
 
     for (auto & unit_account : other_accounts) {
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
@@ -393,8 +393,8 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
         return nullptr;
     }
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
     xdbg("xtable_maker_t::make_light_table remove empty unit:%d", is_forked);
     if (!is_forked) {
         // find all empty and fullunit makers
@@ -604,8 +604,8 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
         return nullptr;
     }
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
     xdbg("xtable_maker_t::make_proposal remove empty unit:%d", is_forked);
     bool can_make_empty_table_block = false;
     if (is_forked) {
@@ -689,8 +689,8 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     if (can_make_next_full_block()) {
         local_block = make_full_table(table_para, cs_para, table_result.m_make_block_error_code);
     } else if (proposal_block->get_block_class() == base::enum_xvblock_class_nil) {
-        auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-        bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
         xdbg("xtable_maker_t::verify_proposal remove empty unit:%d", is_forked);
         if (is_forked) {
             local_block = make_empty_table(table_para, cs_para, table_result.m_make_block_error_code);

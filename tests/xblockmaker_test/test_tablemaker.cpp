@@ -2,7 +2,7 @@
 
 #include "test_common.hpp"
 #include "xblockmaker/xtable_maker.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xdatamock_address.hpp"
@@ -18,8 +18,8 @@ using namespace top::blockmaker;
 class test_tablemaker : public testing::Test {
 protected:
     void SetUp() override {
-        chain_upgrade::xtop_chain_fork_config_center::init();
-        base::xvblock_fork_t::instance().init(chain_upgrade::xtop_chain_fork_config_center::is_block_forked);
+        chain_fork::xtop_chain_fork_config_center::init();
+        base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
     }
 
     void TearDown() override {
@@ -128,7 +128,7 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -170,7 +170,7 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -183,7 +183,7 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
         std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
          << (table_make_hash_count - cur_hash_count)<< std::endl;
       
-        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
         int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
         xassert(ret == 0);
@@ -234,7 +234,7 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
     std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(all_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -247,7 +247,7 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
         std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
          << (table_make_hash_count - cur_hash_count)<< std::endl;
       
-        xtablemaker_para_t table_para2(mocktable.get_table_state());
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(all_txs);
         int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
         xassert(ret == 0);
@@ -297,7 +297,7 @@ TEST_F(test_tablemaker, make_receipt_hash_count) {
         }
 
          std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
-          xtablemaker_para_t table_para(mocktable.get_table_state());
+          xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(all_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -313,7 +313,7 @@ TEST_F(test_tablemaker, make_receipt_hash_count) {
 
     for(int block_index = 2 ; block_index < 4; block_index++){
 
-            xtablemaker_para_t table_para(mocktable.get_table_state());
+            xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
             xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
             xtablemaker_result_t table_result;
@@ -327,7 +327,7 @@ TEST_F(test_tablemaker, make_receipt_hash_count) {
     }
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
 
         int64_t before_receipt_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
@@ -392,7 +392,7 @@ TEST_F(test_tablemaker, make_receipt_hash_new_count) {
         }
 
          std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
-          xtablemaker_para_t table_para(mocktable.get_table_state());
+          xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(all_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -408,7 +408,7 @@ TEST_F(test_tablemaker, make_receipt_hash_new_count) {
 
     for(int block_index = 2 ; block_index < 4; block_index++){
 
-            xtablemaker_para_t table_para(mocktable.get_table_state());
+            xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
             xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
             xtablemaker_result_t table_result;

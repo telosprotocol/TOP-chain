@@ -227,6 +227,7 @@ namespace top
             // read/write corresponding table prove for latest commit unit block
             virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height) = 0;
             virtual const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) = 0;
+            virtual bool    store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) = 0;
 
         protected:
             //only allow remove flag within xvblockstore_t

@@ -1051,12 +1051,16 @@ namespace top
         bool    xblockacct_t::store_committed_unit_block(base::xvblock_t* new_raw_block)
         {
             base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
-            if(exist_cert && !exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) //found duplicated ones
+            if(exist_cert) //found duplicated ones
             {
-                exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
-                exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
-                update_bindex(exist_cert.get());
-                xinfo("xblockacct_t::store_committed_unit_block update index,store block(%s)", new_raw_block->dump().c_str());
+                if (!exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) {
+                    exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
+                    exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
+                    update_bindex(exist_cert.get());
+                    xinfo("xblockacct_t::store_committed_unit_block update index,store block(%s)", new_raw_block->dump().c_str());
+                } else {
+                    xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s)", new_raw_block->dump().c_str());
+                }
                 return true;
             }
             //first do store block

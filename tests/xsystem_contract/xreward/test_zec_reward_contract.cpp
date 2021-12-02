@@ -1490,9 +1490,9 @@ TEST_F(test_suite_zec_reward_contract_t, on_reward_timer) {
 
     if (!is_mainnet_activated()) return;
 
-    chain_upgrade::xtop_chain_fork_config_center fork_config_center;
+    chain_fork::xtop_chain_fork_config_center fork_config_center;
     auto fork_config = fork_config_center.chain_fork_config();
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, onchain_timer_round)) {
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, onchain_timer_round)) {
         auto reg_contract_height = m_store->get_blockchain_height(sys_contract_rec_registration_addr);
         XSET_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, reg_contract_height);
         onchain_timer_round = 1;
@@ -2549,9 +2549,9 @@ TEST_F(test_suite_zec_reward_contract_t, test_issue_model) {
     auto timer_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval);
     onchain_timer_round = timer_interval + 1;
 
-    chain_upgrade::xtop_chain_fork_config_center fork_config_center;
+    chain_fork::xtop_chain_fork_config_center fork_config_center;
     auto fork_config = fork_config_center.chain_fork_config();
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, onchain_timer_round)) {
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, onchain_timer_round)) {
         // report workload
         int ret = on_zec_workload_timer(onchain_timer_round);
         ASSERT_TRUE(ret == 0);

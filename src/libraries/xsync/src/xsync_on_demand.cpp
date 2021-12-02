@@ -10,7 +10,7 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xvledger/xvblockstore.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xvledger/xunit_proof.h"
 
 NS_BEG2(top, sync)

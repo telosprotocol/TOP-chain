@@ -10,7 +10,7 @@
 #include "xtxexecutor/xtransaction_executor.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvblockbuild.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 NS_BEG2(top, txexecutor)
 
@@ -46,10 +46,10 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
         }
     }
 
-    const auto & fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     auto clock = account_context->get_timer_height();
     xdbg("xtransaction_executor::exec_one_tx timer:%llu, timestamp(second):%llu, forkclock:%llu", clock, tx->get_transaction()->get_fire_timestamp(), fork_config.block_unit_tx_opt_fork_point.value().point);
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, clock)) {
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, clock)) {
         if (tx->is_confirm_tx()) {
             if (after_op_records_size == before_op_records_size) {
                 xdbg("xtransaction_executor::exec_one_tx confirm state no change, tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());

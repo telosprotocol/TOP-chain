@@ -7,7 +7,7 @@
 #include "xsync/xsync_log.h"
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_store_shadow.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 NS_BEG2(top, sync)
 
 xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow):
@@ -18,14 +18,13 @@ m_shadow(shadow) {
 }
 
 bool xsync_store_t::store_block(base::xvblock_t* block) {
+    base::xvaccount_t _vaddress(block->get_account());
     if (block->get_block_level() == base::enum_xvblock_level_unit) {
         XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
-        block->set_block_flag(base::enum_xvblock_flag_committed);
-        block->set_block_flag(base::enum_xvblock_flag_locked);
+        return m_blockstore->store_committed_unit_block(_vaddress, block);
     } else if (block->get_block_level() == base::enum_xvblock_level_table) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }
-    base::xvaccount_t _vaddress(block->get_account());
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
 }
 
@@ -276,8 +275,8 @@ bool xsync_store_t::remove_empty_unit_forked() {
 
     xdbg("xsync_store_t::remove_empty_unit_forked clock:%llu", vb->get_height());
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, vb->get_height());
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, vb->get_height());
     if (forked) {
         xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
         m_remove_empty_unit_forked = true;

@@ -4,7 +4,7 @@
 #include "xdata/xtransaction.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #include "tests/mock/xdatamock_tx.hpp"
 
@@ -24,7 +24,7 @@ class test_transfer : public testing::Test {
     void construct_tx(xtransaction_ptr_t & tx) {
         m_tx_mocker.construct_tx(tx);
         m_source_context = m_tx_mocker.get_source_context();
-        const auto & fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+        const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
         tx->set_fire_timestamp(fork_config.block_unit_tx_opt_fork_point.value().point * 10);
         m_target_context = m_tx_mocker.get_target_context();
         m_transfer_out_amount = m_tx_mocker.get_transfer_out_amount();

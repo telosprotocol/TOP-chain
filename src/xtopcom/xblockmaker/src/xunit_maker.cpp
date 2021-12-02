@@ -14,7 +14,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xstore/xaccount_context.h"
 #include "xmbus/xevent_behind.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -84,8 +84,8 @@ int32_t xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & 
     
         uint64_t lacked_height_from = 0;
         uint64_t lacked_height_to = 0;
-        auto & fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-        bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+        auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
         if (is_forked) {
             set_keep_latest_blocks_max(1);
         }
@@ -146,8 +146,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
 
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
@@ -341,8 +341,8 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         return nullptr;
     }
 
-    auto & fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
     if (!is_forked) {
         xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
         if (lock_block == nullptr) {
@@ -358,7 +358,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
     XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
-    bool is_forked_unit_opt = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+    bool is_forked_unit_opt = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
     if (is_forked_unit_opt) {
         // firstly try to make full unit and process txs
         if (can_make_next_full_block(is_forked_unit_opt)) {
