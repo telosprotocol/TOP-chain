@@ -169,7 +169,11 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON"
         echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (all fork points are forked BY DEFAULT)"
     ;;
-    metrics_dataobject) 
+    rpc_v2)
+        CMAKE_EXTRA_OPTIONS+=" -DRPC_V2=ON"
+        echo "Build RPC V2"
+    ;;
+    metrics_dataobject)
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_METRICS_DATAOBJECT=ON"
         echo "BUILD WITH ENABLE_METRICS_DATAOBJECT"
     ;;

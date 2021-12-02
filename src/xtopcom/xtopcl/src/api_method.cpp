@@ -3890,7 +3890,7 @@ void ApiMethod::change_trans_mode(bool use_http) {
         trans_base::s_defaule_mode = TransMode::WS;
         // std::cout << "Using trans mode - WS: " << g_server_host_port  << std::endl;
     }
-#ifdef DEBUG
+#if  defined(DEBUG) || defined(RELEASEDEBINFO)
     // std::cout << "[debug]edge_domain_name old: " << g_edge_domain << std::endl;
     char* topio_home = getenv("TOPIO_HOME");
 //    std::cout <<"data_dir:" << topio_home << std::endl;
