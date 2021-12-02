@@ -588,13 +588,17 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     xassert(sender() == contract_state()->state_account_address());
     xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().value().c_str(), recver().value().c_str());
 
-    xcontract_execution_fee_t fee_change;
+    if (sender().value() == sys_contract_zec_reward_addr) {
+        xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
+        return {};
+    }
     if (sender().type() == base::enum_vaccount_addr_type_native_contract &&
         (recver().type() == base::enum_vaccount_addr_type_secp256k1_eth_user_account || recver().type() == base::enum_vaccount_addr_type_secp256k1_user_account)) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] contract to user, ignore");
-        return fee_change;
+        return {};
     }
 
+    xcontract_execution_fee_t fee_change;
     state_accessor::properties::xproperty_identifier_t balance_prop{
         data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system};
     state_accessor::properties::xproperty_identifier_t burn_balance_prop{
