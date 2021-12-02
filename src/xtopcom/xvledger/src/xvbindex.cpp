@@ -29,28 +29,28 @@ namespace top
             m_last_block_hash       = obj.get_last_block_hash();
             m_last_fullblock_hash   = obj.get_last_full_block_hash();
             m_last_fullblock_height = obj.get_last_full_block_height();
-            
+
             m_parent_block_height   = obj.get_parent_block_height();
             m_parent_block_viewid   = obj.get_parent_block_viewid();
             m_parent_block_entity_id = obj.get_parent_entity_id();
             // m_extend_cert = obj.get_cert()->get_extend_cert();  XTODO not set extend cert and extend data
             // m_extend_data = obj.get_cert()->get_extend_data();
-            
+
             //copy flags of block,and combine class of block
             //[8bit:block-flags][8bit:index-bits]
             m_combineflags      = obj.get_block_flags();
             m_block_types       = obj.get_header()->get_block_raw_types();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
-    
+
         xvbindex_t::xvbindex_t(xvbindex_t && obj)
             :xvaccount_t(obj)
         {
             init();
-            
+
             m_modified              = obj.m_modified;
             m_closed                = obj.m_closed;
-            
+
             m_block_height          = obj.m_block_height;
             m_block_viewid          = obj.m_block_viewid;
             m_block_viewtoken       = obj.m_block_viewtoken;
@@ -58,28 +58,28 @@ namespace top
             m_last_block_hash       = obj.m_last_block_hash;
             m_last_fullblock_hash   = obj.m_last_fullblock_hash;
             m_last_fullblock_height = obj.m_last_fullblock_height;
-            
+
             m_next_viewid_offset    = obj.m_next_viewid_offset;
-            
+
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_block_viewid   = obj.m_parent_block_viewid;
-            m_parent_block_entity_id = obj.m_parent_block_entity_id;            
+            m_parent_block_entity_id = obj.m_parent_block_entity_id;
             m_extend_cert           = obj.m_extend_cert;
             m_extend_data           = obj.m_extend_data;
 
             m_combineflags          = obj.m_combineflags;
             m_block_types           = obj.m_block_types;
- 
+
             m_prev_index = obj.m_prev_index;
             m_next_index = obj.m_next_index;
             m_linked_block = obj.m_linked_block;
-            
+
             obj.m_prev_index = NULL;
             obj.m_next_index = NULL;
             obj.m_linked_block = NULL;
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
-    
+
         xvbindex_t::xvbindex_t(const xvbindex_t & obj)
             :xvaccount_t(obj)
         {
@@ -94,10 +94,10 @@ namespace top
                 return *this;
             }
             xvaccount_t::operator=(obj);
-            
+
             m_modified              = obj.m_modified;
             m_closed                = obj.m_closed;
-            
+
             m_block_height          = obj.m_block_height;
             m_block_viewid          = obj.m_block_viewid;
             m_block_viewtoken       = obj.m_block_viewtoken;
@@ -105,7 +105,7 @@ namespace top
             m_last_block_hash       = obj.m_last_block_hash;
             m_last_fullblock_hash   = obj.m_last_fullblock_hash;
             m_last_fullblock_height = obj.m_last_fullblock_height;
-            
+
             m_next_viewid_offset    = obj.m_next_viewid_offset;
 
             m_parent_block_height   = obj.m_parent_block_height;
@@ -120,44 +120,44 @@ namespace top
             //clean first
             if(m_prev_index != NULL)
                 m_prev_index->release_ref();
-            
+
             if(m_next_index != NULL)
                 m_next_index->release_ref();
-            
+
             if(m_linked_block != NULL)
                 m_linked_block->release_ref();
-            
+
             //then copy ptr
             m_prev_index = obj.m_prev_index;
             if(m_prev_index != NULL)
                 m_prev_index->add_ref();
-            
+
             m_next_index = obj.m_next_index;
             if(m_next_index != NULL)
                 m_next_index->add_ref();
-            
+
             m_linked_block = obj.m_linked_block;
             if(m_linked_block != NULL)
                 m_linked_block->add_ref();
-            
+
             return *this;
         }
-    
+
         xvbindex_t::~xvbindex_t()
         {
             xdbg("xvbindex_t::destroy,dump(%s)",dump().c_str());
-            
+
             if(m_prev_index != NULL)
                 m_prev_index->release_ref();
-            
+
             if(m_next_index != NULL)
                 m_next_index->release_ref();
-                
+
             if(m_linked_block != NULL)
                 m_linked_block->release_ref();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, -1);
         }
-  
+
         void xvbindex_t::init()
         {
             m_version           = 1;
@@ -166,21 +166,21 @@ namespace top
             m_prev_index        = NULL;
             m_next_index        = NULL;
             m_linked_block      = NULL;
-            
+
             m_block_height      = 0;
             m_block_viewid      = 0;
             m_block_viewtoken   = 0;
             m_last_fullblock_height = 0;
             m_next_viewid_offset= 0;
-            
+
             m_parent_block_height= 0;
             m_parent_block_viewid= 0;
             m_parent_block_entity_id = 0;
-            
+
             m_combineflags      = 0;
             m_block_types       = 0;
         }
-    
+
         bool   xvbindex_t::close()
         {
             m_closed = 1; //mark closed flag first
@@ -194,7 +194,7 @@ namespace top
             reset_this_block(NULL);
             return true;
         }
-    
+
         const std::string xvbindex_t::dump() const
         {
             char local_buf[256];
@@ -202,7 +202,7 @@ namespace top
 
             return std::string(local_buf);
         }
-    
+
         //only allow reset it when index has empty address
         bool   xvbindex_t::reset_account_addr(const xvaccount_t & addr)
         {
@@ -215,30 +215,30 @@ namespace top
             xvaccount_t::operator=(addr);
             return true;
         }
- 
+
         void    xvbindex_t::reset_next_viewid_offset(const int32_t next_viewid_offset)
         {
             m_next_viewid_offset = next_viewid_offset;
             set_modified_flag();
         }
-    
+
         void   xvbindex_t::set_modified_flag()
         {
             m_modified = 1;
         }
-    
+
         void   xvbindex_t::reset_modify_flag()
         {
             m_modified = 0;
         }
-    
+
         //[8bit:block-flags][1bit][7bit:store-bits]
         bool   xvbindex_t::check_block_flag(enum_xvblock_flag flag) const
         {
             const int copy_flags = m_combineflags;
             return ((copy_flags & flag) != 0);
         }
-    
+
         int    xvbindex_t::set_block_flag(enum_xvblock_flag flag)
         {
             if(false == check_block_flag(flag)) //duplicated setting
@@ -249,25 +249,25 @@ namespace top
             }
             if(get_this_block() != NULL) //duplicated flag as well
                 get_this_block()->set_block_flag(flag);
-            
+
             return m_combineflags;
         }
-    
+
         int    xvbindex_t::remove_block_flag(enum_xvblock_flag flag)
         {
             uint16_t copy_flags = m_combineflags;
             copy_flags &= (~flag);
             m_combineflags = copy_flags;
             set_modified_flag();
-            
+
             return m_combineflags;
         }
-    
+
         int    xvbindex_t::get_block_flags() const  //return all flags related block
         {
             return (m_combineflags & enum_xvblock_flags_mask);
         }
-    
+
         int    xvbindex_t::reset_block_flags(const uint32_t new_flags) //replace all flags of block
         {
             uint16_t copy_flags = m_combineflags;
@@ -275,37 +275,37 @@ namespace top
             copy_flags |= (new_flags & enum_xvblock_flags_mask); //just keep flags of block(highest 8bit)
             m_combineflags = copy_flags;
             set_modified_flag();
-            
+
             if(get_this_block() != NULL) //duplicated flags as well
                 get_this_block()->reset_block_flags(new_flags);
-            
+
             return m_combineflags;
         }
-    
+
         //[8bit:block-flags][1bit][7bit:store-bits]
         bool    xvbindex_t::check_store_flag(enum_index_store_flag flag) const
         {
             const int copy_flags = m_combineflags;
             return ((copy_flags & flag) != 0);
         }
-    
+
         bool    xvbindex_t::check_store_flags(const uint16_t flags) const
         {
             const int copy_flags = m_combineflags;
             return ((copy_flags & flags) != 0);
         }
-    
+
         int    xvbindex_t::set_store_flag(enum_index_store_flag flag)
         {
             if(check_store_flag(flag)) //duplicated setting
                 return m_combineflags;
-            
+
             const uint16_t copy_flags = m_combineflags;
             m_combineflags = (copy_flags | flag);
             set_modified_flag();
             return m_combineflags;
         }
-    
+
         int  xvbindex_t::remove_store_flag(enum_index_store_flag flag)
         {
             uint16_t copy_flags = m_combineflags;
@@ -314,12 +314,12 @@ namespace top
             set_modified_flag();
             return m_combineflags;
         }
-    
+
         int     xvbindex_t::get_store_flags() const  //return all flags related index
         {
             return (m_combineflags & enum_index_store_flags_mask);//[8bit:block-flags][1bit][7bit:store-bits]
         }
-    
+
         int     xvbindex_t::reset_store_flags(const uint32_t new_flags) //clean all flags related index
         {
             uint16_t copy_flags = m_combineflags;
@@ -329,7 +329,7 @@ namespace top
             set_modified_flag();
             return m_combineflags;
         }
-    
+
         void  xvbindex_t::set_block_character(base::enum_xvblock_character character)
         {
             uint16_t block_types = m_block_types;
@@ -340,7 +340,7 @@ namespace top
                 set_modified_flag();
             }
         }
-    
+
         void  xvbindex_t::remove_block_character(base::enum_xvblock_character character)
         {
             uint16_t block_types = m_block_types;
@@ -351,12 +351,12 @@ namespace top
                 set_modified_flag();
             }
         }
-    
+
         bool  xvbindex_t::reset_prev_block(xvbindex_t * _new_prev_index)//return false if hash or height not match
         {
             if(_new_prev_index == m_prev_index) //same one
                 return true;
-            
+
             if(_new_prev_index != NULL)
             {
                 if(get_height() == (_new_prev_index->get_height() + 1) )
@@ -367,7 +367,7 @@ namespace top
                         xvbindex_t * old_ptr =  xatomic_t::xexchange(m_prev_index, _new_prev_index);
                         if(old_ptr != NULL)
                             old_ptr->release_ref();
-                        
+
                         return true;
                     }
                     xinfo("xvbindex_t::reset_prev_block,get_last_block_hash() not match prev hash,prev_node->dump=%s vs this=%s",_new_prev_index->dump().c_str(),dump().c_str());
@@ -382,17 +382,17 @@ namespace top
                 xvbindex_t * old_ptr = xatomic_t::xexchange(m_prev_index, (xvbindex_t*)NULL);
                 if(old_ptr != NULL)
                     old_ptr->release_ref();
-                
+
                 return true;
             }
             return false;
         }
-        
+
         bool   xvbindex_t::reset_next_block(xvbindex_t * _new_next_index)//return false if hash or height not match
         {
             if(_new_next_index == m_next_index)
                 return true;
-            
+
             if(_new_next_index != NULL)
             {
                 if(_new_next_index->get_height() == (get_height() + 1) )
@@ -403,7 +403,7 @@ namespace top
                         xvbindex_t * old_ptr =  xatomic_t::xexchange(m_next_index, _new_next_index);
                         if(old_ptr != NULL)
                             old_ptr->release_ref();
-                        
+
                         return true;
                     }
                     xerror("xvbindex_t::reset_next_block,next_block'get_last_block_hash() not match current hash,next_block->dump=%s",_new_next_index->dump().c_str());
@@ -418,17 +418,17 @@ namespace top
                 xvbindex_t * old_ptr =  xatomic_t::xexchange(m_next_index, (xvbindex_t*)NULL);
                 if(old_ptr != NULL)
                     old_ptr->release_ref();
-                
+
                 return true;
             }
             return false;
         }
-     
+
         bool     xvbindex_t::reset_this_block(xvblock_t* _block_ptr,bool delay_release_existing_one)
         {
             if(_block_ptr == m_linked_block)
                 return true;
-            
+
             if(_block_ptr != NULL)
             {
                 if(get_height() == _block_ptr->get_height()) //verify height
@@ -467,12 +467,12 @@ namespace top
             }
             return false;
         }
-    
+
         //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
         int32_t     xvbindex_t::serialize_to(xstream_t & stream)   //write whole object to binary
         {
             const int32_t begin_size = stream.size();
-            
+
             if(m_version < 1) //old format
             {
                 stream.write_compact_var(get_account());
@@ -484,13 +484,13 @@ namespace top
                 stream.write_tiny_string(m_last_fullblock_hash);
                 stream.write_compact_var(m_last_fullblock_height);
                 stream.write_compact_var(m_next_viewid_offset);
-                
+
                 stream.write_compact_var(m_parent_block_height);
                 stream.write_compact_var(m_parent_block_viewid);
                 stream.write_compact_var(m_parent_block_entity_id);
                 stream.write_compact_var(m_extend_cert);
                 stream.write_compact_var(m_extend_data);
-                
+
                 stream << m_combineflags;
                 stream << m_block_types;
                 stream.write_compact_var(m_reserved);
@@ -499,11 +499,11 @@ namespace top
             {
                 std::string empty_addr;
                 stream.write_compact_var(empty_addr);
-                
+
                 stream << m_version;
                 stream << m_combineflags;
                 stream << m_block_types;
-                
+
                 //note:to reduce size,new version NOT save account address & m_last_fullblock_hash
                 stream.write_compact_var(m_block_height);
                 stream.write_compact_var(m_block_viewid);
@@ -512,19 +512,19 @@ namespace top
                 stream.write_compact_var(m_last_block_hash);
                 stream.write_compact_var(m_last_fullblock_height);
                 stream.write_compact_var(m_next_viewid_offset);
-                
+
                 stream.write_compact_var(m_parent_block_height);
                 stream.write_compact_var(m_parent_block_viewid);
                 stream.write_compact_var(m_parent_block_entity_id);
                 stream.write_compact_var(m_extend_cert);
                 stream.write_compact_var(m_extend_data);
-                
+
                 stream.write_compact_var(m_reserved);
             }
-            
+
             return (stream.size() - begin_size);
         }
-    
+
         int32_t     xvbindex_t::serialize_from(xstream_t & stream)    //read from binary and regeneate content of
         {
             const int32_t begin_size = stream.size();
@@ -542,17 +542,17 @@ namespace top
                     stream.read_tiny_string(m_last_fullblock_hash);
                     stream.read_compact_var(m_last_fullblock_height);
                     stream.read_compact_var(m_next_viewid_offset);
-                    
+
                     stream.read_compact_var(m_parent_block_height);
                     stream.read_compact_var(m_parent_block_viewid);
                     stream.read_compact_var(m_parent_block_entity_id);
                     stream.read_compact_var(m_extend_cert);
                     stream.read_compact_var(m_extend_data);
-                    
+
                     stream >> m_combineflags;
                     stream >> m_block_types;
                     stream.read_compact_var(m_reserved);
-                    
+
                     //finally reset account information
                     xvaccount_t::operator=(account_addr);
                 }
@@ -563,7 +563,7 @@ namespace top
                     stream >> m_combineflags;
                     stream >> m_block_types;
                     xassert(m_version == 1);
-                    
+
                     stream.read_compact_var(m_block_height);
                     stream.read_compact_var(m_block_viewid);
                     stream.read_compact_var(m_block_viewtoken);
@@ -571,16 +571,16 @@ namespace top
                     stream.read_compact_var(m_last_block_hash);
                     stream.read_compact_var(m_last_fullblock_height);
                     stream.read_compact_var(m_next_viewid_offset);
-                    
+
                     stream.read_compact_var(m_parent_block_height);
                     stream.read_compact_var(m_parent_block_viewid);
                     stream.read_compact_var(m_parent_block_entity_id);
                     stream.read_compact_var(m_extend_cert);
                     stream.read_compact_var(m_extend_data);
-                    
+
                     stream.read_compact_var(m_reserved);
                 }
-            
+
             }catch (int error_code){
                 xerror("xvbindex_t::serialize_from,throw exception with error:%d",error_code);
             }
@@ -594,33 +594,33 @@ namespace top
             }
             return (begin_size - stream.size());
         }
-    
+
         int32_t  xvbindex_t::serialize_to(std::string & bin_data)  //write whole object to binary
         {
             base::xautostream_t<1024> _stream(base::xcontext_t::instance());
             const int result = serialize_to(_stream);
             if(result > 0)
                 bin_data.assign((const char*)_stream.data(),_stream.size());
-            
+
             return result;
         }
-    
+
         int32_t  xvbindex_t::serialize_from(const std::string & bin_data)  //read from binary and
         {
             base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
             const int result = serialize_from(_stream);
             return result;
         }
-    
+
         xvbnode_t::xvbnode_t(xvbnode_t * parent_node,xvblock_t & raw_block)
         {
             m_parent_node = NULL;
             m_child_node  = NULL;
             m_block  = NULL;
-            
+
             raw_block.add_ref();
             m_block = &raw_block;
-            
+
             if(parent_node != NULL)
             {
                 //basic mode may link two block with same height and viewid while consensusing,but once commit that should not happen
@@ -642,36 +642,36 @@ namespace top
                 }
             }
         }
-        
+
         xvbnode_t::~xvbnode_t()
         {
             if(m_child_node != NULL)
                 m_child_node->release_ref();
-            
+
             if(m_parent_node != NULL)
                 m_parent_node->release_ref();
-            
+
             if(m_block != NULL)
                 m_block->release_ref();
         }
-        
+
         std::string xvbnode_t::dump() const  //just for debug purpose
         {
             return m_block->dump();
         }
-        
+
         bool xvbnode_t::reset_child(xvbnode_t * _new_node_ptr)
         {
             if(_new_node_ptr != NULL)
                 _new_node_ptr->add_ref();
-            
+
             xvbnode_t * old_ptr =  xatomic_t::xexchange(m_child_node, _new_node_ptr) ;
             if(old_ptr != NULL)
                 old_ptr->release_ref();
-            
+
             return true;
         }
-        
+
         bool    xvbnode_t::reset_block(xvblock_t *  new_block_ptr) //replace it with newer viewid
         {
             if (new_block_ptr != nullptr) {
@@ -683,14 +683,14 @@ namespace top
                 old_block->release_ref();
             return true;
         }
-        
+
         //return the ptr of target node that hold this height
         //just search by hegit
         xvbnode_t* xvbnode_t::find_node(const uint64_t target_height)
         {
             if(is_close())
                 return NULL;
-            
+
             const uint64_t this_height = get_height();
             if(target_height < this_height)
             {
@@ -706,7 +706,7 @@ namespace top
             {
                 if(m_child_node != NULL)
                     m_child_node->add_ref();
-                
+
                 return m_child_node;
             }
             else if(m_child_node != NULL)
@@ -715,12 +715,12 @@ namespace top
             }
             return NULL;
         }
-        
+
         xvbnode_t*  xvbnode_t::find_node(const uint64_t target_height,const uint64_t target_viewid) //note:must release the retured ptr after use
         {
             if(is_close())
                 return NULL;
-            
+
             const uint64_t this_height = get_height();
             if(target_height < this_height)
             {
@@ -749,15 +749,15 @@ namespace top
             }
             return NULL;
         }
-        
+
         bool       xvbnode_t::reset_parent(xvbnode_t * _new_parent_node) //return false if already attached one
         {
             if(is_close())
                 return false;
-            
+
             if(_new_parent_node == m_parent_node) //same one
                 return true;
-            
+
             if(_new_parent_node != NULL)
             {
                 if(get_height() ==  (_new_parent_node->get_height() + 1) )
@@ -766,11 +766,11 @@ namespace top
                     {
                         if(_new_parent_node != NULL)
                             _new_parent_node->add_ref();
-                        
+
                         xvbnode_t * old_ptr =  xatomic_t::xexchange(m_parent_node, _new_parent_node) ;
                         if(old_ptr != NULL)
                             old_ptr->release_ref();
-                        
+
                         return true;
                     }
                     xwarn("xvbnode_t::reset_parent,get_last_block_hash() not match parent hash,parent_node->dump=%s vs this=%s",_new_parent_node->dump().c_str(),dump().c_str());
@@ -785,24 +785,24 @@ namespace top
                 xvbnode_t * old_ptr =  xatomic_t::xexchange(m_parent_node, _new_parent_node) ;
                 if(old_ptr != NULL)
                     old_ptr->release_ref();
-                
+
                 return true;
             }
             return false;
         }
-        
+
         xvbnode_t* xvbnode_t::attach_child(base::xvblock_t* new_block)
         {
             if( is_close() || (NULL == new_block) )
                 return NULL;
-            
+
             const uint64_t new_height  = new_block->get_height();
             const uint64_t this_height = get_height();
             if(new_height < this_height)//too old
             {
                 if(m_parent_node != NULL)
                     return m_parent_node->attach_child(new_block);
-                
+
     #ifdef DEBUG
                 xdbg("xvbnode_t::attach_child,this_height > new_block'heigh,this-node=%s vs new_block=%s",get_block()->dump().c_str(),new_block->dump().c_str());
     #endif
@@ -812,7 +812,7 @@ namespace top
             {
                 if(get_viewid() < new_block->get_viewid())
                     reset_block(new_block);
-                
+
                 add_ref();
                 return this;
             }
@@ -847,12 +847,12 @@ namespace top
             }
             return NULL;
         }
-        
+
         xvbnode_t*   xvbnode_t::detach_child(const uint64_t height ,const uint64_t viewid) //caller should release to_detach_node after detach successful
         {
             if(is_close())
                 return NULL;
-            
+
             const uint64_t this_height = get_height();
             if(height <= this_height)
             {
@@ -873,13 +873,13 @@ namespace top
             }
             return NULL;
         }
-        
+
         bool   xvbnode_t::close(bool force_async)
         {
             if(is_close() == false)
             {
                 xobject_t::close(); //prevent re-enter
-                
+
                 xvbnode_t* _child_ptr = xatomic_t::xexchange(m_child_node, (xvbnode_t*)NULL);
                 if(_child_ptr != NULL)
                 {
@@ -890,13 +890,13 @@ namespace top
             }
             return true;
         }
-        
+
         bool   xvbnode_t::close_all()
         {
             if(is_close() == false)
             {
                 xobject_t::close(); //prevent re-enter
-                
+
                 xvbnode_t* _child_ptr = xatomic_t::xexchange(m_child_node, (xvbnode_t*)NULL);
                 if(_child_ptr != NULL)
                 {
@@ -907,17 +907,17 @@ namespace top
             }
             return true;
         }
-        
+
         xvbmnode_t::xvbmnode_t(xvbnode_t * parent_node,xvblock_t & raw_block)
         :xvbnode_t(parent_node,raw_block)
         {
         }
-        
+
         xvbmnode_t::~xvbmnode_t()
         {
             auto backup_map = m_child_nodes;
             m_child_nodes.clear();
-            
+
             for(auto it = backup_map.begin(); it != backup_map.end(); ++it)
             {
                 xvbnode_t * _child_node = it->second;
@@ -928,13 +928,13 @@ namespace top
                 }
             }
         }
-        
+
         //just search by hegit
         xvbnode_t*  xvbmnode_t::find_node(const uint64_t target_height)//note:must release the retured ptr after use
         {
             if(is_close())
                 return NULL;
-            
+
             const uint64_t this_height = get_height();
             if(target_height < this_height)
             {
@@ -966,13 +966,13 @@ namespace top
             }
             return NULL;
         }
-        
+
         //return the ptr of target node that hold this height
         xvbnode_t*  xvbmnode_t::find_node(const uint64_t target_height,const uint64_t target_viewid)
         {
             if(is_close())
                 return NULL;
-            
+
             const uint64_t this_height = get_height();
             if(target_height < this_height)
             {
@@ -1007,20 +1007,20 @@ namespace top
             }
             return NULL;
         }
-        
+
         //length = child_node'height - parent_node'height
         xvbnode_t*  xvbmnode_t::attach_child(base::xvblock_t* new_block)
         {
             if( is_close() || (NULL == new_block) )
                 return NULL;
-            
+
             const uint64_t new_height  = new_block->get_height();
             const uint64_t this_height = get_height();
             if(new_height < this_height)//too old
             {
                 if(get_parent() != NULL)
                     return get_parent()->attach_child(new_block);
-                
+
     #ifdef DEBUG
                 xdbg("xvbmnode_t::attach_child,this_height > new_block'heigh,this-node=%s vs new_block=%s",get_block()->dump().c_str(),new_block->dump().c_str());
     #endif
@@ -1030,7 +1030,7 @@ namespace top
             {
                 if(get_viewid() < new_block->get_viewid()) //shoud not happen for xvbmnode_t
                     reset_block(new_block);
-                
+
                 add_ref();
                 return this;
             }
@@ -1068,12 +1068,12 @@ namespace top
             }
             return NULL;
         }
-        
+
         xvbnode_t*  xvbmnode_t::detach_child(const uint64_t height ,const uint64_t viewid) //caller should release to_detach_node after detach successful
         {
             if(is_close())
                 return NULL;
-            
+
             const uint64_t this_height = get_height();
             if(height <= this_height)
             {
@@ -1102,16 +1102,16 @@ namespace top
             }
             return NULL;
         }
-        
+
         bool   xvbmnode_t::close(bool force_async)
         {
             if(is_close() == false)
             {
                 xvbnode_t::close(); //prevent re-enter
-                
+
                 auto backup_map = m_child_nodes;
                 m_child_nodes.clear();
-                
+
                 for(auto it = backup_map.begin(); it != backup_map.end(); ++it)
                 {
                     xvbnode_t * _child_node = it->second;
@@ -1125,16 +1125,16 @@ namespace top
             }
             return true;
         }
-        
+
         bool   xvbmnode_t::close_all()
         {
             if(is_close() == false)
             {
                 xvbnode_t::close(); //prevent re-enter
-                
+
                 auto backup_map = m_child_nodes;
                 m_child_nodes.clear();
-                
+
                 for(auto it = backup_map.begin(); it != backup_map.end(); ++it)
                 {
                     xvbnode_t * _child_node = it->second;
@@ -1148,7 +1148,7 @@ namespace top
             }
             return true;
         }
-        
+
         //vblock tree to manage nodes
         //note:multiple-threads unsafe for the below operations
         class xvbtree_t : public xobject_t
@@ -1163,9 +1163,9 @@ namespace top
             //new_block must pass test of is_deliver()
             virtual xvbnode_t*  attach_node(base::xvblock_t* new_block);//note:must release the retured ptr after use
             virtual xvbnode_t*  find_node(const std::string & block_hash);//note:must release the retured ptr after use
-            
+
             virtual bool        close(bool force_async = true) override;//close and release current node and every child node...
-            
+
             //virtual xvbnode_t*  find_longest_branch() override; //return the node with branch,note:must release the retured ptr after use
         protected:
             inline xvbnode_t*   get_root() const {return m_root;}
@@ -1173,19 +1173,19 @@ namespace top
             xvbnode_t*                        m_root;       //root of tree
             std::map<std::string,xvbnode_t*>  m_hash_pool;  //mapping block-hash ->node
         };
-        
+
         //new_block must pass test of is_deliver
         xvbnode_t*  xvbtree_t::attach_node(base::xvblock_t* new_block)//note:must release the retured ptr after use
         {
             if((NULL == new_block) || is_close() )
                 return NULL;
-            
+
             if(new_block->is_deliver(false) == false)
             {
                 xerror("xvbtree_t::attach_node,undelivered block=%s",new_block->dump().c_str());
                 return NULL;
             }
-            
+
             const std::string & target_block_hash = new_block->get_block_hash();
             auto existing = m_hash_pool.find(target_block_hash);
             if(existing != m_hash_pool.end())
@@ -1193,7 +1193,7 @@ namespace top
                 existing->second->add_ref();
                 return existing->second;
             }
-            
+
             const std::string & target_parent_hash = new_block->get_last_block_hash();
             auto it = m_hash_pool.find(target_parent_hash);//most case hit here
             if(it != m_hash_pool.end()) //found parent node
@@ -1206,7 +1206,7 @@ namespace top
                 }
                 return result;
             }
-            
+
             //create node first
             xvbmnode_t * new_node = new xvbmnode_t(NULL,*new_block);
             for(auto i = m_hash_pool.begin(); i != m_hash_pool.end(); ++i)
@@ -1226,7 +1226,7 @@ namespace top
             //finally put into pool
             m_hash_pool[target_block_hash] = new_node;
             new_node->add_ref();
-            
+
             if(m_root == NULL)
             {
                 m_root = new_node;
@@ -1243,7 +1243,7 @@ namespace top
             }
             return new_node;
         }
-        
+
         xvbnode_t*  xvbtree_t::find_node(const std::string & block_hash)
         {
             auto existing = m_hash_pool.find(block_hash);
@@ -1254,6 +1254,6 @@ namespace top
             }
             return NULL;
         }
-        
+
     };//end of namespace of base
 };//end of namespace of top

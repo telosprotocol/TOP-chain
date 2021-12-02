@@ -5,7 +5,7 @@
 #pragma once
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_cache.h"
@@ -194,9 +194,9 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
     tx->set_len();
 
-    auto const& fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
         xdbg_rpc("[sendTransaction_method] in blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
 
         // filter out black list transaction

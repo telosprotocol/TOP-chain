@@ -143,7 +143,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     //init auto_prune feature
     set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
     xkinfo("topchain_init init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
-        
+
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
         return 1;
@@ -252,7 +252,7 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
                     auto const& addr = json_root[member][i].asString();
                     if (addr.size() <= top::base::xvaccount_t::enum_vaccount_address_prefix_size) return false;
                     auto const addr_type = top::base::xvaccount_t::get_addrtype_from_account(addr);
-                    if (addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account) return false;
+                    if (addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account) return false;
                     if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(addr)) return false;
                 } catch (...) {
                     xwarn("parse config file %s failed", config_file.c_str());
@@ -440,7 +440,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     //init auto_prune feature
     set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
     xkinfo("topchain_noparams_init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
-        
+
     // load bwlist
     std::map<std::string, std::string> bwlist;
     auto ret = load_bwlist_content(bwlist_path, bwlist);
@@ -449,6 +449,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
             xdbg("key %s, value %s", item.first.c_str(), item.second.c_str());
             config_center.set(item.first, item.second);
         }
+    } else {
+        xdbg("load_bwlist_content failed!");
     }
 
     MEMCHECK_INIT();
