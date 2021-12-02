@@ -25,8 +25,10 @@ void metrics_log_init(const std::string& log_path)
 
 void metrics_log_close()
 {
-    //close log 
-    g_metrics_log_instance->close();
+    //close log
+    if (g_metrics_log_instance) {
+        g_metrics_log_instance->close();
+    }      
 }
 
 NS_END3

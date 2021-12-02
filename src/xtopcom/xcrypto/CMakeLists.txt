@@ -13,3 +13,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 
+if (BUILD_METRICS)
+    target_link_libraries(xcrypto PRIVATE xmetrics)
+endif()
+

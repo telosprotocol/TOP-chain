@@ -81,12 +81,18 @@ namespace top
         class xmerkle_t
         {
         public:
+            xmerkle_t(){};
+            xmerkle_t(const std::vector<std::string>  &leafs, bool leaf_change_hash = true)
+            {
+                calc_root_hash(leafs, leaf_change_hash);
+            }
+
             /**
              * Calculate merkle root from value (leaf) list.
              * @param  values leafs
              * @return the root hash. if succ, return value is not empty, otherwise, empty string
              */
-            std::string calc_root(const std::vector<std::string> &values)
+            static std::string calc_root(const std::vector<std::string> &values)
             {
                 if (values.empty()) {
                     return std::string();
@@ -110,7 +116,7 @@ namespace top
              * NOTE : root is not included in the path, since it is unbelievable to validator
              * @return if succ, return true; otherwise false
              */
-            bool calc_path(const std::vector<std::string> &values, int index, std::vector<xmerkle_path_node_t<_Tv>>& hash_path)
+            static bool calc_path(const std::vector<std::string> &values, int index, std::vector<xmerkle_path_node_t<_Tv>>& hash_path)
             {
                 if (values.empty() || !(index >= 0 && index < values.size())) {
                     return false;
@@ -188,8 +194,84 @@ namespace top
                 return hs == root;
             }
 
+            /**
+             * Calculate merkle root from value (leaf) list.
+             * @param  values leafs
+             * @param  leaf_change_hash decide leafs if change to hash
+             * @return the root hash. if succ, return value is not empty, otherwise, empty string
+             */
+            std::string calc_root_hash(const std::vector<std::string> & values, bool leaf_change_hash = true)
+            {
+                if (!m_tree_root_hash.empty()) {
+                    return m_tree_root_hash;
+                }
+
+                if (values.empty()) {
+                    return std::string();
+                }
+
+                std::vector<std::string> leafs_hash;
+                if (!hash_leafs(values, leafs_hash, leaf_change_hash)) {
+                    return std::string();
+                }
+
+                m_tree_leafs = values;
+                m_tree_level = ceil(log2(values.size()))+1; //fix tree level max
+                m_node_level = log2(values.size())+1;       //keep node level max
+                m_tree_level_node.emplace(m_tree_level_node.begin(), leafs_hash);
+                
+                uint64_t level = 1;   
+                while (level < m_tree_level) {
+                    std::vector<std::string> list = m_tree_level_node.front();
+                    if (!hash_list(list)) {
+                       return std::string();
+                    }
+                    m_tree_level_node.emplace(m_tree_level_node.begin(), list);
+                    level++;
+                }
+                
+                auto &root_hash_node = m_tree_level_node.at(0);
+                m_tree_root_hash = root_hash_node.at(0);
+                return m_tree_root_hash;
+            }
+
+            /**
+             * Calculate path from value (leaf) list
+             * @param values leaf
+             * @param hash_path hash path list,contains enough hash values which is used by validate_path()
+             * NOTE : root is not included in the path, since it is unbelievable to validator
+             * @return if succ, return true; otherwise false
+             */
+            bool calc_path_hash(const std::string &leaf, std::vector<xmerkle_path_node_t<_Tv>>& hash_path)
+            {
+                //check merkle tree exist
+                if (m_tree_root_hash.empty() || m_tree_leafs.empty()) {
+                    xwarn(" merkle tree is null.");
+                    return false;
+                }
+
+                auto iter = std::find(m_tree_leafs.begin(), m_tree_leafs.end(), leaf);
+                if (iter == m_tree_leafs.end()) {
+                    xassert(0);
+                    return false;
+                }
+
+                uint64_t tree_level = m_tree_level;
+                uint64_t node_level = m_node_level;
+                int index = static_cast<int>(std::distance(m_tree_leafs.begin(), iter));;
+                while (tree_level > 1) {
+                    std::vector<std::string> &hash_list = m_tree_level_node.at(tree_level-1);
+                    add_path_node(hash_list, index, node_level, hash_path);
+                    index /= 2;
+                    node_level--;
+                    tree_level--;
+                }
+
+                return true;
+            }
+
         private:
-            void add_path_node(const std::vector<std::string> &hashes, int index, int level, std::vector<xmerkle_path_node_t<_Tv>> &hash_path)
+            static void add_path_node(const std::vector<std::string> &hashes, int index, int level, std::vector<xmerkle_path_node_t<_Tv>> &hash_path)
             {
                 if (hashes.empty()) {
                     return;
@@ -200,31 +282,40 @@ namespace top
 
                 if (hashes.size() == 1) {
                     node.pos = 0;
-                    memcpy(node.signature.data(), hashes[index].c_str(), hashes[index].size());
+                    node.signature = hashes[index];
+                    // memcpy(node.signature.data(), hashes[index].c_str(), hashes[index].size());
                     hash_path.push_back(node);
                 } else {
                     if (index & 1) {
                         node.pos = 1;
-                        memcpy(node.signature.data(), hashes[index-1].c_str(), hashes[index-1].size());
+                        node.signature = hashes[index-1];
+                        // memcpy(node.signature.data(), hashes[index-1].c_str(), hashes[index-1].size());
                     } else {
                         if (index == hashes.size() - 1) {
                             if (hash_path.empty()) { // only first odd node need added
                                 node.pos = 0;
-                                memcpy(node.signature.data(), hashes[index].c_str(), hashes[index].size());
+                                node.signature = hashes[index];
+                                // memcpy(node.signature.data(), hashes[index].c_str(), hashes[index].size());
                             } else {
                                 return; // escape
                             }
                         } else {
                             node.pos = 2;
-                            memcpy(node.signature.data(), hashes[index+1].c_str(), hashes[index+1].size());
+                            node.signature = hashes[index+1];
+                            // memcpy(node.signature.data(), hashes[index+1].c_str(), hashes[index+1].size());
                         }
                     }
                     hash_path.push_back(node);
                 }
             }
 
-            bool hash_leafs(const std::vector<std::string> &values, std::vector<std::string> &list)
-            {
+            static bool hash_leafs(const std::vector<std::string> &values, std::vector<std::string> &list, bool leaf_change_hash=true)
+            {               
+                if (!leaf_change_hash) {
+                   list = values;
+                   return true;
+                }
+
                 for(auto &s : values) {
                     const std::string& str = hash(s);
                     if (str.empty()) return false;
@@ -256,13 +347,13 @@ namespace top
                 return std::string((char*) v.data(), v.size());
             }
 
-            std::string hash(const std::string &value)
+            static std::string hash(const std::string &value)
             {
                 _Th h;
                 return hash(h, value);
             }
 
-            std::string hash(_Th &h, const std::string &value)
+            static std::string hash(_Th &h, const std::string &value)
             {
                 h.reset();
                 h.update(value);
@@ -273,13 +364,13 @@ namespace top
                 return std::string((char*) v.data(), v.size());
             }
 
-            std::string hash(const std::string &left, const std::string &right)
+            static std::string hash(const std::string &left, const std::string &right)
             {
                 _Th h;
                 return hash(h, left, right);
             }
 
-            std::string hash(_Th &h, const std::string &left, const std::string &right)
+            static std::string hash(_Th &h, const std::string &left, const std::string &right)
             {
                 h.reset();
                 h.update(left);
@@ -291,13 +382,13 @@ namespace top
                 return std::string((char*) v.data(), v.size());
             }
 
-            bool get_hash(_Th &h, _Tv &v)
+            static bool get_hash(_Th &h, _Tv &v)
             {   
                 XMETRICS_GAUGE(metrics::cpu_merkle_hash_calc, 1);
                 return h.get_hash(v);
             }
 
-            bool hash_list(std::vector<std::string>& nodes)
+            static bool hash_list(std::vector<std::string>& nodes)
             {
                 size_t size = nodes.size() & (~1);
                 std::list<std::string> list;
@@ -326,6 +417,13 @@ namespace top
                 return true;
             }
 
+            
+        private:
+            uint64_t  m_tree_level = 0;
+            uint64_t  m_node_level = 0 ;
+            std::string m_tree_root_hash {};
+            std::vector<std::string> m_tree_leafs {};
+            std::vector<std::vector<std::string>> m_tree_level_node {};
         };
 
         template<typename _Tv>

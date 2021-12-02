@@ -11,6 +11,7 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xvledger/xmerkle.hpp"
+#include "xutility/xhash.h"
 
 namespace top
 {
@@ -130,6 +131,8 @@ namespace top
         public:
             static bool calc_merkle_path(const std::vector<std::string> & leafs, const xvaction_t & leaf, xmerkle_path_256_t& hash_path);
             static bool calc_merkle_path(const std::vector<std::string> & leafs, const std::string & leaf, xmerkle_path_256_t& hash_path);
+            static bool calc_merkle_path(const xvaction_t & leaf, xmerkle_path_256_t& hash_path, xmerkle_t<utl::xsha2_256_t, uint256_t> &merkle);
+            static bool calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path, xmerkle_t<utl::xsha2_256_t, uint256_t> &merkle);
             static bool calc_input_merkle_path(xvinput_t* input, const std::string & leaf, xmerkle_path_256_t& hash_path);
             static std::vector<std::string>    get_input_merkle_leafs(xvinput_t* input);
         public:

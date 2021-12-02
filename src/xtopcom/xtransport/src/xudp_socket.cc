@@ -534,6 +534,7 @@ int XudpSocket::GetSign(std::string& node_sign) {
     top::utl::xsha2_256_t hasher;
     hasher.update(global_node_id.c_str(), global_node_id.size());
     hasher.get_hash(hash_value);
+    XMETRICS_GAUGE(metrics::cpu_hash_256_XudpSocket_calc, 1);
 //    node_sign.assign(hash_value.data(), hash_value.size());
 
     top::utl::xecprikey_t pri_key_obj((uint8_t*)global_node_signkey.data());

@@ -135,11 +135,12 @@ namespace top
             // get all leafs firstly for performance
             std::vector<std::string> all_leafs = xvblockmaker_t::get_input_merkle_leafs(commit_block->get_input());
 
+            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(all_leafs);
             // #3 calc leaf path and make rceipt
             std::vector<xfull_txreceipt_t> txreceipts;
             for (auto & action : actions) {
                 xmerkle_path_256_t hash_path;
-                if (false == xvblockmaker_t::calc_merkle_path(all_leafs, action, hash_path)) {
+                if (false == xvblockmaker_t::calc_merkle_path(action, hash_path, merkle)) {
                     xassert(false);
                     return {};
                 }
@@ -258,7 +259,8 @@ namespace top
 
             auto & action = actions[0];
             xmerkle_path_256_t hash_path;
-            if (false == xvblockmaker_t::calc_merkle_path(all_leafs, action, hash_path)) {
+            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(all_leafs);
+            if (false == xvblockmaker_t::calc_merkle_path(action, hash_path, merkle)) {
                 xassert(false);
                 return nullptr;
             }

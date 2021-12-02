@@ -19,6 +19,7 @@ void make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::str
     std::string property_receiptid_bin = data::xtable_bstate_t::get_receiptid_property_bin(bstate);
     if (!property_receiptid_bin.empty()) {
         uint256_t hash = utl::xsha2_256_t::digest(property_receiptid_bin);
+        XMETRICS_GAUGE(metrics::cpu_hash_256_receiptid_bin_calc, 1);
         std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
         property_hashs[data::xtable_bstate_t::get_receiptid_property_name()] = prophash;
     }

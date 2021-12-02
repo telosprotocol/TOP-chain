@@ -188,6 +188,7 @@ void xtransaction_v2_t::set_digest() {
         base::xstream_t stream(base::xcontext_t::instance());
         do_uncompact_write_without_hash_signature(stream);
         m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
+        XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v2_calc, 1);
     }
 }
 

@@ -530,6 +530,16 @@ namespace top
             leaf.serialize_to(action_bin);
             return calc_merkle_path(leafs, action_bin, hash_path);
         }
+        
+        bool xvblockmaker_t::calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path, xmerkle_t<utl::xsha2_256_t, uint256_t> &merkle) {
+            return merkle.calc_path_hash(leaf, hash_path.get_levels_for_write());
+        }
+
+        bool xvblockmaker_t::calc_merkle_path(const xvaction_t & leaf, xmerkle_path_256_t& hash_path, xmerkle_t<utl::xsha2_256_t, uint256_t> &merkle) {
+            std::string action_bin;
+            leaf.serialize_to(action_bin);
+            return calc_merkle_path(action_bin, hash_path, merkle);
+        }
 
         bool xvblockmaker_t::calc_input_merkle_path(xvinput_t* input, const std::string & leaf, xmerkle_path_256_t& hash_path) {
             if(input == nullptr)
@@ -910,6 +920,7 @@ namespace top
 #endif
             std::string parent_cert_bin;
             parent->get_cert()->serialize_to_string(parent_cert_bin);
+            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
             for (auto & _unit : units) {
                 if (!_unit->get_cert()->get_extend_cert().empty()) { // already set extend cert
                     xassert(false);
@@ -917,7 +928,7 @@ namespace top
                 }
                 std::string _leaf = get_table_out_merkle_leaf(_unit.get());
                 base::xmerkle_path_256_t path;
-                bool ret = xvblockmaker_t::calc_merkle_path(out_leafs, _leaf, path);
+                bool ret = xvblockmaker_t::calc_merkle_path(_leaf, path, merkle);
                 if (!ret) {
                     xerror("xvtableblock_maker_t::units_set_parent_cert fail calc merkle path");
                     return false;
