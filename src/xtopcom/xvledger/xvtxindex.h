@@ -92,6 +92,8 @@ namespace top
         
         public:
             void set_tx_hash(std::string const & tx_hash);
+            void set_block_addr(const std::string & block_addr) {m_block_addr = block_addr;}
+            void set_block_height(uint64_t block_height) {m_block_height = block_height;}
             // void set_tx_phase_type(enum_transaction_subtype tx_phase_type);
         protected:
             virtual int32_t    do_write(base::xstream_t & stream) override;

@@ -52,7 +52,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
-    std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
+    std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path)+DB_PATH);
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());

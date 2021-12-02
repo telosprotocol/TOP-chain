@@ -1949,13 +1949,16 @@ namespace top
             base::xauto_ptr<base::xvbindex_t > new_idx(create_index(*new_raw_block));
             if(0 != new_idx->get_height())
             {
-                if (new_raw_block->get_block_level() == base::enum_xvblock_level_table) {
-                    //just keep low 4bit flags about unpack/store/connect etc
-                    new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
-                    new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
-                    new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
+                //just keep low 4bit flags about unpack/store/connect etc
+                new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
+                new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
+                new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
+
+                if(new_idx->get_height() <= m_meta->_highest_cert_block_height)//just load stored one
+                {
+                    if(new_idx->get_height() > m_meta->_highest_deleted_block_height)//just load undeleted one
+                        load_index(new_idx->get_height());
                 }
-                load_index(new_idx->get_height()); //always load index first for non-genesis block
             }
             else//genesis block
             {
@@ -2107,7 +2110,7 @@ namespace top
                 push_event(enum_blockstore_event_committed,this_block);
 
             const uint64_t this_block_height = this_block->get_height();
-            if(this_block_height > 0)
+            if(this_block_height > m_meta->_highest_deleted_block_height)
             {
                 if(this_block_height >= 2)
                 {
