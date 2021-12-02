@@ -49,6 +49,18 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::get_binlog_failed:
         return "canvas encode binlog failed";
 
+    case xerrc_t::nonce_mismatch:
+        return "nonce mismatch";
+
+    case xerrc_t::transaction_not_enough_balance:
+        return "transaction: balance not enough";
+
+    case xerrc_t::transaction_not_enough_deposit:
+        return "transaction: deposit not enough";
+
+    case xerrc_t::transaction_not_enough_pledge_token_tgas:
+        return "transaction: pledge token tgas not enough";
+
     default:
         return "unknown contract runtime error";
     }
