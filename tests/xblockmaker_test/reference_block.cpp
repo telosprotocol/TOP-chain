@@ -2,7 +2,7 @@
 
 #include "test_common.hpp"
 #include "xblockmaker/xtable_maker.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 using namespace top;
 using namespace top::base;
@@ -15,8 +15,8 @@ using namespace top::blockmaker;
 class reference_block : public testing::Test {
 protected:
     void SetUp() override {
-        chain_upgrade::xtop_chain_fork_config_center::init();
-        base::xvblock_fork_t::instance().init(chain_upgrade::xtop_chain_fork_config_center::is_block_forked);
+        chain_fork::xtop_chain_fork_config_center::init();
+        base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
     }
 
     void TearDown() override {
@@ -96,6 +96,7 @@ protected:
         
 };
 
+#ifndef XCHAIN_FORKED_BY_DEFAULT
 TEST_F(reference_block, creation) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
@@ -154,3 +155,4 @@ TEST_F(reference_block, creation) {
         }
     }
 }
+#endif

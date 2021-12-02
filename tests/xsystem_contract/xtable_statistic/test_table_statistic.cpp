@@ -6,7 +6,7 @@
 #include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xloader/xconfig_onchain_loader.h"

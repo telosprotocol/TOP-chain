@@ -22,7 +22,7 @@
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xtxexecutor/xtransaction_context.h"
 
 using namespace top;

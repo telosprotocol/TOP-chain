@@ -18,7 +18,7 @@
 #include "xtxpool_service_v2/xtxpool_service.h"
 #include "xtxpool_v2/xreceipt_resend.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #include <cinttypes>
 
@@ -212,9 +212,9 @@ void xtxpool_service_mgr::on_timer() {
     std::vector<std::shared_ptr<xtxpool_service_face>> pull_lacking_receipts_service_vec;
     std::vector<std::shared_ptr<xtxpool_service_face>> receipts_recender_service_vec;
 
-    auto fork_config = top::chain_upgrade::xtop_chain_fork_config_center::chain_fork_config();
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     auto clock = m_clock->logic_time();
-    bool is_forked = chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.table_receipt_protocol_fork_point, clock);
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.table_receipt_protocol_fork_point, clock);
     xdbg("xtxpool_service_mgr::on_timer is_forked:%d,clock:%llu", is_forked, clock);
 
     {

@@ -6,4 +6,4 @@ add_library(xchain_upgrade STATIC ${src_dir})
 
 #add_dependencies(xchain_upgrade xbasic xdata xconfig)
 
-target_link_libraries(xchain_upgrade PRIVATE xbase xbasic xdata xconfig pthread)
+target_link_libraries(xchain_upgrade PRIVATE xbase xbasic xdata pthread)

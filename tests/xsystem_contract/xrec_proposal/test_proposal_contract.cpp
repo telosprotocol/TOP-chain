@@ -17,6 +17,7 @@
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xstake/xstake_algorithm.h"
 #include "xconfig/xconfig_update_parameter_action.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #define private public
 #include "xvm/xvm_service.h"
@@ -37,6 +38,9 @@ class test_proposal_contract: public testing::Test {
 public:
 
     static void SetUpTestCase() {
+        chain_fork::xtop_chain_fork_config_center::init();
+        base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
+
         top::data::xrootblock_para_t para;
         para.m_tcc_accounts = {"T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy", "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo"};
         top::data::xrootblock_t::init(para);

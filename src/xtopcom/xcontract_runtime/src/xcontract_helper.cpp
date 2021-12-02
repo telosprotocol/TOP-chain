@@ -7,7 +7,7 @@
 #include "xbasic/xerror/xthrow_error.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xstore/xstore_error.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 using namespace top::data;
 
