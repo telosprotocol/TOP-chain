@@ -38,9 +38,10 @@ namespace top
                     xwarn("string_to_version,invalid version(%s)",ver_str.c_str());
                     return 0;
                 }
-                return ( (h0 << 24) | (h1 << 16) || (h2 << 8) || h3);
+                uint32_t value = ( (h0 << 24) | (h1 << 16) | (h2 << 8) | h3);
+                return value;
             }
-            xwarn("string_to_version,invalid version(%s)",ver_str.c_str());
+            xerror("string_to_version,invalid version(%s)",ver_str.c_str());
             return 0;
         }
     

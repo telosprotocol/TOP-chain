@@ -42,6 +42,7 @@ class xdb_mem_t : public xdb_face_t {
     
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie) override;
+    bool get_estimate_num_keys(uint64_t & num) const override;
     
     xdb_meta_t  get_meta() override {return m_meta;}  // implement for test
  public:

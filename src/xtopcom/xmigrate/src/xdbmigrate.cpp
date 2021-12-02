@@ -3,6 +3,7 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <iostream>
 #include "xvledger/xvdbfilter.h"
 #include "xdb/xdb_factory.h"
 #include "xdbmigrate.h"
@@ -87,6 +88,11 @@ namespace top
         {
             return m_db_face_ptr->read_range(prefix,callback,cookie);
         }
+
+        bool   xmigratedb_t::get_estimate_num_keys(uint64_t & num) const
+        {
+            return m_db_face_ptr->get_estimate_num_keys(num);
+        }
     
         xdbmigrate_t::xdbmigrate_t()
         {
@@ -153,35 +159,52 @@ namespace top
             //step#1 : init & check
             const std::string src_db_path = config_obj.get_config(root_path + "/src_path");
             const std::string dst_db_path = config_obj.get_config(root_path + "/dst_path");
-            if(src_db_path.empty())
+            const std::string dst_db_version = config_obj.get_config(root_path + "/dst_version");
+            if(src_db_path.empty() || dst_db_path.empty() || dst_db_version.empty())
             {
                 xerror("xdbmigrate_t::init,not found DB config at bad config(%s)",config_obj.dump().c_str());
                 return enum_xerror_code_bad_config;
             }
             
-            //step#2: construct src and target db
-            m_src_store_ptr = new xmigratedb_t(src_db_path);
-            if(m_src_store_ptr->open_db() == false)
+            //step#2: open dst db and check if aready newst db version
+            m_dst_store_ptr = new xmigratedb_t(dst_db_path);
+            if(m_dst_store_ptr->open_db() == false)
             {
-                xerror("xdbmigrate_t::init,failed to open src DB at path(%s)",src_db_path.c_str());
+                xerror("xdbmigrate_t::init,failed to open dst DB at path(%s)",dst_db_path.c_str());
                 return enum_xerror_code_bad_config;
             }
-            if( (src_db_path == dst_db_path) || (dst_db_path.empty()) )
+
+            std::string actual_db_version = m_dst_store_ptr->get_value(xvdbkey_t::get_xdb_version_key());
+            if (actual_db_version == dst_db_version)
             {
-                m_src_store_ptr->add_ref();
-                m_dst_store_ptr = m_src_store_ptr;
+                xkinfo("xdbmigrate_t::init,succ aready migrate.dst db version(%s) for dst db path(%s)",dst_db_version.c_str(), dst_db_path.c_str());
+                return enum_xcode_successful;
             }
-            else //seperated db
+
+            //step#3: open src db
+            if (src_db_path == dst_db_path)
             {
-                m_dst_store_ptr = new xmigratedb_t(dst_db_path);
-                if(m_dst_store_ptr->open_db() == false)
+                m_dst_store_ptr->add_ref();
+                m_src_store_ptr = m_dst_store_ptr;
+            }
+            else
+            {
+                // src db path not exist is normal case, set target db version directly
+                if (!base::xfile_utl::folder_exist(src_db_path))
                 {
-                    xerror("xdbmigrate_t::init,failed to open dst DB at path(%s)",dst_db_path.c_str());
+                    m_dst_store_ptr->set_value(xvdbkey_t::get_xdb_version_key(), dst_db_version);
+                    xkinfo("xdbmigrate_t::init,succ src db path folder not exist.dst db version(%s) for dst db path(%s),src db path(%s)",dst_db_version.c_str(), dst_db_path.c_str(), src_db_path.c_str());
+                    return enum_xcode_successful;
+                }
+                m_src_store_ptr = new xmigratedb_t(src_db_path);
+                if(m_src_store_ptr->open_db() == false)
+                {
+                    xerror("xdbmigrate_t::init,failed to open src DB at path(%s)",src_db_path.c_str());
                     return enum_xerror_code_bad_config;
                 }
             }
 
-            //step#3 : load filters at order
+            //step#4 : load filters at order
             const int filters_count = (int)xstring_utl::toint32(config_obj.get_config(root_path + "/size"));
             for(int i = 0; i < filters_count; ++i)
             {
@@ -298,8 +321,18 @@ namespace top
             {
                 if(m_src_store_ptr != nullptr)
                 {
+                    int64_t begin_s = base::xtime_utl::gettimeofday();
+                    m_src_store_ptr->get_estimate_num_keys(m_total_keys_num);
+                    xinfo("xdbmigrate_t::run begin. src db total estimate num = %ld", m_total_keys_num);
+                    std::cout << "xdbmigrate_t::run begin. src db total estimate num = " << m_total_keys_num << std::endl;
                     //scan all keys
                     m_src_store_ptr->read_range("", db_scan_callback,this);
+
+                    int64_t end_s = base::xtime_utl::gettimeofday();
+                    uint64_t dst_db_keys_num = 0;
+                    m_dst_store_ptr->get_estimate_num_keys(dst_db_keys_num);
+                    xinfo("xdbmigrate_t::run finish. dst db total estimate num = %ld, scan key num = %ld, total_time_s = %ld", dst_db_keys_num, m_scaned_keys_num, end_s - begin_s);
+                    std::cout << "xdbmigrate_t::run finish. dst db total estimate num = " << dst_db_keys_num << ", scan key num = " << m_scaned_keys_num << ", total_time_s = " << end_s - begin_s << std::endl;
                 }
                 //add loop here if need continue running
                 
@@ -329,12 +362,21 @@ namespace top
             {
                 enum_xdbkey_type db_key_type = xvdbkey_t::get_dbkey_type(key);//carry real type
                 xdbevent_t db_event(key,value,db_key_type,m_src_store_ptr,m_dst_store_ptr,enum_xdbevent_code_transfer);
+
+                xdbg("xdbmigrate_t::db_scan_callback key=%s,key_type=%d", key.c_str(), db_key_type);
+
                 if(db_event.get_event_code() == enum_xdbevent_code_transfer)
                 {
                     if(m_src_store_ptr == m_dst_store_ptr)//same store
                         db_event.set_event_flag(xdbevent_t::enum_dbevent_flag_key_stored);
                 }
                 m_filter_objects[0]->push_event_back(db_event, nullptr);
+
+                if (m_scaned_keys_num++ % 1000000 == 0)
+                {
+                    xinfo("xdbmigrate_t::db_scan_callback total estimate num = %ld, current num = %ld", m_total_keys_num, m_scaned_keys_num);
+                    std::cout << "xdbmigrate_t::db_scan_callback total estimate num = " << m_total_keys_num << ", current num = " << m_scaned_keys_num << std::endl;
+                }
                 return true;
             }
             return false;

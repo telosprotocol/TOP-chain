@@ -44,6 +44,7 @@ namespace top
             
             //iterator each key of prefix.note: go throuh whole db if prefix is empty
             bool   read_range(const std::string& prefix,db::xdb_iterator_callback callback,void * cookie);
+            bool   get_estimate_num_keys(uint64_t & num) const;
             
         private://API for block object manage,useless while migrating
             virtual bool             set_vblock(const std::string & store_path,base::xvblock_t* block) override{return false;}
@@ -85,6 +86,8 @@ namespace top
             xmigratedb_t*             m_src_store_ptr;//source db
             xmigratedb_t*             m_dst_store_ptr;//target db
             std::vector<xvfilter_t*>  m_filter_objects;
+            uint64_t                  m_scaned_keys_num{0};
+            uint64_t                  m_total_keys_num{0};
         };
     
         template<uint32_t migrate_version>

@@ -52,6 +52,7 @@ namespace top
     
         enum_xfilter_handle_code  xkeymigrate_t::fire_event(const xvevent_t & event,xvfilter_t* last_filter)
         {
+            xdbg("xkeymigrate_t::fire_event for event(0x%x)",event.get_type());
             if(is_close())
             {
                 xwarn("xkeymigrate_t::fire_event,closed");
@@ -87,6 +88,7 @@ namespace top
     
         enum_xfilter_handle_code xkeymigrate_t::transfer_keyvalue(xdbevent_t & event,xvfilter_t* last_filter)
         {
+            xdbg("xkeymigrate_t::transfer_keyvalue for event(0x%x)",event.get_type());
             if(is_close())
             {
                 xwarn("xkeymigrate_t::transfer_keyvalue,closed");
@@ -102,6 +104,7 @@ namespace top
             {
                 if(event.get_target_store() != nullptr)
                 {
+                    xdbg("xkeymigrate_t::transfer_keyvalue set_value_to_dst_db with no changed. key=%s,for event(0x%x)",event.get_db_key().c_str(), event.get_type());
                     if(event.get_target_store()->set_value(event.get_db_key(), event.get_db_value()))
                         event.set_event_flag(xdbevent_t::enum_dbevent_flag_key_stored);
                 }

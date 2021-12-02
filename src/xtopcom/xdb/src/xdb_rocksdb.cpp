@@ -155,6 +155,7 @@ class xdb::xdb_impl final{
     
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie);
+    bool get_estimate_num_keys(uint64_t & num) const;
     
     static void destroy(const std::string& m_db_name);
 
@@ -392,6 +393,11 @@ bool xdb::xdb_impl::read_range(const std::string& prefix,xdb_iterator_callback c
     return ret;
 }
 
+bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
+}
+
 xdb::xdb(const std::string& name)
 : m_db_impl(new xdb_impl(name)) {
 }
@@ -490,6 +496,11 @@ bool xdb::single_delete(const std::string& key)
 bool xdb::read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie)
 {
     return m_db_impl->read_range(prefix, callback,cookie);
+}
+
+bool xdb::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db_impl->get_estimate_num_keys(num);
 }
 
 }  // namespace ledger

@@ -145,6 +145,11 @@ bool xdb_mem_t::read_range(const std::string& prefix,xdb_iterator_callback callb
     return false;
 }
 
+bool xdb_mem_t::get_estimate_num_keys(uint64_t & num) const
+{
+    return false;
+}
+
 bool xdb_memdb_transaction_t::rollback() {
     // drop every thing
     m_read_values.clear();

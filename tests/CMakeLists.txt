@@ -25,3 +25,5 @@ add_subdirectory(xdb)
 add_subdirectory(xtxexecutor)
 add_subdirectory(xrpc)
 add_subdirectory(xunit_proof)
+add_subdirectory(xmigrate)
+

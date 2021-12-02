@@ -31,6 +31,8 @@ namespace top
             
             virtual enum_xfilter_handle_code  transfer_keyvalue(xdbevent_t & event,xvfilter_t* last_filter) override;
             virtual enum_xfilter_handle_code  transfer_tx(xdbevent_t & event,xvfilter_t* last_filter) override;
+        private:
+            enum_xfilter_handle_code    transfer_tx_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter);
         };
     
         template<uint32_t migrate_version>

@@ -18,7 +18,7 @@ namespace top
         {
             m_front_filter = nullptr;
             m_back_filter  = nullptr;
-            memset(m_event_handlers, NULL, sizeof(m_event_handlers));
+            memset(m_event_handlers, 0, sizeof(m_event_handlers));
             
             xkinfo("xvfilter_t::xvfilter_t");
         }
@@ -28,7 +28,7 @@ namespace top
         {
             m_front_filter = nullptr;
             m_back_filter  = nullptr;
-            memset(m_event_handlers, NULL, sizeof(m_event_handlers));
+            memset(m_event_handlers, 0, sizeof(m_event_handlers));
             
             m_front_filter = front_filter;
             if(front_filter != nullptr)
@@ -42,7 +42,7 @@ namespace top
         {
             m_front_filter = nullptr;
             m_back_filter  = nullptr;
-            memset(m_event_handlers, NULL, sizeof(m_event_handlers));
+            memset(m_event_handlers, 0, sizeof(m_event_handlers));
             
             m_front_filter = front_filter;
             m_back_filter  = back_filter;
