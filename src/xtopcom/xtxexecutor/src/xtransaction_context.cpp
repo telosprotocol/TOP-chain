@@ -288,8 +288,9 @@ int32_t xtransaction_transfer::source_fee_exec() {
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
         const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
         auto clock = m_account_ctx->get_timer_height();
-        xdbg("xtransaction_transfer::source_fee_exec account context timer:%llu, timestamp(second):%llu, forkclock:%llu", clock, m_trans->get_transaction()->get_fire_timestamp(), fork_config.block_unit_tx_opt_fork_point.value().point);
-        if (m_trans->get_transaction()->get_fire_timestamp() >= fork_config.block_unit_tx_opt_fork_point.value().point * 10) {
+        if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
+            ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
+        } else {
             if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
                 return xconsensus_service_error_balance_not_enough;
             }
@@ -299,8 +300,6 @@ int32_t xtransaction_transfer::source_fee_exec() {
             }
 
             ret = m_fee.update_tgas_sender();
-        } else {
-            ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
         }
     }
     return ret;
@@ -309,11 +308,10 @@ int32_t xtransaction_transfer::source_fee_exec() {
 int32_t xtransaction_transfer::source_confirm_fee_exec() {
     const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     auto clock = m_account_ctx->get_timer_height();
-    xdbg("xtransaction_transfer::source_confirm_fee_exec account context timer:%llu, timestamp(second):%llu, forkclock:%llu", clock, m_trans->get_transaction()->get_fire_timestamp(), fork_config.block_unit_tx_opt_fork_point.value().point);
-    if (m_trans->get_transaction()->get_fire_timestamp() >= fork_config.block_unit_tx_opt_fork_point.value().point) {
-        return 0;
-    } else {
+    if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
         return xtransaction_face_t::source_confirm_fee_exec();
+    } else {
+        return 0;
     }
 }
 

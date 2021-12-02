@@ -85,7 +85,7 @@ int32_t xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & 
         uint64_t lacked_height_from = 0;
         uint64_t lacked_height_to = 0;
         auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-        bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+        bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
         if (is_forked) {
             set_keep_latest_blocks_max(1);
         }
@@ -147,7 +147,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
 
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
@@ -342,7 +342,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
     }
 
     auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, cs_para.get_clock());
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
     if (!is_forked) {
         xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
         if (lock_block == nullptr) {
@@ -358,10 +358,9 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
     XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
-    bool is_forked_unit_opt = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_unit_tx_opt_fork_point, cs_para.get_clock());
-    if (is_forked_unit_opt) {
+    if (is_forked) {
         // firstly try to make full unit and process txs
-        if (can_make_next_full_block(is_forked_unit_opt)) {
+        if (can_make_next_full_block(is_forked)) {
             xwarn("xunit_maker_t::make_next_block full block. account=%s,pending_txs:%zu,cs_para:%s", get_account().c_str(), m_pending_txs.size(), cs_para.dump().c_str());
             make_light_block(proposal_unit, m_fullunit_builder, unit_para, cs_para, result);
         }
@@ -377,7 +376,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         }
 
         // secondly try to make full unit
-        if (nullptr == proposal_unit && can_make_next_full_block(is_forked_unit_opt)) {
+        if (nullptr == proposal_unit && can_make_next_full_block(is_forked)) {
             proposal_unit = m_fullunit_builder->build_block(cert_block,
                                                             get_latest_bstate()->get_bstate(),
                                                             cs_para,
@@ -398,7 +397,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         }
     }
 
-    if (is_forked_unit_opt) {
+    if (is_forked) {
         if ((nullptr == proposal_unit) && (result.m_make_block_error_code == 0)) {
             xdbg("wish null unit account:%s,cs_para:%s,make_block_error_code:%d", get_account().c_str(),cs_para.dump().c_str(),result.m_make_block_error_code);
             result.m_make_block_error_code = xblockmaker_error_null_unit;
@@ -416,8 +415,8 @@ bool xunit_maker_t::can_make_next_block() const {
     return false;
 }
 
-bool xunit_maker_t::can_make_next_block_v2(bool is_forked_unit_opt) const {
-    if (can_make_next_light_block() || can_make_next_full_block(is_forked_unit_opt)) {
+bool xunit_maker_t::can_make_next_block_v2() const {
+    if (can_make_next_light_block() || can_make_next_full_block(true)) {
         return true;
     }
     return false;

@@ -68,8 +68,6 @@ namespace top {
             top::optional<xfork_point_t> table_statistic_info_fork_point;
             top::optional<xfork_point_t> table_receipt_protocol_fork_point;
             top::optional<xfork_point_t> tx_v2_fork_point;
-            top::optional<xfork_point_t> remove_empty_unit_fork_point;
-            top::optional<xfork_point_t> block_unit_tx_opt_fork_point;
         };
         using xchain_fork_config_t = xtop_chain_fork_config;
     }

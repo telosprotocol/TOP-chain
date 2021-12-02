@@ -24,7 +24,7 @@ class xunit_maker_t : public xblock_maker_t {
     void                    clear_tx();
     xblock_ptr_t            make_proposal(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     bool                    can_make_next_block() const;
-    bool                    can_make_next_block_v2(bool is_forked_unit_opt = false) const;
+    bool                    can_make_next_block_v2() const;
     bool                    can_make_next_empty_block() const;
     bool                    can_make_next_full_block(bool is_forked_unit_opt = false) const;
     bool                    must_make_next_full_block() const;

@@ -274,9 +274,8 @@ bool xsync_store_t::remove_empty_unit_forked() {
     }
 
     xdbg("xsync_store_t::remove_empty_unit_forked clock:%llu", vb->get_height());
-
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.remove_empty_unit_fork_point, vb->get_height());
+    bool forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, vb->get_height());
     if (forked) {
         xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
         m_remove_empty_unit_forked = true;
