@@ -213,6 +213,10 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                 if (vnode->faded() && vnode->running()) {
                     vnode->stop();
                     m_vnode_proxy->unreg(vnode->address());
+                } else if (common::has<common::xnode_type_t::storage>(vnode->type()) || common::has<common::xnode_type_t::edge>(vnode->type())) {
+                    vnode->fade();
+                    vnode->stop();
+                    m_vnode_proxy->unreg(vnode->address());
                 }
                 xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
                       vnode.get(),
