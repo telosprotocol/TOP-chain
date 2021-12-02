@@ -72,7 +72,6 @@ class xtable_maker_t : public xblock_maker_t {
     xblock_builder_para_ptr_t                   m_default_builder_para;
     bool                                        m_check_state_success{false};
     mutable std::mutex                          m_lock;
-    xunit_block_cache                           m_unit_block_cache;
 };
 
 using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;

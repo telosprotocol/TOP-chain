@@ -85,6 +85,8 @@ namespace top
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
 
+            virtual bool                try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) override;
+
 
         public://batch process api
             virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account,const int atag = 0) override;
@@ -135,6 +137,7 @@ namespace top
             bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
 
             bool                        store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block);
+            bool                        store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block);
 
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()
             virtual std::string          get_store_path() const override {return m_store_path;}//each store may has own space at DB/disk

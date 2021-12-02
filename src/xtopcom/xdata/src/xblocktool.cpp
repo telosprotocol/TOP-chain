@@ -496,7 +496,10 @@ base::xreceiptid_state_ptr_t xblocktool_t::get_receiptid_from_property_prove(con
     return receiptid;
 }
 
-bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount, const base::xaccount_index_t & commit_account_index, base::xvblockstore_t * blockstore, const std::string & caller) {
+bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount,
+                                                   const base::xaccount_index_t & commit_account_index,
+                                                   base::xvblockstore_t * blockstore,
+                                                   const std::string & caller) {
     // firstly, load connected block, always sync unit from latest connected block
     uint64_t latest_connect_height = blockstore->get_latest_connected_block_height(vaccount);
     uint64_t latest_commit_height = commit_account_index.get_latest_unit_height();
@@ -509,10 +512,23 @@ bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vac
               latest_connect_height,
               caller.c_str());
         if (latest_connect_height < latest_commit_height) {
+            if (latest_connect_height + 2 >= latest_commit_height) {
+                auto ret = blockstore->try_update_account_index(
+                    vaccount, latest_commit_height, commit_account_index.get_latest_unit_viewid(), (latest_connect_height + 2 == latest_commit_height));
+                if (ret) {
+                    xinfo("xblocktool_t::check_lacking_unit_and_try_sync update account index succ account=%s,index=%s,commit height=%ld,connect_height=%ld,caller:%s",
+                          vaccount.get_account().c_str(),
+                          commit_account_index.dump().c_str(),
+                          latest_commit_height,
+                          latest_connect_height,
+                          caller.c_str());
+                    return true;
+                }
+            }
+
             uint64_t from_height = latest_connect_height + 1;
             uint32_t sync_num = (uint32_t)(latest_commit_height - latest_connect_height);
-            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            vaccount.get_address(), from_height, sync_num, true, "account_state_fall_behind", true);
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(vaccount.get_address(), from_height, sync_num, true, "account_state_fall_behind", true);
             base::xvchain_t::instance().get_xevmbus()->push_event(ev);
         }
         return false;

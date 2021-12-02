@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -170,7 +170,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             tablestate->get_account_index(unit_account, accountindex);
             base::xaccount_index_t commit_accountindex;
             table_para.get_commit_tablestate()->get_account_index(unit_account, commit_accountindex);
-            int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex, m_unit_block_cache);
+            int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex);
             account_check_state_ret[unit_account] = (ret != xsuccess) ? false : true;
             if (ret != xsuccess) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_unit_check_state, 1);
@@ -299,7 +299,7 @@ bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & tabl
         tablestate->get_account_index(unit_account, accountindex);
         base::xaccount_index_t commit_accountindex;
         table_para.get_commit_tablestate()->get_account_index(unit_account, commit_accountindex);
-        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex, m_unit_block_cache);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex);
         if (ret != xsuccess) {
             // empty unit maker must create success
             xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",
@@ -336,7 +336,7 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
         tablestate->get_account_index(unit_account, accountindex);
         base::xaccount_index_t commit_accountindex;
         table_para.get_commit_tablestate()->get_account_index(unit_account, commit_accountindex);
-        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex, m_unit_block_cache);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex, commit_accountindex);
         if (ret != xsuccess) {
             // other unit maker must create success
             xwarn("xtable_maker_t::create_other_makers fail-check_latest_state,%s,account=%s,error_code=%s",
@@ -383,7 +383,6 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         get_blockstore()->load_block_output(locked_block->get_account(), locked_block.get(), metrics::blockstore_access_from_blk_mk_table);
         table_blocks.push_back(locked_block);
     }
-    m_unit_block_cache.update_table_blocks(table_blocks);
 
     // try to make non-empty-unit for left unitmakers
     std::map<std::string, xunit_maker_ptr_t> unitmakers;

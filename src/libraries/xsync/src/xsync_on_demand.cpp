@@ -160,13 +160,26 @@ void xsync_on_demand_t::handle_blocks_response_with_proof(const std::vector<data
             xsync_error("xsync_on_demand_t::on_response_event table sync never need unit proof!addr:%s", account.c_str());
             return;
         }
+        store_on_demand_sync_blocks(blocks, unit_proof_str);
     } else {
-        if (!check_unit_blocks(blocks, unit_proof_str)) {
-            return;
+        if (!unit_proof_str.empty()) {
+            if (!check_unit_blocks(blocks, unit_proof_str)) {
+                return;
+            }
+            store_on_demand_sync_blocks(blocks, unit_proof_str);
+        } else {
+            std::vector<data::xblock_ptr_t> validated_blocks;
+            if (!check_unit_blocks(blocks, validated_blocks)) {
+                if (blocks.size() < 3) {
+                    return;
+                } else {
+                    validated_blocks.clear();
+                    validated_blocks.insert(validated_blocks.begin(), blocks.begin(), blocks.end() - 2);
+                }
+            }
+            store_on_demand_sync_blocks(validated_blocks, "");
         }
     }
-
-    store_on_demand_sync_blocks(blocks, unit_proof_str);
 
     if (!m_download_tracer.refresh(account, blocks.rbegin()->get()->get_height())) {
         return;
@@ -300,8 +313,8 @@ void xsync_on_demand_t::handle_blocks_request_with_proof(const xsync_message_get
                 base::xvaccount_t unit_account(address);
                 unit_proof_str = m_sync_store->get_unit_proof(unit_account, blocks.back()->get_height());
                 if(unit_proof_str.empty()){
-                    xsync_error("get_unit_proof fail");
-                    blocks.clear();
+                    xsync_info(
+                        "xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu] get proof fail", address.c_str(), blocks.front()->get_height(), blocks.back()->get_height());
                 }
             }
         }
@@ -544,20 +557,25 @@ bool xsync_on_demand_t::basic_check(const std::vector<data::xblock_ptr_t> &block
         return false;
     }
     
-    xblock_ptr_t block = blocks[blocks.size() -1];
+    xblock_ptr_t last_block = blocks[blocks.size() -1];
 
-    if (!check_auth(m_certauth, block)) {
+    if (!check_auth(m_certauth, last_block)) {
         xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof auth_failed %s,height=%lu,viewid=%lu,",
-            account.c_str(), block->get_height(), block->get_viewid());
+            account.c_str(), last_block->get_height(), last_block->get_viewid());
         return false;
     }
 
-    for (auto & block : blocks) {
-        if (block->get_account() != account) {
-            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof receive on_demand_blocks(address error) (%s, %s)",
-                block->get_account().c_str(), account.c_str());
+    auto it = blocks.begin();
+    auto last_hash = it->get()->get_block_hash();
+    it++;
+    for (; it != blocks.end(); it++) {
+        auto block = it->get();
+        if (block->get_account() != account || block->get_last_block_hash() != last_hash) {
+            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof receive on_demand_blocks(address or hash error)(%s,%s)(%s,%s)",
+                block->get_account().c_str(), account.c_str(), block->get_last_block_hash().c_str(), last_hash.c_str());
             return false;
         }
+        last_hash = block->get_block_hash();
     }
     return true;
 }
@@ -581,32 +599,28 @@ bool xsync_on_demand_t::check_unit_blocks(const std::vector<data::xblock_ptr_t> 
 
 // check unit blocks with unit proof
 bool xsync_on_demand_t::check_unit_blocks(const std::vector<data::xblock_ptr_t> & blocks, const std::string & unit_proof_str) {
-    if (!unit_proof_str.empty()) {
-        base::xunit_proof_t unit_proof;
-        auto len = unit_proof.serialize_from(unit_proof_str);
-        if (len <= 0) {
-            xerror("xsync_on_demand_t::check_unit_blocks deserialize unit proof fail");
-            return false;
-        }
+    base::xunit_proof_t unit_proof;
+    auto len = unit_proof.serialize_from(unit_proof_str);
+    if (len <= 0) {
+        xerror("xsync_on_demand_t::check_unit_blocks deserialize unit proof fail");
+        return false;
+    }
 
-        auto highest_sync_unit_block = blocks.back();
+    auto highest_sync_unit_block = blocks.back();
 
-        if (highest_sync_unit_block->get_height() != unit_proof.get_height() || highest_sync_unit_block->get_viewid() != unit_proof.get_viewid() ||
-            !unit_proof.verify_unit_block(m_certauth.get(), highest_sync_unit_block)) {
-            xsync_warn("xsync_on_demand_t::handle_blocks_response unit proof check fail,unit:%s,proof h:%llu,v:%llu",
-                    highest_sync_unit_block->dump().c_str(),
-                    unit_proof.get_height(),
-                    unit_proof.get_viewid());
-            return false;
-        }
-        xsync_dbg("xsync_on_demand_t::check_unit_blocks sync unit proof succ,unit:%s,proof h:%llu,v:%llu",
+    if (highest_sync_unit_block->get_height() != unit_proof.get_height() || highest_sync_unit_block->get_viewid() != unit_proof.get_viewid() ||
+        !unit_proof.verify_unit_block(m_certauth.get(), highest_sync_unit_block)) {
+        xsync_warn("xsync_on_demand_t::handle_blocks_response unit proof check fail,unit:%s,proof h:%llu,v:%llu",
                 highest_sync_unit_block->dump().c_str(),
                 unit_proof.get_height(),
                 unit_proof.get_viewid());
-        return true;
-    } else {
-        return check_unit_blocks(blocks);
+        return false;
     }
+    xsync_dbg("xsync_on_demand_t::check_unit_blocks sync unit proof succ,unit:%s,proof h:%llu,v:%llu",
+            highest_sync_unit_block->dump().c_str(),
+            unit_proof.get_height(),
+            unit_proof.get_viewid());
+    return true;
 }
 
 // check unit blocks for old version, might contain cert blocks.

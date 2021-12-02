@@ -37,9 +37,7 @@ xblock_maker_t::~xblock_maker_t() {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblock_maker_t, -1);
 }
 // create the state matching latest block and cache it
-bool xblock_maker_t::update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
-    xblock_ptr_t latest_block = latest_blocks.rbegin()->second;
-
+bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block) {
     if (m_latest_bstate != nullptr
         && m_latest_bstate->get_block_viewid() == latest_block->get_viewid()
         && m_latest_bstate->get_block_height() == latest_block->get_height()) {
@@ -48,12 +46,7 @@ bool xblock_maker_t::update_account_state(const std::map<uint64_t, xblock_ptr_t>
         return true;
     }
 
-    std::map<uint64_t, base::xvblock_t *> blocks;
-    for (auto _block : latest_blocks) {
-        blocks[_block.first] = _block.second.get();
-    }
-
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blocks,metrics::statestore_access_from_blkmaker_update_account_state);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get(),metrics::statestore_access_from_blkmaker_update_account_state);
     if (bstate == nullptr) {
         xwarn("xblock_maker_t::update_account_state fail-get target state. account=%s,height=%ld,viewid=%ld",
             get_account().c_str(), latest_block->get_height(), latest_block->get_viewid());
@@ -128,9 +121,9 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
     return true;
 }
 
-bool xblock_maker_t::load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_height_from, uint64_t & lacked_height_to) {
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_height_from, uint64_t & lacked_height_to) {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_load_and_cache_enough_blocks");
-    xblock_ptr_t current_block = latest_blocks.rbegin()->second;
+    xblock_ptr_t current_block = latest_block;
     reset_latest_cert_block(current_block);
     uint32_t count = 1;
 
@@ -141,21 +134,15 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const std::map<uint64_t, xbloc
         }
         xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
         if (prev_block == nullptr) {
-            auto iter = latest_blocks.find(current_block->get_height() - 1);
-            if (iter != latest_blocks.end()) {
-                prev_block = iter->second;
-                set_latest_block(prev_block);
-            } else {
-                // only mini-block is enough
-                auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_ld_and_cache);
-                if (_block == nullptr) {
-                    xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
-                    lacked_height_to = current_block->get_height() - 1;
-                    return false;
-                }
-                prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
-                set_latest_block(prev_block);
+            // only mini-block is enough
+            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_ld_and_cache);
+            if (_block == nullptr) {
+                xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                lacked_height_to = current_block->get_height() - 1;
+                return false;
             }
+            prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+            set_latest_block(prev_block);
         }
         current_block = prev_block;
         count++;

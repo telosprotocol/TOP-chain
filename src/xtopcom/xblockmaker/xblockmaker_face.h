@@ -172,7 +172,7 @@ class xblock_maker_t : public base::xvaccount_t {
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
     void                        reset_latest_cert_block(const xblock_ptr_t & block);
-    bool                        load_and_cache_enough_blocks(const std::map<uint64_t, xblock_ptr_t> & latest_blocks, uint64_t & lacked_height_from, uint64_t & lacked_height_to);
+    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_height_from, uint64_t & lacked_height_to);
     bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block);
     bool                        check_latest_blocks(const xblock_ptr_t & latest_block) const;
 
@@ -189,7 +189,7 @@ class xblock_maker_t : public base::xvaccount_t {
     void                        set_keep_latest_blocks_max(uint32_t keep_latest_blocks_max) {m_keep_latest_blocks_max = keep_latest_blocks_max;}
 
  protected:
-    bool                        update_account_state(const std::map<uint64_t, xblock_ptr_t> & latest_blocks);
+    bool                        update_account_state(const xblock_ptr_t & latest_block);
     void                        clear_old_blocks();
 
  private:
