@@ -165,6 +165,8 @@ namespace top
                 xerror("xdbmigrate_t::init,not found DB config at bad config(%s)",config_obj.dump().c_str());
                 return enum_xerror_code_bad_config;
             }
+
+            m_dst_db_version = dst_db_version;
             
             //step#2: open dst db and check if aready newst db version
             m_dst_store_ptr = new xmigratedb_t(dst_db_path);
@@ -261,7 +263,10 @@ namespace top
                 }
             }
             
-            xkinfo("xdbmigrate_t::init,finised");
+            std::string src_db_version = m_src_store_ptr->get_value(xvdbkey_t::get_xdb_version_key());
+            xkinfo("xdbmigrate_t::init,finised. src db path = %s, src db version = %s, dst db path = %s, dst db version = %s",
+                src_db_path.c_str(), src_db_version.c_str(), dst_db_path.c_str(), dst_db_version.c_str());
+            std::cout << "xdbmigrate_t::init,finised. src db path = " << src_db_path << ", src db version = " << src_db_version << ", dst db path = " << dst_db_path << ", dst db version = " << dst_db_version << std::endl;
             return enum_xcode_successful;
         }
         
@@ -325,8 +330,11 @@ namespace top
                     m_src_store_ptr->get_estimate_num_keys(m_total_keys_num);
                     xinfo("xdbmigrate_t::run begin. src db total estimate num = %ld", m_total_keys_num);
                     std::cout << "xdbmigrate_t::run begin. src db total estimate num = " << m_total_keys_num << std::endl;
-                    //scan all keys
-                    m_src_store_ptr->read_range("", db_scan_callback,this);
+                    // XTODO only scan txindex keys
+                    m_src_store_ptr->read_range("t/", db_scan_callback,this);
+
+                    // finally, update db version to dst db version
+                    m_dst_store_ptr->set_value(xvdbkey_t::get_xdb_version_key(), m_dst_db_version);
 
                     int64_t end_s = base::xtime_utl::gettimeofday();
                     uint64_t dst_db_keys_num = 0;

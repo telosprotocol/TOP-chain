@@ -88,14 +88,14 @@ bool set_auto_prune_switch(const std::string& prune)
     return true;
 }
 
-bool db_migrate_v2_to_v0_3_0_0(const std::string & db_folder_path)
+#define ENABLE_DB_MIGRATE_FROM_V2_TO_V3
+bool db_migrate_v2_to_v0_3_0_0(const std::string & db_path)
 {    
-    const std::string src_db_path = db_folder_path + OLD_DB_PATH;
-    const std::string dst_db_path = db_folder_path + DB_PATH;
-
-    if (src_db_path == dst_db_path) {
-        return true;
-    }
+#ifndef ENABLE_DB_MIGRATE_FROM_V2_TO_V3
+    return true;
+#endif
+    const std::string src_db_path = db_path;
+    const std::string dst_db_path = db_path;
 
     xkinfo("db_migrate_v2_to_v0_3_0_0 begin.src_db_path=%s,dst_db_path=%s",src_db_path.c_str(),dst_db_path.c_str());
     std::cout << "db_migrate_v2_to_v0_3_0_0 begin" << std::endl;
@@ -499,7 +499,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     if (false == create_rootblock("")) {
         return 1;
     }
-    if (false == db_migrate_v2_to_v0_3_0_0(datadir)) {
+    if (false == db_migrate_v2_to_v0_3_0_0(chain_db_path)) {
         return 1;
     }
     // start admin http service
