@@ -239,13 +239,8 @@ bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
 
     xdbg("fullunit block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
     // #2 set output entitys and resources
-    if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-        std::string full_state_bin = para.m_property_snapshot;
-        set_output_full_state(full_state_bin);
-    } else {
-        std::string full_state_bin = para.get_fullstate_bin();
-        set_output_full_state(full_state_bin);
-    }
+    std::string full_state_bin = para.get_fullstate_bin();
+    set_output_full_state(full_state_bin);
 
     return true;
 }
