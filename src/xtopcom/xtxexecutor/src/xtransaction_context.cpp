@@ -11,7 +11,6 @@
 #include "xbase/xcontext.h"
 #include "xconfig/xconfig_register.h"
 #include "xverifier/xverifier_utl.h"
-#include "xchain_fork/xchain_upgrade_center.h"
 
 using namespace top::data;
 
@@ -286,8 +285,6 @@ int32_t xtransaction_transfer::source_fee_exec() {
     auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
-        const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-        auto clock = m_account_ctx->get_timer_height();
         if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
             ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
         } else {
@@ -306,8 +303,6 @@ int32_t xtransaction_transfer::source_fee_exec() {
 }
 
 int32_t xtransaction_transfer::source_confirm_fee_exec() {
-    const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    auto clock = m_account_ctx->get_timer_height();
     if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
         return xtransaction_face_t::source_confirm_fee_exec();
     } else {
