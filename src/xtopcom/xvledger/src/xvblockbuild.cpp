@@ -678,12 +678,10 @@ namespace top
                     xassert(false);
                     return false;
                 }
-                // if (target_block->get_block_level() == enum_xvblock_level_table) {
-                    if (!target_block->get_binlog_hash().empty()) {
-                        xassert(false);
-                        return false;
-                    }
-                // }
+                if (!target_block->get_binlog_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
                 // full-table not has state
                 if (target_block->get_block_level() == enum_xvblock_level_table && !target_block->get_full_state().empty()) {
                     xassert(false);
@@ -695,12 +693,10 @@ namespace top
                     return false;
                 }
                 // full-blcok not has binlog
-                // if (target_block->get_block_level() == enum_xvblock_level_table) {
-                    if (!target_block->get_binlog().empty()) {
-                        xassert(false);
-                        return false;
-                    }
-                // }
+                if (!target_block->get_binlog().empty()) {
+                    xassert(false);
+                    return false;
+                }
             }
             if (_class == enum_xvblock_class_light) {
                 // light-block has state hash and binlog hash
