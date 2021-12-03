@@ -922,7 +922,7 @@ TEST_F(test_tablemaker, version_2) {
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
         auto txs = proposal_block->get_txs();
         EXPECT_EQ(txs.size(), tx_cnt);
-        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt);
+        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_unit_opt);
 
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 1);
@@ -991,7 +991,7 @@ TEST_F(test_tablemaker, version_2) {
         EXPECT_EQ(headers.size(), 1);
         for (auto & header : headers) {
             EXPECT_EQ(header->get_extra_data().empty(), false);
-            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt);
+            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_unit_opt);
         }
     }
 }

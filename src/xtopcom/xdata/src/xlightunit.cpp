@@ -73,7 +73,7 @@ void * xlightunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
 
 void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
     xJson::Value ji;
-    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
         auto txs = get_txs();
         for (auto & tx : txs) {
             xJson::Value jv;
@@ -101,7 +101,7 @@ void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
 }
 
 void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
-    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_tx_opt)) {
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
         auto txs = get_txs();
         for (auto & tx : txs) {
             xJson::Value jv;

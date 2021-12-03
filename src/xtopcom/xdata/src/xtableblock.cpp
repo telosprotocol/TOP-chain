@@ -119,7 +119,7 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
 std::vector<base::xvaction_t> xtable_block_t::get_tx_actions() const {
     const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
     auto version = get_block_version();
-    if (base::xvblock_fork_t::is_block_older_version(version, base::enum_xvblock_fork_version_unit_tx_opt)) {
+    if (base::xvblock_fork_t::is_block_older_version(version, base::enum_xvblock_fork_version_unit_opt)) {
         std::vector<base::xvaction_t> tx_actions;
         uint32_t entitys_count = _table_inentitys.size();
         for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
