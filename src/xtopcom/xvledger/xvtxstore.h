@@ -41,17 +41,17 @@ namespace top
             virtual void*               query_interface(const int32_t _enum_xobject_type_) override;
  
         public://read & load interface
-            virtual xauto_ptr<xvtxindex_t>  load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type);
-            virtual const std::string       load_tx_bin(const std::string & raw_tx_hash);
-            virtual xauto_ptr<xdataunit_t>  load_tx_obj(const std::string & raw_tx_hash);
+            virtual xauto_ptr<xvtxindex_t>  load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type) = 0;
+            virtual const std::string       load_tx_bin(const std::string & raw_tx_hash) = 0 ;
+            virtual xauto_ptr<xdataunit_t>  load_tx_obj(const std::string & raw_tx_hash) = 0;
 
         public:
-            virtual void update_node_type(uint32_t combined_node_type);
+            virtual void update_node_type(uint32_t combined_node_type) = 0;
 
         public: //write interface
-            virtual bool                store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin);
-            virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin);
-            virtual bool                store_tx_obj(const std::string & raw_tx_hash,xdataunit_t * raw_tx_obj);
+            virtual bool                store_txs(xvblock_t * block_ptr) = 0;
+            virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin) = 0;
+            virtual bool                store_tx_obj(const std::string & raw_tx_hash,xdataunit_t * raw_tx_obj) = 0;
         
         public: // tx cache interface
             virtual bool tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) = 0;

@@ -35,7 +35,7 @@ public:  // read & load interface
     base::xauto_ptr<base::xdataunit_t> load_tx_obj(const std::string & raw_tx_hash) override;
 
 public:  // write interface
-    bool store_txs(base::xvblock_t * block_ptr, bool store_raw_tx_bin) override;
+    bool store_txs(base::xvblock_t * block_ptr) override;
     bool store_tx_bin(const std::string & raw_tx_hash, const std::string & raw_tx_bin) override;
     bool store_tx_obj(const std::string & raw_tx_hash, base::xdataunit_t * raw_tx_obj) override;
 
