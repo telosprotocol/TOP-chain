@@ -66,8 +66,8 @@ TEST_F(test_migrate, version_config) {
 }
 
 TEST_F(test_migrate, db_version_control_no_src_dst_db_path) {
-    std::string src_db_path = "./db_v2";
-    std::string dst_db_path = "./db_v3";
+    std::string src_db_path = "./db_v2_0";
+    std::string dst_db_path = "./db_v3_0";
     delete_folder(src_db_path);
     delete_folder(dst_db_path);
 
@@ -81,8 +81,8 @@ TEST_F(test_migrate, db_version_control_no_src_dst_db_path) {
 }
 
 TEST_F(test_migrate, key_migrate_1_mormal_kvs) {
-    std::string src_db_path = "./db_v2";
-    std::string dst_db_path = "./db_v3";
+    std::string src_db_path = "./db_v2_1";
+    std::string dst_db_path = "./db_v3_1";
     uint32_t count = 10;
     {
         std::shared_ptr<db::xdb_face_t> old_db = db::xdb_factory_t::create(db::xdb_kind_kvdb,src_db_path);
@@ -113,8 +113,8 @@ TEST_F(test_migrate, key_migrate_1_mormal_kvs) {
 }
 
 TEST_F(test_migrate, key_migrate_2_txindex_kvs) {
-    std::string src_db_path = "./db_v2";
-    std::string dst_db_path = "./db_v3";
+    std::string src_db_path = "./db_v2_2";
+    std::string dst_db_path = "./db_v3_2";
     uint32_t count = 10;
 
     std::string unit_addr = mock::xdatamock_address::make_user_address_random();
@@ -164,8 +164,8 @@ TEST_F(test_migrate, key_migrate_2_txindex_kvs) {
 }
 
 TEST_F(test_migrate, key_migrate_1_all_kvs_BENCH_1000000) {
-    std::string src_db_path = "./db_v2";
-    std::string dst_db_path = "./db_v3";
+    std::string src_db_path = "./db_v2_3";
+    std::string dst_db_path = "./db_v3_3";
     uint32_t count = 1000000;
     {
         std::shared_ptr<db::xdb_face_t> old_db = db::xdb_factory_t::create(db::xdb_kind_kvdb,src_db_path);
