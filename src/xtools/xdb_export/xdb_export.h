@@ -13,6 +13,8 @@ NS_BEG2(top, db_export)
 
 class xdb_export_tools_t {
 public:
+    enum enum_query_account_version { QUERY_ACCOUNT_V1 = 0, QUERY_ACCOUNT_V2 };
+
     xdb_export_tools_t(std::string const & db_path);
     ~xdb_export_tools_t() = default;
 
@@ -30,8 +32,13 @@ public:
     void query_block_info(std::string const & account, std::string const & param);
     // query block basic info
     void query_block_basic(std::string const & account, std::string const & param);
+    void query_block_basic(std::vector<std::string> const & account_vec, std::string const & param);
     // query state basic info
     void query_state_basic(std::string const & account, std::string const & param);
+    void query_state_basic(std::vector<std::string> const & account_vec, std::string const & param);
+    // query meta info
+    void query_meta(std::string const & account);
+    void query_meta(std::vector<std::string> const & account_vec);
     // query table state and its all units state
     void query_table_unit_state(std::string const & table);
     // query contract property(use contract manager interface)
@@ -81,10 +88,9 @@ private:
     };
 
     std::set<std::string> query_db_unit_accounts();
-    std::set<std::string> generate_db_unit_accounts_file();
-    void generate_db_unit_accounts_file_v2(std::set<std::string> & accounts_set);
-    void query_unit_account(std::string const & account, std::set<std::string> & accounts_set);
-    void query_unit_account2(std::string const & account, std::set<std::string> & accounts_set);
+    std::set<std::string> generate_db_unit_accounts_file(enum_query_account_version version);
+    std::set<std::string> query_unit_account(std::string const & account);
+    std::set<std::string> query_unit_account2(std::string const & account);
     void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s = -1, int init_e = -1);
     void query_sync_result(std::string const & account, json & result_json);
     void query_table_latest_fullblock(std::string const & account, json & j);
@@ -92,6 +98,7 @@ private:
     void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root);
     void query_block_basic(std::string const & account, const uint64_t h, json & result);
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
+    void query_meta(std::string const & account, json & result);
     void query_table_unit_state(std::string const & table, json & result);
     void query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph);
     void query_balance(std::string const & table, json & j_unit, json & j_table);

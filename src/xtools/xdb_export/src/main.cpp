@@ -32,8 +32,9 @@ void usage() {
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_block_basic <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_state_basic <account> <height|last|all>" << std::endl;
+    std::cout << "        - check_block_basic [account] [height|last|all]" << std::endl;
+    std::cout << "        - check_state_basic [account] [height|last|all]" << std::endl;
+    std::cout << "        - check_meta [account]" << std::endl;
     std::cout << "        - check_table_unit_state <table>" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
@@ -158,17 +159,61 @@ int main(int argc, char ** argv) {
         }
         tools.query_block_info(argv[3], argv[4]);
     } else if (function_name == "check_block_basic") {
-        if (argc < 5) {
+        if (argc < 3) {
             usage();
             return -1;
         }
-        tools.query_block_basic(argv[3], argv[4]);
+        if (argc == 3) {
+            mkdir("all_block_basic_info", 0750);
+            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            tools.query_block_basic(unit_account_vec, "all");
+        } else if (argc == 4) {
+            mkdir("all_block_basic_info", 0750);
+            tools.query_block_basic(argv[3], "all");
+        } else if (argc == 5) {
+            if (std::string{argv[4]} == "all") {
+                mkdir("all_block_basic_info", 0750);
+            }
+            tools.query_block_basic(argv[3], argv[4]);
+        } else {
+            usage();
+            return -1;
+        }
     } else if (function_name == "check_state_basic") {
-        if (argc < 5) {
+        if (argc < 3) {
             usage();
             return -1;
         }
-        tools.query_state_basic(argv[3], argv[4]);
+        if (argc == 3) {
+            mkdir("all_state_basic_info", 0750);
+            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            tools.query_state_basic(unit_account_vec, "all");
+        } else if (argc == 4) {
+            mkdir("all_state_basic_info", 0750);
+            tools.query_state_basic(argv[3], "all");
+        } else if (argc == 5) {
+            if (std::string{argv[4]} == "all") {
+                mkdir("all_state_basic_info", 0750);
+            }
+            tools.query_state_basic(argv[3], argv[4]);
+        } else {
+            usage();
+            return -1;
+        }
+    } else if (function_name == "check_meta") {
+        if (argc < 3) {
+            usage();
+            return -1;
+        }
+        if (argc == 3) {
+            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            tools.query_meta(unit_account_vec);
+        } else if (argc == 4) {
+            tools.query_meta(argv[3]);
+        } else {
+            usage();
+            return -1;
+        }
     } else if (function_name == "check_table_unit_state") {
         if (argc < 4) {
             usage();
@@ -193,40 +238,6 @@ int main(int argc, char ** argv) {
     } else {
         usage();
     }
-
-    // if (function_name == "check_db_reset") {
-    //     std::string file = "all_account.json";
-    //     if (access(file.c_str(), 0) != 0) {
-    //         std::cout << file << " not exist!" << std::endl;
-    //         return -1;
-    //     }
-    //     std::ifstream file_stream(file);
-    //     json j;
-    //     file_stream >> j;
-    //     if (j.empty()) {
-    //         std::cout << file << " not exist!" << std::endl;
-    //         return -1;
-    //     }
-    //     db_reset_t reset(tools);
-    //     reset.generate_reset_check_file(tools.get_db_unit_accounts());
-    // } else if (function_name == "verify") {
-    //     if (argc < 4) {
-    //         usage();
-    //         return -1;
-    //     }
-    //     std::string file{argv[3]};
-    //     if (access(file.c_str(), 0) != 0) {
-    //         std::cout << "file: " << file << " not found" << std::endl;
-    //         return -1;
-    //     }
-    //     json contract;
-    //     json user;
-    //     std::ifstream file_stream(file);
-    //     file_stream >> contract;
-    //     file_stream >> user;
-    //     db_reset_t reset(tools);
-    //     reset.verify(contract, user);
-    // }
 
     return 0;
 }
