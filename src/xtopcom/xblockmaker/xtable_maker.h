@@ -13,7 +13,6 @@
 #include "xblockmaker/xunit_maker.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
-#include "xblockmaker/xunit_block_cache.h"
 #include "xunit_service/xcons_face.h"
 
 NS_BEG2(top, blockmaker)

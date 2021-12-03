@@ -9,7 +9,6 @@
 #include "xdata/xblock.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
-#include "xblockmaker/xunit_block_cache.h"
 
 NS_BEG2(top, blockmaker)
 
