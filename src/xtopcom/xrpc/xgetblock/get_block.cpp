@@ -98,7 +98,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         uint64_t last_hash_xxhash64 = static_cast<xJson::UInt64>(utl::xxh64_t::digest(last_hash.data(), last_hash.size()));
         result_json["latest_tx_hash_xxhash64"] = uint64_to_str(last_hash_xxhash64);
         result_json["latest_unit_height"] = static_cast<xJson::UInt64>(account_ptr->get_chain_height());
-        result_json["unconfirm_sendtx_num"] = static_cast<xJson::UInt64>(account_ptr->get_unconfirm_sendtx_num());
         result_json["recv_tx_num"] = static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
 
         auto timer_height = get_timer_height();

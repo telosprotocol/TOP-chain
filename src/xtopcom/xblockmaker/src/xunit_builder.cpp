@@ -123,6 +123,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
     xfullunit_block_para_t para;
     para.m_property_snapshot = make_binlog(_temp_header, prev_bstate);
+    para.set_fullstate_bin(para.m_property_snapshot);
     para.m_first_unit_height = prev_bstate->get_last_fullblock_height();
     para.m_first_unit_hash = prev_bstate->get_last_fullblock_hash();
     xinfo("xfullunit_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
@@ -137,7 +138,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         para.set_unchange_txs(exec_result.m_exec_unchange_txs);
         // para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
         para.set_fullstate_bin(exec_result.m_full_state);
-        para.set_binlog(exec_result.m_property_binlog);
+        // para.set_binlog(exec_result.m_property_binlog);
 
         alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state());
         if (para.get_input_txs().empty() && !para.get_unchange_txs().empty()) {
