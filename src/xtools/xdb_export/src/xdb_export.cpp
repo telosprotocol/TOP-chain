@@ -41,7 +41,7 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
-    m_store = top::store::xstore_factory::create_store_with_kvdb(db_path + DB_PATH);
+    m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());

@@ -89,6 +89,13 @@ namespace top
 
             // load unit block from tx index
             base::xvaccount_t _unitvaccount(txindex->get_block_addr());
+
+            std::string table_addr = base::xvaccount_t::make_table_account_address(_unitvaccount);
+            if (table_addr == txindex->get_block_addr()) {
+                xerror("xtxsmigrate_t::transfer_tx_v2_to_v3,fail txindex addr already is table addr");
+                return enum_xfilter_handle_code_finish;
+            }
+
             uint64_t _unitheight = txindex->get_block_height();
             // XTODO only load main-entry bindex key, almost all nodes should can migrate successfully
             std::string unitbindex_key = xvdbkey_t::create_block_index_key(_unitvaccount, _unitheight);
@@ -103,8 +110,7 @@ namespace top
                 xerror("xtxsmigrate_t::transfer_tx_v2_to_v3,fail unitbindex serialize");
                 return enum_xfilter_handle_code_finish;
             }
-
-            std::string table_addr = base::xvaccount_t::make_table_account_address(_unitvaccount);
+            
             txindex->set_block_addr(table_addr);
             txindex->set_block_height(unitbindex->get_parent_block_height());
             if (unitbindex->get_height() > 0) {

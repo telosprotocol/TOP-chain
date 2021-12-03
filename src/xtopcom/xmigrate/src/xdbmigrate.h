@@ -88,6 +88,7 @@ namespace top
             std::vector<xvfilter_t*>  m_filter_objects;
             uint64_t                  m_scaned_keys_num{0};
             uint64_t                  m_total_keys_num{0};
+            std::string               m_dst_db_version;
         };
     
         template<uint32_t migrate_version>
