@@ -15,8 +15,8 @@ NS_BEG2(top, blockmaker)
 
 class xlighttable_builder_para_t : public xblock_builder_para_face_t {
  public:
-    xlighttable_builder_para_t(const std::vector<xblock_ptr_t> & units, const xblockmaker_resources_ptr_t & resources)
-    : xblock_builder_para_face_t(resources), m_batch_units(units) {}
+    xlighttable_builder_para_t(const std::vector<xblock_ptr_t> & units, const xblockmaker_resources_ptr_t & resources, const std::vector<xlightunit_tx_info_ptr_t> & txs_info)
+    : xblock_builder_para_face_t(resources, txs_info), m_batch_units(units) {}
     virtual ~xlighttable_builder_para_t() {}
 
     const std::vector<xblock_ptr_t> &               get_batch_units() const {return m_batch_units;}
@@ -45,11 +45,12 @@ class xlighttable_builder_t : public xblock_builder_face_t {
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
                                             const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
-                                            xblock_builder_para_ptr_t & build_para);
+                                            xblock_builder_para_ptr_t & build_para) override;
     void                        make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
                                                         const std::vector<xblock_ptr_t> & units,
                                                         std::string & property_binlog,
-                                                        std::map<std::string, std::string> & property_hashs);
+                                                        std::map<std::string, std::string> & property_hashs,
+                                                        const std::vector<xlightunit_tx_info_ptr_t> & txs_info);
 };
 
 class xfulltable_builder_t : public xblock_builder_face_t {
@@ -65,6 +66,13 @@ class xfulltable_builder_t : public xblock_builder_face_t {
 
  protected:
     xstatistics_data_t                 make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
+};
+class xemptytable_builder_t : public xblock_builder_face_t {
+ public:
+    virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                            const data::xblock_consensus_para_t & cs_para,
+                                            xblock_builder_para_ptr_t & build_para);
 };
 
 NS_END2

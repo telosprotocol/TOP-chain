@@ -14,6 +14,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xstore/xaccount_context.h"
 #include "xmbus/xevent_behind.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -44,64 +45,60 @@ xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & acco
     return nullptr;
 }
 
-void xunit_maker_t::try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus) {
-    xinfo("xunit_maker_t::try_sync_lacked_blocks check_latest_state %s, account=%s,try sync unit from:%llu,end:%llu", reason.c_str(), get_account().c_str(), from_height, to_height);
+void xunit_maker_t::try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus, bool need_proof) {
+    xinfo("xunit_maker_t::try_sync_lacked_blocks check_latest_state %s, account=%s,try sync unit from:%llu,end:%llu,proof:%d", reason.c_str(), get_account().c_str(), from_height, to_height, need_proof);
     if (to_height >= from_height) {
         uint32_t sync_num = (uint32_t)(to_height + 1 - from_height);
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            get_address(), from_height, sync_num, is_consensus, "account_state_fall_behind");
+            get_address(), from_height, sync_num, is_consensus, "account_state_fall_behind", need_proof);
         get_bus()->push_event(ev);
-        XMETRICS_GAUGE(metrics::cons_sync_on_demand_unit, sync_num);
     }
 }
 
-int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & cs_para,const base::xaccount_index_t & account_index) {
+int32_t xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & cs_para,
+                                          const base::xaccount_index_t & account_index,
+                                          const base::xaccount_index_t & commit_account_index) {
     if (m_check_state_success && m_latest_account_index == account_index) {
         return xsuccess;
     }
 
     XMETRICS_TIMER(metrics::cons_unitmaker_check_state_tick);
     do {
+        m_check_state_success = false;
         // firstly, load connected block, always sync unit from latest connected block
-        uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
-        uint64_t start_sync_height = latest_connect_height + 1;
+        if (!xblocktool_t::check_lacking_unit_and_try_sync(*this, commit_account_index, get_blockstore(), "unit_maker")) {
+            break;
+        }
 
-        // find the latest cert block which matching account_index
-        auto _latest_cert_block = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
+        auto _latest_cert_block = get_blockstore()->load_block_object(
+            *this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
         if (_latest_cert_block == nullptr) {
             xwarn("xunit_maker_t::check_latest_state fail-load unit cert block.%s, account=%s,index=%s,missing_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), account_index.get_latest_unit_height());
-            try_sync_lacked_blocks(start_sync_height, account_index.get_latest_unit_height(), "missing_unit_cert", true);
+                  cs_para.dump().c_str(),
+                  get_account().c_str(),
+                  account_index.dump().c_str(),
+                  account_index.get_latest_unit_height());
             break;
         }
         xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(_latest_cert_block.get());
-
-        // reinit unit maker
-        m_check_state_success = false;
-        uint64_t lacked_block_height = 0;
-        // cache latest block
-        if (!load_and_cache_enough_blocks(latest_block, lacked_block_height)) {
-            xwarn("xunit_maker_t::check_latest_state fail-load unit block.%s, account=%s,,index=%s,missing_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_block_height);
-            try_sync_lacked_blocks(start_sync_height, lacked_block_height, "missing_unit_lock_commit", true);
+    
+        uint64_t lacked_height_from = 0;
+        uint64_t lacked_height_to = 0;
+        auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
+        if (is_forked) {
+            set_keep_latest_blocks_max(1);
+        }
+        if (!load_and_cache_enough_blocks(latest_block, lacked_height_from, lacked_height_to)) {
+            xwarn("xunit_maker_t::check_latest_state fail-load unit block.%s, account=%s,index=%s,missing_height=%ld:%ld",
+                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_height_from, lacked_height_to);
+            try_sync_lacked_blocks(lacked_height_from, lacked_height_to, "missing_unit_lock_commit", false, true);
             break;
         }
 
-        // TODO(jimmy) move to statestore load connectted block before make unit state
-        if (latest_connect_height+ 4 < latest_block->get_height()) {  // allow connected height update more slowly
-            lacked_block_height = latest_block->get_height() - 1;
-            xwarn("xblock_maker_t::update_account_state fail-connect block behind too much. %s, account=%s,index=%s,connect_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), latest_connect_height);
-            try_sync_lacked_blocks(start_sync_height, lacked_block_height, "connect_unit_behind", true);
-            break;
-        }
-        if (!update_account_state(latest_block, lacked_block_height)) {
-            xassert(lacked_block_height > 0);
-            if (lacked_block_height > 0) {
-                try_sync_lacked_blocks(start_sync_height, lacked_block_height, "update_account_state", true);
-            }
-            xwarn("xunit_maker_t::check_latest_state fail-make unit state.%s,account=%s,index=%s,missing_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_block_height);
+        if (!update_account_state(latest_block)) {
+            xerror("xunit_maker_t::check_latest_state fail-make unit state.%s,account=%s,index=%s,missing_height=%ld:%ld",
+                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), lacked_height_from, lacked_height_to);
             break;
         }
 
@@ -149,13 +146,16 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
 
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
 
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
-            return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(), is_forked);
+            if (!is_forked)
+                return false;
         }
     }
 
@@ -163,9 +163,10 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_recv_tx()) {
         if (is_match_account_fullunit_recv_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
-            return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(),is_forked);
+            if (!is_forked)
+                return false;
         }
     }
 
@@ -204,12 +205,12 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         uint256_t latest_hash;
         find_highest_send_tx(latest_nonce, latest_hash);
         if (tx->get_transaction()->get_last_nonce() != latest_nonce) {
-            auto commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(*this,metrics::statestore_access_from_blkmaker_unit_connect_state);
-            if (commit_bstate != nullptr) {
-                xunit_bstate_t committed_state(commit_bstate.get());
-                uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();
-                get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce);
-            }
+            // auto commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(*this,metrics::statestore_access_from_blkmaker_unit_connect_state);
+            // if (commit_bstate != nullptr) {
+            //     xunit_bstate_t committed_state(commit_bstate.get());
+            //     uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();
+            //     get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce);
+            // }
             XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,bstate=%s,latest_nonce=%ld,tx=%s",
                 cs_para.dump().c_str(), get_latest_bstate()->get_bstate()->dump().c_str(), latest_nonce, tx->dump().c_str());
@@ -301,6 +302,32 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     return proposal_block;
 }
 
+// same for light unit & full unit, full unit now 
+void xunit_maker_t::make_light_block(xblock_ptr_t & proposal_unit, xblock_builder_face_ptr_t & block_builder, const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
+    const xblock_ptr_t & cert_block = get_highest_height_block();
+    base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
+    xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
+    proposal_unit = block_builder->build_block(cert_block,
+                                                    get_latest_bstate()->get_bstate(),
+                                                    cs_para,
+                                                    build_para);
+    result.m_make_block_error_code = build_para->get_error_code();
+    std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+    result.add_pack_txs(lightunit_build_para->get_pack_txs());
+    result.m_fail_txs = lightunit_build_para->get_fail_txs();
+    result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
+    result.m_unchange_txs = lightunit_build_para->get_unchange_txs();
+    if (lightunit_build_para->get_pack_txs().empty() && !lightunit_build_para->get_unchange_txs().empty()) {
+        result.m_make_block_error_code = xblockmaker_error_no_need_make_unit;
+    }
+    for (auto & tx : lightunit_build_para->get_fail_txs()) {
+        xassert(tx->is_self_tx() || tx->is_send_tx());
+        xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
+        xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+        get_txpool()->pop_tx(txinfo);
+    }
+}
+
 xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
     xblock_ptr_t proposal_unit = nullptr;
 
@@ -314,65 +341,82 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         return nullptr;
     }
 
-    xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
-    if (lock_block == nullptr) {
-        xerror("xunit_maker_t::make_next_block,fail-get lock block. %s,cert_block=%s", cs_para.dump().c_str(), cert_block->dump().c_str());
-        return nullptr;
+    auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
+    if (!is_forked) {
+        xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
+        if (lock_block == nullptr) {
+            xerror("xunit_maker_t::make_next_block,fail-get lock block. %s,cert_block=%s", cs_para.dump().c_str(), cert_block->dump().c_str());
+            return nullptr;
+        }
+        // reset justify cert hash para
+        cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
+        xassert(cs_para.get_proposal_height() != 0);
+        cs_para.set_parent_height(cs_para.get_proposal_height());
+        m_default_builder_para->set_error_code(xsuccess);
     }
-    // reset justify cert hash para
-    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
-    xassert(cs_para.get_proposal_height() != 0);
-    cs_para.set_parent_height(cs_para.get_proposal_height());
-    m_default_builder_para->set_error_code(xsuccess);
 
-    // firstly should process txs and try to make lightunit
-    if (can_make_next_light_block()) {
-        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
-        XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
-        base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
-        xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
-        proposal_unit = m_lightunit_builder->build_block(cert_block,
-                                                        get_latest_bstate()->get_bstate(),
-                                                        cs_para,
-                                                        build_para);
-        result.m_make_block_error_code = build_para->get_error_code();
-        std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-        result.add_pack_txs(lightunit_build_para->get_pack_txs());
-        result.m_fail_txs = lightunit_build_para->get_fail_txs();
-        result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
-        for (auto & tx : lightunit_build_para->get_fail_txs()) {
-            xassert(tx->is_self_tx() || tx->is_send_tx());
-            xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
-            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            get_txpool()->pop_tx(txinfo);
+    XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
+    XMETRICS_GAUGE(metrics::cons_table_total_process_tx_count, m_pending_txs.size());        
+    if (is_forked) {
+        // firstly try to make full unit and process txs
+        if (can_make_next_full_block(is_forked)) {
+            xwarn("xunit_maker_t::make_next_block full block. account=%s,pending_txs:%zu,cs_para:%s", get_account().c_str(), m_pending_txs.size(), cs_para.dump().c_str());
+            make_light_block(proposal_unit, m_fullunit_builder, unit_para, cs_para, result);
+        }
+
+        // secondly try to make lightunit and process txs
+        if (nullptr == proposal_unit && result.m_make_block_error_code != xblockmaker_error_no_need_make_unit && can_make_next_light_block()) {
+            make_light_block(proposal_unit, m_lightunit_builder, unit_para, cs_para, result);
+        }
+    } else {
+        // firstly should process txs and try to make lightunit
+        if (can_make_next_light_block()) {
+            make_light_block(proposal_unit, m_lightunit_builder, unit_para, cs_para, result);
+        }
+
+        // secondly try to make full unit
+        if (nullptr == proposal_unit && can_make_next_full_block(is_forked)) {
+            proposal_unit = m_fullunit_builder->build_block(cert_block,
+                                                            get_latest_bstate()->get_bstate(),
+                                                            cs_para,
+                                                            m_default_builder_para);
+            result.m_make_block_error_code = m_default_builder_para->get_error_code();
         }
     }
 
-    // secondly try to make full unit
-    if (nullptr == proposal_unit && can_make_next_full_block()) {
-        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
-        proposal_unit = m_fullunit_builder->build_block(cert_block,
-                                                        get_latest_bstate()->get_bstate(),
-                                                        cs_para,
-                                                        m_default_builder_para);
-        result.m_make_block_error_code = m_default_builder_para->get_error_code();
+    if (!is_forked) {
+        // thirdly try to make empty unit
+        if (nullptr == proposal_unit && can_make_next_empty_block()) {
+            XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
+            proposal_unit = m_emptyunit_builder->build_block(cert_block,
+                                                            nullptr,
+                                                            cs_para,
+                                                            m_default_builder_para);
+            result.m_make_block_error_code = m_default_builder_para->get_error_code();
+        }
     }
 
-    // thirdly try to make full unit
-    if (nullptr == proposal_unit && can_make_next_empty_block()) {
-        XMETRICS_GAUGE(metrics::cons_table_total_process_unit_count, 1);
-        proposal_unit = m_emptyunit_builder->build_block(cert_block,
-                                                        nullptr,
-                                                        cs_para,
-                                                        m_default_builder_para);
-        result.m_make_block_error_code = m_default_builder_para->get_error_code();
+    if (is_forked) {
+        if ((nullptr == proposal_unit) && (result.m_make_block_error_code == 0)) {
+            xdbg("wish null unit account:%s,cs_para:%s,make_block_error_code:%d", get_account().c_str(),cs_para.dump().c_str(),result.m_make_block_error_code);
+            result.m_make_block_error_code = xblockmaker_error_null_unit;
+        }
     }
+
     result.m_block = proposal_unit;
     return proposal_unit;
 }
 
 bool xunit_maker_t::can_make_next_block() const {
     if (can_make_next_light_block() || can_make_next_empty_block() || can_make_next_full_block()) {
+        return true;
+    }
+    return false;
+}
+
+bool xunit_maker_t::can_make_next_block_v2() const {
+    if (can_make_next_light_block() || can_make_next_full_block(true)) {
         return true;
     }
     return false;
@@ -434,8 +478,16 @@ bool xunit_maker_t::must_make_next_full_block() const {
     return false;
 }
 
-bool xunit_maker_t::can_make_next_full_block() const {
+bool xunit_maker_t::can_make_next_full_block(bool is_forked_unit_opt) const {
     // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
+    xwarn("xunit_maker_t::can_make_next_full_block lightunit.account=%s,current_height=%ld,pending_txs=%zu,locked=%d,forked%d",
+        get_account().c_str(), get_latest_bstate()->get_block_height(), m_pending_txs.size(), is_account_locked(), is_forked_unit_opt);
+    if (is_forked_unit_opt) {
+        if (m_pending_txs.empty()) {
+            return false;
+        }
+    }
+    
     if (is_account_locked()) {
         return false;
     }
@@ -443,6 +495,8 @@ bool xunit_maker_t::can_make_next_full_block() const {
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
     xassert(current_lightunit_count > 0);
     uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    xwarn("xunit_maker_t::can_make_next_full_block lightunit.account=%s,current_height=%ld,current_lightunit_count=%llu,max_limit_lightunit_count:%llu",
+        get_account().c_str(), get_latest_bstate()->get_block_height(), current_lightunit_count, max_limit_lightunit_count);
     if (current_lightunit_count >= max_limit_lightunit_count) {
 #if 0  // remove unconfirm limit
         if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {  
@@ -459,6 +513,8 @@ bool xunit_maker_t::can_make_next_full_block() const {
 }
 
 bool xunit_maker_t::can_make_next_light_block() const {
+    xwarn("xunit_maker_t::can_make_next_light_block lightunit.account=%s,current_height=%ld,pending_txs=%zu,lock=%d",
+        get_account().c_str(), get_latest_bstate()->get_block_height(), m_pending_txs.size(), is_account_locked());
     if (m_pending_txs.empty()) {
         return false;
     }

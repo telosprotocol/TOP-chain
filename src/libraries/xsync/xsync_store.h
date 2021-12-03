@@ -29,6 +29,7 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) = 0;
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) = 0;
+    virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height) = 0;
     virtual bool existed(const std::string & account, const uint64_t height, uint64_t viewid = 0) = 0;
 
     virtual void update_latest_genesis_connected_block(const std::string & account) = 0;
@@ -47,6 +48,9 @@ public:
     virtual bool delete_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual const std::string get_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual xsync_store_shadow_t* get_shadow() =  0;
+    virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) = 0;
+    virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
+    virtual bool remove_empty_unit_forked() = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
 
@@ -87,6 +91,7 @@ public:
     base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) override;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
+    base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height);
     bool existed(const std::string & account, const uint64_t height, uint64_t viewid = 0) override;
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
 
@@ -105,10 +110,15 @@ public:
     virtual xsync_store_shadow_t* get_shadow() override;
     uint32_t add_listener(int major_type, mbus::xevent_queue_cb_t cb) override;
     void remove_listener(int major_type, uint32_t id) override;
+    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) override;
+    const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
+    bool remove_empty_unit_forked() override;
+    
 private:
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
+    bool m_remove_empty_unit_forked{false};
 };
 
 NS_END2

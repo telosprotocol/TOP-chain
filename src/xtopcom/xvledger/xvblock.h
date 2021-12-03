@@ -114,7 +114,18 @@ namespace top
         };
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
-
+        const std::string HEADER_KEY_TXS("t");
+        class xvheader_extra {
+        public:
+            int32_t serialize_to_string(std::string & str) const;
+            int32_t do_write(base::xstream_t & stream) const;
+            int32_t serialize_from_string(const std::string & _data);
+            int32_t do_read(base::xstream_t & stream);
+            void insert(const std::string & key, const std::string & val);
+            std::string get_val(const std::string & key) const;
+        private:
+            std::map<std::string, std::string> m_map;
+        };
         //The definition of version defintion for binary of node and block:[8:Features][8:MAJOR][8:MINOR][8:PATCH]
             //Features: added new featurs that need most node agree then make it effect,refer BIP8 spec
             //MAJOR： version when make incompatible API changes
@@ -587,6 +598,7 @@ namespace top
         };
 
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
+        using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
         class xvblock_t : public xdataobj_t
         {
             friend class xvbbuild_t;
@@ -694,7 +706,9 @@ namespace top
         public:
             xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
-            
+            virtual std::vector<base::xvaction_t> get_tx_actions() const {return std::vector<base::xvaction_t>{};}
+            virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const {return std::vector<xvheader_ptr_t>{};}
+
             const std::string           get_fullstate_hash();
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
             const std::string           get_full_state();

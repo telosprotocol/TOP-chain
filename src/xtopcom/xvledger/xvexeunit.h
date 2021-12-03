@@ -63,9 +63,7 @@ namespace top
         };
         
         //group container that hold child exeunits,like vblockstate hold many properties
-        class 
-        
-        xvexegroup_t : public xvexeunit_t
+        class xvexegroup_t : public xvexeunit_t
         {
         protected:
             xvexegroup_t(enum_xdata_type type);

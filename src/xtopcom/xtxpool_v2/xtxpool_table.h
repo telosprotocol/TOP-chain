@@ -84,7 +84,7 @@ class xtxpool_table_t {
 public:
     xtxpool_table_t(xtxpool_resources_face * para,
                     std::string table_addr,
-                    xtxpool_shard_info_t * shard,
+                    xtxpool_role_info_t * shard,
                     xtxpool_statistic_t * statistic,
                     std::set<base::xtable_shortid_t> * all_sid_set = nullptr)
       : m_para(para), m_table_state_cache(para, table_addr), m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set), m_txmgr_table(&m_xtable_info, para), m_unconfirmed_tx_queue(para, &m_xtable_info) {
@@ -107,9 +107,9 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint32_t max_num) const;
     bool need_sync_lacking_receipts() const;
-    void add_shard(xtxpool_shard_info_t * shard);
-    void remove_shard(xtxpool_shard_info_t * shard);
-    bool no_shard() const;
+    void add_role(xtxpool_role_info_t * shard);
+    void remove_role(xtxpool_role_info_t * shard);
+    bool no_role() const;
     // bool is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const;
     // bool is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const;
 
@@ -128,7 +128,6 @@ private:
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
-    bool get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
     void update_id_state(const std::vector<update_id_state_para> & para_vec);
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);

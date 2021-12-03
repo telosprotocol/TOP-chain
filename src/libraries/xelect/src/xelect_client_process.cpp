@@ -161,17 +161,20 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 
 void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
     if (election_data_block == nullptr) {
+        xwarn("xelect_client_process::process_election_block election block is null");
         return;
     }
 
     auto const block = dynamic_xobject_ptr_cast<data::xblock_t>(election_data_block);
     if (block == nullptr) {
+        xwarn("xelect_client_process::process_election_block election block is null");
         return;
     }
 
     common::xaccount_address_t const contract_address{ block->get_block_owner() };
     auto const it = m_election_status.find(contract_address);
     if (it == std::end(m_election_status)) {
+        xwarn("xelect_client_process::process_election_block not found in m_election_status,block:%s", block->dump().c_str());
         return;
     }
 
@@ -179,6 +182,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
 
     auto const local_height = top::get<xinternal_election_status_t>(*it).height;
     if (local_height >= block->get_height()) {
+        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,block:%s", local_height, block->dump().c_str());
         return;
     }
 
