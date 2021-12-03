@@ -66,7 +66,6 @@ void get_block_handle::getAccount() {
     std::string account = m_js_req["account_addr"].asString();
     if (account.empty()) {
         xwarn("getAccount:account is empty ");
-        set_result("getAccount:account is empty");
         return;
     }  
     try {

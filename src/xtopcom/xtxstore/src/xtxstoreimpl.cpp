@@ -77,7 +77,7 @@ base::xauto_ptr<base::xdataunit_t> xtxstoreimpl::load_tx_obj(const std::string &
     return base::xdataunit_t::read_from(raw_tx_bin);
 }
 
-bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr, bool store_raw_tx_bin) {
+bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
     if (!strategy_permission(m_txstore_strategy)) {
         return false;
     }
@@ -92,14 +92,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr, bool store_raw_tx_bin)
     std::vector<xobject_ptr_t<base::xvtxindex_t>> sub_txs;
     if (block_ptr->extract_sub_txs(sub_txs)) {
         bool has_error = false;
-        std::map<std::string, int> counting_stored_raw_txs;
         for (auto & v : sub_txs) {
-            if (store_raw_tx_bin) {
-                if (counting_stored_raw_txs.find(v->get_tx_hash()) == counting_stored_raw_txs.end()) {
-                    if (store_tx_obj(v->get_tx_hash(), v->get_tx_obj()))
-                        counting_stored_raw_txs[v->get_tx_hash()] = 1;
-                }
-            }
             base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
             const std::string tx_key = base::xvdbkey_t::create_tx_index_key(v->get_tx_hash(), txindex_type);
             std::string tx_bin;

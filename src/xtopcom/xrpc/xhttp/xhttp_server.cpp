@@ -28,6 +28,7 @@ xhttp_server::xhttp_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                            observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
 #if defined XDISABLE_RATELIMIT
     m_enable_ratelimit = false;
+    xinfo("m_enable_ratelimit is false");
 #endif
     if (m_rpc_service == nullptr) {
         m_rpc_service = top::make_unique<xrpc_service<xedge_http_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
