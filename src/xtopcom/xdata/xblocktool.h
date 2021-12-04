@@ -67,6 +67,7 @@ class xblocktool_t {
  public:  // property prove    
     static base::xvproperty_prove_ptr_t             create_receiptid_property_prove(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xvbstate_t* bstate);
     static base::xreceiptid_state_ptr_t             get_receiptid_from_property_prove(const base::xvproperty_prove_ptr_t & prop_prove);
+    static bool                                     check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount, const base::xaccount_index_t & commit_account_index, base::xvblockstore_t* blockstore, const std::string & caller);
 
 };
 

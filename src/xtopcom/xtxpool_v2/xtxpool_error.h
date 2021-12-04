@@ -15,7 +15,8 @@ NS_BEG2(top, xtxpool_v2)
 enum enum_xtxpool_error_type {
     xtxpool_success = 0,
     xtxpool_error_base = chainbase::enum_xmodule_type::xmodule_type_xtxpool,
-    xtxpool_error_queue_reached_upper_limit,
+    xtxpool_error_table_reached_upper_limit,
+    xtxpool_error_role_reached_upper_limit,
     xtxpool_error_request_tx_repeat,
     xtxpool_error_account_unconfirm_txs_reached_upper_limit,
     xtxpool_error_pending_reached_upper_limit,
@@ -41,7 +42,8 @@ enum enum_xtxpool_error_type {
 
 inline std::string xtxpool_error_to_string(int32_t code) {
     assert(code > xtxpool_error_base && code < xtxpool_error_max);
-    static const char * names[] = {XTXPOOL_TO_STR(xtxpool_error_queue_reached_upper_limit),
+    static const char * names[] = {XTXPOOL_TO_STR(xtxpool_error_table_reached_upper_limit),
+                                   XTXPOOL_TO_STR(xtxpool_error_role_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_request_tx_repeat),
                                    XTXPOOL_TO_STR(xtxpool_error_account_unconfirm_txs_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_pending_reached_upper_limit),

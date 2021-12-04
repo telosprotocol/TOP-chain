@@ -132,7 +132,6 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_table_leader_make_unit_count);
         RETURN_METRICS_NAME(cons_table_total_process_tx_count);
         RETURN_METRICS_NAME(cons_table_total_process_unit_count);
-        RETURN_METRICS_NAME(cons_sync_on_demand_unit);
 
         RETURN_METRICS_NAME(cons_packtx_succ);
         RETURN_METRICS_NAME(cons_packtx_sendtx_succ);
@@ -283,6 +282,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_recv_get_blocks_by_hashes_bytes);
         RETURN_METRICS_NAME(xsync_store_block_units);
         RETURN_METRICS_NAME(xsync_store_block_tables);
+        RETURN_METRICS_NAME(xsync_unit_proof_sync_req_send);
+        RETURN_METRICS_NAME(xsync_unit_proof_sync_req_recv);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
@@ -318,7 +319,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_receipt_recv_num_7to12_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_13to30_clock);
         RETURN_METRICS_NAME(txpool_receipt_recv_num_exceed_30_clock);
-        RETURN_METRICS_NAME(txpool_push_send_fail_queue_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_table_limit);
+        RETURN_METRICS_NAME(txpool_push_send_fail_role_limit);
         RETURN_METRICS_NAME(txpool_push_send_fail_repeat);
         RETURN_METRICS_NAME(txpool_push_send_fail_unconfirm_limit);
         RETURN_METRICS_NAME(txpool_push_send_fail_nonce_limit);
@@ -384,6 +386,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_txpool);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_on_block_event);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_id_state);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_get_nonce);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_create_receipt);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_pull_lacking_receipts);

@@ -42,6 +42,7 @@ endif()
 
 target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
     xapplication
+    xmigrate
     xconfig
     xloader
     xdata

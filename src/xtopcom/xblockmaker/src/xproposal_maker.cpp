@@ -73,7 +73,15 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    xtablemaker_para_t table_para(tablestate);
+    xtablestate_ptr_t tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
+    if (tablestate_commit == nullptr) {
+        xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,commit_height=%" PRIu64 "", proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->get_height());
+        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
+        return nullptr;
+    }
+
+    xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
@@ -102,7 +110,9 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     }
 
     // only invoke sync when make proposal successfully, avoiding too much call
-    sys_contract_sync(tablestate);
+    if (proposal_para.get_latest_committed_block()->get_height() > 0) {
+        sys_contract_sync(tablestate_commit);
+    }
 
     // need full cert block
     //get_blockstore()->load_block_input(*m_table_maker.get(), latest_cert_block.get());
@@ -200,9 +210,13 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     // update txpool receiptid state
     const xblock_ptr_t & commit_block = cs_para.get_latest_committed_block();
     xtablestate_ptr_t commit_tablestate = get_target_tablestate(commit_block.get());
-    if (commit_tablestate != nullptr) {
-        get_txpool()->update_table_state(commit_tablestate);
+    if (commit_tablestate == nullptr) {
+        xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert=%s", cs_para.dump().c_str(), proposal_prev_block->dump().c_str());
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_state_get, 1);
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
+        return xblockmaker_error_proposal_table_state_clone;
     }
+    get_txpool()->update_table_state(commit_tablestate);
 
     // get tablestate related to latest cert block
     xtablestate_ptr_t tablestate = get_target_tablestate(proposal_prev_block.get());
@@ -213,7 +227,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         return xblockmaker_error_proposal_table_state_clone;
     }
 
-    xtablemaker_para_t table_para(tablestate);
+    xtablemaker_para_t table_para(tablestate, commit_tablestate);
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
@@ -278,22 +292,11 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
     // set other accounts for tableblock
     std::vector<std::string> other_accounts;
-    const std::vector<base::xventity_t*> & _table_inentitys = proposal_block->get_input()->get_entitys();
-    for (auto & _inentity : _table_inentitys) {
-        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_inentity);
-        if (_table_unit_inentity == nullptr) {
-            xerror("xproposal_maker_t::verify_proposal_input fail-get inentity. proposal=%s",
-                proposal_block->dump().c_str());
-            return false;
-        }
-        if (!_table_unit_inentity->get_extend_data().empty()) {
-            base::xtable_inentity_extend_t extend;
-            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
-            if (_unit_header->get_block_class() == base::enum_xvblock_class_nil || _unit_header->get_block_class() == base::enum_xvblock_class_full) {
-                other_accounts.push_back(_unit_header->get_account());
-            }
-        }
+    auto unit_headers = proposal_block->get_sub_block_headers();
+    for (auto & _unit_header : unit_headers) {
+        if (_unit_header->get_block_class() == base::enum_xvblock_class_nil || _unit_header->get_block_class() == base::enum_xvblock_class_full) {
+            other_accounts.push_back(_unit_header->get_account());
+        }        
     }
 
     const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
@@ -338,20 +341,19 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
 }
 
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
-    std::map<std::string, uint64_t> locked_nonce_map;
+    // std::map<std::string, uint64_t> locked_nonce_map;
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
-        auto tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
-        if (nullptr == tablestate_commit) {
+        if (nullptr == table_para.get_commit_tablestate()) {
             xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s,committed_block=%s",
                 proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
             return false;
         }
-        get_txpool()->update_table_state(tablestate_commit);
+        get_txpool()->update_table_state(table_para.get_commit_tablestate());
 
         // update locked txs for txpool, locked txs come from two latest tableblock
-        get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
-        get_locked_nonce_map(proposal_para.get_latest_cert_block(), locked_nonce_map);
+        // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
+        // get_locked_nonce_map(proposal_para.get_latest_cert_block(), locked_nonce_map);
     }
 
     // get table batch txs for execute and make block
@@ -359,7 +361,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), locked_nonce_map, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc, /*locked_nonce_map,*/ all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
     std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
     for (auto & tx : origin_txs) {
         xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
@@ -452,39 +454,27 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const {
-    if (block->get_block_class() == base::enum_xvblock_class_light) {
-        base::xvaccount_t _vaccount(block->get_account());
-        get_blockstore()->load_block_input(_vaccount, block.get());
-        const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
-        uint32_t entitys_count = _table_inentitys.size();
-        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-            base::xtable_inentity_extend_t extend;
-            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+    auto tx_actions = block->get_tx_actions();
+    for (auto & action : tx_actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
+        }
+        base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
 
-            const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-            for (auto & action : input_actions) {
-                if (action.get_org_tx_hash().empty()) {  // not txaction
-                    continue;
-                }
-                base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-
-                if (_subtype == enum_transaction_subtype_self || _subtype == enum_transaction_subtype_send) {
-                    xlightunit_action_t txaction(action);
-                    xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
-                    if (_rawtx != nullptr) {
-                        uint64_t txnonce = _rawtx->get_tx_nonce();
-                        auto account_addr = _unit_header->get_account();
-                        auto it = locked_nonce_map.find(account_addr);
-                        xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
-                        if (it == locked_nonce_map.end()) {
-                            locked_nonce_map[account_addr] = txnonce;
-                        } else {
-                            if (it->second < txnonce) {
-                                locked_nonce_map[account_addr] = txnonce;
-                            }
-                        }
+        if (_subtype == enum_transaction_subtype_self || _subtype == enum_transaction_subtype_send) {
+            xlightunit_action_t txaction(action);
+            xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+            if (_rawtx != nullptr) {
+                uint64_t txnonce = _rawtx->get_tx_nonce();
+                const std::string uri = txaction.get_contract_uri();
+                const std::string & account_addr = _rawtx->get_source_addr();
+                auto it = locked_nonce_map.find(account_addr);
+                xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
+                if (it == locked_nonce_map.end()) {
+                    locked_nonce_map[account_addr] = txnonce;
+                } else {
+                    if (it->second < txnonce) {
+                        locked_nonce_map[account_addr] = txnonce;
                     }
                 }
             }
@@ -505,40 +495,9 @@ void xproposal_maker_t::sys_contract_sync(const xtablestate_ptr_t & tablestate) 
 
 void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablestate, const std::string & addr) const {
     base::xvaccount_t _vaddr(addr);
-    auto cert_block =  base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_vaddr);
-    if (cert_block == nullptr) {
-        xassert(false);
-        return;
-    }
-
-    bool is_need_sync = false;
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
-
-    uint64_t latest_commit_height = 0;
-    if (accountindex.get_latest_unit_height() >= 2) {
-        latest_commit_height = accountindex.get_latest_unit_height() - 2;
-    } else if (accountindex.get_latest_unit_height() >= 1) {
-        latest_commit_height = accountindex.get_latest_unit_height() - 1;
-    }
-
-    uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
-
-    if (cert_block->get_height() < accountindex.get_latest_unit_height()) {
-        is_need_sync = true;
-    } else if (latest_connect_height < latest_commit_height) { // conncet height should equal with commit height in two-nil unit mode
-        is_need_sync = true;
-    }
-
-    if (is_need_sync) {
-        uint64_t from_height = latest_connect_height + 1;
-        uint32_t sync_num = (uint32_t)(accountindex.get_latest_unit_height() + 1 - from_height);
-        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu,cert_height=%ld", 
-            addr.c_str(), from_height, accountindex.get_latest_unit_height(), cert_block->get_height());
-        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            addr, from_height, sync_num, true, "proposal_maker_check");
-        base::xvchain_t::instance().get_xevmbus()->push_event(ev);
-    }
+    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, get_blockstore(), "proposal_maker");
 }
 
 

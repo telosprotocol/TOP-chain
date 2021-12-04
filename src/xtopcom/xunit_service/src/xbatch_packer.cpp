@@ -497,7 +497,8 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
 }
 
 void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
-    if (commit_block->get_block_class() == base::enum_xvblock_class_full) {
+    // broadcast receipt id state to all shards
+    if (commit_block->get_block_class() == base::enum_xvblock_class_full || commit_block->get_block_class() == base::enum_xvblock_class_nil) {
         return;
     }
 
