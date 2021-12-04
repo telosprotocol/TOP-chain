@@ -775,6 +775,7 @@ namespace top
             else
             {
                 xinfo("read_prunable_block_object_from_db,NOT found main block of account(%s) at height(%lld) ",account.get_address().c_str(),target_height);
+                return all_blocks_at_height;
             }
             
             //step#2: try load other blocks at same height

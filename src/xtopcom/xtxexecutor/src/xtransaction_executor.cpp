@@ -10,6 +10,7 @@
 #include "xtxexecutor/xtransaction_executor.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvblockbuild.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 NS_BEG2(top, txexecutor)
 
@@ -42,6 +43,18 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (after_op_records_size == before_op_records_size) {
             return xunit_contract_exec_no_property_change;
+        }
+    }
+
+    const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    auto clock = account_context->get_timer_height();
+    xdbg("xtransaction_executor::exec_one_tx timer:%llu, timestamp(second):%llu, forkclock:%llu", clock, tx->get_transaction()->get_fire_timestamp(), fork_config.block_fork_point.value().point);
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, clock)) {
+        if (tx->is_confirm_tx()) {
+            if (after_op_records_size == before_op_records_size) {
+                xdbg("xtransaction_executor::exec_one_tx confirm state no change, tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
+                return xtransaction_confirm_state_unchange;
+            }
         }
     }
 
@@ -98,6 +111,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
     std::vector<xcons_transaction_ptr_t> exec_txs = txs;
     std::vector<xcons_transaction_ptr_t> failure_send_txs;
     std::vector<xcons_transaction_ptr_t> failure_receipt_txs;
+    std::vector<xcons_transaction_ptr_t> unchange_confirm_txs;
     std::vector<xcons_transaction_ptr_t> contract_create_txs;
     int32_t error_code = xsuccess;  // record the last failure tx error code
     std::shared_ptr<store::xaccount_context_t> _account_context = nullptr;
@@ -122,11 +136,15 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
 
         // try to execute all txs
         bool all_txs_succ = true;
-        for (auto iter = exec_txs.begin(); iter != exec_txs.end(); iter++) {
+        for (auto iter = exec_txs.begin(); iter != exec_txs.end();) {
             auto cur_tx = *iter;  // copy cur tx
             // execute input tx,
             int32_t action_ret = xtransaction_executor::exec_tx(_account_context.get(), cs_para, cur_tx, contract_create_txs);
-            if (action_ret) {
+            if (action_ret == xtransaction_confirm_state_unchange) {
+                xdbg("xtransaction_executor::exec_batch_txs tx_hash:%s, type:%s", cur_tx->get_transaction()->get_digest_hex_str().c_str(), cur_tx->get_tx_subtype_str().c_str());
+                unchange_confirm_txs.push_back(cur_tx);
+                iter = exec_txs.erase(iter);
+            } else if (action_ret) {
                 error_code = action_ret;
                 all_txs_succ = false;
                 auto next_iter = exec_txs.erase(iter);  // erase fail iter and get next iter
@@ -147,6 +165,8 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
                     failure_receipt_txs.push_back(cur_tx);
                 }
                 break;  // break exec when one tx exec fail
+            } else {
+                 iter++;
             }
         }
         if (all_txs_succ == true) {
@@ -179,14 +199,22 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
         xassert(tx->is_recv_tx());  // confirm tx should not fail
         all_pack_txs.push_back(tx);
     }
+    for (auto & tx : unchange_confirm_txs) {
+        tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+        xassert(tx->is_confirm_tx());
+        xdbg("xtransaction_executor::exec_batch_txs tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
+        // all_pack_txs.push_back(tx);
+    }
 
-    if (all_pack_txs.empty()) {
+    if (!txs.empty() && all_pack_txs.empty() && unchange_confirm_txs.empty()) {
         xassert(error_code != xsuccess);
         return error_code;
     }
 
     // update tx related propertys and other default propertys
-    if (false == _account_context->finish_exec_all_txs(all_pack_txs)) {
+    std::vector<xcons_transaction_ptr_t> succ_txs{all_pack_txs};
+    succ_txs.insert(succ_txs.end(), unchange_confirm_txs.begin(), unchange_confirm_txs.end());
+    if (!succ_txs.empty() && false == _account_context->finish_exec_all_txs(succ_txs)) {
         xerror("xtransaction_executor::exec_batch_txs fail-update tx info. %s,account=%s,height=%ld,origin_txs=%zu,all_txs=%zu",
             cs_para.dump().c_str(), _temp_header->get_account().c_str(), _temp_header->get_height(), txs.size(), all_pack_txs.size());
         return -1;
@@ -196,6 +224,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
     _account_context->get_transaction_result(result);
 
     txs_result.m_exec_succ_txs = all_pack_txs;
+    txs_result.m_exec_unchange_txs = unchange_confirm_txs;
     txs_result.m_unconfirm_tx_num = proposal_state->get_unconfirm_sendtx_num();
     txs_result.m_full_state = result.m_full_state;
     txs_result.m_property_binlog = result.m_property_binlog;

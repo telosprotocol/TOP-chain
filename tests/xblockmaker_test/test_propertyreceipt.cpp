@@ -49,7 +49,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_2) {
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -63,7 +63,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_2) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;
@@ -76,7 +76,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_2) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         xtablemaker_result_t table_result;

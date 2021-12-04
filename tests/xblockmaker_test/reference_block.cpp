@@ -127,7 +127,7 @@ TEST_F(reference_block, creation) {
         std::vector<xcons_transaction_ptr_t> send_txs;
         send_txs.push_back(constx);
 
-        xtablemaker_para_t table_para(mocktable.get_table_state());
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(clock);
 

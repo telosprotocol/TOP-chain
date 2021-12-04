@@ -461,8 +461,10 @@ namespace top
         }
         bool xvblockmaker_t::set_output_binlog(const std::string & value) {
             if (value.empty() || get_header()->get_block_class() != enum_xvblock_class_light) {
-                xassert(false);
-                return false;
+                // if (get_header()->get_block_class() != enum_xvblock_class_full) {
+                    xassert(false);
+                    return false;
+                // }
             }
 
             std::string binlog_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
@@ -665,10 +667,6 @@ namespace top
                     return false;
                 }
                 if (target_block->get_input_root_hash().empty()) {
-                    xassert(false);
-                    return false;
-                }
-                if (target_block->get_output_root_hash().empty()) {
                     xassert(false);
                     return false;
                 }
@@ -901,7 +899,6 @@ namespace top
 
         bool xvtableblock_maker_t::units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent) {
             std::vector<std::string> out_leafs = get_table_out_merkle_leafs(units);
-            xassert(out_leafs.size() > 0);
 #ifdef  VBLOCKBUILD_CHECK_ENALBE // for debug check
             {
                 std::string root_hash = xvblockbuild_t::build_mpt_root(out_leafs);
@@ -1021,6 +1018,9 @@ namespace top
         bool    xvtableblock_maker_t::make_output_root(xvoutput_t* output_obj) {
             // table output root = merkle(all units sign hash)
             std::vector<std::string> output_leafs = get_table_out_merkle_leafs(get_batch_units());
+            if (output_leafs.empty()) {
+                return true;
+            }
             std::string root_hash = build_mpt_root(output_leafs);
             if (root_hash.empty()) {
                 xassert(false);

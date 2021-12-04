@@ -119,7 +119,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
             }
 
 #ifdef LONG_CONFIRM_CHECK
-            if (v->get_tx_phase_type() == enum_transaction_subtype_confirm) {
+            if (v->get_tx_phase_type() == base::enum_transaction_subtype_confirm) {
                 base::xauto_ptr<base::xvtxindex_t> send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(v->get_tx_hash(), base::enum_transaction_subtype_send);
                 if (send_txindex == nullptr) {
                     xwarn("xvtxstore_t::store_txs,fail find sendtx index. tx=%s", base::xstring_utl::to_hex(v->get_tx_hash()).c_str());

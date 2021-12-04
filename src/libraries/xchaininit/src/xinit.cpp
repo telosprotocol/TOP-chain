@@ -28,6 +28,7 @@
 #include "xverifier/xverifier_utl.h"
 #include "xtopcl/include/api_method.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xmigrate/xvmigrate.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -85,6 +86,11 @@ bool set_auto_prune_switch(const std::string& prune)
     else
         base::xvchain_t::instance().enable_auto_prune(false);
     return true;
+}
+
+bool db_migrate(const std::string & db_path)
+{    
+    return base::db_migrate_v2_to_v0_3_0_0(db_path);
 }
 
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
@@ -147,6 +153,10 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
         
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
+        return 1;
+    }
+
+    if (false == db_migrate(XGET_CONFIG(db_path))) {
         return 1;
     }
 
@@ -335,16 +345,14 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     //using top::elect::xbeacon_xelect_imp;
 
     auto hash_plugin = new xtop_hash_t();
-    std::string chain_db_path;
+    std::string chain_db_path = datadir + DB_PATH;
     std::string log_path;
     std::string bwlist_path;
 #ifdef _WIN32
-    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "\\log";
     bwlist_path = datadir + "\\bwlist.json"
     // TODO(smaug) mkdir in windows
 #else
-    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "/log";
     bwlist_path = datadir + "/bwlist.json";
 
@@ -452,7 +460,9 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     if (false == create_rootblock("")) {
         return 1;
     }
-
+    if (false == db_migrate(chain_db_path)) {
+        return 1;
+    }
     // start admin http service
     {
         xinfo("==== start admin http server ===");

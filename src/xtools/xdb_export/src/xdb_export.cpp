@@ -747,15 +747,9 @@ void xdb_export_tools_t::read_info_from_table_block(const data::xblock_t * block
 
     const uint64_t timestamp = block->get_timestamp();
 
-    const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
-    uint32_t entitys_count = _table_inentitys.size();
-    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        table_info.total_unit_block_num++;
-        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-        base::xtable_inentity_extend_t extend;
-        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
-
+    auto unit_headers = block->get_sub_block_headers();
+    table_info.total_unit_block_num += unit_headers.size();
+    for (auto & _unit_header : unit_headers) {
         if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
             table_info.empty_unit_block_num++;
         } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
@@ -763,51 +757,51 @@ void xdb_export_tools_t::read_info_from_table_block(const data::xblock_t * block
         } else {
             table_info.light_unit_block_num++;
         }
-        
-        const uint64_t unit_height = _unit_header->get_height();
-        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                continue;
-            }
-            data::xlightunit_action_t txaction(action);
-            auto tx_size = block->query_tx_size(txaction.get_tx_hash());
-            auto tx_ptr = block->query_raw_transaction(txaction.get_tx_hash());
-            if (tx_size > 0) {
-                if (tx_ptr != nullptr) {
-                    if (tx_ptr->get_tx_version() == 2) {
-                        table_info.tx_v2_num++;
-                        table_info.tx_v2_total_size += tx_size;
-                    } else {
-                        table_info.tx_v1_num++;
-                        table_info.tx_v1_total_size += tx_size;
-                    }
+    }
+
+
+    auto input_actions = block->get_tx_actions();
+    for (auto & action : input_actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
+        }
+        data::xlightunit_action_t txaction(action);
+        auto tx_size = block->query_tx_size(txaction.get_tx_hash());
+        auto tx_ptr = block->query_raw_transaction(txaction.get_tx_hash());
+        if (tx_size > 0) {
+            if (tx_ptr != nullptr) {
+                if (tx_ptr->get_tx_version() == 2) {
+                    table_info.tx_v2_num++;
+                    table_info.tx_v2_total_size += tx_size;
+                } else {
+                    table_info.tx_v1_num++;
+                    table_info.tx_v1_total_size += tx_size;
                 }
             }
-            tx_ext_t tx_ext;
-            if (tx_ptr != nullptr) {
-                tx_ext.src = tx_ptr->get_source_addr();
-                tx_ext.target = tx_ptr->get_target_addr();
-                tx_ext.fire_timestamp = tx_ptr->get_fire_timestamp();
-            }
-            // tx_ext.tableid = tableid;
-            tx_ext.height = block->get_height();
-            tx_ext.timestamp = timestamp;
-            tx_ext.hash = "0x" + txaction.get_tx_hex_hash();
-            tx_ext.unit_height = unit_height;
-            tx_ext.phase = txaction.get_tx_subtype();
-            txinfos.push_back(tx_ext);
+        }
+        tx_ext_t tx_ext;
+        if (tx_ptr != nullptr) {
+            tx_ext.src = tx_ptr->get_source_addr();
+            tx_ext.target = tx_ptr->get_target_addr();
+            tx_ext.fire_timestamp = tx_ptr->get_fire_timestamp();
+        }
+        // tx_ext.tableid = tableid;
+        tx_ext.height = block->get_height();
+        tx_ext.timestamp = timestamp;
+        tx_ext.hash = "0x" + txaction.get_tx_hex_hash();
+        // tx_ext.unit_height = unit_height;
+        tx_ext.phase = txaction.get_tx_subtype();
+        txinfos.push_back(tx_ext);
 
-            auto type = txaction.get_tx_subtype();
-            if (type == enum_transaction_subtype_self) {
-                table_info.selftx_num++;
-            } else if (type == enum_transaction_subtype_send) {
-                table_info.sendtx_num++;
-            } else if (type == enum_transaction_subtype_recv) {
-                table_info.recvtx_num++;
-            } else if (type == enum_transaction_subtype_confirm) {
-                table_info.confirmtx_num++;
-            }
+        auto type = txaction.get_tx_subtype();
+        if (type == enum_transaction_subtype_self) {
+            table_info.selftx_num++;
+        } else if (type == enum_transaction_subtype_send) {
+            table_info.sendtx_num++;
+        } else if (type == enum_transaction_subtype_recv) {
+            table_info.recvtx_num++;
+        } else if (type == enum_transaction_subtype_confirm) {
+            table_info.confirmtx_num++;
         }
     }
 }

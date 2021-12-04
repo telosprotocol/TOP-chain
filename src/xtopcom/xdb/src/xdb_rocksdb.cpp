@@ -153,6 +153,10 @@ class xdb::xdb_impl final{
     bool single_delete(const std::string& key);
     bool delete_range(const std::string& begin_key,const std::string& end_key);
     
+    //iterator each key of prefix.note: go throuh whole db if prefix is empty
+    bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie);
+    bool get_estimate_num_keys(uint64_t & num) const;
+    
     static void destroy(const std::string& m_db_name);
 
  private:
@@ -368,6 +372,32 @@ bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::strin
     return ret;
 }
 
+//iterator each key of prefix.note: go throuh whole db if prefix is empty
+bool xdb::xdb_impl::read_range(const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie)
+{
+    bool ret = false;
+    auto iter = m_db->NewIterator(rocksdb::ReadOptions(), m_handles[0]);
+    
+    for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+    {
+        const std::string std_key(iter->key().ToString());
+        const std::string std_value(iter->value().ToString());
+        if((*callback_fuc)(std_key,std_value,cookie) == false)
+        {
+            ret = false;
+            break;
+        }
+        ret = true;
+    }
+    delete iter;
+    return ret;
+}
+
+bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
+}
+
 xdb::xdb(const std::string& name)
 : m_db_impl(new xdb_impl(name)) {
 }
@@ -460,6 +490,17 @@ bool xdb::single_delete(const std::string& key)
     auto ret =  m_db_impl->single_delete(key);
     XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
     return ret;
+}
+ 
+//iterator each key of prefix.note: go throuh whole db if prefix is empty
+bool xdb::read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie)
+{
+    return m_db_impl->read_range(prefix, callback,cookie);
+}
+
+bool xdb::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db_impl->get_estimate_num_keys(num);
 }
 
 }  // namespace ledger

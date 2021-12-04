@@ -134,6 +134,24 @@ private:
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time);
 
+    void get_on_demand_blocks_with_proof(
+        uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
+
+    void on_demand_blocks_with_proof(
+        uint32_t msg_size,
+        const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
+
     void broadcast_chain_state(
         uint32_t msg_size,
         const vnetwork::xvnode_address_t &from_address,
