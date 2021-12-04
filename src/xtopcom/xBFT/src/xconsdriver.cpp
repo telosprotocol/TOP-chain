@@ -430,8 +430,8 @@ namespace top
                        ||(prev_proposal->get_viewid() != _prev_block_cert->get_viewid())
                        ||(prev_proposal->get_viewtoken() != _prev_block_cert->get_viewtoken())
                        ||(prev_proposal->get_block()->get_header_hash() != _prev_block_cert->get_header_hash())
-                       ||(prev_proposal->get_block()->is_input_ready(true) == false)
-                       ||(prev_proposal->get_block()->is_output_ready(true) == false) )
+                       ||(prev_proposal->get_block()->is_input_ready(false) == false)
+                       ||(prev_proposal->get_block()->is_output_ready(false) == false) )
                     {
                         send_sync_request(get_xip2_addr(),peer_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),new_proposal->get_last_block_cert() ,(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
                         //sync missed cert block completely

@@ -627,8 +627,13 @@ namespace top
                 base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
                 if(existing_index && (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
+                    #ifdef DEBUG
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
+                    #else
+                    xassert(container_block->is_input_ready(false));
+                    xassert(container_block->is_output_ready(false));
+                    #endif
 
                     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
                     if(container_block->extract_sub_blocks(sub_blocks))

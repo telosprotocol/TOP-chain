@@ -464,8 +464,8 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
             xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
-        xassert(vblock->is_input_ready(true));
-        xassert(vblock->is_output_ready(true));
+        xassert(vblock->is_input_ready(false));
+        xassert(vblock->is_output_ready(false));
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
         m_mbus->push_event(ev);

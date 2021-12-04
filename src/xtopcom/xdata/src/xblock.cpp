@@ -256,7 +256,7 @@ int32_t xblock_t::release_ref() {
 #endif
 
 int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
-    if (!is_input_ready(true) || !is_output_ready(true)) {
+    if (!is_input_ready(false) || !is_output_ready(false)) {
         xerror("xblock_t::full_block_serialize_to not valid block.%s", dump().c_str());
         return -1;
     }
