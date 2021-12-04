@@ -20,6 +20,7 @@ using data::xcons_transaction_ptr_t;
 struct xbatch_txs_result_t {
     std::vector<xcons_transaction_ptr_t>    m_exec_succ_txs;
     std::vector<xcons_transaction_ptr_t>    m_exec_fail_txs;
+    std::vector<xcons_transaction_ptr_t>    m_exec_unchange_txs;
     uint32_t                                m_unconfirm_tx_num{0};
     std::string                             m_property_binlog;
     std::string                             m_full_state;

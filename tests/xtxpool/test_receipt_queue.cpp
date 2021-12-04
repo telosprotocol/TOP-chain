@@ -37,7 +37,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     std::string sender = unit_addrs[0];
     std::string receiver = unit_addrs[1];
 
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);

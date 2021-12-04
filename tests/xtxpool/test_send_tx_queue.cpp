@@ -26,7 +26,7 @@ protected:
 
 TEST_F(test_send_tx_queue, continuous_txs_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -113,7 +113,7 @@ TEST_F(test_send_tx_queue, continuous_txs_basic) {
 
 TEST_F(test_send_tx_queue, continuous_txs_replace) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -149,7 +149,7 @@ TEST_F(test_send_tx_queue, continuous_txs_replace) {
 
 TEST_F(test_send_tx_queue, uncontinuous_txs_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -185,7 +185,7 @@ TEST_F(test_send_tx_queue, uncontinuous_txs_basic) {
 
 TEST_F(test_send_tx_queue, uncontinuous_txs_replace) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -217,7 +217,7 @@ TEST_F(test_send_tx_queue, uncontinuous_txs_replace) {
 
 TEST_F(test_send_tx_queue, send_tx_account_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -300,7 +300,7 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
 
 TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -353,7 +353,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
 
 TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -401,7 +401,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
 
 TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -456,7 +456,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
 
 TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -506,7 +506,7 @@ TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {
 // hash continuous constraint was canceled
 TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -546,7 +546,7 @@ TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
 
 TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 15, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
@@ -563,7 +563,7 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 
     std::shared_ptr<xtx_entry> tx_ent0 = std::make_shared<xtx_entry>(txs[0], para);
     int32_t ret = send_tx_queue.push_tx(tx_ent0, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 
     table_para.send_tx_dec(1);
 
@@ -572,11 +572,11 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 
     std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_queue.push_tx(tx_ent1, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 
     std::shared_ptr<xtx_entry> tx_ent2 = std::make_shared<xtx_entry>(txs[2], para);
     ret = send_tx_queue.push_tx(tx_ent2, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 
     table_para.send_tx_dec(1);
 
@@ -591,5 +591,5 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 
     std::shared_ptr<xtx_entry> tx_ent3 = std::make_shared<xtx_entry>(txs[3], para);
     ret = send_tx_queue.push_tx(tx_ent3, 0);
-    ASSERT_EQ(xtxpool_error_queue_reached_upper_limit, ret);
+    ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
 }

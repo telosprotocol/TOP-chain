@@ -1048,6 +1048,76 @@ namespace top
             return true;
         }
 
+        bool    xblockacct_t::store_committed_unit_block(base::xvblock_t* new_raw_block)
+        {
+            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
+            if(exist_cert) //found duplicated ones
+            {
+                if (!exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) {
+                    exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
+                    exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
+                    update_bindex(exist_cert.get());
+                    xinfo("xblockacct_t::store_committed_unit_block update index,store block(%s)", new_raw_block->dump().c_str());
+                } else {
+                    xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s)", new_raw_block->dump().c_str());
+                }
+                return true;
+            }
+            //first do store block
+            bool ret = store_block(new_raw_block);
+            if(!ret)
+            {
+                xwarn("xblockacct_t::store_committed_unit_block,fail-store block(%s)", new_raw_block->dump().c_str());
+            }
+            return true;
+        }
+
+        bool   xblockacct_t::try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block)
+        {
+            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, viewid));
+            if (exist_cert == nullptr) {
+                xinfo("xblockacct_t::try_update_account_index index not found:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
+                return false;
+            }
+
+            bool ret = true;
+            if (update_pre_block && height > 1) {
+                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
+                if (exist_cert2 == nullptr) {
+                    xinfo("xblockacct_t::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                    ret = false;
+                } else {
+                    exist_cert2->set_block_flag(base::enum_xvblock_flag_locked);
+                    exist_cert2->set_block_flag(base::enum_xvblock_flag_committed);
+
+                    update_bindex(exist_cert2.get());
+                    xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                }
+            }
+
+            exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
+            exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
+            update_bindex(exist_cert.get());
+            xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
+            return ret;
+        }
+
+        void xblockacct_t::update_bindex(base::xvbindex_t* this_block)
+        {
+            rebase_chain_at_height(this_block->get_height()); //resolve other block of lower-weight thans this
+            if(this_block->is_close() == false)
+            {
+                update_meta_metric(this_block);//update meta since block has change status
+
+                //may double check whether need save again
+                write_block(this_block);
+                write_index(this_block);
+                
+                //push event at end
+                push_event(enum_blockstore_event_committed, this_block);//fire event for commit
+            }
+        }
+
         //physical store and cache seperately
         /* 3 rules for managing cache
          #1. clean blocks of lower stage when higher stage coming. stage include : cert, lock and commit
@@ -1886,7 +1956,11 @@ namespace top
                 new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
                 new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
 
-                load_index(new_idx->get_height()); //always load index first for non-genesis block
+                if(new_idx->get_height() <= m_meta->_highest_cert_block_height)//just load stored one
+                {
+                    if(new_idx->get_height() > m_meta->_highest_deleted_block_height)//just load undeleted one
+                        load_index(new_idx->get_height());
+                }
             }
             else//genesis block
             {
@@ -2022,18 +2096,7 @@ namespace top
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_committed);//change to commit status
 
                 prev_prev_block->add_ref(); //hold it to avoid be released by rebase_chain_at_height
-                rebase_chain_at_height(prev_prev_block->get_height()); //resolve other block of lower-weight thans this
-                if(prev_prev_block->is_close() == false) //prev_prev_block is still valid to use
-                {
-                    update_meta_metric(prev_prev_block);//update meta since block has change status
-
-                    //may double check whether need save again
-                    write_block(prev_prev_block);
-                    write_index(prev_prev_block);
-                    
-                    //push event at end
-                    push_event(enum_blockstore_event_committed,prev_prev_block);//fire event for commit
-                }
+                update_bindex(prev_prev_block);
                 prev_prev_block->release_ref(); //safe release now
             }
             return true;
@@ -2049,7 +2112,7 @@ namespace top
                 push_event(enum_blockstore_event_committed,this_block);
 
             const uint64_t this_block_height = this_block->get_height();
-            if(this_block_height > 0)
+            if(this_block_height > m_meta->_highest_deleted_block_height)
             {
                 if(this_block_height >= 2)
                 {
@@ -2374,6 +2437,20 @@ namespace top
         {
             return xchainacct_t::store_block(new_raw_block);
         }
-    
+
+        bool        xblockacct_t::set_unit_proof(const std::string& unit_proof, uint64_t height){
+            const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*get_account_obj(), height);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, unit_proof)) {
+                xerror("xblockacct_t::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
+                return false;
+            }
+
+            return true;
+        }
+
+        const std::string xblockacct_t::get_unit_proof(uint64_t height){
+            const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*get_account_obj(), height);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+        }
     };//end of namespace of vstore
 };//end of namespace of top

@@ -56,13 +56,14 @@ namespace top
             return transaction_subtype_to_string(m_subtype);
         }
 
-        int32_t xvtxkey_t::do_write(base::xstream_t & stream) {
+        int32_t xvtxkey_t::do_write(base::xstream_t & stream) const {
             const int32_t begin_size = stream.size();
             // use old serialize method for compatibility
             stream << m_txhash;
             stream << (uint8_t)m_subtype;
             return (stream.size() - begin_size);
         }
+
         int32_t xvtxkey_t::do_read(base::xstream_t & stream) {
             const int32_t begin_size = stream.size();
             stream >> m_txhash;
@@ -70,6 +71,49 @@ namespace top
             stream >> subtype_uint8;
             m_subtype = (enum_transaction_subtype)subtype_uint8;
             return (begin_size - stream.size());
+        }
+
+        int32_t xvtxkey_vec_t::serialize_to_string(std::string & str) const {
+            base::xstream_t _stream(base::xcontext_t::instance());
+            auto size = do_write(_stream);
+            str.clear();
+            str.assign((const char*)_stream.data(), _stream.size());
+            return str.size();
+        }
+
+        int32_t xvtxkey_vec_t::do_write(base::xstream_t & stream) const {
+            const int32_t begin_size = stream.size();
+            stream << static_cast<uint32_t>(m_vec.size());
+            for (auto key : m_vec) {
+                key.do_write(stream);
+            }
+            return (stream.size() - begin_size);
+        }
+        
+        int32_t xvtxkey_vec_t::serialize_from_string(const std::string & _data) {
+            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)_data.data(),(uint32_t)_data.size());
+            const int result = do_read(_stream);
+            return result;
+        }
+
+        int32_t xvtxkey_vec_t::do_read(base::xstream_t & stream) {
+            const int32_t begin_size = stream.size();
+            uint32_t size;
+            stream >> size;
+            for (uint32_t i = 0; i < size; ++i) {
+                xvtxkey_t key;
+                key.do_read(stream);
+                m_vec.push_back(key);
+            }
+            return (begin_size - stream.size());
+        }
+
+        void xvtxkey_vec_t::push_back(const xvtxkey_t & key) {
+            m_vec.push_back(key);
+        }
+
+        const std::vector<xvtxkey_t> & xvtxkey_vec_t::get_txkeys() const {
+            return m_vec;
         }
 
         xvtxindex_t::xvtxindex_t()

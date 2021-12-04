@@ -1,6 +1,7 @@
 #include "../xdb_export.h"
 #include "../xdb_reset.h"
 #include "xbase/xhash.h"
+#include "xmigrate/xvmigrate.h"
 
 using namespace top;
 using namespace top::db_export;
@@ -76,7 +77,9 @@ int main(int argc, char ** argv) {
 #endif
     xdb_export_tools_t tools{db_path};
     std::string function_name{argv[2]};
-    if (function_name == "check_fast_sync") {
+    if (function_name == "db_migrate") {
+        base::db_migrate_v2_to_v0_3_0_0(db_path);
+    } else if (function_name == "check_fast_sync") {
         if (argc == 3) {
             auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
             auto const unit_account_vec = tools.get_db_unit_accounts();
