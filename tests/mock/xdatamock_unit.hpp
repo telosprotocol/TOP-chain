@@ -210,14 +210,10 @@ class xdatamock_unit {
         m_history_units.push_back(block);
 
         // save raw tx
-        std::vector<xobject_ptr_t<xvtxindex_t>> sub_txs;
-        block->extract_sub_txs(sub_txs);
+        const std::vector<xlightunit_tx_info_ptr_t> & sub_txs = block->get_txs();
         for (auto & v : sub_txs) {
-            if (v->get_tx_obj() != nullptr) {
-                xtransaction_t* raw_tx = dynamic_cast<xtransaction_t*>(v->get_tx_obj());
-                xtransaction_ptr_t raw_tx_ptr;
-                raw_tx->add_ref();
-                raw_tx_ptr.attach(raw_tx);
+            xtransaction_ptr_t raw_tx_ptr = v->get_raw_tx();
+            if (raw_tx_ptr != nullptr) {
                 m_raw_txs[v->get_tx_hash()] = raw_tx_ptr;
             }
         }

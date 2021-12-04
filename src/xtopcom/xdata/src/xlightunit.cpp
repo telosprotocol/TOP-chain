@@ -111,11 +111,18 @@ const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() cons
 }
 
 bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
-    const std::vector<xlightunit_tx_info_ptr_t> & txs_info = get_txs();
-    // xassert(!txs_info.empty());
-    for (auto & tx : txs_info) {
-        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, dynamic_cast<xdataunit_t*>(tx->get_raw_tx().get()), tx->get_tx_hash(), tx->get_tx_subtype());
-        sub_txs.push_back(tx_index);
+     if (get_input() != nullptr) {
+        base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
+        if (primary_input_entity != nullptr) {
+            const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
+            for (auto & action : actions) {
+                if (!action.get_org_tx_hash().empty()) {
+                    enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
+                    base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, nullptr, action.get_org_tx_hash(), _actionid);
+                    sub_txs.push_back(tx_index);
+                }
+            }
+        }
     }
     return true;
 }
