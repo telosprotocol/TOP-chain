@@ -20,7 +20,7 @@ class xdb_error : public std::runtime_error {
 
 class xdb : public xdb_face_t {
  public:
-    explicit xdb(const std::string& name);
+    explicit xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
     ~xdb() noexcept;
     bool open() override;
     bool close() override;
@@ -42,6 +42,9 @@ class xdb : public xdb_face_t {
     bool delete_range(const std::string& begin_key,const std::string& end_key) override;
     //key must be readonly(never update after PUT),otherwise the behavior is undefined
     bool single_delete(const std::string& key) override;
+    
+    //iterator each key of prefix.note: go throuh whole db if prefix is empty
+    bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie) override;
     
     xdb_meta_t  get_meta() override {return xdb_meta_t();}  // XTODO no need implement
 

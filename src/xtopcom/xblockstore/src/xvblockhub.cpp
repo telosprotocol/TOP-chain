@@ -263,6 +263,11 @@ namespace top
             }
             else if(force_release_unused_block) //force release block that only hold by internal
             {
+                //just return if dont cache block at first place
+                #ifndef __CACHE_RAW_BLOCK_PTR_AT_FIRST_PLACE__
+                    return true;
+                #endif
+                
                 for(auto height_it = m_all_blocks.begin(); height_it != m_all_blocks.end();)//search from lowest hight to higher
                 {
                     auto old_height_it = height_it; //copy first
@@ -1884,7 +1889,11 @@ namespace top
                 new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
                 new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
 
-                load_index(new_idx->get_height()); //always load index first for non-genesis block
+                if(new_idx->get_height() <= m_meta->_highest_cert_block_height)
+                {
+                    if(new_idx->get_height() > m_meta->_highest_deleted_block_height)
+                       load_index(new_idx->get_height()); //always load index first for non-genesis block
+                }
             }
             else//genesis block
             {

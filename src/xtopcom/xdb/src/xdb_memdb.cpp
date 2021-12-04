@@ -139,6 +139,12 @@ bool xdb_mem_t::single_delete(const std::string& key)
     return erase(key);
 }
 
+//iterator each key of prefix.note: go throuh whole db if prefix is empty
+bool xdb_mem_t::read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie)
+{
+    return false;
+}
+
 bool xdb_memdb_transaction_t::rollback() {
     // drop every thing
     m_read_values.clear();

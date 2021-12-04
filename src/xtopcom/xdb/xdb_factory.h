@@ -19,10 +19,10 @@ class xdb_factory_t {
  public:
     xdb_factory_t() = delete;
     ~xdb_factory_t() = delete;
-    static std::shared_ptr<xdb_face_t> create(xdb_kind_t kind, const std::string& path);
-    static std::shared_ptr<xdb_face_t> instance(const std::string& path);
-    static std::shared_ptr<xdb_face_t> create_kvdb(const std::string& path) {
-        return create(xdb_kind_kvdb, path);
+    static std::shared_ptr<xdb_face_t> create(xdb_kind_t kind, const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths = std::vector<xdb_path_t>());
+    static std::shared_ptr<xdb_face_t> instance(const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths = std::vector<xdb_path_t>());
+    static std::shared_ptr<xdb_face_t> create_kvdb(const std::string& db_root_dir) {
+        return create(xdb_kind_kvdb, db_root_dir);
     }
     static std::shared_ptr<xdb_face_t> create_memdb() {
         return create(xdb_kind_mem, {});

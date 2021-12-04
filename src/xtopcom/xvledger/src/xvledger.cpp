@@ -1553,6 +1553,7 @@ namespace top
             if(NULL == new_mgr)
                 return false;
             
+            xkinfo("xvchain_t::set_xrecyclemgr");
             return register_plugin(new_mgr,enum_xvchain_plugin_recycle_mgr);
         }
         
@@ -1567,6 +1568,11 @@ namespace top
     
         void  xvchain_t::enable_auto_prune(bool enable)
         {
+            if(enable)
+                xkinfo("xvchain_t::enable_auto_prune,Enabled");
+            else
+                xkinfo("xvchain_t::enable_auto_prune,Disabled");
+            
             if(enable)
                 m_is_auto_prune = 1;
             else
