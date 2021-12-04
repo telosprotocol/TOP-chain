@@ -198,6 +198,7 @@ public:
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     bool compact_range(const std::string & begin_key,const std::string & end_key);
+    bool get_estimate_num_keys(uint64_t & num) const;
     
     static void destroy(const std::string& m_db_name);
 
@@ -771,6 +772,10 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
     return true;
 }
 
+bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
+}
 
 xdb::xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
 : m_db_impl(new xdb_impl(db_root_dir,db_paths)) {
@@ -877,6 +882,10 @@ bool xdb::read_range(const std::string& prefix,xdb_iterator_callback callback,vo
 bool xdb::compact_range(const std::string & begin_key,const std::string & end_key)
 {
     return m_db_impl->compact_range(begin_key, end_key);
+}
+bool xdb::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db_impl->get_estimate_num_keys(num);
 }
 
 }  // namespace ledger

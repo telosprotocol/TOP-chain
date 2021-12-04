@@ -43,12 +43,24 @@ namespace top
             std::string                 get_tx_hex_hash() const;
             std::string                 get_tx_subtype_str() const;
 
-            int32_t do_write(base::xstream_t & stream);
+            int32_t do_write(base::xstream_t & stream) const;
             int32_t do_read(base::xstream_t & stream);
 
         private:
             std::string                 m_txhash;
             enum_transaction_subtype    m_subtype;
+        };
+
+        class xvtxkey_vec_t {
+        public:
+            int32_t serialize_to_string(std::string & str) const;
+            int32_t do_write(base::xstream_t & stream) const;
+            int32_t serialize_from_string(const std::string & _data);
+            int32_t do_read(base::xstream_t & stream);
+            void push_back(const xvtxkey_t & key);
+            const std::vector<xvtxkey_t> & get_txkeys() const;
+        private:
+            std::vector<xvtxkey_t> m_vec;
         };
 
         class xvblock_t;
@@ -80,6 +92,8 @@ namespace top
         
         public:
             void set_tx_hash(std::string const & tx_hash);
+            void set_block_addr(const std::string & block_addr) {m_block_addr = block_addr;}
+            void set_block_height(uint64_t block_height) {m_block_height = block_height;}
             // void set_tx_phase_type(enum_transaction_subtype tx_phase_type);
         protected:
             virtual int32_t    do_write(base::xstream_t & stream) override;

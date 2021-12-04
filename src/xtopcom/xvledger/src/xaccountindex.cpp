@@ -44,8 +44,9 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
     if (is_account_destroy) {
         set_account_index_flag(enum_xaccount_index_flag_account_destroy);
     }
-    if(m_latest_tx_nonce > 0)
+    if (m_latest_tx_nonce > 0) {
         set_account_index_flag(enum_xaccount_index_flag_carry_nonce);
+    }
     
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
@@ -56,8 +57,9 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     stream.write_compact_var(m_latest_unit_viewid);
     stream.write_compact_var(m_account_flag);
     
-    if(check_account_index_flag(enum_xaccount_index_flag_carry_nonce))
+    if (check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.write_compact_var(m_latest_tx_nonce);
+    }
     
     return (stream.size() - begin_size);
 }
@@ -68,8 +70,9 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     stream.read_compact_var(m_latest_unit_viewid);
     stream.read_compact_var(m_account_flag);
     
-    if(check_account_index_flag(enum_xaccount_index_flag_carry_nonce))
+    if(check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.read_compact_var(m_latest_tx_nonce);
+    }
     
     return (begin_size - stream.size());
 }

@@ -85,6 +85,8 @@ namespace top
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
 
+            virtual bool                try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) override;
+
 
         public://batch process api
             virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account,const int atag = 0) override;
@@ -120,7 +122,11 @@ namespace top
             virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) override;
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override;
 
+            virtual bool        set_unit_proof(const base::xvaccount_t & account, const std::string &unit_proof, const uint64_t height) override;
+            virtual const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override;
+
             bool                         store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
+            bool                         on_block_committed(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
         protected:
             bool    get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj);
 
@@ -131,6 +137,7 @@ namespace top
             bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
 
             bool                        store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block);
+            bool                        store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block);
 
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()
             virtual std::string          get_store_path() const override {return m_store_path;}//each store may has own space at DB/disk
@@ -141,6 +148,7 @@ namespace top
         private:
             bool                        on_block_committed(const xblockevent_t & event);
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
+            bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
 
             virtual bool                on_object_close() override;
 

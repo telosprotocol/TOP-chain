@@ -10,11 +10,12 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xblock.h"
+#include "xdata/xlightunit.h"
 
 NS_BEG2(top, data)
 
-struct xfullunit_block_para_t {
-    std::string                         m_property_snapshot;
+class xfullunit_block_para_t : public xlightunit_block_para_t {
+public:
     uint64_t                            m_first_unit_height{0};
     std::string                         m_first_unit_hash;
 };

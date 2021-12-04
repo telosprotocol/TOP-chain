@@ -24,6 +24,7 @@ public:
 
     int32_t update_tgas_disk_sender(const uint64_t amount, bool is_contract);
     int32_t update_tgas_sender(uint64_t& used_deposit, bool is_contract);
+    int32_t update_tgas_sender();
     int32_t update_disk(bool is_contract);
     bool    need_use_tgas_disk(const std::string &source_addr, const std::string &target_addr, const std::string &func_name);
 

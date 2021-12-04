@@ -97,7 +97,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         uint64_t last_hash_xxhash64 = static_cast<xJson::UInt64>(utl::xxh64_t::digest(last_hash.data(), last_hash.size()));
         result_json["latest_tx_hash_xxhash64"] = uint64_to_str(last_hash_xxhash64);
         result_json["latest_unit_height"] = static_cast<xJson::UInt64>(account_ptr->get_chain_height());
-        result_json["unconfirm_sendtx_num"] = static_cast<xJson::UInt64>(account_ptr->get_unconfirm_sendtx_num());
         result_json["recv_tx_num"] = static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
 
         auto timer_height = get_timer_height();
@@ -1422,12 +1421,12 @@ void get_block_handle::set_fullunit_state(xJson::Value & j_fu, data::xblock_t * 
     xassert(bstate != nullptr);
     data::xunit_bstate_t unitstate(bstate.get());
 
-    j_fu["latest_send_trans_number"] = static_cast<unsigned int>(unitstate.account_send_trans_number());
+    j_fu["latest_send_trans_number"] = static_cast<unsigned long long>(unitstate.account_send_trans_number());
     j_fu["latest_send_trans_hash"] = to_hex_str(unitstate.account_send_trans_hash());
-    j_fu["latest_recv_trans_number"] = static_cast<unsigned int>(unitstate.account_recv_trans_number());
-    j_fu["account_balance"] = static_cast<unsigned int>(unitstate.balance());
-    j_fu["burned_amount_change"] = static_cast<unsigned int>(unitstate.burn_balance());
-    j_fu["account_create_time"] = static_cast<unsigned int>(unitstate.get_account_create_time());
+    j_fu["latest_recv_trans_number"] = static_cast<unsigned long long>(unitstate.account_recv_trans_number());
+    j_fu["account_balance"] = static_cast<unsigned long long>(unitstate.balance());
+    j_fu["burned_amount_change"] = static_cast<unsigned long long>(unitstate.burn_balance());
+    j_fu["account_create_time"] = static_cast<unsigned long long>(unitstate.get_account_create_time());
 }
 
 void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp, const std::string & rpc_version) {
@@ -1463,7 +1462,7 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp, const std::string &
     }
 
     set_shared_info(root, bp);
-    
+
     xJson::Value header;
     set_header_info(header, bp);
     root["header"] = header;

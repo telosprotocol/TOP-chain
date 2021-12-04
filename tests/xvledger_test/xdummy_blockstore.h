@@ -142,6 +142,14 @@ public:
         return false;
     }
 
+    bool try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) override {
+        return false;
+    }
+
+    bool store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) override {
+        return false;
+    }
+
     base::xvbindex_vector load_block_index(const base::xvaccount_t &, const uint64_t,const int atag = 0) override {
         return {};
     }
@@ -188,6 +196,14 @@ public:
     }
 
     const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override {
+        return "";
+    }
+
+    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height) override {
+        return true;
+    }
+
+    const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override {
         return "";
     }
 };
