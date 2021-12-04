@@ -45,8 +45,6 @@ namespace top
                     }
                 }
 
-                m_raw_ptr->clean_caches(false,false);//light cleanup
-
                 //then release raw ptr
                 xblockacct_t * old_ptr = m_raw_ptr;
                 m_raw_ptr = NULL;
@@ -620,7 +618,7 @@ namespace top
                 // return false;
             }
 
-            bool did_stored = false;//inited as false
+            bool did_stored = ret;//inited as false
             //then try extract for container if that is
             if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table)

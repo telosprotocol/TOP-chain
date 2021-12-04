@@ -208,7 +208,8 @@ namespace top
         {
             if(get_address().empty() == false)
             {
-                xerror("xvbindex_t::reset_account_addr,try to overwrite exist addr(%s) by new(%s)",get_address().c_str(),addr.get_address().c_str());
+                if(get_address() != addr.get_address() )
+                    xerror("xvbindex_t::reset_account_addr,try to overwrite exist addr(%s) by new(%s)",get_address().c_str(),addr.get_address().c_str());
                 return false;
             }
             xvaccount_t::operator=(addr);
