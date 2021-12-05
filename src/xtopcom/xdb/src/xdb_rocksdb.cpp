@@ -143,10 +143,9 @@ bool xdb_rocksdb_transaction_t::erase(const std::string& key) {
 enum enum_xvdb_cf_type
 {
     //new style(defined as character,optimized for i/o,db size etc)
-    enum_xvdb_cf_type_read_write  = 'w',  //default one for key that has Put/Update/Delete together
-    enum_xvdb_cf_type_update_most = 'i',  //update most once Put but rarely read; good for meta-data
-    enum_xvdb_cf_type_read_only   = 'b',  //read only once first Put.no update; good for block,txs
-    enum_xvdb_cf_type_log_only    = 'l',  //store as log(unreliable) and cleared unused & oldest one automatically(like LRU)
+    enum_xvdb_cf_type_update_most = 'u',  //update most once Put but rarely read; good for meta-data
+    enum_xvdb_cf_type_read_most   = 'r',  //read only once first Put.no update; good for block,txs
+    enum_xvdb_cf_type_log_only    = 'f',  //store as log(unreliable) and cleared unused & oldest one automatically(like LRU)
     
     //old style(defined by object) and stored at default CF(column Family)
 };
@@ -164,11 +163,12 @@ class xdb::xdb_impl final
 public:
     static void  disable_default_compress_options(rocksdb::ColumnFamilyOptions & default_cf_options);
     static void  setup_default_db_options(rocksdb::Options & default_db_options);//setup Default Option of whole DB Level
+    void         setup_default_cf_options(xColumnFamily & cf_config);
     
-    xColumnFamily    setup_default_cf(uint64_t memtable_memory_budget = 448 * 1024 * 1024,int num_levels = 7);//setup Default ColumnFamily(CF),and for read&write as well
-    xColumnFamily setup_update_most_cf(uint64_t memtable_memory_budget = 128 * 1024 * 1024,int num_levels = 5);//setup ColumnFamily(CF) of update_most; good for meta-data
-    xColumnFamily setup_read_only_cf(uint64_t memtable_memory_budget = 256 * 1024 * 1024,int num_levels = 7);//setup ColumnFamily(CF) of read_only; good for block
-    xColumnFamily setup_log_only_cf(uint64_t ttl = 14 * 24 * 60 * 60);//setup ColumnFamily(CF) of log only,delete after 14 day as default setting);
+    xColumnFamily setup_default_cf();//setup Default ColumnFamily(CF),and for read&write as well
+    xColumnFamily setup_universal_style_cf(const std::string & name,uint64_t memtable_memory_budget = 64 * 1024 * 1024,int num_levels = 5);
+    xColumnFamily setup_level_style_cf(const std::string & name,uint64_t memtable_memory_budget = 128 * 1024 * 1024,int num_levels = 7);
+    xColumnFamily setup_fifo_style_cf(const std::string & name,uint64_t ttl = 14 * 24 * 60 * 60);//setup ColumnFamily(CF) of log only,delete after 14 day as default setting);
 
  public:
     explicit xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
@@ -242,12 +242,8 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
     return ;
 }
 
-//setup ColumnFamily(CF) of read & write,as default CF
-xColumnFamily xdb::xdb_impl::setup_default_cf(uint64_t memtable_memory_budget,int num_levels)
+void xdb::xdb_impl::setup_default_cf_options(xColumnFamily & cf_config)
 {
-    xColumnFamily  cf_config;
-    cf_config.cf_name   = rocksdb::kDefaultColumnFamilyName;
- 
     rocksdb::BlockBasedTableOptions table_options;
     table_options.enable_index_compression = false;
     table_options.block_size = 16 * 1024; //default is 4K -> 16K
@@ -267,59 +263,74 @@ xColumnFamily xdb::xdb_impl::setup_default_cf(uint64_t memtable_memory_budget,in
     
     cf_config.cf_option.bottommost_compression_opts.enabled = m_options.bottommost_compression_opts.enabled;
     cf_config.cf_option.bottommost_compression = m_options.bottommost_compression;
-    
+ 
+    cf_config.cf_option.level_compaction_dynamic_level_bytes = m_options.level_compaction_dynamic_level_bytes;
+    return cf_config;
+}
+
+//setup ColumnFamily(CF) of read & write,as default CF
+xColumnFamily xdb::xdb_impl::setup_default_cf()
+{
+    xColumnFamily  cf_config;
+    cf_config.cf_name = rocksdb::kDefaultColumnFamilyName;
     cf_config.cf_option.num_levels = m_options.num_levels;
     cf_config.cf_option.compression_per_level = m_options.compression_per_level;
-    
-    cf_config.cf_option.level_compaction_dynamic_level_bytes = m_options.level_compaction_dynamic_level_bytes;
+    setup_default_cf_options(cf_config);
     
     return cf_config;
 }
 
-//setup ColumnFamily(CF) of update_only; good for meta-data,span-data
-//update only once first Put,no delete and rarely read op
-xColumnFamily xdb::xdb_impl::setup_update_most_cf(uint64_t memtable_memory_budget,int num_levels)
+//setup ColumnFamily(CF) based on OptimizeUniversalStyleCompaction
+xColumnFamily xdb::xdb_impl::setup_universal_style_cf(const std::string & name,uint64_t memtable_memory_budget,int num_levels)
 {
     xColumnFamily  cf_config;
-    cf_config.cf_name.append(1,(const char)enum_xvdb_cf_type_update_most);
+    cf_config.cf_name = name;
     cf_config.cf_option = rocksdb::ColumnFamilyOptions();
-    cf_config.cf_option.num_levels = num_levels;
+    if(num_levels <= 0)
+        cf_config.cf_option.num_levels = m_options.num_levels;
+    else
+        cf_config.cf_option.num_levels = num_levels;
     cf_config.cf_option.OptimizeUniversalStyleCompaction(memtable_memory_budget);
-    cf_config.cf_option.level_compaction_dynamic_level_bytes = m_options.level_compaction_dynamic_level_bytes;
+    
+    setup_default_cf_options(cf_config);
+    if(false == cf_config.cf_option.compression_opts.enabled)//force turn off for each level
+    {
+        xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
+    }
     //XTODO,upgrade to RocksDB 6.x version
     //cf_config.cf_option.periodic_compaction_seconds = 12 * 60 * 60; //12 hour
-    
-    #ifndef __ENABLE_ROCKSDB_COMPRESSTION__
-    xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
-    #endif
     return cf_config;
 }
 
-//setup ColumnFamily(CF) of read_only; good for block,txs
-//delete only once first Put, no update and many read
-xColumnFamily xdb::xdb_impl::setup_read_only_cf(uint64_t memtable_memory_budget,int num_levels)
+//setup ColumnFamily(CF) based by OptimizeLevelStyleCompaction
+xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,uint64_t memtable_memory_budget,int num_levels)
 {
     xColumnFamily  cf_config;
-    cf_config.cf_name.append(1,(const char)enum_xvdb_cf_type_read_only);
+    cf_config.cf_name = name;
     cf_config.cf_option = rocksdb::ColumnFamilyOptions();
-    cf_config.cf_option.num_levels = num_levels;
+    if(num_levels <= 0)
+        cf_config.cf_option.num_levels = m_options.num_levels;
+    else
+        cf_config.cf_option.num_levels = num_levels;
     cf_config.cf_option.OptimizeLevelStyleCompaction(memtable_memory_budget);
-    cf_config.cf_option.level_compaction_dynamic_level_bytes = m_options.level_compaction_dynamic_level_bytes;
+
+    setup_default_cf_options(cf_config);
+    if(false == cf_config.cf_option.compression_opts.enabled)//force turn off for each level
+    {
+        xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
+    }
+    
     //XTODO,upgrade to RocksDB 6.x version
-    //cf_config.cf_option.periodic_compaction_seconds = 1 * 24 * 60 * 60; //1 day
- 
-    #ifndef __ENABLE_ROCKSDB_COMPRESSTION__
-    xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
-    #endif
+    //cf_config.cf_option.periodic_compaction_seconds = 12 * 60 * 60; //12 hour
     return cf_config;
 }
 
-//setup ColumnFamily(CF) of log_only; good for cached txs
+//setup ColumnFamily(CF) based on kCompactionStyleFIFO
 //store as log(unreliable) and cleared unused & oldest one automatically(like LRU)
-xColumnFamily xdb::xdb_impl::setup_log_only_cf(uint64_t ttl)
+xColumnFamily xdb::xdb_impl::setup_fifo_style_cf(const std::string & name,uint64_t ttl)
 {
     xColumnFamily  cf_config;
-    cf_config.cf_name.append(1,(const char)enum_xvdb_cf_type_log_only);
+    cf_config.cf_name = name;
     cf_config.cf_option = rocksdb::ColumnFamilyOptions();
     cf_config.cf_option.OptimizeForSmallDb();
     cf_config.cf_option.compaction_style = rocksdb::kCompactionStyleFIFO;
@@ -445,6 +456,11 @@ xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> &
     
     std::vector<xColumnFamily> cf_list;
     cf_list.push_back(setup_default_cf()); //default is always first one
+    cf_list.push_back(setup_level_style_cf("1")); //block 'cf[1]
+    cf_list.push_back(setup_level_style_cf("2")); //block 'cf[2]
+    cf_list.push_back(setup_level_style_cf("3")); //block 'cf[3]
+    cf_list.push_back(setup_level_style_cf("4")); //block 'cf[4]
+    cf_list.push_back(setup_fifo_style_cf("f"));  //fifo
     //XTODO,add other CF here
     
     m_cf_configs = cf_list;
@@ -461,10 +477,35 @@ rocksdb::ColumnFamilyHandle* xdb::xdb_impl::get_cf_handle(const std::string& key
 {
     if(key.size() >= 2)//hit most case
     {
-        if(key.at(1) != '/') //all customized cf must format as "x/..."
+        const char* key_data = key.data();
+        if(key_data[1] != '/') //all customized cf must format as "x/..."
             return m_cf_handles[0];
-        
-        rocksdb::ColumnFamilyHandle* target_cf = m_cf_handles[(uint8_t)key.at(0)];
+    
+        /* key of "r" class for block & index
+            r/full_ledger(24bit)/...
+            //full_ledger = (ledger_id & 0xFFFF) + (subaddr_of_ledger & 0xFF)
+                //ledger_id= [chain_id:12bit][zone_index:4bit]
+                //[8bit:subaddr_of_ledger] = [5 bit:book-index]-[3 bit:table-index]
+        */
+        rocksdb::ColumnFamilyHandle* target_cf  = nullptr;
+        if( (key_data[0] == enum_xvdb_cf_type_read_most) && (key.size() >= 8) )
+        {
+            //const int subaddr_of_ledger = (((int)key_data[6]) << 4) | key_data[7];
+            //const int maped_cf = (subaddr_of_ledger % 4) + 1; //mapping to cf[1],cf[2],cf[3].cf[4]
+            const int maped_cf = (key_data[7] % 4) + 1; //mapping to cf[1],cf[2],cf[3].cf[4]
+            if(maped_cf == 1)
+                target_cf = m_cf_handles['1'];
+            else if(maped_cf == 2)
+                target_cf = m_cf_handles['2'];
+            else if(maped_cf == 3)
+                target_cf = m_cf_handles['3'];
+            else if(maped_cf == 4)
+                target_cf = m_cf_handles['4'];
+        }
+        else
+        {
+            target_cf = m_cf_handles[key_data[0]];
+        }
         if(NULL == target_cf) //using default for any other case
             target_cf = m_cf_handles[0];
         

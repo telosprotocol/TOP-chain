@@ -106,7 +106,7 @@ namespace top
             m_blockstore_version = base::xstring_utl::toint32(version_value);
             
             //XTODO,debug purpose to force to upgrade to new version
-            // m_blockstore_version = enum_xblockstore_prunable_version;
+            m_blockstore_version = enum_xblockstore_prunable_version;
         }
     
         xvblockdb_t::~xvblockdb_t()

@@ -112,9 +112,7 @@ namespace top
         {
             if(account_meta._highest_full_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
-            
-            return false;//XTODO,disable unit_prune temporary
-            
+ 
             //[lower_bound_height,upper_bound_height)
             const uint64_t upper_bound_height = account_meta._highest_full_block_height - enum_reserved_blocks_count;
             const uint64_t lower_bound_height = std::max(account_meta._lowest_vkey2_block_height,account_meta._highest_deleted_block_height) + 1;

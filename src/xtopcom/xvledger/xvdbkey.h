@@ -56,6 +56,10 @@ namespace top
            static const std::string  create_account_span_key(const xvaccount_t & account);
            static const std::string  create_account_span_key(const xvaccount_t & account,const uint64_t target_height);
            
+           //prunable tx and tx index
+           static const std::string  create_prunable_tx_key(const std::string & org_tx_hash);
+           static const std::string  create_prunable_tx_index_key(const std::string & org_tx_hash, const enum_txindex_type type);
+           
            //all keys under of same height
            static const std::string  create_prunable_block_height_key(const xvaccount_t & account,const uint64_t target_height);
            
