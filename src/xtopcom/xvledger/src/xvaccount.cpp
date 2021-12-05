@@ -52,7 +52,7 @@ namespace top
             }
             else //exception case
             {
-                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size);
+                raw_public_addr = account_full_adress;
             }
             
             //step#2: decode hex to byte address for eth address

@@ -265,7 +265,7 @@ void xdb::xdb_impl::setup_default_cf_options(xColumnFamily & cf_config)
     cf_config.cf_option.bottommost_compression = m_options.bottommost_compression;
  
     cf_config.cf_option.level_compaction_dynamic_level_bytes = m_options.level_compaction_dynamic_level_bytes;
-    return cf_config;
+    return;
 }
 
 //setup ColumnFamily(CF) of read & write,as default CF
