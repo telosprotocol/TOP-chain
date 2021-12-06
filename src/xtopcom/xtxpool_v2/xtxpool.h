@@ -34,12 +34,9 @@ public:
     void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override;
     void on_block_confirmed(xblock_t * block) override;
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) override;
-    const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) override;
-    void refresh_table_v1(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) override;
-    void refresh_table_v2(uint8_t zone, uint16_t subaddr) override;
+    void refresh_table(uint8_t zone, uint16_t subaddr) override;
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;
     void update_table_state(const data::xtablestate_ptr_t & table_state) override;
-    // xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
     void build_recv_tx(base::xtable_shortid_t from_table_sid,
                        base::xtable_shortid_t to_table_sid,
                        std::vector<uint64_t> receiptids,
@@ -50,11 +47,8 @@ public:
                           std::vector<xcons_transaction_ptr_t> & receipts) override;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override;
-    const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
     void print_statistic_values() const override;
-    // bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
-    // bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     void update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) override;
 
 private:
