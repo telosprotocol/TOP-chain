@@ -65,8 +65,9 @@ xsniffer_config_t xtop_sniffer::sniff_config() const {
             config.insert(std::make_pair(xsniffer_event_type_t::broadcast, xsniffer_event_config_t{sniff_block_type, std::bind(&xtop_sniffer::sniff_broadcast, this, std::placeholders::_1)}));
         }
         if (contract_runtime::has<contract_runtime::xsniff_type_t::timer>(sniff_type)) {
-            config.insert(std::make_pair(xsniffer_event_type_t::timer,
-                                         xsniffer_event_config_t{xsniffer_block_type_t::all_block, std::bind(&xtop_sniffer::sniff_timer, this, std::placeholders::_1)}));
+            config.insert(std::make_pair(
+                xsniffer_event_type_t::timer,
+                xsniffer_event_config_t{xsniffer_block_type_t::all_block, std::bind(&xtop_sniffer::sniff_timer, this, std::placeholders::_1)}));
         }
         if (contract_runtime::has<contract_runtime::xsniff_type_t::block>(sniff_type)) {
             auto sniff_block_type = data.role_data.block_config.type;
@@ -82,7 +83,7 @@ bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock
     xassert(vblock->get_block_level() == base::enum_xvblock_level_table);
     auto const & block_address = vblock->get_account();
     auto const height = vblock->get_height();
-    for (auto & role_data_pair : m_config_map) {
+    for (auto const & role_data_pair : m_config_map) {
         auto const & contract_address = top::get<common::xaccount_address_t const>(role_data_pair);
         auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
         if (!contract_runtime::has<contract_runtime::xsniff_type_t::broadcast>(config.sniff_type)) {
@@ -215,24 +216,6 @@ bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & addres
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_archive_addr },
                                                                        common::xaccount_address_t{sys_contract_rec_elect_zec_addr},
                                                                        common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
-    //auto const first_block = trigger_first_timer_call(address);
-
-    //std::error_code ec;
-    //auto const interval = data.role_data.timer_config.timer_config_data.get_timer_interval(ec);
-    //if (ec) {
-    //    xwarn("xvnode_sniff_t::is_valid_timer_call: fail to get trigger interval. contract %s, ec %d, msg %s", address.value().c_str(), ec.value(), ec.message().c_str());
-    //    return false;
-    //}
-
-    //assert(interval > 0);
-    //if (interval != 0 && height != 0 && ((first_block && (height % 3) == 0) || (!first_block && (height % interval) == 0))) {
-    //    xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check pass, interval: %u, height: %llu, first_block: %d", interval, height, first_block);
-    //    return true;
-    //} else {
-    //    xdbg("[xtop_vnode_sniff::is_valid_timer_call] param check not pass, interval: %u, height: %llu, first_block: %d", interval, height, first_block);
-    //    return false;
-    //}
-
     bool is_first_block{false};
     if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), address) != std::end(sys_addr_list)) {
         if (m_store->query_account(address.value())->get_chain_height() == 0) {
@@ -282,16 +265,15 @@ void xtop_sniffer::table_timer_func(common::xaccount_address_t const& contract_a
                                             std::string const& action_params, uint64_t timestamp, uint64_t height) const {
     int table_num = m_vnode->vnetwork_driver()->table_ids().size();
     if (table_num == 0) {
-        xwarn("[xtop_vnode_sniff::table_timer_func] table_ids empty\n");
+        xwarn("[xtop_vnode_sniff::table_timer_func] table_ids empty");
         return;
     }
 
-    int clock_interval = 1;
-    clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
+    int clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
 
     if (m_table_contract_schedule.find(contract_address) != m_table_contract_schedule.end()) {
         auto& schedule_info = m_table_contract_schedule[contract_address];
-        schedule_info.cur_table = m_vnode->vnetwork_driver()->table_ids().at(0) +  static_cast<uint16_t>((height / clock_interval) % table_num);
+        schedule_info.cur_table = m_vnode->vnetwork_driver()->table_ids().at(0) + static_cast<uint16_t>((height / clock_interval) % table_num);
         xinfo("[xtop_vnode_sniff::table_timer_func] table contract schedule, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
             contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
         call(contract_address, timer_config.action, action_params, timestamp, schedule_info.cur_table);
