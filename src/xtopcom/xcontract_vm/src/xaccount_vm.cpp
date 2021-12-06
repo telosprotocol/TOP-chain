@@ -10,6 +10,7 @@
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_runtime/xaction_session.h"
+#include "xcontract_runtime/xerror/xerror.h"
 #include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_vm/xerror/xerror.h"
 #include "xdata/xconsensus_action.h"
@@ -116,9 +117,9 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
         result = sys_action_runtime_->new_session(make_observer(std::addressof(contract_state)))->execute_action(std::move(action));
 
         XMETRICS_GAUGE(metrics::txexecutor_total_system_contract_count, 1);
-        if (result.status.ec) {
-            XMETRICS_GAUGE(metrics::txexecutor_system_contract_failed_count, 1);
-        }
+        XMETRICS_GAUGE(
+            metrics::txexecutor_system_contract_failed_count,
+            static_cast<int64_t>(static_cast<bool>(result.status.ec && result.status.ec != make_error_code(contract_runtime::error::xerrc_t::account_state_not_changed))));
         break;
     }
 
