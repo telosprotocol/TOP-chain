@@ -338,6 +338,12 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
                 leader_election->get_leader_xip(packet.get_block_viewid(), get_account(), nullptr, local_addr, from_addr, election_epoch, enum_rotate_mode_rotate_by_view_id);
             if (xcons_utl::xip_equals(leader_xip, from_addr)) {
                 valid = true;
+            } else {
+                xerror("verify_proposal_packet: leader mismatch. local xip=%s, from xip=%s, calc-ed leader xip=%s, pdu={%s}",
+                       xcons_utl::xip_to_hex(local_addr).c_str(),
+                       xcons_utl::xip_to_hex(from_addr).c_str(),
+                       xcons_utl::xip_to_hex(leader_xip).c_str(),
+                       packet.dump().c_str());
             }
         } else {
             // TODO here may happen when many elect blocks sync
