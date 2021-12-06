@@ -176,7 +176,9 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_all_neighbors(
     auto const & neighbors_info = m_vnetwork_driver->neighbors_info2();
     std::vector<common::xnode_address_t> neighbor_addresses;
     for (auto const & info : neighbors_info) {
-        neighbor_addresses.push_back(info.second.address);
+        if(self_addr != info.second.address) {
+            neighbor_addresses.push_back(info.second.address);
+        }
     }
     return neighbor_addresses;
 }
