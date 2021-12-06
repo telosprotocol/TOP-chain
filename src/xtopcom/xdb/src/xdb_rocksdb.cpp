@@ -19,6 +19,8 @@
 #include "xdb/xdb.h"
 #include "xmetrics/xmetrics.h"
 
+#define __ENABLE_ROCKSDB_COMPRESSTION__
+
 using std::string;
 
 namespace top { namespace db {
