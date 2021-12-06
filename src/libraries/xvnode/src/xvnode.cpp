@@ -131,7 +131,7 @@ void xtop_vnode::start() {
 
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
-        common::has<common::xnode_type_t::storage_full_node>(vnetwork_driver()->type()));
+                                 common::has<common::xnode_type_t::storage_exchange>(vnetwork_driver()->type()));
     // if (m_cons_face != nullptr) {
     //     m_cons_face->start(this->start_time());
     // }
@@ -195,7 +195,7 @@ void xtop_vnode::driver_removed() {
     if (m_rpc_services != nullptr) {
         m_rpc_services->stop();
     }
-    // if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type()) && m_tx_prepare_mgr != nullptr) {
+    // if (common::has<common::xnode_type_t::storage_exchange>(m_the_binding_driver->type()) && m_tx_prepare_mgr != nullptr) {
     //     m_tx_prepare_mgr->stop();
     // }
     sync_remove_vnet();

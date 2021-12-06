@@ -148,7 +148,7 @@ common::xnode_address_t build_data_node_address(common::xaccount_address_t accou
                                                 common::xslot_id_t slot_id,
                                                 common::xlogic_epoch_t logic_epoch,
                                                 common::xgroup_id_t data_group_id) {
-    if (data_group_id != common::xarchive_group_id && data_group_id != common::xfull_node_group_id) {
+    if (data_group_id != common::xarchive_group_id && data_group_id != common::xexchange_group_id) {
         assert(false);
         return{};
     }

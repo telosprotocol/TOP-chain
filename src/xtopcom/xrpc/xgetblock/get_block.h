@@ -64,7 +64,7 @@ public:
         REGISTER_QUERY_METHOD(getZecs);
         REGISTER_QUERY_METHOD(getEdges);
         REGISTER_QUERY_METHOD(getArcs);
-        REGISTER_QUERY_METHOD(getFullNodes);
+        REGISTER_QUERY_METHOD(getExchangeNodes);
         REGISTER_QUERY_METHOD(getConsensus);
         REGISTER_QUERY_METHOD(getStandbys);
         REGISTER_QUERY_METHOD(queryNodeInfo);
@@ -116,7 +116,7 @@ public:
     void getZecs();
     void getEdges();
     void getArcs();
-    void getFullNodes();
+    void getExchangeNodes();
     void getConsensus();
     void getStandbys();
     void queryNodeInfo();

@@ -57,7 +57,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         m_arc_handler->start();
         break;
     }
-    case common::xnode_type_t::storage_full_node:
+    case common::xnode_type_t::storage_exchange:
     {
         init_rpc_cb_thread();
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));

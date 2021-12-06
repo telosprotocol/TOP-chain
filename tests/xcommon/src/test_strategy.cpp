@@ -24,7 +24,7 @@ TEST(xcommon, default_strategy) {
     EXPECT_FALSE(strategy.allow(xnode_type_t::rec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::zec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::archive));
-    EXPECT_FALSE(strategy.allow(xnode_type_t::full_node));
+    EXPECT_FALSE(strategy.allow(xnode_type_t::exchange));
     EXPECT_FALSE(strategy.allow(xnode_type_t::edge));
     EXPECT_FALSE(strategy.allow(xnode_type_t::consensus));
     EXPECT_FALSE(strategy.allow(xnode_type_t::consensus_auditor));
@@ -40,7 +40,7 @@ TEST(xcommon, node_type_strategy) {
     EXPECT_FALSE(strategy.allow(xnode_type_t::rec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::zec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::archive));
-    EXPECT_FALSE(strategy.allow(xnode_type_t::full_node));
+    EXPECT_FALSE(strategy.allow(xnode_type_t::exchange));
     EXPECT_FALSE(strategy.allow(xnode_type_t::edge));
     EXPECT_FALSE(strategy.allow(xnode_type_t::consensus));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus_auditor));
@@ -58,7 +58,7 @@ TEST(xcommon, user_strategy) {
     EXPECT_FALSE(strategy.allow(xnode_type_t::rec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::zec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::archive));
-    EXPECT_FALSE(strategy.allow(xnode_type_t::full_node));
+    EXPECT_FALSE(strategy.allow(xnode_type_t::exchange));
     EXPECT_FALSE(strategy.allow(xnode_type_t::edge));
     EXPECT_FALSE(strategy.allow(xnode_type_t::consensus));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus_auditor));
@@ -84,11 +84,11 @@ TEST(xcommon, test_unordered_strategy) {
 
     // defaulty: enable
     EXPECT_TRUE(strategy.allow(xnode_type_t::archive));
-    EXPECT_TRUE(strategy.allow(xnode_type_t::full_node));
+    EXPECT_TRUE(strategy.allow(xnode_type_t::exchange));
     EXPECT_TRUE(strategy.allow(xnode_type_t::frozen));
     EXPECT_TRUE(strategy.allow(xnode_type_t::invalid));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus));
-    EXPECT_TRUE(strategy.allow(xnode_type_t::consensus | xnode_type_t::full_node | xnode_type_t::archive));
+    EXPECT_TRUE(strategy.allow(xnode_type_t::consensus | xnode_type_t::exchange | xnode_type_t::archive));
 
     // rec: disable
     EXPECT_FALSE(strategy.allow(xnode_type_t::rec));
