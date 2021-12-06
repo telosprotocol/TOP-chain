@@ -40,7 +40,9 @@ class xdatamock_tx {
     std::shared_ptr<xaccount_context_t> get_source_context() {return m_source_context;}
     std::shared_ptr<xaccount_context_t> get_target_context() {return m_target_context;}
     uint64_t get_transfer_out_amount() {return m_transfer_out_amount;}
-    uint32_t get_deposit() {return m_deposit;};
+    uint32_t get_deposit() {return m_deposit;}
+
+    void set_target_account(const std::string & target_account) {m_target_account = target_account;}
 
 private:
     xobject_ptr_t<xstore_face_t> m_store;
