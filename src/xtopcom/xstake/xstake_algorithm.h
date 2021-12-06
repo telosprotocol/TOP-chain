@@ -282,7 +282,7 @@ template <>
 uint64_t minimal_deposit_of<common::xminer_type_t::archive>();
 
 template <>
-uint64_t minimal_deposit_of<common::xminer_type_t::full_node>();
+uint64_t minimal_deposit_of<common::xminer_type_t::exchange>();
 
 template <>
 uint64_t minimal_deposit_of<common::xminer_type_t::advance>();
@@ -318,10 +318,10 @@ template <>
 bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_type);
 
 template <>
-bool could_be<common::xnode_type_t::storage_full_node>(common::xminer_type_t const miner_type);
+bool could_be<common::xnode_type_t::storage_exchange>(common::xminer_type_t const miner_type);
 
 template <>
-bool could_be<common::xnode_type_t::full_node>(common::xminer_type_t const miner_type);
+bool could_be<common::xnode_type_t::exchange>(common::xminer_type_t const miner_type);
 
 template <>
 bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type);
@@ -356,8 +356,8 @@ public:
     /// @brief Check to see if this node could be an edge based on miner type.
     bool could_be_edge() const noexcept;
 
-    /// @brief Check to see if this node could be a full node based on miner type.
-    bool could_be_full_node() const noexcept;
+    /// @brief Check to see if this node could be a exchange node based on miner type.
+    bool could_be_exchange() const noexcept;
 
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
@@ -380,8 +380,8 @@ public:
     /// @brief Check to see if this node can be an edge based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_edge() const noexcept;
 
-    /// @brief Check to see if this node can be a full node based on miner type and other information (e.g. deposit, amount of received tickets).
-    bool can_be_full_node() const noexcept;
+    /// @brief Check to see if this node can be a exchange based on miner type and other information (e.g. deposit, amount of received tickets).
+    bool can_be_exchange() const noexcept;
 
     /**
      * @brief check if self is an invlid node
@@ -442,7 +442,7 @@ public:
      */
     uint64_t archive_stake() const noexcept;
 
-    uint64_t full_node_stake() const noexcept;
+    uint64_t exchange_stake() const noexcept;
 
     /**
      * @brief Get role type

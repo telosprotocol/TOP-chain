@@ -53,8 +53,8 @@ to_string(xnode_type_t const type) {
         string += "archive.";
     }
 
-    if (has<xnode_type_t::full_node>(type)) {
-        string += "full_node.";
+    if (has<xnode_type_t::exchange>(type)) {
+        string += "exchange.";
     }
 
     if (has<xnode_type_t::group>(type)) {
