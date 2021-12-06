@@ -8,8 +8,8 @@ R"(
     "adv1": [
         {
             "gid": 0,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff070402010000ff"
         },
         {
@@ -430,8 +430,8 @@ R"(
     "adv2": [
         {
             "gid": 0,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff0b0402010000ff"
         },
         {
@@ -850,7 +850,7 @@ R"(
         }
     ],
     "all": [
-        "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+        "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
         "027872c23921307e972fab4724d99f81cdbb5e14",
         "a1ac50d3e2d3ef32af74c46e5e53d9809d7cb5d1",
         "5421e423a65793b9a9d5c1e17940c016f150ca39",
@@ -1017,8 +1017,8 @@ R"(
     "arc": [
         {
             "gid": 0,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff030080010000ff"
         },
         {
@@ -1379,8 +1379,8 @@ R"(
     "edg": [
         {
             "gid": 0,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff0300fc010000ff"
         },
         {
@@ -1390,12 +1390,12 @@ R"(
             "xip": "ffffffffffffffffff0300fc010000ff"
         }
     ],
-    "fullnode": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+    "exchange": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
     "rec": [
         {
             "gid": 0,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff030000000000ff"
         },
         {
@@ -1444,8 +1444,8 @@ R"(
     "val1": [
         {
             "gid": 1,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff070502010000ff"
         },
         {
@@ -1806,8 +1806,8 @@ R"(
     "val2": [
         {
             "gid": 1,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff0b0502010000ff"
         },
         {
@@ -2168,8 +2168,8 @@ R"(
     "val3": [
         {
             "gid": 2,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff0f0502010000ff"
         },
         {
@@ -2530,8 +2530,8 @@ R"(
     "val4": [
         {
             "gid": 2,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff130502010000ff"
         },
         {
@@ -2892,8 +2892,8 @@ R"(
     "zec": [
         {
             "gid": 0,
-            "node_id": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
-            "pubkey": "DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!",
+            "node_id": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
+            "pubkey": "DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!",
             "xip": "ffffffffffffffffff030004010000ff"
         },
         {

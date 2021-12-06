@@ -48,9 +48,9 @@ void xrole_chains_t::init_chains() {
     add_tables(nt::storage_archive, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
     add_chain(nt::storage_archive, sys_drand_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::storage_full_node, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
-    add_tables(nt::storage_full_node, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
-    add_tables(nt::storage_full_node, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_exchange, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_exchange, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_exchange, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
 }
 
 void xrole_chains_t::add_chain(common::xnode_type_t allow_types,

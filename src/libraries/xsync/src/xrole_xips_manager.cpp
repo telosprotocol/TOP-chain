@@ -130,7 +130,7 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_edge_archive_l
     if (m_vnetwork_driver == nullptr)
         return {};
     xip_vector_ptr edge_archive_xips{};
-    edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), m_self_xip);
+    edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_exchange), m_self_xip);
 
     std::unique_lock<std::mutex> lock(m_lock);
 
