@@ -650,7 +650,7 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     std::vector<xchain_state_info_t> &info_list = ptr->info_list;
 
     if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
-        xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive or full node) %" PRIx64 " count(%u), %s %s",
+        xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive or exchange) %" PRIx64 " count(%u), %s %s",
             msg_hash, info_list.size(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
@@ -784,7 +784,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
 
         m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, vnetwork_driver, set_table_ids);
 //            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive),
-//            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), set_table_ids);
+//            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_exchange), set_table_ids);
 
         XMETRICS_GAUGE(metrics::xsync_cost_role_add_event, 1);
 

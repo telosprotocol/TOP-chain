@@ -142,7 +142,7 @@ static std::unordered_map<common::xnode_type_t, std::string> node_type_map = {{c
                                                                               {common::xnode_type_t::storage_archive, "archive"},
                                                                               {common::xnode_type_t::rec, "root_beacon"},
                                                                               {common::xnode_type_t::zec, "sub_beacon"},
-                                                                              {common::xnode_type_t::storage_full_node, "full_node"}};
+                                                                              {common::xnode_type_t::storage_exchange, "exchange"}};
 
 void property_json(xobject_ptr_t<base::xvbstate_t> const & state, json & j) {
     auto const & all_properties = state->get_all_property_names();

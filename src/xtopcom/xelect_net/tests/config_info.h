@@ -15,7 +15,7 @@ local_port = 9000
 country = CN
 first_node = false
 local_ip = 127.0.0.1
-node_id = DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!
+node_id = DEMOEXCHANGEACCOUNT!DEMOEXCHANGEACCOUNT!
 public_endpoints = 127.0.0.1:9000,127.0.0.1:9001,127.0.0.1:9002,127.0.0.1:9003
 
 [db]
