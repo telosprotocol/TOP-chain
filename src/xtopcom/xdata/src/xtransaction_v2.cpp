@@ -398,8 +398,7 @@ void xtransaction_v2_t::parse_to_json(xJson::Value& result_json, const std::stri
 
     if (tx_version == RPC_VERSION_V2) {
         result_json["sender_account"] = m_source_addr;
-        // must return addr with table id
-        result_json["receiver_account"] = m_adjust_target_addr;
+        result_json["receiver_account"] = m_target_addr;
         result_json["amount"] = static_cast<xJson::UInt64>(m_amount);
         result_json["token_name"] = m_token_name;
         result_json["edge_nodeid"] = m_edge_nodeid;
@@ -438,8 +437,7 @@ void xtransaction_v2_t::parse_to_json(xJson::Value& result_json, const std::stri
         t_action_json["action_hash"] = m_target_action.get_action_hash();
         t_action_json["action_type"] = m_target_action.get_action_type();
         t_action_json["action_size"] = m_target_action.get_action_size();
-        // must return addr with table id
-        t_action_json["tx_receiver_account_addr"] = m_adjust_target_addr;
+        t_action_json["tx_receiver_account_addr"] = m_target_addr;
         t_action_json["action_name"] = m_target_action_name;
         t_action_json["action_param"] = data::uint_to_str(target_action_para.data(), target_action_para.size());
         t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
