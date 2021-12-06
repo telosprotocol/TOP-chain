@@ -129,6 +129,30 @@ TEST_F(test_transfer, transfer_v2_not_enough) {
     EXPECT_EQ(55000, m_trans->get_current_used_tgas());
 }
 
+TEST_F(test_transfer, v2_burn_token) {
+    m_tx_mocker.set_target_account(top::black_hole_addr);
+    construct_cons_tx_v2();
+
+    m_source_context->top_token_transfer_in(ASSET_TOP(100));
+    auto balance = m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE);
+    EXPECT_EQ(ASSET_TOP(100), balance);
+
+    uint32_t tx_len = 10;
+    m_trans->get_transaction()->set_tx_len(tx_len);
+    xtransaction_transfer tx(m_source_context.get(), m_trans);
+
+    tx.parse();
+    auto ret = tx.source_fee_exec();
+    EXPECT_EQ(ret, 0);
+    ret = tx.source_action_exec();
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(balance - m_tx_mocker.get_transfer_out_amount(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));
+    EXPECT_EQ(m_tx_mocker.get_transfer_out_amount(), m_source_context->token_balance(XPROPERTY_BALANCE_BURN));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
+
+    ret = tx.target_fee_exec();
+    EXPECT_EQ(ret, 0);
+}
 #if 0 
 // fork based on tx fire timestamp
 TEST_F(test_transfer, transfer_v1) {

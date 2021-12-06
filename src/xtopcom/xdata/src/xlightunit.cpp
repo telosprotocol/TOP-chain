@@ -107,7 +107,7 @@ void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
             xJson::Value jv;
             jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
             jv["tx_hash"] = "0x" + tx->get_tx_hex_hash();
-            root["lightunit"]["lightunit_input"].append(jv);
+            root["lightunit"]["txs"].append(jv);
         }
     } else {
         auto tx_vec = get_txkeys();
@@ -115,7 +115,7 @@ void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
             xJson::Value jv;
             jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
             jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
-            root["lightunit"]["lightunit_input"].append(jv);
+            root["lightunit"]["txs"].append(jv);
         }
     }
 }
