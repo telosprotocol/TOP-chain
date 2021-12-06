@@ -191,7 +191,7 @@ uint64_t minimal_deposit_of<common::xminer_type_t::archive>() {
 }
 
 template <>
-uint64_t minimal_deposit_of<common::xminer_type_t::full_node>() {
+uint64_t minimal_deposit_of<common::xminer_type_t::exchange>() {
     return 0;
 }
 
@@ -246,13 +246,13 @@ bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_t
 }
 
 template <>
-bool could_be<common::xnode_type_t::storage_full_node>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::full_node>(miner_type);
+bool could_be<common::xnode_type_t::storage_exchange>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::exchange>(miner_type);
 }
 
 template <>
-bool could_be<common::xnode_type_t::full_node>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::full_node>(miner_type);
+bool could_be<common::xnode_type_t::exchange>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::exchange>(miner_type);
 }
 
 template <>
@@ -288,8 +288,8 @@ bool xreg_node_info::could_be_edge() const noexcept {
     return could_be<common::xnode_type_t::edge>(m_registered_role);
 }
 
-bool xreg_node_info::could_be_full_node() const noexcept {
-    return could_be<common::xnode_type_t::storage_full_node>(m_registered_role);
+bool xreg_node_info::could_be_exchange() const noexcept {
+    return could_be<common::xnode_type_t::storage_exchange>(m_registered_role);
 }
 
 bool xreg_node_info::can_be_rec() const noexcept {
@@ -320,8 +320,8 @@ bool xreg_node_info::can_be_validator() const noexcept {
     return could_be_validator();
 }
 
-bool xreg_node_info::can_be_full_node() const noexcept {
-    return could_be_full_node();
+bool xreg_node_info::can_be_exchange() const noexcept {
+    return could_be_exchange();
 }
 
 uint64_t xreg_node_info::deposit() const noexcept {
@@ -346,8 +346,8 @@ uint64_t xreg_node_info::get_required_min_deposit() const noexcept {
         min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::archive>());
     }
 
-    if (miner_type_has<common::xminer_type_t::full_node>()) {
-        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::full_node>());
+    if (miner_type_has<common::xminer_type_t::exchange>()) {
+        min_deposit = std::max(min_deposit, minimal_deposit_of<common::xminer_type_t::exchange>());
     }
 
     return min_deposit;
@@ -372,7 +372,7 @@ uint64_t xreg_node_info::auditor_stake() const noexcept { return get_auditor_sta
 uint64_t xreg_node_info::validator_stake() const noexcept { return get_validator_stake(); };
 uint64_t xreg_node_info::edge_stake() const noexcept { return 0; }
 uint64_t xreg_node_info::archive_stake() const noexcept { return 0; }
-uint64_t xreg_node_info::full_node_stake() const noexcept { return 0; }
+uint64_t xreg_node_info::exchange_stake() const noexcept { return 0; }
 
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();

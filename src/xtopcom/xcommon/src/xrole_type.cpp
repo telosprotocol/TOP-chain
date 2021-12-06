@@ -27,8 +27,8 @@ std::string to_string(xminer_type_t const role) {
     case xminer_type_t::advance:
         return XMINER_TYPE_ADVANCE;
 
-    case xminer_type_t::full_node:
-        return XMINER_TYPE_FULL_NODE;
+    case xminer_type_t::exchange:
+        return XMINER_TYPE_EXCHANGE;
 
     case xminer_type_t::validator:
         return XMINER_TYPE_VALIDATOR;
@@ -70,8 +70,8 @@ common::xminer_type_t to_miner_type(std::string const & node_type) {
         role_type = common::xminer_type_t::validator;
     } else if (node_type == XMINER_TYPE_ARCHIVE) {
         role_type = common::xminer_type_t::archive;
-    } else if (node_type == XMINER_TYPE_FULL_NODE) {
-        role_type = common::xminer_type_t::full_node;
+    } else if (node_type == XMINER_TYPE_EXCHANGE) {
+        role_type = common::xminer_type_t::exchange;
     }
 
     return role_type;

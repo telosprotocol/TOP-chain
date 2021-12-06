@@ -141,12 +141,12 @@ enum class xenum_node_type : std::uint32_t {
     validator = 0x00000002,
 
     archive = 0x00000004,
-    full_node = 0x00000008,
+    exchange = 0x00000008,
 
     consensus_auditor = consensus | auditor,
     consensus_validator = consensus | validator,
     storage_archive = storage | archive,
-    storage_full_node = storage | full_node,
+    storage_exchange = storage | exchange,
 
     /// @brief all type
     all = 0x0000FFFF,

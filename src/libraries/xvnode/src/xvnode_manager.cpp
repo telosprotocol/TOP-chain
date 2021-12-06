@@ -299,7 +299,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
         if (time % 6 == 0) {    // dump per one minute
             std::unordered_map<common::xnode_type_t, int32_t> metrics_vnode_status;
             metrics_vnode_status[common::xnode_type_t::storage_archive] = 0;
-            metrics_vnode_status[common::xnode_type_t::storage_full_node] = 0;
+            metrics_vnode_status[common::xnode_type_t::storage_exchange] = 0;
             metrics_vnode_status[common::xnode_type_t::edge] = 0;
             metrics_vnode_status[common::xnode_type_t::rec] = 0;
             metrics_vnode_status[common::xnode_type_t::zec] = 0;
@@ -336,7 +336,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
 
                 case common::xnode_type_t::storage_archive:
                     XATTRIBUTE_FALLTHROUGH;
-                case common::xnode_type_t::storage_full_node:
+                case common::xnode_type_t::storage_exchange:
                     metrics_vnode_status[vnode_real_part_type] = -3;
                     break;
 

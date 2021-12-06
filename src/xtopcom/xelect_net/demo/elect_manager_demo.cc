@@ -23,8 +23,8 @@ void ElectManagerDemo::OnElectUpdated(json all_info) {
             std::cout << it.value() << std::endl;
             continue;
         }
-        if (key == "fullnode") {
-            std::cout << "read fullnode_id:" << std::endl;
+        if (key == "exchange") {
+            std::cout << "read exchange_id:" << std::endl;
             std::cout << it.value() << std::endl;
             continue;
         }

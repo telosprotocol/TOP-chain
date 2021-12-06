@@ -176,13 +176,13 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         node_id_vec.push_back(prefix_account);
     }
 
-    all_info["fullnode"] = node_id_vec[0];  // the 0 index node is full node
+    all_info["exchange"] = node_id_vec[0];  // the 0 index node is exchange
 
     auto callback = [&node_id_vec](std::vector<std::string> & random_node_id_vec, uint32_t number) {
         random_node_id_vec.clear();
         std::set<size_t> index_set;
 
-        index_set.insert(0);  // 0 node if full node
+        index_set.insert(0);  // 0 node if exchange
         random_node_id_vec.push_back(node_id_vec[0]);
 
         while (random_node_id_vec.size() < number) {

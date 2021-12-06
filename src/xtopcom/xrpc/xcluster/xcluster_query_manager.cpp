@@ -401,10 +401,10 @@ void xcluster_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     if (j["archive"].isMember(target)) {
         ev.push_back("archiver");
     }
-    prop_name = data::election::get_property_by_group_id(common::xfull_node_group_id);
+    prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
     m_bh.query_account_property(j, addr, prop_name);
-    if (j["full_node"].isMember(target)) {
-        ev.push_back("full_node");
+    if (j["exchange"].isMember(target)) {
+        ev.push_back("exchange");
     }
 
     addr = sys_contract_rec_elect_edge_addr;
