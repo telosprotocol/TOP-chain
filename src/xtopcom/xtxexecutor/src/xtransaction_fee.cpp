@@ -191,6 +191,12 @@ void xtransaction_fee_t::update_fee_recv() {
 
 int32_t xtransaction_fee_t::update_fee_recv_self() {
     int32_t ret = xsuccess;
+    // only v2 token burn tx meets the following requirments
+    if ((m_trans->get_tx_type() == xtransaction_type_transfer)
+     && (m_trans->get_transaction()->get_tx_version() == xtransaction_version_2)) {
+        xassert(m_trans->get_target_addr() == black_hole_addr);
+        return ret;
+    }
     if (m_trans->get_transaction()->get_deposit() > 0) {
         ret = m_account_ctx->other_balance_to_available_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(m_trans->get_transaction()->get_deposit()));
         if (xsuccess != ret) {
