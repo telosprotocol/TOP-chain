@@ -31,6 +31,7 @@
 #include "topio_setproctitle.h"
 #include "safebox_http.h"
 #include "CLI11.hpp"
+#include "xnode/xconfig.h"
 
  // nlohmann_json
  #include <nlohmann/json.hpp>
@@ -1219,10 +1220,20 @@ int StartNode(config_t& config) {
     }
 
 
-    if (!load_keystore(config)) {
-        //std::cout << "decrypt_keystore failed, exit" << std::endl;
-        return -1;
+    if (config.config_file.empty()) { //load from keystore
+        if (!load_keystore(config)) {
+                //std::cout << "decrypt_keystore failed, exit" << std::endl;
+                return -1;
+        }
+    } else { //read from config
+        auto & topio_config = top::topio::xtopio_config_t::get_instance();
+        topio_config.load_config_file(config.config_file);
+        config.node_id =  topio_config.get_string("node_id");
+        config.pub_key = topio_config.get_string("public_key");
+        std::cout << "node_id: " << config.node_id << "\n";
+        std::cout << "public_key: " << config.pub_key << "\n";
     }
+
 
 #ifdef DEBUG
     std::cout << "datadir:       " << config.datadir << std::endl
