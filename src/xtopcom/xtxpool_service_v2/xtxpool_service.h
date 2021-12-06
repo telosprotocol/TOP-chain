@@ -33,6 +33,13 @@ struct table_info {
     base::xvproperty_prove_ptr_t m_property_prove{nullptr};
 };
 
+enum enum_txpool_service_status
+{
+    enum_txpool_service_status_running = 0,
+    enum_txpool_service_status_faded = 1,
+    enum_txpool_service_status_not_run = 2,
+};
+
 class xtxpool_service final
   : public xtxpool_service_face
   , public std::enable_shared_from_this<xtxpool_service> {
@@ -42,8 +49,8 @@ public:
 public:
     bool start(const xvip2_t & xip) override;
     bool unreg(const xvip2_t & xip) override;
+    bool fade(const xvip2_t & xip) override;
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
-    bool is_running() const override;
     // bool is_receipt_sender(const base::xtable_index_t & tableid) const override;
     bool is_send_receipt_role() const override {
         return m_is_send_receipt_role;
@@ -73,6 +80,7 @@ private:
     void drop_msg(vnetwork::xmessage_t const & message, std::string reason);
     void push_send_fail_record(int32_t err_type);
     // void send_neighbor_sync_req(base::xtable_shortid_t table_sid);
+    enum_txpool_service_status status() const;
 
 private:
     xvip2_t m_xip;
@@ -86,7 +94,7 @@ private:
     common::xnode_type_t m_node_type;
     uint16_t m_node_id;
     uint16_t m_shard_size;
-    std::atomic<bool> m_running{false};
+    std::atomic<enum_txpool_service_status> m_status{enum_txpool_service_status_not_run};
     std::string m_vnetwork_str;
     std::unordered_map<uint16_t, table_info> m_table_info_cache;
 };

@@ -160,6 +160,9 @@ void xtop_vnode::fade() {
     // if (m_cons_face != nullptr) {
     //     m_cons_face->fade();
     // }
+    if (m_txpool_face != nullptr) {
+        m_txpool_face->fade();
+    }
     m_faded.store(true, std::memory_order_release);
 }
 

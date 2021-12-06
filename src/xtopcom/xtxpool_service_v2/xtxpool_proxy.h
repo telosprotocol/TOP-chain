@@ -17,6 +17,7 @@ public:
 public:
     bool    start() override;
     bool    unreg() override;
+    bool    fade() override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & trans, bool local) override;
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override;
 

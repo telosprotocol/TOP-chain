@@ -148,6 +148,16 @@ bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetw
     return false;
 }
 
+bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
+    xinfo("xtxpool_service_mgr::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    std::shared_ptr<xtxpool_service_face> service = find(xip);
+    if (service != nullptr) {
+        service->fade(xip);
+        return true;
+    }
+    return false;
+}
+
 // uninit data
 bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
     // auto key = xcons_utl::erase_version(xip);
