@@ -103,7 +103,7 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
         }
 
         enum_chain_sync_policy sync_policy = enum_chain_sync_policy_fast;
-        if (common::has<common::xnode_type_t::storage_full_node>(network_self.type()) && common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
+        if (common::has<common::xnode_type_t::storage_exchange>(network_self.type()) && common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
             sync_policy = enum_chain_sync_policy_full;
         }
 
