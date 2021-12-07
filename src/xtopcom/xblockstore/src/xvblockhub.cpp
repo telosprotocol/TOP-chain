@@ -119,7 +119,7 @@ namespace top
             bool recovered_something = false;
             if(m_meta->_highest_cert_block_height > 0)
             {
-                const int64_t min_recover_height = m_meta->_highest_cert_block_height + 1;
+                const int64_t min_recover_height = m_meta->_highest_cert_block_height;
                 const int64_t max_recover_height = min_recover_height + base::enum_account_save_meta_interval + 1;
                 for(int64_t i = min_recover_height; i <= max_recover_height; ++i)
                 {
@@ -1057,9 +1057,9 @@ namespace top
                     exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
                     exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
                     update_bindex(exist_cert.get());
-                    xinfo("xblockacct_t::store_committed_unit_block update index,store block(%s)", new_raw_block->dump().c_str());
+                    xinfo("xblockacct_t::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
                 } else {
-                    xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s)", new_raw_block->dump().c_str());
+                    xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
                 }
                 return true;
             }
