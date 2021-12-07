@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include "xbasic/xutility.h"
 #include "xbasic/xmemory.hpp"
+#include "xbasic/xutility.h"
 #include "xcommon/xaddress.h"
 #include "xcontract_runtime/xblock_sniff_config.h"
 #include "xdata/xgenesis_data.h"
+#include "xsystem_contract_runtime/xsystem_contract_object_creator.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvledger.h"
@@ -40,16 +41,10 @@ struct xtop_contract_deployment_data {
 };
 using xcontract_deployment_data_t = xtop_contract_deployment_data;
 
-struct xtop_system_contract_data {
-    std::unique_ptr<system_contracts::xbasic_system_contract_t> system_contract;
-    xcontract_deployment_data_t deployment_data;
-};
-using xsystem_contract_data = xtop_system_contract_data;
-
 class xtop_system_contract_manager {
 private:
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> m_system_contract_deployment_data;
-    std::unordered_map<common::xaccount_address_t, std::unique_ptr<system_contracts::xbasic_system_contract_t>> m_system_contracts;
+    std::unordered_map<common::xaccount_base_address_t, std::unique_ptr<xcontract_object_creator_t>> m_system_contract_creators;
 
 public:
     xtop_system_contract_manager() = default;
@@ -71,8 +66,8 @@ public:
 
     void deploy(observer_ptr<base::xvblockstore_t> const & blockstore);
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & deployment_data() const noexcept;
-    observer_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept;
-    observer_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const;
+    std::unique_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept;
+    std::unique_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const;
 
 private:
     template <typename system_contract_type>
@@ -104,31 +99,24 @@ void xtop_system_contract_manager::deploy_system_contract(common::xaccount_addre
 
     xcontract_deployment_data_t data{node_type, sniff_type, broadcast_config, std::move(timer_config), std::move(block_config)};
 #if !defined(NDEBUG)
-    auto r1 = 
+    auto r1 =
 #endif
     m_system_contract_deployment_data.insert(std::make_pair(address, std::move(data)));
     assert(top::get<bool>(r1));
 
+    auto sys_contract_creator = top::make_unique<xsystem_contract_object_creator_t<system_contract_type>>();
+#if !defined(NDEBUG)
+    auto r2 =
+#endif
+    m_system_contract_creators.emplace(address.base_address(), std::move(sys_contract_creator));
+    assert(top::get<bool>(r2));
+
     if (address.ledger_id().zone_id() == common::xconsensus_zone_id) {
         for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
             auto table_address = common::xaccount_address_t{address.base_address(), static_cast<uint16_t>(i)};
-
-            auto sys_contract = top::make_unique<system_contract_type>();
-#if !defined(NDEBUG)
-            auto r2 =
-#endif
-            m_system_contracts.emplace(table_address, std::move(sys_contract));
-            assert(top::get<bool>(r2));
             init_system_contract(table_address, blockstore);
         }
     } else {
-        auto sys_contract = top::make_unique<system_contract_type>();
-#if !defined(NDEBUG)
-        auto r2 =
-#endif
-        m_system_contracts.emplace(address, std::move(sys_contract));
-        assert(top::get<bool>(r2));
-
         init_system_contract(address, blockstore);
     }
 }
