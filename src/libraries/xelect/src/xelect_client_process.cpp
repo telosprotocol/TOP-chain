@@ -187,7 +187,9 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
     }
 
     // only process light unit, others are filtered
-    xassert(block->get_block_class() == base::enum_xvblock_class_light);
+    xassert(block->get_block_class() == base::enum_xvblock_class_light ||
+            (block->get_block_class() == base::enum_xvblock_class_full &&
+             base::xvblock_fork_t::is_block_match_version(block->get_block_version(), base::enum_xvblock_fork_version_unit_opt)));
     xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
     // TODO(jimmy) db event must stable and order
     base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
