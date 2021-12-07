@@ -389,7 +389,7 @@ xzone_id_t const
 #endif
     xfrozen_zone_id{xfrozen_zone_id_value};
 
-XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_archive_index - 1};
+XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_fullnode_index};
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xzone_id_t
 #else
