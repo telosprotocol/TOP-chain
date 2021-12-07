@@ -45,9 +45,9 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
         std::vector<vnetwork::xvnode_address_t> archive_list;
 
         if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
-            common::has<common::xnode_type_t::consensus>(node_type)) {
+            common::has<common::xnode_type_t::consensus_validator>(node_type)) {
             std::vector<vnetwork::xvnode_address_t> nodes;
-            auto inserted = m_role_xips_mgr->get_rand_archives(1);
+            auto inserted = m_role_xips_mgr->get_rand_full_nodes(1);
             nodes.insert(nodes.end(), inserted.begin(), inserted.end());
             inserted = m_role_xips_mgr->get_edge_archive_list();
             nodes.insert(nodes.end(), inserted.begin(), inserted.end());

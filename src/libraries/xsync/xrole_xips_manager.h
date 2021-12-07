@@ -113,6 +113,9 @@ public:
     std::vector<vnetwork::xvnode_address_t> get_rand_archives(uint32_t max_peers);
 
     std::vector<vnetwork::xvnode_address_t> get_archive_list();
+
+    std::vector<vnetwork::xvnode_address_t> get_rand_full_nodes(uint32_t max_peers);
+    std::vector<vnetwork::xvnode_address_t> get_full_nodes();
     std::vector<vnetwork::xvnode_address_t> get_edge_archive_list();
 
     bool get_self_addr(vnetwork::xvnode_address_t& self_addr) const;
