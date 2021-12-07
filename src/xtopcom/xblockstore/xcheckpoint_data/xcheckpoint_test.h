@@ -1,7 +1,7 @@
 #pragma once
 
 namespace top {
-namespace chain_checkpoint {
+namespace store {
 static auto checkpoint_json =
     R"T(
 {
@@ -34,4 +34,4 @@ static auto checkpoint_json =
 }
 )T";
 }
-}  // namespace top
+}
