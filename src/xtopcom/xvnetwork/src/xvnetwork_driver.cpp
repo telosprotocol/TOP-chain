@@ -213,6 +213,18 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
     return result;
 }
 
+std::vector<common::xnode_address_t> xtop_vnetwork_driver::fullnode_addresses(std::error_code & ec) const {
+    assert(m_vhost != nullptr);
+    std::vector<common::xnode_address_t> result;
+
+    auto tmp = m_vhost->members_info_of_group2(common::build_fullnode_group_address(network_id()), common::xelection_round_t::max());
+    std::transform(std::begin(tmp), std::end(tmp), std::back_inserter(result), [](std::pair<common::xslot_id_t const, data::xnode_info_t> & datum) -> common::xnode_address_t {
+        return top::get<data::xnode_info_t>(std::move(datum)).address;
+    });
+
+    return result;
+}
+
 std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     xdbg("[vnetwork driver] getting table ids for %s", address().to_string().c_str());
 
@@ -220,6 +232,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     book_ids.reserve(enum_vbucket_has_books_count);
 
     switch (type()) {
+    case common::xnode_type_t::fullnode:
     case common::xnode_type_t::storage_archive:
         XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::storage_exchange:

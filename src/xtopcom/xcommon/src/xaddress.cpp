@@ -778,6 +778,15 @@ build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const
     };
 }
 
+xgroup_address_t build_fullnode_group_address(xnetwork_id_t const & network_id) {
+    return xgroup_address_t{
+        network_id,
+        xfullnode_zone_id,
+        xdefault_cluster_id,
+        xdefault_group_id
+    };
+}
+
 xgroup_address_t
 build_consensus_sharding_address(xgroup_id_t const & group_id,
                                  xnetwork_id_t const & network_id) {

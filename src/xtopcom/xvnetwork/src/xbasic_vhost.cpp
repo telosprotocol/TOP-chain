@@ -56,6 +56,13 @@ std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_
     return m_election_cache_data_accessor->sharding_nodes(group_addr, election_round, ec);
 }
 
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_of_group(xcluster_address_t const & group_addr,
+                                                                                         common::xelection_round_t const & election_round,
+                                                                                         std::error_code & ec) const {
+    assert(m_election_cache_data_accessor != nullptr);
+    return m_election_cache_data_accessor->sharding_nodes(group_addr, election_round, ec);
+}
+
 common::xnode_address_t xtop_basic_vhost::parent_group_address(xvnode_address_t const & child_addr) const {
     std::error_code ec{election::xdata_accessor_errc_t::success};
 
