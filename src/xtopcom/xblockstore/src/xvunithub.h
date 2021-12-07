@@ -84,6 +84,7 @@ namespace top
 
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
+            virtual bool                check_block(base::xvblock_t* block,const int atag = 0) override;
 
 
         public://batch process api
