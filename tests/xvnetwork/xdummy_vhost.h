@@ -64,6 +64,10 @@ public:
         m_counter++;
         return {{}, {}};
     }
+    std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group(common::xgroup_address_t const &, common::xelection_round_t const &, std::error_code &) const override {
+        m_counter++;
+        return {{}, {}};
+    }
 
     common::xlogic_time_t last_logic_time() const noexcept override { return 0; }
 

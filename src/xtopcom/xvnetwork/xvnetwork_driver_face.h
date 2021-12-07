@@ -151,7 +151,12 @@ public:
      * 
      * @return std::vector<xvnode_address_t> 
      */
-    virtual std::vector<xvnode_address_t> archive_addresses(common::xnode_type_t node_type) const = 0;
+    virtual std::vector<common::xnode_address_t> archive_addresses(common::xnode_type_t node_type) const = 0;
+
+    /// @brief Get the fullnodes' addresses
+    /// @param ec Store the error code when getting the data.
+    /// @return The fullnodes' addresses.
+    virtual std::vector<common::xnode_address_t> fullnode_addresses(std::error_code & ec) const = 0;
 
     /**
      * @brief Get table ids belonging to this zone

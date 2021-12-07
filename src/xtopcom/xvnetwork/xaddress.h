@@ -26,8 +26,10 @@ NS_BEG2(top, vnetwork)
 using xaccount_address_t = common::xaccount_address_t;
 
 using xcluster_address_t = common::xcluster_address_t;
+using xgroup_address_t = common::xgroup_address_t;
 
 using xvnode_address_t = common::xnode_address_t;
+using xnode_address_t = common::xnode_address_t;
 
 template <
     common::xnode_type_t VNodeTypeV,
