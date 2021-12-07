@@ -6,6 +6,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
+#include "xcheckpoint.h"
 #include "xvunithub.h"
 #include "xvledger/xvdrecycle.h"
 #include "xvledger/xunit_proof.h"
@@ -622,9 +623,45 @@ namespace top
             return true;
         }
 
+        bool xvblockstore_impl::check_block(base::xvblock_t * block,const int atag)
+        {
+            // step 1: verify checkpoint
+            auto const & account = block->get_account();
+            auto const & checkpoints = xchain_checkpoint_t::checkpoints(account);
+            if (checkpoints.empty()) {
+                return true;
+            }
+            auto const height = block->get_height();
+            auto const & hash = block->get_block_hash();
+            auto it = checkpoints.find(height);
+            if (it != checkpoints.end() && it->second != hash) {
+                return false;
+            }
+            // step 2: check latest checkpoint
+            for (auto it = checkpoints.crbegin(); it != checkpoints.crend(); it++) {
+                auto const block_vec = load_block_object(account, it->first).get_vector();
+                if (block_vec.empty()) {
+                    continue;
+                }
+                for (auto const & one_block : block_vec) {
+                    if (one_block->get_block_hash() == it->second) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
+        }
+
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
+
+            // verify checkpoint before store
+            if (!check_block(container_block)) {
+                xwarn("xvblockstore_impl::store_block,checkpoint not pass,block=%s",container_block->dump().c_str());
+                return false;
+            }
 
             //first do store block
             bool ret = container_account->store_block(container_block);

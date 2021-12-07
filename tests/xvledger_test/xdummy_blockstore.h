@@ -138,6 +138,10 @@ public:
         return false;
     }
 
+    bool check_block(base::xvblock_t * block,const int atag = 0) override {
+        return false;
+    }
+
     bool store_blocks(const base::xvaccount_t &, std::vector<base::xvblock_t *> &,const int atag = 0) override {
         return false;
     }
