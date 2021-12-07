@@ -102,7 +102,7 @@ constexpr uint64_t TIMER_BLOCK_HEIGHT_PER_YEAR = 3155815;
  * @return true
  * @return false
  */
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const enable_archive_miner);
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled);
 
 /*#if defined(__LINUX_PLATFORM__) || defined(__MAC_PLATFORM__)
 typedef __uint128_t top::xstake::uint128_t;
@@ -356,8 +356,11 @@ public:
     /// @brief Check to see if this node could be an edge based on miner type.
     bool could_be_edge() const noexcept;
 
-    /// @brief Check to see if this node could be a exchange node based on miner type.
+    /// @brief Check to see if this node could be an exchange node based on miner type.
     bool could_be_exchange() const noexcept;
+
+    /// @brief Check to see if this account could be a fullnode node based on miner type.
+    bool could_be_fullnode() const noexcept;
 
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
@@ -380,8 +383,12 @@ public:
     /// @brief Check to see if this node can be an edge based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_edge() const noexcept;
 
-    /// @brief Check to see if this node can be a exchange based on miner type and other information (e.g. deposit, amount of received tickets).
+    /// @brief Check to see if this node can be an exchange based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_exchange() const noexcept;
+
+    /// @brief Check to see if this account can be a fullnode based on miner type and other information (e.g. deposit, amount of received tickects).
+    /// @return 
+    bool can_be_fullnode() const noexcept;
 
     /**
      * @brief check if self is an invlid node
@@ -443,6 +450,8 @@ public:
     uint64_t archive_stake() const noexcept;
 
     uint64_t exchange_stake() const noexcept;
+
+    uint64_t fullnode_stake() const noexcept;
 
     /**
      * @brief Get role type
