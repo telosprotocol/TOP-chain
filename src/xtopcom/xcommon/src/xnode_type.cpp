@@ -41,6 +41,10 @@ to_string(xnode_type_t const type) {
         string += "consensus.";
     }
 
+    if (has<xnode_type_t::full_node>(type)) {
+        string += "fullnode.";
+    }
+
     if (has<xnode_type_t::auditor>(type)) {
         string += "auditor.";
     }
@@ -96,25 +100,25 @@ has(xnode_type_t const target, xnode_type_t const input) noexcept {
 
 xnode_type_t
 real_part_type(xnode_type_t const in) noexcept {
-    return static_cast<xnode_type_t>(0x0000FFFF & static_cast<std::underlying_type<xnode_type_t>::type>(in));
+    return xnode_type_t::real_part_mask & in;
 }
 
 xnode_type_t
 virtual_part_type(xnode_type_t const in) noexcept {
-    return static_cast<xnode_type_t>(0xFFFF0000 & static_cast<std::underlying_type<xnode_type_t>::type>(in));
+    return xnode_type_t::virtual_part_mask & in;
 }
 
 xnode_type_t
 reset_virtual_part(xnode_type_t const in, xnode_type_t const desired_virtual_part_type) noexcept {
-    auto const high_part = desired_virtual_part_type & static_cast<xnode_type_t>(0xFFFF0000);
-    auto const result = in & static_cast<xnode_type_t>(0x0000FFFF);
+    auto const high_part = desired_virtual_part_type & xnode_type_t::virtual_part_mask;
+    auto const result = in & xnode_type_t::real_part_mask;
     return result | high_part;
 }
 
 xnode_type_t
 reset_real_part(xnode_type_t const in, xnode_type_t const desired_real_part_type) noexcept {
-    auto const low_part = desired_real_part_type & static_cast<xnode_type_t>(0x0000FFFF);
-    auto const result = in & static_cast<xnode_type_t>(0xFFFF0000);
+    auto const low_part = desired_real_part_type & xnode_type_t::real_part_mask;
+    auto const result = in & xnode_type_t::virtual_part_mask;
     return result | low_part;
 }
 
