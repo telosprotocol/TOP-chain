@@ -47,6 +47,9 @@ public:
                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const & group_addr, common::xelection_round_t const & election_round) const override final;
+    std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group(xcluster_address_t const & group_addr,
+                                                                           common::xelection_round_t const & election_round,
+                                                                           std::error_code & ec) const override final;
 
     xvnode_address_t parent_group_address(xvnode_address_t const & child_addr) const override final;
 

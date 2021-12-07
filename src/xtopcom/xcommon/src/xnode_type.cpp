@@ -41,7 +41,7 @@ to_string(xnode_type_t const type) {
         string += "consensus.";
     }
 
-    if (has<xnode_type_t::full_node>(type)) {
+    if (has<xnode_type_t::fullnode>(type)) {
         string += "fullnode.";
     }
 
