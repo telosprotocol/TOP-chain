@@ -135,7 +135,7 @@ enum class xenum_node_type : std::uint32_t {
     edge = 0x00008000,
 
     /// @brief full node zone type
-    full_node = 0x00010000,
+    fullnode = 0x00010000,
 
     /// @brief Auditor node.
     auditor = 0x00000001,

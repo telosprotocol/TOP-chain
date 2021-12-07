@@ -115,6 +115,9 @@ public:
      * @return std::map<common::xslot_id_t, data::xnode_info_t> 
      */
     virtual std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const & group_addr, common::xelection_round_t const & election_round) const = 0;
+    virtual std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group(xcluster_address_t const & group_addr,
+                                                                                   common::xelection_round_t const & election_round,
+                                                                                   std::error_code & ec) const = 0;
 
     /**
      * @brief Get the parent node info of specified child node
