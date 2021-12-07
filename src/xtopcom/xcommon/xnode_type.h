@@ -115,6 +115,12 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief Group node manages advance nodes & consensus nodes
     group = 0x08000000,
 
+    /// @brief Frozen zone type or frozen node type. It is used for synchronizing data.
+    frozen = 0x00000100,
+
+    /// @brief Consensus Zone type.
+    consensus = 0x00000200,
+
     /// @brief REC zone type or REC node type.
     rec = 0x00001000,
     committee = rec,
@@ -128,11 +134,8 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief Edge zone type or edge node type.
     edge = 0x00008000,
 
-    /// @brief Frozen zone type or frozen node type. It is used for synchronizing data.
-    frozen = 0x00000100,
-
-    /// @brief Consensus Zone type.
-    consensus = 0x00000200,
+    /// @brief full node zone type
+    full_node = 0x00010000,
 
     /// @brief Auditor node.
     auditor = 0x00000001,
@@ -149,7 +152,8 @@ enum class xenum_node_type : std::uint32_t {
     storage_exchange = storage | exchange,
 
     /// @brief all type
-    all = 0x0000FFFF,
+    real_part_mask    = 0x00FFFFFF,
+    virtual_part_mask = 0xFF000000
 };
 using xnode_type_t = xenum_node_type;
 
