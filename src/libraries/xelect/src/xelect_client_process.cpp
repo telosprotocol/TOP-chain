@@ -37,6 +37,7 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
     xdbg("xelect_client_process created %p", mb);
     // mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     mb->add_listener((int)mbus::xevent_major_type_chain_timer, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
+    m_xchain_timer->watch("elect_client_process_on_timer", 1, std::bind(&xelect_client_process::update_election_status, this, std::placeholders::_1));
 }
 
 bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
@@ -88,8 +89,8 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
     xdbg("[xelect_client_process::process_timer] update xchain timer to %" PRIu64, block->get_height());
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
 
-    xdbg("[xelect_client_process::process_timer] try update election status at logic time %" PRIu64, block->get_height());
-    update_election_status(block->get_height());
+    // xdbg("[xelect_client_process::process_timer] try update election status at logic time %" PRIu64, block->get_height());
+    // update_election_status(block->get_height());
 }
 
 //void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
@@ -161,17 +162,20 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 
 void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
     if (election_data_block == nullptr) {
+        xwarn("election block nullptr");
         return;
     }
 
     auto const block = dynamic_xobject_ptr_cast<data::xblock_t>(election_data_block);
     if (block == nullptr) {
+        xwarn("election block is not xblock_t");
         return;
     }
 
     common::xaccount_address_t const contract_address{ block->get_block_owner() };
     auto const it = m_election_status.find(contract_address);
     if (it == std::end(m_election_status)) {
+        xwarn("election block is unknown. %s", contract_address.c_str());
         return;
     }
 
@@ -257,7 +261,7 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
     }
 }
 
-void xelect_client_process::update_election_status(common::xlogic_time_t const& current_time) {
+void xelect_client_process::update_election_status(common::xlogic_time_t current_time) {
     constexpr config::xinterval_t update_divider = 4;
 
     auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / update_divider;
