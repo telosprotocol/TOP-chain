@@ -36,7 +36,6 @@ enum class xenum_miner_type : uint32_t {
     ///        but its business behavour is untrustable (since no deposit is required)
     ///        which means sync module won't pull data from such 'archive'
     exchange = 0x00000010,
-    /// @brief
 };
 using xminer_type_t = xenum_miner_type;
 
