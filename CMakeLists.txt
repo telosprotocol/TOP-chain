@@ -23,6 +23,7 @@ option(XENABLE_CONFIG_CHECK "Enable config check when node boot" OFF)
 option(XENABLE_MOCK_ZEC_STAKE "Enable mocking stake for ZEC" OFF)
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
+option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 
 if (XENABLE_TESTS)
     set(XENABLE_BLOCK_VERIFY OFF)
@@ -402,6 +403,10 @@ if (ENABLE_METRICS_DATAOBJECT)
     add_definitions(-DENABLE_METRICS_DATAOBJECT)
 endif()
 
+if (DISABLE_CORE_SIGNAL_CAPTURE)
+    add_definitions(-DDISABLE_CORE_SIGNAL_CAPTURE)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 
@@ -416,6 +421,7 @@ message(STATUS "XENABLE_VERBOSE_DBG:" ${XENABLE_VERBOSE_DBG})
 message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
+message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
 
 find_package(Threads REQUIRED)
 
