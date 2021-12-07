@@ -25,7 +25,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable archive miner type"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode type"},
             };
 
             // !!!change!!! fork time for galileo
@@ -33,21 +33,21 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable archive miner type"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode type"},
            };
 
             xchain_fork_config_t default_chain_config {
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable archive miner type"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode type"},
             };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable archive miner type"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable fullnode type"},
         };
 
         // !!!change!!! fork time for galileo
@@ -55,7 +55,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable archive miner type"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable fullnode type"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -63,7 +63,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable archive miner type"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable fullnode type"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {

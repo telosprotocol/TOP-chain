@@ -9,10 +9,11 @@
 
 NS_BEG2(top, xstake)
 
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const enable_archive_miner) {
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled) {
     uint32_t auditor_num = 0;
     uint32_t validator_num = 0;
     uint32_t archive_num = 0;
+    uint32_t fullnode_num = 0;
     uint32_t edge_num = 0;
     uint64_t total_votes = 0;
 
@@ -26,12 +27,13 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         xreg_node_info reg_node_info;
         reg_node_info.serialize_from(stream);
 
-        xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, votes: %llu\n",
+        xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, if_fullnode: %d, votes: %llu\n",
              reg_node_info.m_account.c_str(),
              reg_node_info.can_be_auditor(),
              reg_node_info.can_be_validator(),
-             enable_archive_miner ? reg_node_info.can_be_archive() : reg_node_info.legacy_can_be_archive(),
+             fullnode_enabled ? reg_node_info.can_be_archive() : reg_node_info.legacy_can_be_archive(),
              reg_node_info.can_be_edge(),
+             fullnode_enabled ? reg_node_info.can_be_fullnode() : 0,
              reg_node_info.m_vote_amount);
 
         if (reg_node_info.is_invalid_node())
@@ -44,16 +46,20 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
             validator_num++;
         }
 
-        if (enable_archive_miner) {
+        if (fullnode_enabled) {
             if (reg_node_info.can_be_archive()) {
                 archive_num++;
+            }
+
+            if (reg_node_info.can_be_fullnode()) {
+                fullnode_num++;
             }
         } else {
             if (reg_node_info.legacy_can_be_archive()) {
                 archive_num++;
             }
         }
-        
+
         if (reg_node_info.can_be_edge()) {
             edge_num++;
         }
@@ -64,11 +70,15 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
     auto CFG_VALIDATORS_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators);
     auto CFG_EDGES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_edges);
     auto CFG_ARCHIVES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives);
+    uint32_t CFG_FULLNODES_MIN = 0;
+    if (fullnode_enabled) {
+        CFG_FULLNODES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_fullnodes);
+    }
     auto CFG_TOTAL_VOTES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes);
 
     xinfo(
         "[check_registered_nodes_active] auditor_num: %u, AUDITORS_MIN: %u, validator_num: %u, VALIDATORS_MIN: %u, archive_num: %u, ARCHIVES_MIN: %u, edge_num: %u, EDGES_MIN: %u, "
-        "total_votes: %llu, TOTAL_VOTES_MIN: %llu",
+        "fullnode_num: %u, FULLNODES_MIN: %u total_votes: %llu, TOTAL_VOTES_MIN: %llu",
         auditor_num,
         CFG_AUDITORS_MIN,
         validator_num,
@@ -77,11 +87,13 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         CFG_ARCHIVES_MIN,
         edge_num,
         CFG_EDGES_MIN,
+        fullnode_num,
+        CFG_FULLNODES_MIN,
         total_votes,
         CFG_TOTAL_VOTES_MIN);
 
     return auditor_num >= CFG_AUDITORS_MIN && validator_num >= CFG_VALIDATORS_MIN && edge_num >= CFG_EDGES_MIN && archive_num >= CFG_ARCHIVES_MIN &&
-           total_votes >= CFG_TOTAL_VOTES_MIN;
+           fullnode_num >= CFG_FULLNODES_MIN && total_votes >= CFG_TOTAL_VOTES_MIN;
 }
 
 int32_t xreward_node_record::do_write(base::xstream_t & stream) const {
@@ -260,6 +272,11 @@ bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type
     return common::has<common::xminer_type_t::edge>(miner_type);
 }
 
+template <>
+bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
 bool xreg_node_info::could_be_rec() const noexcept {
     return could_be<common::xnode_type_t::rec>(m_registered_role);
 }
@@ -292,6 +309,10 @@ bool xreg_node_info::could_be_exchange() const noexcept {
     return could_be<common::xnode_type_t::storage_exchange>(m_registered_role);
 }
 
+bool xreg_node_info::could_be_fullnode() const noexcept {
+    return could_be<common::xnode_type_t::fullnode>(m_registered_role);
+}
+
 bool xreg_node_info::can_be_rec() const noexcept {
     return could_be_rec();
 }
@@ -322,6 +343,10 @@ bool xreg_node_info::can_be_validator() const noexcept {
 
 bool xreg_node_info::can_be_exchange() const noexcept {
     return could_be_exchange();
+}
+
+bool xreg_node_info::can_be_fullnode() const noexcept {
+    return can_be_auditor();
 }
 
 uint64_t xreg_node_info::deposit() const noexcept {
@@ -368,11 +393,29 @@ uint64_t xreg_node_info::zec_stake() const noexcept {
     }
     return stake;
 }
-uint64_t xreg_node_info::auditor_stake() const noexcept { return get_auditor_stake(); }
-uint64_t xreg_node_info::validator_stake() const noexcept { return get_validator_stake(); };
-uint64_t xreg_node_info::edge_stake() const noexcept { return 0; }
-uint64_t xreg_node_info::archive_stake() const noexcept { return 0; }
-uint64_t xreg_node_info::exchange_stake() const noexcept { return 0; }
+uint64_t xreg_node_info::auditor_stake() const noexcept {
+    return get_auditor_stake();
+}
+
+uint64_t xreg_node_info::validator_stake() const noexcept {
+    return get_validator_stake();
+}
+
+uint64_t xreg_node_info::edge_stake() const noexcept {
+    return 0;
+}
+
+uint64_t xreg_node_info::archive_stake() const noexcept {
+    return 0;
+}
+
+uint64_t xreg_node_info::exchange_stake() const noexcept {
+    return 0;
+}
+
+uint64_t xreg_node_info::fullnode_stake() const noexcept {
+    return 0;
+}
 
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
