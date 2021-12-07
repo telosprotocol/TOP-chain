@@ -411,6 +411,10 @@ if (${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
     add_definitions(-DRELEASEDEBINFO)
 endif()
 
+if (CHECKPOINT_TEST)
+    add_definitions(-DCHECKPOINT_TEST)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 
