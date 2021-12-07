@@ -187,12 +187,14 @@ bool xtop_system_contract_manager::contains(common::xaccount_address_t const & a
     return m_system_contract_deployment_data.find(address) != std::end(m_system_contract_deployment_data);
 }
 
-observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept {
+std::unique_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept {
     assert(!ec);
 
-    auto const it = m_system_contracts.find(address);
-    if (it != std::end(m_system_contracts)) {
-        return top::make_observer(top::get<std::unique_ptr<system_contracts::xbasic_system_contract_t>>(*it).get());
+    auto const & contract_base_address = address.base_address();
+    auto const it = m_system_contract_creators.find(contract_base_address);
+    if (it != std::end(m_system_contract_creators)) {
+        auto & creator = top::get<std::unique_ptr<xcontract_object_creator_t>>(*it);
+        return creator->create();
     }
 
     ec = error::xerrc_t::contract_not_found;
@@ -200,7 +202,7 @@ observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::s
     return nullptr;
 }
 
-observer_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const {
+std::unique_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager::system_contract(common::xaccount_address_t const & address) const {
     std::error_code ec;
     auto r = system_contract(address, ec);
     assert(!ec);

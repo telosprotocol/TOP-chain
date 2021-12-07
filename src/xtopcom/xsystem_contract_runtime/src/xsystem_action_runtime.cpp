@@ -41,7 +41,6 @@ xtransaction_execution_result_t xtop_action_runtime<data::xsystem_consensus_acti
                 result.status.ec = error::xerrc_t::account_state_not_changed;
             }
         }
-
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
