@@ -257,7 +257,7 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
                                                       common::xlogic_time_t const update_interval) {
     if (current_time > m_election_status[contract_address].last_update_time &&
         current_time - m_election_status[contract_address].last_update_time >= update_interval) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }), current_time);
+        process_election_block(data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }), current_time);
     }
 }
 
