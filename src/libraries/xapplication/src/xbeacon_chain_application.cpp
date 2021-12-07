@@ -60,7 +60,7 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 
     do {
         // get committed lightunit from a specified height. the height of the returned block won't be higher than the specified height.
-        xobject_ptr_t<xvblock_t> const vblock = xblocktool_t::get_committed_lightunit(blockstore.get(), contract_address.value(), block_height);
+        xobject_ptr_t<xvblock_t> const vblock = xblocktool_t::get_committed_state_changed_block(blockstore.get(), contract_address.value(), block_height);
         if (vblock == nullptr) {
             ec = error::xerrc_t::load_election_data_missing_block;
 
@@ -173,7 +173,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
             } };
 
             // only use lightunit
-            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_connectted_light_block(m_application->blockstore().get(), addr);
+            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_application->blockstore().get(), addr);
             if (latest_vblock == nullptr) {
                 xerror("xtop_beacon_chain_application::load_last_election_data has no latest lightunit. addr=%s", addr.c_str());
                 continue;
