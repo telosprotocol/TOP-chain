@@ -8,7 +8,6 @@
 
 #include <map>
 #include <string>
-#include <vector>
 
 namespace top {
 namespace chain_checkpoint {
@@ -19,8 +18,15 @@ struct xtop_checkpoint_info {
 };
 using xcheckpoint_info_t = xtop_checkpoint_info;
 
-// vector<timer_height, <account, info>>
-using xcheckpoints_t = std::vector<std::pair<uint64_t, std::map<std::string, xcheckpoint_info_t>>>;
+struct xtop_checkpoint_cmp {
+    bool operator()(const uint64_t & lhs, const uint64_t & rhs) const {
+        return lhs < rhs;
+    }
+};
+using xcheckpoint_cmp_t = xtop_checkpoint_cmp;
+
+using xcheckpoint_unit_t = std::map<std::string, xcheckpoint_info_t>;
+using xcheckpoints_t = std::map<uint64_t, xcheckpoint_unit_t, xcheckpoint_cmp_t>;
 
 class xtop_chain_checkpoint {
 public:
