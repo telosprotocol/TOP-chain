@@ -25,16 +25,15 @@ struct xtop_checkpoint_cmp {
 };
 using xcheckpoint_cmp_t = xtop_checkpoint_cmp;
 
-using xcheckpoint_unit_t = std::map<std::string, xcheckpoint_info_t>;
-using xcheckpoints_t = std::map<uint64_t, xcheckpoint_unit_t, xcheckpoint_cmp_t>;
+using xcheckpoints_t = std::map<uint64_t, xcheckpoint_info_t, xcheckpoint_cmp_t>;
+using xcheckpoints_map_t = std::map<std::string, xcheckpoints_t>;
 
 class xtop_chain_checkpoint {
 public:
-    static void init();
-    static xcheckpoints_t const & checkpoints();
+    static xcheckpoints_t const checkpoints(std::string account);
 
 private:
-    static xcheckpoints_t m_checkpoints;
+    static xcheckpoints_map_t m_checkpoints_map;
 };
 using xchain_checkpoint_t = xtop_chain_checkpoint;
 
