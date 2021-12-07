@@ -188,6 +188,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DDISABLE_CORE_SIGNAL_CAPTURE=ON"
         echo "BUILD WITH DISABLE_CORE_SIGNAL_CAPTURE"
     ;;
+    checkpoint_test)
+        CMAKE_EXTRA_OPTIONS+=" -DCHECKPOINT_TEST=ON"
+        echo "BUILD WITH CHECKPOINT_TEST"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;
