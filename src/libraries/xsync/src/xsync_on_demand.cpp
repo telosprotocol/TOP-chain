@@ -53,7 +53,14 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     }
 
     // only one archive node
-    std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_rand_archives(1);
+    std::vector<vnetwork::xvnode_address_t> archive_list;
+    
+    if (bme->is_consensus) {
+        archive_list = m_role_xips_mgr->get_rand_archives(1);
+    } else {
+        archive_list = m_role_xips_mgr->get_rand_full_nodes(1);
+    }
+    
     if (archive_list.size() == 0) {
         xsync_warn("xsync_on_demand_t::on_behind_event no archive node %s,", address.c_str());
         return;
