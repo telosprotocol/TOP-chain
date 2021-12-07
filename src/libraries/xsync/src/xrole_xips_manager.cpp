@@ -99,13 +99,39 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_parents(c
     return get_rand_peers(parents_xips, max_peers);
 }
 
+std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_full_nodes(uint32_t max_peers) {
+    if (m_vnetwork_driver == nullptr)
+        return {};
+    xip_vector_ptr archive_xips{};
+    std::error_code ec;
+    archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->fullnode_addresses(ec), m_self_xip);
+    if (ec) {
+        xsync_dbg("xrole_xips_manager_t::get_rand_full_nodes fail to get full nodes");
+        return *archive_xips;
+    }
+
+    return get_rand_peers(archive_xips, max_peers);
+}
+
+std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_full_nodes() {
+    if (m_vnetwork_driver == nullptr)
+        return {};
+    xip_vector_ptr archive_xips{};
+    std::error_code ec;
+    archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->fullnode_addresses(ec), m_self_xip);
+    if (ec) {
+        xsync_dbg("xrole_xips_manager_t::get_rand_full_nodes fail to get full nodes");
+    }
+
+    return *archive_xips;
+}
+
+
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_archives(uint32_t max_peers) {
     if (m_vnetwork_driver == nullptr)
         return {};
     xip_vector_ptr archive_xips{};
     archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), m_self_xip);
-
-    std::unique_lock<std::mutex> lock(m_lock);
     return get_rand_peers(archive_xips, max_peers);
 }
 
@@ -114,16 +140,7 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_archive_list()
         return {};
     xip_vector_ptr archive_xips{};
     archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), m_self_xip);
-
-    std::unique_lock<std::mutex> lock(m_lock);
-
-    std::vector<vnetwork::xvnode_address_t> nodes;
-    uint32_t count = archive_xips->size();
-    for (uint32_t i=0; i<count; i++) {
-        nodes.push_back(archive_xips->at(i));
-    }
-
-    return nodes;
+    return *archive_xips;
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_edge_archive_list() {
@@ -131,16 +148,7 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_edge_archive_l
         return {};
     xip_vector_ptr edge_archive_xips{};
     edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_exchange), m_self_xip);
-
-    std::unique_lock<std::mutex> lock(m_lock);
-
-    std::vector<vnetwork::xvnode_address_t> nodes;
-    uint32_t count = edge_archive_xips->size();
-    for (uint32_t i=0; i<count; i++) {
-        nodes.push_back(edge_archive_xips->at(i));
-    }
-
-    return nodes;
+    return *edge_archive_xips;
 }
 
 bool xrole_xips_manager_t::vrf_gossip_with_archive(base::xvblock_t *time_vblock, common::xnode_type_t role_type) {

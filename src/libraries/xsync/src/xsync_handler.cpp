@@ -216,8 +216,8 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
 
     xblock_ptr_t &block = ptr->block;
 
-    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
-        xsync_warn("xsync_handler receive push_newblock(target must be archive) %" PRIx64 " %s %s %s",
+    if (!(common::has<common::xnode_type_t::storage>(network_self.type()) || (common::has<common::xnode_type_t::fullnode>(network_self.type())))) {
+        xsync_warn("xsync_handler receive push_newblock(target must be archive or fullnode) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
@@ -649,7 +649,7 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     ptr->serialize_from(stream);
     std::vector<xchain_state_info_t> &info_list = ptr->info_list;
 
-    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
+    if (!(common::has<common::xnode_type_t::storage_exchange>(network_self.type()) || (common::has<common::xnode_type_t::fullnode>(network_self.type())))) {
         xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive or exchange) %" PRIx64 " count(%u), %s %s",
             msg_hash, info_list.size(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -1101,41 +1101,30 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
     auto ptr = make_object_ptr<xsync_query_height_t>();
     ptr->serialize_from(stream);
 
-    xsync_roles_t roles = m_role_chains_mgr->get_roles();
-    for (const auto &role_it: roles) {
-        const vnetwork::xvnode_address_t &self_addr = role_it.first;
-        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
-        common::xnode_type_t node_type = self_addr.type();
+    if (!(common::has<common::xnode_type_t::storage>(network_self.type()) || (common::has<common::xnode_type_t::fullnode>(network_self.type())))) {
+        return;
+    }
 
-        if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
-            common::has<common::xnode_type_t::consensus>(node_type)) {
-            continue;
-        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
-        } else {
-            continue;
-        }
+    const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);
+    const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
+    std::vector<xchain_state_info_t> info_list;
+    for (const auto & it : chains) {
+        const std::string & address = it.first;
+        const xchain_info_t & chain_info = it.second;
 
-        std::vector<xchain_state_info_t> info_list;
-        const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
-        for (const auto & it : chains) {
-            const std::string & address = it.first;
-            const xchain_info_t & chain_info = it.second;
+        xchain_state_info_t info;
+        info.address = address;
+        info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
+        info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+        info_list.push_back(info);
+    }
 
-            xchain_state_info_t info;
-            info.address = address;
-            info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
-            info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
-            info_list.push_back(info);
-        }
+    xsync_info("recv_query_archive_height, send height info %s count(%d)", network_self.to_string().c_str(), info_list.size());
+    if (info_list.empty()) {
+        return;
+    }
 
-        xsync_info("recv_query_archive_height, send height info %s %s count(%d)", self_addr.to_string().c_str(), network_self.to_string().c_str(), info_list.size());
-        if (info_list.empty()) {
-            continue;
-        }
-
-        m_sync_sender->send_archive_height_list(info_list, network_self, from_address);
-    }   
-    //m_sync_sender->send_archive_height(info, network_self, from_address);    
+    m_sync_sender->send_archive_height_list(info_list, network_self, from_address);
 }
 // val recv height list from arc
 void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
