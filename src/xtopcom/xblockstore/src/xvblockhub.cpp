@@ -1169,11 +1169,6 @@ namespace top
             }
             #endif
 
-            if (!xblock_checkpoint::check_block(new_raw_block)) {
-                xerror("xblockacct_t::store_block,checkpoint not pass,block=%s",new_raw_block->dump().c_str());
-                return false;
-            }
-
             // TODO(jimmy) should store and execute genesis block
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {
