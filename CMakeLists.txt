@@ -402,6 +402,10 @@ if (ENABLE_METRICS_DATAOBJECT)
     add_definitions(-DENABLE_METRICS_DATAOBJECT)
 endif()
 
+if (CHECKPOINT_TEST)
+    add_definitions(-DCHECKPOINT_TEST)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 
