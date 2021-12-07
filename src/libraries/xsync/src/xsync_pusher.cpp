@@ -125,7 +125,9 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     uint32_t random = vrf_value(block->get_block_hash());
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
-    std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
+    std::vector<std::shared_ptr<std::vector<vnetwork::xvnode_address_t>>> objects;
+    objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_archive_list()));
+    objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_full_nodes()));
 
     std::unordered_set<common::xaccount_address_t> validator_auditor_neighbours;
     for (auto neighbor:all_neighbors) {
@@ -139,26 +141,25 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
 
-    if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-/*        if (block->get_height() % 30 ==  0 && block->get_account().substr(0,7) == "Ta0000@") {
-            xsync_dbg("push_newblock_to_archive, skip block: %s,%d", block->get_account().c_str(), block->get_height());
-            return;
-        }*/
-        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, random);
-        xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, archive_list.size(),
-            push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
-        for (auto &dst_idx: push_arcs) {
-            vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
-            auto found = validator_auditor_neighbours.find(target_addr.account_address());
-            if (found == validator_auditor_neighbours.end()) {
-                xsync_dbg("push_newblock_to_archive,send, src=%s dst=%s, block_height = %llu",
-                    self_addr.to_string().c_str(),
-                    target_addr.to_string().c_str(),
-                    block->get_height());
-                m_sync_sender->push_newblock(block, self_addr, target_addr);
+    for (auto object:objects) {
+        if (!object->empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
+            std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, random);
+            xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, object->size(),
+                push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
+            for (auto &dst_idx: push_arcs) {
+                vnetwork::xvnode_address_t &target_addr = (*object)[dst_idx];
+                auto found = validator_auditor_neighbours.find(target_addr.account_address());
+                if (found == validator_auditor_neighbours.end()) {
+                    xsync_dbg("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                        self_addr.to_string().c_str(),
+                        target_addr.to_string().c_str(),
+                        block->get_height());
+                    m_sync_sender->push_newblock(block, self_addr, target_addr);
+                }
             }
         }
     }
+    
 
     // push edge archive
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
@@ -224,7 +225,9 @@ void xsync_pusher_t::on_timer() {
 
     uint32_t overlap_count = 0;
     uint32_t overlap_quota = 3;
-    std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_archive_list();
+    std::vector<std::shared_ptr<std::vector<vnetwork::xvnode_address_t>>> objects;
+    objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_archive_list()));
+    objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_full_nodes()));
 
     std::unordered_set<common::xaccount_address_t> validator_auditor_neighbours;
     for (auto neighbor:all_neighbors) {
@@ -240,24 +243,26 @@ void xsync_pusher_t::on_timer() {
     for (auto n:validator_auditor_neighbours)
         xsync_dbg("xsync_pusher_t, neighbours:%s", n.to_string().c_str());
 
-    if (!archive_list.empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
-        std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_list.size(), self_position, 0);
-        xsync_dbg("xsync_pusher_t, send_query_archive_height src=%u dst=%u push_arcs=%u src %s, %s", neighbor_number, archive_list.size(),
-            push_arcs.size(), self_addr.to_string().c_str(), address.c_str());
-        if (push_arcs.size() == 1 && archive_list.size() > 1)  // mapping to 2 arc
-            push_arcs.push_back((push_arcs[0] + 1) % archive_list.size());
+    for (auto object:objects) {
+        if (!object->empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
+            std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, 0);
+            xsync_dbg("xsync_pusher_t, maybe send_query_archive_height src=%u dst=%u push_arcs=%u src %s", neighbor_number, object->size(),
+                push_arcs.size(), self_addr.to_string().c_str());
+            if (push_arcs.size() == 1 && object->size() > 1)  // mapping to 2 arc
+                push_arcs.push_back((push_arcs[0] + 1) % object->size());
 
-        for (auto &dst_idx: push_arcs) {
-            vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
-            auto found = validator_auditor_neighbours.find(target_addr.account_address());
-            if (found == validator_auditor_neighbours.end()) {
-                xsync_dbg("xsync_pusher_t, send_query_archive_height, send, src=%s dst=%s",
-                    self_addr.to_string().c_str(), target_addr.to_string().c_str());
-                xsync_query_height_t info;
-                m_sync_sender->send_query_archive_height(info, self_addr, target_addr);
-            } else {
-                xsync_dbg("xsync_pusher_t, send_query_archive_height, not find, src=%s dst=%s",
-                    self_addr.to_string().c_str(), target_addr.to_string().c_str());
+            for (auto &dst_idx: push_arcs) {
+                vnetwork::xvnode_address_t &target_addr = (*object)[dst_idx];
+                auto found = validator_auditor_neighbours.find(target_addr.account_address());
+                if (found == validator_auditor_neighbours.end()) {
+                    xsync_dbg("xsync_pusher_t, send_query_archive_height, send, src=%s dst=%s",
+                        self_addr.to_string().c_str(), target_addr.to_string().c_str());
+                    xsync_query_height_t info;
+                    m_sync_sender->send_query_archive_height(info, self_addr, target_addr);
+                } else {
+                    xsync_dbg("xsync_pusher_t, send_query_archive_height, not find, src=%s dst=%s",
+                        self_addr.to_string().c_str(), target_addr.to_string().c_str());
+                }
             }
         }
     }
