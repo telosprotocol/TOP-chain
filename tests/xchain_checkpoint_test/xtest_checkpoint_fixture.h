@@ -1,6 +1,6 @@
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_table.hpp"
-#include "xchain_upgrade/xchain_checkpoint_center.h"
+#include "xchain_checkpoint/xchain_checkpoint.h"
 
 #include <gtest/gtest.h>
 
