@@ -147,6 +147,8 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     lighttable_para.set_property_hashs(property_hashs);
     lighttable_para.set_txs(txs_info);
 
+    // printf("binlog: %s, full state: %s\n", base::xstring_utl::to_hex(property_binlog).c_str(), base::xstring_utl::to_hex(fullstate_bin).c_str());
+
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_tableblock(lighttable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
