@@ -151,7 +151,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_group_size, xgroup_size_t, n
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
 #endif
 
-#if defined(XBUILD_DEV) || defined(XBULLD_CI)
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 6, 6, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 8, 8, 512);
 #elif defined(XBUILD_GALILEO)
