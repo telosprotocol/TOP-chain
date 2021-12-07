@@ -12,7 +12,6 @@ add_dependencies(xblockstore xxbase xstore)
 target_link_libraries(xblockstore PRIVATE
     xxbase
     xstore
-    xchain_checkpoint
 )
 
 if (BUILD_METRICS)
