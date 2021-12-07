@@ -16,7 +16,7 @@ NS_BEG2(top, sync)
 #define xsync_error(fmt, ...) xerror("vnode_id(%s) " fmt, m_vnode_id.c_str(), ## __VA_ARGS__)
 
 #else
-#define xsync_dbg xinfo
+#define xsync_dbg xdbg
 #define xsync_info xinfo
 #define xsync_warn xwarn
 #define xsync_kinfo xkinfo
