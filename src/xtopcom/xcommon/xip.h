@@ -389,6 +389,14 @@ xzone_id_t const
 #endif
     xfrozen_zone_id{xfrozen_zone_id_value};
 
+XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_archive_index - 1};
+#if defined XCXX14_OR_ABOVE
+XINLINE_CONSTEXPR xzone_id_t
+#else
+xzone_id_t const
+#endif
+    xfullnode_zone_id{xfullnode_zone_id_value};
+
 /**
  * @brief default archive zone id
  */
