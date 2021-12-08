@@ -97,14 +97,11 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
             jv["height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
 
             jv["used_gas"] = txaction->get_used_tgas();
-            jv["used_disk"] = txaction->get_used_disk();
             jv["used_deposit"] = txaction->get_used_deposit();
             if (txaction->is_self_tx()) {
-                jv["tx_exec_status"] = tx_exec_status_to_str(txaction->get_tx_exec_status());
                 jv["exec_status"] = tx_exec_status_to_str(txaction->get_tx_exec_status());
             }
             if (txaction->is_confirm_tx()) {
-                jv["tx_exec_status"] = tx_exec_status_to_str(txaction->get_tx_exec_status());
                 // TODO(jimmy) should read recv tx exec status from recv tx unit
                 if (recv_txinfo != nullptr) {
                     jv["recv_tx_exec_status"] = tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
@@ -123,11 +120,11 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
                 m_transaction_cache->tx_erase(txaction->get_tx_hash());
                 continue;
             } else if (type == base::enum_transaction_subtype_send)
-                ji["send_unit_info"] = jv;
+                ji["send_block_info"] = jv;
             else if (type == base::enum_transaction_subtype_recv)
-                ji["recv_unit_info"] = jv;
+                ji["recv_block_info"] = jv;
             else if (type == base::enum_transaction_subtype_confirm)
-                ji["confirm_unit_info"] = jv;
+                ji["confirm_block_info"] = jv;
             else
                 continue;
             m_transaction_cache->tx_set_json(txaction->get_tx_hash(), ji);
