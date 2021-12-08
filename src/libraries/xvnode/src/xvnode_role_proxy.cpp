@@ -36,7 +36,7 @@ void xtop_vnode_role_proxy::create(vnetwork::xvnetwork_driver_face_ptr_t const &
     m_node_address_set.insert(vnetwork->address());
     update_modules_node_type();
 
-    if (!is_edge_archive(vnetwork->type()) && !is_frozen(vnetwork->type())) {
+    if (!is_edge_archive(vnetwork->type()) && !is_frozen(vnetwork->type()) && !common::has<common::xnode_type_t::fullnode>(vnetwork->type())) {
         m_cons_mgr->create(vnetwork);
     }
 }
@@ -44,13 +44,13 @@ void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, comm
     m_node_address_set.insert(address);
     update_modules_node_type();
 
-    if (!is_edge_archive(address.type()) && !is_frozen(address.type())) {
+    if (!is_edge_archive(address.type()) && !is_frozen(address.type()) && !common::has<common::xnode_type_t::fullnode>(address.type())) {
         m_cons_mgr->start(address.xip2(), start_time);
     }
 }
 
 void xtop_vnode_role_proxy::fade(common::xnode_address_t const & address) {
-    if (!is_edge_archive(address.type()) && !is_frozen(address.type())) {
+    if (!is_edge_archive(address.type()) && !is_frozen(address.type()) && !common::has<common::xnode_type_t::fullnode>(address.type())) {
         m_cons_mgr->fade(address.xip2());
     }
 }
@@ -59,7 +59,7 @@ void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
     m_node_address_set.erase(address);
     update_modules_node_type();
 
-    if (!is_edge_archive(address.type()) && !is_frozen(address.type())) {
+    if (!is_edge_archive(address.type()) && !is_frozen(address.type()) && !common::has<common::xnode_type_t::fullnode>(address.type())) {
         m_cons_mgr->unreg(address.xip2());
     }
 }
