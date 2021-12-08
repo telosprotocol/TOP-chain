@@ -1014,7 +1014,7 @@ namespace top
                     // target_account->load_block_object(index_ptr);
                     // target_account->load_block_input(index_ptr->get_this_block());
                     // target_account->load_block_output(index_ptr->get_this_block());
-                    auto ret = base::xvchain_t::instance().get_xtxstore()->store_txs(target_block.get(), false);
+                    auto ret = base::xvchain_t::instance().get_xtxstore()->store_txs(target_block.get());
                     if(ret)
                     {
                         index_ptr->set_store_flag(base::enum_index_store_flag_transactions);
