@@ -69,6 +69,14 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         xdbg("start arc rpc service.");
         break;
     }
+    case common::xnode_type_t::fullnode: {
+        xdbg("fullnode rpc start");
+        init_rpc_cb_thread();
+        m_arc_handler = std::make_shared<xarc_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, make_observer(m_thread));
+        m_arc_handler->start();
+
+        break;
+    }
     default:
         assert(false);
         break;

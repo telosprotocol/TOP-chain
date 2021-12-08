@@ -233,6 +233,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
 
     switch (type()) {
     case common::xnode_type_t::fullnode:
+        XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::storage_archive:
         XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::storage_exchange:
