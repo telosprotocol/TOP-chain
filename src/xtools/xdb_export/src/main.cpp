@@ -35,12 +35,20 @@ void usage() {
     std::cout << "        - check_block_basic [account] [height|last|all]" << std::endl;
     std::cout << "        - check_state_basic [account] [height|last|all]" << std::endl;
     std::cout << "        - check_meta [account]" << std::endl;
-    std::cout << "        - check_table_unit_state <table>" << std::endl;
+    std::cout << "        - check_table_unit_state [table]" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
+    std::cout << "        - check_archive_db" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
+}
+
+void init_log(std::string const & filename) {
+    xinit_log(filename.c_str(), true, true);
+    xset_log_level(enum_xlog_level_debug);
+    xdbg("------------------------------------------------------------------");
+    xinfo("new log start here");
 }
 
 int main(int argc, char ** argv) {
@@ -67,27 +75,22 @@ int main(int argc, char ** argv) {
             return -1;
         }
     }
-#ifdef XDB_EXPORT_LOG
-    xinit_log("./xdb_export.log", true, true);
-    xset_log_level(enum_xlog_level_debug);
-    xdbg("------------------------------------------------------------------");
-    xinfo("new log start here");
-#endif
+
     xdb_export_tools_t tools{db_path};
     std::string function_name{argv[2]};
     if (function_name == "check_fast_sync") {
         if (argc == 3) {
-            auto const & table_account_vec = xdb_export_tools_t::get_table_contract_accounts();
-            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+            auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_all_sync_result(table_account_vec, true);
             tools.query_all_sync_result(unit_account_vec, false);
         } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {
-                auto const & table_account_vec = xdb_export_tools_t::get_table_contract_accounts();
+                auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
                 tools.query_all_sync_result(table_account_vec, true);
             } else if (method_name == "unit") {
-                auto const & unit_account_vec = tools.get_db_unit_accounts();
+                auto const unit_account_vec = tools.get_db_unit_accounts();
                 tools.query_all_sync_result(unit_account_vec, false);
             } else if (method_name == "account") {
                 std::vector<std::string> account = {argv[4]};
@@ -137,7 +140,7 @@ int main(int argc, char ** argv) {
         }
 
         if (argc == 3 || argc == 5) {
-            auto const & account_vec = xdb_export_tools_t::get_table_contract_accounts();
+            auto const account_vec = xdb_export_tools_t::get_table_accounts();
             tools.query_table_tx_info(account_vec, start_timestamp, end_timestamp);
         } else if (argc == 4 || argc == 6) {
             std::vector<std::string> account = {argv[3]};
@@ -159,67 +162,56 @@ int main(int argc, char ** argv) {
         }
         tools.query_block_info(argv[3], argv[4]);
     } else if (function_name == "check_block_basic") {
-        if (argc < 3) {
+        if (argc < 3 || argc > 5) {
             usage();
             return -1;
         }
+        mkdir("all_block_basic_info", 0750);
         if (argc == 3) {
-            mkdir("all_block_basic_info", 0750);
-            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_block_basic(unit_account_vec, "all");
         } else if (argc == 4) {
-            mkdir("all_block_basic_info", 0750);
             tools.query_block_basic(argv[3], "all");
         } else if (argc == 5) {
-            if (std::string{argv[4]} == "all") {
-                mkdir("all_block_basic_info", 0750);
-            }
             tools.query_block_basic(argv[3], argv[4]);
-        } else {
-            usage();
-            return -1;
         }
     } else if (function_name == "check_state_basic") {
-        if (argc < 3) {
+        if (argc < 3 || argc > 5) {
             usage();
             return -1;
         }
+        mkdir("all_state_basic_info", 0750);
         if (argc == 3) {
-            mkdir("all_state_basic_info", 0750);
-            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_state_basic(unit_account_vec, "all");
         } else if (argc == 4) {
-            mkdir("all_state_basic_info", 0750);
             tools.query_state_basic(argv[3], "all");
         } else if (argc == 5) {
-            if (std::string{argv[4]} == "all") {
-                mkdir("all_state_basic_info", 0750);
-            }
             tools.query_state_basic(argv[3], argv[4]);
-        } else {
-            usage();
-            return -1;
         }
     } else if (function_name == "check_meta") {
-        if (argc < 3) {
+        if (argc < 3 || argc > 4) {
             usage();
             return -1;
         }
         if (argc == 3) {
-            auto const & unit_account_vec = tools.get_db_unit_accounts();
+            auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_meta(unit_account_vec);
         } else if (argc == 4) {
             tools.query_meta(argv[3]);
-        } else {
-            usage();
-            return -1;
         }
     } else if (function_name == "check_table_unit_state") {
-        if (argc < 4) {
+        if (argc < 3 || argc > 4) {
             usage();
             return -1;
         }
-        tools.query_table_unit_state(argv[3]);
+        mkdir("all_table_unit_state", 0750);
+        if (argc == 3) {
+            auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+            tools.query_table_unit_state(table_account_vec);
+        } else if (argc == 4) {
+            tools.query_table_unit_state(argv[3]);
+        }
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {
@@ -227,14 +219,12 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        std::string param{argv[5]};
-        if (param != "last" && param != "all") {
-            usage();
-            return -1;
-        }
-        tools.query_contract_property(argv[3], argv[4], param);
+        tools.query_contract_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
+    } else if (function_name == "check_archive_db") {
+        init_log("./check_archive_db.log");
+        tools.query_archive_db();
     } else {
         usage();
     }

@@ -14,18 +14,17 @@ NS_BEG2(top, db_export)
 class xdb_export_tools_t {
 public:
     enum enum_query_account_version { QUERY_ACCOUNT_V1 = 0, QUERY_ACCOUNT_V2 };
+    enum enum_query_account_type { query_account_table = 0, query_account_unit };
 
     xdb_export_tools_t(std::string const & db_path);
     ~xdb_export_tools_t() = default;
 
-    static std::vector<std::string> get_unit_contract_accounts();
-    static std::vector<std::string> get_table_contract_accounts();
+    static std::vector<std::string> get_system_contract_accounts();
+    static std::vector<std::string> get_table_accounts();
     std::vector<std::string> get_db_unit_accounts();
     void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table);
     void query_table_latest_fullblock();
     void query_table_tx_info(std::vector<std::string> const & address_vec, const uint32_t start_timestamp, const uint32_t end_timestamp);
-    // not used
-    void query_block_num();
     // query if a specific block is exist(include num)
     void query_block_exist(std::string const & address, const uint64_t height);
     // query block detailed info(use grpc interface)
@@ -41,10 +40,13 @@ public:
     void query_meta(std::vector<std::string> const & account_vec);
     // query table state and its all units state
     void query_table_unit_state(std::string const & table);
+    void query_table_unit_state(std::vector<std::string> const & table_vec);
     // query contract property(use contract manager interface)
     void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param);
     // query balance info
     void query_balance();
+    // query archive db integrity and continuity
+    void query_archive_db();
 
 private:
     struct tx_ext_t {
@@ -100,8 +102,11 @@ private:
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_meta(std::string const & account, json & result);
     void query_table_unit_state(std::string const & table, json & result);
-    void query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph);
+    void query_contract_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
+    uint32_t query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type);
+    uint32_t query_block_continuity(std::string const & account, enum_query_account_type type);
+    uint32_t query_cert_continuity(std::string const & account, enum_query_account_type type);
 
     void read_info_from_table_block(const data::xblock_t * block, xdbtool_table_info_t & table_info, std::vector<tx_ext_t> & txinfos);
     void set_txinfo_to_json(json & j, const tx_ext_t & txinfo);
