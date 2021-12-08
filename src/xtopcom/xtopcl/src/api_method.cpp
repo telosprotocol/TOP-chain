@@ -925,7 +925,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
         if (!reader.parse(result, root)) {
             cout << result << endl;
         } else {
-            auto tx_state = root["data"]["tx_consensus_state"]["confirm_unit_info"]["exec_status"].asString();
+            auto tx_state = root["data"]["tx_consensus_state"]["confirm_block_info"]["exec_status"].asString();
             if (tx_state == "success") {
                 cout << "Successfully registering to the mining pool." << endl;
                 return;
