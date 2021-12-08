@@ -225,7 +225,7 @@ bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & addres
 
     auto const interval = data.role_data.timer_config.timer_config_data.get_timer_interval();
     assert(interval > 0);
-    if (interval != 0 && height != 0 && ((is_first_block && (height % 3) == 0) || (!is_first_block && (height % interval) == 0))) {
+    if (interval != 0 && height != 0 && ((is_first_block && (height % 7) == 0) || (!is_first_block && (height % interval) == 0))) {
         xdbg("[xtop_sniffer::is_valid_timer_call] param check pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);
     } else {
         xdbg("[xtop_sniffer::is_valid_timer_call] param check not pass, interval: %u, height: %llu, first_block: %d", interval, height, is_first_block);
