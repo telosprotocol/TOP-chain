@@ -1189,7 +1189,12 @@ static void set_user_info(task_info_callback<T> * info,
     info->use_transaction = use_transaction;
     info->host = g_server_host_port;
     info->callback_ = func;
-    info->params["version"] = top::data::RPC_VERSION_V1;
+    // only getTransaction & getBlock has 2.0 version rpc
+    if (method == CMD_ACCOUNT_TRANSACTION || method == CMD_GET_BLOCK) {
+        info->params["version"] = top::data::RPC_VERSION_V2;
+    } else {
+        info->params["version"] = top::data::RPC_VERSION_V1;
+    }
     info->params["balance"] = uinfo.balance;
     info->method = method;
     info->params["target_account_addr"] = uinfo.account;
