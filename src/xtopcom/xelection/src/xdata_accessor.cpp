@@ -83,6 +83,9 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     case common::xnode_type_t::storage:
         return update_storage_zone(zone_element, election_result_store, associated_blk_height, ec);
 
+    case common::xnode_type_t::fullnode:
+        return update_fullnode_zone(zone_element, election_result_store, associated_blk_height, ec);
+
     case common::xnode_type_t::zec:
         return update_zec_zone(zone_element, election_result_store, associated_blk_height, ec);
 
@@ -665,6 +668,15 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     }
 
     return ret;
+}
+
+std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_fullnode_zone(
+    std::shared_ptr<xzone_element_t> const & zone_element,
+    data::election::xelection_result_store_t const & election_result_store,
+    std::uint64_t const associated_blk_height,
+    std::error_code & ec) {
+    assert(!ec);
+    return update_zone(zone_element, election_result_store, associated_blk_height, ec);
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_zec_zone(std::shared_ptr<xzone_element_t> const & zone_element,
