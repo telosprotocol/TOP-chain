@@ -57,15 +57,13 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         joined_election_round)} {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
-    if (!is_edge_archive && !is_frozen) {
-        // m_cons_face = cons_mgr->create(m_the_binding_driver);
+    if (!is_edge_archive && !is_frozen && !common::has<common::xnode_type_t::fullnode>(m_the_binding_driver->type())) {
         m_txpool_face = txpool_service_mgr->create(m_the_binding_driver, m_router);
 
-        // xwarn("[virtual node] vnode %p create at address %s cons_proxy:%p txproxy:%p",
-        //       this,
-        //       m_the_binding_driver->address().to_string().c_str(),
-        //       m_cons_face.get(),
-        //       m_txpool_face.get());
+        xwarn("[virtual node] vnode %p create at address %s txproxy:%p",
+              this,
+              m_the_binding_driver->address().to_string().c_str(),
+              static_cast<void *>(m_txpool_face.get()));
     } else {
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
@@ -178,12 +176,6 @@ void xtop_vnode::stop() {
 }
 
 void xtop_vnode::new_driver_added() {
-    // need call by order, if depends on other components
-    // for example : store depends on message bus, then
-    // update_message_bus should be called before update_store
-    // update_consensus_instance();
-    // update_unit_service();
-    // update_tx_cache_service();
     update_rpc_service();
     update_contract_manager(false);
     
@@ -211,16 +203,6 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
         return false;
     }
     if (!common::has<common::xnode_type_t::storage>(node_type)) {
-        // if (base::xvchain_t::instance().get_round_number() < 5) {
-        //     xdbg("wait to start enable_block_recycler: %d", base::xvchain_t::instance().get_round_number());
-        //     base::xvchain_t::instance().add_round_number();
-        //     return true;
-        // }
-        // uint64_t now = base::xvchain_t::instance().get_time_now();
-        // if (base::xvchain_t::instance().get_start_time() + 5 * 60 * 1000000 < now) {
-        //     xdbg("wait for enough time to start prune data: %" PRIu64 ",%" PRIu64, base::xvchain_t::instance().get_start_time(), now);
-        //     return true;
-        // }
         if (top::store::install_block_recycler(xvdb_ptr))
             xinfo("install_block_recycler ok.");
         else
@@ -284,19 +266,7 @@ void xtop_vnode::sync_add_vnet() {
 }
 
 void xtop_vnode::sync_remove_vnet() {
-    // if ((type() & common::xnode_type_t::edge) == common::xnode_type_t::invalid) {
-
     m_sync_obj->remove_vnet(vnetwork_driver());
-
-    //}
 }
-
-//std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {
-//    assert(!ec);
-//
-//    if (address().xip2().xip().group_xip() == group_xip) {
-//        return neighbors_xip2(ec);
-//    }
-//}
 
 NS_END2
