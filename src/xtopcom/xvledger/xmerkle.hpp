@@ -237,7 +237,7 @@ namespace top
 
             /**
              * Calculate path from value (leaf) list
-             * @param values leaf
+             * @param leaf leaf
              * @param hash_path hash path list,contains enough hash values which is used by validate_path()
              * NOTE : root is not included in the path, since it is unbelievable to validator
              * @return if succ, return true; otherwise false
@@ -256,8 +256,8 @@ namespace top
                     return false;
                 }
 
-                uint64_t tree_level = m_tree_level;
-                uint64_t node_level = m_node_level;
+                int tree_level = (int)m_tree_level;
+                int node_level = (int)m_node_level;
                 int index = static_cast<int>(std::distance(m_tree_leafs.begin(), iter));;
                 while (tree_level > 1) {
                     std::vector<std::string> &hash_list = m_tree_level_node.at(tree_level-1);

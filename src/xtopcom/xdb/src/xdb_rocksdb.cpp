@@ -148,6 +148,7 @@ enum enum_xvdb_cf_type
     enum_xvdb_cf_type_update_most = 'u',  //update most once Put but rarely read; good for meta-data
     enum_xvdb_cf_type_read_most   = 'r',  //read only once first Put.no update; good for block,txs
     enum_xvdb_cf_type_log_only    = 'f',  //store as log(unreliable) and cleared unused & oldest one automatically(like LRU)
+    enum_xvdb_cf_type_state       = 's',  //read only once first Put.no update; good for block,txs
     
     //old style(defined by object) and stored at default CF(column Family)
 };
@@ -490,19 +491,27 @@ rocksdb::ColumnFamilyHandle* xdb::xdb_impl::get_cf_handle(const std::string& key
                 //[8bit:subaddr_of_ledger] = [5 bit:book-index]-[3 bit:table-index]
         */
         rocksdb::ColumnFamilyHandle* target_cf  = nullptr;
-        if( (key_data[0] == enum_xvdb_cf_type_read_most) && (key.size() >= 8) )
+        if(  (key_data[0] == enum_xvdb_cf_type_read_most)
+           ||(key_data[0] == enum_xvdb_cf_type_state) )
         {
-            //const int subaddr_of_ledger = (((int)key_data[6]) << 4) | key_data[7];
-            //const int maped_cf = (subaddr_of_ledger % 4) + 1; //mapping to cf[1],cf[2],cf[3].cf[4]
-            const int maped_cf = (key_data[7] % 4) + 1; //mapping to cf[1],cf[2],cf[3].cf[4]
-            if(maped_cf == 1)
-                target_cf = m_cf_handles['1'];
-            else if(maped_cf == 2)
-                target_cf = m_cf_handles['2'];
-            else if(maped_cf == 3)
-                target_cf = m_cf_handles['3'];
-            else if(maped_cf == 4)
-                target_cf = m_cf_handles['4'];
+            if(key.size() >= 8)
+            {
+                //const int subaddr_of_ledger = (((int)key_data[6]) << 4) | key_data[7];
+                //const int maped_cf = (subaddr_of_ledger % 4) + 1; //mapping to cf[1],cf[2],cf[3].cf[4]
+                const int maped_cf = (key_data[7] % 4) + 1; //mapping to cf[1],cf[2],cf[3].cf[4]
+                if(maped_cf == 1)
+                    target_cf = m_cf_handles['1'];
+                else if(maped_cf == 2)
+                    target_cf = m_cf_handles['2'];
+                else if(maped_cf == 3)
+                    target_cf = m_cf_handles['3'];
+                else if(maped_cf == 4)
+                    target_cf = m_cf_handles['4'];
+            }
+            else
+            {
+                target_cf = m_cf_handles[key_data[0]];
+            }
         }
         else
         {
