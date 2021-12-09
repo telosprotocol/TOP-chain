@@ -704,8 +704,20 @@ void get_block_handle::getTransaction() {
                 tx->add_ref();
                 xtransaction_ptr_t tx_ptr;
                 tx_ptr.attach(tx);
-                auto jsa = parse_action(tx_ptr->get_source_action());
-                auto jta = parse_action(tx_ptr->get_target_action());
+
+                data::xaction_t action;
+                action.set_account_addr(tx->get_source_addr());
+                action.set_action_type(tx->get_source_action_type());
+                action.set_action_name(tx->get_source_action_name());
+                action.set_action_param(tx->get_source_action_para());
+                auto jsa = parse_action(action);
+
+                action.set_account_addr(tx->get_origin_target_addr());
+                action.set_action_type(tx->get_target_action_type());
+                action.set_action_name(tx->get_target_action_name());
+                action.set_action_param(tx->get_target_action_para());
+                auto jta = parse_action(action);
+                
                 if (version == RPC_VERSION_V2) {
                     m_js_rsp["value"]["original_tx_info"]["sender_action_param"] = jsa;
                     m_js_rsp["value"]["original_tx_info"]["receiver_action_param"] = jta;

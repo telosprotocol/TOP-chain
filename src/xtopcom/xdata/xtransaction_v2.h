@@ -57,12 +57,16 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void        set_last_trans_hash_and_nonce(uint256_t last_hash, uint64_t last_nonce) override;
     virtual void        set_fire_and_expire_time(uint16_t const expire_duration) override;
 
-    virtual void        set_source_addr(const std::string & addr) override { m_source_addr = addr; }
     void                set_source(const std::string & addr, const std::string & action_name, const std::string & para);
-    virtual void        set_target_addr(const std::string & addr) override { m_target_addr = addr; }
     void                set_target(const std::string & addr, const std::string & action_name, const std::string & para);
-    virtual void        set_source_action(const xaction_t & action) override { m_source_addr = action.get_account_addr(); m_source_action_name = action.get_action_name(); m_source_action_para = action.get_action_param(); }
-    virtual void        set_target_action(const xaction_t & action) override { m_target_addr = action.get_account_addr(); m_target_action_name = action.get_action_name(); m_target_action_para = action.get_action_param(); }
+    virtual void        set_source_addr(const std::string & addr) override { m_source_addr = addr; }
+    virtual void        set_source_action_type(const enum_xaction_type type) {m_source_action_type = type;}
+    virtual void        set_source_action_name(const std::string & name) {m_source_action_name = name;}
+    virtual void        set_source_action_para(const std::string & para) {m_source_action_para = para;}
+    virtual void        set_target_addr(const std::string & addr) override { m_target_addr = addr; }
+    virtual void        set_target_action_type(const enum_xaction_type type) {m_target_action_type = type;}
+    virtual void        set_target_action_name(const std::string & name) {m_target_action_name = name;}
+    virtual void        set_target_action_para(const std::string & para) {m_target_action_para = para;}
     virtual void        set_authorization(const std::string & authorization) override {m_authorization = authorization;}
     virtual void        set_len() override;
 
@@ -84,9 +88,14 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual size_t              get_serialize_size() const override;
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();
-    virtual xaction_t &         get_source_action() override;
-    virtual xaction_t &         get_target_action() override;
+    virtual const std::string & get_source_action_name() const override {return m_source_action_name;}
+    virtual const std::string & get_source_action_para() const override {return m_source_action_para;}
+    virtual enum_xaction_type get_source_action_type() const {return m_source_action_type;}
+    virtual std::string get_source_action_str() const;
     virtual const std::string & get_target_action_name() const override {return m_target_action_name;}
+    virtual const std::string & get_target_action_para() const override {return m_target_action_para;}
+    virtual enum_xaction_type get_target_action_type() const {return m_target_action_type;}
+    virtual std::string get_target_action_str() const;
     virtual const std::string & get_authorization() const override {return m_authorization;}
     virtual void                parse_to_json(xJson::Value& tx_json, const std::string & version = RPC_VERSION_V2) const override;
     virtual void                construct_from_json(xJson::Value& tx_json) override;
@@ -98,7 +107,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual int32_t    serialize_read(base::xstream_t & stream) override {return 0;};
 
  public:
-    virtual void set_tx_type(uint16_t type) override {m_transaction_type = static_cast<enum_xtransaction_type>(type);}
+    virtual void set_tx_type(uint16_t type) override {m_transaction_type = static_cast<enum_xtransaction_type>(type); set_action_type();}
     virtual uint16_t get_tx_type() const override {return m_transaction_type;};
     virtual void set_tx_len(uint16_t len) override {m_transaction_len = len;};
     virtual uint16_t get_tx_len() const override {return m_transaction_len;};
@@ -151,8 +160,8 @@ private:
     mutable std::string m_transaction_hash_str{};
     std::string m_adjust_target_addr{};
     // just reserved for compatibility
-    xaction_t m_source_action;
-    xaction_t m_target_action;
+    enum_xaction_type m_source_action_type;
+    enum_xaction_type m_target_action_type;
 };
 
 using xtransaction_v2_ptr_t = xobject_ptr_t<xtransaction_v2_t>;

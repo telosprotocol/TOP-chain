@@ -179,8 +179,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_digest", 1);
         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction hash error"};
     }
-    auto & target_action = tx->get_target_action();
-    if (!(target_action.get_account_addr() == sys_contract_rec_standby_pool_addr && target_action.get_action_name() == "nodeJoinNetwork2")) {
+    if (!(tx->get_origin_target_addr() == sys_contract_rec_standby_pool_addr && tx->get_target_action_name() == "nodeJoinNetwork2")) {
         if (!tx->sign_check()) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction sign error"};

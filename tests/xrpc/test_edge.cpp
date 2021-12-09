@@ -81,12 +81,8 @@ TEST_F(test_edge, illegal_request) {
     }
 
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
-    data::xproperty_asset asset_out{100};
-    data::xaction_asset_out action_asset_out;
-    action_asset_out.serialze_to(tx->get_source_action(), asset_out);
-    action_asset_out.serialze_to(tx->get_target_action(), asset_out);
-    tx->get_source_action().set_account_addr("m_source_account");
-    tx->get_target_action().set_account_addr("m_target_account");
+    tx->set_source_addr("m_source_account");
+    tx->set_target_addr("m_target_account");
     xJson::Value tx_json;
     tx->parse_to_json(tx_json);
     json_proc.m_request_json = tx_json;
@@ -97,7 +93,7 @@ TEST_F(test_edge, illegal_request) {
     }
     EXPECT_EQ(3, cnt);
 
-    tx->get_target_action().set_account_addr("");
+    tx->set_target_addr("");
     tx->parse_to_json(tx_json);
     json_proc.m_request_json = tx_json;
     try{
@@ -110,12 +106,8 @@ TEST_F(test_edge, illegal_request) {
 
 TEST_F(test_edge, send_transaction) {
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
-    data::xproperty_asset asset_out{100};
-    data::xaction_asset_out action_asset_out;
-    action_asset_out.serialze_to(tx->get_source_action(), asset_out);
-    action_asset_out.serialze_to(tx->get_target_action(), asset_out);
-    tx->get_source_action().set_account_addr("m_source_account");
-    tx->get_target_action().set_account_addr("m_target_account");
+    tx->set_source_addr("m_source_account");
+    tx->set_target_addr("m_target_account");
     xJson::Value tx_json;
     tx->parse_to_json(tx_json);
 
@@ -133,12 +125,8 @@ TEST_F(test_edge, send_transaction) {
 
 TEST_F(test_edge, forward_method) {
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
-    data::xproperty_asset asset_out{100};
-    data::xaction_asset_out action_asset_out;
-    action_asset_out.serialze_to(tx->get_source_action(), asset_out);
-    action_asset_out.serialze_to(tx->get_target_action(), asset_out);
-    tx->get_source_action().set_account_addr("m_source_account");
-    tx->get_target_action().set_account_addr("m_target_account");
+    tx->set_source_addr("m_source_account");
+    tx->set_target_addr("m_target_account");
     xJson::Value tx_json;
     tx->parse_to_json(tx_json);
 
