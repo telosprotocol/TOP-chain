@@ -521,10 +521,18 @@ data::enum_xunit_tx_exec_status xtop_contract_execution_context::last_action_exe
 }
 
 data::xproperty_asset xtop_contract_execution_context::asset() const {
+    data::xproperty_asset asset_out{0};
+    if (source_action_type() != data::xaction_type_asset_out) {
+        return asset_out;
+    }
+
     auto const & asset_param = source_action_data();
+    if (asset_param.empty()) {
+        return asset_out;
+    }
+
     xdbg("[xtop_contract_execution_context::asset] parse asset");
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)asset_param.data(), (size_t)asset_param.size());
-    data::xproperty_asset asset_out{0};
     stream >> asset_out.m_token_name;
     stream >> asset_out.m_amount;
     xdbg("[xtop_contract_execution_context::asset] asset: %" PRIu64, asset_out.m_amount);

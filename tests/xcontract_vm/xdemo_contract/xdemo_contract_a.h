@@ -29,6 +29,7 @@ public:
         DECLARE_API(xdemo_contract_a::test_sync_call);
         DECLARE_API(xdemo_contract_a::test_async_call);
         DECLARE_API(xdemo_contract_a::test_followup_transfer_to_user);
+        DECLARE_SEND_ONLY_API(xdemo_contract_a::send_only_api);
     END_CONTRACT_API
 
     void setup() {
@@ -64,6 +65,12 @@ public:
     void test_followup_transfer_to_user(uint64_t amount, contract_common::xfollowup_transaction_schedule_type_t type) {
         auto user = sender();
         transfer(user, amount, type);
+    }
+
+    void send_only_api() {
+        deposit(state_accessor::xtoken_t{500});
+        auto token = withdraw(500);
+        token.clear();
     }
 
 private:

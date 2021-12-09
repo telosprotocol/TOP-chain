@@ -23,13 +23,24 @@ public:
     BEGIN_CONTRACT_API()
     DECLARE_API(xtop_dummy_contract::setup);
     DECLARE_API(xtop_dummy_contract::do_nothing);
+    DECLARE_SEND_ONLY_API(xtop_dummy_contract::send_only);
     END_CONTRACT_API
 
     void setup() {
+        m_string_prop.set("9999999");
     }
 
     void do_nothing() {
+        static int i{0};
+        m_string_prop.set(std::to_string(i));
     }
+
+    void send_only() {
+        deposit(state_accessor::xtoken_t{500});
+    }
+
+private:
+    contract_common::properties::xstring_property_t m_string_prop{"$999", this};
 };
 using xdummy_contract_t = xtop_dummy_contract;
 
