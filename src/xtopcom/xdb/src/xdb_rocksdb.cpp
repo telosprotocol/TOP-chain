@@ -518,7 +518,7 @@ rocksdb::ColumnFamilyHandle* xdb::xdb_impl::get_cf_handle(const std::string& key
                     target_cf = m_cf_handles['4'];
                 
                 #ifdef DEBUG
-                xdbg("xdb_get_cf_handle,access CF(%d) <- key(%s)",maped_cf,key.c_str());
+                //xdbg("xdb_get_cf_handle,access CF(%d) <- key(%s)",maped_cf,key.c_str());
                 #endif
             }
             else

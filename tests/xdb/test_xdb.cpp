@@ -165,7 +165,7 @@ TEST_F(test_xdb, db_write_with_binary_key) {
 }
 
 TEST_F(test_xdb, db_erase_one_key) {
-    xdb db1(DB_NAME);
+    xdb db1(DB_NAME,std::vector<xdb_path_t>());
     {
         string value;
         db1.write("key3","value3");
