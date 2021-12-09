@@ -8,15 +8,7 @@
 #include "nlohmann/fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "xbase/xutl.h"
-#if defined(CHECKPOINT_TEST)
-#    include "xblockstore/xcheckpoint_data/xcheckpoint_test.h"
-#elif defined(XBUILD_CI) || defined(XBUILD_DEV)
-#    include "xblockstore/xcheckpoint_data/xcheckpoint_default.h"
-#elif defined(XBUILD_GALILEO)
-#    include "xblockstore/xcheckpoint_data/xcheckpoint_galileo.h"
-#else
-#    include "xblockstore/xcheckpoint_data/xcheckpoint_new_horizons.h"
-#endif
+#include "xblockstore/src/xcheckpoint_data.h"
 
 template <class K, class V, class dummy_compare, class A>
 using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
