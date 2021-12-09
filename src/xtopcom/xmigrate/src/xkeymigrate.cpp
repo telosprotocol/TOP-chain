@@ -4,6 +4,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xkeymigrate.h"
+#include "xvledger/xvbindex.h"
+#include "xvledger/xvtxindex.h"
 
 namespace top
 {
@@ -97,19 +99,172 @@ namespace top
             
             if(get_object_version() > 0)
             {
-                //XTODO add code for specific version
+                return transfer_db_v2_to_v3(event, last_filter);
             }
             
-            if(event.check_event_flag(xdbevent_t::enum_dbevent_flag_key_stored) == false)
-            {
-                if(event.get_target_store() != nullptr)
-                {
-                    xdbg("xkeymigrate_t::transfer_keyvalue set_value_to_dst_db with no changed. key=%s,for event(0x%x)",event.get_db_key().c_str(), event.get_type());
-                    if(event.get_target_store()->set_value(event.get_db_key(), event.get_db_value()))
-                        event.set_event_flag(xdbevent_t::enum_dbevent_flag_key_stored);
+            return enum_xfilter_handle_code_success;
+        }
+
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_transaction(xdbevent_t & event,xvfilter_t* last_filter)
+        {
+            const auto & db_value = event.get_db_value();
+            base::xauto_ptr<base::xvtxindex_t> txindex = new base::xvtxindex_t();
+            int32_t ret = txindex->serialize_from_string(db_value);
+            if (ret <= 0) {
+                xerror("xkeymigrate_t::transfer_tx_v2_to_v3,fail txindex serialize");
+                return enum_xfilter_handle_code_interrupt;
+            }
+
+            // load unit block from tx index
+            base::xvaccount_t _unitvaccount(txindex->get_block_addr());
+
+            std::string table_addr = base::xvaccount_t::make_table_account_address(_unitvaccount);
+            if (table_addr == txindex->get_block_addr()) {
+                xerror("xkeymigrate_t::transfer_tx_v2_to_v3,fail txindex addr already is table addr");
+                return enum_xfilter_handle_code_interrupt;
+            }
+
+            uint64_t _unitheight = txindex->get_block_height();
+            // XTODO only load main-entry bindex key, almost all nodes should can migrate successfully
+            std::string unitbindex_key = xvdbkey_t::create_block_index_key(_unitvaccount, _unitheight);
+            std::string unitbindex_bin = event.get_source_store()->get_value(unitbindex_key);
+            if (unitbindex_bin.empty()) {
+                xerror("xkeymigrate_t::transfer_tx_v2_to_v3,fail load unitbindex");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            base::xauto_ptr<base::xvbindex_t> unitbindex = new base::xvbindex_t();
+            ret = unitbindex->serialize_from(unitbindex_bin);
+            if (ret <= 0) {
+                xerror("xkeymigrate_t::transfer_tx_v2_to_v3,fail unitbindex serialize");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            
+            txindex->set_block_addr(table_addr);
+            txindex->set_block_height(unitbindex->get_parent_block_height());
+            if (unitbindex->get_height() > 0) {
+                xassert(unitbindex->get_parent_block_height() > 0);
+            }
+
+            std::string new_txindex_bin;
+            txindex->serialize_to_string(new_txindex_bin);
+            event.get_target_store()->set_value(event.get_db_key(), new_txindex_bin);
+            xdbg("xkeymigrate_t::transfer_tx_v2_to_v3 set_value_to_dst_db with new value.unit_addr=%s,unit_height=%ld,table_addr=%s,table_height=%ld",
+                _unitvaccount.get_address().c_str(), _unitheight, table_addr.c_str(), unitbindex->get_parent_block_height());
+            return enum_xfilter_handle_code_finish;  // process finish
+        }
+
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_bindex(xdbevent_t & event,xvfilter_t* last_filter)
+        {
+            const auto & db_value = event.get_db_value();
+            base::xauto_ptr<base::xvbindex_t> bindex = new base::xvbindex_t();
+            int32_t ret = bindex->serialize_from(db_value);
+            if (ret <= 0) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail bindex serialize");
+                return enum_xfilter_handle_code_interrupt;
+            }            
+
+            if (bindex->get_address().empty()) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail bindex address empty");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            base::xvaccount_t _account(bindex->get_address());
+
+            // transfer block bindex
+            std::string new_bindex_key;
+            if(bindex->check_store_flag(base::enum_index_store_flag_main_entry)) {
+                new_bindex_key = xvdbkey_t::create_prunable_block_index_key(_account, bindex->get_height());
+            } else {
+                new_bindex_key = xvdbkey_t::create_prunable_block_index_key(_account, bindex->get_height(), bindex->get_viewid());
+            }
+            if (false == event.get_target_store()->set_value(new_bindex_key, db_value)) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block index");
+                return enum_xfilter_handle_code_interrupt;
+            } else {
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block index with new value.bindex=%s", bindex->dump().c_str());
+            }
+
+            std::string _blockhash;
+            // transfer block object key
+            std::string old_object_key = xvdbkey_t::create_block_object_key(_account, bindex->get_block_hash());
+            std::string object_value = event.get_source_store()->get_value(old_object_key);
+            if (object_value.empty()) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail load block object");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            std::string new_object_key = xvdbkey_t::create_prunable_block_object_key(_account, bindex->get_height(), bindex->get_viewid());
+            if (false == event.get_target_store()->set_value(new_object_key, object_value)) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block object");
+                return enum_xfilter_handle_code_interrupt;
+            } else {
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db with new value.bindex=%s", bindex->dump().c_str());
+            }
+
+            // transfer block input/output key
+            if (bindex->get_block_class() != base::enum_xvblock_class_nil) {
+                std::string old_input_key = xvdbkey_t::create_block_input_resource_key(_account, bindex->get_block_hash());
+                std::string input_value = event.get_source_store()->get_value(old_input_key);
+                if (!input_value.empty()) {
+                    std::string new_input_key = xvdbkey_t::create_prunable_block_input_resource_key(_account, bindex->get_height(), bindex->get_viewid());
+                    if (false == event.get_target_store()->set_value(new_input_key, input_value)) {
+                        xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block input");
+                        return enum_xfilter_handle_code_interrupt;
+                    } else {
+                        xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block input with new value.bindex=%s", bindex->dump().c_str());
+                    }
+                }
+                std::string old_output_key = xvdbkey_t::create_block_output_resource_key(_account, bindex->get_block_hash());
+                std::string output_value = event.get_source_store()->get_value(old_output_key);
+                if (!output_value.empty()) {
+                    std::string new_output_key = xvdbkey_t::create_prunable_block_output_resource_key(_account, bindex->get_height(), bindex->get_viewid());
+                    if (false == event.get_target_store()->set_value(new_output_key, output_value)) {
+                        xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block output");
+                        return enum_xfilter_handle_code_interrupt;
+                    } else {
+                        xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block output with new value.bindex=%s", bindex->dump().c_str());
+                    }
                 }
             }
-            return enum_xfilter_handle_code_success;
+
+            // try to transfer block state
+            std::string old_state_key = xvdbkey_t::create_block_state_key(_account, bindex->get_block_hash());
+            std::string state_value = event.get_source_store()->get_value(old_state_key);
+            if (!state_value.empty()) {
+                std::string new_state_key = xvdbkey_t::create_prunable_state_key(_account, bindex->get_height(), bindex->get_block_hash());
+                if (false == event.get_target_store()->set_value(new_state_key, state_value)) {
+                    xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block state");
+                    return enum_xfilter_handle_code_interrupt;
+                } else {
+                    xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block state with new value.bindex=%s", bindex->dump().c_str());
+                }
+            }
+ 
+            return enum_xfilter_handle_code_finish;  // process finish
+        }        
+
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter)
+        {
+            enum_xfilter_handle_code _code = enum_xfilter_handle_code_finish;
+            auto key_type = event.get_db_key_type();
+            if (key_type == base::enum_xdbkey_type_block_index) {
+                _code = transfer_db_v2_to_v3_bindex(event, last_filter);
+            } else if (key_type == base::enum_xdbkey_type_block_object 
+                    || key_type == enum_xdbkey_type_block_input_resource 
+                    || key_type == enum_xdbkey_type_block_output_resource
+                    || key_type == enum_xdbkey_type_state_object) {
+                // drop old block object/input/output/state
+                _code = enum_xfilter_handle_code_finish;  // drop object
+            } else if (key_type == base::enum_xdbkey_type_transaction) {
+                _code = transfer_db_v2_to_v3_transaction(event, last_filter);
+            } else {
+                // others copy directly
+                if (false == event.get_target_store()->set_value(event.get_db_key(), event.get_db_value())) {
+                    xerror("xkeymigrate_t::transfer_db_v2_to_v3,fail set value");
+                    _code = enum_xfilter_handle_code_interrupt;
+                } else {
+                    xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db other with new value.");
+                }
+            }
+            return _code;
         }
             
     }//end of namespace of base

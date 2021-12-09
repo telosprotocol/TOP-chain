@@ -536,7 +536,7 @@ namespace top
             friend class xvaccountobj_t;
             enum {enum_obj_type = xdataunit_t::enum_xdata_type_vaccountmeta};
         public:
-            xvactmeta_t(xvaccount_t & _account);
+            xvactmeta_t(const xvaccount_t & _account);
             xvactmeta_t(const xvactmeta_t & obj);
             virtual ~xvactmeta_t();
             

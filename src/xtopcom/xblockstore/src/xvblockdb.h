@@ -63,7 +63,7 @@ namespace top
             bool                write_index_to_db(base::xvbindex_t* index_obj);
             base::xvbindex_t*   read_index_from_db(const std::string & index_db_key_path);
             //return map sorted by viewid from lower to high,caller respond to release ptr later
-            std::vector<base::xvbindex_t*> read_index_from_db(const base::xvaccount_t & account,const uint64_t target_height,bool prunable_block);
+            std::vector<base::xvbindex_t*> read_index_from_db(const base::xvaccount_t & account,const uint64_t target_height);
             
         protected:
             //when successful return the comibned stored-flags, return 0 if nothing changed, but return < 0 when failed
@@ -79,8 +79,8 @@ namespace top
             std::vector<base::xvblock_t*>  read_prunable_block_object_from_db(base::xvaccount_t & account,const uint64_t target_height);
 
         protected:
-            const std::string   create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height,bool prunable_block);
-            const std::string   create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid,bool prunable_block);
+            const std::string   create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height);
+            const std::string   create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
             const std::string   create_block_index_key(base::xvbindex_t * index_ptr,const uint64_t target_height,const uint64_t target_viewid);
             
             

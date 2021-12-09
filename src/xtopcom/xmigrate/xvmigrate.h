@@ -4,6 +4,7 @@
 
 #pragma once
 #include "xvledger/xvsysobj.h"
+#include "xvledger/xvblockstore.h"
 
 namespace top
 {
@@ -21,6 +22,7 @@ namespace top
         };
 
         bool init_migrate();//just placehold to link this static lib
-        bool db_migrate_v2_to_v0_3_0_0(const std::string & db_path);
+        bool db_migrate_v2_to_v3(const std::string & src_db_path, const std::string & dst_db_path);
+        bool db_delta_migrate_v2_to_v3(const std::string & src_db_path, base::xvblockstore_t* dst_blockstore);
     }//end of namespace of base
 }//end of namespace top

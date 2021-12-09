@@ -8,6 +8,7 @@ if (BUILD_METRICS)
 endif()
 
 target_link_libraries(xmigrate PRIVATE
+    xdata
     xvledger
     xdb
     xxbase

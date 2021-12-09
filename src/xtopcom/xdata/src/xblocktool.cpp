@@ -244,6 +244,22 @@ std::string xblocktool_t::make_address_user_contract(const std::string & public_
     return base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_custom_contract, ledger_id, public_key_address);
 }
 
+std::vector<std::string> xblocktool_t::make_all_table_addresses() {
+    std::vector<std::string> table_addrs;
+    const std::vector<std::pair<base::enum_xchain_zone_index, uint16_t>> table = {
+        std::make_pair(base::enum_chain_zone_consensus_index, enum_vledger_const::enum_vbucket_has_tables_count),
+        std::make_pair(base::enum_chain_zone_zec_index, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
+        std::make_pair(base::enum_chain_zone_beacon_index, MAIN_CHAIN_REC_TABLE_USED_NUM),
+    };
+    for (auto const & t : table) {
+        for (auto i = 0; i < t.second; i++) {
+            std::string addr = base::xvaccount_t::make_table_account_address(t.first, i);
+            table_addrs.push_back(addr);
+        }
+    }
+    return table_addrs;
+}
+
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {
