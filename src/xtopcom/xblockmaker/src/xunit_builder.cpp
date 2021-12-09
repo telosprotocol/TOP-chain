@@ -5,7 +5,7 @@
 #include "xblockmaker/xunit_builder.h"
 
 #include "xblockmaker/xblockmaker_error.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcontract_vm/xaccount_vm.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xblocktool.h"
@@ -100,8 +100,8 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     bool run_new_vm{has_run_contract_tx};
     if (run_new_vm) {
-        auto const & chain_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-        if (!chain_upgrade::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_clock())) {
+        auto const & chain_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+        if (!chain_fork::xchain_fork_config_center_t::is_forked(chain_config.new_system_contract_runtime_fork_point, cs_para.get_clock())) {
             bool registration_or_tcc{false};
             for (auto const & tx : input_txs) {
                 if (!registration_or_tcc) {
