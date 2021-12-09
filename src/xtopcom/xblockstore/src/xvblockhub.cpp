@@ -1536,8 +1536,10 @@ namespace top
         {
             if(NULL == index_ptr)
                 return false;
-            xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
-            if(index_ptr->get_block_level() == base::enum_xvblock_level_table
+            //xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
+            //if(index_ptr->get_block_level() == base::enum_xvblock_level_table
+            xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s,level=%d",get_account().c_str(),index_ptr->dump().c_str(), index_ptr->get_block_level());
+            if((index_ptr->get_block_level() == base::enum_xvblock_level_table || index_ptr->get_block_level() == base::enum_xvblock_level_root)            
                 && index_ptr->get_block_flags() & base::enum_xvblock_flag_committed
                 && index_ptr->get_height() != 0)
             {
