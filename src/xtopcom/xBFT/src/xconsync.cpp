@@ -256,8 +256,14 @@ namespace top
                         xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target cert of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
                         return enum_xconsensus_error_not_found;
                     }
+                    
+                    #ifdef DEBUG
                     xassert(target_block->is_input_ready(true));
                     xassert(target_block->is_output_ready(true));
+                    #else
+                    xassert(target_block->is_input_ready(false));
+                    xassert(target_block->is_output_ready(false));
+                    #endif
                     
                     bool found_matched_proposal = false;
                     add_cert_block(target_block.get(),found_matched_proposal);//fill into cache list

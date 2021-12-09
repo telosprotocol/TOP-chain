@@ -164,7 +164,7 @@ class xdb::xdb_impl final
 public:
     static void  disable_default_compress_options(rocksdb::ColumnFamilyOptions & default_cf_options);
     static void  setup_default_db_options(rocksdb::Options & default_db_options);//setup Default Option of whole DB Level
-    void         setup_default_cf_options(xColumnFamily & cf_config);
+    void         setup_default_cf_options(xColumnFamily & cf_config,const size_t block_size,std::shared_ptr<rocksdb::Cache> & block_cache);
     
     xColumnFamily setup_default_cf();//setup Default ColumnFamily(CF),and for read&write as well
     xColumnFamily setup_universal_style_cf(const std::string & name,uint64_t memtable_memory_budget = 64 * 1024 * 1024,int num_levels = 5);
@@ -243,12 +243,14 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
     return ;
 }
 
-void xdb::xdb_impl::setup_default_cf_options(xColumnFamily & cf_config)
+void xdb::xdb_impl::setup_default_cf_options(xColumnFamily & cf_config,const size_t block_size,std::shared_ptr<rocksdb::Cache> & block_cache)
 {
     rocksdb::BlockBasedTableOptions table_options;
     table_options.enable_index_compression = false;
-    table_options.block_size = 16 * 1024; //default is 4K -> 16K
-    table_options.block_cache = rocksdb::NewLRUCache(32 << 20);//default 8M -> 32M
+    if(block_size > 0)
+        table_options.block_size = block_size;
+    if(block_cache != nullptr)
+        table_options.block_cache = block_cache;
     
 #ifdef DB_CACHE
     table_options.cache_index_and_filter_blocks = true;
@@ -276,7 +278,10 @@ xColumnFamily xdb::xdb_impl::setup_default_cf()
     cf_config.cf_name = rocksdb::kDefaultColumnFamilyName;
     cf_config.cf_option.num_levels = m_options.num_levels;
     cf_config.cf_option.compression_per_level = m_options.compression_per_level;
-    setup_default_cf_options(cf_config);
+    
+    const size_t block_size = 0; //use default one(4 * 1024)
+    std::shared_ptr<rocksdb::Cache> block_cache = nullptr; //use default one(8M)
+    setup_default_cf_options(cf_config,block_size,block_cache);
     
     return cf_config;
 }
@@ -293,7 +298,10 @@ xColumnFamily xdb::xdb_impl::setup_universal_style_cf(const std::string & name,u
         cf_config.cf_option.num_levels = num_levels;
     cf_config.cf_option.OptimizeUniversalStyleCompaction(memtable_memory_budget);
     
-    setup_default_cf_options(cf_config);
+    const size_t block_size = 0; //use default one(4 * 1024)
+    std::shared_ptr<rocksdb::Cache> block_cache = nullptr; //use default one(8M)
+    setup_default_cf_options(cf_config,block_size,block_cache);
+    
     if(false == cf_config.cf_option.compression_opts.enabled)//force turn off for each level
     {
         xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
@@ -315,7 +323,10 @@ xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,uint6
         cf_config.cf_option.num_levels = num_levels;
     cf_config.cf_option.OptimizeLevelStyleCompaction(memtable_memory_budget);
 
-    setup_default_cf_options(cf_config);
+    const size_t block_size = 8 * 1024; //default is 4K -> 8K
+    std::shared_ptr<rocksdb::Cache> block_cache = rocksdb::NewLRUCache(32 << 20);//default 8M -> 32M
+    //4 Block CF -> 4 * 32 = 128M block caches
+    setup_default_cf_options(cf_config,block_size,block_cache);
     if(false == cf_config.cf_option.compression_opts.enabled)//force turn off for each level
     {
         xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
@@ -461,7 +472,7 @@ xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> &
     cf_list.push_back(setup_level_style_cf("2")); //block 'cf[2]
     cf_list.push_back(setup_level_style_cf("3")); //block 'cf[3]
     cf_list.push_back(setup_level_style_cf("4")); //block 'cf[4]
-    cf_list.push_back(setup_fifo_style_cf("f"));  //fifo
+    //cf_list.push_back(setup_fifo_style_cf("f"));  //fifo
     //XTODO,add other CF here
     
     m_cf_configs = cf_list;
