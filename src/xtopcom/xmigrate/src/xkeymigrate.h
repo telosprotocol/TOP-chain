@@ -32,6 +32,10 @@ namespace top
         protected: //triggered by push_event_back or push_event_front
             virtual enum_xfilter_handle_code  transfer_keyvalue(xdbevent_t & event,xvfilter_t* last_filter) override;
             virtual enum_xfilter_handle_code  fire_event(const xvevent_t & event,xvfilter_t* last_filter) override;
+
+            enum_xfilter_handle_code transfer_db_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter);
+            enum_xfilter_handle_code transfer_db_v2_to_v3_transaction(xdbevent_t & event,xvfilter_t* last_filter);
+            enum_xfilter_handle_code transfer_db_v2_to_v3_bindex(xdbevent_t & event,xvfilter_t* last_filter);
         };
     
         template<uint32_t migrate_version>

@@ -13,6 +13,18 @@ namespace top
 {
     namespace base
     {
+        //full_ledger = (ledger_id & 0xFFFF) + (subaddr_of_ledger & 0xFF)
+            //ledger_id= [chain_id:12bit][zone_index:4bit]
+            //[8bit:subaddr_of_ledger] = [5 bit:book-index]-[3 bit:table-index]
+        const std::string  fullledger_to_storageid(const xvid_t xvid_addr)//pick fixed 24bit as storage_id
+        {
+            char szBuff[32] = {0};
+            const int inBufLen = sizeof(szBuff);
+            const uint64_t storage_id = (get_vledger_ledger_id(xvid_addr) << 8) | get_vledger_subaddr(xvid_addr);
+            snprintf(szBuff,inBufLen,"%6llx", (long long unsigned int)storage_id);
+            return std::string(szBuff);//align 24bit as fixed size
+        }
+    
         //convert to binary/bytes address with compact mode as for DB 'key
         const std::string  xvaccount_t::get_storage_key(const xvaccount_t & _account)
         {
@@ -25,33 +37,11 @@ namespace top
                 xassert(account_full_adress.size() >= enum_vaccount_address_prefix_size);
                 return account_full_adress;
             }
-            
-            //step#1: extract the raw address of public key from full-address
-            std::string raw_public_addr;
-            const std::string::size_type end_raw_public_addr_pos = account_full_adress.find_last_of('@');
-            if(end_raw_public_addr_pos == std::string::npos)//most cases
-            {
-                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size);
-            }
-            else if(end_raw_public_addr_pos > enum_vaccount_address_prefix_size)
-            {
-                //note: string substr (size_t pos = 0, size_t len = npos); //[)
-                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size,end_raw_public_addr_pos - enum_vaccount_address_prefix_size);
-            }
-            else //exception case
-            {
-                raw_public_addr = account_full_adress.substr(enum_vaccount_address_prefix_size);
-            }
-            
-            //step#2: decode hex to byte address for eth address
-            enum_vaccount_addr_type addr_type = _account.get_addr_type();
-            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account)
-            {
-                raw_public_addr = base::xstring_utl::from_hex(raw_public_addr);
-            }
-            
-            //step#3: combine with ledger_id/subsubleder/raw_public_addr
-            const std::string final_storage_key = xstring_utl::tostring(_account.get_ledger_id()) + "/" + xstring_utl::tostring(_account.get_ledger_subaddr()) + "/" + raw_public_addr;
+
+            //ledger_id= [chain_id:12bit][zone_index:4bit]
+            //[10bit:subaddr_of_ledger] = [7 bit:book-index]-[3 bit:table-index]
+            //step#3: combine with ledger_id/subsubleder/compact_address
+            const std::string final_storage_key = fullledger_to_storageid(_account.get_xvid()) + "/" + compact_address_to(account_full_adress);
             return final_storage_key;
         }
     
@@ -403,7 +393,7 @@ namespace top
             return meta_ptr;
         }
         
-        xvactmeta_t::xvactmeta_t(xvaccount_t & _account)
+        xvactmeta_t::xvactmeta_t(const xvaccount_t & _account)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization

@@ -129,10 +129,10 @@ namespace top
             return key_path;
         }
 
-        const std::string  xvdbkey_t::create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height)
+        const std::string  xvdbkey_t::create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height, const std::string & org_block_hash)
         {
             //enum_xdb_cf_type_read_only = 'r'
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/a";//a for state
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + org_block_hash + "/a";//a for state
             return key_path;
         }
     
@@ -199,7 +199,12 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/q";
             return key_path;
         }
-    
+
+        const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height) {
+            const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
+            return key_path;
+        }
+
         enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
         {
             enum_xdbkey_type type = enum_xdbkey_type_unknow;
@@ -313,11 +318,5 @@ namespace top
             }
             return type;
         }
-
-        const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height) {
-            const std::string key_path = "r/" + account.get_storage_key()+ "/" + xstring_utl::uint642hex(target_height) + "/up/";
-            return key_path;
-        }
-
     }//end of namespace of base
 }//end of namespace top

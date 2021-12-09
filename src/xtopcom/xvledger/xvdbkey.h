@@ -78,7 +78,8 @@ namespace top
            static const std::string  create_account_span_key(const xvaccount_t & account);
            static const std::string  create_account_span_key(const xvaccount_t & account,const uint64_t target_height);
            
-           static const std::string  create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height);
+           //state keep hash as key for geting last block state
+           static const std::string  create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height, const std::string & org_block_hash);
            
            //all keys under of same height
            static const std::string  create_prunable_block_height_key(const xvaccount_t & account,const uint64_t target_height);

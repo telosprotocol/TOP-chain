@@ -330,8 +330,8 @@ namespace top
                     m_src_store_ptr->get_estimate_num_keys(m_total_keys_num);
                     xinfo("xdbmigrate_t::run begin. src db total estimate num = %ld", m_total_keys_num);
                     std::cout << "xdbmigrate_t::run begin. src db total estimate num = " << m_total_keys_num << std::endl;
-                    // XTODO only scan txindex keys
-                    m_src_store_ptr->read_range("t/", db_scan_callback,this);
+
+                     m_src_store_ptr->read_range("", db_scan_callback,this);
 
                     // finally, update db version to dst db version
                     m_dst_store_ptr->set_value(xvdbkey_t::get_xdb_version_key(), m_dst_db_version);

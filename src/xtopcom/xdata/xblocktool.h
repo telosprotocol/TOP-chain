@@ -48,6 +48,8 @@ class xblocktool_t {
     static std::string      make_address_beacon_sys_account(const std::string & public_key_address, uint16_t subaddr);
     static std::string      make_address_user_contract(const std::string & public_key_address);
 
+    static std::vector<std::string>     make_all_table_addresses();
+
  public:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
     static base::xauto_ptr<base::xvblock_t> get_committed_state_changed_block(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height);
