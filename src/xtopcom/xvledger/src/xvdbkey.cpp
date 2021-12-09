@@ -146,15 +146,15 @@ namespace top
     
         const std::string  xvdbkey_t::create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height)
         {
-            //enum_xdb_cf_type_state = 's'
-            const std::string key_path = "s/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/s";//a for state
+            //enum_xdb_cf_type_read_most = 's'
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/s";//a for state
             return key_path;
         }
         
         const std::string  xvdbkey_t::create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height,const std::string & block_hash)
         {
-            //enum_xdb_cf_type_state = 's'
-            const std::string key_path = "s/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + block_hash + "/s";//a for state
+            //enum_xdb_cf_type_read_most = 's'
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + block_hash + "/s";//a for state
             return key_path;
         }
     
@@ -261,6 +261,10 @@ namespace top
                         
                     case 'a':
                         type = enum_xdbkey_type_account_span;
+                        break;
+                    
+                    case 's':
+                        type = enum_xdbkey_type_state_object;
                         break;
                 }
             }
