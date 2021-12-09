@@ -76,39 +76,29 @@ public:
     }
 
     data::xtransaction_ptr_t on_collect_statistic_info(std::string data_str, uint64_t height, uint64_t tgas) {
-        xaction_t source_action;
-        xaction_t destination_action;
-        source_action.set_account_addr(shard_table_slash_addr);
-        destination_action.set_account_addr(shard_table_slash_addr);
-        destination_action.set_action_name("on_collect_statistic_info");
-
         top::base::xstream_t target_stream(base::xcontext_t::instance());
         target_stream << data_str;
         target_stream << height;
         target_stream << tgas;
-        destination_action.set_action_param(std::string((char*) target_stream.data(), target_stream.size()));
 
         data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
-        slash_colletion_trx->set_source_action(source_action);
-        slash_colletion_trx->set_target_action(destination_action);
+        slash_colletion_trx->set_source_addr(shard_table_slash_addr);
+        slash_colletion_trx->set_target_addr(shard_table_slash_addr);
+        slash_colletion_trx->set_target_action_name("on_collect_statistic_info");
+        slash_colletion_trx->set_target_action_para(std::string((char*) target_stream.data(), target_stream.size()));
         slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr);
         return slash_colletion_trx;
     }
 
     data::xtransaction_ptr_t report_summarized_statistic_info(uint64_t timestamp) {
-        xaction_t source_action;
-        xaction_t destination_action;
-        source_action.set_account_addr(shard_table_slash_addr);
-        destination_action.set_account_addr(shard_table_slash_addr);
-        destination_action.set_action_name("report_summarized_statistic_info");
-
         top::base::xstream_t target_stream(base::xcontext_t::instance());
         target_stream << timestamp;
-        destination_action.set_action_param(std::string((char*) target_stream.data(), target_stream.size()));
 
         data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
-        slash_colletion_trx->set_source_action(source_action);
-        slash_colletion_trx->set_target_action(destination_action);
+        slash_colletion_trx->set_source_addr(shard_table_slash_addr);
+        slash_colletion_trx->set_target_addr(shard_table_slash_addr);
+        slash_colletion_trx->set_target_action_name("report_summarized_statistic_info");
+        slash_colletion_trx->set_target_action_para(std::string((char*) target_stream.data(), target_stream.size()));
         slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr);
         return slash_colletion_trx;
     }

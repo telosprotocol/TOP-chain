@@ -75,39 +75,24 @@ public:
     }
 
     data::xtransaction_ptr_t summarize_slash_info(std::string const& slash_info) {
-
-        xaction_t source_action;
-        xaction_t destination_action;
-        // source_action.set_account_addr(sys_contract_zec_slash_info_addr);
-        source_action.set_account_addr(shard_table_statistic_addr);
-        destination_action.set_account_addr(sys_contract_zec_slash_info_addr);
-        destination_action.set_action_name("summarize_slash_info");
-
-
-        destination_action.set_action_param(slash_info);
-
         data::xtransaction_ptr_t slash_summarize_trx = make_object_ptr<xtransaction_v2_t>();
-        slash_summarize_trx->set_source_action(source_action);
-        slash_summarize_trx->set_target_action(destination_action);
+        slash_summarize_trx->set_source_addr(shard_table_statistic_addr);
+        slash_summarize_trx->set_target_addr(sys_contract_zec_slash_info_addr);
+        slash_summarize_trx->set_target_action_name("summarize_slash_info");
+        slash_summarize_trx->set_target_action_para(slash_info);
         slash_summarize_trx->set_different_source_target_address(shard_table_statistic_addr, sys_contract_zec_slash_info_addr);
         return slash_summarize_trx;
-
     }
 
     data::xtransaction_ptr_t do_unqualified_node_slash(uint64_t timestamp) {
-        xaction_t source_action;
-        xaction_t destination_action;
-        source_action.set_account_addr(sys_contract_zec_slash_info_addr);
-        destination_action.set_account_addr(sys_contract_zec_slash_info_addr);
-        destination_action.set_action_name("do_unqualified_node_slash");
-
         top::base::xstream_t target_stream(base::xcontext_t::instance());
         target_stream << timestamp;
-        destination_action.set_action_param(std::string((char*) target_stream.data(), target_stream.size()));
 
         data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
-        slash_colletion_trx->set_source_action(source_action);
-        slash_colletion_trx->set_target_action(destination_action);
+        slash_colletion_trx->set_source_addr(sys_contract_zec_slash_info_addr);
+        slash_colletion_trx->set_target_addr(sys_contract_zec_slash_info_addr);
+        slash_colletion_trx->set_target_action_name("do_unqualified_node_slash");
+        slash_colletion_trx->set_target_action_para(std::string((char*) target_stream.data(), target_stream.size()));
         slash_colletion_trx->set_same_source_target_address(sys_contract_zec_slash_info_addr);
         return slash_colletion_trx;
     }

@@ -2179,11 +2179,12 @@ namespace top
                     return false;
                 }
  
-                const std::string cert_hash = get_cert()->build_block_hash();
-                if(cert_hash != m_cert_hash)
-                {
-                    xerror("xvblock_t::is_valid,hash of cert not match,cert_hash=%s vs m_cert_hash(%s)",cert_hash.c_str(), m_cert_hash.c_str());
-                    return false;
+                if(deep_test){
+                    const std::string cert_hash = get_cert()->build_block_hash();
+                    if(cert_hash != m_cert_hash) {
+                        xerror("xvblock_t::is_valid,hash of cert not match,cert_hash=%s vs m_cert_hash(%s)",cert_hash.c_str(), m_cert_hash.c_str());
+                        return false;
+                    }
                 }
                 
                 //genesis block dont need verify certification
@@ -2351,15 +2352,17 @@ namespace top
                 xassert(qcert_ptr != NULL); //should has value
                 if(qcert_ptr != NULL)
                 {
-                    const std::string vcert_hash = qcert_ptr->hash(vqcert_bin);
-                    if( (m_cert_hash.empty() == false) && (vcert_hash != m_cert_hash) ) //test match
-                    {
-                        xerror("xvblock_t::do_read, vqcert not match with stored hash, vcert_hash:%s but ask %s",vcert_hash.c_str(),m_cert_hash.c_str());
-                    }
-                    else
-                    {
-                        m_vqcert_ptr = qcert_ptr;
-                    }
+                    #if DEBUG
+                        const std::string vcert_hash = qcert_ptr->hash(vqcert_bin);
+                        if( (m_cert_hash.empty() == false) && (vcert_hash != m_cert_hash) ) //test match
+                        {
+                            xerror("xvblock_t::do_read, vqcert not match with stored hash, vcert_hash:%s but ask %s",vcert_hash.c_str(),m_cert_hash.c_str());
+                        }   
+                        else
+                    #endif
+                        {
+                            m_vqcert_ptr = qcert_ptr;
+                        }
                 }
             }
             if(NULL == m_vqcert_ptr) {

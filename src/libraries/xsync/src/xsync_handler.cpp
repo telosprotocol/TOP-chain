@@ -380,8 +380,10 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
         successor = block.get();
     }
 
-    if (data::is_unit_address(common::xaccount_address_t{successor->get_account()}))
+    if (!data::is_table_address(common::xaccount_address_t{successor->get_account()}) && !data::is_drand_address(common::xaccount_address_t{successor->get_account()})) {
+        xsync_dbg("xsync_handler_t::blocks, address type error: %s", successor->get_account().c_str());
         return;
+    }
 
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
     m_downloader->push_event(e);

@@ -460,14 +460,15 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
     std::string account_prefix;
     uint32_t table_id = 0;
 
-    if (!data::xdatautil::extract_parts(m_address, account_prefix, table_id)){
-        return abort;
-    }
-    {
+    if (m_address == sys_drand_addr) {
+    } else {
+        if (!data::xdatautil::extract_parts(m_address, account_prefix, table_id)) {
+            xsync_dbg("xchain_downloader_t::execute_download check fail : %s", m_address.c_str());
+            return abort;
+        }
         if (account_prefix == sys_contract_beacon_table_block_addr) {
             // ignore
         } else if (account_prefix == sys_contract_zec_table_block_addr) {
-
             if (!check_behind(end_height, sys_contract_rec_elect_rec_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
@@ -478,6 +479,7 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
                 return abort;
             }
         } else {
+            xsync_dbg("xchain_downloader_t::execute_download check fail: %s", m_address.c_str());
             return abort;
         }
     }

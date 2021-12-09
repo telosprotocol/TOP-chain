@@ -100,7 +100,7 @@ void xtransaction_v1_t::construct_tx(enum_xtransaction_type tx_type, const uint1
     m_target_action.set_action_name(info.m_target_action_name);
     m_target_action.set_action_param(info.m_target_action_para);
 
-    xtransaction_t::set_action_type_by_tx_type(m_source_action, m_target_action, static_cast<enum_xtransaction_type>(m_transaction_type));
+    xtransaction_t::set_action_type_by_tx_type(static_cast<enum_xtransaction_type>(m_transaction_type));
 }
 
 int32_t xtransaction_v1_t::do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const {
@@ -462,35 +462,33 @@ void xtransaction_v1_t::construct_from_json(xJson::Value& request) {
 
     const auto & from = request["sender_action"]["tx_sender_account_addr"].asString();
     const auto & to = request["receiver_action"]["tx_receiver_account_addr"].asString();
-    auto & source_action = get_source_action();
-    source_action.set_action_hash(request["sender_action"]["action_hash"].asUInt());
-    source_action.set_action_type(static_cast<enum_xaction_type>(request["sender_action"]["action_type"].asUInt()));
-    source_action.set_action_size(static_cast<uint16_t>(request["sender_action"]["action_size"].asUInt()));
-    source_action.set_account_addr(from);
-    source_action.set_action_name(request["sender_action"]["action_name"].asString());
+    m_source_action.set_action_hash(request["sender_action"]["action_hash"].asUInt());
+    m_source_action.set_action_type(static_cast<enum_xaction_type>(request["sender_action"]["action_type"].asUInt()));
+    m_source_action.set_action_size(static_cast<uint16_t>(request["sender_action"]["action_size"].asUInt()));
+    m_source_action.set_account_addr(from);
+    m_source_action.set_action_name(request["sender_action"]["action_name"].asString());
     auto source_param_vec = hex_to_uint(request["sender_action"]["action_param"].asString());
     std::string source_param((char *)source_param_vec.data(), source_param_vec.size());
-    source_action.set_action_param(std::move(source_param));
+    m_source_action.set_action_param(std::move(source_param));
     auto source_ext_vec = hex_to_uint(request["sender_action"]["action_ext"].asString());
     std::string source_ext((char *)source_ext_vec.data(), source_ext_vec.size());
-    source_action.set_action_ext(std::move(source_ext));
+    m_source_action.set_action_ext(std::move(source_ext));
 
-    source_action.set_action_authorization(request["sender_action"]["action_authorization"].asString());
+    m_source_action.set_action_authorization(request["sender_action"]["action_authorization"].asString());
 
-    auto & target_action = get_target_action();
-    target_action.set_action_hash(request["receiver_action"]["action_hash"].asUInt());
-    target_action.set_action_type(static_cast<enum_xaction_type>(request["receiver_action"]["action_type"].asUInt()));
-    target_action.set_action_size(static_cast<uint16_t>(request["receiver_action"]["action_size"].asUInt()));
-    target_action.set_account_addr(to);
-    target_action.set_action_name(request["receiver_action"]["action_name"].asString());
+    m_target_action.set_action_hash(request["receiver_action"]["action_hash"].asUInt());
+    m_target_action.set_action_type(static_cast<enum_xaction_type>(request["receiver_action"]["action_type"].asUInt()));
+    m_target_action.set_action_size(static_cast<uint16_t>(request["receiver_action"]["action_size"].asUInt()));
+    m_target_action.set_account_addr(to);
+    m_target_action.set_action_name(request["receiver_action"]["action_name"].asString());
     auto target_param_vec = hex_to_uint(request["receiver_action"]["action_param"].asString());
     std::string target_param((char *)target_param_vec.data(), target_param_vec.size());
-    target_action.set_action_param(std::move(target_param));
+    m_target_action.set_action_param(std::move(target_param));
     auto target_ext_vec = hex_to_uint(request["receiver_action"]["action_ext"].asString());
     std::string target_ext((char *)target_ext_vec.data(), target_ext_vec.size());
-    target_action.set_action_ext(std::move(target_ext));
+    m_target_action.set_action_ext(std::move(target_ext));
 
-    target_action.set_action_authorization(request["receiver_action"]["action_authorization"].asString());
+    m_target_action.set_action_authorization(request["receiver_action"]["action_authorization"].asString());
 
     auto ext_vec = hex_to_uint(request["ext"].asString());
     std::string ext((char *)ext_vec.data(), ext_vec.size());
@@ -508,7 +506,7 @@ void xtransaction_v1_t::construct_from_json(xJson::Value& request) {
 int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) {
     if (source_type == xaction_type_source_null) {
         data::xaction_source_null source_action;
-        int32_t ret = source_action.parse(get_source_action());
+        int32_t ret = source_action.parse(m_source_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -516,11 +514,11 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (source_type == xaction_type_asset_out) {
         data::xaction_asset_out source_action;
-        int32_t ret = source_action.parse(get_source_action());
+        int32_t ret = source_action.parse(m_source_action);
         if (ret != xsuccess) {
             // should return error, but old topio won't be able to execute run_contract tx, because of source_action_param mistakenly set to ""
             if (get_tx_type() == xtransaction_type_run_contract) {
-                xdbg("xtransaction_v1_t::parse empty source action param:%s, tx_hash:%s", get_source_action().get_action_param().c_str(), get_digest_hex_str().c_str());
+                xdbg("xtransaction_v1_t::parse empty source action param:%s, tx_hash:%s", get_source_action_para().c_str(), get_digest_hex_str().c_str());
             } else {
                 return ret;
             }
@@ -531,7 +529,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 #ifdef ENABLE_CREATE_USER  // debug use
     if (target_type == xaction_type_create_user_account) {
         data::xaction_create_user_account target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -541,7 +539,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (target_type == xaction_type_asset_in) {
         data::xaction_asset_in target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -553,7 +551,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (target_type == xaction_type_run_contract) {
         data::xaction_run_contract target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -564,7 +562,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (target_type == xaction_type_pledge_token) {
         data::xaction_pledge_token target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -573,7 +571,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (target_type == xaction_type_redeem_token) {
         data::xaction_redeem_token target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -582,7 +580,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (target_type == xaction_type_pledge_token_vote) {
         data::xaction_pledge_token_vote target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }
@@ -592,7 +590,7 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     if (target_type == xaction_type_redeem_token_vote) {
         data::xaction_redeem_token_vote target_action;
-        int32_t ret = target_action.parse(get_target_action());
+        int32_t ret = target_action.parse(m_target_action);
         if (ret != xsuccess) {
             return ret;
         }

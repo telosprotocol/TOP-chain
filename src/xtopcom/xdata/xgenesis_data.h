@@ -29,6 +29,7 @@ bool is_account_address(common::xaccount_address_t const & addr);
 bool is_sub_account_address(common::xaccount_address_t const & addr);
 bool is_sys_contract_address(common::xaccount_address_t const & addr);
 bool is_black_hole_address(common::xaccount_address_t const & addr);
+bool is_drand_address(common::xaccount_address_t const & addr);
 bool is_user_contract_address(common::xaccount_address_t const & addr);
 bool is_contract_address(common::xaccount_address_t const & addr);
 bool is_beacon_contract_address(common::xaccount_address_t const & addr);

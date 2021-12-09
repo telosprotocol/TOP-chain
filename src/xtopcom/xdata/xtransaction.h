@@ -85,7 +85,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     static std::string transaction_type_to_string(uint16_t type);
     static bool set_tx_by_serialized_data(xtransaction_ptr_t & tx_ptr, const std::string & data);
     static uint64_t get_gmttime_s();
-    static void set_action_type_by_tx_type(data::xaction_t & source_action, data::xaction_t & target_action, const enum_xtransaction_type tx_type);
     static std::string tx_exec_status_to_str(uint8_t exec_status);
 
  public:
@@ -113,9 +112,15 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void        set_last_trans_hash_and_nonce(uint256_t last_hash, uint64_t last_nonce) = 0;
     virtual void        set_fire_and_expire_time(uint16_t const expire_duration) = 0;
  
-    virtual void        set_source_addr(const std::string & addr) {}
-    virtual void        set_source_action(const xaction_t & action) = 0;
-    virtual void        set_target_action(const xaction_t & action) = 0;
+    void set_action_type_by_tx_type(const enum_xtransaction_type tx_type);
+    virtual void        set_source_addr(const std::string & addr) = 0;
+    virtual void        set_source_action_type(const enum_xaction_type type) = 0;
+    virtual void        set_source_action_name(const std::string & name) = 0;
+    virtual void        set_source_action_para(const std::string & para) = 0;
+    virtual void        set_target_addr(const std::string & addr) = 0;
+    virtual void        set_target_action_type(const enum_xaction_type type) = 0;
+    virtual void        set_target_action_name(const std::string & name) = 0;
+    virtual void        set_target_action_para(const std::string & para) = 0;
     virtual void        set_authorization(const std::string & authorization) = 0;
     virtual void        set_len() = 0;
  
@@ -135,9 +140,14 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual uint64_t            get_tx_nonce() const = 0;
     virtual size_t              get_serialize_size() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
-    virtual xaction_t &         get_source_action() = 0;
-    virtual xaction_t &         get_target_action() = 0;
+    virtual const std::string & get_source_action_name() const = 0;
+    virtual const std::string & get_source_action_para() const = 0;
+    virtual enum_xaction_type get_source_action_type() const = 0;
+    virtual std::string get_source_action_str() const = 0;
     virtual const std::string & get_target_action_name() const = 0;
+    virtual const std::string & get_target_action_para() const = 0;
+    virtual enum_xaction_type get_target_action_type() const = 0;
+    virtual std::string get_target_action_str() const = 0;
     virtual const std::string & get_authorization() const = 0;
     virtual void                parse_to_json(xJson::Value& tx_json, const std::string & tx_version = RPC_VERSION_V2) const = 0;
     virtual void                construct_from_json(xJson::Value& tx_json) = 0;
@@ -171,7 +181,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const std::string & get_ext() const = 0;
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
-    virtual void set_target_addr(const std::string & addr) = 0;
     virtual const std::string & get_target_address() const = 0;
 };
 

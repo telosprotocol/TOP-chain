@@ -97,53 +97,6 @@ TEST_F(test_receipt_strategy, is_select) {
     ASSERT_EQ(xreceipt_strategy_t::is_selected_pos(3, 3, 3, 4), true);
 }
 
-// TEST_F(test_receipt_strategy, is_resend_node) {
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 0, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 0, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 0, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 0, 4, 3), false);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 28, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 28, 4, 1), true);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 28, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 28, 4, 3), false);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(99, 29, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(99, 29, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(99, 29, 4, 2), true);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(99, 29, 4, 3), false);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(98, 30, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(98, 30, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(98, 30, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(98, 30, 4, 3), true);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(97, 31, 4, 0), true);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(97, 31, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(97, 31, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(97, 31, 4, 3), false);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(164, 28, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(164, 28, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(164, 28, 4, 2), true);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(164, 28, 4, 3), false);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(163, 29, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(163, 29, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(163, 29, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(163, 29, 4, 3), true);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(162, 30, 4, 0), true);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(162, 30, 4, 1), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(162, 30, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(162, 30, 4, 3), false);
-
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 0), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 1), true);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 2), false);
-//     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 3), false);
-// }
-
 TEST_F(test_receipt_strategy, is_selected_receipt_pull_msg_processor) {
     ASSERT_EQ(xreceipt_strategy_t::is_selected_receipt_pull_msg_processor(100, 0, 4, 0), true);
     ASSERT_EQ(xreceipt_strategy_t::is_selected_receipt_pull_msg_processor(100, 0, 4, 1), false);

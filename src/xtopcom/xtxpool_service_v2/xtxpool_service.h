@@ -50,13 +50,11 @@ public:
     }
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const override;
-    void resend_receipts(uint64_t now) override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) override;
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     };
-    void pull_lacking_receipts_v1(uint64_t now, xcovered_tables_t & covered_tables) override;
-    void pull_lacking_receipts_v2(uint64_t now, xcovered_tables_t & covered_tables) override;
+    void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
     void send_receipt_id_state(uint64_t now) override;
 
 private:
@@ -65,18 +63,9 @@ private:
     void on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_pull_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
-    // void on_message_pull_recv_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
-    void on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);  // keep it for compatibility
     void on_message_receipt_id_state_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     // void on_message_neighbor_sync_req(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
-    void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);                        // keep it for compatibility
-    bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;  // keep it for compatibility
-    void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
-    void send_receipt_retry(xcons_transaction_ptr_t & cons_tx);  // keep it for compatibility
-    xcons_transaction_ptr_t create_confirm_tx_by_hash(const uint256_t & hash);
-    xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
-    void send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t & pulled_receipt);
-    void send_pull_receipts_of_confirm_v2(xreceipt_pull_receipt_t & pulled_receipt);
+    void send_pull_receipts_of_confirm(xreceipt_pull_receipt_t & pulled_receipt);
     void send_pull_receipts_of_recv(xreceipt_pull_receipt_t & pulled_receipt);
     void send_push_receipts(xreceipt_push_t & pushed_receipt);
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);

@@ -87,6 +87,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     vnetwork::xvnode_address_t peer_addr;
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
+        xsync_dbg("xsync_behind_checker_t::check_one, %d, %s,%llu,%llu,%llu,%llu", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height);
         if ((m_counter % 120) == 0) {
             std::string sync_mode;
             std::string gap_metric_tag_name;

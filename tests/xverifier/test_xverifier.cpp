@@ -241,8 +241,8 @@ TEST_F(test_xverifier, trx_verifier_validation_4_len) {
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->get_source_action().set_action_size(10000);
-    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
+    // trx_ptr->get_source_action().set_action_size(10000);
+    // ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }

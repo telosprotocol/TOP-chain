@@ -79,7 +79,7 @@ void xtable_block_t::parse_to_json_v1(xJson::Value & root) {
                 juj["sender"] = _rawtx->get_source_addr();
                 juj["receiver"] = _rawtx->get_target_addr();
                 juj["action_name"] = _rawtx->get_target_action_name();
-                juj["action_param"] = to_hex_str(_rawtx->get_target_action().get_action_param());
+                juj["action_param"] = to_hex_str(_rawtx->get_target_action_para());
             }
             if (txaction.is_self_tx() || txaction.is_send_tx()) {
                 juj["last_tx_nonce"] = static_cast<unsigned int>(last_tx_nonce);
