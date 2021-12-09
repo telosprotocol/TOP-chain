@@ -61,7 +61,7 @@ xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t* bloc
     return tablestate;
 }
 
-xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para) {
+xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
     XMETRICS_TIMER(metrics::cons_make_proposal_tick);
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
@@ -84,6 +84,14 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);
+    if (table_para.get_origin_txs().size() < min_tx_num) {
+        xinfo("xproposal_maker_t::make_proposal tx number too small:%d,min num:%d. %s,cert_height=%" PRIu64 "",
+              table_para.get_origin_txs().size(),
+              min_tx_num,
+              proposal_para.dump().c_str(),
+              latest_cert_block->get_height());
+        return nullptr;
+    }
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
