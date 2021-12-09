@@ -1,7 +1,9 @@
 #pragma once
 
 namespace top {
-namespace store {
+
+#if defined(CHECKPOINT_TEST)
+
 static auto checkpoint_json =
     R"T(
 {
@@ -33,5 +35,31 @@ static auto checkpoint_json =
     }
 }
 )T";
+
+#elif defined(XBUILD_CI) || defined(XBUILD_DEV)
+
+static auto checkpoint_json =
+    R"T(
+{
 }
+)T";
+
+#elif defined(XBUILD_GALILEO)
+
+static auto checkpoint_json =
+    R"T(
+{
+}
+)T";
+
+#else
+
+static auto checkpoint_json =
+    R"T(
+{
+}
+)T";
+
+#endif
+
 }

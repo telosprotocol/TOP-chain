@@ -12,14 +12,7 @@
 namespace top {
 namespace store {
 
-struct xtop_checkpoint_cmp {
-    bool operator()(const uint64_t & lhs, const uint64_t & rhs) const {
-        return lhs < rhs;
-    }
-};
-using xcheckpoint_cmp_t = xtop_checkpoint_cmp;
-
-using xcheckpoints_t = std::map<uint64_t, std::string, xcheckpoint_cmp_t>;
+using xcheckpoints_t = std::map<uint64_t, std::string>;
 using xcheckpoints_map_t = std::map<std::string, xcheckpoints_t>;
 
 class xtop_chain_checkpoint {
