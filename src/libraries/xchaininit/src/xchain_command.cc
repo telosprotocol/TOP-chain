@@ -252,14 +252,15 @@ int db_restore(const std::string & from, const std::string & to, const int backu
         printf("please make sure there is no any topio proccess running on current directory.\n");
         return -1;
     }
-    // check if the target directory specified by user is exist
-    if (!IsDirEmpty(target.c_str())) {
-        printf("Restore failed\nError: The target dir for restore is not empty, please input a empty one.\n");
-        return -1;
-    }
     // create two restore user directory, one for db, the other for pdb
     multiplatform_mkdir(target.c_str());
     auto db_target = target + DB_PATH;
+    // check if the target directory specified by user is exist
+    if (!IsDirEmpty(db_target.c_str())) {
+        printf("Restore failed: %s\nError: The target dir for restore is not empty, please input a empty one.\n", db_target.c_str());
+        return -1;
+    }
+
     multiplatform_mkdir(db_target.c_str());
 
     // printf("resetore from:%s to %s\n", from_db_dir.c_str(),db_target.c_str());
@@ -946,6 +947,12 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         db_restore(restoreFromDir, restoreToDir, backupid);
     });
 
+    auto cmd_db_download = db->add_subcommand("download", "download database.");
+    std::string download_addr;
+    cmd_db_download->add_option("download_addr", download_addr, "Download address.")->mandatory();
+    cmd_db_download->callback([&]() {
+        db_download(config_extra_json["datadir"].get<std::string>(), download_addr, out_str);
+    });
     /*
      * debug
      */
@@ -1027,6 +1034,122 @@ std::string decrypt_keystore(const std::string & keystore_path, const std::strin
 std::string decrypt_keystore_by_key(const std::string & keystore_path, const std::string & token) {
     auto private_key = xChainSDK::xcrypto::decrypt_keystore_by_key(token, keystore_path);
     return private_key;
+}
+
+int db_download(const std::string datadir, const std::string& download_addr, std::ostringstream& out_str) {
+    std::string local_db_dir = datadir + DB_PATH;
+    if (!IsDirEmpty(local_db_dir.c_str())) {
+        printf("The target dir for restore is not empty: %s\n", local_db_dir.c_str());
+        return 1;
+    }
+    std::string::size_type found = download_addr.find_last_of('/');
+    if (found == std::string::npos) {
+        out_str << "download address error." << std::endl;
+        return 1;
+    }
+    std::string db_filename = download_addr.substr(found + 1);
+    if (db_filename.empty())
+        return 1;
+    if (db_filename.substr(db_filename.size()-7) != ".tar.gz") {
+        out_str<<"only support tar.gz file format."<<std::endl;
+        return 1;
+    }
+    std::string tmp_filename = db_filename.substr(0, db_filename.size()-7);  // remove ".tar.gz"
+
+    found = tmp_filename.find_last_of('_');
+    if (found == std::string::npos) {
+        out_str << "database file name format error." << std::endl;
+        return 1;
+    }
+    std::string md5sum = tmp_filename.substr(found+1);  // get md5sum
+
+    tmp_filename = tmp_filename.substr(found);
+    found = tmp_filename.find_last_of('_');
+    if (found == std::string::npos) {
+        out_str << "database file name format error." << std::endl;
+        return 1;
+    }
+    std::string db_version = std::string("/db_") + tmp_filename.substr(found+1);  // get db version
+
+    // wget download file
+    std::string down_cmd = std::string("wget ") + download_addr;
+    FILE * output = popen(down_cmd.c_str(), "r");
+    if (!output) {
+        printf("popen failed\n");
+        return 1;
+    }
+    char tmp[4096] = {0};
+    while (fgets(tmp, sizeof(tmp), output) != NULL) {
+        printf("%s", tmp);
+    }
+    pclose(output);
+    printf("download database ok.\n");
+    // check md5sum
+    down_cmd = std::string("md5sum ./") + db_filename;
+    output = popen(down_cmd.c_str(), "r");
+    if (!output) {
+        printf("popen failed\n");
+        return 1;
+    }
+    std::string md5_tmp;
+    while (fgets(tmp, sizeof(tmp), output) != NULL) {
+        printf("%s", tmp);
+        md5_tmp = tmp;
+    }
+    pclose(output);
+    found = md5_tmp.find(' ');
+    if (md5_tmp.substr(0, found) != md5sum) {
+        printf("md5 check failed: %s, %s\n", md5_tmp.substr(0, found).c_str(), md5sum.c_str());
+        return 1;
+    }
+    printf("md5sum check ok.\n");    
+
+    // extract file
+    down_cmd = std::string("tar zxvf ./") + db_filename + " -C " + datadir;
+    printf("extract database: %s\n", down_cmd.c_str());
+    output = popen(down_cmd.c_str(), "r");
+    if (!output) {
+        printf("popen failed\n");
+        return 1;
+    }
+    std::string out;
+    while (fgets(tmp, sizeof(tmp), output) != NULL) {
+        if (out.empty())
+            out = tmp;
+        printf("%s", tmp);
+    }
+    found = out.find('/');
+    if (found == std::string::npos) {
+        printf("extract database error.\n");
+        return 1;
+    }
+    pclose(output);
+    printf("extract database to '%s' ok.\n", out.substr(0, found).c_str());
+/*
+    // get db backup_id
+    auto dbdir = CRYPTOPP_DATA_DIR + "/" + out.substr(0, found);
+    auto listvec = db_backup_list_info(dbdir + DB_PATH);
+    uint32_t backup_id = 0;
+    if (listvec.empty()) {
+        out_str << "No data." << std::endl;
+        return 1;
+    } else {
+        char backup_date[100];
+        for (auto iter : listvec) {
+            time_t rawtime(iter.timestamp);
+            struct tm * p = gmtime(&rawtime);
+            strftime(backup_date, sizeof(backup_date), "%Y-%m-%d %H:%M:%S", p);
+            // out_str << "DBversion:" << iter.backup_id << ",timestamp:" << backup_date << "." << std::endl;
+            printf("DBversion: %d, timestamp: %s\n", iter.backup_id, backup_date);
+            backup_id = iter.backup_id;
+        }
+    }
+    // db restore
+    if (db_restore(dbdir, config_extra_json["datadir"].get<std::string>(), backup_id) != 0)
+        return 1;
+*/
+    out_str << "download and extract db ok." << std::endl;;
+    return 0;
 }
 
 }  //  namespace top
