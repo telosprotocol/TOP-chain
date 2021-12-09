@@ -49,6 +49,7 @@ typedef std::shared_ptr<ChainCommands> ChainCommandsPtr;
 std::string get_working_path();
 int db_backup( const std::string &from, const std::string &to);
 int db_restore(const std::string &from, const std::string &to,const int backupid);
+int db_download(const std::string datadir, const std::string& download_addr, std::ostringstream& out_str);
 bool isDirExist(std::string dirPath);
 bool isFileExist (const std::string &name);
 bool IsDirEmpty(const char *dirname);
