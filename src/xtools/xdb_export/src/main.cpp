@@ -38,17 +38,10 @@ void usage() {
     std::cout << "        - check_table_unit_state [table]" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
-    std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
+    std::cout << "        - check_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
     std::cout << "        - check_archive_db" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
-}
-
-void init_log(std::string const & filename) {
-    xinit_log(filename.c_str(), true, true);
-    xset_log_level(enum_xlog_level_debug);
-    xdbg("------------------------------------------------------------------");
-    xinfo("new log start here");
 }
 
 int main(int argc, char ** argv) {
@@ -75,7 +68,12 @@ int main(int argc, char ** argv) {
             return -1;
         }
     }
-
+#ifdef XDB_EXPORT_LOG
+    xinit_log("./xdb_export.log", true, true);
+    xset_log_level(enum_xlog_level_debug);
+    xdbg("------------------------------------------------------------------");
+    xinfo("new log start here");
+#endif
     xdb_export_tools_t tools{db_path};
     std::string function_name{argv[2]};
     if (function_name == "check_fast_sync") {
@@ -214,16 +212,15 @@ int main(int argc, char ** argv) {
         }
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
-    } else if (function_name == "check_contract_property") {
+    } else if (function_name == "check_property") {
         if (argc < 6) {
             usage();
             return -1;
         }
-        tools.query_contract_property(argv[3], argv[4], argv[5]);
+        tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
     } else if (function_name == "check_archive_db") {
-        init_log("./check_archive_db.log");
         tools.query_archive_db();
     } else {
         usage();

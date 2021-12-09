@@ -1,30 +1,18 @@
 #include "../xdb_export.h"
 
-#include "../services/xgrpcservice/xgrpc_service.h"
+#include "xbasic/xasio_io_context_wrapper.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xelection/xelection_info_bundle.h"
-#include "xdata/xelection/xelection_result_property.h"
-#include "xdata/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xproposal_data.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
-#include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
 #include "xrpc/xgetblock/get_block.h"
 #include "xstake/xstake_algorithm.h"
-#include "xstore/xstore_face.h"
-#include "xvledger/xvblock.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
-
-using namespace top::base;
-using namespace top::xstake;
-using namespace top::data;
-using namespace top::election;
 
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
@@ -40,12 +28,18 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
+    auto io_obj = std::make_shared<xbase_io_context_wrapper_t>();
+    m_timer_driver = make_unique<xbase_timer_driver_t>(io_obj);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
     m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
-    m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
+    m_txstore = xobject_ptr_t<base::xvtxstore_t>(
+        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
+                                top::make_observer<xbase_timer_driver_t>(m_timer_driver.get())));
+    base::xvchain_t::instance().set_xtxstore(m_txstore.get());
+    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
     m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
     contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
     contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
@@ -273,6 +267,8 @@ void xdb_export_tools_t::query_block_info(std::string const & account, std::stri
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
 void xdb_export_tools_t::query_block_basic(std::vector<std::string> const & account_vec, std::string const & param) {
@@ -313,6 +309,8 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, std::str
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
 void xdb_export_tools_t::query_state_basic(std::vector<std::string> const & account_vec, std::string const & param) {
@@ -353,6 +351,8 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, std::str
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
 void xdb_export_tools_t::query_state_basic(std::string const & account, const uint64_t h, json & result) {
@@ -378,13 +378,13 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, const ui
             result[block_id]["height"] = bstate->get_block_height();
             result[block_id]["class"] = bstate->get_block_class();
             result[block_id]["viewid"] = bstate->get_block_viewid();
-            result[block_id]["last_hash"] = xstring_utl::to_hex(bstate->get_last_block_hash());
+            result[block_id]["last_hash"] = base::xstring_utl::to_hex(bstate->get_last_block_hash());
         } else {
             result["account"] = bstate->get_account();
             result["height"] = bstate->get_block_height();
             result["class"] = bstate->get_block_class();
             result["viewid"] = bstate->get_block_viewid();
-            result["last_hash"] = xstring_utl::to_hex(bstate->get_last_block_hash());
+            result["last_hash"] = base::xstring_utl::to_hex(bstate->get_last_block_hash());
         }
     }
 }
@@ -398,6 +398,8 @@ void xdb_export_tools_t::query_meta(std::vector<std::string> const & account_vec
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
 void xdb_export_tools_t::query_meta(std::string const & account) {
@@ -407,6 +409,8 @@ void xdb_export_tools_t::query_meta(std::string const & account) {
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
 void xdb_export_tools_t::query_meta(std::string const & account, json & result) {
@@ -464,6 +468,8 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table) {
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
 void xdb_export_tools_t::query_table_unit_state(std::string const & table, json & root) {
@@ -486,8 +492,8 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
         json_table["type"] = bstate->get_block_type();
         json_table["level"] = bstate->get_block_level();
         json_table["viewid"] = bstate->get_block_viewid();
-        json_table["last_hash"] = xstring_utl::to_hex(bstate->get_last_block_hash());
-        json_table["last_fullblock_hash"] = xstring_utl::to_hex(bstate->get_last_fullblock_hash());
+        json_table["last_hash"] = base::xstring_utl::to_hex(bstate->get_last_block_hash());
+        json_table["last_fullblock_hash"] = base::xstring_utl::to_hex(bstate->get_last_fullblock_hash());
         json_table["last_fullblock_height"] = bstate->get_last_fullblock_height();
         {
             json j_property;
@@ -525,8 +531,8 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
         j_unit["type"] = unit_bstate->get_block_type();
         j_unit["level"] = unit_bstate->get_block_level();
         j_unit["viewid"] = unit_bstate->get_block_viewid();
-        j_unit["last_hash"] = xstring_utl::to_hex(unit_bstate->get_last_block_hash());
-        j_unit["last_fullblock_hash"] = xstring_utl::to_hex(unit_bstate->get_last_fullblock_hash());
+        j_unit["last_hash"] = base::xstring_utl::to_hex(unit_bstate->get_last_block_hash());
+        j_unit["last_fullblock_hash"] = base::xstring_utl::to_hex(unit_bstate->get_last_fullblock_hash());
         j_unit["last_fullblock_height"] = unit_bstate->get_last_fullblock_height();
         {
             json j_property;
@@ -538,27 +544,29 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
     }
 }
 
-void xdb_export_tools_t::query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param) {
+void xdb_export_tools_t::query_property(std::string const & account, std::string const & prop_name, std::string const & param) {
     auto const latest_height = m_blockstore->get_latest_committed_block_height(account);
 
     json jph;
     if (param == "last") {
-        query_contract_property(account, prop_name, latest_height, jph);
+        query_property(account, prop_name, latest_height, jph);
     } else if (param != "all") {
         auto const h = base::xstring_utl::touint64(param);
-        query_contract_property(account, prop_name, h, jph["height " + xstring_utl::tostring(h)]);
+        query_property(account, prop_name, h, jph["height " + base::xstring_utl::tostring(h)]);
     } else {
         for (uint64_t i = 0; i <= latest_height; i++) {
-            query_contract_property(account, prop_name, i, jph["height " + xstring_utl::tostring(i)]);
+            query_property(account, prop_name, i, jph["height " + base::xstring_utl::tostring(i)]);
         }
     }
     std::string filename = account + "_" + prop_name + "_" + param + "_property.json";
     std::ofstream out_json(filename);
     out_json << std::setw(4) << jph;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
-void xdb_export_tools_t::query_contract_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j) {
+void xdb_export_tools_t::query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j) {
     auto const block = m_blockstore->load_block_object(account, height, 0, false);
     if (block == nullptr) {
         std::cerr << account << " height: " << height << " block null!" << std::endl;
@@ -628,8 +636,8 @@ void xdb_export_tools_t::query_balance() {
     std::cout << "===> top reward issurance" << std::endl;
     auto reward_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{sys_contract_zec_reward_addr});
     auto reward_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(reward_vblock.get());
-    if (reward_bstate != nullptr && true == reward_bstate->find_property(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
-        auto map = reward_bstate->load_string_map_var(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
+    if (reward_bstate != nullptr && true == reward_bstate->find_property(xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
+        auto map = reward_bstate->load_string_map_var(xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
         std::cout << map["total"] << std::endl;
     } else {
         std::cerr << "load error!" << std::endl;
@@ -639,9 +647,57 @@ void xdb_export_tools_t::query_balance() {
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
 }
 
-uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type) {
+void xdb_export_tools_t::query_archive_db() {
+    std::string filename = "check_archive_db.log";
+    std::ofstream file(filename);
+    // step 1: check table
+    std::cout << "step 1 ===> checking table accounts..." << std::endl;
+    auto const table_accounts = xdb_export_tools_t::get_table_accounts();
+    for (auto const & table : table_accounts) {
+        uint32_t error_num = 0;
+        error_num += query_block_continuity_and_integrity(table, query_account_table, file);
+        error_num += query_cert_continuity(table, query_account_table, file);
+        if (error_num) {
+            std::cout << "table: " << table << ", check not ok, error num: " << error_num << std::endl;
+        } else {
+            std::cout << "table: " << table << ", check ok" << std::endl;
+        }
+    }
+    // step 2: check unit
+    std::cout << "step 2 ===> checking unit accounts..." << std::endl;
+    auto const unit_accounts = get_db_unit_accounts();
+    for (auto const & unit : unit_accounts) {
+        uint32_t error_num = 0;
+        error_num += query_block_continuity_and_integrity(unit, query_account_unit, file);
+        error_num += query_cert_continuity(unit, query_account_unit, file);
+        if (error_num) {
+            std::cout << "unit: " << unit << ", check not ok, error num: " << error_num << std::endl;
+        } else {
+            std::cout << "unit: " << unit << ", check ok" << std::endl;
+        }
+    }
+    // step 3: check drand
+    std::cout << "step 3 ===> checking drand..." << std::endl;
+    {
+        uint32_t error_num = 0;
+        std::string drand{sys_drand_addr};
+        error_num += query_block_continuity(drand, query_account_unit, file);
+        error_num += query_cert_continuity(drand, query_account_unit, file);
+        if (error_num) {
+            std::cout << "drand: " << drand << ", check not ok, error num: " << error_num << std::endl;
+        } else {
+            std::cout << "drand: " << drand << ", check ok" << std::endl;
+        }
+    }
+    file.flush();
+    file.close();
+}
+
+uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -651,34 +707,30 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
     }
     auto const committd_height = m_blockstore->get_latest_committed_block_height(account);
     auto const connected_height = m_blockstore->get_latest_connected_block_height(account);
-    xinfo("%s: %s, committd_height: %lu, connected_height: %lu, genesis_connected_height: %lu, executed_height: %lu ",
-          type_str.c_str(),
-          account.c_str(),
-          committd_height,
-          connected_height,
-          m_blockstore->get_latest_genesis_connected_block_height(account),
-          m_blockstore->get_latest_executed_block_height(account));
+    file << "[info] " << type_str << ": " << account << ", committd_height: " << committd_height << ", connected_height: " << connected_height
+         << ", genesis_connected_height: " << m_blockstore->get_latest_genesis_connected_block_height(account)
+         << ", executed_height: " << m_blockstore->get_latest_executed_block_height(account) << std::endl;
     if (committd_height != connected_height) {
-        xwarn("%s: %s, committd_height and connected_height not equal, %lu, %lu!", type_str.c_str(), account.c_str(), committd_height, connected_height);
+        file << "[warn] " << type_str << ": " << account << ", committd_height and connected_height not equal, " << committd_height << ", " << connected_height << std::endl;
         error_num++;
     }
     for (size_t h = 0; h < connected_height; h++) {
         auto const block = m_blockstore->load_block_object(account, h, 0, true);
         if (block == nullptr) {
-            xwarn("%s: %s, height: %lu, block is nullptr!", type_str.c_str(), account.c_str(), h);
+            file << "[warn] " << type_str << ": " << account << ", height: " << h << ", block is nullptr!" << std::endl;
             error_num++;
             continue;
         }
         if (block->is_input_ready(true) == false) {
-            xwarn("%s: %s, height: %lu, block input is not ready!", type_str.c_str(), account.c_str(), h);
+            file << "[warn] " << type_str << ": " << account << ", height: " << h << ", block input is not ready!" << std::endl;
             error_num++;
         }
         if (block->is_output_ready(true) == false) {
-            xwarn("%s: %s, height: %lu, block output is not ready!", type_str.c_str(), account.c_str(), h);
+            file << "[warn] " << type_str << ": " << account << ", height: " << h << ", block output is not ready!" << std::endl;
             error_num++;
         }
         if (block->is_deliver(true) == false) {
-            xwarn("%s: %s, height: %lu, block not deliver!", type_str.c_str(), account.c_str(), h);
+            file << "[warn] " << type_str << ": " << account << ", height: " << h << ", block not deliver!" << std::endl;
             error_num++;
         }
         if (type == query_account_unit) {
@@ -696,7 +748,7 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
                 data::xlightunit_action_t txaction(action);
                 auto txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txaction.get_tx_hash(), txaction.get_tx_subtype());
                 if (txindex == nullptr) {
-                    xwarn("%s: %s, height: %lu, tx: %s, load tx idx null!", type_str.c_str(), account.c_str(), h, base::xstring_utl::to_hex(txaction.get_tx_hash()).c_str());
+                    file << "[warn] " << type_str << ": " << account << ", height: " << h << ", tx: " << base::xstring_utl::to_hex(txaction.get_tx_hash()) << ", load tx idx null!" << std::endl;
                     error_num++;
                 }
             }
@@ -705,7 +757,7 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
     return error_num;
 }
 
-uint32_t xdb_export_tools_t::query_block_continuity(std::string const & account, enum_query_account_type type) {
+uint32_t xdb_export_tools_t::query_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -715,28 +767,24 @@ uint32_t xdb_export_tools_t::query_block_continuity(std::string const & account,
     }
     auto const committd_height = m_blockstore->get_latest_committed_block_height(account);
     auto const connected_height = m_blockstore->get_latest_connected_block_height(account);
-    xinfo("%s: %s, committd_height: %lu, connected_height: %lu, genesis_connected_height: %lu, executed_height: %lu ",
-          type_str.c_str(),
-          account.c_str(),
-          committd_height,
-          connected_height,
-          m_blockstore->get_latest_genesis_connected_block_height(account),
-          m_blockstore->get_latest_executed_block_height(account));
+    file << "[info] " << type_str << ": " << account << ", committd_height: " << committd_height << ", connected_height: " << connected_height
+         << ", genesis_connected_height: " << m_blockstore->get_latest_genesis_connected_block_height(account)
+         << ", executed_height: " << m_blockstore->get_latest_executed_block_height(account) << std::endl;
     if (committd_height != connected_height) {
-        xwarn("%s: %s, committd_height and connected_height not equal, %lu, %lu!", type_str.c_str(), account.c_str(), committd_height, connected_height);
+        file << "[warn] " << type_str << ": " << account << ", committd_height and connected_height not equal, " << committd_height << ", " << connected_height << std::endl;
         error_num++;
     }
     for (size_t h = 0; h < connected_height; h++) {
         auto const block = m_blockstore->load_block_object(account, h, 0, true);
         if (block == nullptr) {
-            xwarn("%s: %s, height: %lu, block is nullptr!", type_str.c_str(), account.c_str(), h);
+            file << "[warn] " << type_str << ": " << account << ", height: " << h << ", block is nullptr!" << std::endl;
             error_num++;
         }
     }
     return error_num;
 }
 
-uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, enum_query_account_type type) {
+uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -746,58 +794,16 @@ uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, 
     }
     auto const cert_block = m_blockstore->get_latest_cert_block(account);
     if (cert_block == nullptr)  {
-        xwarn("%s: %s, latest cert block is nullptr!", type_str.c_str(), account.c_str());
+        file << "[warn] " << type_str << ": " << account << ", latest cert block is nullptr!" << std::endl;
         error_num++;
     } else {
         auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(cert_block.get());
         if (bstate == nullptr) {
-            xwarn("%s: %s, latest cert block is nullptr!", type_str.c_str(), account.c_str());
+            file << "[warn] " << type_str << ": " << account << ", latest cert state is nullptr!" << std::endl;
             error_num++;
         }
     }
     return error_num;
-}
-
-void xdb_export_tools_t::query_archive_db() {
-    // step 1: check table
-    std::cout << "step 1 ===> checking table accounts..." << std::endl;
-    auto const table_accounts = xdb_export_tools_t::get_table_accounts();
-    for (auto const & table : table_accounts) {
-        uint32_t error_num = 0;
-        error_num += query_block_continuity_and_integrity(table, query_account_table);
-        error_num += query_cert_continuity(table, query_account_table);
-        if (error_num) {
-            std::cout << "table: " << table << ", check not ok, error num: " << error_num << std::endl;
-        } else {
-            std::cout << "table: " << table << ", check ok" << std::endl;
-        }
-    }
-    // step 2: check unit
-    std::cout << "step 2 ===> checking unit accounts..." << std::endl;
-    auto const unit_accounts = get_db_unit_accounts();
-    for (auto const & unit : unit_accounts) {
-        uint32_t error_num = 0;
-        error_num += query_block_continuity_and_integrity(unit, query_account_unit);
-        error_num += query_cert_continuity(unit, query_account_unit);
-        if (error_num) {
-            std::cout << "unit: " << unit << ", check not ok, error num: " << error_num << std::endl;
-        } else {
-            std::cout << "unit: " << unit << ", check ok" << std::endl;
-        }
-    }
-    // step 3: check drand
-    std::cout << "step 3 ===> checking drand..." << std::endl;
-    {
-        uint32_t error_num = 0;
-        std::string drand{sys_drand_addr};
-        error_num += query_block_continuity(drand, query_account_unit);
-        error_num += query_cert_continuity(drand, query_account_unit);
-        if (error_num) {
-            std::cout << "drand: " << drand << ", check not ok, error num: " << error_num << std::endl;
-        } else {
-            std::cout << "drand: " << drand << ", check ok" << std::endl;
-        }
-    }
 }
 
 std::set<std::string> xdb_export_tools_t::query_db_unit_accounts() {
@@ -935,7 +941,7 @@ void xdb_export_tools_t::query_sync_result(std::string const & account, json & r
         return;
     }
     if (block_height == connect_height) {
-        result_json = "0-" + xstring_utl::tostring(block_height) + ",";
+        result_json = "0-" + base::xstring_utl::tostring(block_height) + ",";
     } else {
         std::string result;
         query_sync_result(account, connect_height + 1, block_height, result, 0, connect_height);
@@ -1126,14 +1132,14 @@ void xdb_export_tools_t::query_table_tx_info(std::string const & account, const 
     int tableid{-1};
     {
         std::vector<std::string> parts;
-        if(xstring_utl::split_string(account,'@',parts) >= 2) {
-            tableid = xstring_utl::toint32(parts[1]);
+        if(base::xstring_utl::split_string(account,'@',parts) >= 2) {
+            tableid = base::xstring_utl::toint32(parts[1]);
         } else {
             std::cout << account << " parse table id error" << tableid << std::endl;
             return;
         }
     }
-    auto t1 = xtime_utl::time_now_ms();
+    auto t1 = base::xtime_utl::time_now_ms();
     base::xvaccount_t _vaccount(account);
     for (uint64_t h = 0; h <= block_height; h++) {
         auto const vblock = m_blockstore->load_block_object(account,h,0,false);
@@ -1197,7 +1203,7 @@ void xdb_export_tools_t::query_table_tx_info(std::string const & account, const 
         }
     }
 
-    auto t2 = xtime_utl::time_now_ms();
+    auto t2 = base::xtime_utl::time_now_ms();
     j["table info"]["table height"] = block_height;
     j["table info"]["total table block num"] = block_height + 1;
     j["table info"]["miss table block num"] = table_info.missing_table_block_num;
@@ -1250,7 +1256,7 @@ void xdb_export_tools_t::query_table_tx_info(std::string const & account, const 
         j["multi detail"] = txs_multi_txs_j;            
     }
     result_json[account] = j;
-    auto t3 = xtime_utl::time_now_ms();
+    auto t3 = base::xtime_utl::time_now_ms();
     std::cout << "block_height=" << block_height << " t2-t1=" << t2-t1 << " t3-t2=" << t3-t2 << std::endl;
 }
 
@@ -1292,8 +1298,8 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, const ui
             result[block_id]["viewid"] = vblock->get_viewid();
             result[block_id]["viewtoken"] = vblock->get_viewtoken();
             result[block_id]["clock"] = vblock->get_clock();
-            result[block_id]["hash"] = xstring_utl::to_hex(vblock->get_block_hash());
-            result[block_id]["last_hash"] = xstring_utl::to_hex(vblock->get_last_block_hash());
+            result[block_id]["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
+            result[block_id]["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
 
         } else {
             result["account"] = vblock->get_account();
@@ -1302,8 +1308,8 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, const ui
             result["viewid"] = vblock->get_viewid();
             result["viewtoken"] = vblock->get_viewtoken();
             result["clock"] = vblock->get_clock();
-            result["hash"] = xstring_utl::to_hex(vblock->get_block_hash());
-            result["last_hash"] = xstring_utl::to_hex(vblock->get_last_block_hash());
+            result["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
+            result["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
         }
     }
 }

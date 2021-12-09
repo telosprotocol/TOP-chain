@@ -1,23 +1,20 @@
 #pragma once
 
-#include "xbase/xobject_ptr.h"
+#include "xbasic/xtimer_driver.h"
 #include "xdb_util.h"
-#include "xdepends/include/json/config.h"
-#include "xdepends/include/json/value.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xmessage_bus.h"
 #include "xstore/xstore_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvcnode.h"
 
 NS_BEG2(top, db_export)
-
 class xdb_export_tools_t {
 public:
     enum enum_query_account_version { QUERY_ACCOUNT_V1 = 0, QUERY_ACCOUNT_V2 };
     enum enum_query_account_type { query_account_table = 0, query_account_unit };
 
     xdb_export_tools_t(std::string const & db_path);
-    ~xdb_export_tools_t() = default;
 
     static std::vector<std::string> get_system_contract_accounts();
     static std::vector<std::string> get_table_accounts();
@@ -42,7 +39,7 @@ public:
     void query_table_unit_state(std::string const & table);
     void query_table_unit_state(std::vector<std::string> const & table_vec);
     // query contract property(use contract manager interface)
-    void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param);
+    void query_property(std::string const & account, std::string const & prop_name, std::string const & param);
     // query balance info
     void query_balance();
     // query archive db integrity and continuity
@@ -102,11 +99,11 @@ private:
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_meta(std::string const & account, json & result);
     void query_table_unit_state(std::string const & table, json & result);
-    void query_contract_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
+    void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
-    uint32_t query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type);
-    uint32_t query_block_continuity(std::string const & account, enum_query_account_type type);
-    uint32_t query_cert_continuity(std::string const & account, enum_query_account_type type);
+    uint32_t query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file);
+    uint32_t query_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
+    uint32_t query_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
 
     void read_info_from_table_block(const data::xblock_t * block, xdbtool_table_info_t & table_info, std::vector<tx_ext_t> & txinfos);
     void set_txinfo_to_json(json & j, const tx_ext_t & txinfo);
@@ -115,9 +112,11 @@ private:
     void set_confirmed_txinfo_to_json(json & j, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
     void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
 
+    std::unique_ptr<xbase_timer_driver_t> m_timer_driver;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    xobject_ptr_t<base::xvtxstore_t> m_txstore;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
 };
