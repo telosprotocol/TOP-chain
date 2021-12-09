@@ -7,13 +7,14 @@
 #include "task/task_dispatcher.h"
 #include "topchain_type.h"
 #include "xaction_param.h"
+#include "xconfig/xutility.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction.h"
 #include "xrpc/xuint_format.h"
 #include "xvm/xvm_define.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xbase/xutl.h"
 #include "xvledger/xvblock.h"
 
@@ -709,9 +710,9 @@ bool api_method_imp::registerNode(const user_info & uinfo,
     std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
 #endif
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
         source_action_name = "mortgage";
     }
 
@@ -737,9 +738,9 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
         source_action_name = "mortgage";
     }
 
@@ -809,9 +810,9 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     }
 
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
         source_action_name = "mortgage";
     }
 
@@ -1132,9 +1133,9 @@ bool api_method_imp::submitProposal(const user_info & uinfo,
     std::string param_t = stream_params(stream_t, target, value, type, effective_timer_height);
 
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_upgrade::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                   (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10)) {
+    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
         source_action_name = "charge";
     }
 

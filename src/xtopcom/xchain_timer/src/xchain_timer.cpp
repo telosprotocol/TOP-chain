@@ -9,6 +9,7 @@
 #include "xbase/xthread.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
+#include "xconfig/xutility.h"
 #include "xmetrics/xmetrics.h"
 #include "xvledger/xvblock.h"
 
@@ -141,7 +142,7 @@ void xchain_timer_t::do_check_logic_time() {
 
         auto const diff = std::chrono::duration_cast<std::chrono::minutes>(curr_time - last_update_time_point);
         if (diff >= std::chrono::minutes{2}) {
-            common::xlogic_time_t time = (base::xtime_utl::gmttime() - base::TOP_BEGIN_GMTIME) / 10;
+            common::xlogic_time_t time = config::gmttime_to_logic_time(top::base::xtime_utl::gmttime());
             xinfo("logic_timer: locally update timer: input: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
                   time,
                   static_cast<int64_t>(last_update_time_point.time_since_epoch().count()),
