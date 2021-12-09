@@ -21,9 +21,11 @@ constexpr uint64_t TOTAL_ISSUANCE = 200 * 1e8 * TOP_UNIT;
 #define TOP_MAX_LENGTH 12 // enough for 20,000,000,000 tokens
 
 #ifdef _WIN32
-#define DB_PATH "\\db_v2"
+#define OLD_DB_PATH "\\db_v2"
+#define DB_PATH "\\db_v3"
 #else
-#define DB_PATH "/db_v2"
+#define OLD_DB_PATH "/db_v2"
+#define DB_PATH "/db_v3"
 #endif
 
 NS_BEG2(top, config)

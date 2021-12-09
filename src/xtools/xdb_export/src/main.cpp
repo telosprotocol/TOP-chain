@@ -2,9 +2,12 @@
 #include "../xdb_reset.h"
 #include "xbase/xhash.h"
 #include "xmigrate/xvmigrate.h"
+#include "xconfig/xpredefined_configurations.h"
 
 using namespace top;
 using namespace top::db_export;
+
+#define XDB_EXPORT_LOG
 
 class xtop_hash_t : public top::base::xhashplugin_t {
 public:
@@ -30,6 +33,7 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
+    std::cout << "        - db_migrate_v2_to_v3 old_path new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
@@ -75,11 +79,21 @@ int main(int argc, char ** argv) {
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
 #endif
-    xdb_export_tools_t tools{db_path};
+
     std::string function_name{argv[2]};
-    if (function_name == "db_migrate") {
-        base::db_migrate_v2_to_v0_3_0_0(db_path);
-    } else if (function_name == "check_fast_sync") {
+    if (function_name == "db_migrate_v2_to_v3") {
+        if (argc != 5) {
+            usage();
+            return -1;
+        }
+        std::string v2_db_path = argv[3];
+        std::string v3_db_path = argv[4];
+        base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
+        return 0;
+    }
+
+    xdb_export_tools_t tools{db_path};
+    if (function_name == "check_fast_sync") {
         if (argc == 3) {
             auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
             auto const unit_account_vec = tools.get_db_unit_accounts();

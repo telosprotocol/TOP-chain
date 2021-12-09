@@ -385,7 +385,7 @@ namespace top
             return meta_ptr;
         }
         
-        xvactmeta_t::xvactmeta_t(xvaccount_t & _account)
+        xvactmeta_t::xvactmeta_t(const xvaccount_t & _account)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization

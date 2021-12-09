@@ -52,7 +52,7 @@ namespace top
 
             bool                      delete_state_of_db(const xvbindex_t & target_index);
             bool                      delete_state_of_db(const xvblock_t & target_block);
-            bool                      delete_state_of_db(const xvaccount_t & target_account,const std::string & block_hash);
+            bool                      delete_state_of_db(const xvaccount_t & target_account,uint64_t block_height,const std::string & block_hash);
             bool                      delete_states_of_db(const xvaccount_t & target_account,const uint64_t block_height);
 
             bool                      load_latest_blocks_and_state(xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);

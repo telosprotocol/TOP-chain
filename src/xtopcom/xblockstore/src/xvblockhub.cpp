@@ -69,36 +69,13 @@ namespace top
 
         bool  xblockacct_t::init_meta(const base::xvactmeta_t & account_meta)
         {
-            bool changed_meta = false;
-
             xvblockplugin_t::init_meta(account_meta);
             m_meta = (base::xblockmeta_t*)get_block_meta();
-            if(recover_meta(account_meta))
-                changed_meta = true;//mark changed something
+            recover_meta(account_meta);
             
-            if(get_blockdb_ptr()->get_blockstore_version() >= enum_xblockstore_prunable_version)
-            {
-                if(m_meta->_lowest_vkey2_block_height == (uint64_t)-1) //not initted
-                {
-                    m_meta->_lowest_vkey2_block_height = m_meta->_highest_cert_block_height + 1;
-                    changed_meta = true;//mark changed something
-                }
-            }
-            
-            if(changed_meta)
-            {
-                
-                
-                xwarn("xblockacct_t::init_meta,changed meta for account=%s objectid=% " PRId64 ",this=% " PRId64 ",meta=%s",
-                  dump().c_str(),
-                  get_obj_id(),this,m_meta->ddump().c_str());
-            }
-            else
-            {
-                xinfo("xblockacct_t::init_meta,account=%s objectid=% " PRId64 ",this=% " PRId64 ",meta=%s",
-                      dump().c_str(),
-                      get_obj_id(),this,m_meta->ddump().c_str());
-            }
+            xinfo("xblockacct_t::init_meta,account=%s objectid=% " PRId64 ",this=% " PRId64 ",meta=%s",
+                    dump().c_str(),
+                    get_obj_id(),this,m_meta->ddump().c_str());
             return true;
         }
         
@@ -2170,19 +2147,12 @@ namespace top
         base::xvbindex_t*  xtablebkplugin::create_index(base::xvblock_t & new_raw_block)
         {
             base::xvbindex_t* new_index = new base::xvbindex_t(new_raw_block);
-            if(new_raw_block.get_height() >= m_meta->_lowest_vkey2_block_height) //new way
-                new_index->set_block_character(base::enum_xvblock_character_pruneable);
-            else
-                new_index->remove_block_character(base::enum_xvblock_character_pruneable);
             return new_index;
         }
         
         std::vector<base::xvbindex_t*> xtablebkplugin::read_index(const uint64_t target_height)
         {
-            if(target_height >= m_meta->_lowest_vkey2_block_height) //new way to read index
-                return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height,true);
-            else
-                return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height,false);
+            return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height);
         }
         
         bool  xtablebkplugin::write_index(base::xvbindex_t* this_index)
@@ -2190,11 +2160,6 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
             
-            if(this_index->get_height() >= m_meta->_lowest_vkey2_block_height)
-                xassert( (this_index->get_block_characters() & base::enum_xvblock_character_pruneable) != 0);
-            else
-                xassert( (this_index->get_block_characters() & base::enum_xvblock_character_pruneable) == 0);
-                
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
     
@@ -2211,12 +2176,7 @@ namespace top
             if(NULL == new_block_ptr)
             {
                 return false;
-            }
-            
-            if(index_ptr->get_height() >= m_meta->_lowest_vkey2_block_height)
-                xassert( (index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0);
-            else
-                xassert( (index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) == 0);
+            }           
             
             //sync flags from index to raw block if has any change in case
             if(index_ptr->check_block_flag(base::enum_xvblock_flag_locked))
@@ -2259,82 +2219,55 @@ namespace top
         base::xvbindex_t*  xunitbkplugin::create_index(base::xvblock_t & new_raw_block)
         {
             base::xvbindex_t* new_index = new base::xvbindex_t(new_raw_block);
-            if(new_raw_block.get_height() >= m_meta->_lowest_vkey2_block_height) //new key-format
-            {
-                new_index->set_block_character(base::enum_xvblock_character_pruneable);
-                #ifdef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
-                //force to save raw block only to DB by adding enum_index_store_flag_non_index
-                new_index->set_store_flag(base::enum_index_store_flag_non_index);
-                #endif
-            }
-            else //old key-format
-            {
-                new_index->remove_block_character(base::enum_xvblock_character_pruneable);
-            }
+            #ifdef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
+            //force to save raw block only to DB by adding enum_index_store_flag_non_index
+            new_index->set_store_flag(base::enum_index_store_flag_non_index);
+            #endif
             return new_index;
         }
         
         //unit raw block must save fullly(dont split input/output/resource)
         std::vector<base::xvbindex_t*> xunitbkplugin::read_index(const uint64_t target_height)
         {
-            if(target_height >= m_meta->_lowest_vkey2_block_height) //new way to read index
+            #ifdef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
+            std::vector<base::xvblock_t*> target_blocks(get_blockdb_ptr()->read_prunable_block_object_from_db(*get_account_obj(),target_height));
+            
+            std::vector<base::xvbindex_t*>  index_list;
+            for(auto block_ptr : target_blocks)
             {
-                #ifdef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
-                std::vector<base::xvblock_t*> target_blocks(get_blockdb_ptr()->read_prunable_block_object_from_db(*get_account_obj(),target_height));
+                base::xvbindex_t * target_index = create_index(*block_ptr);
                 
-                std::vector<base::xvbindex_t*>  index_list;
-                for(auto block_ptr : target_blocks)
+                //recover flags back to index
+                const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
+                target_index->reset_store_flags(everything_flags);
+                target_index->set_block_flag(base::enum_xvblock_flag_stored);
+                if(block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
                 {
-                    base::xvbindex_t * target_index = create_index(*block_ptr);
-                    
-                    //recover flags back to index
-                    const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
-                    target_index->reset_store_flags(everything_flags);
-                    target_index->set_block_flag(base::enum_xvblock_flag_stored);
-                    if(block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
-                    {
-                        //committed block always stored at height'key to improve I/O
-                        target_index->set_store_flag(base::enum_index_store_flag_main_entry);
-                    }
-                    //force to save raw block only to DB by adding enum_index_store_flag_non_index
-                    target_index->set_store_flag(base::enum_index_store_flag_non_index);
-                    block_ptr->reset_modified_count(); //clean flag of modification if have
-                    target_index->reset_this_block(block_ptr); //hook to raw block within index
-                    block_ptr->release_ref(); //release it since reset_this_block has hold reference now
-                    
-                    target_index->reset_modify_flag(); //clean flag of modified
-                    index_list.push_back(target_index); //transfer ownership of target_index to here
+                    //committed block always stored at height'key to improve I/O
+                    target_index->set_store_flag(base::enum_index_store_flag_main_entry);
                 }
-                return index_list;
-                #else //new key-format
-                return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height,true);
-                #endif
+                //force to save raw block only to DB by adding enum_index_store_flag_non_index
+                target_index->set_store_flag(base::enum_index_store_flag_non_index);
+                block_ptr->reset_modified_count(); //clean flag of modification if have
+                target_index->reset_this_block(block_ptr); //hook to raw block within index
+                block_ptr->release_ref(); //release it since reset_this_block has hold reference now
+                
+                target_index->reset_modify_flag(); //clean flag of modified
+                index_list.push_back(target_index); //transfer ownership of target_index to here
             }
-            else //old key-format
-            {
-                return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height,false);
-            }
+            return index_list;
+            #else //new key-format
+            return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height);
+            #endif
         }
         
         bool  xunitbkplugin::write_index(base::xvbindex_t* this_index)
-        {
-            if(this_index->get_height() >= m_meta->_lowest_vkey2_block_height)
-                xassert( (this_index->get_block_characters() & base::enum_xvblock_character_pruneable) != 0);
-            else
-                xassert( (this_index->get_block_characters() & base::enum_xvblock_character_pruneable) == 0);
-            
-            if((this_index->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)//new key-format
+        {   
+            if(this_index->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
             {
-                if(this_index->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
-                {
-                    return true;//do nothing
-                }
-                else if(this_index->check_modified_flag()) //still store index and raw block both
-                {
-                    return get_blockdb_ptr()->write_index_to_db(this_index);
-                }
+                return true;//do nothing
             }
-            else if(this_index->check_modified_flag()) //old key-format
+            else if(this_index->check_modified_flag()) //still store index and raw block both
             {
                 return get_blockdb_ptr()->write_index_to_db(this_index);
             }
@@ -2342,49 +2275,36 @@ namespace top
         }
     
         bool  xunitbkplugin::write_block(base::xvbindex_t* this_index)
-        {
-            if(this_index->get_height() >= m_meta->_lowest_vkey2_block_height)
-                xassert( (this_index->get_block_characters() & base::enum_xvblock_character_pruneable) != 0);
-            else
-                xassert( (this_index->get_block_characters() & base::enum_xvblock_character_pruneable) == 0);
-            
+        {            
             bool reset_modified_flag_after_saved = false;
             base::xvblock_t * raw_block_ptr = this_index->get_this_block();
-            if((this_index->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)//new key-format
+            if(this_index->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
             {
-                if(this_index->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
+                //handle 3 cases:
+                /*
+                    case#1: Index has changed
+                    case#2: raw block not saved yet
+                    case#3: raw block has changed
+                    */
+                if(  (this_index->check_modified_flag())
+                    ||(this_index->check_store_flag(base::enum_index_store_flag_mini_block) == false)
+                    ||((raw_block_ptr != NULL) && (raw_block_ptr->get_modified_count() > 0))
+                    )
                 {
-                    //handle 3 cases:
-                    /*
-                     case#1: Index has changed
-                     case#2: raw block not saved yet
-                     case#3: raw block has changed
-                     */
-                    if(  (this_index->check_modified_flag())
-                       ||(this_index->check_store_flag(base::enum_index_store_flag_mini_block) == false)
-                       ||((raw_block_ptr != NULL) && (raw_block_ptr->get_modified_count() > 0))
-                       )
+                    xassert(raw_block_ptr != NULL);//always keep raw block for non_index case
+                    if(raw_block_ptr == NULL)
                     {
-                        xassert(raw_block_ptr != NULL);//always keep raw block for non_index case
-                        if(raw_block_ptr == NULL)
-                        {
-                            get_blockdb_ptr()->load_block_object(this_index);
-                            raw_block_ptr = this_index->get_this_block();
-                        }
-                        reset_modified_flag_after_saved = true;//reset index since it not save
+                        get_blockdb_ptr()->load_block_object(this_index);
+                        raw_block_ptr = this_index->get_this_block();
                     }
-                    else //nothing need save
-                    {
-                        return true;
-                    }
+                    reset_modified_flag_after_saved = true;//reset index since it not save
                 }
-                else //new key-format but still have index
+                else //nothing need save
                 {
-                    if(this_index->check_store_flag(base::enum_index_store_flag_mini_block))
-                        return true;//nothing need save
+                    return true;
                 }
             }
-            else //old-key format with index
+            else //new key-format but still have index
             {
                 if(this_index->check_store_flag(base::enum_index_store_flag_mini_block))
                     return true;//nothing need save
@@ -2405,12 +2325,7 @@ namespace top
         }
     
         bool  xunitbkplugin::write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr)
-        {
-            if(index_ptr->get_height() >= m_meta->_lowest_vkey2_block_height)
-                xassert( (index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0);
-            else
-                xassert( (index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) == 0);
-            
+        {           
             //sync flags from index to raw block if has any change in case
             if(index_ptr->check_block_flag(base::enum_xvblock_flag_locked))
                 new_block_ptr->set_block_flag(base::enum_xvblock_flag_locked);

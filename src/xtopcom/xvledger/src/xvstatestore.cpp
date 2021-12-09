@@ -32,7 +32,7 @@ namespace top
                 XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
             }
             
-            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block_hash);
+            const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,target_state.get_block_height(),target_block_hash);
 
             std::string state_db_bin;
             if(target_state.serialize_to_string(state_db_bin))
@@ -66,7 +66,7 @@ namespace top
         xvbstate_t*     xvblkstatestore_t::read_state_from_db(const xvaccount_t & target_account, uint64_t block_height, const std::string & block_hash)
         {
             XMETRICS_GAUGE(metrics::store_state_read, 1);
-            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
+            const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,block_height,block_hash);
             const std::string state_db_bin = xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
             {
@@ -93,21 +93,17 @@ namespace top
 
         bool   xvblkstatestore_t::delete_state_of_db(const xvbindex_t & target_index)
         {
-            XMETRICS_GAUGE(metrics::store_state_delete, 1);
-            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_index,target_index.get_block_hash());
-            return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
+            return delete_state_of_db(target_index,target_index.get_height(),target_index.get_block_hash());            
         }
         bool   xvblkstatestore_t::delete_state_of_db(const xvblock_t & target_block)
         {
-            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             xvaccount_t target_account(target_block.get_account());
-            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block.get_block_hash());
-            return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
+            return delete_state_of_db(target_account,target_block.get_height(),target_block.get_block_hash());
         }
-        bool   xvblkstatestore_t::delete_state_of_db(const xvaccount_t & target_account,const std::string & block_hash)
+        bool   xvblkstatestore_t::delete_state_of_db(const xvaccount_t & target_account,uint64_t block_height,const std::string & block_hash)
         {
             XMETRICS_GAUGE(metrics::store_state_delete, 1);
-            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
+            const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,block_height,block_hash);
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
         bool   xvblkstatestore_t::delete_states_of_db(const xvaccount_t & target_account,const uint64_t block_height)
@@ -119,7 +115,7 @@ namespace top
                 if(index != NULL)
                 {
                     xdbg_info("xvblkstatestore_t::delete_states_of_db.account=%s,height=%ld", target_account.get_account().c_str(), block_height);
-                    delete_state_of_db(target_account,index->get_block_hash());
+                    delete_state_of_db(target_account,index->get_height(),index->get_block_hash());
                 }
             }
             return true;
