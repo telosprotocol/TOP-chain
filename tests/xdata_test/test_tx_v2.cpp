@@ -140,7 +140,7 @@ TEST_F(test_tx_v2, json) {
     xtransaction_ptr_t tx2 = make_object_ptr<xtransaction_v2_t>();
     tx2->construct_from_json(jv);
     EXPECT_EQ(tx2->get_source_addr(), source_addr);
-    EXPECT_EQ(tx2->get_source_action().get_action_param(), source_action_para);
+    EXPECT_EQ(tx2->get_source_action_para(), source_action_para);
     EXPECT_EQ(tx2->get_tx_type(), tx_type);
 
     tx2->set_digest();

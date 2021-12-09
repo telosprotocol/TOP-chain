@@ -67,58 +67,31 @@ public:
     }
 
     static data::xtransaction_ptr_t submit_proposal(std::string const& source_param, std::string const& target_param) {
-        xaction_t source_action;
-        xaction_t destination_action;
-
-        source_action.set_account_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
-        source_action.set_action_param(source_param);
-
-        destination_action.set_account_addr(sys_contract_rec_tcc_addr);
-        destination_action.set_action_name("submitProposal");
-        destination_action.set_action_param(target_param);
-
         data::xtransaction_v2_ptr_t submit_proposal_trx = make_object_ptr<xtransaction_v2_t>();
         submit_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
         submit_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
-        submit_proposal_trx->set_source_action(source_action);
-        submit_proposal_trx->set_target_action(destination_action);
+        submit_proposal_trx->set_source_action_para(source_param);
+        submit_proposal_trx->set_target_action_name("submitProposal");
+        submit_proposal_trx->set_target_action_para(target_param);
         return submit_proposal_trx;
 
     }
 
     static data::xtransaction_ptr_t withdraw_proposal(std::string const& target_param) {
-        xaction_t source_action;
-        xaction_t destination_action;
-
-        source_action.set_account_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
-
-        destination_action.set_account_addr(sys_contract_rec_tcc_addr);
-        destination_action.set_action_name("withdrawProposal");
-        destination_action.set_action_param(target_param);
-
         data::xtransaction_v2_ptr_t withdraw_proposal_trx = make_object_ptr<xtransaction_v2_t>();
         withdraw_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
         withdraw_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
-        withdraw_proposal_trx->set_source_action(source_action);
-        withdraw_proposal_trx->set_target_action(destination_action);
+        withdraw_proposal_trx->set_target_action_name("withdrawProposal");
+        withdraw_proposal_trx->set_target_action_para(target_param);
         return withdraw_proposal_trx;
     }
 
     static data::xtransaction_ptr_t vote_proposal(std::string const& target_param) {
-        xaction_t source_action;
-        xaction_t destination_action;
-
-        source_action.set_account_addr("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB");
-
-        destination_action.set_account_addr(sys_contract_rec_tcc_addr);
-        destination_action.set_action_name("tccVote");
-        destination_action.set_action_param(target_param);
-
         data::xtransaction_v2_ptr_t vote_proposal_trx = make_object_ptr<xtransaction_v2_t>();
         vote_proposal_trx->set_source_addr("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB");
         vote_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
-        vote_proposal_trx->set_source_action(source_action);
-        vote_proposal_trx->set_target_action(destination_action);
+        vote_proposal_trx->set_target_action_name("tccVote");
+        vote_proposal_trx->set_target_action_para(target_param);
         return vote_proposal_trx;
     }
 

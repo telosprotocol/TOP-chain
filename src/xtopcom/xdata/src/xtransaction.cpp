@@ -60,52 +60,52 @@ uint64_t xtransaction_t::get_gmttime_s() {
     return static_cast<uint64_t>(val.tv_sec);
 }
 
-void xtransaction_t::set_action_type_by_tx_type(data::xaction_t & source_action, data::xaction_t & target_action, const enum_xtransaction_type tx_type) {
+void xtransaction_t::set_action_type_by_tx_type(const enum_xtransaction_type tx_type) {
     switch (tx_type)
     {
     case xtransaction_type_create_user_account:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_create_user_account);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_create_user_account);
         break;
     
     case xtransaction_type_run_contract:
-        source_action.set_action_type(xaction_type_asset_out);
-        target_action.set_action_type(xaction_type_run_contract);
+        set_source_action_type(xaction_type_asset_out);
+        set_target_action_type(xaction_type_run_contract);
         break;
     
     case xtransaction_type_transfer:
-        source_action.set_action_type(xaction_type_asset_out);
-        target_action.set_action_type(xaction_type_asset_in);
+        set_source_action_type(xaction_type_asset_out);
+        set_target_action_type(xaction_type_asset_in);
         break;
     
     case xtransaction_type_vote:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_run_contract);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_run_contract);
         break;
     
     case xtransaction_type_abolish_vote:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_run_contract);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_run_contract);
         break;
     
     case xtransaction_type_pledge_token_tgas:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_pledge_token);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_pledge_token);
         break;
     
     case xtransaction_type_redeem_token_tgas:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_redeem_token);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_redeem_token);
         break;
     
     case xtransaction_type_pledge_token_vote:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_pledge_token_vote);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_pledge_token_vote);
         break;
     
     case xtransaction_type_redeem_token_vote:
-        source_action.set_action_type(xaction_type_source_null);
-        target_action.set_action_type(xaction_type_redeem_token_vote);
+        set_source_action_type(xaction_type_source_null);
+        set_target_action_type(xaction_type_redeem_token_vote);
         break;
 
     default:
