@@ -503,6 +503,10 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("================================================");
     xinfo("topio start ok");
     xinfo("================================================");
+  
+    std::ofstream ofs;
+    ofs.open(datadir + "/.1.2.7", std::ofstream::out | std::ofstream::app);
+    ofs.close();
 
     // make block here
     while (true) {
