@@ -381,7 +381,7 @@ namespace top
             base::xvbindex_t* index_entry = read_index_from_db(main_entry_key);
             if(index_entry == NULL) //main entry
             {
-                xdbg("xvblockdb_t::read_index_from_db,dont find main entry for height(%" PRIu64 ")",target_height);
+                xwarn("xvblockdb_t::read_index_from_db,dont find main entry for account=%s,height(%" PRIu64 ")",account.get_address().c_str(), target_height);
                 return all_blocks_at_height;
             }
             //NOTE:rebind account address into xvbindex

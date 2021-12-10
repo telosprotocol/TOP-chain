@@ -33,7 +33,7 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
-    std::cout << "        - db_migrate_v2_to_v3 old_path new_path" << std::endl;
+    std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
@@ -45,7 +45,7 @@ void usage() {
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db" << std::endl;
+    std::cout << "        - check_archive_db new_path" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -82,15 +82,28 @@ int main(int argc, char ** argv) {
 
     std::string function_name{argv[2]};
     if (function_name == "db_migrate_v2_to_v3") {
-        if (argc != 5) {
+        if (argc != 4) {
+            xassert(false);
             usage();
             return -1;
         }
-        std::string v2_db_path = argv[3];
-        std::string v3_db_path = argv[4];
+        std::string v2_db_path = db_path;
+        std::string v3_db_path = argv[3];
         base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
         return 0;
     }
+
+    if (function_name == "check_archive_db") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        tools_v3.query_archive_db();
+        return 0;
+    } 
 
     xdb_export_tools_t tools{db_path};
     if (function_name == "check_fast_sync") {
@@ -237,8 +250,6 @@ int main(int argc, char ** argv) {
         tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
-    } else if (function_name == "check_archive_db") {
-        tools.query_archive_db();
     } else {
         usage();
     }

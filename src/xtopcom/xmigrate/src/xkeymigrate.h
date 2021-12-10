@@ -33,9 +33,16 @@ namespace top
             virtual enum_xfilter_handle_code  transfer_keyvalue(xdbevent_t & event,xvfilter_t* last_filter) override;
             virtual enum_xfilter_handle_code  fire_event(const xvevent_t & event,xvfilter_t* last_filter) override;
 
-            enum_xfilter_handle_code transfer_db_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter);
-            enum_xfilter_handle_code transfer_db_v2_to_v3_transaction(xdbevent_t & event,xvfilter_t* last_filter);
-            enum_xfilter_handle_code transfer_db_v2_to_v3_bindex(xdbevent_t & event,xvfilter_t* last_filter);
+            enum_xfilter_handle_code transfer_db_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter) const;
+            enum_xfilter_handle_code transfer_db_v2_to_v3_transaction(xdbevent_t & event,xvfilter_t* last_filter) const;
+            enum_xfilter_handle_code transfer_db_v2_to_v3_bindex(xdbevent_t & event,xvfilter_t* last_filter) const;
+            enum_xfilter_handle_code transfer_db_v2_to_v3_meta(xdbevent_t & event,xvfilter_t* last_filter) const;
+            enum_xfilter_handle_code transfer_db_v2_to_v3_span_height(xdbevent_t & event,xvfilter_t* last_filter) const;
+            enum_xfilter_handle_code transfer_db_v2_to_v3_span(xdbevent_t & event,xvfilter_t* last_filter)const ;
+            std::string              get_addr_by_xvid(const std::string & xvid) const;
+
+        private:
+            std::map<std::string, std::string>  m_tableaddr_vids;
         };
     
         template<uint32_t migrate_version>

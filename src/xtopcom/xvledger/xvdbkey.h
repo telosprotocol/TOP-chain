@@ -32,10 +32,8 @@ namespace top
            
            enum_xdbkey_type_block_input_resource   = 0x0008,
            enum_xdbkey_type_block_output_resource  = 0x0009,
-           
-           //note:block_input and block_output has been part of block_object
-           //enum_xdbkey_type_block_input          = 0x000a,
-           //enum_xdbkey_type_block_output         = 0x000b,
+           enum_xdbkey_type_account_span_height    = 0x000a, //account span height
+           enum_xdbkey_type_unit_proof             = 0x000b, //unit proof
            
            enum_xdbkey_type_max             = 0x000F, //not over this max value
        };
@@ -75,7 +73,7 @@ namespace top
         public://new key style for block,index,meta and designed for multiple CF purpose
            //meta,span related
            static const std::string  create_account_meta_key(const xvaccount_t & account);
-           static const std::string  create_account_span_key(const xvaccount_t & account);
+           static const std::string  create_account_span_genesis_height_key(const xvaccount_t & account);
            static const std::string  create_account_span_key(const xvaccount_t & account,const uint64_t target_height);
            
            static const std::string  create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height);

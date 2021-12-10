@@ -34,6 +34,7 @@ namespace top
             static base::xauto_ptr<base::xvactmeta_t>  get_meta(base::xvdbstore_t* dbstore, const base::xvaccount_t & account);
             static base::xauto_ptr<base::xvactmeta_t>  get_v3_meta(base::xvdbstore_t* dbstore, const base::xvaccount_t & account);
             static uint64_t                            get_genesis_height(xvdbstore_t* dbstore, const base::xvaccount_t & account);
+            static uint64_t                            get_v3_genesis_height(xvdbstore_t* dbstore, const base::xvaccount_t & account);
         protected:
             xobject_ptr_t<base::xvbindex_t>                 read_index_from_db(const std::string & index_db_key_path);
             std::vector<xobject_ptr_t<base::xvbindex_t>>    read_indexs(const base::xvaccount_t & account,const uint64_t target_height);
