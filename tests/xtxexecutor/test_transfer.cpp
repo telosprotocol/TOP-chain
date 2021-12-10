@@ -202,8 +202,14 @@ TEST_F(test_transfer, transfer_v1) {
     EXPECT_EQ(ASSET_TOP(100), balance);
 
     data::xproperty_asset asset_out{10};
-    xaction_asset_out::serialze_to(m_trans->get_transaction()->get_source_action(), asset_out);
-    xaction_asset_in::serialze_to(m_trans->get_transaction()->get_target_action(), asset_out, xaction_type_asset_in);
+   base::xstream_t stream(base::xcontext_t::instance());
+    stream << asset_out.m_token_name;
+    stream << asset_out.m_amount;
+    std::string param((char *)stream.data(), stream.size());
+    m_trans->get_transaction()->set_source_action_type(xaction_type_asset_out);
+    m_trans->get_transaction()->set_source_action_para(param);
+    m_trans->get_transaction()->set_target_action_type(xaction_type_asset_in);
+    m_trans->get_transaction()->set_target_action_para(param);
 
     uint32_t tx_len = 10000;
     m_trans->get_transaction()->set_tx_len(tx_len);
@@ -224,3 +230,4 @@ TEST_F(test_transfer, transfer_v1) {
     tx.source_confirm_action_exec();
     EXPECT_EQ(balance - asset_out.m_amount - m_trans->get_transaction()->get_deposit(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));
 }
+

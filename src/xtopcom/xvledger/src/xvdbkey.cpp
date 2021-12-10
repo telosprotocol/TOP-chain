@@ -222,7 +222,6 @@ namespace top
             return key_path;
         }
         
-        /*
         enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
         {
             enum_xdbkey_type type = enum_xdbkey_type_unknow;
@@ -328,7 +327,6 @@ namespace top
             }
             return type;
         }
-        */
 
         const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height)
         {
