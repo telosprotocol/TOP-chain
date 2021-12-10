@@ -106,7 +106,7 @@ namespace top
             m_blockstore_version = base::xstring_utl::toint32(version_value);
             
             //XTODO,debug purpose to force to upgrade to new version
-            // m_blockstore_version = enum_xblockstore_prunable_version;
+            m_blockstore_version = enum_xblockstore_prunable_version;
         }
     
         xvblockdb_t::~xvblockdb_t()
@@ -775,6 +775,7 @@ namespace top
             else
             {
                 xinfo("read_prunable_block_object_from_db,NOT found main block of account(%s) at height(%lld) ",account.get_address().c_str(),target_height);
+                return all_blocks_at_height;
             }
             
             //step#2: try load other blocks at same height

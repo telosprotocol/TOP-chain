@@ -105,6 +105,7 @@ namespace top
     
         bool  xvdrecycle_mgr::set_block_recycler(xblockrecycler_t& new_recycler)
         {
+            xkinfo("xvdrecycle_mgr::set_block_recycler");
             return set_recycler(new_recycler);
         }
     

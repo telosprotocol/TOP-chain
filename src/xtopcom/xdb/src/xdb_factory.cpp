@@ -14,11 +14,11 @@
 
 namespace top { namespace db {
 
-std::shared_ptr<xdb_face_t> xdb_factory_t::create(xdb_kind_t kind, const std::string& path) {
+std::shared_ptr<xdb_face_t> xdb_factory_t::create(xdb_kind_t kind, const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths) {
     switch (kind) {
         case xdb_kind_kvdb:
         {
-            return std::make_shared<xdb>(path);
+            return std::make_shared<xdb>(db_root_dir,db_data_paths);
         }
         case xdb_kind_mem:
         {
@@ -32,10 +32,10 @@ std::shared_ptr<xdb_face_t> xdb_factory_t::create(xdb_kind_t kind, const std::st
     }
 }
 
-std::shared_ptr<xdb_face_t> xdb_factory_t::instance(const std::string& path) {
+std::shared_ptr<xdb_face_t> xdb_factory_t::instance(const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths) {
     static std::shared_ptr<xdb_face_t> db = nullptr;
     if (db == nullptr) {
-        db = std::make_shared<xdb>(path);
+        db = std::make_shared<xdb>(db_root_dir,db_data_paths);
     }
     return db;
 }

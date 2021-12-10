@@ -81,6 +81,8 @@ namespace top
     
         bool  install_block_recycler(base::xvdbstore_t* xvdb_ptr)
         {
+            xkinfo("install_block_recycler start");
+            
             if(base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler() != NULL)
                 return true; //has been installed
             

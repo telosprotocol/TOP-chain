@@ -52,7 +52,6 @@ public:
     virtual ~xtop_hash_t(){};
     virtual const std::string hash(const std::string & input,enum_xhash_type type) override
     {
-        XMETRICS_GAUGE(metrics::cpu_hash_256_xhashplugin_t_calc, 1);
         xassert(type == enum_xhash_type_sha2_256);
         auto hash = utl::xsha2_256_t::digest(input);
         return std::string(reinterpret_cast<char*>(hash.data()), hash.size());
