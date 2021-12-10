@@ -409,7 +409,7 @@ void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::stri
         result_json["sender_account"] = m_source_action.get_account_addr();
         result_json["sender_action_name"] = m_source_action.get_action_name();
         result_json["sender_action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
-        result_json["receiver_account"] = m_target_addr;
+        result_json["receiver_account"] = m_target_action.get_account_addr();
         result_json["receiver_action_name"] = m_target_action.get_action_name();
         result_json["receiver_action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
     } else {
@@ -433,7 +433,7 @@ void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::stri
         t_action_json["action_hash"] = m_target_action.get_action_hash();
         t_action_json["action_type"] = m_target_action.get_action_type();
         t_action_json["action_size"] = m_target_action.get_action_size();
-        t_action_json["tx_receiver_account_addr"] = m_target_addr;
+        t_action_json["tx_receiver_account_addr"] = m_target_action.get_account_addr();
         t_action_json["action_name"] = m_target_action.get_action_name();
         t_action_json["action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
         t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
