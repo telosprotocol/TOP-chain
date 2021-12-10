@@ -21,6 +21,6 @@ using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compa
 using unordered_json = nlohmann::basic_json<my_workaround_fifo_map>;
 using json = unordered_json;
 
-void property_json(xobject_ptr_t<base::xvbstate_t> const & state, json & j);
+json property_json(xobject_ptr_t<base::xvbstate_t> const & state);
 
 NS_END2

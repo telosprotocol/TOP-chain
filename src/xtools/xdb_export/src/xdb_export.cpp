@@ -496,8 +496,7 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
         json_table["last_fullblock_hash"] = base::xstring_utl::to_hex(bstate->get_last_fullblock_hash());
         json_table["last_fullblock_height"] = bstate->get_last_fullblock_height();
         {
-            json j_property;
-            property_json(bstate, j_property);
+            json j_property = property_json(bstate);
             json_table["system_property"] = j_property["system_property"];
             json_table["user_property"] = j_property["user_property"];
         }
@@ -535,8 +534,7 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
         j_unit["last_fullblock_hash"] = base::xstring_utl::to_hex(unit_bstate->get_last_fullblock_hash());
         j_unit["last_fullblock_height"] = unit_bstate->get_last_fullblock_height();
         {
-            json j_property;
-            property_json(unit_bstate, j_property);
+            json j_property = property_json(unit_bstate);
             j_unit["system_property"] = j_property["system_property"];
             j_unit["user_property"] = j_property["user_property"];
         }
@@ -544,43 +542,38 @@ void xdb_export_tools_t::query_table_unit_state(std::string const & table, json 
     }
 }
 
-void xdb_export_tools_t::query_property(std::string const & account, std::string const & prop_name, std::string const & param) {
+void xdb_export_tools_t::generate_property_file(std::string const & account, std::string const & prop_name, std::string const & param) {
     auto const latest_height = m_blockstore->get_latest_committed_block_height(account);
 
-    json jph;
+    json j;
     if (param == "last") {
-        query_property(account, prop_name, latest_height, jph);
+        j = query_property(account, prop_name, latest_height);
     } else if (param != "all") {
         auto const h = base::xstring_utl::touint64(param);
-        query_property(account, prop_name, h, jph["height " + base::xstring_utl::tostring(h)]);
+        j["height " + base::xstring_utl::tostring(h)] = query_property(account, prop_name, h);
     } else {
-        for (uint64_t i = 0; i <= latest_height; i++) {
-            query_property(account, prop_name, i, jph["height " + base::xstring_utl::tostring(i)]);
+        for (uint64_t h = 0; h <= latest_height; h++) {
+            j["height " + base::xstring_utl::tostring(h)] = query_property(account, prop_name, h);
         }
     }
-    std::string filename = account + "_" + prop_name + "_" + param + "_property.json";
-    std::ofstream out_json(filename);
-    out_json << std::setw(4) << jph;
-    std::cout << "===> " << filename << " generated success!" << std::endl;
-    out_json.flush();
-    out_json.close();
+    generate_json_file(std::string{account + "_" + prop_name + "_" + param + "_property.json"}, j);
 }
 
-void xdb_export_tools_t::query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j) {
+json xdb_export_tools_t::query_property(std::string const & account, std::string const & prop_name, const uint64_t height) {
     auto const block = m_blockstore->load_block_object(account, height, 0, false);
     if (block == nullptr) {
         std::cerr << account << " height: " << height << " block null!" << std::endl;
-        return;
+        return {};
     }
     auto const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
     if (bstate == nullptr) {
         std::cerr << account << " height: " << height << " bstate null!" << std::endl;
-        return;
+        return {};
     }
-    property_json(bstate, j);
+    return property_json(bstate);
 }
 
-void xdb_export_tools_t::query_balance() {
+void xdb_export_tools_t::verify_balance() {
     json root;
     uint64_t balance = 0;
     uint64_t lock_balance = 0;
@@ -590,7 +583,7 @@ void xdb_export_tools_t::query_balance() {
     auto const table_vec = xdb_export_tools_t::get_table_accounts();
     for (auto const & table : table_vec) {
         json j_table;
-        query_balance(table, root[table], j_table);
+        verify_balance(table, root[table], j_table);
         uint64_t table_balance = 0;
         uint64_t table_lock_balance = 0;
         uint64_t table_tgas_balance = 0;
@@ -642,16 +635,86 @@ void xdb_export_tools_t::query_balance() {
     } else {
         std::cerr << "load error!" << std::endl;
     }
-
-    std::string filename = "top_balance_detail.json";
-    std::ofstream out_json(filename);
-    out_json << std::setw(4) << root;
-    std::cout << "===> " << filename << " generated success!" << std::endl;
-    out_json.flush();
-    out_json.close();
+    generate_json_file("top_balance_detail.json", root);
 }
 
-void xdb_export_tools_t::query_archive_db() {
+void xdb_export_tools_t::verify_balance(std::string const & table, json & j_unit, json & j_table) {
+    auto vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{table});
+    if (vblock == nullptr) {
+        std::cerr << "table: " << table << ", latest committed block nullptr!" << std::endl;
+        j_table = nullptr;
+        return;
+    }
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    if (bstate == nullptr) {
+        std::cerr << "table: " << table << ", latest committed block state constructed failed" << std::endl;
+        j_table = nullptr;
+        return;
+    }
+    std::map<std::string, std::string> table_account_index;
+    if (false == bstate->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
+        std::cerr << "table: " << table << ", latest committed block state fail-find property XPROPERTY_TABLE_ACCOUNT_INDEX " << XPROPERTY_TABLE_ACCOUNT_INDEX << std::endl;
+    } else {
+        auto propobj = bstate->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
+        table_account_index = propobj->query();
+    }
+    uint64_t balance = 0;
+    uint64_t lock_balance = 0;
+    uint64_t tgas_balance = 0;
+    uint64_t vote_balance = 0;
+    uint64_t burn_balance = 0;
+    for (auto const & pair : table_account_index) {
+        auto const & account  = pair.first;
+        json j;
+        auto unit_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{account});
+        if (unit_vblock == nullptr) {
+            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block nullptr!" << std::endl;
+            continue;
+        }
+        auto unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
+        if (unit_bstate == nullptr) {
+            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block state constructed failed" << std::endl;
+            continue;
+        }
+        uint64_t unit_balance = 0;
+        uint64_t unit_lock_balance = 0;
+        uint64_t unit_tgas_balance = 0;
+        uint64_t unit_vote_balance = 0;
+        uint64_t unit_burn_balance = 0;
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_AVAILABLE)) {
+            unit_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_LOCK)) {
+            unit_lock_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_TGAS)) {
+            unit_tgas_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_TGAS)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_VOTE)) {
+            unit_vote_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_VOTE)->get_balance();
+        }
+        if (unit_bstate->find_property(XPROPERTY_BALANCE_BURN)) {
+            unit_burn_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
+        }
+        j_unit[account][XPROPERTY_BALANCE_AVAILABLE] = unit_balance;
+        j_unit[account][XPROPERTY_BALANCE_LOCK] = unit_lock_balance;
+        j_unit[account][XPROPERTY_BALANCE_PLEDGE_TGAS] = unit_tgas_balance;
+        j_unit[account][XPROPERTY_BALANCE_PLEDGE_VOTE] = unit_vote_balance;
+        j_unit[account][XPROPERTY_BALANCE_BURN] = unit_burn_balance;
+        balance += unit_balance;
+        lock_balance += unit_lock_balance;
+        tgas_balance += unit_tgas_balance;
+        vote_balance += unit_vote_balance;
+        burn_balance += unit_burn_balance;
+    }
+    j_table[XPROPERTY_BALANCE_AVAILABLE] = balance;
+    j_table[XPROPERTY_BALANCE_BURN] = burn_balance;
+    j_table[XPROPERTY_BALANCE_LOCK] = lock_balance;
+    j_table[XPROPERTY_BALANCE_PLEDGE_TGAS] = tgas_balance;
+    j_table[XPROPERTY_BALANCE_PLEDGE_VOTE] = vote_balance;
+}
+
+void xdb_export_tools_t::verify_archive_db() {
     std::string filename = "check_archive_db.log";
     std::ofstream file(filename);
     // step 1: check table
@@ -659,8 +722,8 @@ void xdb_export_tools_t::query_archive_db() {
     auto const table_accounts = xdb_export_tools_t::get_table_accounts();
     for (auto const & table : table_accounts) {
         uint32_t error_num = 0;
-        error_num += query_block_continuity_and_integrity(table, query_account_table, file);
-        error_num += query_cert_continuity(table, query_account_table, file);
+        error_num += verify_block_continuity_and_integrity(table, query_account_table, file);
+        error_num += verify_cert_continuity(table, query_account_table, file);
         if (error_num) {
             std::cout << "table: " << table << ", check not ok, error num: " << error_num << std::endl;
         } else {
@@ -672,8 +735,8 @@ void xdb_export_tools_t::query_archive_db() {
     auto const unit_accounts = get_db_unit_accounts();
     for (auto const & unit : unit_accounts) {
         uint32_t error_num = 0;
-        error_num += query_block_continuity_and_integrity(unit, query_account_unit, file);
-        error_num += query_cert_continuity(unit, query_account_unit, file);
+        error_num += verify_block_continuity_and_integrity(unit, query_account_unit, file);
+        error_num += verify_cert_continuity(unit, query_account_unit, file);
         if (error_num) {
             std::cout << "unit: " << unit << ", check not ok, error num: " << error_num << std::endl;
         } else {
@@ -685,8 +748,8 @@ void xdb_export_tools_t::query_archive_db() {
     {
         uint32_t error_num = 0;
         std::string drand{sys_drand_addr};
-        error_num += query_block_continuity(drand, query_account_unit, file);
-        error_num += query_cert_continuity(drand, query_account_unit, file);
+        error_num += verify_block_continuity(drand, query_account_unit, file);
+        error_num += verify_cert_continuity(drand, query_account_unit, file);
         if (error_num) {
             std::cout << "drand: " << drand << ", check not ok, error num: " << error_num << std::endl;
         } else {
@@ -697,7 +760,7 @@ void xdb_export_tools_t::query_archive_db() {
     file.close();
 }
 
-uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
+uint32_t xdb_export_tools_t::verify_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -757,7 +820,7 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
     return error_num;
 }
 
-uint32_t xdb_export_tools_t::query_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
+uint32_t xdb_export_tools_t::verify_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -784,7 +847,7 @@ uint32_t xdb_export_tools_t::query_block_continuity(std::string const & account,
     return error_num;
 }
 
-uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
+uint32_t xdb_export_tools_t::verify_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -1314,80 +1377,32 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, const ui
     }
 }
 
-void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit, json & j_table) {
-    auto vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{table});
-    if (vblock == nullptr) {
-        std::cerr << "table: " << table << ", latest committed block nullptr!" << std::endl;
-        j_table = nullptr;
-        return;
+void xdb_export_tools_t::generate_checkpoint_file(const uint64_t clock) {
+    json j;
+    auto const clock_str = base::xstring_utl::tostring(clock);
+    auto accounts = get_table_accounts();
+    accounts.emplace_back(sys_contract_beacon_timer_addr);
+    accounts.emplace_back(sys_drand_addr);
+    for (auto const & account : accounts) {
+        auto height = m_blockstore->get_latest_committed_block_height(account);
+        for (size_t h = height; h > 0; h--) {
+            auto const block = m_blockstore->load_block_object(account, h, 0, false);
+            if (block->get_clock() <= clock) {
+                j[clock_str][account]["height"] = base::xstring_utl::tostring(block->get_height());
+                j[clock_str][account]["hash"] = base::xstring_utl::to_hex(block->get_block_hash());
+                break;
+            }
+        }
     }
-    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
-    if (bstate == nullptr) {
-        std::cerr << "table: " << table << ", latest committed block state constructed failed" << std::endl;
-        j_table = nullptr;
-        return;
-    }
-    std::map<std::string, std::string> table_account_index;
-    if (false == bstate->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        std::cerr << "table: " << table << ", latest committed block state fail-find property XPROPERTY_TABLE_ACCOUNT_INDEX " << XPROPERTY_TABLE_ACCOUNT_INDEX << std::endl;
-    } else {
-        auto propobj = bstate->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
-        table_account_index = propobj->query();
-    }
-    uint64_t balance = 0;
-    uint64_t lock_balance = 0;
-    uint64_t tgas_balance = 0;
-    uint64_t vote_balance = 0;
-    uint64_t burn_balance = 0;
-    for (auto const & pair : table_account_index) {
-        auto const & account  = pair.first;
-        json j;
-        auto unit_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{account});
-        if (unit_vblock == nullptr) {
-            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block nullptr!" << std::endl;
-            continue;
-        }
-        auto unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        if (unit_bstate == nullptr) {
-            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block state constructed failed" << std::endl;
-            continue;
-        }
-        uint64_t unit_balance = 0;
-        uint64_t unit_lock_balance = 0;
-        uint64_t unit_tgas_balance = 0;
-        uint64_t unit_vote_balance = 0;
-        uint64_t unit_burn_balance = 0;
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_AVAILABLE)) {
-            unit_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
-        }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_LOCK)) {
-            unit_lock_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
-        }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_TGAS)) {
-            unit_tgas_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_TGAS)->get_balance();
-        }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_VOTE)) {
-            unit_vote_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_VOTE)->get_balance();
-        }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_BURN)) {
-            unit_burn_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
-        }
-        j_unit[account][XPROPERTY_BALANCE_AVAILABLE] = unit_balance;
-        j_unit[account][XPROPERTY_BALANCE_LOCK] = unit_lock_balance;
-        j_unit[account][XPROPERTY_BALANCE_PLEDGE_TGAS] = unit_tgas_balance;
-        j_unit[account][XPROPERTY_BALANCE_PLEDGE_VOTE] = unit_vote_balance;
-        j_unit[account][XPROPERTY_BALANCE_BURN] = unit_burn_balance;
-        balance += unit_balance;
-        lock_balance += unit_lock_balance;
-        tgas_balance += unit_tgas_balance;
-        vote_balance += unit_vote_balance;
-        burn_balance += unit_burn_balance;
-    }
-    j_table[XPROPERTY_BALANCE_AVAILABLE] = balance;
-    j_table[XPROPERTY_BALANCE_BURN] = burn_balance;
-    j_table[XPROPERTY_BALANCE_LOCK] = lock_balance;
-    j_table[XPROPERTY_BALANCE_PLEDGE_TGAS] = tgas_balance;
-    j_table[XPROPERTY_BALANCE_PLEDGE_VOTE] = vote_balance;
+    generate_json_file(std::string{"checkpoint_" + clock_str + ".json"}, j);
+}
+
+void xdb_export_tools_t::generate_json_file(std::string const & filename, json & j) {
+    std::ofstream out_json(filename);
+    out_json << std::setw(4) << j;
+    out_json.flush();
+    out_json.close();
+    std::cout << "===> " << filename << " generated success!" << std::endl;
 }
 
 NS_END2

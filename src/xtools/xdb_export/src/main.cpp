@@ -2,6 +2,8 @@
 #include "../xdb_reset.h"
 #include "xbase/xhash.h"
 
+#include <cstring>
+
 using namespace top;
 using namespace top::db_export;
 
@@ -217,11 +219,17 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        tools.query_property(argv[3], argv[4], argv[5]);
+        tools.generate_property_file(argv[3], argv[4], argv[5]);
+    } else if (function_name == "checkpoint") {
+        if (argc < 4) {
+            usage();
+            return -1;
+        }
+        tools.generate_checkpoint_file(std::stoi(argv[3]));
     } else if (function_name == "check_balance") {
-        tools.query_balance();
+        tools.verify_balance();
     } else if (function_name == "check_archive_db") {
-        tools.query_archive_db();
+        tools.verify_archive_db();
     } else {
         usage();
     }

@@ -144,7 +144,8 @@ static std::unordered_map<common::xnode_type_t, std::string> node_type_map = {{c
                                                                               {common::xnode_type_t::zec, "sub_beacon"},
                                                                               {common::xnode_type_t::storage_full_node, "full_node"}};
 
-void property_json(xobject_ptr_t<base::xvbstate_t> const & state, json & j) {
+json property_json(xobject_ptr_t<base::xvbstate_t> const & state) {
+    json j;
     auto const & all_properties = state->get_all_property_names();
     for (auto const & property : all_properties) {
         if (system_property.count(property)) {
@@ -155,6 +156,7 @@ void property_json(xobject_ptr_t<base::xvbstate_t> const & state, json & j) {
             std::cerr << "account: " << state->get_account() << " property: " << property << " not found in system!" << std::endl;
         }
     }
+    return j;
 }
 
 static void system_property_json(xobject_ptr_t<base::xvbstate_t> const & state, std::string const & property, json & j) {

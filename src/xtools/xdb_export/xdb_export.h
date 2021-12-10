@@ -39,11 +39,13 @@ public:
     void query_table_unit_state(std::string const & table);
     void query_table_unit_state(std::vector<std::string> const & table_vec);
     // query contract property(use contract manager interface)
-    void query_property(std::string const & account, std::string const & prop_name, std::string const & param);
-    // query balance info
-    void query_balance();
-    // query archive db integrity and continuity
-    void query_archive_db();
+    void generate_property_file(std::string const & account, std::string const & prop_name, std::string const & param);
+    // generate checkpoint
+    void generate_checkpoint_file(const uint64_t clock);
+    // verify chain balance
+    void verify_balance();
+    // verify archive db integrity and continuity
+    void verify_archive_db();
 
 private:
     struct tx_ext_t {
@@ -99,11 +101,11 @@ private:
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_meta(std::string const & account, json & result);
     void query_table_unit_state(std::string const & table, json & result);
-    void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
-    void query_balance(std::string const & table, json & j_unit, json & j_table);
-    uint32_t query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file);
-    uint32_t query_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
-    uint32_t query_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
+    json query_property(std::string const & account, std::string const & prop_name, const uint64_t height);
+    void verify_balance(std::string const & table, json & j_unit, json & j_table);
+    uint32_t verify_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file);
+    uint32_t verify_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
+    uint32_t verify_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
 
     void read_info_from_table_block(const data::xblock_t * block, xdbtool_table_info_t & table_info, std::vector<tx_ext_t> & txinfos);
     void set_txinfo_to_json(json & j, const tx_ext_t & txinfo);
@@ -111,6 +113,8 @@ private:
     void set_txinfos_to_json(json & j, const std::vector<tx_ext_t> & txinfos);
     void set_confirmed_txinfo_to_json(json & j, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
     void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
+
+    void generate_json_file(std::string const & filename, json & j);
 
     std::unique_ptr<xbase_timer_driver_t> m_timer_driver;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
