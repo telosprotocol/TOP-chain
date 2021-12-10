@@ -117,8 +117,8 @@ bool xtxpool_service::start(const xvip2_t & xip) {
           m_cover_front_table_id,
           m_cover_back_table_id,
           m_is_send_receipt_role);
-    m_running.store(true, std::memory_order_release);
-    return is_running();
+    m_status.store(enum_txpool_service_status_running, std::memory_order_release);
+    return true;
 }
 bool xtxpool_service::unreg(const xvip2_t & xip) {
     xinfo("xtxpool_service::unreg node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
@@ -129,15 +129,20 @@ bool xtxpool_service::unreg(const xvip2_t & xip) {
           m_cover_front_table_id,
           m_cover_back_table_id,
           m_is_send_receipt_role);
-    xassert(is_running());
+    xassert(status() != enum_txpool_service_status_not_run);
     m_vnet_driver->unregister_message_ready_notify(xmessage_category_txpool);
-    m_running.store(false, std::memory_order_release);
-
-    return !is_running();
+    m_status.store(enum_txpool_service_status_not_run, std::memory_order_release);
+    return true;
 }
 
-bool xtxpool_service::is_running() const {
-    return m_running.load(std::memory_order_acquire);
+bool xtxpool_service::fade(const xvip2_t & xip) {
+    xinfo("xtxpool_service::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    m_status.store(enum_txpool_service_status_faded, std::memory_order_release);
+    return true;
+}
+
+enum_txpool_service_status xtxpool_service::status() const {
+    return m_status.load(std::memory_order_acquire);
 }
 
 void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & zone_id,
@@ -151,7 +156,7 @@ void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & 
 }
 
 void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) {
-    if (!is_running()) {
+    if (status() != enum_txpool_service_status_running) {
         return;
     }
 
@@ -288,7 +293,7 @@ void xtxpool_service::drop_msg(vnetwork::xmessage_t const & message, std::string
 }
 
 void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    if (!is_running()) {
+    if (status() == enum_txpool_service_status_not_run) {
         return;
     }
     (void)sender;
@@ -456,7 +461,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
          tx->get_source_addr().c_str(),
          tx->get_target_addr().c_str(),
          tx->get_digest_hex_str().c_str());
-    if (!is_running()) {
+    if (status() == enum_txpool_service_status_not_run) {
         xwarn(
             "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_digest_hex_str().c_str());
         push_send_fail_record(xtxpool_v2::xtxpool_error_service_not_running);
@@ -734,7 +739,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
 }
 
 void xtxpool_service::send_receipt_id_state(uint64_t now) {
-    if (m_running && m_is_send_receipt_role) {
+    if (status() == enum_txpool_service_status_running && m_is_send_receipt_role) {
         for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
             if (!xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(now, table_id, m_shard_size, m_node_id)) {
                 continue;
