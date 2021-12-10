@@ -6,6 +6,7 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
+#include "xblockstore/xblockstore_face.h"
 #include "xmetrics/xmetrics.h"
 #include "xvblockhub.h"
 #include "xvgenesis.h"
@@ -868,14 +869,14 @@ namespace top
                 }
                 
                 //genesis block but dont have data at DB, create it ondemand
-                if(0 == target_height)
-                {
+                if (0 == target_height) {
                     std::error_code ec;
-                    store::get_vblockstore()->create_genesis_block(base::xvaccount_t{get_account()}, ec);
+                    store::get_vblockstore()->create_genesis_block(get_account(), ec);
                     if (ec) {
-                        xwarn("xblockacct_t::store_block, create_genesis_block error, category: %s, msg: %s!", ec.category().name(), ec.message().c_str());
+                        xwarn(
+                            "xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!", get_account().c_str(), ec.category().name(), ec.message().c_str());
                     } else {
-                        return 1; //genesis always be 1 block at height(0)
+                        return 1;  // genesis always be 1 block at height(0)
                     }
                 }
                 xdbg("xblockacct_t::load_index(),fail found index for addr=%s at height=%" PRIu64 "", get_account().c_str(), target_height);
@@ -1167,12 +1168,15 @@ namespace top
             {
                 // meta is not 100% reliable, query to ensure the existence of genesis block
                 base::xauto_ptr<base::xvbindex_t> genesis_index(query_index(0, 0));
-                if(!genesis_index)//if not existing at cache
+                if (!genesis_index)  // if not existing at cache
                 {
                     std::error_code ec;
-                    store::get_vblockstore()->create_genesis_block(base::xvaccount_t{get_account()}, ec);
+                    store::get_vblockstore()->create_genesis_block(new_raw_block->get_account(), ec);
                     if (ec) {
-                        xwarn("xblockacct_t::store_block, create_genesis_block error, category: %s, msg: %s!", ec.category().name(), ec.message().c_str());
+                        xwarn("xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!",
+                              new_raw_block->get_account().c_str(),
+                              ec.category().name(),
+                              ec.message().c_str());
                         return false;
                     }
                 }

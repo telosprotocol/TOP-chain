@@ -6,6 +6,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
+#include "xblockstore/xerror/xerror.h"
 #include "xvunithub.h"
 #include "xvledger/xvdrecycle.h"
 #include "xvledger/xunit_proof.h"
@@ -1181,6 +1182,10 @@ namespace top
 
         void xvblockstore_impl::create_genesis_block(const base::xvaccount_t & account, std::error_code & ec)
         {
+            if (!m_create_genesis_block_cb) {
+                ec = error::xenum_errc::store_create_genesis_cb_not_register;
+                return;
+            }
             m_create_genesis_block_cb(account, ec);
         }
 
