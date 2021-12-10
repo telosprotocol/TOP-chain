@@ -503,6 +503,10 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr, const std::stri
         ori_tx_info.removeMember("sender_action");
         ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
         ori_tx_info.removeMember("receiver_action");
+        // for sys shard addr, the account must return with table id suffix
+        ori_tx_info["tx_action"]["receiver_action"]["tx_receiver_account_addr"] = tx_ptr->get_target_addr();
+    } else {
+        ori_tx_info["receiver_account"] = tx_ptr->get_target_addr();
     }
     return ori_tx_info;
 }
