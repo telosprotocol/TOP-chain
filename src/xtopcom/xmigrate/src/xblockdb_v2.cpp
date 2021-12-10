@@ -59,6 +59,17 @@ namespace top
             return height;
         }
 
+        uint64_t xblockdb_v2_t::get_v3_genesis_height(xvdbstore_t* dbstore, const base::xvaccount_t & account) {
+            const std::string key_path = base::xvdbkey_t::create_account_span_genesis_height_key(account);
+            std::string value = dbstore->get_value(key_path);
+            uint64_t height = 0;
+            if (!value.empty()) {
+                base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
+                stream >> height;
+            }
+            return height;
+        }
+
         xobject_ptr_t<base::xvbindex_t>   xblockdb_v2_t::read_index_from_db(const std::string & index_db_key_path)
         {
             const std::string index_bin = get_xdbstore()->get_value(index_db_key_path);

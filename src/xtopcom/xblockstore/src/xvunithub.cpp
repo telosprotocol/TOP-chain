@@ -1181,7 +1181,7 @@ namespace top
 
         bool xvblockstore_impl::set_genesis_height(const base::xvaccount_t & account, const std::string &height)
         {
-            const std::string key_path = base::xvdbkey_t::create_chain_key(account);
+            const std::string key_path = base::xvdbkey_t::create_account_span_genesis_height_key(account);
             if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, height))
             {
                 xerror("xvblockstore_impl::set_genesis_height key %s,fail to writed into db,index dump(%s)",key_path.c_str(), height.c_str());
@@ -1192,13 +1192,13 @@ namespace top
         
         const std::string xvblockstore_impl::get_genesis_height(const base::xvaccount_t & account)
         {
-            const std::string key_path = base::xvdbkey_t::create_chain_key(account);
+            const std::string key_path = base::xvdbkey_t::create_account_span_genesis_height_key(account);
             return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
         
         bool xvblockstore_impl::set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string& span)
         {
-            const std::string key_path = base::xvdbkey_t::create_chain_span_key(account, height);
+            const std::string key_path = base::xvdbkey_t::create_account_span_key(account, height);
             if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, span))
             {
                 xerror("xvblockstore_impl::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), span.c_str());
@@ -1209,7 +1209,7 @@ namespace top
         
         bool xvblockstore_impl::delete_block_span(const base::xvaccount_t & account, const uint64_t height)
         {
-            const std::string key_path = base::xvdbkey_t::create_chain_span_key(account, height);
+            const std::string key_path = base::xvdbkey_t::create_account_span_key(account, height);
             if (!base::xvchain_t::instance().get_xdbstore()->delete_value(key_path))
             {
                 xerror("xvblockstore_impl::delete_block_span key %s,fail to delete from db",key_path.c_str());
@@ -1220,7 +1220,7 @@ namespace top
         
         const std::string xvblockstore_impl::get_block_span(const base::xvaccount_t & account, const uint64_t height)
         {
-            const std::string key_path = base::xvdbkey_t::create_chain_span_key(account, height);
+            const std::string key_path = base::xvdbkey_t::create_account_span_key(account, height);
             return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
 

@@ -27,7 +27,8 @@ namespace top
     
         //convert to binary/bytes address with compact mode as for DB 'key
         const std::string  xvaccount_t::get_storage_key(const xvaccount_t & _account)
-        {
+        {            
+            xassert(!_account.get_address().empty());
             //sample of full address as "Tx0000[raw_public_addr]@[subledger]"
          
             //ledger_id= [chain_id:12bit][zone_index:4bit]

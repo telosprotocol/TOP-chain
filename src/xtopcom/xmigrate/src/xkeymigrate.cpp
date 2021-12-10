@@ -6,6 +6,7 @@
 #include "xkeymigrate.h"
 #include "xvledger/xvbindex.h"
 #include "xvledger/xvtxindex.h"
+#include "xdata/xblocktool.h"
 
 namespace top
 {
@@ -28,7 +29,23 @@ namespace top
     
         int   xkeymigrate_t::init(const xvconfig_t & config_obj)
         {
+            xkinfo("xkeymigrate_t::init");
+            std::vector<std::string> all_table_addrs = data::xblocktool_t::make_all_table_addresses();
+
+            for (auto & addr : all_table_addrs) {
+                base::xvaccount_t _vaddr(addr);
+                m_tableaddr_vids[_vaddr.get_xvid_str()] = addr;
+            }
+            
             return enum_xcode_successful;
+        }
+
+        std::string xkeymigrate_t::get_addr_by_xvid(const std::string & xvid) const {
+            auto iter = m_tableaddr_vids.find(xvid);
+            if (iter != m_tableaddr_vids.end()) {
+                return iter->second;
+            }
+            return std::string();
         }
     
         bool  xkeymigrate_t::close(bool force_async)//close filter
@@ -105,7 +122,7 @@ namespace top
             return enum_xfilter_handle_code_success;
         }
 
-        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_transaction(xdbevent_t & event,xvfilter_t* last_filter)
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_transaction(xdbevent_t & event,xvfilter_t* last_filter) const
         {
             const auto & db_value = event.get_db_value();
             base::xauto_ptr<base::xvtxindex_t> txindex = new base::xvtxindex_t();
@@ -153,7 +170,7 @@ namespace top
             return enum_xfilter_handle_code_finish;  // process finish
         }
 
-        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_bindex(xdbevent_t & event,xvfilter_t* last_filter)
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_bindex(xdbevent_t & event,xvfilter_t* last_filter) const
         {
             const auto & db_value = event.get_db_value();
             base::xauto_ptr<base::xvbindex_t> bindex = new base::xvbindex_t();
@@ -180,7 +197,7 @@ namespace top
                 xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block index");
                 return enum_xfilter_handle_code_interrupt;
             } else {
-                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block index with new value.bindex=%s", bindex->dump().c_str());
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block index with new value.bindex=%s,is_main_entry=%d,key=%s", bindex->dump().c_str(),bindex->check_store_flag(base::enum_index_store_flag_main_entry),new_bindex_key.c_str());
             }
 
             std::string _blockhash;
@@ -196,7 +213,7 @@ namespace top
                 xerror("xkeymigrate_t::transfer_db_v2_to_v3_bindex,fail set block object");
                 return enum_xfilter_handle_code_interrupt;
             } else {
-                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db with new value.bindex=%s", bindex->dump().c_str());
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_bindex set_value_to_dst_db block object with new value.bindex=%s", bindex->dump().c_str());
             }
 
             // transfer block input/output key
@@ -241,7 +258,88 @@ namespace top
             return enum_xfilter_handle_code_finish;  // process finish
         }        
 
-        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter)
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_meta(xdbevent_t & event,xvfilter_t* last_filter) const
+        {
+            const auto & db_key = event.get_db_key();
+
+            std::vector<std::string> values;
+            base::xstring_utl::split_string(db_key, '/', values);
+            if (values.size() != 3) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_meta,fail invalid meta key");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            std::string address = values[1];
+            if (address.empty()) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_meta,fail invalid address");
+                return enum_xfilter_handle_code_interrupt;
+            }
+
+            base::xvaccount_t _vaddr(address);
+            std::string new_meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
+            if (false == event.get_target_store()->set_value(new_meta_key, event.get_db_value())) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_meta,fail set value");
+                return enum_xfilter_handle_code_interrupt;
+            } else {
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_meta set_value_to_dst_db meta with new value.addr=%s",address.c_str());
+            }
+            return enum_xfilter_handle_code_finish;  // process finish
+        }
+
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_span_height(xdbevent_t & event,xvfilter_t* last_filter) const
+        {
+            const auto & db_key = event.get_db_key();
+            std::vector<std::string> values;
+            base::xstring_utl::split_string(db_key, '/', values);
+            if (values.size() != 2) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_span_height,fail invalid span key");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            std::string xvid_str = values[1];
+            std::string table_addr = get_addr_by_xvid(xvid_str);
+            if (table_addr.empty()) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_span_height,fail get addr by xvid");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            base::xvaccount_t _vaddr(table_addr);
+            std::string new_key = base::xvdbkey_t::create_account_span_genesis_height_key(_vaddr);
+            if (false == event.get_target_store()->set_value(new_key, event.get_db_value())) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_span_height,fail set value");
+                return enum_xfilter_handle_code_interrupt;
+            } else {
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_span_height set_value_to_dst_db span height with new value.addr=%s",table_addr.c_str());
+            }
+            return enum_xfilter_handle_code_finish;  // process finish
+        }
+
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3_span(xdbevent_t & event,xvfilter_t* last_filter) const
+        {
+            const auto & db_key = event.get_db_key();
+            std::vector<std::string> values;
+            base::xstring_utl::split_string(db_key, '/', values);
+            if (values.size() != 4) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_span,fail invalid span key");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            std::string xvid_str = values[1];
+            std::string table_addr = get_addr_by_xvid(xvid_str);
+            if (table_addr.empty()) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_span,fail get addr by xvid");
+                return enum_xfilter_handle_code_interrupt;
+            }
+            uint64_t height = base::xstring_utl::hex2uint64(values[3]);
+
+            base::xvaccount_t _vaddr(table_addr);
+            std::string new_key = base::xvdbkey_t::create_account_span_key(_vaddr, height);
+            if (false == event.get_target_store()->set_value(new_key, event.get_db_value())) {
+                xerror("xkeymigrate_t::transfer_db_v2_to_v3_span,fail set value");
+                return enum_xfilter_handle_code_interrupt;
+            } else {
+                xdbg("xkeymigrate_t::transfer_db_v2_to_v3_span set_value_to_dst_db span with new value.addr=%s,height=%ld",table_addr.c_str(),height);
+            }
+            return enum_xfilter_handle_code_finish;  // process finish
+        }
+
+        enum_xfilter_handle_code xkeymigrate_t::transfer_db_v2_to_v3(xdbevent_t & event,xvfilter_t* last_filter) const
         {
             enum_xfilter_handle_code _code = enum_xfilter_handle_code_finish;
             auto key_type = event.get_db_key_type();
@@ -255,6 +353,12 @@ namespace top
                 _code = enum_xfilter_handle_code_finish;  // drop object
             } else if (key_type == base::enum_xdbkey_type_transaction) {
                 _code = transfer_db_v2_to_v3_transaction(event, last_filter);
+            } else if (key_type == base::enum_xdbkey_type_account_meta) {
+                _code = transfer_db_v2_to_v3_meta(event, last_filter);
+            } else if (key_type == base::enum_xdbkey_type_account_span) {
+                _code = transfer_db_v2_to_v3_span(event, last_filter);
+            } else if (key_type == base::enum_xdbkey_type_account_span_height) {
+                _code = transfer_db_v2_to_v3_span_height(event, last_filter);
             } else {
                 // others copy directly
                 if (false == event.get_target_store()->set_value(event.get_db_key(), event.get_db_value())) {

@@ -67,7 +67,7 @@ namespace top
             if (address.get_address() == sys_drand_addr) {
                 height = _dst_blockstore->get_latest_connected_block_height(address);
             } else {
-                height = xblockdb_v2_t::get_genesis_height(_dst_dbstore, address);
+                height = xblockdb_v2_t::get_v3_genesis_height(_dst_dbstore, address);
             }
             return height;
         }

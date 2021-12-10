@@ -738,7 +738,7 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
         }
         auto const & _table_inentitys = block->get_input()->get_entitys();
         auto const entitys_count = _table_inentitys.size();
-        for (size_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        for (size_t index = 0; index < entitys_count; index++) {  // unit entity from index#1
             auto _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
             auto const & input_actions = _table_unit_inentity->get_actions();
             for (auto & action : input_actions) {
