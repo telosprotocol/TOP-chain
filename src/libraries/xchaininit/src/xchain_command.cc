@@ -171,7 +171,14 @@ void ChainCommands::AddSyncModuleCommands() {
             result = sync_module->status();
             // std::cout << result << std::endl;
         });
-
+        AddCommand(module_name, "autoprunedata", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
+            if (args.size() < 1)
+                return;
+            std::string prune = args[0];
+            xinfo("enter set prune: %s", prune.c_str());
+            result = sync_module->auto_prune_data(prune);
+            // std::cout << result << std::endl;
+        });
     } catch (std::exception & e) {
         std::cout << "catch error: (" << e.what() << ") check_cast failed" << std::endl;
     }
@@ -794,9 +801,28 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // syncStatus
     auto syncstatus_app = chain_app->add_subcommand("syncStatus", "Get block sync status of the node.");
     syncstatus_app->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
+
+    auto block_prune = [&](std::string& prune_enable, std::ostringstream& out_str, const std::string & admin_http_addr, uint16_t admin_http_port) -> int {
+        topcl.api.block_prune(prune_enable, out_str);
+        std::pair<std::string, uint16_t> admin_http_pair = std::make_pair(admin_http_addr, admin_http_port);
+        std::string cmd;
+        for (int i = 1; i < argc; ++i) {
+            if (strlen(argv[i]) == 0) {
+                continue;
+            }
+            cmd += argv[i];
+            cmd += " ";
+        }
+        std::string result;
+        handle_node_command(admin_http_pair, cmd, result);
+        std::cout << result << std::endl;
+        return 0;
+    };
+
     std::string prune_enable("off");
     auto block_prune_app = chain_app->add_subcommand("autoPruneData", "Set auto prune data.");
-    block_prune_app->callback(std::bind(&ApiMethod::block_prune, &topcl.api, std::ref(prune_enable), std::ref(out_str)));
+    block_prune_app->callback(std::bind(block_prune, std::ref(prune_enable), std::ref(out_str),
+        std::ref(admin_http_addr), std::ref(admin_http_port)));
     block_prune_app->add_option("on|off", prune_enable, "auto prune data on or off.")->required();
     /*
      * resource

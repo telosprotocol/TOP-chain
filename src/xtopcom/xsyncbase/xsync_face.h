@@ -14,6 +14,7 @@ public:
     virtual std::string help() const = 0;
     virtual std::string status() const = 0;
     virtual std::map<std::string, std::vector<std::string>> get_neighbors() const = 0;
+    virtual std::string auto_prune_data(const std::string& prune) const = 0;
 };
 
 NS_END2
