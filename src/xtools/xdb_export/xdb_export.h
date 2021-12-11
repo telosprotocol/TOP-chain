@@ -44,6 +44,8 @@ public:
     void query_balance();
     // query archive db integrity and continuity
     void query_archive_db();
+    // set folder
+    void set_outfile_folder(std::string const & folder);
 
 private:
     struct tx_ext_t {
@@ -119,6 +121,8 @@ private:
     xobject_ptr_t<base::xvtxstore_t> m_txstore;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
+
+    std::string m_outfile_folder;
 };
 
 NS_END2
