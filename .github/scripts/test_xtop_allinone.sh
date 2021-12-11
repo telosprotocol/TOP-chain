@@ -41,8 +41,8 @@ export TOPIO_HOME=${workdir}
 echo "====== deploy start ======"
 sh run.sh
 echo "====== wait genesis ======"
-echo "sleep 360s"
-sleep 360
+echo "sleep 60s"
+sleep 60
 echo "====== check genesis ======"
 ret=$(grep -a 'vnode mgr' /tmp/rec*/log/xtop*log|grep -a consensus|grep -a 'starts at'|wc -l)
 if [[ -z ${ret} ]];then
