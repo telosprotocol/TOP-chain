@@ -43,9 +43,10 @@ void usage() {
     std::cout << "        - check_table_unit_state [table]" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
-    std::cout << "        - check_property <account> <property> <height|last|all>" << std::endl;
+    std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
     std::cout << "        - check_archive_db new_path" << std::endl;
+    std::cout << "        - parse_db" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -194,7 +195,9 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        mkdir("all_block_basic_info", 0750);
+        std::string dir{"all_block_basic_info/"};
+        mkdir(dir.c_str(), 0750);
+        tools.set_outfile_folder(dir);
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_block_basic(unit_account_vec, "all");
@@ -208,7 +211,9 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        mkdir("all_state_basic_info", 0750);
+        std::string dir{"all_state_basic_info/"};
+        mkdir(dir.c_str(), 0750);
+        tools.set_outfile_folder(dir);
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_state_basic(unit_account_vec, "all");
@@ -250,6 +255,14 @@ int main(int argc, char ** argv) {
         tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
+    } else if (function_name == "parse_db") {
+        std::string dir{"parse_db_result/"};
+        mkdir(dir.c_str(), 0750);
+        tools.set_outfile_folder(dir);
+        auto const unit_account_vec = tools.get_db_unit_accounts();
+        tools.query_block_basic(unit_account_vec, "all");
+        tools.query_state_basic(unit_account_vec, "all");
+        tools.query_meta(unit_account_vec);
     } else {
         usage();
     }

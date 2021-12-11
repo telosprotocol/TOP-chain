@@ -305,12 +305,49 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, std::str
             root["height" + std::to_string(i)] = j;
         }
     }
-    std::string filename = "./all_block_basic_info/" + account + "_all_block_basic.json";
+    std::string filename = m_outfile_folder + account + "_all_block_basic.json";
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
     out_json.flush();
     out_json.close();
+}
+
+void xdb_export_tools_t::query_block_basic(std::string const & account, const uint64_t h, json & result) {
+    auto const block_vec_obj = m_blockstore->load_block_object(account, h);
+    auto const & block_vec = block_vec_obj.get_vector();
+    if (block_vec.empty()) {
+        std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
+        return;
+    }
+    for (size_t i = 0; i < block_vec.size(); i++) {
+        auto const & vblock = block_vec[i];
+        if (vblock == nullptr) {
+            std::cerr << "account: " << account << ", height: " << h << " block[" << i << "] null" << std::endl;
+            continue;
+        }
+        if (block_vec.size() > 1) {
+            std::string block_id = std::string{"block"} + std::to_string(i);
+            result[block_id]["account"] = vblock->get_account();
+            result[block_id]["height"] = vblock->get_height();
+            result[block_id]["class"] = vblock->get_block_class();
+            result[block_id]["viewid"] = vblock->get_viewid();
+            result[block_id]["viewtoken"] = vblock->get_viewtoken();
+            result[block_id]["clock"] = vblock->get_clock();
+            result[block_id]["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
+            result[block_id]["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
+
+        } else {
+            result["account"] = vblock->get_account();
+            result["height"] = vblock->get_height();
+            result["class"] = vblock->get_block_class();
+            result["viewid"] = vblock->get_viewid();
+            result["viewtoken"] = vblock->get_viewtoken();
+            result["clock"] = vblock->get_clock();
+            result["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
+            result["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
+        }
+    }
 }
 
 void xdb_export_tools_t::query_state_basic(std::vector<std::string> const & account_vec, std::string const & param) {
@@ -347,7 +384,7 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, std::str
             root["height" + std::to_string(i)] = j;
         }
     }
-    std::string filename = "./all_state_basic_info/" + account + "_all_state_basic.json";
+    std::string filename = m_outfile_folder + account + "_all_state_basic.json";
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
@@ -356,7 +393,8 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, std::str
 }
 
 void xdb_export_tools_t::query_state_basic(std::string const & account, const uint64_t h, json & result) {
-    auto block_vec = m_blockstore->load_block_object(account, h).get_vector();
+    auto const block_vec_obj = m_blockstore->load_block_object(account, h);
+    auto const & block_vec = block_vec_obj.get_vector();
     if (block_vec.empty()) {
         std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
         return;
@@ -394,7 +432,7 @@ void xdb_export_tools_t::query_meta(std::vector<std::string> const & account_vec
     for (auto const & account : account_vec) {
         query_meta(account, root[account]);
     }
-    std::string filename = "all_meta_data.json";
+    std::string filename = m_outfile_folder + "all_meta_data.json";
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
@@ -405,7 +443,7 @@ void xdb_export_tools_t::query_meta(std::vector<std::string> const & account_vec
 void xdb_export_tools_t::query_meta(std::string const & account) {
     json root;
     query_meta(account, root);
-    std::string filename = account + "_meta_data.json";
+    std::string filename = m_outfile_folder + account + "_meta_data.json";
     std::ofstream out_json(filename);
     out_json << std::setw(4) << root;
     std::cout << "===> " << filename << " generated success!" << std::endl;
@@ -1272,42 +1310,6 @@ void xdb_export_tools_t::query_block_info(std::string const & account, const uin
     root = dynamic_cast<chain_info::get_block_handle *>(m_getblock.get())->get_block_json(bp);
 }
 
-void xdb_export_tools_t::query_block_basic(std::string const & account, const uint64_t h, json & result) {
-    auto block_vec = m_blockstore->load_block_object(account, h).get_vector();
-    if (block_vec.empty()) {
-        std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
-        return;
-    }
-    for (size_t i = 0; i < block_vec.size(); i++) {
-        auto const & vblock = block_vec[i];
-        if (vblock == nullptr) {
-            std::cerr << "account: " << account << ", height: " << h << " block[" << i << "] null" << std::endl;
-            continue;
-        }
-        if (block_vec.size() > 1) {
-            std::string block_id = std::string{"block"} + std::to_string(i);
-            result[block_id]["account"] = vblock->get_account();
-            result[block_id]["height"] = vblock->get_height();
-            result[block_id]["class"] = vblock->get_block_class();
-            result[block_id]["viewid"] = vblock->get_viewid();
-            result[block_id]["viewtoken"] = vblock->get_viewtoken();
-            result[block_id]["clock"] = vblock->get_clock();
-            result[block_id]["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
-            result[block_id]["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
-
-        } else {
-            result["account"] = vblock->get_account();
-            result["height"] = vblock->get_height();
-            result["class"] = vblock->get_block_class();
-            result["viewid"] = vblock->get_viewid();
-            result["viewtoken"] = vblock->get_viewtoken();
-            result["clock"] = vblock->get_clock();
-            result["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
-            result["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
-        }
-    }
-}
-
 void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit, json & j_table) {
     auto vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{table});
     if (vblock == nullptr) {
@@ -1382,6 +1384,10 @@ void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit,
     j_table[XPROPERTY_BALANCE_LOCK] = lock_balance;
     j_table[XPROPERTY_BALANCE_PLEDGE_TGAS] = tgas_balance;
     j_table[XPROPERTY_BALANCE_PLEDGE_VOTE] = vote_balance;
+}
+
+void xdb_export_tools_t::set_outfile_folder(std::string const & folder) {
+    m_outfile_folder = folder;
 }
 
 NS_END2
