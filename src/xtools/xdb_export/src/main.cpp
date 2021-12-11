@@ -105,6 +105,22 @@ int main(int argc, char ** argv) {
         tools_v3.query_archive_db();
         return 0;
     } 
+    if (function_name == "parse_db") {
+        if (argc != 4) {
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        std::string dir{"parse_db_result/"};
+        mkdir(dir.c_str(), 0750);
+        tools_v3.set_outfile_folder(dir);
+        auto const unit_account_vec = tools_v3.get_db_unit_accounts();
+        tools_v3.query_block_basic(unit_account_vec, "all");
+        tools_v3.query_state_basic(unit_account_vec, "all");
+        tools_v3.query_meta(unit_account_vec);
+        return 0;
+    }
 
     xdb_export_tools_t tools{db_path};
     if (function_name == "check_fast_sync") {
@@ -247,7 +263,7 @@ int main(int argc, char ** argv) {
         }
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
-    } else if (function_name == "check_property") {
+    } else if (function_name == "check_contract_property") {
         if (argc < 6) {
             usage();
             return -1;
@@ -255,14 +271,6 @@ int main(int argc, char ** argv) {
         tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
-    } else if (function_name == "parse_db") {
-        std::string dir{"parse_db_result/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
-        auto const unit_account_vec = tools.get_db_unit_accounts();
-        tools.query_block_basic(unit_account_vec, "all");
-        tools.query_state_basic(unit_account_vec, "all");
-        tools.query_meta(unit_account_vec);
     } else {
         usage();
     }
