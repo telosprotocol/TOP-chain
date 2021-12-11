@@ -41,11 +41,11 @@ jobs:
         run: |
           bash .github/scripts/test_ut.sh
 
-      - name: TEST XTOP AllInOne
-        env:
-          RUN_NUM: ${{ github.run_number }}
-        run: |
-          bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
+      # - name: TEST XTOP AllInOne
+      #   env:
+      #     RUN_NUM: ${{ github.run_number }}
+      #   run: |
+      #     bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
 
       - name: Notify
         if: always()
