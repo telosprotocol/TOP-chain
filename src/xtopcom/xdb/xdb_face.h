@@ -67,6 +67,10 @@ class xdb_face_t {
     virtual bool single_delete(const std::string& key) = 0;
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     virtual bool read_range(const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie) = 0;
+    
+    //compact whole DB if both begin_key and end_key are empty
+    //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+    virtual bool compact_range(const std::string & begin_key,const std::string & end_key) = 0;
 };
 
 }  // namespace ledger

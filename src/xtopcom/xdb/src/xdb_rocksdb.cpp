@@ -195,6 +195,9 @@ public:
     
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie);
+    //compact whole DB if both begin_key and end_key are empty
+    //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+    bool compact_range(const std::string & begin_key,const std::string & end_key);
     
     static void destroy(const std::string& m_db_name);
 
@@ -731,6 +734,40 @@ bool xdb::xdb_impl::read_range(const std::string& prefix,xdb_iterator_callback c
     return ret;
 }
 
+//compact whole DB if both begin_key and end_key are empty
+//note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::string & end_key)
+{
+    rocksdb::Slice  begin_slice(begin_key);
+    rocksdb::Slice  end_slice(end_key);
+    
+    rocksdb::ColumnFamilyHandle* begin_cf = get_cf_handle(begin_key);
+    rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
+    if(end_cf == begin_cf) //most case
+    {
+        rocksdb::Status res = m_db->CompactRange(rocksdb::CompactRangeOptions(),begin_cf,&begin_slice,&end_slice);
+        if (!res.ok())
+        {
+            if (res.IsNotFound()) //possible case
+                return true;
+            
+            handle_error(res);
+            return false;
+        }
+        return true;
+    }
+    
+    for(size_t i = 0; i < m_cf_handles.size(); ++i)
+    {
+        rocksdb::ColumnFamilyHandle* cf_handle = m_cf_handles[i];
+        if(cf_handle != nullptr)//try every CF
+        {
+            m_db->CompactRange(rocksdb::CompactRangeOptions(),cf_handle,&begin_slice,&end_slice);
+        }
+    }
+    return true;
+}
+
 
 xdb::xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
 : m_db_impl(new xdb_impl(db_root_dir,db_paths)) {
@@ -830,6 +867,13 @@ bool xdb::single_delete(const std::string& key)
 bool xdb::read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie)
 {
     return m_db_impl->read_range(prefix, callback,cookie);
+}
+
+//compact whole DB if both begin_key and end_key are empty
+//note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+bool xdb::compact_range(const std::string & begin_key,const std::string & end_key)
+{
+    return m_db_impl->compact_range(begin_key, end_key);
 }
 
 }  // namespace ledger

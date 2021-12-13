@@ -62,9 +62,13 @@ namespace top
             // If "end_key" comes before "start_key" according to the user's comparator,
             // a `Status::InvalidArgument` is returned.
             virtual bool             delete_range(const std::string & begin_key,const std::string & end_key) = 0;
+            
             //key must be readonly(never update after PUT),otherwise the behavior is undefined
             virtual bool             single_delete(const std::string & target_key) = 0;
 
+            //compact whole DB if both begin_key and end_key are empty
+            //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+            virtual bool             compact_range(const std::string & begin_key,const std::string & end_key) = 0;
         protected:
 //            using xobject_t::add_ref;
 //            using xobject_t::release_ref;
