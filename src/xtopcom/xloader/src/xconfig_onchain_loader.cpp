@@ -166,10 +166,8 @@ void xconfig_onchain_loader_t::get_deleted_params(std::map<std::string, std::str
 void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) {
     // for modify & add case
     for (auto& entry : map) {
-        if (!entry.first.empty() && !entry.second.empty()) {
-            if (is_param_changed(entry.first, entry.second)) {
-                filterd_map[entry.first] = entry.second;
-            }
+        if (is_param_changed(entry.first, entry.second)) {
+            filterd_map[entry.first] = entry.second;
         }
     }
 }

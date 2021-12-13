@@ -46,6 +46,11 @@ TEST_F(test_loader_api, onchain_loader_filter_changes) {
     onchain_loader.filter_changes(property_map, filter_map);
     EXPECT_TRUE(filter_map.size() == 1);
     EXPECT_EQ(filter_map["id1"], "modify");
+    property_map = {{"id1", ""}, {"id2", "test2"}, {"id3", "test3"}};
+    filter_map.clear();
+    onchain_loader.filter_changes(property_map, filter_map);
+    EXPECT_TRUE(filter_map.size() == 1);
+    EXPECT_EQ(filter_map["id1"], "");
 
     // filter addition
     property_map = {{"id1", "test1"}, {"id2", "test2"}, {"id3", "test3"}, {"id4", "test4"}};
