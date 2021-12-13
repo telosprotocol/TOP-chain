@@ -81,6 +81,50 @@ to_string(xnode_type_t const type) {
     return string;
 }
 
+std::string to_presentation_string(xnode_type_t const type) {
+    std::string name;
+
+    switch (type) {
+    case xnode_type_t::rec:
+        name = "root_beacon";
+        break;
+
+    case xnode_type_t::zec:
+        name = "sub_beacon";
+        break;
+
+    case xnode_type_t::edge:
+        name = "edge";
+        break;
+
+    case xnode_type_t::fullnode:
+        name = "fullnode";
+        break;
+
+    case xnode_type_t::consensus_auditor:
+        name = "auditor";
+        break;
+
+    case xnode_type_t::consensus_validator:
+        name = "validator";
+        break;
+
+    case xnode_type_t::storage_archive:
+        name = "archive";
+        break;
+
+    case xnode_type_t::storage_exchange:
+        name = "exchange";
+        break;
+
+    default:
+        assert(false);
+        break;
+    }
+
+    return name;
+}
+
 xnode_type_t &
 operator &=(xnode_type_t & lhs, xnode_type_t const rhs) noexcept {
     lhs = lhs & rhs;
