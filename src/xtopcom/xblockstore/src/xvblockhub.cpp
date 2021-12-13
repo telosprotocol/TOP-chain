@@ -42,9 +42,7 @@ namespace top
             xassert(xvbkdb_ptr != NULL);
             xvbkdb_ptr->add_ref();
 
-#ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, 1);
-#endif
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xblockacct_t, 1);
         }
 
         xblockacct_t::~xblockacct_t()
