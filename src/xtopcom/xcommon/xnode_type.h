@@ -158,6 +158,7 @@ enum class xenum_node_type : std::uint32_t {
 using xnode_type_t = xenum_node_type;
 
 std::string to_string(xnode_type_t const type);
+std::string to_presentation_string(xnode_type_t const type);
 
 constexpr xnode_type_t operator&(xnode_type_t const lhs, xnode_type_t const rhs) noexcept {
 #if defined XCXX14_OR_ABOVE
