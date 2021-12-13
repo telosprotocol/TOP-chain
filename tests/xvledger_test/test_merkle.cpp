@@ -68,7 +68,6 @@ TEST_F(test_merkle, merkle_root_1) {
     leafs.push_back("1");
 
     std::string root = merkle.calc_root(leafs);
-    std::cout << "root=" << root << std::endl;
     ASSERT_EQ(root, "1");
 }
 
@@ -79,7 +78,6 @@ TEST_F(test_merkle, merkle_root_2) {
     leafs.push_back("2");
 
     std::string root = merkle.calc_root(leafs);
-    std::cout << "root=" << root << std::endl;
     ASSERT_EQ(root, "12");
     std::string root2 = merkle.calc_root(leafs);
     ASSERT_EQ(root2, "12");    
@@ -92,7 +90,6 @@ TEST_F(test_merkle, merkle_root_3) {
     leafs.push_back("3");
 
     std::string root = merkle.calc_root(leafs);
-    std::cout << "root=" << root << std::endl;
     ASSERT_EQ(root, "123");
 }
 TEST_F(test_merkle, merkle_root_4) {
@@ -104,7 +101,6 @@ TEST_F(test_merkle, merkle_root_4) {
     leafs.push_back("4");
 
     std::string root = merkle.calc_root(leafs);
-    std::cout << "root=" << root << std::endl;
     ASSERT_EQ(root, "1234");
 }
 
@@ -135,12 +131,11 @@ TEST_F(test_merkle, merkle_path_2) {
         ASSERT_EQ(ret, true);
         const std::vector<xmerkle_path_node_t<std::string>> & levels = hash_path.get_levels();
         ASSERT_EQ(levels.size(), 1);
-        std::cout << "merkle path for index " << index << std::endl;
         for (size_t i = 0; i < levels.size(); i++) {
-            std::cout << "i = " << i << std::endl;
-            std::cout << "level=" << levels[i].level << std::endl;
-            std::cout << "pos=" << levels[i].pos << std::endl;
-            std::cout << "signature=" << levels[i].signature << std::endl;
+            ASSERT_EQ(levels[i].level, 2);
+           //std::cout << "i = "<< i<< "mlevels[i].pos " << levels[i].pos << "levels.size()" <<levels.size() << std::endl;
+            ASSERT_EQ(levels[i].pos, (levels.size()+1));
+            ASSERT_EQ(levels[i].signature, base::xstring_utl::tostring(2-i));
         }
     }
     {
@@ -150,12 +145,10 @@ TEST_F(test_merkle, merkle_path_2) {
         ASSERT_EQ(ret, true);
         const std::vector<xmerkle_path_node_t<std::string>> & levels = hash_path.get_levels();
         ASSERT_EQ(levels.size(), 1);
-        std::cout << "merkle path for index " << index << std::endl;
         for (size_t i = 0; i < levels.size(); i++) {
-            std::cout << "i = " << i << std::endl;
-            std::cout << "level=" << levels[i].level << std::endl;
-            std::cout << "pos=" << levels[i].pos << std::endl;
-            std::cout << "signature=" << levels[i].signature << std::endl;
+            ASSERT_EQ(levels[i].level, 2);
+            ASSERT_EQ(levels[i].pos, 1);
+            ASSERT_EQ(levels[i].signature, "1");
         }
     }    
 }
@@ -173,12 +166,11 @@ TEST_F(test_merkle, merkle_path_3) {
         ASSERT_EQ(ret, true);
         const std::vector<xmerkle_path_node_t<std::string>> & levels = hash_path.get_levels();
         ASSERT_EQ(levels.size(), 2);
-        std::cout << "merkle path for index " << index << std::endl;
+        int level =  log2(leafs.size()) + 1;
         for (size_t i = 0; i < levels.size(); i++) {
-            std::cout << "i = " << i << std::endl;
-            std::cout << "level=" << levels[i].level << std::endl;
-            std::cout << "pos=" << levels[i].pos << std::endl;
-            std::cout << "signature=" << levels[i].signature << std::endl;
+            ASSERT_EQ(levels[i].level, (level-i));
+            ASSERT_EQ(levels[i].pos, 2);
+            ASSERT_EQ(levels[i].signature,  base::xstring_utl::tostring(i+2));
         }
     }
     {
@@ -188,15 +180,15 @@ TEST_F(test_merkle, merkle_path_3) {
         ASSERT_EQ(ret, true);
         const std::vector<xmerkle_path_node_t<std::string>> & levels = hash_path.get_levels();
         ASSERT_EQ(levels.size(), 2);
-        std::cout << "merkle path for index " << index << std::endl;
+        int level =  log2(leafs.size()) + 1;
         for (size_t i = 0; i < levels.size(); i++) {
-            std::cout << "i = " << i << std::endl;
-            std::cout << "level=" << levels[i].level << std::endl;
-            std::cout << "pos=" << levels[i].pos << std::endl;
-            std::cout << "signature=" << levels[i].signature << std::endl;
+            ASSERT_EQ(levels[i].level, (level-i));
+            ASSERT_EQ(levels[i].pos, (i+1));
+            ASSERT_EQ(levels[i].signature, base::xstring_utl::tostring(i*2+1));
         }
     }    
 }
+/*
 TEST_F(test_merkle, merkle_path_4) {
     xmerkle_t<test_hash_mock_t, std::string> merkle;
     std::vector<std::string> leafs;
@@ -220,7 +212,6 @@ TEST_F(test_merkle, merkle_path_4) {
             std::cout << "signature=" << levels[i].signature << std::endl;
         }
 
-        
     }   
     {
         xmerkle_path_t<std::string> hash_path;
@@ -238,6 +229,7 @@ TEST_F(test_merkle, merkle_path_4) {
         }
     }    
 }
+*/
 TEST_F(test_merkle, merkle_valid_path) {   
     int leafs_num = 100;
      int count = 0;
@@ -245,32 +237,32 @@ TEST_F(test_merkle, merkle_valid_path) {
        
         std::vector<std::string> leafs;
 
-        std::cout << "merkle leasf number  " << count << " leafs is : ";
+        //std::cout << "merkle leasf number  " << count << " leafs is : ";
         for (int i = 0; i < count; i++) {
             std::string v = base::xstring_utl::tostring(i+1);
             leafs.push_back(v);
-            std::cout <<  v << " ";
+            //std::cout <<  v << " ";
         }
-         std::cout << std::endl;
+        //std::cout << std::endl;
   
         for (int index = 0; index < count; index++) {
             xmerkle_t<test_hash_mock_t, std::string> merkle;
             xmerkle_path_t<std::string> hash_path; 
             const std::string mpt_root = merkle.calc_root(leafs);
-            std::cout << "merkle path mpt_root " << mpt_root << std::endl;
+            //std::cout << "merkle path mpt_root " << mpt_root << std::endl;
             bool ret = merkle.calc_path(leafs, index, hash_path.get_levels_for_write());
             ASSERT_EQ(ret, true);
             const std::vector<xmerkle_path_node_t<std::string>> & levels = hash_path.get_levels();
             //ASSERT_EQ(levels.size(), 2);
-            std::cout << "merkle path for index " << index << std::endl;
+            /*std::cout << "merkle path for index " << index << std::endl;
             for (size_t i = 0; i < levels.size(); i++) {
                 std::cout << "i = " << i << std::endl;
                 std::cout << "level=" << levels[i].level << std::endl;
                 std::cout << "pos=" << levels[i].pos << std::endl;
                 std::cout << "signature=" << levels[i].signature << std::endl;
-            }
+            }*/
             ret = merkle.validate_path(leafs[index], mpt_root, hash_path.get_levels());
-            std::cout << "ret= " << ret  << std::endl;
+            //std::cout << "ret= " << ret  << std::endl;
             ASSERT_EQ(ret, true);   
         }
     }
@@ -283,24 +275,24 @@ TEST_F(test_merkle, merkle_invalid_path_level_signature) {
     for (count = 0; count < leafs_num; count++) {   
         std::vector<std::string> leafs;
 
-        std::cout << "merkle leasf number  " << count << " leafs is : ";
+        //std::cout << "merkle leasf number  " << count << " leafs is : ";
         for (int i = 0; i < count; i++) {
             std::string v = base::xstring_utl::tostring(i+1);
             leafs.push_back(v);
-            std::cout <<  v << " ";
+         //std::cout <<  v << " ";
         }
-         std::cout << std::endl;
+    //std::cout << std::endl;
   
         for (int index = 0; index < count; index++) {
             xmerkle_t<test_hash_mock_t, std::string> merkle;
             xmerkle_path_t<std::string> hash_path; 
             const std::string mpt_root = merkle.calc_root(leafs);
-            std::cout << "merkle path mpt_root " << mpt_root << std::endl;
+            //std::cout << "merkle path mpt_root " << mpt_root << std::endl;
             bool ret = merkle.calc_path(leafs, index, hash_path.get_levels_for_write());
             ASSERT_EQ(ret, true);
             const std::vector<xmerkle_path_node_t<std::string>> & levels = hash_path.get_levels();
             //ASSERT_EQ(levels.size(), 2);
-            std::cout << "merkle path for index " << index << std::endl;
+            //std::cout << "merkle path for index " << index << std::endl;
 
             //add err path 
             std::vector<xmerkle_path_node_t<std::string>> & err_levels = hash_path.get_levels_for_write();
@@ -425,14 +417,7 @@ TEST_F(test_merkle, merkle_hash_count_compare) {
 
             xassert(_path_bin_old == _path_bin_new);
         }
-
-        int test_count = cur_count; 
-        std::cout << "leafs num " << test_count << ":" << std::endl;
-        std::cout << "old root:" << root_hash_count_old << " hash ,test " << test_count << " hash_path "\
-        << hash_path_total_old << " hash" << std::endl;
-        std::cout << "new root:" << root_hash_count_new << " hash ,test " << test_count << " hash_path "\
-        << hash_path_total_new << " hash" << std::endl;
-        xassert(hash_path_total_old >= hash_path_total_old);
+        
         xassert(hash_path_total_old == (hash_count_calc(cur_count)*(cur_count+1)));
         xassert(hash_path_total_new == hash_count_calc(cur_count));
     }
