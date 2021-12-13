@@ -306,6 +306,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
             metrics_vnode_status[common::xnode_type_t::zec] = 0;
             metrics_vnode_status[common::xnode_type_t::consensus_auditor] = 0;
             metrics_vnode_status[common::xnode_type_t::consensus_validator] = 0;
+            metrics_vnode_status[common::xnode_type_t::fullnode] = 0;
 
             for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
                 auto const & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
@@ -341,9 +342,20 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                     metrics_vnode_status[vnode_real_part_type] = -3;
                     break;
 
-                default:
-                    //edge
+                case common::xnode_type_t::edge:
                     metrics_vnode_status[vnode_real_part_type] = -4;
+                    break;
+
+                case common::xnode_type_t::fullnode:
+                    metrics_vnode_status[vnode_real_part_type] = -5;
+                    break;
+
+                case common::xnode_type_t::frozen:
+                    // do nothing.
+                    break;
+
+                default:
+                    assert(false);
                     break;
                 }
             }
@@ -354,7 +366,8 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                                  "auditor", metrics_vnode_status[common::xnode_type_t::consensus_auditor],
                                  "validator", metrics_vnode_status[common::xnode_type_t::consensus_validator],
                                  "archive", metrics_vnode_status[common::xnode_type_t::storage_archive],
-                                 "edge", metrics_vnode_status[common::xnode_type_t::edge]);
+                                 "edge", metrics_vnode_status[common::xnode_type_t::edge],
+                                 "fullnode", metrics_vnode_status[common::xnode_type_t::fullnode]);
         }
 #endif
     }
