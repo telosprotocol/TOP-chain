@@ -58,7 +58,7 @@ namespace top
                 return false;
             }
             
-            if(account_obj.is_unit_address())
+            if(account_obj.is_user_unit_address())
                 return recycle_unit(account_obj,account_meta);
             else if(account_obj.is_table_address())
                 return recycle_table(account_obj,account_meta);

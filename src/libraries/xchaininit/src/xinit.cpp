@@ -119,8 +119,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     config_center.init_static_config();
 
     // XTODO from v3, v3_db_path = config_path+DB_PATH
-    std::string v2_db_path = XGET_CONFIG(db_path);
-    std::string v3_db_path = v2_db_path + DB_PATH;
+    std::string v2_db_path = XGET_CONFIG(db_path) + OLD_DB_PATH;
+    std::string v3_db_path = XGET_CONFIG(db_path) + DB_PATH;
     config_center.set(config::xdb_path_configuration_t::name, v3_db_path);
 
     xchain_params chain_params;

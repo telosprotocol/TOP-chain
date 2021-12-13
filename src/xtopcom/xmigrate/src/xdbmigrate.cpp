@@ -82,6 +82,11 @@ namespace top
         {
             return m_db_face_ptr->single_delete(target_key);
         }
+
+        bool   xmigratedb_t::compact_range(const std::string & begin_key,const std::string & end_key)
+        {
+            return m_db_face_ptr->compact_range(begin_key, end_key);
+        }
     
         //iterator each key of prefix.note: go throuh whole db if prefix is empty
         bool  xmigratedb_t::read_range(const std::string& prefix,db::xdb_iterator_callback callback,void * cookie)
@@ -383,7 +388,7 @@ namespace top
                 if (m_scaned_keys_num++ % 1000000 == 0)
                 {
                     xinfo("xdbmigrate_t::db_scan_callback total estimate num = %ld, current num = %ld", m_total_keys_num, m_scaned_keys_num);
-                    std::cout << "xdbmigrate_t::db_scan_callback total estimate num = " << m_total_keys_num << ", current num = " << m_scaned_keys_num << std::endl;
+                    std::cout << "xdbmigrate_t::db_scan_callback total estimate num = " << m_total_keys_num << ", current num = " << m_scaned_keys_num << " current_time_s = " << base::xtime_utl::gettimeofday() << std::endl;
                 }
                 return true;
             }

@@ -46,6 +46,9 @@ public:
     void query_archive_db();
     // set folder
     void set_outfile_folder(std::string const & folder);
+    bool prune_user_unit_blocks(base::xvaccount_t const & table_account);
+    bool prune_all_users_unit_blocks();
+    bool compact_db();
 
 private:
     struct tx_ext_t {

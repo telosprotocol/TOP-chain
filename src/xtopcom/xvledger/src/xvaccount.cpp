@@ -128,7 +128,7 @@ namespace top
             }
         }
     
-        bool  xvaccount_t::is_unit_address() const
+        bool  xvaccount_t::is_user_unit_address() const
         {
             if(   (get_addr_type() == enum_vaccount_addr_type_secp256k1_eth_user_account)
                || (get_addr_type() == enum_vaccount_addr_type_secp256k1_user_account) )

@@ -41,7 +41,9 @@ namespace top
             virtual bool             delete_range(const std::string & begin_key,const std::string & end_key) override;
             //key must be readonly(never update after PUT),otherwise the behavior is undefined
             virtual bool             single_delete(const std::string & target_key) override;
-            
+            //compact whole DB if both begin_key and end_key are empty
+            //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+            virtual bool             compact_range(const std::string & begin_key,const std::string & end_key) override;
             //iterator each key of prefix.note: go throuh whole db if prefix is empty
             bool   read_range(const std::string& prefix,db::xdb_iterator_callback callback,void * cookie);
             bool   get_estimate_num_keys(uint64_t & num) const;

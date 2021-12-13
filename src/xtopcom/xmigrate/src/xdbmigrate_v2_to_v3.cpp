@@ -138,10 +138,12 @@ namespace top
             for (auto & addr : all_table_addrs) {
                 base::xvaccount_t _vaddr(addr);
                 db_delta_migrate_v2_to_v3_block(_vaddr, _vblockdb.get(), dst_blockstore, total_count);
+                std::cout << "db_delta_migrate_v2_to_v3 addr=" << addr << " current_time_s = " << base::xtime_utl::gettimeofday()  << std::endl;
             }
 
             // migrate delta drand-blocks
             db_delta_migrate_v2_to_v3_block(base::xvaccount_t(sys_drand_addr), _vblockdb.get(), dst_blockstore, total_count);
+            std::cout << "db_delta_migrate_v2_to_v3 addr=" << sys_drand_addr << " current_time_s = " << base::xtime_utl::gettimeofday()  << std::endl;
 
             // migrate delta tc-blocks
             int64_t end_s = base::xtime_utl::gettimeofday();

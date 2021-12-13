@@ -8,6 +8,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
+#include "xdata/xblocktool.h"
 #include "xelection/xvnode_house.h"
 #include "xrpc/xgetblock/get_block.h"
 #include "xstake/xstake_algorithm.h"
@@ -1389,5 +1390,63 @@ void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit,
 void xdb_export_tools_t::set_outfile_folder(std::string const & folder) {
     m_outfile_folder = folder;
 }
+
+bool xdb_export_tools_t::prune_user_unit_blocks(base::xvaccount_t const & table_account) {
+    auto vblock = m_blockstore->get_latest_connected_block(table_account);
+    if (vblock == nullptr) {
+        std::cout << "table: " << table_account.get_address() << ", latest connect block fail" << std::endl;
+        return false;
+    }
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    if (bstate == nullptr) {
+        std::cerr << "table: " << table_account.get_address() << ", get table state failed" << std::endl;
+        return false;
+    }
+
+    data::xtable_bstate_t _tablebstate(bstate.get());
+    std::set<std::string> unit_addrs = _tablebstate.get_all_accounts();
+    for (auto & unit_addr : unit_addrs) {
+        base::xvaccount_t _uaddr(unit_addr);
+        if (!_uaddr.is_user_unit_address()) {
+            continue;
+        }
+
+        auto full_vblock = m_blockstore->get_latest_committed_full_block(_uaddr);
+        if (full_vblock == nullptr) {
+            std::cerr << "unit: " << _uaddr.get_address() << ", get_latest_committed_full_block failed" << std::endl;
+            return false;
+        }
+        if (full_vblock->get_height() == 0) {
+            continue;
+        }
+
+        const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(_uaddr,1);
+        const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(_uaddr,full_vblock->get_height()-1);
+        if (false == base::xvchain_t::instance().get_xdbstore()->delete_range(begin_delete_key, end_delete_key)) {
+            std::cerr << "unit: " << _uaddr.get_address() << ", delete_range failed" << std::endl;
+            return false;
+        }
+       xinfo("xdb_export_tools_t::prune_user_unit_blocks addr=%s,end_height=%ld",unit_addr.c_str(), full_vblock->get_height()-1);
+    }
+    return true;
+}
+
+bool xdb_export_tools_t::prune_all_users_unit_blocks() {
+    std::vector<std::string> all_table_addrs = data::xblocktool_t::make_all_table_addresses();
+
+    for (auto & table_addr : all_table_addrs) {
+        prune_user_unit_blocks(table_addr);
+        std::cout << "table=" << table_addr << " prune finish" << std::endl;
+    }
+    return true;
+}
+
+bool xdb_export_tools_t::compact_db() {
+    // compact whold db
+    std::string begin_key;
+    std::string end_key;
+    return base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
+}
+
 
 NS_END2

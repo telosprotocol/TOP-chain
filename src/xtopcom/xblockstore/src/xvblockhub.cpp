@@ -2048,7 +2048,7 @@ namespace top
                     {
                         update_meta_metric(prev_block);//update meta since block has change status
                         
-                        if(prev_block->is_unit_address() == false)//update status for any other block on time
+                        if(prev_block->is_user_unit_address() == false)//update status for any other block on time
                         {
                             //may double check whether need save again
                             write_block(prev_block);
