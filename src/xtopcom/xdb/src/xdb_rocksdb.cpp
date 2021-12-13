@@ -741,20 +741,23 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
     rocksdb::Slice  begin_slice(begin_key);
     rocksdb::Slice  end_slice(end_key);
     
-    rocksdb::ColumnFamilyHandle* begin_cf = get_cf_handle(begin_key);
-    rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
-    if(end_cf == begin_cf) //most case
+    if( (begin_key.empty() == false) && (end_key.empty() == false) ) //specified range of begin and end
     {
-        rocksdb::Status res = m_db->CompactRange(rocksdb::CompactRangeOptions(),begin_cf,&begin_slice,&end_slice);
-        if (!res.ok())
+        rocksdb::ColumnFamilyHandle* begin_cf = get_cf_handle(begin_key);
+        rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
+        if(end_cf == begin_cf) //most case
         {
-            if (res.IsNotFound()) //possible case
-                return true;
-            
-            handle_error(res);
-            return false;
+            rocksdb::Status res = m_db->CompactRange(rocksdb::CompactRangeOptions(),begin_cf,&begin_slice,&end_slice);
+            if (!res.ok())
+            {
+                if (res.IsNotFound()) //possible case
+                    return true;
+                
+                handle_error(res);
+                return false;
+            }
+            return true;
         }
-        return true;
     }
     
     for(size_t i = 0; i < m_cf_handles.size(); ++i)
