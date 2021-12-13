@@ -770,7 +770,7 @@ void get_block_handle::getArcs() {
     std::string const addr = sys_contract_rec_elect_archive_addr;
     auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
     query_account_property(j, addr, property_name);
-    m_js_rsp["value"] = j["archive"];
+    m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::storage_archive)];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
 
@@ -779,8 +779,20 @@ void get_block_handle::getExchangeNodes() {
     std::string const addr = sys_contract_rec_elect_archive_addr;
     auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
     query_account_property(j, addr, property_name);
-    m_js_rsp["value"] = j["exchange"];
+    m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::storage_exchange)];
     m_js_rsp["chain_id"] = j["chain_id"];
+}
+
+void get_block_handle::getFullNodes() {
+    std::string const addr = sys_contract_rec_elect_fullnode_addr;
+    auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
+    assert(property_names.size() == 1);
+    for (auto const & property : property_names) {
+        xJson::Value j;
+        query_account_property(j, addr, property);
+        m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::fullnode)];
+        m_js_rsp["chain_id"] = j["chain_id"];
+    }
 }
 
 void get_block_handle::getConsensus() {
@@ -1321,16 +1333,6 @@ void get_block_handle::set_property_info(xJson::Value & jph, const std::map<std:
     }
 }
 
-static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
-    { common::xnode_type_t::consensus_auditor, "auditor" },
-    { common::xnode_type_t::consensus_validator, "validator" },
-    { common::xnode_type_t::edge, "edge" },
-    { common::xnode_type_t::storage_archive, "archive" },
-    { common::xnode_type_t::rec, "root_beacon" },
-    { common::xnode_type_t::zec, "sub_beacon" },
-    { common::xnode_type_t::storage_exchange, "exchange" }
-};
-
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
     auto _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp, metrics::statestore_access_from_rpc_set_addition);
     if (nullptr == _bstate) {
@@ -1396,7 +1398,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                 j["public_key"] = to_hex_str(election_info.consensus_public_key.to_string());
                                 j["group_id"] = xip2.group_id().value();
                                 j["stake"] = static_cast<unsigned long long>(election_info.stake);
-                                j["node_type"] = node_type_map[node_type];
+                                j["node_type"] = common::to_presentation_string(node_type);
 
                                 if (group_result.group_version().has_value()) {
                                     j["version"] = static_cast<xJson::UInt64>(group_result.group_version().value());
