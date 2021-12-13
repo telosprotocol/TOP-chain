@@ -1054,6 +1054,7 @@ int db_download(const std::string datadir, const std::string& download_addr, std
         out_str<<"only support tar.gz file format."<<std::endl;
         return 1;
     }
+/*    
     std::string tmp_filename = db_filename.substr(0, db_filename.size()-7);  // remove ".tar.gz"
 
     found = tmp_filename.find_last_of('_');
@@ -1125,29 +1126,22 @@ int db_download(const std::string datadir, const std::string& download_addr, std
     }
     pclose(output);
     printf("extract database to '%s' ok.\n", out.substr(0, found).c_str());
-/*
-    // get db backup_id
-    auto dbdir = CRYPTOPP_DATA_DIR + "/" + out.substr(0, found);
-    auto listvec = db_backup_list_info(dbdir + DB_PATH);
-    uint32_t backup_id = 0;
-    if (listvec.empty()) {
-        out_str << "No data." << std::endl;
-        return 1;
-    } else {
-        char backup_date[100];
-        for (auto iter : listvec) {
-            time_t rawtime(iter.timestamp);
-            struct tm * p = gmtime(&rawtime);
-            strftime(backup_date, sizeof(backup_date), "%Y-%m-%d %H:%M:%S", p);
-            // out_str << "DBversion:" << iter.backup_id << ",timestamp:" << backup_date << "." << std::endl;
-            printf("DBversion: %d, timestamp: %s\n", iter.backup_id, backup_date);
-            backup_id = iter.backup_id;
-        }
-    }
-    // db restore
-    if (db_restore(dbdir, config_extra_json["datadir"].get<std::string>(), backup_id) != 0)
-        return 1;
 */
+    
+    // wget download file
+    std::string down_cmd = std::string("wget -c ") + download_addr + " -O - | tar -xz -C " + datadir;
+    printf("%s\n", down_cmd.c_str());
+    FILE * output = popen(down_cmd.c_str(), "r");
+    if (!output) {
+        printf("popen failed\n");
+        return 1;
+    }
+    char tmp[4096] = {0};
+    while (fgets(tmp, sizeof(tmp), output) != NULL) {
+        printf("%s", tmp);
+    }
+    pclose(output);
+
     out_str << "download and extract db ok." << std::endl;;
     return 0;
 }
