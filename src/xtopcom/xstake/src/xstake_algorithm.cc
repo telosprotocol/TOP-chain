@@ -5,7 +5,6 @@
 
 #include "xbasic/xutility.h"
 #include "xdata/xnative_contract_address.h"
-#include "xchain_upgrade/xchain_upgrade_center.h"
 
 NS_BEG2(top, xstake)
 
