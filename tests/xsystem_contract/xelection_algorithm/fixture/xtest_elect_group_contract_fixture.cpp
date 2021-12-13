@@ -37,6 +37,10 @@ common::xnode_type_t xtop_test_elect_nonconsensus_group_algorithm::standby_type(
         return common::xnode_type_t::storage_exchange;
     }
 
+    if (zid == common::xfullnode_zone_id) {
+        return common::xnode_type_t::fullnode;
+    }
+
     return common::xnode_type_t::invalid;
 }
 
