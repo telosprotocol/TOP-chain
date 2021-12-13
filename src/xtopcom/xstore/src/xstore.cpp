@@ -300,6 +300,13 @@ bool   xstore::delete_range(const std::string & begin_key,const std::string & en
     return m_db->delete_range(begin_key,end_key);
 }
 
+//compact whole DB if both begin_key and end_key are empty
+//note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+bool  xstore::compact_range(const std::string & begin_key,const std::string & end_key)
+{
+    return m_db->compact_range(begin_key,end_key);
+}
+
 //key must be readonly(never update after PUT),otherwise the behavior is undefined
 bool   xstore::single_delete(const std::string & target_key)//key must be readonly(never update after PUT),otherwise the behavior is undefined
 {

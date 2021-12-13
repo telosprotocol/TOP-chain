@@ -145,6 +145,13 @@ bool xdb_mem_t::read_range(const std::string& prefix,xdb_iterator_callback callb
     return false;
 }
 
+//compact whole DB if both begin_key and end_key are empty
+//note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
+bool xdb_mem_t::compact_range(const std::string & begin_key,const std::string & end_key)
+{
+    return false;
+}
+
 bool xdb_memdb_transaction_t::rollback() {
     // drop every thing
     m_read_values.clear();
