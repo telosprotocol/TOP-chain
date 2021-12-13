@@ -115,10 +115,15 @@ int main(int argc, char ** argv) {
         std::string dir{"parse_db_result/"};
         mkdir(dir.c_str(), 0750);
         tools_v3.set_outfile_folder(dir);
-        auto const unit_account_vec = tools_v3.get_db_unit_accounts();
-        tools_v3.query_block_basic(unit_account_vec, "all");
-        tools_v3.query_state_basic(unit_account_vec, "all");
-        tools_v3.query_meta(unit_account_vec);
+        std::vector<std::string> all_accounts;
+        {
+            auto const & table_account_vec = tools_v3.get_table_accounts();
+            auto const & unit_account_vec = tools_v3.get_db_unit_accounts();
+            all_accounts.insert(all_accounts.end(), table_account_vec.begin(), table_account_vec.end());
+            all_accounts.insert(all_accounts.end(), unit_account_vec.begin(), unit_account_vec.end());
+        }
+        tools_v3.query_block_state_basic(all_accounts, "all");
+        tools_v3.query_meta(all_accounts);
         return 0;
     }
 

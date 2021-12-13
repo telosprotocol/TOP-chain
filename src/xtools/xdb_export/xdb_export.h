@@ -26,6 +26,9 @@ public:
     void query_block_exist(std::string const & address, const uint64_t height);
     // query block detailed info(use grpc interface)
     void query_block_info(std::string const & account, std::string const & param);
+    // query block and state basic info
+    void query_block_state_basic(std::vector<std::string> const & account_vec, std::string const & param);
+    void query_block_state_basic(std::string const & account, std::string const & param);
     // query block basic info
     void query_block_basic(std::string const & account, std::string const & param);
     void query_block_basic(std::vector<std::string> const & account_vec, std::string const & param);
@@ -97,6 +100,7 @@ private:
     void query_table_latest_fullblock(std::string const & account, json & j);
     void query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json);
     void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root);
+    void query_block_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_block_basic(std::string const & account, const uint64_t h, json & result);
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_meta(std::string const & account, json & result);

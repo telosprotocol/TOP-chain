@@ -2,6 +2,7 @@
 
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xblockstore/xblockstore_face.h"
+#include "xchain_upgrade/xchain_data_processor.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xgenesis_data.h"
@@ -9,6 +10,8 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xelection/xvnode_house.h"
+#include "xloader/src/xgenesis_info.h"
+#include "xloader/xconfig_genesis_loader.h"
 #include "xrpc/xgetblock/get_block.h"
 #include "xstake/xstake_algorithm.h"
 #include "xvledger/xvledger.h"
@@ -269,6 +272,109 @@ void xdb_export_tools_t::query_block_info(std::string const & account, std::stri
     std::cout << "===> " << filename << " generated success!" << std::endl;
     out_json.flush();
     out_json.close();
+}
+
+void xdb_export_tools_t::query_block_state_basic(std::vector<std::string> const & account_vec, std::string const & param) {
+    for (auto const & account : account_vec) {
+        query_block_state_basic(account, param);
+    }
+}
+
+void xdb_export_tools_t::query_block_state_basic(std::string const & account, std::string const & param) {
+    json root;
+    if (param == "last") {
+        auto vblock = m_blockstore->get_latest_cert_block(base::xvaccount_t{account});
+        if (vblock == nullptr) {
+            std::cout << "account: " << account << ", latest cert block nullptr!" << std::endl;
+            return;
+        }
+        uint64_t h = vblock->get_height();
+        std::cout << "account: " << account << ", latest cert height: " << h << ", block info:" << std::endl;
+        query_block_state_basic(account, h, root);
+    } else if (param != "all") {
+        uint64_t h = std::stoi(param);
+        std::cout << "account: " << account << ", height: " << h << ", block info:" << std::endl;
+        query_block_state_basic(account, h, root);
+    } else {
+        auto vblock = m_blockstore->get_latest_cert_block(base::xvaccount_t{account});
+        if (vblock == nullptr) {
+            std::cout << "account: " << account << ", latest cert block nullptr!" << std::endl;
+            return;
+        }
+        uint64_t h = vblock->get_height();
+        for (size_t i = 0; i <= h; i++) {
+            json j;
+            query_block_state_basic(account, i, j);
+            root["height" + std::to_string(i)] = j;
+        }
+    }
+    std::string filename = m_outfile_folder + account + "_basic_info.json";
+    std::ofstream out_json(filename);
+    out_json << std::setw(4) << root;
+    std::cout << "===> " << filename << " generated success!" << std::endl;
+    out_json.flush();
+    out_json.close();
+}
+
+void xdb_export_tools_t::query_block_state_basic(std::string const & account, const uint64_t h, json & result) {
+    auto const block_vec_obj = m_blockstore->load_block_object(account, h);
+    auto const & block_vec = block_vec_obj.get_vector();
+    if (block_vec.empty()) {
+        std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+        return;
+    }
+    for (size_t i = 0; i < block_vec.size(); i++) {
+        auto const & vblock = block_vec[i];
+        if (vblock == nullptr) {
+            std::cerr << "account: " << account << ", height: " << h << " block[" << i << "] null" << std::endl;
+            continue;
+        }
+        json j_block;
+        j_block["account"] = vblock->get_account();
+        j_block["height"] = vblock->get_height();
+        j_block["class"] = vblock->get_block_class();
+        j_block["viewid"] = vblock->get_viewid();
+        j_block["viewtoken"] = vblock->get_viewtoken();
+        j_block["clock"] = vblock->get_clock();
+        j_block["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
+        j_block["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
+        auto const & _table_inentitys = vblock->get_input()->get_entitys();
+        auto const entitys_count = _table_inentitys.size();
+        for (size_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+            auto _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
+            auto const & input_actions = _table_unit_inentity->get_actions();
+            for (auto & action : input_actions) {
+                if (action.get_org_tx_hash().empty()) {  // not txaction
+                    continue;
+                }
+                j_block["tx"].push_back(base::xstring_utl::to_hex(action.get_org_tx_hash()));
+            }
+        }
+        if (block_vec.size() > 1) {
+            std::string block_id = std::string{"block"} + std::to_string(i);
+            result["block"][block_id] = j_block;
+        } else {
+            result["block"] = j_block;
+        }
+        auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock);
+        if (bstate == nullptr) {
+            std::cerr << "account: " << account << ", height: " << h << " state null" << std::endl;
+            continue;
+        }
+        json j_state;
+        j_state["account"] = bstate->get_account();
+        j_state["height"] = bstate->get_block_height();
+        j_state["class"] = bstate->get_block_class();
+        j_state["viewid"] = bstate->get_block_viewid();
+        j_state["last_hash"] = base::xstring_utl::to_hex(bstate->get_last_block_hash());
+        property_json(bstate, j_state["property"]);
+        if (block_vec.size() > 1) {
+            std::string block_id = std::string{"block"} + std::to_string(i);
+            result["state"][block_id] = j_state;
+        } else {
+            result["state"] = j_state;
+        }
+    }
 }
 
 void xdb_export_tools_t::query_block_basic(std::vector<std::string> const & account_vec, std::string const & param) {
@@ -883,6 +989,38 @@ std::set<std::string> xdb_export_tools_t::generate_db_unit_accounts_file(enum_qu
             accounts.insert(units.cbegin(), units.cend());
             for (auto const & unit : units) {
                 j[table].push_back(unit);
+            }
+            auto const contracts = get_system_contract_accounts();
+            for (auto const & contract : contracts) {
+                if (!accounts.count(contract)) {
+                    accounts.insert(contract);
+                    j["genesis_only"].push_back(contract);
+                }
+            }
+            std::vector<chain_data::data_processor_t> reset_data;
+            chain_data::xchain_data_processor_t::get_all_user_data(reset_data);
+            for (auto const & user : reset_data) {
+                if (!accounts.count(user.address)) {
+                    accounts.insert(user.address);
+                    j["genesis_only"].push_back(user.address);
+                }
+            }
+            auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>("{}");
+            xrootblock_para_t rootblock_para;
+            genesis_loader->extract_genesis_para(rootblock_para);
+            auto const genesis_accounts = rootblock_para.m_account_balances;
+            for (auto const & account : genesis_accounts) {
+                if (!accounts.count(account.first)) {
+                    accounts.insert(account.first);
+                    j["genesis_only"].push_back(account.first);
+                }
+            }
+            auto const seed_nodes = rootblock_para.m_genesis_nodes;
+            for (auto const & node : seed_nodes) {
+                if (!accounts.count(node.m_account.value())) {
+                    accounts.insert(node.m_account.value());
+                    j["genesis_only"].push_back(node.m_account.value());
+                }
             }
         }
     } else {

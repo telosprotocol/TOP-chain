@@ -207,7 +207,8 @@ static void user_property_json(xobject_ptr_t<base::xvbstate_t> const & state, st
         } else if (property == XPROPERTY_REWARD_DETAIL) {
             parse_reward_detail_string(string, j[property]);
         } else if (property == XPROPERTY_CONTRACT_STANDBYS_KEY) {
-            parse_rec_standby_pool_string(string, j[property]);
+            // parse_rec_standby_pool_string(string, j[property]);
+            j[property] = base::xstring_utl::to_hex(string);
         } else if (property == XPROPERTY_CONTRACT_ELECTION_RESULT_0_KEY || property == XPROPERTY_CONTRACT_ELECTION_RESULT_1_KEY ||
                    property == XPROPERTY_CONTRACT_ELECTION_RESULT_2_KEY) {
             parse_election_result_string(string, j[property]);
