@@ -204,7 +204,7 @@ namespace top
                     xkinfo("xdbmigrate_t::init,succ src db path folder not exist.dst db version(%s) for dst db path(%s),src db path(%s)",dst_db_version.c_str(), dst_db_path.c_str(), src_db_path.c_str());
                     return enum_xcode_successful;
                 }
-                int src_db_kind = db::xdb_kind_kvdb | db::xdb_kind_readonly;
+                int src_db_kind = db::xdb_kind_kvdb | db::xdb_kind_readonly | db::xdb_kind_no_multi_cf;  // db v2 has no multi cf
                 m_src_store_ptr = new xmigratedb_t(src_db_kind, src_db_path);
                 if(m_src_store_ptr->open_db() == false)
                 {

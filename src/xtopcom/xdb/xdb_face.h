@@ -17,9 +17,11 @@ enum xdb_kind_t {
     xdb_kind_mem            = 0x002,
     
     xdb_kind_readonly       = 0x010, //open for read-only
-    
+    xdb_kind_no_multi_cf    = 0x020, //open for multi cf
     //compression/decompression control
     xdb_kind_high_compress  = 0x100, //high compression for data while persisting
+    xdb_kind_bottom_compress= 0x200, //only compress the bottom level
+    xdb_kind_no_compress    = 0x400, //disable copmression completely,useful for consensus node
 };
 
 // XTODO for test
