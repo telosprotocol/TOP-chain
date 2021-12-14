@@ -167,7 +167,7 @@ class xdb::xdb_impl final
 {
 public:
     static void  disable_default_compress_options(rocksdb::ColumnFamilyOptions & default_cf_options);
-    static void  setup_default_db_options(rocksdb::Options & default_db_options);//setup Default Option of whole DB Level
+    static void  setup_default_db_options(rocksdb::Options & default_db_options,const int db_kinds);//setup Default Option of whole DB Level
     void         setup_default_cf_options(xColumnFamily & cf_config,const size_t block_size,std::shared_ptr<rocksdb::Cache> & block_cache);
     
     xColumnFamily setup_default_cf();//setup Default ColumnFamily(CF),and for read&write as well
@@ -176,7 +176,8 @@ public:
     xColumnFamily setup_fifo_style_cf(const std::string & name,uint64_t ttl = 14 * 24 * 60 * 60);//setup ColumnFamily(CF) of log only,delete after 14 day as default setting);
 
  public:
-    explicit xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
+    //db_kinds refer to xdb_kind_t
+    explicit xdb_impl(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
     ~xdb_impl();
     bool open();
     bool close();
@@ -211,6 +212,7 @@ public:
     rocksdb::WriteBatch     m_batch{};
     std::vector<xColumnFamily>                m_cf_configs;
     std::vector<rocksdb::ColumnFamilyHandle*> m_cf_handles;
+    int                     m_db_kinds = {0};
 };
 
 void    xdb::xdb_impl::disable_default_compress_options(rocksdb::ColumnFamilyOptions & default_db_options)
@@ -231,7 +233,7 @@ void    xdb::xdb_impl::disable_default_compress_options(rocksdb::ColumnFamilyOpt
     }
 }
 
-void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_options)
+void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_options,const int db_kinds)
 {
     default_db_options.create_if_missing = true;
     default_db_options.create_missing_column_families = true;
@@ -241,12 +243,36 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
     default_db_options.max_subcompactions  = 2; //fast compact to clean deleted_range/deleted_keys
     
     #ifdef __ENABLE_ROCKSDB_COMPRESSTION__
-    //do nothing to keep defaut
+    
+        if((db_kinds & xdb_kind_high_compress) != 0)
+        {
+            default_db_options.compression = rocksdb::kLZ4Compression;
+            default_db_options.compression_opts.enabled = true;
+            default_db_options.bottommost_compression = rocksdb::kZSTD;
+            default_db_options.bottommost_compression_opts.enabled = true;
+            
+            xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_high_compress");
+            printf("xdb_impl::setup_default_db_options() as xdb_kind_high_compress \n");
+        }
+        else //normal & medium compression
+        {
+            default_db_options.compression = rocksdb::kLZ4Compression;
+            default_db_options.compression_opts.enabled = true;
+            default_db_options.bottommost_compression = rocksdb::kLZ4Compression;
+            default_db_options.bottommost_compression_opts.enabled = true;
+            
+            xkinfo("xdb_impl::setup_default_db_options() as fast_compress");
+            printf("xdb_impl::setup_default_db_options() as fast_compress \n");
+        }
+    
     #else //disable compress
-    default_db_options.compression = rocksdb::kNoCompression;
-    default_db_options.compression_opts.enabled = false;
-    default_db_options.bottommost_compression = rocksdb::kNoCompression;
-    default_db_options.bottommost_compression_opts.enabled = false;
+        default_db_options.compression = rocksdb::kNoCompression;
+        default_db_options.compression_opts.enabled = false;
+        default_db_options.bottommost_compression = rocksdb::kNoCompression;
+        default_db_options.bottommost_compression_opts.enabled = false;
+    
+        xkinfo("xdb_impl::setup_default_db_options() as no_compress");
+        printf("xdb_impl::setup_default_db_options() as no_compress \n");
     #endif
     return ;
 }
@@ -377,7 +403,21 @@ bool xdb::xdb_impl::open()
         //printf("xrocksdb_t::get_raw_ptr(),rocksdb::version=%s \n",version.c_str());
         
         std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
-        rocksdb::Status s = rocksdb::DB::Open(m_options, m_db_name, column_families, &cf_handles, &m_db);
+        
+        rocksdb::Status s;
+        if((m_db_kinds & xdb_kind_readonly) != 0)
+        {
+            xkinfo("xdb_impl::open() as readonly");
+            printf("xdb_impl::open() as readonly \n");
+            s = rocksdb::DB::OpenForReadOnly(m_options, m_db_name, column_families, &cf_handles, &m_db);
+        }
+        else
+        {
+            xkinfo("xdb_impl::open() as read_write");
+            printf("xdb_impl::open() as read_write \n");
+            s = rocksdb::DB::Open(m_options, m_db_name, column_families, &cf_handles, &m_db);
+        }
+        
         handle_error(s);
         if(s.ok())
         {
@@ -446,8 +486,10 @@ bool xdb::xdb_impl::close()
     return true;
 }
 
-xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
+//db_kinds refer to xdb_kind_t
+xdb::xdb_impl::xdb_impl(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
 {
+    m_db_kinds = db_kinds;
     m_cf_handles.clear();
     m_cf_handles.resize(256); //static mapping each 'char' -> handles
     for(size_t i = 0; i < m_cf_handles.size(); ++i)
@@ -459,7 +501,7 @@ xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> &
     printf("xdb_impl::init,db_root_dir=%s \n",db_root_dir.c_str());
     
     m_db_name = db_root_dir;
-    xdb::xdb_impl::setup_default_db_options(m_options);//setup base options first
+    xdb::xdb_impl::setup_default_db_options(m_options,m_db_kinds);//setup base options first
     if(db_paths.empty() == false)
     {
         for(auto it : db_paths)
@@ -748,6 +790,7 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
         rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
         if(end_cf == begin_cf) //most case
         {
+            printf("xdb_impl::compact_range,one cf \n");
             rocksdb::Status res = m_db->CompactRange(rocksdb::CompactRangeOptions(),begin_cf,&begin_slice,&end_slice);
             if (!res.ok())
             {
@@ -761,6 +804,7 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
         }
     }
     
+    printf("xdb_impl::compact_range,all cfs \n");
     for(size_t i = 0; i < m_cf_handles.size(); ++i)
     {
         rocksdb::ColumnFamilyHandle* cf_handle = m_cf_handles[i];
@@ -777,8 +821,8 @@ bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
     return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
 }
 
-xdb::xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
-: m_db_impl(new xdb_impl(db_root_dir,db_paths)) {
+xdb::xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
+: m_db_impl(new xdb_impl(db_kinds,db_root_dir,db_paths)) {
 }
 
 xdb::~xdb() noexcept = default;

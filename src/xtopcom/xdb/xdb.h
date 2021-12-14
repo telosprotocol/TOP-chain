@@ -20,7 +20,8 @@ class xdb_error : public std::runtime_error {
 
 class xdb : public xdb_face_t {
  public:
-    explicit xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
+    //db_kinds refer to xdb_kind_t
+    explicit xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
     ~xdb() noexcept;
     bool open() override;
     bool close() override;

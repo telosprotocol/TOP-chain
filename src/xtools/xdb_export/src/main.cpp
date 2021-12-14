@@ -34,6 +34,7 @@ void usage() {
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
     std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
+    std::cout << "        - compact_db new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
@@ -91,6 +92,18 @@ int main(int argc, char ** argv) {
         std::string v2_db_path = db_path;
         std::string v3_db_path = argv[3];
         base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
+        return 0;
+    }
+
+    if (function_name == "compact_db") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        tools_v3.compact_db();
         return 0;
     }
 

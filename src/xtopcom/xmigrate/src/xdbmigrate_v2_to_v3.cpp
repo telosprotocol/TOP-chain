@@ -125,7 +125,8 @@ namespace top
                 return true;
             }
 
-            xobject_ptr_t<xmigratedb_t> src_dbstore = make_object_ptr<xmigratedb_t>(src_db_path);
+            int src_db_kind = db::xdb_kind_kvdb;  // blockstore may write, so shoul not use readonly option
+            xobject_ptr_t<xmigratedb_t> src_dbstore = make_object_ptr<xmigratedb_t>(src_db_kind, src_db_path);
             if(src_dbstore->open_db() == false) {
                 xerror("db_delta_migrate_v2_to_v3,failed to open src DB at path(%s)",src_db_path.c_str());
                 return false;

@@ -15,10 +15,10 @@ namespace top
 {
     namespace base
     {
-        xmigratedb_t::xmigratedb_t(const std::string & db_path)
+        xmigratedb_t::xmigratedb_t(int db_kinds, const std::string & db_path)
         {
             m_store_path = db_path;
-            m_db_face_ptr = db::xdb_factory_t::create(db::xdb_kind_kvdb,db_path);
+            m_db_face_ptr = db::xdb_factory_t::create(db_kinds,db_path);
             xkinfo("xmigratedb_t::xmigratedb_t,db_path(%s)",db_path.c_str());
         }
     
@@ -81,6 +81,11 @@ namespace top
         bool   xmigratedb_t::single_delete(const std::string & target_key)//key must be readonly(never update after PUT),otherwise the behavior is undefined
         {
             return m_db_face_ptr->single_delete(target_key);
+        }
+
+        bool   xmigratedb_t::compact_range(const std::string & begin_key,const std::string & end_key)
+        {
+            return m_db_face_ptr->compact_range(begin_key, end_key);
         }
     
         //iterator each key of prefix.note: go throuh whole db if prefix is empty
@@ -169,7 +174,8 @@ namespace top
             m_dst_db_version = dst_db_version;
             
             //step#2: open dst db and check if aready newst db version
-            m_dst_store_ptr = new xmigratedb_t(dst_db_path);
+            int dst_db_kind = db::xdb_kind_kvdb | db::xdb_kind_high_compress;
+            m_dst_store_ptr = new xmigratedb_t(dst_db_kind, dst_db_path);
             if(m_dst_store_ptr->open_db() == false)
             {
                 xerror("xdbmigrate_t::init,failed to open dst DB at path(%s)",dst_db_path.c_str());
@@ -198,7 +204,8 @@ namespace top
                     xkinfo("xdbmigrate_t::init,succ src db path folder not exist.dst db version(%s) for dst db path(%s),src db path(%s)",dst_db_version.c_str(), dst_db_path.c_str(), src_db_path.c_str());
                     return enum_xcode_successful;
                 }
-                m_src_store_ptr = new xmigratedb_t(src_db_path);
+                int src_db_kind = db::xdb_kind_kvdb | db::xdb_kind_readonly;
+                m_src_store_ptr = new xmigratedb_t(src_db_kind, src_db_path);
                 if(m_src_store_ptr->open_db() == false)
                 {
                     xerror("xdbmigrate_t::init,failed to open src DB at path(%s)",src_db_path.c_str());
@@ -333,6 +340,12 @@ namespace top
 
                      m_src_store_ptr->read_range("", db_scan_callback,this);
 
+#if 0  // TODO(jimmy)
+                    std::string begin_key;
+                    std::string end_key;
+                    m_dst_store_ptr->compact_range(begin_key, end_key);
+#endif
+
                     // finally, update db version to dst db version
                     m_dst_store_ptr->set_value(xvdbkey_t::get_xdb_version_key(), m_dst_db_version);
 
@@ -383,7 +396,7 @@ namespace top
                 if (m_scaned_keys_num++ % 1000000 == 0)
                 {
                     xinfo("xdbmigrate_t::db_scan_callback total estimate num = %ld, current num = %ld", m_total_keys_num, m_scaned_keys_num);
-                    std::cout << "xdbmigrate_t::db_scan_callback total estimate num = " << m_total_keys_num << ", current num = " << m_scaned_keys_num << std::endl;
+                    std::cout << "xdbmigrate_t::db_scan_callback total estimate num = " << m_total_keys_num << ", current num = " << m_scaned_keys_num << " current_time_s = " << base::xtime_utl::gettimeofday() << std::endl;
                 }
                 return true;
             }

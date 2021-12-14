@@ -12,6 +12,16 @@
 
 namespace top { namespace db {
 
+enum xdb_kind_t {
+    xdb_kind_kvdb           = 0x001,
+    xdb_kind_mem            = 0x002,
+    
+    xdb_kind_readonly       = 0x010, //open for read-only
+    
+    //compression/decompression control
+    xdb_kind_high_compress  = 0x100, //high compression for data while persisting
+};
+
 // XTODO for test
 struct xdb_meta_t {
     size_t      m_db_key_size{0};

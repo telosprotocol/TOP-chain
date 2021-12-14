@@ -1528,4 +1528,10 @@ void xdb_export_tools_t::set_outfile_folder(std::string const & folder) {
     m_outfile_folder = folder;
 }
 
+void xdb_export_tools_t::compact_db() {
+    std::string begin_key;
+    std::string end_key;
+    base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
+}
+
 NS_END2

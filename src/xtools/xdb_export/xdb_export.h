@@ -49,6 +49,7 @@ public:
     void query_archive_db();
     // set folder
     void set_outfile_folder(std::string const & folder);
+    void compact_db();
 
 private:
     struct tx_ext_t {
