@@ -58,7 +58,7 @@ namespace top
             else if(account_obj.is_contract_address())
                 return recycle_contract(account_obj,account_meta);
             
-            return false;
+            return true;
         }
     
         bool  xvblockprune_impl::recycle_contract(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
@@ -108,7 +108,7 @@ namespace top
             {
                 xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
             }
-            return false;
+            return true;
         }
     
         bool  xvblockprune_impl::recycle_unit(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
@@ -146,7 +146,7 @@ namespace top
                 xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
             }
 
-            return false;
+            return true;
         }
 
         bool  xvblockprune_impl::refresh(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj, const uint64_t permit_prune_upper_boundary) {
