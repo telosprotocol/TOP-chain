@@ -66,7 +66,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         http_server_ptr->start(http_port);
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
-        xdbg("start arc rpc service.");
+        xdbg("start exchange rpc service.");
         break;
     }
     case common::xnode_type_t::fullnode: {
