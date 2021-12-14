@@ -38,16 +38,12 @@ void usage() {
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_block_basic [account] [height|last|all]" << std::endl;
-    std::cout << "        - check_state_basic [account] [height|last|all]" << std::endl;
-    std::cout << "        - check_meta [account]" << std::endl;
-    std::cout << "        - check_table_unit_state [table]" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
     std::cout << "        - check_archive_db new_path" << std::endl;
-    std::cout << "        - parse_db" << std::endl;
+    std::cout << "        - parse_db new_path" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -128,15 +124,8 @@ int main(int argc, char ** argv) {
         std::string dir{"parse_db_result/"};
         mkdir(dir.c_str(), 0750);
         tools_v3.set_outfile_folder(dir);
-        std::vector<std::string> all_accounts;
-        {
-            auto const & table_account_vec = tools_v3.get_table_accounts();
-            auto const & unit_account_vec = tools_v3.get_db_unit_accounts();
-            all_accounts.insert(all_accounts.end(), table_account_vec.begin(), table_account_vec.end());
-            all_accounts.insert(all_accounts.end(), unit_account_vec.begin(), unit_account_vec.end());
-        }
-        tools_v3.query_block_state_basic(all_accounts, "all");
-        tools_v3.query_meta(all_accounts);
+        auto const & table_account_vec = tools_v3.get_table_accounts();
+        tools_v3.query_table_unit_info(table_account_vec);
         return 0;
     }
 
@@ -266,18 +255,6 @@ int main(int argc, char ** argv) {
             tools.query_meta(unit_account_vec);
         } else if (argc == 4) {
             tools.query_meta(argv[3]);
-        }
-    } else if (function_name == "check_table_unit_state") {
-        if (argc < 3 || argc > 4) {
-            usage();
-            return -1;
-        }
-        mkdir("all_table_unit_state", 0750);
-        if (argc == 3) {
-            auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
-            tools.query_table_unit_state(table_account_vec);
-        } else if (argc == 4) {
-            tools.query_table_unit_state(argv[3]);
         }
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
