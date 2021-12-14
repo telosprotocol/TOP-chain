@@ -65,6 +65,7 @@ namespace top
                 m_mutex.unlock();
                 
                 //handle events after unlock
+                
                 for(auto & event : block_events)
                 {
                     if(event.get_index() != NULL) //still valid
@@ -72,6 +73,20 @@ namespace top
                         if(enum_blockstore_event_committed == event.get_type())
                         {
                             m_store_ptr->on_block_committed(event);
+                        }
+                    }
+                }
+
+                if (!block_events.empty()) {
+                    for (uint64_t index = block_events.size() - 1; index >= 0; index--) {
+                        auto event = block_events[index];
+                        if(event.get_index() != NULL) //still valid
+                        {
+                            if(enum_blockstore_event_committed == event.get_type())
+                            {
+                                m_store_ptr->on_block_prune(event);
+                                break;
+                            }
                         }
                     }
                 }
@@ -1033,7 +1048,13 @@ namespace top
                 }
             }
             #endif //end of __FIRE_MBUS_EVENT_ON_UNITHUB_LAYER__
-            
+            return true;
+        }
+
+        bool      xvblockstore_impl::on_block_prune(const xblockevent_t & event){
+            base::xvbindex_t* index_ptr = event.get_index();
+            if(NULL == index_ptr)
+                return false;
             base::xblockrecycler_t* recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler();
             if(recycler != NULL)
             {
