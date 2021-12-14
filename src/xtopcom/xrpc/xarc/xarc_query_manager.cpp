@@ -392,10 +392,10 @@ void xarc_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
     for (auto property : property_names) {
         m_bh.query_account_property(j, addr, property);
-        if (j["auditor"].isMember(target)) {
+        if (j[common::to_presentation_string(common::xnode_type_t::consensus_auditor)].isMember(target)) {
             ev.push_back("auditor");
         }
-        if (j["validator"].isMember(target)) {
+        if (j[common::to_presentation_string(common::xnode_type_t::consensus_validator)].isMember(target)) {
             ev.push_back("validator");
         }
     }
@@ -403,20 +403,27 @@ void xarc_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     addr = sys_contract_rec_elect_archive_addr;
     std::string prop_name = data::election::get_property_by_group_id(common::xarchive_group_id);
     m_bh.query_account_property(j, addr, prop_name);
-    if (j["archive"].isMember(target)) {
+    if (j[common::to_presentation_string(common::xnode_type_t::storage_archive)].isMember(target)) {
         ev.push_back("archiver");
     }
     prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
     m_bh.query_account_property(j, addr, prop_name);
-    if (j["exchange"].isMember(target)) {
+    if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
         ev.push_back("exchange");
     }
 
     addr = sys_contract_rec_elect_edge_addr;
     prop_name = data::election::get_property_by_group_id(common::xdefault_group_id);
     m_bh.query_account_property(j, addr, prop_name);
-    if (j["edge"].isMember(target)) {
+    if (j[common::to_presentation_string(common::xnode_type_t::edge)].isMember(target)) {
         ev.push_back("edger");
+    }
+
+    addr = sys_contract_rec_elect_fullnode_addr;
+    prop_name = data::election::get_property_by_group_id(common::xdefault_group_id);
+    m_bh.query_account_property(j, addr, prop_name);
+    if (j[common::to_presentation_string(common::xnode_type_t::fullnode)].isMember(target)) {
+        ev.push_back("fullnode");
     }
 
     std::string elect_info;
