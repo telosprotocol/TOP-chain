@@ -21,9 +21,11 @@ TEST_F(test_registration_contract_api, initial_creditscore) {
     auto& config_center = top::config::config_register.get_instance();
 
     // if config item not exist
+#if !defined(XCHAIN_FORKED_BY_DEFAULT)
     auto const& not_exist_initial_credit = top::config::config_register.value_or<std::string>(std::string{""}, INITIAL_CREDITSCORE);
     EXPECT_TRUE(not_exist_initial_credit.empty());
     EXPECT_EQ(top::base::xstring_utl::touint64(not_exist_initial_credit), 0);
+#endif
 
     // config item exist
     std::string origin_initial_credit = "330000";
