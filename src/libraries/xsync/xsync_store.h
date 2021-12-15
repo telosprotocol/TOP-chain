@@ -40,6 +40,10 @@ public:
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) = 0;
     virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
     virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
+    virtual uint64_t get_latest_immutable_connected_checkpoint_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_mutable_connected_checkpoint_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_deleted_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_block_with_state(const std::string & account) = 0;
     virtual uint32_t add_listener(int major_type, mbus::xevent_queue_cb_t cb) = 0;
     virtual void remove_listener(int major_type, uint32_t id) = 0;
     virtual bool set_genesis_height(const base::xvaccount_t &account, const std::string &height) = 0;
@@ -76,6 +80,10 @@ public:
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
     virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    virtual uint64_t get_latest_immutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_mutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_deleted_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_block_with_state(const std::string & account) override;
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -101,6 +109,10 @@ public:
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
     virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    virtual uint64_t get_latest_immutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_mutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_deleted_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_block_with_state(const std::string & account) override;
 
     virtual bool set_genesis_height(const base::xvaccount_t & account, const std::string &height) override;
     virtual const std::string get_genesis_height(const base::xvaccount_t & account) override;
