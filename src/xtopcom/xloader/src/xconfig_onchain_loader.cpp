@@ -141,24 +141,38 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
         return;
     }
 
-    std::map<std::string, std::string> changed_param;
-    filter_changes(params, changed_param);
-    config::xconfig_register_t::get_instance().update_cache_and_persist(changed_param);
+    std::map<std::string, std::string> change_and_add_param;
+    std::map<std::string, std::string> deleted_param;
+    filter_changes(params, change_and_add_param);
+    get_deleted_params(params, deleted_param);
+    config::xconfig_register_t::get_instance().update_cache_and_persist(change_and_add_param);
+    if (!deleted_param.empty()) config::xconfig_register_t::get_instance().add_delete_params(deleted_param, false);
     m_last_param_map = params;
     xdbg("xconfig_onchain_loader_t::update_onchain_param, update param sucessfully");
 }
 
-void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) {
+
+void xconfig_onchain_loader_t::get_deleted_params(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& deleted_map) const {
+    // fix delete param change
+    if (map.size() < m_last_param_map.size()) {
+        for (auto& entry: m_last_param_map) {
+            if (map.find(entry.first) == map.end()) deleted_map[entry.first] = entry.second;
+        }
+
+    }
+
+}
+
+void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) const {
+    // for modify & add case
     for (auto& entry : map) {
-        if (!entry.first.empty() && !entry.second.empty()) {
-            if (is_param_changed(entry.first, entry.second)) {
-                filterd_map[entry.first] = entry.second;
-            }
+        if (is_param_changed(entry.first, entry.second)) {
+            filterd_map[entry.first] = entry.second;
         }
     }
 }
 
-bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) {
+bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) const {
     auto it = m_last_param_map.find(key);
     if (it == m_last_param_map.end()) {
         return true;

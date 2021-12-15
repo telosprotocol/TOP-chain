@@ -143,7 +143,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     //init auto_prune feature
     set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
     xkinfo("topchain_init init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
-        
+
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {
         return 1;
@@ -249,7 +249,11 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
         if (json_root[member].isArray()) {
             for (unsigned int i = 0; i < json_root[member].size(); ++i) {
                 try {
-                    if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(json_root[member][i].asString())) return false;
+                    auto const& addr = json_root[member][i].asString();
+                    if (addr.size() <= top::base::xvaccount_t::enum_vaccount_address_prefix_size) return false;
+                    auto const addr_type = top::base::xvaccount_t::get_addrtype_from_account(addr);
+                    if (addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account) return false;
+                    if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(addr)) return false;
                 } catch (...) {
                     xwarn("parse config file %s failed", config_file.c_str());
                     return false;
@@ -272,7 +276,7 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
 bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
     g_userinfo.account = node_id;
     if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-        std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);    
+        std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
     top::xtopcl::xtopcl xtop_cl;
     std::string result;
     xtop_cl.api.change_trans_mode(true);
@@ -409,7 +413,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
 
-    global_node_signkey = DecodePrivateString(user_params.signkey);    
+    global_node_signkey = DecodePrivateString(user_params.signkey);
 
 #ifdef CONFIG_CHECK
     // config check
@@ -436,7 +440,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     //init auto_prune feature
     set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
     xkinfo("topchain_noparams_init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
-        
+
     // load bwlist
     std::map<std::string, std::string> bwlist;
     auto ret = load_bwlist_content(bwlist_path, bwlist);
@@ -445,6 +449,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
             xdbg("key %s, value %s", item.first.c_str(), item.second.c_str());
             config_center.set(item.first, item.second);
         }
+    } else {
+        xdbg("load_bwlist_content failed!");
     }
 
     MEMCHECK_INIT();

@@ -8,5 +8,5 @@ add_library(xloader STATIC ${src_dir})
 
 #add_dependencies(xloader xconfig xdata xbasic xpbase)
 
-target_link_libraries(xloader PRIVATE jsoncpp xconfig xmbus xdata xbasic xpbase)
+target_link_libraries(xloader PRIVATE jsoncpp xconfig xmbus xdata xbasic xpbase xblockstore)
 
