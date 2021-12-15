@@ -88,7 +88,6 @@ void xchain_params::load_platform_config() {
     // TODO(smaug) maybe we should use the real local_ip (for p2p nat)
     platform_params.local_ip = XGET_CONFIG(ip);
     platform_params.local_port = XGET_CONFIG(platform_business_port);
-    platform_params.first_node = XGET_CONFIG(platform_first_node);
     platform_params.public_endpoints = XGET_CONFIG(platform_public_endpoints);
     platform_params.url_endpoints = XGET_CONFIG(platform_url_endpoints);
     platform_params.show_cmd = XGET_CONFIG(platform_show_cmd);

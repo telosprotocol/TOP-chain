@@ -72,7 +72,6 @@ public:
     // parse seed_edge_host from outsider
     void set_seed_edge_host(const std::string endpoints);
 
-    bool                                  first_node {false};
     std::string                           local_ip {};
     uint16_t                              local_port {9000};
     std::string                           log_path {};

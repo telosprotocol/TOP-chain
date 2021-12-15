@@ -95,7 +95,6 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(ip);
     XADD_OFFCHAIN_PARAMETER(root_hash);
 
-    XADD_OFFCHAIN_PARAMETER(platform_first_node);
     XADD_OFFCHAIN_PARAMETER(platform_business_port);
     XADD_OFFCHAIN_PARAMETER(platform_public_endpoints);
     XADD_OFFCHAIN_PARAMETER(platform_url_endpoints);
