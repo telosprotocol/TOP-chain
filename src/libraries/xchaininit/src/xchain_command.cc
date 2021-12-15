@@ -38,6 +38,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <sys/statvfs.h>
 using json = nlohmann::json;
 
 namespace top {
@@ -1036,10 +1037,36 @@ std::string decrypt_keystore_by_key(const std::string & keystore_path, const std
     return private_key;
 }
 
+uint64_t GetAvailableSpace(const char * path) {
+    struct statvfs stat;
+
+    if (statvfs(path, &stat) != 0) {
+        return -1;
+    }
+    // the available size is f_bsize * f_bavail
+    return stat.f_bsize * stat.f_bavail;
+}
+uint64_t get_db_file_length(const std::string& str_out) {
+    uint64_t len = 0;
+    std::string strtemp = str_out;
+    std::string::size_type found = str_out.find("Length: ");
+    if (found == std::string::npos)
+        return 0;
+    strtemp = strtemp.substr(found + 8);
+    //printf("find2: %s\n", strtemp.c_str());
+
+    found = strtemp.find(" ");
+    if (found == std::string::npos)
+        return 0;
+    strtemp = strtemp.substr(0, found);
+    //printf("find3: %s\n", strtemp.c_str());
+    len = std::strtoull(strtemp.c_str(), NULL, 0);
+    return len;
+}
 int db_download(const std::string datadir, const std::string& download_addr, std::ostringstream& out_str) {
     std::string local_db_dir = datadir + DB_PATH;
     if (!IsDirEmpty(local_db_dir.c_str())) {
-        printf("The target dir for restore is not empty: %s\n", local_db_dir.c_str());
+        out_str << "The target dir for restore is not empty: " << local_db_dir << std::endl;;
         return 1;
     }
     std::string::size_type found = download_addr.find_last_of('/');
@@ -1054,95 +1081,140 @@ int db_download(const std::string datadir, const std::string& download_addr, std
         out_str<<"only support tar.gz file format."<<std::endl;
         return 1;
     }
-/*    
-    std::string tmp_filename = db_filename.substr(0, db_filename.size()-7);  // remove ".tar.gz"
 
-    found = tmp_filename.find_last_of('_');
-    if (found == std::string::npos) {
-        out_str << "database file name format error." << std::endl;
-        return 1;
-    }
-    std::string md5sum = tmp_filename.substr(found+1);  // get md5sum
-
-    tmp_filename = tmp_filename.substr(found);
-    found = tmp_filename.find_last_of('_');
-    if (found == std::string::npos) {
-        out_str << "database file name format error." << std::endl;
-        return 1;
-    }
-    std::string db_version = std::string("/db_") + tmp_filename.substr(found+1);  // get db version
-
-    // wget download file
-    std::string down_cmd = std::string("wget ") + download_addr;
-    FILE * output = popen(down_cmd.c_str(), "r");
-    if (!output) {
-        printf("popen failed\n");
-        return 1;
-    }
+    std::string down_cmd;
     char tmp[4096] = {0};
-    while (fgets(tmp, sizeof(tmp), output) != NULL) {
-        printf("%s", tmp);
+    uint64_t file_length = 0;
+    FILE * output = NULL;
+    // get file length
+    {
+        down_cmd = std::string("wget --spider ") + download_addr + " 2>&1";
+        printf("%s\n", down_cmd.c_str());
+        output = popen(down_cmd.c_str(), "r");
+        if (!output) {
+            printf("popen failed\n");
+            return 1;
+        }
+        while (fgets(tmp, sizeof(tmp), output) != NULL) {
+            printf("%s", tmp);
+            std::string strtemp = tmp;
+            if (strtemp.substr(0, 8).compare("Length: ") == 0) {
+                file_length = get_db_file_length(strtemp);
+                break;
+            }
+        }
+        pclose(output);
+        printf("file length: %lu\n", file_length);
+        if (file_length == 0) {
+            return 0;
+        }
     }
-    pclose(output);
-    printf("download database ok.\n");
+
+    uint64_t free_space = GetAvailableSpace(datadir.c_str());
+    if (free_space < 0) {
+        printf("get free space fail: %s\n", datadir.c_str());
+        return 0;
+    }
+    printf("free space: %lu\n", free_space);
+    if (free_space < file_length / 2 * 3) {
+        printf("No enough free disk space.\n");
+        return 0;
+    }
+
+    // wget download and extract file with one command
+    if (free_space < file_length / 2 * 5) {
+        down_cmd = std::string("wget -c ") + download_addr + " -O - | tar -xz -C " + datadir;
+        printf("%s\n", down_cmd.c_str());
+        output = popen(down_cmd.c_str(), "r");
+        if (!output) {
+            printf("popen failed\n");
+            return 1;
+        }
+        while (fgets(tmp, sizeof(tmp), output) != NULL) {
+            printf("%s", tmp);
+        }
+        pclose(output);
+        out_str << "download and extract db ok." << std::endl;;
+        return 0;
+    }
+
+    // download file and check md5sum
+    std::string md5sum;
+    {
+        std::string tmp_filename = db_filename.substr(0, db_filename.size() - 7);  // remove ".tar.gz"
+        found = tmp_filename.find_last_of('_');
+        if (found == std::string::npos) {
+            out_str << "database file name format error." << std::endl;
+            return 1;
+        }
+        md5sum = tmp_filename.substr(found + 1);  // get md5sum
+
+        tmp_filename = tmp_filename.substr(found);
+        found = tmp_filename.find_last_of('_');
+        if (found == std::string::npos) {
+            out_str << "database file name format error." << std::endl;
+            return 1;
+        }
+        std::string db_version = std::string("/db_") + tmp_filename.substr(found + 1);  // get db version
+    }
+    // wget download file
+    {
+        down_cmd = std::string("wget ") + download_addr;
+        output = popen(down_cmd.c_str(), "r");
+        if (!output) {
+            printf("popen failed\n");
+            return 1;
+        }
+        while (fgets(tmp, sizeof(tmp), output) != NULL) {
+            printf("%s", tmp);
+        }
+        pclose(output);
+        printf("download database ok.\n");
+    }
     // check md5sum
-    down_cmd = std::string("md5sum ./") + db_filename;
-    output = popen(down_cmd.c_str(), "r");
-    if (!output) {
-        printf("popen failed\n");
-        return 1;
+    {
+        down_cmd = std::string("md5sum ./") + db_filename;
+        output = popen(down_cmd.c_str(), "r");
+        if (!output) {
+            printf("popen failed\n");
+            return 1;
+        }
+        std::string md5_tmp;
+        while (fgets(tmp, sizeof(tmp), output) != NULL) {
+            printf("%s", tmp);
+            md5_tmp = tmp;
+        }
+        pclose(output);
+        found = md5_tmp.find(' ');
+        if (md5_tmp.substr(0, found) != md5sum) {
+            printf("md5 check failed: %s, %s\n", md5_tmp.substr(0, found).c_str(), md5sum.c_str());
+            return 1;
+        }
+        printf("md5sum check ok.\n");
     }
-    std::string md5_tmp;
-    while (fgets(tmp, sizeof(tmp), output) != NULL) {
-        printf("%s", tmp);
-        md5_tmp = tmp;
-    }
-    pclose(output);
-    found = md5_tmp.find(' ');
-    if (md5_tmp.substr(0, found) != md5sum) {
-        printf("md5 check failed: %s, %s\n", md5_tmp.substr(0, found).c_str(), md5sum.c_str());
-        return 1;
-    }
-    printf("md5sum check ok.\n");    
-
     // extract file
-    down_cmd = std::string("tar zxvf ./") + db_filename + " -C " + datadir;
-    printf("extract database: %s\n", down_cmd.c_str());
-    output = popen(down_cmd.c_str(), "r");
-    if (!output) {
-        printf("popen failed\n");
-        return 1;
+    {
+        down_cmd = std::string("tar zxvf ./") + db_filename + " -C " + datadir;
+        printf("extract database: %s\n", down_cmd.c_str());
+        output = popen(down_cmd.c_str(), "r");
+        if (!output) {
+            printf("popen failed\n");
+            return 1;
+        }
+        std::string out;
+        while (fgets(tmp, sizeof(tmp), output) != NULL) {
+            if (out.empty())
+                out = tmp;
+            printf("%s", tmp);
+        }
+        found = out.find('/');
+        if (found == std::string::npos) {
+            printf("extract database error.\n");
+            return 1;
+        }
+        pclose(output);
+        printf("extract database to '%s' ok.\n", out.substr(0, found).c_str());
     }
-    std::string out;
-    while (fgets(tmp, sizeof(tmp), output) != NULL) {
-        if (out.empty())
-            out = tmp;
-        printf("%s", tmp);
-    }
-    found = out.find('/');
-    if (found == std::string::npos) {
-        printf("extract database error.\n");
-        return 1;
-    }
-    pclose(output);
-    printf("extract database to '%s' ok.\n", out.substr(0, found).c_str());
-*/
-    
-    // wget download file
-    std::string down_cmd = std::string("wget -c ") + download_addr + " -O - | tar -xz -C " + datadir;
-    printf("%s\n", down_cmd.c_str());
-    FILE * output = popen(down_cmd.c_str(), "r");
-    if (!output) {
-        printf("popen failed\n");
-        return 1;
-    }
-    char tmp[4096] = {0};
-    while (fgets(tmp, sizeof(tmp), output) != NULL) {
-        printf("%s", tmp);
-    }
-    pclose(output);
-
-    out_str << "download and extract db ok." << std::endl;;
     return 0;
 }
 
