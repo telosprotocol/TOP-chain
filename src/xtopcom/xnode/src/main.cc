@@ -1225,6 +1225,18 @@ int StartNode(config_t& config) {
                 //std::cout << "decrypt_keystore failed, exit" << std::endl;
                 return -1;
         }
+
+        if (!config.genesis) {
+            // check miner info
+            config.so_func_name = "check_miner_info";
+            int miner_status = load_lib(config);
+            if (miner_status != 0) {
+                // check miner info not ok: not registered or pub key not matched
+                std::cout << "Start node failed." << std::endl;
+                return false;
+            }
+        }
+
     } else { //read from config
         auto & topio_config = top::topio::xtopio_config_t::get_instance();
         topio_config.load_config_file(config.config_file);
@@ -1240,18 +1252,6 @@ int StartNode(config_t& config) {
         << "node_id:       " << config.node_id << std::endl
         << "public_key:    " << config.pub_key << std::endl;
 #endif
-
-
-    if (!config.genesis) {
-        // check miner info
-        config.so_func_name = "check_miner_info";
-        int miner_status = load_lib(config);
-        if (miner_status != 0) {
-            // check miner info not ok: not registered or pub key not matched
-            std::cout << "Start node failed." << std::endl;
-            return false;
-        }
-    }
 
     generate_extra_config(config);
 

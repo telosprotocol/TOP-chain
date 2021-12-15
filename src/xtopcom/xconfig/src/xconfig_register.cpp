@@ -151,7 +151,7 @@ void xconfig_register_t::dump() {
     std::cout << "=======config dump end======" << std::endl;
 }
 
- void xconfig_register_t::log_dump() {
+ void xconfig_register_t::log_dump() const {
     xinfo("xconfig_register_t::log_dump");
     xinfo("=======================current load config dump start=============================");
     m_param_lock.lock_read();

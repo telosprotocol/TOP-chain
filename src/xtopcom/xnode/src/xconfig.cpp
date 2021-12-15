@@ -5,17 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <fstream>
+#include <unordered_map>
 
 #include "xnode/xconfig.h"
 #include "json/value.h"
@@ -24,7 +14,7 @@
 namespace top{
     namespace topio {
 
-std::string xconfig::get_file_content(const std::string& filepath) {
+std::string xconfig::get_file_content(const std::string& filepath) const {
     std::ifstream in(filepath);
     if (!in.is_open()) {
         std::cerr << "can't open file: " << filepath << std::endl;
@@ -38,8 +28,7 @@ std::string xconfig::get_file_content(const std::string& filepath) {
     return tmp.str();
 }
 
-int32_t xconfig::load_config_file(const std::string & config_file, const std::string & config_extra)
-{
+int32_t xconfig::load_config_file(const std::string & config_file, const std::string & config_extra) {
     std::string content = get_file_content(config_file);
     xJson::Reader reader;
     bool ret = reader.parse(content, m_root);
@@ -108,8 +97,7 @@ void xconfig::extract(xJson::Value& arr, std::unordered_map<std::string, std::st
     }
 }
 
-std::string xconfig::get_string(const std::string & item)
-{
+std::string xconfig::get_string(const std::string & item) const {
     if(m_root[item].empty())
     {
         std::cout << "config item " << item << " is empty" << std::endl;
@@ -119,7 +107,7 @@ std::string xconfig::get_string(const std::string & item)
     return m_root[item].asString();
 }
 
-bool xconfig::get_string(const std::string & item, std::string& value) {
+bool xconfig::get_string(const std::string & item, std::string& value) const {
     if (!m_root[item].empty() && m_root[item].isString()) {
         value = m_root[item].asString();
         return true;
@@ -127,7 +115,7 @@ bool xconfig::get_string(const std::string & item, std::string& value) {
     return false;
 }
 
-bool xconfig::get_json(const std::string& item, xJson::Value& value) {
+bool xconfig::get_json(const std::string& item, xJson::Value& value) const {
     if (m_root.isMember(item)) {
         value = m_root[item];
         return true;
@@ -224,8 +212,7 @@ void xconfig::set_option_param(
     }
 }
 
-int xconfig::get_int(const std::string & item)
-{
+int xconfig::get_int(const std::string & item) const {
     if(m_root[item].empty())
     {
         std::cout << "config item " << item << " is empty" << std::endl;
@@ -235,8 +222,7 @@ int xconfig::get_int(const std::string & item)
     return m_root[item].asInt();
 }
 
-int xconfig::get_int_empty(const std::string & item)
-{
+int xconfig::get_int_empty(const std::string & item) const {
     if(m_root[item].empty()) {
         std::cout << "config item " << item << " empty, use default" << std::endl;
         return 0;
@@ -245,8 +231,7 @@ int xconfig::get_int_empty(const std::string & item)
     return m_root[item].asInt();
 }
 
-bool xconfig::get_bool(const std::string & item)
-{
+bool xconfig::get_bool(const std::string & item) const {
     if(m_root[item].empty())
     {
         std::cout << "config item " << item << " is empty" << std::endl;
