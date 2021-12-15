@@ -62,10 +62,16 @@ namespace top
             return true;
         }
 
+
+        uint64_t get_v2_db_genesis_height(const base::xvaccount_t & address, base::xvdbstore_t* _dst_dbstore) {
+            uint64_t height = xblockdb_v2_t::get_genesis_height(_dst_dbstore, address);
+            return height;
+        }
+
         uint64_t get_v3_db_genesis_height(const base::xvaccount_t & address, base::xvdbstore_t* _dst_dbstore, base::xvblockstore_t* _dst_blockstore) {
             uint64_t height;
             if (address.get_address() == sys_drand_addr) {
-                height = _dst_blockstore->get_latest_connected_block_height(address);
+                height = _dst_blockstore->get_latest_committed_block_height(address);
             } else {
                 height = xblockdb_v2_t::get_v3_genesis_height(_dst_dbstore, address);
             }
@@ -75,12 +81,13 @@ namespace top
         bool  db_delta_migrate_v2_to_v3_block(const base::xvaccount_t & address, xblockdb_v2_t* _src_dbstore, base::xvblockstore_t* _dst_blockstore, uint64_t & total_count)
         {
             base::xvdbstore_t* _dst_dbstore = base::xvchain_t::instance().get_xdbstore();
+            uint64_t src_db_min_height = get_v2_db_genesis_height(address, _src_dbstore->get_xdbstore());
             uint64_t dst_db_min_height = get_v3_db_genesis_height(address, _dst_dbstore, _dst_blockstore);
 
             base::xauto_ptr<base::xvactmeta_t> src_meta = xblockdb_v2_t::get_meta(_src_dbstore->get_xdbstore(), address);
             base::xauto_ptr<base::xvactmeta_t> dst_meta = xblockdb_v2_t::get_v3_meta(_dst_dbstore, address);
             uint64_t src_db_max_height = src_meta->clone_block_meta()._highest_cert_block_height;
-            xinfo("db_delta_migrate_v2_to_v3_block address=%s,srcmeta=%s,dst_meta=%s,dst_height=%ld", address.get_account().c_str(),src_meta->clone_block_meta().ddump().c_str(),dst_meta->clone_block_meta().ddump().c_str(),dst_db_min_height);
+            xinfo("db_delta_migrate_v2_to_v3_block address=%s,srcmeta=%s,dst_meta=%s,src_height=%ld,dst_height=%ld", address.get_account().c_str(),src_meta->clone_block_meta().ddump().c_str(),dst_meta->clone_block_meta().ddump().c_str(),src_db_min_height,dst_db_min_height);
             uint64_t begin_height = dst_db_min_height + 1; // always migrate block from dst_db_min_height + 1
             uint64_t end_height = src_db_max_height;
             if (begin_height > end_height) {

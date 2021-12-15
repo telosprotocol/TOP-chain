@@ -45,7 +45,18 @@ namespace top
         base::xauto_ptr<base::xvactmeta_t>  xblockdb_v2_t::get_v3_meta(base::xvdbstore_t* dbstore, const base::xvaccount_t & account)
         {
             // XTODO same key now
-            return get_meta(dbstore, account);
+            const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key(account);
+            const std::string meta_content = dbstore->get_value(full_meta_path);
+            base::xvactmeta_t* _meta = new xvactmeta_t(account);  // create empty meta default
+            if (!meta_content.empty()) {
+                if (_meta->serialize_from_string(meta_content) <= 0) {
+                    xerror("xblockdb_v2_t::get_v3_meta,bad meta_serialized_data that not follow spec");
+                    return new xvactmeta_t(account);  // return empty meta
+                }
+            } else {
+                xwarn("xblockdb_v2_t::get_v3_meta,meta empty. address=%s,full_meta_path=%s",account.get_address().c_str(),full_meta_path.c_str());
+            }
+            return _meta;
         }
 
         uint64_t xblockdb_v2_t::get_genesis_height(xvdbstore_t* dbstore, const base::xvaccount_t & account) {
