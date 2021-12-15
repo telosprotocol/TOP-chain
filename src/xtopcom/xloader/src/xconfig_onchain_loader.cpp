@@ -152,7 +152,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
 }
 
 
-void xconfig_onchain_loader_t::get_deleted_params(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& deleted_map) {
+void xconfig_onchain_loader_t::get_deleted_params(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& deleted_map) const {
     // fix delete param change
     if (map.size() < m_last_param_map.size()) {
         for (auto& entry: m_last_param_map) {
@@ -163,7 +163,7 @@ void xconfig_onchain_loader_t::get_deleted_params(std::map<std::string, std::str
 
 }
 
-void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) {
+void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) const {
     // for modify & add case
     for (auto& entry : map) {
         if (is_param_changed(entry.first, entry.second)) {
@@ -172,7 +172,7 @@ void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string>
     }
 }
 
-bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) {
+bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) const {
     auto it = m_last_param_map.find(key);
     if (it == m_last_param_map.end()) {
         return true;
