@@ -445,6 +445,13 @@ namespace top
             return account_obj->get_latest_executed_block_height();
         }
 
+        uint64_t xvblockstore_impl::get_latest_deleted_block_height(const base::xvaccount_t & address,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,address);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_deleted_block_height();
+        }
+
         bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag)
         {
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());

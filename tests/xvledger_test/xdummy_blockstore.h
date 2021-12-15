@@ -78,6 +78,10 @@ public:
         return 0;
     }
 
+    uint64_t get_latest_deleted_block_height(const base::xvaccount_t & account,const int atag = 0) override {
+        return 0;
+    }
+
     bool set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override {
         return false;
     }
