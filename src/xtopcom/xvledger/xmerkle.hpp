@@ -336,10 +336,13 @@ namespace top
                 _Tv v;
                 h.reset();
                 h.update(value);
+
+                XMETRICS_GAUGE(metrics::cpu_merkle_hash_multi_times_calc, 1);
                 if (!get_hash(h, v)) return std::string();
 
                 for(int i=1;i<times;i++) {
                     h.reset();
+                    XMETRICS_GAUGE(metrics::cpu_merkle_hash_multi_times_calc, 1);
                     h.update(v.data(), v.size());
                     if (!get_hash(h, v)) return std::string();
                 }

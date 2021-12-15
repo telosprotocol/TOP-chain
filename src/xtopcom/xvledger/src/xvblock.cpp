@@ -354,7 +354,8 @@ namespace top
         }
         xvqcert_t::~xvqcert_t()
         {
-            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, -1);
+            //xinfo("~xvqcert_t build_block_hash  %lx ", this);
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, -1);            
         }
         
         xvqcert_t & xvqcert_t::operator = (const xvqcert_t & other)
@@ -384,6 +385,7 @@ namespace top
             m_extend_data       = other.m_extend_data;
   
             m_modified_count    = other.m_modified_count;
+            m_sign_hash         = other.m_sign_hash;
             return *this;
         }
     
@@ -424,6 +426,7 @@ namespace top
         
         uint32_t  xvqcert_t::add_modified_count()
         {
+            xatomic_t::xadd(m_sign_hash_flag);
             return xatomic_t::xadd(m_modified_count);
         }
         
@@ -655,7 +658,7 @@ namespace top
         {
             if(is_allow_modify())
             {
-                m_cryptos = ((m_cryptos & 0xF8) | (type     ));
+                m_cryptos = ((m_cryptos & 0xF8) | (type));
                 add_modified_count();
                 return;
             }
@@ -711,7 +714,10 @@ namespace top
         {
             if(is_allow_modify())
             {
+                XMETRICS_GAUGE(metrics::cpu_hash_256_block_header_calc, 1);
                 const std::string hash_to_check = hash(header_binary_data);
+
+                xinfo("set_header_hash %lx" , this);
                 if( (m_header_hash.empty() == false) && (m_header_hash != hash_to_check) )
                 {
                     xwarn("xvqcert_t::set_header_hash,try to overwrited existing header with different hash,existing-hash(%s) vs new_hash(%s)",m_header_hash.c_str(),hash_to_check.c_str());
@@ -987,6 +993,11 @@ namespace top
         
         const std::string  xvqcert_t::get_hash_to_sign() const //signatrure' hash = hash(m_target_obj_hash + m_consensus + m_cryptos..)
         {
+            if (0 == m_sign_hash_flag && m_sign_hash.empty() == false)  {
+               xinfo("get_hash_to_sign ok ,  %p , m_sign_hash_flag =%d ", this,   m_sign_hash_flag);  
+               return m_sign_hash;
+            }
+
             base::xautostream_t<512> stream(base::xcontext_t::instance());
             
             //new compact mode
@@ -1014,14 +1025,41 @@ namespace top
             }
             
             const std::string data_to_sign((const char*)stream.data(),stream.size());
-            return hash(data_to_sign);
+            
+            XMETRICS_GAUGE(metrics::cpu_hash_256_block_sign_calc, 1);
+             // xinfo(" m_sign_hash_flag =%d  address %lx m_clock %d m_nonce %d ",  m_sign_hash_flag,  &m_sign_hash_flag, m_clock, m_nonce); 
+             //if m_sign_hash_flag != 0, rebuild hash 
+            if (xatomic_t::xcompare_exchange(m_sign_hash_flag, 0, 0) != 0) {
+                m_sign_hash = hash(data_to_sign);
+                /*xinfo("test1 block do it this %p, m_sign_hash_flag =%d , add = %lx  %s ",   this, m_sign_hash_flag ,
+                &m_sign_hash_flag, data_to_sign.c_str()); */
+                return m_sign_hash;
+            }else{
+                return  hash(data_to_sign);
+            }
         }
         
         const std::string  xvqcert_t::build_block_hash()    //recalculate the hash of block, note: block_hash is equal as cert'hash
         {
-            std::string  cert_bin_data;
-            serialize_to_string(cert_bin_data);
-            return hash(cert_bin_data);
+            if(xatomic_t::xorx(m_modified_count, (uint32_t)0) > 0 ){
+                XMETRICS_GAUGE(metrics::cpu_hash_256_block_build_calc, 1);
+                //will recalculate hash
+                std::string  cert_bin_data;
+                serialize_to_string(cert_bin_data);
+                m_cert_hash = hash(cert_bin_data);
+                xinfo("111 build_block_hash  %lx ", this);
+                return m_cert_hash;
+            }else{
+                if (m_cert_hash.empty() == false){
+                    return m_cert_hash;
+                }else{
+                    XMETRICS_GAUGE(metrics::cpu_hash_256_block_build_calc, 1);
+                    std::string  cert_bin_data;
+                    serialize_to_string(cert_bin_data);
+                    xinfo("222 build_block_hash  %lx ", this);
+                    return hash(cert_bin_data);
+                }
+            }
         }
         
         //note:cert may carry some flags of block temproray,so dont serialized them to persist stream
@@ -1364,6 +1402,7 @@ namespace top
                     //makeup hash for input & output
                     if(_vinput->get_resources_hash().empty() == false)
                     {
+                        XMETRICS_GAUGE(metrics::cpu_hash_256_block_prepare_input_check_calc, 1);
                         if(_vinput->get_resources_hash() != _vcert.hash(_vinput->get_resources_data()))
                         {
                             xassert(0);
@@ -1372,6 +1411,7 @@ namespace top
                     }
                     else
                     {
+                        XMETRICS_GAUGE(metrics::cpu_hash_256_block_prepare_input_check_calc, 1);
                         _vinput->set_resources_hash(_vcert.hash(_vinput->get_resources_data()));
                     }
                     //generate root of merkle for input & output if have
@@ -1396,6 +1436,7 @@ namespace top
                 {
                     if(_voutput->get_resources_hash().empty() == false)
                     {
+                        XMETRICS_GAUGE(metrics::cpu_hash_256_block_prepare_output_check_calc, 1);
                         if(_voutput->get_resources_hash() != _vcert.hash(_voutput->get_resources_data()))
                         {
                             xassert(0);
@@ -1404,6 +1445,7 @@ namespace top
                     }
                     else
                     {
+                        XMETRICS_GAUGE(metrics::cpu_hash_256_block_prepare_output_check_calc, 1);
                         _voutput->set_resources_hash(_vcert.hash(_voutput->get_resources_data()));
                     }
                     
@@ -1602,6 +1644,8 @@ namespace top
         
         xvblock_t::~xvblock_t()
         {
+            xinfo("is_input_ready %lx", this);
+            xinfo("~xvblock_t set_header_hash  vheader_input_output_hash %lx ", this);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvblock, -1);
             if(m_vheader_ptr != NULL){
                 m_vheader_ptr->close();
@@ -1858,6 +1902,7 @@ namespace top
             if(get_input() == NULL)
                 return false;
             
+            XMETRICS_GAUGE(metrics::cpu_hash_256_block_set_input_calc, 1);
             const std::string hash_to_check = get_cert()->hash(raw_resource_data);
             if(hash_to_check != get_input()->get_resources_hash() )
                 return false;
@@ -1870,6 +1915,7 @@ namespace top
             if(get_output() == NULL)
                 return false;
             
+            XMETRICS_GAUGE(metrics::cpu_hash_256_block_set_output_calc, 1);
             const std::string hash_to_check = get_cert()->hash(raw_resource_data);
             if(hash_to_check != get_output()->get_resources_hash() )
                 return false;
@@ -2099,6 +2145,8 @@ namespace top
             
             if(full_check_resources)
             {
+                 XMETRICS_GAUGE(metrics::cpu_hash_256_block_input_check_calc, 1);
+                 xinfo("is_input_ready %lx", this);
                 const std::string _resources_hash = get_cert()->hash(get_input()->get_resources_data());
                 if(_resources_hash != get_input()->get_resources_hash()){
                     if(_resources_hash.empty())
@@ -2127,6 +2175,7 @@ namespace top
             
             if(full_check_resources)
             {
+                XMETRICS_GAUGE(metrics::cpu_hash_256_block_output_check_calc, 1);
                 const std::string _resources_hash = get_cert()->hash(get_output()->get_resources_data());
                 if(_resources_hash != get_output()->get_resources_hash()){
                     if(_resources_hash.empty())
@@ -2180,6 +2229,7 @@ namespace top
                 }
  
                 if(deep_test){
+                  //  XMETRICS_GAUGE(metrics::cpu_hash_256_block_build_deep_test_calc, 1);
                     const std::string cert_hash = get_cert()->build_block_hash();
                     if(cert_hash != m_cert_hash) {
                         xerror("xvblock_t::is_valid,hash of cert not match,cert_hash=%s vs m_cert_hash(%s)",cert_hash.c_str(), m_cert_hash.c_str());
@@ -2428,6 +2478,9 @@ namespace top
             {
                 const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
                 const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
+                XMETRICS_GAUGE(metrics::cpu_hash_256_block_do_read_header_input_output_calc, 1);
+                xinfo(" vheader_input_output_hash %lx ", this);
+                //auto reg_pub = base::xstring_utl::base64_decode(node_info.consensus_public_key.to_string());
                 if(get_cert()->get_header_hash() != vheader_input_output_hash)
                 {
                     xerror("xvblock_t::do_read, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());

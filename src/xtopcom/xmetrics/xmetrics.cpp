@@ -576,6 +576,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_tc);
         RETURN_METRICS_NAME(cpu_ca_verify_multi_sign_blockstore);
         RETURN_METRICS_NAME(cpu_merkle_hash_calc);
+        RETURN_METRICS_NAME(cpu_merkle_hash_multi_times_calc);
         RETURN_METRICS_NAME(cpu_hash_256_xecprikey_calc);
         RETURN_METRICS_NAME(cpu_hash_256_XudpSocket_calc);
         RETURN_METRICS_NAME(cpu_hash_256_GetRootKadmliaKey_calc);
@@ -586,6 +587,17 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cpu_hash_256_xvproperty_prove_t_leafs_calc);
         RETURN_METRICS_NAME(cpu_hash_256_xvproperty_property_bin_calc);
         RETURN_METRICS_NAME(cpu_hash_256_xhashplugin_t_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_header_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_sign_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_build_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_build_deep_test_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_prepare_input_check_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_prepare_output_check_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_set_input_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_set_output_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_input_check_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_output_check_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_block_do_read_header_input_output_calc);
 
         //bft
         RETURN_METRICS_NAME(bft_verify_vote_msg_fail);

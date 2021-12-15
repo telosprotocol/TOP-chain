@@ -431,6 +431,9 @@ namespace top
 
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed
+            mutable  int           m_sign_hash_flag{0};
+            mutable std::string    m_sign_hash;        //hash of qcert to sign
+            std::string            m_cert_hash;    //hash of cert 
         private:
             uint64_t            m_nonce;            //each block has random nonce
             uint64_t            m_clock;            //the effective time of this cert from clock cert, note: m_clock is round of global-clock and be 10-seconds since 2019-11-08 05:00:00 UTC(2019-11-08 13:00:00 UTC+8)
