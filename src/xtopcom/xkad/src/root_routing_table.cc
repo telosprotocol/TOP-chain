@@ -427,7 +427,7 @@ void RootRoutingTable::SetFindNeighbourIntervalKeepOrMid() {
 }
 
 void RootRoutingTable::FindNeighbours() {
-    if (destroy_) {
+    if (destroy_ || !joined_) {
         return;
     }
 
@@ -546,10 +546,6 @@ int RootRoutingTable::AddNode(NodeInfoPtr node) {
         no_lock_for_use_nodes_ = std::make_shared<std::vector<NodeInfoPtr>>(nodes());
     }
 
-    std::unique_lock<std::mutex> lock(joined_mutex_);
-    if (!joined_) {
-        joined_ = true;
-    }
     return kKadSuccess;
 }
 
@@ -1449,11 +1445,16 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
                  packet.get_from_ip_port());
         }
 
-        if (!joined_) {
-            if (!SetJoin(message.src_node_id(), handshake.public_ip(), handshake.public_port())) {
-                xinfo("ignore BootstrapJoinResponse because this node already joined");
-            }
-        }
+        // if (!joined_) {
+        //     if (!SetJoin(message.src_node_id(), handshake.public_ip(), handshake.public_port())) {
+        //         xinfo("ignore BootstrapJoinResponse because this node already joined");
+        //     }
+        // }
+        return;
+    }
+
+    if (!joined_) {
+        TOP_WARN("forbidden kHandshakeRequest when offline or self not join network yet");
         return;
     }
 
