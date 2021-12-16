@@ -11,6 +11,8 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xvm_service.h"
 
+#include <chrono>
+
 NS_BEG2(top, application)
 
 #define CHECK_EC_RETURN(ec)                                                                                                                                                        \
@@ -210,13 +212,60 @@ void xtop_genesis_manager::create_genesis_of_common_account(base::xvaccount_t co
     xinfo("[xtop_genesis_manager::create_genesis_of_common_account] account: %s, create empty genesis block success", account.get_account().c_str());
 }
 
+void start_blockstore_test_thread(std::string const & account, observer_ptr<base::xvblockstore_t> blockstore) {
+    auto blockstore_test_thread = [](std::string const & account, observer_ptr<base::xvblockstore_t> blockstore) {
+        printf("blockstore_test_thread for %s waiting...\n", account.c_str());
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        printf("blockstore_test_thread for %s start\n", account.c_str());
+        auto vblock = blockstore->load_block_object(account, 0, 0, false);
+        if (vblock == nullptr) {
+            printf("load %s height 0 block null!\n", account.c_str());
+        } else {
+            printf("load %s height 0 block not null!\n", account.c_str());
+        }
+    };
+
+    std::thread th(blockstore_test_thread, account, blockstore);
+    th.join();
+}
+
 void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
     // step0: load accounts
     load_accounts();
     // step1: root account
     create_genesis_of_root_account(base::xvaccount_t{m_root_account.value()}, ec);
     CHECK_EC_RETURN(ec);
+
+    // printf("test before root init...\n");
+    // start_blockstore_test_thread(sys_contract_rec_registration_addr, m_blockstore);
+    // printf("genesis_main_thread wating...\n");
+    // std::this_thread::sleep_for(std::chrono::seconds(15));
+    // // start_blockstore_test_thread(test_account, m_blockstore);
+    // // printf("genesis_main_thread wating...\n");
+    // // std::this_thread::sleep_for(std::chrono::seconds(30));
+    // start_blockstore_test_thread("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", m_blockstore);
+    // printf("genesis_main_thread wating...\n");
+    // std::this_thread::sleep_for(std::chrono::seconds(15));
+    // start_blockstore_test_thread("T00000LhyqGeUzUCAqfDbhTGcu5ToaReQy4BQNos", m_blockstore);
+    // printf("genesis_main_thread wating...\n");
+    // std::this_thread::sleep_for(std::chrono::seconds(15));
+
     m_root_finish = true;
+
+    // printf("test after root init...\n");
+    // start_blockstore_test_thread(sys_contract_rec_registration_addr, m_blockstore);
+    // printf("genesis_main_thread wating...\n");
+    // std::this_thread::sleep_for(std::chrono::seconds(15));
+    // // start_blockstore_test_thread(test_account, m_blockstore);
+    // // printf("genesis_main_thread wating...\n");
+    // // std::this_thread::sleep_for(std::chrono::seconds(30));
+    // start_blockstore_test_thread("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", m_blockstore);
+    // printf("genesis_main_thread wating...\n");
+    // std::this_thread::sleep_for(std::chrono::seconds(15));
+    // start_blockstore_test_thread("T00000LhyqGeUzUCAqfDbhTGcu5ToaReQy4BQNos", m_blockstore);
+    // printf("genesis_main_thread wating...\n");
+    // std::this_thread::sleep_for(std::chrono::seconds(15));
+
     // step2: system contract accounts(reset)
     for (auto const & account : m_contract_accounts) {
         create_genesis_of_contract_account(base::xvaccount_t{account.value()}, ec);
