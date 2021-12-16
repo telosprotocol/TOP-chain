@@ -56,9 +56,12 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     std::vector<vnetwork::xvnode_address_t> archive_list;
     
     if (bme->is_consensus) {
-        archive_list = m_role_xips_mgr->get_rand_archives(1);
-    } else {
         archive_list = m_role_xips_mgr->get_rand_full_nodes(1);
+        if (archive_list.empty()) {
+            archive_list =  m_role_xips_mgr->get_rand_archives(1);
+        }
+    } else {
+        archive_list = m_role_xips_mgr->get_rand_archives(1);
     }
     
     if (archive_list.size() == 0) {
