@@ -175,7 +175,7 @@ std::string xtop_consensus_action<ActionTypeV>::source_action_name() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return tx->get_transaction()->get_source_action().get_action_name();
+    return tx->get_transaction()->get_source_action_name();
 }
 
 template <xtop_action_type_t ActionTypeV>
@@ -183,7 +183,7 @@ std::string xtop_consensus_action<ActionTypeV>::target_action_name() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return tx->get_transaction()->get_target_action().get_action_name();
+    return tx->get_transaction()->get_target_action_name();
 }
 
 template <xtop_action_type_t ActionTypeV>
@@ -192,8 +192,7 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::source_action_data() const {
     assert(tx != nullptr);
 
     auto const & transaction = tx->get_transaction();
-    auto const & src_action = transaction->get_source_action();
-    auto const & action_param = src_action.get_action_param();
+    auto const & action_param = transaction->get_source_action_para();
     xdbg("action param size %zu", action_param.size());
 
     return {std::begin(action_param), std::end(action_param)};
@@ -205,8 +204,7 @@ xbyte_buffer_t xtop_consensus_action<ActionTypeV>::target_action_data() const {
     assert(tx != nullptr);
 
     auto const & transaction = tx->get_transaction();
-    auto const & dst_action = transaction->get_target_action();
-    auto const & action_param = dst_action.get_action_param();
+    auto const & action_param = transaction->get_target_action_para();
 
     return { std::begin(action_param), std::end(action_param) };
 }
@@ -238,7 +236,7 @@ data::enum_xaction_type xtop_consensus_action<ActionTypeV>::source_action_type()
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return tx->get_transaction()->get_source_action().get_action_type();
+    return tx->get_transaction()->get_source_action_type();
 }
 
 template <xtop_action_type_t ActionTypeV>
@@ -246,7 +244,7 @@ data::enum_xaction_type xtop_consensus_action<ActionTypeV>::target_action_type()
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return tx->get_transaction()->get_target_action().get_action_type();
+    return tx->get_transaction()->get_target_action_type();
 }
 
 template <xtop_action_type_t ActionTypeV>

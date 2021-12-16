@@ -41,16 +41,6 @@ void xtransaction_exec_state_t::set_receipt_data(xreceipt_data_t data) {
     }
 }
 
-xreceipt_data_t  xtransaction_exec_state_t::get_receipt_data() const {
-    auto const& res = get_value(XTX_RECEIPT_DATA);
-    if (res.empty()) return xreceipt_data_t{};
-
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)res.data(), (int32_t)res.size());
-    xreceipt_data_t data;
-    data.serialize_from(stream);
-    return data;
-}
-
 enum_xunit_tx_exec_status xtransaction_exec_state_t::get_tx_exec_status() const {
     enum_xunit_tx_exec_status status = static_cast<enum_xunit_tx_exec_status>(get_value_uint32(XTX_STATE_TX_EXEC_STATUS));
     return status;

@@ -171,7 +171,8 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_fire_timestamp(uint64_t timestamp) = 0;
     virtual uint64_t get_fire_timestamp() const = 0;
     inline  uint64_t get_delay_from_fire_timestamp(uint64_t now_s) const {return now_s > get_fire_timestamp() ? now_s - get_fire_timestamp() : 0;}
-    virtual void set_amount(uint64_t amount) {}
+    virtual void set_amount(uint64_t amount) = 0;
+    virtual uint64_t get_amount() const noexcept = 0;
     virtual void set_premium_price(uint32_t premium_price) = 0;
     virtual uint32_t get_premium_price() const = 0;
     virtual void set_last_nonce(uint64_t last_nonce) = 0;

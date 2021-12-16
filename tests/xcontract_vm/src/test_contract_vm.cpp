@@ -52,10 +52,7 @@ TEST_F(test_contract_vm, test_send_tx) {
     param_stream << std::string{"test_send_tx_str"};
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_set_string_property", param);
-    xaction_t src_action;
-    src_action.set_account_addr(user_address);
-    src_action.set_action_name("send_only_api");
-    tx->set_source_action(src_action);
+    tx->set_source_action_name("send_only_api");
     tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
@@ -750,14 +747,14 @@ TEST_F(test_contract_vm, test_async_call) {
     EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
     EXPECT_EQ(result.success_tx_assemble[0]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
     EXPECT_EQ(result.success_tx_assemble[1]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action().get_action_name(), std::string{"test_set_string_property"});
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action_name(), std::string{"test_set_string_property"});
     std::string str;
     {
         base::xstream_t param_stream(base::xcontext_t::instance());
         param_stream << property_string;
         str = std::string{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
     }
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action().get_action_param(), str);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action_para(), str);
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_source_addr(), sys_contract_rec_standby_pool_addr);
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_addr(), sys_contract_rec_registration_addr);
     // tx 0 is recev tx
@@ -908,12 +905,7 @@ TEST_F(test_contract_vm, test_followup_transfer) {
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_source_addr(), std::string{sys_contract_rec_standby_pool_addr});
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_addr(), user_address);
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_tx_type(), enum_xtransaction_type::xtransaction_type_transfer);
-    auto action_param = result.success_tx_assemble[1]->get_transaction()->get_target_action().get_action_param();
-    base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t*)action_param.data(), (uint32_t)action_param.size());
-    data::xproperty_asset asset{0};
-    stream >> asset.m_token_name;
-    stream >> asset.m_amount;
-    EXPECT_EQ(asset.m_amount, 100000000);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_amount(), 100000000);
 }
 
 #if defined(XENABLE_MOCK_ZEC_STAKE)
@@ -1015,7 +1007,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     EXPECT_EQ(result.success_tx_assemble[1]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
     EXPECT_EQ(result.success_tx_assemble[1]->get_source_addr(), sys_contract_rec_standby_pool_addr);
     EXPECT_EQ(result.success_tx_assemble[1]->get_target_addr(), sys_contract_rec_registration_addr);
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action().get_action_name(), std::string{"registerNode"});
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action_name(), std::string{"registerNode"});
     std::string str;
     {
         top::base::xstream_t param_stream(base::xcontext_t::instance());
@@ -1028,7 +1020,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
         param_stream << common::xtop_node_id{user_address};
         str = std::string{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
     }
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action().get_action_param(), str);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action_para(), str);
     // tx 0 is recev tx
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_last_nonce(), last_nonce);
 

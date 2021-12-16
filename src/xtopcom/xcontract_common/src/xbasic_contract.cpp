@@ -150,8 +150,8 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     assert(type != xfollowup_transaction_schedule_type_t::invalid);
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
 
-    tx->get_source_action().set_action_name(source_method_name);
-    tx->get_source_action().set_action_param(source_method_params);
+    tx->set_source_action_name(source_method_name);
+    tx->set_source_action_para(source_method_params);
     tx->make_tx_run_contract(data::xproperty_asset{0}, target_method_name, target_method_params);
     tx->set_different_source_target_address(address().value(), target_addr.value());
     data::xcons_transaction_ptr_t cons_tx;
@@ -242,8 +242,8 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     // only target action
     data::xcons_transaction_ptr_t cons_tx;
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
-    tx->get_source_action().set_action_name(source_method_name);
-    tx->get_source_action().set_action_param(source_method_params);
+    tx->set_source_action_name(source_method_name);
+    tx->set_source_action_para(source_method_params);
     tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
     tx->set_different_source_target_address(address().value(), target_addr.value());
     cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
