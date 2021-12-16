@@ -103,11 +103,11 @@ namespace top
             bool              turn_off_recycler(enum_vdata_recycle_type target);
             
         public:
-            xblockrecycler_t* get_block_recycler();
+            xblockrecycler_t* get_block_recycler(bool break_through = false);
             bool              set_block_recycler(xblockrecycler_t& new_recycler);
             
         protected:
-            xvdrecycle_t*     get_recycler(enum_vdata_recycle_type target);
+            xvdrecycle_t*     get_recycler(enum_vdata_recycle_type target, bool break_through = false);
             bool              set_recycler(xvdrecycle_t& new_recycler);
             
         private: //only allow xvchain_t mangage reference

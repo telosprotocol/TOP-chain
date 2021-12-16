@@ -196,18 +196,17 @@ void xtop_vnode::driver_removed() {
 bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type, base::xvdbstore_t* xvdb_ptr)
 {
     xinfo("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
+    
+    top::store::install_block_recycler(xvdb_ptr);
+    
     if(base::xvchain_t::instance().is_auto_prune_enable() == false)
         return false;//not allow change anymore
     
     if (common::has<common::xnode_type_t::frozen>(node_type)) {
         return false;
     }
-    if (!common::has<common::xnode_type_t::storage>(node_type)) {
-        if (top::store::install_block_recycler(xvdb_ptr))
-            xinfo("install_block_recycler ok.");
-        else
-            xerror("install_block_recycler fail.");
-        
+
+    if (!common::has<common::xnode_type_t::storage>(node_type)) {        
         if (top::store::enable_block_recycler(true))
             xinfo("enable_block_recycler ok.");
         else

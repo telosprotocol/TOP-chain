@@ -83,7 +83,7 @@ namespace top
         {
             xkinfo("install_block_recycler start");
             
-            if(base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler() != NULL)
+            if(base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler(true) != NULL)
                 return true; //has been installed
             
             if(NULL == xvdb_ptr)
@@ -113,7 +113,7 @@ namespace top
         }
 
         bool  watch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) {
-            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler();
+            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler(true);
             if(recycler == NULL) {
                 return false; //has been installed
             }
@@ -122,7 +122,7 @@ namespace top
         }
 
         bool  unwatch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) {
-            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler();
+            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler(true);
             if(recycler == NULL) {
                 return false; //has been installed
             }
