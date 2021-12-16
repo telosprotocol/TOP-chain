@@ -41,24 +41,17 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
         common::xnode_type_t node_type = self_addr.type();
         std::map<enum_chain_sync_policy, std::vector<vnetwork::xvnode_address_t>> archives;
 
-        enum_chain_sync_policy sync_policy = enum_chain_sync_policy_fast;
-        std::vector<vnetwork::xvnode_address_t> archive_list;
-
-        if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
-            common::has<common::xnode_type_t::consensus_validator>(node_type)) {
-            std::vector<vnetwork::xvnode_address_t> nodes;
-            auto inserted = m_role_xips_mgr->get_rand_full_nodes(1);
-            nodes.insert(nodes.end(), inserted.begin(), inserted.end());
-            inserted = m_role_xips_mgr->get_edge_archive_list();
-            nodes.insert(nodes.end(), inserted.begin(), inserted.end());
-            archives[enum_chain_sync_policy_fast] = nodes;
-        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
+        if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
             archives[enum_chain_sync_policy_full] = m_role_xips_mgr->get_edge_archive_list();
         } else {
             continue;
         }
 
         for (auto archive : archives) {
+            if (archive.second.empty()) {
+                continue;
+            }
+            
             std::vector<xchain_state_info_t> info_list;
             const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
             for (const auto &it: chains) {
