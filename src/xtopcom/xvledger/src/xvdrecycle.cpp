@@ -98,9 +98,9 @@ namespace top
             return true;
         }
     
-        xblockrecycler_t* xvdrecycle_mgr::get_block_recycler()
+        xblockrecycler_t* xvdrecycle_mgr::get_block_recycler(bool break_through)
         {
-            return (xblockrecycler_t*)get_recycler(enum_vdata_recycle_type_block);
+            return (xblockrecycler_t*)get_recycler(enum_vdata_recycle_type_block, break_through);
         }
     
         bool  xvdrecycle_mgr::set_block_recycler(xblockrecycler_t& new_recycler)
@@ -109,14 +109,16 @@ namespace top
             return set_recycler(new_recycler);
         }
     
-        xvdrecycle_t*   xvdrecycle_mgr::get_recycler(enum_vdata_recycle_type target)
+        xvdrecycle_t*   xvdrecycle_mgr::get_recycler(enum_vdata_recycle_type target, bool break_through)
         {
-            if(m_recycler_switch[target] <= 0) //not turn on
-                return NULL;
-            
-            if(xvchain_t::instance().is_auto_prune_enable() == false)
-                return NULL;//global switch is off
-            
+            if (!break_through) {
+                if(m_recycler_switch[target] <= 0) //not turn on
+                    return NULL;
+                
+                if(xvchain_t::instance().is_auto_prune_enable() == false)
+                    return NULL;//global switch is off
+            }
+                        
             return m_recyclers_obj[target];
         }
     

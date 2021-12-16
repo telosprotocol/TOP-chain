@@ -5,6 +5,7 @@
 #include "xsync/xsync_peer_keeper.h"
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
+#include "xsync/xsync_prune.h"
 
 NS_BEG2(top, sync)
 
@@ -138,6 +139,26 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
 
         const std::string &address = it.first;
         const xchain_info_t &chain_info = it.second;
+        if (common::has<common::xnode_type_t::fullnode>(self_addr.type())) {
+            uint64_t min_height = 0;
+            bool updated = false;
+            uint64_t height = m_sync_store->get_latest_block_with_state(address);
+            updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height, min_height);
+            // height = m_sync_store->get_latest_genesis_connected_block_height(address);
+            // updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::genesis_height, height, min_height);
+            height = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
+            updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::immutable_checkpoint_height, height, min_height);
+            height = m_sync_store->get_latest_mutable_connected_checkpoint_height(address);
+            updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height, min_height);
+            if (updated) {
+                base::xvaccount_t _vaddr(address);
+                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
+                xsync_info("xsync_peer_keeper walk_role,refresh prune height account %s, height %llu", address.c_str(), min_height);
+            }
+
+            xsync_dbg("xsync_peer_keeper walk_role,maybe refresh prune height account %s, height %llu", address.c_str(), min_height);
+        }
+
         xchain_state_info_t info;
         info.address = address;
         if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
