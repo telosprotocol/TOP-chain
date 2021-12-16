@@ -1034,6 +1034,17 @@ namespace top
             if(exist_cert) //found duplicated ones
             {
                 if (!exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) {
+                    // check if pre block is committed, update it if not.
+                    if (new_raw_block->get_height() > 1) {
+                        base::xauto_ptr<base::xvbindex_t> pre_idx(load_index(new_raw_block->get_height() - 1, new_raw_block->get_last_block_hash()));
+                        if (pre_idx != nullptr && !pre_idx->check_block_flag(base::enum_xvblock_flag_committed)) {
+                            pre_idx->set_block_flag(base::enum_xvblock_flag_locked);
+                            pre_idx->set_block_flag(base::enum_xvblock_flag_committed);
+                            update_bindex(pre_idx.get());
+                            xinfo("xblockacct_t::store_committed_unit_block update pre index,store_block,done for pre_idx(%s),dump:%s", pre_idx->dump().c_str(), dump().c_str());
+                        }
+                    }
+
                     exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
                     exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
                     update_bindex(exist_cert.get());
