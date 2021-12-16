@@ -2,7 +2,6 @@
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
 #include "xmetrics/xmetrics.h"
-
 NS_BEG2(top, sync)
 
 xsync_behind_checker_t::xsync_behind_checker_t(std::string vnode_id, xsync_store_face_t *sync_store, xrole_chains_mgr_t *role_chains_mgr, xsync_peerset_t *peerset, xdownloader_face_t *downloader):
