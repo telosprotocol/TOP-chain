@@ -48,7 +48,6 @@ class xlightunit_action_t : public base::xvaction_t {
     uint32_t                    get_recv_tx_use_send_tx_tgas()const;
     enum_xunit_tx_exec_status   get_tx_exec_status() const;
     uint64_t                    get_receipt_id() const;
-    xreceipt_data_t             get_receipt_data() const;
     base::xtable_shortid_t      get_receipt_id_self_tableid()const;
     base::xtable_shortid_t      get_receipt_id_peer_tableid()const;
     uint64_t                    get_sender_confirmed_receipt_id() const;

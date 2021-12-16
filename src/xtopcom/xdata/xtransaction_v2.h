@@ -119,7 +119,8 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual uint16_t get_expire_duration() const override {return m_expire_duration;};
     virtual void set_fire_timestamp(uint64_t timestamp) override {m_fire_timestamp = timestamp;};
     virtual uint64_t get_fire_timestamp() const override {return m_fire_timestamp;};
-    virtual void set_amount(uint64_t amount) override{ m_amount = amount; } 
+    virtual void set_amount(uint64_t amount) override{ m_amount = amount; }
+    virtual uint64_t get_amount() const noexcept override { return m_amount; }
     virtual void set_premium_price(uint32_t premium_price) override {m_premium_price = premium_price;};
     virtual uint32_t get_premium_price() const override {return m_premium_price;};
     virtual void set_last_nonce(uint64_t last_nonce) override {m_last_trans_nonce = last_nonce;};
