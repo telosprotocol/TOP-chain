@@ -25,6 +25,7 @@
 #include "xdata/xblock.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"
+#include "xsync/xsync_prune.h"
 
 NS_BEG2(top, sync)
 
@@ -802,6 +803,12 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
+            if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) || common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
+                xsync_prune_sigleton_t::instance().add(it.second.address);
+                base::xvaccount_t _vaddr(it.second.address);
+                store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
+                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
+            }
             xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_add_role_t>(it.second.address);
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
@@ -844,6 +851,13 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
             xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_remove_role_t>(it.second.address);
+            if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) || common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
+                if (!m_role_chains_mgr->exists(it.second.address)) {
+                    base::xvaccount_t _vaddr(it.second.address);
+                    store::unwatch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
+                }
+            }
+
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
         }
@@ -1013,9 +1027,7 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
 
     auto ptr = make_object_ptr<xchain_state_info_t>();
     ptr->serialize_from(stream);
-
-    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
-    xsync_dbg("recv_archive_height: %s, %llu, %llu", ptr->address.c_str(), ptr->end_height, latest_end_block_height);
+    
     base::xvaccount_t _vaddr(ptr->address);
     if (ptr->end_height % 50 == 0) {
         if (!store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, ptr->end_height)) {
@@ -1024,7 +1036,9 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
             xsync_info("refresh_block_recycler_rule succ: %s,%d", ptr->address.c_str(), ptr->end_height);
         }
     }
-    
+
+    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
+    xsync_dbg("recv_archive_height: %s, %llu, %llu", ptr->address.c_str(), ptr->end_height, latest_end_block_height);
     if (latest_end_block_height < ptr->end_height + 50)  // not send blocks within 50 blocks
         return;
 
