@@ -701,7 +701,7 @@ namespace top
                 }
             }
 
-            if(false == did_stored)
+            if(did_stored)
             {
                 //move clean logic here to reduce risk of reenter process that might clean up some index too early
                 if(container_block->get_block_level() == base::enum_xvblock_level_table)

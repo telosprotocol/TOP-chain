@@ -175,6 +175,10 @@ namespace top
         {
             if((int)m_all_blocks.size() > keep_blocks_count)
             {
+                if ((int)m_all_blocks.size() > keep_blocks_count * 2) {
+                    xerror("xblockacct_t::clean_blocks account:%s cache size:%u is more than 2 times of upper limmit:%u", get_account().c_str(), m_all_blocks.size(), keep_blocks_count);
+                }
+
                 for(auto height_it = m_all_blocks.begin(); height_it != m_all_blocks.end();)//search from lowest hight to higher
                 {
                     if((int)m_all_blocks.size() <= keep_blocks_count)//clean enough
@@ -191,7 +195,7 @@ namespace top
                     }
 
                     if(   (old_height_it->first != m_meta->_highest_full_block_height)    //keep latest_full_block
-                       && (old_height_it->first <  m_meta->_highest_commit_block_height)  //keep latest_committed block
+                       && (old_height_it->first != m_meta->_highest_commit_block_height)  //keep latest_committed block
                        && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
                        && (old_height_it->first != m_meta->_highest_cert_block_height)    //keep latest_cert block
                        && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block

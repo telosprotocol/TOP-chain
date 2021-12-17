@@ -2,11 +2,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xverifier/xtx_verifier.h"
+
+#include "xbase/xutl.h"
+#include "xbasic/xmodule_type.h"
+#include "xchain_fork/xchain_upgrade_center.h"
+#include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
+#include "xstake/xstake_algorithm.h"
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
-#include "xbasic/xmodule_type.h"
-#include "xdata/xgenesis_data.h"
-#include "xstake/xstake_algorithm.h"
+#include "xverifier/xblacklist_verifier.h"
+#include "xvledger/xvblock.h"
 
 #include <cinttypes>
 
@@ -87,7 +93,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
         && (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_user_sub_account)
         && (dst_addr_type != base::enum_vaccount_addr_type_native_contract)
         && (dst_addr_type != base::enum_vaccount_addr_type_custom_contract)
-        && (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account)        
+        && (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         && (dst_addr_type != base::enum_vaccount_addr_type_black_hole) ) {
         xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid, tx:%s", trx->dump().c_str());
         return  xverifier_error::xverifier_error_addr_invalid;
@@ -271,7 +277,7 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
     if (!trx_ptr->transaction_len_check()) {
         xwarn("[global_trace][xtx_verifier][verify_send_tx_validation][fail], tx:%s,len check invalid", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_param_invalid;
-    }    
+    }
     int32_t ret = verify_address_type(trx_ptr);
     if (ret) {
         return ret;
@@ -309,6 +315,19 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
     if (ret) {
         return ret;
     }
+
+    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
+        xdbg("[xtx_verifier::verify_send_tx_legitimacy] in blacklist fork point time, clock height: %" PRIu64, logic_clock);
+        if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+            xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
+            return xverifier_error::xverifier_error_tx_blacklist_invalid;
+        }
+    } else {
+        xdbg("[xtx_verifier::verify_send_tx_legitimacy] not up to blacklist fork point time, clock height: %" PRIu64, logic_clock);
+    }
+
     if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
         return xverifier_error::xverifier_error_tx_whitelist_invalid;
     }
@@ -317,7 +336,7 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
 
 int32_t xtx_verifier::verify_shard_contract_addr(data::xtransaction_t const * trx_ptr) {
     const auto & source_addr = trx_ptr->get_source_addr();
-    const auto & origin_target_addr = trx_ptr->get_origin_target_addr();    
+    const auto & origin_target_addr = trx_ptr->get_origin_target_addr();
     // user call sys sharding contract, always auto set target addresss
     if (is_sys_sharding_contract_address(common::xaccount_address_t{origin_target_addr})) {
         if (is_account_address(common::xaccount_address_t{source_addr})) {

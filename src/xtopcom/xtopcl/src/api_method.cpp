@@ -84,7 +84,7 @@ string ApiMethod::get_account_from_daemon() {
 int ApiMethod::get_eth_file(std::string& account) {
     if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
-    std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);    
+    std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
     for (int i = 0; i < (int)files.size(); i++)
     {
         std::string file = files[i];
@@ -521,7 +521,7 @@ void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str)
     std::string path = create_new_keystore(cache_pw, dir, pri_str);
     if (path.empty())
         return;
-    
+
     out_str << "Import successfully.\n" << std::endl;
     out_str << "Account Address: " << g_userinfo.account << std::endl;
     out_str << "Public-Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
@@ -3472,9 +3472,9 @@ int ApiMethod::submitProposal(const ParamList & param_list, std::ostringstream &
         out_str << "\nUSAGE:\n    system submitProposal  proposal_type target value proposal_deposit effective_timer_height\n";
         out_str << "\nParams:\n";
         out_str << std::setw(INDENT_WIDTH) << std::setfill(' ') << ' ' << std::left << std::setw(HELP_WIDTH - INDENT_WIDTH) << std::setfill(' ')
-                << "proposal_type  UINT8  REQUIRED  Proposal Type：1--on-chain governance parameter modification proposal；2--community fund management proposal.\n";
+                << "proposal_type  UINT8  REQUIRED  Proposal Type：1/3/4/5/6--on-chain governance parameter modification proposal；2--community fund management proposal.\n";
         out_str << std::setw(INDENT_WIDTH) << std::setfill(' ') << ' ' << std::left << std::setw(HELP_WIDTH - INDENT_WIDTH) << std::setfill(' ')
-                << "target  STRING  REQUIRED  When proposal_type is \"1\": target is on-chain governance parameter. When proposal_type is \"2\": target is burn account address "
+                << "target  STRING  REQUIRED  When proposal_type is \"1/3/4/5/6\": target is on-chain governance parameter. When proposal_type is \"2\": target is burn account address "
                    "\"T-!-Ebj8hBvoLdvcEEUwNZ423zM3Kh9d4nL1Ug\".\n";
         out_str << std::setw(INDENT_WIDTH) << std::setfill(' ') << ' ' << std::left << std::setw(HELP_WIDTH - INDENT_WIDTH) << std::setfill(' ')
                 << "value  STRING  REQUIRED   When target is on-chain governance parameter, value=new parameter value. When target is burn account address, value=transfered "
@@ -3979,8 +3979,8 @@ void ApiMethod::block_prune(std::string & prune_enable, std::ostringstream & out
     os << new_sw.write(key_info_js);
     os.close();
     if (prune_enable == "off")
-        out_str << "Set auto prune data Off successfully." << std::endl;    
+        out_str << "Set auto prune data Off successfully." << std::endl;
     else if (prune_enable == "on")
-        out_str << "Set auto prune data On successfully." << std::endl;    
+        out_str << "Set auto prune data On successfully." << std::endl;
 }
 }  // namespace xChainSDK

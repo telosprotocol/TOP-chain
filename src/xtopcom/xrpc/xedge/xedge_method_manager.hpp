@@ -4,6 +4,11 @@
 
 #pragma once
 #include "xbase/xcontext.h"
+#include "xbase/xutl.h"
+#include "xchain_fork/xchain_upgrade_center.h"
+#include "xdata/xcons_transaction.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xtransaction_cache.h"
 #include "xdata/xtx_factory.h"
 #include "xedge_local_method.hpp"
 #include "xedge_rpc_handler.h"
@@ -15,11 +20,11 @@
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
 #include "xstore/xstore_face.h"
-#include "xverifier/xwhitelist_verifier.h"
-#include "xvnetwork/xvhost_face.h"
-#include "xdata/xcons_transaction.h"
 #include "xtxstore/xtransaction_prepare.h"
-#include "xdata/xtransaction_cache.h"
+#include "xverifier/xwhitelist_verifier.h"
+#include "xverifier/xblacklist_verifier.h"
+#include "xvledger/xvblock.h"
+#include "xvnetwork/xvhost_face.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
@@ -66,6 +71,7 @@ protected:
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
     std::shared_ptr<xcluster_query_manager> m_cluster_query_mgr;
+    observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
@@ -129,6 +135,7 @@ xedge_method_base<T>::xedge_method_base(shared_ptr<xrpc_edge_vhost> edge_vhost,
                                         observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
   , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, txstore, nullptr))
+  , m_store(store)
   , m_txstore{txstore}
   , m_archive_flag(archive_flag)
 {
@@ -186,6 +193,22 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         }
     }
     tx->set_len();
+
+    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
+        xdbg_rpc("[sendTransaction_method] in blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
+
+        // filter out black list transaction
+        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
+            xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
+            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
+            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
+        }
+    } else {
+        xdbg_rpc("[sendTransaction_method] not up to blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
+    }
+
     if (m_archive_flag) {
         xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
         txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
@@ -226,6 +249,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
             m_txstore->tx_cache_add(hash, tx);
         }
     }
+
     std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
     xinfo_rpc("send tx hash:%s", tx_hash.c_str());
     XMETRICS_PACKET_INFO("rpc_tx_ip",
@@ -287,7 +311,7 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_lack, "msg list is empty"};
         }
         if (nullptr != json_proc.m_tx_ptr) {
-            uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();            
+            uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
             if (now < json_proc.m_tx_ptr->get_fire_timestamp()) {
                 XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
             }
