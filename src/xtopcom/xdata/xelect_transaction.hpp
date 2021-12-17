@@ -65,6 +65,9 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);                       // auditor credit score 0.03
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(backward_node_lock_duration_increment);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
+#endif
 
         // stake:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_stake);
