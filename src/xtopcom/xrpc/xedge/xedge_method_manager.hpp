@@ -218,8 +218,8 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
             //std::string err = std::string("transaction txpool check error (") + std::to_string(ret) + ")";
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, tx_prepare.get_err_msg(ret)};
         }
-        std::string old_target_addr = tx->get_target_address();
-        if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_target_addr()})) {
+        std::string old_target_addr = tx->get_origin_target_addr();
+        if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_origin_target_addr()})) {
             auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
             tx->adjust_target_address(tableid.get_subaddr());
         }

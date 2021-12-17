@@ -68,9 +68,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 #else
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
-}
-
-void xtop_application::start() {
+    // genesis blocks should init imediately after db created
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
         exit(0);
@@ -87,6 +85,9 @@ void xtop_application::start() {
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
+}
+
+void xtop_application::start() {
     chain_data::xchain_data_processor_t::release();
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
@@ -431,7 +432,7 @@ bool xtop_application::is_beacon_account() const noexcept {
         top::common::xnode_id_t node_id = top::common::xnode_id_t{ user_params.account };
 
         std::string result;
-        auto latest_vblock = data::xblocktool_t::get_latest_connectted_light_block(m_blockstore.get(), xvaccount_t{sys_contract_rec_elect_rec_addr});
+        auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore.get(), xvaccount_t{sys_contract_rec_elect_rec_addr});
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
         if (bstate == nullptr) {
             xerror("xtop_application::is_beacon_account fail-get state.");

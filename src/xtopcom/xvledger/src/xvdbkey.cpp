@@ -116,10 +116,10 @@ namespace top
             return key_path;
         }
         
-        const std::string  xvdbkey_t::create_account_span_key(const xvaccount_t & account)
+        const std::string  xvdbkey_t::create_account_span_genesis_height_key(const xvaccount_t & account)
         {
             //enum_xvdb_cf_type_update_most = 'u'
-            const std::string key_path = "u/" + account.get_storage_key() + "/a";
+            const std::string key_path = "u/" + account.get_storage_key() + "/g";
             return key_path;
         }
     
@@ -222,7 +222,6 @@ namespace top
             return key_path;
         }
         
-        /*
         enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
         {
             enum_xdbkey_type type = enum_xdbkey_type_unknow;
@@ -266,6 +265,10 @@ namespace top
                     case 's':
                         type = enum_xdbkey_type_state_object;
                         break;
+
+                    case 'p':
+                        type = enum_xdbkey_type_unit_proof;
+                        break;
                 }
             }
             else if(first_char == 's')//new version
@@ -285,6 +288,8 @@ namespace top
                     type = enum_xdbkey_type_account_meta;
                 else if(last_char == 'a')
                     type = enum_xdbkey_type_account_span;
+                else if(last_char == 'g')
+                    type = enum_xdbkey_type_account_span_height;
             }
             else if(first_char == 'f')//new version
             {
@@ -320,15 +325,20 @@ namespace top
             }
             else if(first_char == 'c')//old version
             {
-                type = enum_xdbkey_type_account_span;
+                std::vector<std::string> values;
+                base::xstring_utl::split_string(key, '/', values);
+                if (values.size() > 2) {
+                    type = enum_xdbkey_type_account_span;
+                } else {
+                    type = enum_xdbkey_type_account_span_height;
+                }
             }
             else if(first_char == '0')//old version
             {
-                type = enum_xdbkey_type_account_meta;
+                type = enum_xdbkey_type_account_meta;                
             }
             return type;
         }
-        */
 
         const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height)
         {

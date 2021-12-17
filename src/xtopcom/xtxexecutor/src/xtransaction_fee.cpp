@@ -76,6 +76,18 @@ int32_t xtransaction_fee_t::update_tgas_sender(uint64_t& used_deposit, bool is_c
     return ret;
 }
 
+int32_t xtransaction_fee_t::update_tgas_sender() {
+    uint64_t tgas_usage = get_tgas_usage(false);
+    uint64_t used_deposit = 0;
+    auto ret = m_account_ctx->update_tgas_sender(tgas_usage, m_trans->get_transaction()->get_deposit(), used_deposit);
+    uint64_t used_tgas = tgas_usage - used_deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+    m_trans->set_current_used_tgas(used_tgas);
+    if (ret != 0) {
+        m_account_ctx->incr_used_tgas(used_tgas);
+    }
+    return ret;
+}
+
 bool xtransaction_fee_t::need_use_tgas_disk(const std::string &source_addr, const std::string &target_addr, const std::string &func_name){
     xdbg("need_use_tgas_disk:%s, %s", target_addr.c_str(), func_name.c_str());
     return !is_sys_contract_address(common::xaccount_address_t{ source_addr });
@@ -174,10 +186,17 @@ uint64_t xtransaction_fee_t::cal_service_fee(const std::string& source, const st
 
 void xtransaction_fee_t::update_fee_recv() {
     m_trans->set_current_used_deposit(m_trans->get_last_action_used_deposit());
+    xdbg("xtransaction_fee_t::update_fee_recv used deposit:%u", m_trans->get_last_action_used_deposit());
 }
 
 int32_t xtransaction_fee_t::update_fee_recv_self() {
     int32_t ret = xsuccess;
+    // only v2 token burn tx meets the following requirments
+    if ((m_trans->get_tx_type() == xtransaction_type_transfer)
+     && (m_trans->get_transaction()->get_tx_version() == xtransaction_version_2)) {
+        xassert(m_trans->get_target_addr() == black_hole_addr);
+        return ret;
+    }
     if (m_trans->get_transaction()->get_deposit() > 0) {
         ret = m_account_ctx->other_balance_to_available_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(m_trans->get_transaction()->get_deposit()));
         if (xsuccess != ret) {

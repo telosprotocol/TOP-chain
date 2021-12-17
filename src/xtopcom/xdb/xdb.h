@@ -20,7 +20,8 @@ class xdb_error : public std::runtime_error {
 
 class xdb : public xdb_face_t {
  public:
-    explicit xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
+    //db_kinds refer to xdb_kind_t
+    explicit xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
     ~xdb() noexcept;
     bool open() override;
     bool close() override;
@@ -45,6 +46,7 @@ class xdb : public xdb_face_t {
     
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie) override;
+    bool get_estimate_num_keys(uint64_t & num) const override;
     
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs

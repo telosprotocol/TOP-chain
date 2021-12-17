@@ -12,7 +12,7 @@ NS_BEG2(top, db_export)
 class xdb_export_tools_t {
 public:
     enum enum_query_account_version { QUERY_ACCOUNT_V1 = 0, QUERY_ACCOUNT_V2 };
-    enum enum_query_account_type { query_account_table = 0, query_account_unit };
+    enum enum_query_account_type { query_account_table = 0, query_account_unit, query_account_system};
 
     xdb_export_tools_t(std::string const & db_path);
 
@@ -26,6 +26,9 @@ public:
     void query_block_exist(std::string const & address, const uint64_t height);
     // query block detailed info(use grpc interface)
     void query_block_info(std::string const & account, std::string const & param);
+    // query block and state basic info
+    void query_block_state_basic(std::vector<std::string> const & account_vec, std::string const & param);
+    void query_block_state_basic(std::string const & account, std::string const & param);
     // query block basic info
     void query_block_basic(std::string const & account, std::string const & param);
     void query_block_basic(std::vector<std::string> const & account_vec, std::string const & param);
@@ -36,14 +39,17 @@ public:
     void query_meta(std::string const & account);
     void query_meta(std::vector<std::string> const & account_vec);
     // query table state and its all units state
-    void query_table_unit_state(std::string const & table);
-    void query_table_unit_state(std::vector<std::string> const & table_vec);
+    void query_table_unit_info(std::string const & table);
+    void query_table_unit_info(std::vector<std::string> const & table_vec);
     // query contract property(use contract manager interface)
     void query_property(std::string const & account, std::string const & prop_name, std::string const & param);
     // query balance info
     void query_balance();
     // query archive db integrity and continuity
     void query_archive_db();
+    // set folder
+    void set_outfile_folder(std::string const & folder);
+    void compact_db();
 
 private:
     struct tx_ext_t {
@@ -95,6 +101,7 @@ private:
     void query_table_latest_fullblock(std::string const & account, json & j);
     void query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json);
     void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root);
+    void query_block_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_block_basic(std::string const & account, const uint64_t h, json & result);
     void query_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_meta(std::string const & account, json & result);
@@ -112,6 +119,9 @@ private:
     void set_confirmed_txinfo_to_json(json & j, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
     void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
 
+    void load_db_unit_accounts_info();
+    void generate_json_file(std::string const & filename, json const & j);
+
     std::unique_ptr<xbase_timer_driver_t> m_timer_driver;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
@@ -119,6 +129,9 @@ private:
     xobject_ptr_t<base::xvtxstore_t> m_txstore;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
+
+    std::map<std::string, std::map<std::string, base::xaccount_index_t>> m_db_units_info;
+    std::string m_outfile_folder;
 };
 
 NS_END2

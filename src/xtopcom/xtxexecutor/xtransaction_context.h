@@ -195,6 +195,8 @@ class xtransaction_transfer : public xtransaction_face_t{
     int32_t target_action_exec() override {
         return m_account_ctx->token_transfer_in(get_asset());
     }
+
+    int32_t source_confirm_fee_exec() override ;
 };
 
 class xtransaction_pledge_token : public xtransaction_face_t{

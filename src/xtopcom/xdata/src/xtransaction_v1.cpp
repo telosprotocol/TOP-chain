@@ -159,8 +159,6 @@ void xtransaction_v1_t::adjust_target_address(uint32_t table_id) {
         m_target_addr = make_address_by_prefix_and_subaddr(m_target_action.get_account_addr(), table_id).value();
         xdbg("xtransaction_v1_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
             get_digest_hex_str().c_str(), m_target_action.get_account_addr().c_str(), m_target_addr.c_str());        
-    } else {
-        xassert(false);
     }
 }
 
@@ -557,7 +555,6 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
         }
         tx_parse_data.m_function_name = target_action.m_function_name;
         tx_parse_data.m_function_para = target_action.m_para;
-        xdbg("wish v1 target_action_name:%s", tx_parse_data.m_function_name.c_str());
     }
 
     if (target_type == xaction_type_pledge_token) {

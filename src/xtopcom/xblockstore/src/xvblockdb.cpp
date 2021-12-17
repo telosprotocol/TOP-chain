@@ -283,22 +283,18 @@ namespace top
         {
             if(NULL == index_ptr)
                 return false;
-            
-            bool prunable_block = false;
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                prunable_block = true;
-    
+
             std::vector<std::string> deleted_key_list;
             //step#1: remove index first
             {
                 if(index_ptr->check_store_flag(base::enum_index_store_flag_main_entry))
                 {
-                    const std::string index_key = create_block_index_key(*index_ptr,index_ptr->get_height(),prunable_block);
+                    const std::string index_key = create_block_index_key(*index_ptr,index_ptr->get_height());
                     deleted_key_list.push_back(index_key);
                 }
                 else
                 {
-                    const std::string index_key = create_block_index_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid(),prunable_block);
+                    const std::string index_key = create_block_index_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
                     deleted_key_list.push_back(index_key);
                 }
             }
@@ -309,16 +305,16 @@ namespace top
             }
             //delete input
             {
-                const std::string block_input_key = create_block_input_key(index_ptr);
-                deleted_key_list.push_back(block_input_key);
+                // const std::string block_input_key = create_block_input_key(index_ptr);
+                // deleted_key_list.push_back(block_input_key);
                 
                 const std::string input_resource_key = create_block_input_resource_key(index_ptr);
                 deleted_key_list.push_back(input_resource_key);
             }
             //delete output
             {
-                const std::string block_output_key = create_block_output_key(index_ptr);
-                deleted_key_list.push_back(block_output_key);
+                // const std::string block_output_key = create_block_output_key(index_ptr);
+                // deleted_key_list.push_back(block_output_key);
                 
                 const std::string output_resource_key = create_block_output_resource_key(index_ptr);
                 deleted_key_list.push_back(output_resource_key);
@@ -348,21 +344,17 @@ namespace top
                 xerror("xvblockdb_t::write_index_to_db,fail to serialize_to,index'dump(%s)",index_obj->dump().c_str());
                 return false;
             }
-            
-            bool prunable_block = false;
-            if( (index_obj->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                prunable_block = true;
-            
+                       
             bool is_stored_db_successful = false;
             if(index_obj->check_store_flag(base::enum_index_store_flag_main_entry)) //main index for this height
             {
-                const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height(),prunable_block);
+                const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
                 xdbg("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
             }
             else
             {
-                const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height(),index_obj->get_viewid(),prunable_block);
+                const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height(),index_obj->get_viewid());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
                 xdbg("xvblockdb_t::write_index_to_db for other entry.index=%s",index_obj->dump().c_str());
             }
@@ -381,15 +373,15 @@ namespace top
         }
         
         //return map sorted by viewid from lower to high,caller respond to release ptr later
-        std::vector<base::xvbindex_t*>   xvblockdb_t::read_index_from_db(const base::xvaccount_t & account,const uint64_t target_height,bool prunable_block)
+        std::vector<base::xvbindex_t*>   xvblockdb_t::read_index_from_db(const base::xvaccount_t & account,const uint64_t target_height)
         {
             std::vector<base::xvbindex_t*> all_blocks_at_height;
             
-            const std::string main_entry_key = create_block_index_key(account,target_height,prunable_block);
+            const std::string main_entry_key = create_block_index_key(account,target_height);
             base::xvbindex_t* index_entry = read_index_from_db(main_entry_key);
             if(index_entry == NULL) //main entry
             {
-                xdbg("xvblockdb_t::read_index_from_db,dont find main entry for height(%" PRIu64 ")",target_height);
+                xwarn("xvblockdb_t::read_index_from_db,dont find main entry for account=%s,height(%" PRIu64 ")",account.get_address().c_str(), target_height);
                 return all_blocks_at_height;
             }
             //NOTE:rebind account address into xvbindex
@@ -401,51 +393,18 @@ namespace top
                 index_entry->set_store_flag(base::enum_index_store_flag_main_entry); //mark as main entry again
                 index_entry->set_modified_flag(); //force to write later
             }
-            if(prunable_block)//verification
-            {
-                if( (index_entry->get_block_characters() & base::enum_xvblock_character_pruneable) == 0)
-                {
-                    xassert(0);
-                    index_entry->set_block_character(base::enum_xvblock_character_pruneable);
-                }
-            }
-            else
-            {
-                if( (index_entry->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                {
-                    xassert(0);
-                    index_entry->remove_block_character(base::enum_xvblock_character_pruneable);
-                }
-            }
             
             all_blocks_at_height.push_back(index_entry);//transfer owner to vector
             xdbg("xvblockdb_t::read_index_from_db,read main index(%s)",index_entry->dump().c_str());
             
             while(index_entry->get_next_viewid_offset() != 0) //check whether has other view entry
             {
-                const std::string other_entry_key = create_block_index_key(account,target_height,index_entry->get_next_viewid(),prunable_block);
+                const std::string other_entry_key = create_block_index_key(account,target_height,index_entry->get_next_viewid());
                 index_entry = read_index_from_db(other_entry_key);
                 if(index_entry == NULL)
                     break;
                 //NOTE:rebind account address into xvbindex
                 index_entry->reset_account_addr(account);
-                
-                if(prunable_block)//verification
-                {
-                    if( (index_entry->get_block_characters() & base::enum_xvblock_character_pruneable) == 0)
-                    {
-                        xassert(0);
-                        index_entry->set_block_character(base::enum_xvblock_character_pruneable);
-                    }
-                }
-                else
-                {
-                    if( (index_entry->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                    {
-                        xassert(0);
-                        index_entry->remove_block_character(base::enum_xvblock_character_pruneable);
-                    }
-                }
                 
                 all_blocks_at_height.push_back(index_entry);//transfer owner to vector
                 xdbg("xvblockdb_t::read_index_from_db,read a index(%s)",index_entry->dump().c_str());
@@ -821,87 +780,59 @@ namespace top
             return get_xdbstore()->set_value(full_path_as_key,value);
         }
     
-        const std::string  xvblockdb_t::create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height,bool prunable_block)
+        const std::string  xvblockdb_t::create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height)
         {
-            if(prunable_block)
-                return base::xvdbkey_t::create_prunable_block_index_key(account,target_height);
-            else
-                return base::xvdbkey_t::create_block_index_key(account,target_height);
+            return base::xvdbkey_t::create_prunable_block_index_key(account,target_height);
         }
     
-        const std::string  xvblockdb_t::create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid,bool prunable_block)
+        const std::string  xvblockdb_t::create_block_index_key(const base::xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
-            if(prunable_block)
-                return base::xvdbkey_t::create_prunable_block_index_key(account,target_height,target_viewid);
-            else
-                return base::xvdbkey_t::create_block_index_key(account,target_height,target_viewid);
+            return base::xvdbkey_t::create_prunable_block_index_key(account,target_height,target_viewid);
         }
     
         const std::string  xvblockdb_t::create_block_index_key(base::xvbindex_t * index_ptr,const uint64_t target_height,const uint64_t target_viewid)
         {
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                return base::xvdbkey_t::create_prunable_block_index_key(*index_ptr,target_height,target_viewid);
-            else
-                return base::xvdbkey_t::create_block_index_key(*index_ptr,target_height,target_viewid);
+            return base::xvdbkey_t::create_prunable_block_index_key(*index_ptr,target_height,target_viewid);
         }
 
         const std::string  xvblockdb_t::create_block_object_key(base::xvbindex_t * index_ptr)
         {
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
+            if(index_ptr->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
             {
-                if(index_ptr->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
+                if( index_ptr->check_block_flag(base::enum_xvblock_flag_committed)) //main-entry block
                 {
-                    if( index_ptr->check_block_flag(base::enum_xvblock_flag_committed)) //main-entry block
-                    {
-                        return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height());
-                    }
-                    else
-                    {
-                        return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
-                    }
+                    return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height());
                 }
-                else //the persisted index always point to fixed postion to store raw block
+                else
                 {
                     return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
                 }
             }
-            else //old version of db always has index stored
+            else //the persisted index always point to fixed postion to store raw block
             {
-                return base::xvdbkey_t::create_block_object_key(*index_ptr,index_ptr->get_block_hash());
+                return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
             }
         }
     
         const std::string  xvblockdb_t::create_block_input_key(base::xvbindex_t * index_ptr)
         {
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                return base::xvdbkey_t::create_prunable_block_input_key(*index_ptr, index_ptr->get_height(), index_ptr->get_viewid());
-            else
-                return base::xvdbkey_t::create_block_input_key(*index_ptr,index_ptr->get_block_hash());
+            return base::xvdbkey_t::create_prunable_block_input_key(*index_ptr, index_ptr->get_height(), index_ptr->get_viewid());
         }
           
         const std::string  xvblockdb_t::create_block_input_resource_key(base::xvbindex_t * index_ptr)
         {
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                return base::xvdbkey_t::create_prunable_block_input_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
-            else
-                return base::xvdbkey_t::create_block_input_resource_key(*index_ptr,index_ptr->get_block_hash());
+            return base::xvdbkey_t::create_prunable_block_input_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
         }
         
         const std::string  xvblockdb_t::create_block_output_key(base::xvbindex_t * index_ptr)
         {
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                return base::xvdbkey_t::create_prunable_block_output_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
-            else
-                return base::xvdbkey_t::create_block_output_key(*index_ptr,index_ptr->get_block_hash());
+            return base::xvdbkey_t::create_prunable_block_output_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
         }
     
         const std::string  xvblockdb_t::create_block_output_resource_key(base::xvbindex_t * index_ptr)
         {
-            if((index_ptr->get_block_characters() & base::enum_xvblock_character_pruneable) != 0)
-                return base::xvdbkey_t::create_prunable_block_output_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
-            else
-                return base::xvdbkey_t::create_block_output_resource_key(*index_ptr,index_ptr->get_block_hash());
+            return base::xvdbkey_t::create_prunable_block_output_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
         }
-    
+
     };//end of namespace of vstore
 };//end of namespace of top

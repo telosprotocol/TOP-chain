@@ -14,14 +14,16 @@
 
 namespace top { namespace db {
 
-std::shared_ptr<xdb_face_t> xdb_factory_t::create(xdb_kind_t kind, const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths) {
+std::shared_ptr<xdb_face_t> xdb_factory_t::create(int db_kinds, const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths) {
+    const xdb_kind_t kind = (xdb_kind_t)(db_kinds & 0x0F);
     switch (kind) {
         case xdb_kind_kvdb:
         {
-            return std::make_shared<xdb>(db_root_dir,db_data_paths);
+            return std::make_shared<xdb>(db_kinds,db_root_dir,db_data_paths);
         }
         case xdb_kind_mem:
         {
+            xwarn("xdb_factory_t::create a memory-db");
             return std::make_shared<xdb_mem_t>();
         }
         default:
@@ -35,7 +37,7 @@ std::shared_ptr<xdb_face_t> xdb_factory_t::create(xdb_kind_t kind, const std::st
 std::shared_ptr<xdb_face_t> xdb_factory_t::instance(const std::string& db_root_dir,std::vector<xdb_path_t> db_data_paths) {
     static std::shared_ptr<xdb_face_t> db = nullptr;
     if (db == nullptr) {
-        db = std::make_shared<xdb>(db_root_dir,db_data_paths);
+        db = std::make_shared<xdb>(xdb_kind_kvdb,db_root_dir,db_data_paths);
     }
     return db;
 }

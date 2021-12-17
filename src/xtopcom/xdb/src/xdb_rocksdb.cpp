@@ -19,10 +19,6 @@
 #include "xdb/xdb.h"
 #include "xmetrics/xmetrics.h"
 
-#ifndef __ENABLE_ROCKSDB_COMPRESSTION__
-    #define __ENABLE_ROCKSDB_COMPRESSTION__
-#endif
-
 using std::string;
 
 namespace top { namespace db {
@@ -167,7 +163,7 @@ class xdb::xdb_impl final
 {
 public:
     static void  disable_default_compress_options(rocksdb::ColumnFamilyOptions & default_cf_options);
-    static void  setup_default_db_options(rocksdb::Options & default_db_options);//setup Default Option of whole DB Level
+    static void  setup_default_db_options(rocksdb::Options & default_db_options,const int db_kinds);//setup Default Option of whole DB Level
     void         setup_default_cf_options(xColumnFamily & cf_config,const size_t block_size,std::shared_ptr<rocksdb::Cache> & block_cache);
     
     xColumnFamily setup_default_cf();//setup Default ColumnFamily(CF),and for read&write as well
@@ -176,7 +172,8 @@ public:
     xColumnFamily setup_fifo_style_cf(const std::string & name,uint64_t ttl = 14 * 24 * 60 * 60);//setup ColumnFamily(CF) of log only,delete after 14 day as default setting);
 
  public:
-    explicit xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
+    //db_kinds refer to xdb_kind_t
+    explicit xdb_impl(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths);
     ~xdb_impl();
     bool open();
     bool close();
@@ -198,6 +195,7 @@ public:
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     bool compact_range(const std::string & begin_key,const std::string & end_key);
+    bool get_estimate_num_keys(uint64_t & num) const;
     
     static void destroy(const std::string& m_db_name);
 
@@ -210,6 +208,7 @@ public:
     rocksdb::WriteBatch     m_batch{};
     std::vector<xColumnFamily>                m_cf_configs;
     std::vector<rocksdb::ColumnFamilyHandle*> m_cf_handles;
+    int                     m_db_kinds = {0};
 };
 
 void    xdb::xdb_impl::disable_default_compress_options(rocksdb::ColumnFamilyOptions & default_db_options)
@@ -218,8 +217,6 @@ void    xdb::xdb_impl::disable_default_compress_options(rocksdb::ColumnFamilyOpt
     //disable compression as default since consense node may prune data automatically
     default_db_options.compression = rocksdb::kNoCompression;
     default_db_options.compression_opts.enabled = false;
-    default_db_options.bottommost_compression = rocksdb::kNoCompression;
-    default_db_options.bottommost_compression_opts.enabled = false;
     //,compressiong bring much more CPU/IO,which means,so prefer CPU/IO first
     if(default_db_options.num_levels > 0)
     {
@@ -230,7 +227,7 @@ void    xdb::xdb_impl::disable_default_compress_options(rocksdb::ColumnFamilyOpt
     }
 }
 
-void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_options)
+void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_options,const int db_kinds)
 {
     default_db_options.create_if_missing = true;
     default_db_options.create_missing_column_families = true;
@@ -239,21 +236,56 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
     default_db_options.max_background_jobs = 4; //recommend 4 for HDD disk
     default_db_options.max_subcompactions  = 2; //fast compact to clean deleted_range/deleted_keys
     
-    #ifdef __ENABLE_ROCKSDB_COMPRESSTION__
-    //do nothing to keep defaut
-    #else //disable compress
-    default_db_options.compression = rocksdb::kNoCompression;
-    default_db_options.compression_opts.enabled = false;
-    default_db_options.bottommost_compression = rocksdb::kNoCompression;
-    default_db_options.bottommost_compression_opts.enabled = false;
-    #endif
+    if((db_kinds & xdb_kind_high_compress) != 0)
+    {
+        default_db_options.compression = rocksdb::kLZ4Compression;
+        default_db_options.compression_opts.enabled = true;
+        default_db_options.bottommost_compression = rocksdb::kZSTD;
+        default_db_options.bottommost_compression_opts.enabled = true;
+        
+        xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_high_compress");
+        printf("xdb_impl::setup_default_db_options() as xdb_kind_high_compress \n");
+    }
+    else if((db_kinds & xdb_kind_bottom_compress) != 0) //disable level'compression but keep bottom one
+    {
+        default_db_options.compression = rocksdb::kNoCompression;
+        default_db_options.compression_opts.enabled = false;
+        default_db_options.bottommost_compression = rocksdb::kLZ4Compression;
+        default_db_options.bottommost_compression_opts.enabled = true;
+        
+        xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_bottom_compress");
+        printf("xdb_impl::setup_default_db_options() as xdb_kind_bottom_compress \n");
+    }
+    else if((db_kinds & xdb_kind_no_compress) != 0) //disable compress
+    {
+        default_db_options.compression = rocksdb::kNoCompression;
+        default_db_options.compression_opts.enabled = false;
+        default_db_options.bottommost_compression = rocksdb::kNoCompression;
+        default_db_options.bottommost_compression_opts.enabled = false;
+        
+        xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_no_compress");
+        printf("xdb_impl::setup_default_db_options() as xdb_kind_no_compress \n");
+    }
+    else //normal & default compression
+    {
+        default_db_options.compression = rocksdb::kLZ4Compression;
+        default_db_options.compression_opts.enabled = true;
+        default_db_options.bottommost_compression = rocksdb::kLZ4Compression;
+        default_db_options.bottommost_compression_opts.enabled = true;
+        
+        xkinfo("xdb_impl::setup_default_db_options() as default_compress");
+        printf("xdb_impl::setup_default_db_options() as default_compress \n");
+    }
+
     return ;
 }
 
 void xdb::xdb_impl::setup_default_cf_options(xColumnFamily & cf_config,const size_t block_size,std::shared_ptr<rocksdb::Cache> & block_cache)
 {
     rocksdb::BlockBasedTableOptions table_options;
-    table_options.enable_index_compression = false;
+    if((m_db_kinds & xdb_kind_no_compress) != 0)//performance most
+        table_options.enable_index_compression = false;
+    
     if(block_size > 0)
         table_options.block_size = block_size;
     if(block_cache != nullptr)
@@ -338,6 +370,18 @@ xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,uint6
     {
         xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
     }
+    else
+    {
+        for(size_t it = 0; it < cf_config.cf_option.compression_per_level.size(); ++it)
+        {
+            if(it < 3) //disable compression of level-0,1,2
+            {
+                cf_config.cf_option.compression_per_level[it] = rocksdb::kNoCompression;
+            }
+            xkinfo("xdb_impl::setup_level_style_cf,Options.compression[%d] = %d \n",(int)it,(int)cf_config.cf_option.compression_per_level[it]);
+            printf("xdb_impl::setup_level_style_cf,Options.compression[%d] = %d \n",(int)it,(int)cf_config.cf_option.compression_per_level[it]);
+        }
+    }
     
     //XTODO,upgrade to RocksDB 6.x version
     //cf_config.cf_option.periodic_compaction_seconds = 12 * 60 * 60; //12 hour
@@ -376,7 +420,21 @@ bool xdb::xdb_impl::open()
         //printf("xrocksdb_t::get_raw_ptr(),rocksdb::version=%s \n",version.c_str());
         
         std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
-        rocksdb::Status s = rocksdb::DB::Open(m_options, m_db_name, column_families, &cf_handles, &m_db);
+        
+        rocksdb::Status s;
+        if((m_db_kinds & xdb_kind_readonly) != 0)
+        {
+            xkinfo("xdb_impl::open() as readonly cf=%zu", column_families.size());
+            printf("xdb_impl::open() as readonly cf=%zu\n", column_families.size());
+            s = rocksdb::DB::OpenForReadOnly(m_options, m_db_name, column_families, &cf_handles, &m_db);
+        }
+        else
+        {
+            xkinfo("xdb_impl::open() as read_write cf=%zu", column_families.size());
+            printf("xdb_impl::open() as read_write cf=%zu\n", column_families.size());
+            s = rocksdb::DB::Open(m_options, m_db_name, column_families, &cf_handles, &m_db);
+        }
+        
         handle_error(s);
         if(s.ok())
         {
@@ -445,8 +503,10 @@ bool xdb::xdb_impl::close()
     return true;
 }
 
-xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
+//db_kinds refer to xdb_kind_t
+xdb::xdb_impl::xdb_impl(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
 {
+    m_db_kinds = db_kinds;
     m_cf_handles.clear();
     m_cf_handles.resize(256); //static mapping each 'char' -> handles
     for(size_t i = 0; i < m_cf_handles.size(); ++i)
@@ -458,7 +518,7 @@ xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> &
     printf("xdb_impl::init,db_root_dir=%s \n",db_root_dir.c_str());
     
     m_db_name = db_root_dir;
-    xdb::xdb_impl::setup_default_db_options(m_options);//setup base options first
+    xdb::xdb_impl::setup_default_db_options(m_options,m_db_kinds);//setup base options first
     if(db_paths.empty() == false)
     {
         for(auto it : db_paths)
@@ -475,12 +535,16 @@ xdb::xdb_impl::xdb_impl(const std::string& db_root_dir,std::vector<xdb_path_t> &
     
     std::vector<xColumnFamily> cf_list;
     cf_list.push_back(setup_default_cf()); //default is always first one
-    cf_list.push_back(setup_level_style_cf("1")); //block 'cf[1]
-    cf_list.push_back(setup_level_style_cf("2")); //block 'cf[2]
-    cf_list.push_back(setup_level_style_cf("3")); //block 'cf[3]
-    cf_list.push_back(setup_level_style_cf("4")); //block 'cf[4]
-    //cf_list.push_back(setup_fifo_style_cf("f"));  //fifo
-    //XTODO,add other CF here
+
+    if ((m_db_kinds & xdb_kind_no_multi_cf) == 0)
+    {
+        cf_list.push_back(setup_level_style_cf("1")); //block 'cf[1]
+        cf_list.push_back(setup_level_style_cf("2")); //block 'cf[2]
+        cf_list.push_back(setup_level_style_cf("3")); //block 'cf[3]
+        cf_list.push_back(setup_level_style_cf("4")); //block 'cf[4]
+        //cf_list.push_back(setup_fifo_style_cf("f"));  //fifo
+        //XTODO,add other CF here
+    }
     
     m_cf_configs = cf_list;
     
@@ -747,6 +811,7 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
         rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
         if(end_cf == begin_cf) //most case
         {
+            printf("xdb_impl::compact_range,one cf \n");
             rocksdb::Status res = m_db->CompactRange(rocksdb::CompactRangeOptions(),begin_cf,&begin_slice,&end_slice);
             if (!res.ok())
             {
@@ -760,6 +825,7 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
         }
     }
     
+    printf("xdb_impl::compact_range,all cfs \n");
     for(size_t i = 0; i < m_cf_handles.size(); ++i)
     {
         rocksdb::ColumnFamilyHandle* cf_handle = m_cf_handles[i];
@@ -771,9 +837,13 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
     return true;
 }
 
+bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
+}
 
-xdb::xdb(const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
-: m_db_impl(new xdb_impl(db_root_dir,db_paths)) {
+xdb::xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
+: m_db_impl(new xdb_impl(db_kinds,db_root_dir,db_paths)) {
 }
 
 xdb::~xdb() noexcept = default;
@@ -877,6 +947,10 @@ bool xdb::read_range(const std::string& prefix,xdb_iterator_callback callback,vo
 bool xdb::compact_range(const std::string & begin_key,const std::string & end_key)
 {
     return m_db_impl->compact_range(begin_key, end_key);
+}
+bool xdb::get_estimate_num_keys(uint64_t & num) const
+{
+    return m_db_impl->get_estimate_num_keys(num);
 }
 
 }  // namespace ledger

@@ -45,7 +45,7 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
     if (it_ready != m_ready_tx_map.end()) {
         auto & tx_ent = *it_ready->second;
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s,delay:%llu",
+        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx pop tx from ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
                      delay);
@@ -97,9 +97,6 @@ const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_internal_t::get_exp
             break;
         }
         expired_txs.push_back(tx);
-    }
-    if (!expired_txs.empty()) {
-        XMETRICS_GAUGE(metrics::txpool_send_tx_timeout, expired_txs.size());
     }
 
     return expired_txs;
@@ -319,10 +316,11 @@ void xsend_tx_account_t::erase(uint64_t nonce, bool clear_follower) {
 int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce) {
     clear_expired_txs();
     std::shared_ptr<xtx_entry> to_be_droped_tx = nullptr;
-    if (m_send_tx_queue_internal.full()) {
+    int32_t err = m_send_tx_queue_internal.check_full();
+    if (err != xsuccess) {
         to_be_droped_tx = m_send_tx_queue_internal.pick_to_be_droped_tx();
         if (to_be_droped_tx == nullptr) {
-            return xtxpool_error_queue_reached_upper_limit;
+            return err;
         }
     }
 
@@ -347,7 +345,7 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
         tx_info_t txinfo(to_be_droped_tx->get_tx());
         pop_tx(txinfo, true);
         if (to_be_droped_tx->get_tx()->get_tx_hash_256() == tx_ent->get_tx()->get_tx_hash_256()) {
-            return xtxpool_error_queue_reached_upper_limit;
+            return err;
         }
     }
     if (send_tx_account->empty()) {

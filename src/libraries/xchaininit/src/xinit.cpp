@@ -28,6 +28,7 @@
 #include "xverifier/xverifier_utl.h"
 #include "xtopcl/include/api_method.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xmigrate/xvmigrate.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -86,6 +87,13 @@ bool set_auto_prune_switch(const std::string& prune)
     return true;
 }
 
+bool db_migrate(const std::string & src_db_path)
+{    
+    base::xvblockstore_t* _blockstore = base::xvchain_t::instance().get_xblockstore();
+    xassert(_blockstore != nullptr);
+    return base::db_delta_migrate_v2_to_v3(src_db_path, _blockstore);
+}
+
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
     using namespace base;
@@ -110,6 +118,10 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     config_center.remove_loader(offchain_loader);
     config_center.init_static_config();
 
+    // XTODO from v3, v3_db_path = config_path+DB_PATH
+    std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
+    std::string v3_db_path = XGET_CONFIG(db_path) + DB_PATH;
+    config_center.set(config::xdb_path_configuration_t::name, v3_db_path);
 
     xchain_params chain_params;
     // attention: put chain_params.initconfig_using_configcenter behind config_center
@@ -182,6 +194,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
         xpublic_key_t{ user_params.publickey },
         user_params.signkey
     };
+
+    if (false == db_migrate(v2_db_path)) {
+        return 1;
+    }
+
     app.start();
     xinfo("==== app start done ===");
 
@@ -338,16 +355,14 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     //using top::elect::xbeacon_xelect_imp;
 
     auto hash_plugin = new xtop_hash_t();
-    std::string chain_db_path;
+    std::string chain_db_path = datadir + DB_PATH;
     std::string log_path;
     std::string bwlist_path;
 #ifdef _WIN32
-    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "\\log";
     bwlist_path = datadir + "\\bwlist.json"
     // TODO(smaug) mkdir in windows
 #else
-    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "/log";
     bwlist_path = datadir + "/bwlist.json";
 
@@ -457,7 +472,6 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     if (false == create_rootblock("")) {
         return 1;
     }
-
     // start admin http service
     {
         xinfo("==== start admin http server ===");
@@ -499,6 +513,12 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
         xpublic_key_t{ user_params.publickey },
         user_params.signkey
     };
+
+    std::string v2_db_path = datadir + OLD_DB_PATH;
+    if (false == db_migrate(v2_db_path)) {
+        return 1;
+    }
+
     app.start();
 
     std::cout << std::endl

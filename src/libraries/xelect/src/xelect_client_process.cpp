@@ -162,20 +162,20 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 
 void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
     if (election_data_block == nullptr) {
-        xwarn("election block nullptr");
+        xwarn("xelect_client_process::process_election_block election block is null");
         return;
     }
 
     auto const block = dynamic_xobject_ptr_cast<data::xblock_t>(election_data_block);
     if (block == nullptr) {
-        xwarn("election block is not xblock_t");
+        xwarn("xelect_client_process::process_election_block election block is null");
         return;
     }
 
     common::xaccount_address_t const contract_address{ block->get_block_owner() };
     auto const it = m_election_status.find(contract_address);
     if (it == std::end(m_election_status)) {
-        xwarn("election block is unknown. %s", contract_address.c_str());
+        xwarn("xelect_client_process::process_election_block not found in m_election_status,block:%s", block->dump().c_str());
         return;
     }
 
@@ -183,11 +183,14 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
 
     auto const local_height = top::get<xinternal_election_status_t>(*it).height;
     if (local_height >= block->get_height()) {
+        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,block:%s", local_height, block->dump().c_str());
         return;
     }
 
     // only process light unit, others are filtered
-    xassert(block->get_block_class() == base::enum_xvblock_class_light);
+    xassert(block->get_block_class() == base::enum_xvblock_class_light ||
+            (block->get_block_class() == base::enum_xvblock_class_full &&
+             base::xvblock_fork_t::is_block_match_version(block->get_block_version(), base::enum_xvblock_fork_version_unit_opt)));
     xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
     // TODO(jimmy) db event must stable and order
     base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
@@ -257,7 +260,7 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
                                                       common::xlogic_time_t const update_interval) {
     if (current_time > m_election_status[contract_address].last_update_time &&
         current_time - m_election_status[contract_address].last_update_time >= update_interval) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }), current_time);
+        process_election_block(data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }), current_time);
     }
 }
 

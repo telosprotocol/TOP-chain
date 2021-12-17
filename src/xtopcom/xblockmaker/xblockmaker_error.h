@@ -24,6 +24,7 @@ enum enum_xblockmaker_error_type {
     xblockmaker_error_tx_execute,
     xblockmaker_error_tx_check,
     xblockmaker_error_no_need_make_unit,
+    xblockmaker_error_null_unit,
     xblockmaker_error_no_need_make_table,
 
     xblockmaker_error_proposal_outofdate,
@@ -56,6 +57,7 @@ inline std::string xblockmaker_error_to_string(int32_t code) {
         XUNIT_TO_STR(xblockmaker_error_tx_execute),
         XUNIT_TO_STR(xblockmaker_error_tx_check),
         XUNIT_TO_STR(xblockmaker_error_no_need_make_unit),
+        XUNIT_TO_STR(xblockmaker_error_null_unit),
         XUNIT_TO_STR(xblockmaker_error_no_need_make_table),
 
         XUNIT_TO_STR(xblockmaker_error_proposal_outofdate),

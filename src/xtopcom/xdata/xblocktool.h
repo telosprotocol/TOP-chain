@@ -48,9 +48,11 @@ class xblocktool_t {
     static std::string      make_address_beacon_sys_account(const std::string & public_key_address, uint16_t subaddr);
     static std::string      make_address_user_contract(const std::string & public_key_address);
 
+    static std::vector<std::string>     make_all_table_addresses();
+
  public:
-    static base::xauto_ptr<base::xvblock_t> get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
-    static base::xauto_ptr<base::xvblock_t> get_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height);
+    static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
+    static base::xauto_ptr<base::xvblock_t> get_committed_state_changed_block(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height);
     static bool             verify_latest_blocks(const base::xblock_mptrs & latest_blocks);
     static bool             verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
     static bool             can_make_next_empty_block(const base::xblock_mptrs & latest_blocks, uint32_t max_empty_num);
@@ -67,6 +69,7 @@ class xblocktool_t {
  public:  // property prove    
     static base::xvproperty_prove_ptr_t             create_receiptid_property_prove(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xvbstate_t* bstate);
     static base::xreceiptid_state_ptr_t             get_receiptid_from_property_prove(const base::xvproperty_prove_ptr_t & prop_prove);
+    static bool                                     check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount, const base::xaccount_index_t & commit_account_index, base::xvblockstore_t* blockstore, const std::string & caller);
 
 };
 

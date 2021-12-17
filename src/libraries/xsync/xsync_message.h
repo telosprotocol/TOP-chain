@@ -456,6 +456,125 @@ public:
     std::vector<data::xblock_ptr_t> blocks;
 };
 
+struct xsync_message_get_on_demand_blocks_with_proof_t : public top::basic::xserialize_face_t {
+protected:
+    virtual ~xsync_message_get_on_demand_blocks_with_proof_t() {}
+public:
+    xsync_message_get_on_demand_blocks_with_proof_t() {
+    }
+
+    xsync_message_get_on_demand_blocks_with_proof_t(
+            const std::string& _address,
+            uint64_t _start_height,
+            uint32_t _count,
+            bool _is_consensus,
+            bool _unit_proof) :
+    address(_address),
+    start_height(_start_height),
+    count(_count),
+    is_consensus(_is_consensus),
+    unit_proof(_unit_proof) {
+    }
+
+protected:
+    int32_t do_write(base::xstream_t & stream) override {
+        KEEP_SIZE();
+        SERIALIZE_FIELD_BT(address);
+        SERIALIZE_FIELD_BT(start_height);
+        SERIALIZE_FIELD_BT(count);
+        SERIALIZE_FIELD_BT(is_consensus);
+        SERIALIZE_FIELD_BT(unit_proof);
+        return CALC_LEN();
+    }
+
+    int32_t do_read(base::xstream_t & stream) override {
+
+        try {
+
+            KEEP_SIZE();
+            DESERIALIZE_FIELD_BT(address);
+            DESERIALIZE_FIELD_BT(start_height);
+            DESERIALIZE_FIELD_BT(count);
+            DESERIALIZE_FIELD_BT(is_consensus);
+            DESERIALIZE_FIELD_BT(unit_proof);
+            return CALC_LEN();
+        } catch (...) {
+            address = "";
+            start_height = 0;
+            count = 0;
+            is_consensus = false;
+            unit_proof = false;
+        }
+
+        return 0;
+    }
+
+public:
+    std::string address;
+    uint64_t start_height;
+    uint32_t count;
+    bool is_consensus;
+    bool unit_proof;
+};
+
+struct xsync_message_general_blocks_with_proof_t : public top::basic::xserialize_face_t {
+protected:
+    virtual ~xsync_message_general_blocks_with_proof_t() {}
+public:
+    xsync_message_general_blocks_with_proof_t() {}
+    xsync_message_general_blocks_with_proof_t(const std::vector<data::xblock_ptr_t> &_blocks,
+        const std::string& _unit_proof_str) :
+        blocks(_blocks),
+        unit_proof_str(_unit_proof_str) {}
+    xsync_message_general_blocks_with_proof_t(const std::vector<data::xblock_ptr_t> &_blocks) :
+        blocks(_blocks) {}
+
+protected:
+    int32_t do_write(base::xstream_t & stream) override {
+        KEEP_SIZE();
+        std::vector<data::xentire_block_ptr_t> vector_entire_block;
+        for (auto &it: blocks) {
+            data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
+            entire_block->block_ptr = it;
+            vector_entire_block.push_back(entire_block);
+        }
+
+        SERIALIZE_CONTAINER(vector_entire_block) {
+            item->serialize_to(stream);
+        }
+        SERIALIZE_FIELD_BT(unit_proof_str);        
+        return CALC_LEN();
+    }
+
+    int32_t do_read(base::xstream_t & stream) override {
+        try {
+            KEEP_SIZE();
+            std::vector<data::xentire_block_ptr_t> vector_entire_block;
+            DESERIALIZE_CONTAINER(vector_entire_block) {
+                data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
+                entire_block->serialize_from(stream);
+
+                if (entire_block != nullptr)
+                    vector_entire_block.push_back(entire_block);
+            }
+
+            for (auto &it: vector_entire_block) {
+                if (it->block_ptr != nullptr)
+                    blocks.push_back(it->block_ptr);
+            }
+            DESERIALIZE_FIELD_BT(unit_proof_str);
+            return CALC_LEN();
+        } catch (...) {
+            blocks.clear();
+        }
+        return 0;
+    }
+
+public:
+    std::vector<data::xblock_ptr_t> blocks;
+    std::string unit_proof_str;
+};
+
 class xchain_state_info_t : public top::basic::xserialize_face_t {
 public:
     std::string address;

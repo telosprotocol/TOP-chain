@@ -45,6 +45,7 @@ class xdb_mem_t : public xdb_face_t {
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     bool compact_range(const std::string & begin_key,const std::string & end_key) override;
+    bool get_estimate_num_keys(uint64_t & num) const override;
     
     xdb_meta_t  get_meta() override {return m_meta;}  // implement for test
  public:

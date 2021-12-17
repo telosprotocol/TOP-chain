@@ -107,7 +107,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
     xdbg("xconfig_onchain_loader_t::update_onchain_param,  logic time is %" PRIu64, time);
     std::lock_guard<std::mutex> lock(m_action_param_mutex);
 
-    auto block =  data::xblocktool_t::get_latest_connectted_light_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
+    auto block =  data::xblocktool_t::get_latest_connectted_state_changed_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
     if (block == nullptr) {
         xdbg("xconfig_onchain_loader_t::update_onchain_param latest connected light block null");
         return;

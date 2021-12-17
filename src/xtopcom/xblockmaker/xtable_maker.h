@@ -32,7 +32,6 @@ class xtable_maker_t : public xblock_maker_t {
     int32_t                 default_check_latest_state();
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
-    bool                    can_make_next_block(xtablemaker_para_t & table_para);
 
  protected:
     int32_t                 check_latest_state(const xblock_ptr_t & latest_block); // check table latest block and state
@@ -43,6 +42,7 @@ class xtable_maker_t : public xblock_maker_t {
     xblock_ptr_t            leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
     xblock_ptr_t            backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
     xblock_ptr_t            make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code);
+    xblock_ptr_t            make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code);
     void                    clear_old_unit_makers();
 
     bool                    verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const;
@@ -57,6 +57,7 @@ class xtable_maker_t : public xblock_maker_t {
     void                    clear_all_pending_txs();
     void                    refresh_cache_unit_makers();
     void                    set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const;
+    bool                    can_make_next_empty_block() const;
 
  private:
     std::map<std::string, xunit_maker_ptr_t>    m_unit_makers;
@@ -66,6 +67,8 @@ class xtable_maker_t : public xblock_maker_t {
     uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;
     xblock_builder_face_ptr_t                   m_lighttable_builder;
+    xblock_builder_face_ptr_t                   m_emptytable_builder;
+    xblock_builder_para_ptr_t                   m_default_builder_para;
     bool                                        m_check_state_success{false};
     mutable std::mutex                          m_lock;
 };

@@ -48,6 +48,9 @@ namespace top
             virtual bool           store_block(base::xvblock_t* new_raw_block);
             //better performance with batch mode
             virtual bool           store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks);
+
+            virtual bool           store_committed_unit_block(base::xvblock_t* new_raw_block);
+            virtual bool           try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block);
             
             virtual bool           delete_block(base::xvblock_t* target_block);
             virtual bool           delete_block(const uint64_t target_height);
@@ -98,6 +101,10 @@ namespace top
             std::vector<base::xvbindex_t*>  load_indexes(const uint64_t target_height);//load indexes from db for height
             size_t                 load_index_by_height(const uint64_t target_height);
 
+            
+            bool                    set_unit_proof(const std::string& unit_proof, uint64_t height);
+            const std::string       get_unit_proof(uint64_t height);
+
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
             bool                resort_index_of_store(std::map<uint64_t,base::xvbindex_t*> & target_height_map);
@@ -125,6 +132,8 @@ namespace top
 
             //compatible for old version,e.g read meta and other stuff
             bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
+
+            void                update_bindex(base::xvbindex_t* this_block);
             
         private:
             virtual bool        init_meta(const base::xvactmeta_t & meta) override;

@@ -5,6 +5,7 @@
 #include "gtest/gtest.h"
 #include "xdb/xdb.h"
 #include "xdb/xdb_factory.h"
+#include "xdb/xdb_face.h"
 
 using namespace top::db;
 using namespace std;
@@ -166,7 +167,7 @@ TEST_F(test_xdb, db_write_with_binary_key) {
 
 TEST_F(test_xdb, db_erase_one_key) {
     std::vector<xdb_path_t> db_paths;
-    xdb db1(DB_NAME,db_paths);
+    xdb db1(xdb_kind_t::xdb_kind_kvdb, DB_NAME,db_paths);
     {
         string value;
         db1.write("key3","value3");
@@ -192,7 +193,7 @@ TEST_F(test_xdb, db_erase_one_key) {
 
 TEST_F(test_xdb, db_erase_multi_key) {
     std::vector<xdb_path_t> db_paths;
-    xdb db1(DB_NAME,db_paths);
+    xdb db1(xdb_kind_kvdb,DB_NAME,db_paths);
     {
         string value;
         std::string key("multikey1");
@@ -237,7 +238,7 @@ TEST_F(test_xdb, db_erase_multi_key) {
 
 TEST_F(test_xdb, db_read_range) {
     std::vector<xdb_path_t> db_paths;
-    xdb db1(DB_NAME,db_paths);
+    xdb db1(xdb_kind_kvdb,DB_NAME,db_paths);
 
     db1.write("key11", "value11");
     db1.write("key21", "value21");

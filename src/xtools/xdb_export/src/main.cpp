@@ -1,9 +1,13 @@
 #include "../xdb_export.h"
 #include "../xdb_reset.h"
 #include "xbase/xhash.h"
+#include "xmigrate/xvmigrate.h"
+#include "xconfig/xpredefined_configurations.h"
 
 using namespace top;
 using namespace top::db_export;
+
+#define XDB_EXPORT_LOG
 
 class xtop_hash_t : public top::base::xhashplugin_t {
 public:
@@ -29,18 +33,17 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
+    std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
+    std::cout << "        - compact_db new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_block_basic [account] [height|last|all]" << std::endl;
-    std::cout << "        - check_state_basic [account] [height|last|all]" << std::endl;
-    std::cout << "        - check_meta [account]" << std::endl;
-    std::cout << "        - check_table_unit_state [table]" << std::endl;
     std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
-    std::cout << "        - check_property <account> <property> <height|last|all>" << std::endl;
+    std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db" << std::endl;
+    std::cout << "        - check_archive_db new_path" << std::endl;
+    std::cout << "        - parse_db new_path" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -74,8 +77,59 @@ int main(int argc, char ** argv) {
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
 #endif
-    xdb_export_tools_t tools{db_path};
+
     std::string function_name{argv[2]};
+    if (function_name == "db_migrate_v2_to_v3") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        std::string v2_db_path = db_path;
+        std::string v3_db_path = argv[3];
+        base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
+        return 0;
+    }
+
+    if (function_name == "compact_db") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        tools_v3.compact_db();
+        return 0;
+    }
+
+    if (function_name == "check_archive_db") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        tools_v3.query_archive_db();
+        return 0;
+    } 
+    if (function_name == "parse_db") {
+        if (argc != 4) {
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        std::string dir{"parse_db_result/"};
+        mkdir(dir.c_str(), 0750);
+        tools_v3.set_outfile_folder(dir);
+        auto const & table_account_vec = tools_v3.get_table_accounts();
+        tools_v3.query_table_unit_info(table_account_vec);
+        return 0;
+    }
+
+    xdb_export_tools_t tools{db_path};
     if (function_name == "check_fast_sync") {
         if (argc == 3) {
             auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
@@ -164,7 +218,9 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        mkdir("all_block_basic_info", 0750);
+        std::string dir{"all_block_basic_info/"};
+        mkdir(dir.c_str(), 0750);
+        tools.set_outfile_folder(dir);
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_block_basic(unit_account_vec, "all");
@@ -178,7 +234,9 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        mkdir("all_state_basic_info", 0750);
+        std::string dir{"all_state_basic_info/"};
+        mkdir(dir.c_str(), 0750);
+        tools.set_outfile_folder(dir);
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_state_basic(unit_account_vec, "all");
@@ -198,21 +256,9 @@ int main(int argc, char ** argv) {
         } else if (argc == 4) {
             tools.query_meta(argv[3]);
         }
-    } else if (function_name == "check_table_unit_state") {
-        if (argc < 3 || argc > 4) {
-            usage();
-            return -1;
-        }
-        mkdir("all_table_unit_state", 0750);
-        if (argc == 3) {
-            auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
-            tools.query_table_unit_state(table_account_vec);
-        } else if (argc == 4) {
-            tools.query_table_unit_state(argv[3]);
-        }
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
-    } else if (function_name == "check_property") {
+    } else if (function_name == "check_contract_property") {
         if (argc < 6) {
             usage();
             return -1;
@@ -220,8 +266,6 @@ int main(int argc, char ** argv) {
         tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
-    } else if (function_name == "check_archive_db") {
-        tools.query_archive_db();
     } else {
         usage();
     }
