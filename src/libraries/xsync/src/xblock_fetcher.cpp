@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xsync/xblock_fetcher.h"
+
+#include "xdata/xnative_contract_address.h"
 #include "xmbus/xevent_account.h"
 #include "xmbus/xevent_blockfetcher.h"
 #include "xmbus/xevent_executor.h"

@@ -14,6 +14,7 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xunit_bstate.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"

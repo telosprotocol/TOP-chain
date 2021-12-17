@@ -10,6 +10,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xstake/xstake_algorithm.h"
 

@@ -8,6 +8,7 @@
 #include "xcontract_runtime/xblock_sniff_config.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"

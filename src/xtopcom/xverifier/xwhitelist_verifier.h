@@ -7,7 +7,7 @@
 #include "xbase/xcontext.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xgenesis_data.h"
+#include "xdata/xtransaction.h"
 #include "xverifier/xverifier_errors.h"
 
 #include <string>

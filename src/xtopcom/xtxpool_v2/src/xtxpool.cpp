@@ -5,6 +5,7 @@
 #include "xtxpool_v2/xtxpool.h"
 
 #include "xdata/xblocktool.h"
+#include "xdata/xnative_contract_address.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"

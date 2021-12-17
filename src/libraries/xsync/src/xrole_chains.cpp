@@ -1,6 +1,6 @@
 #include "xsync/xrole_chains.h"
 
-#include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_log.h"
 
 NS_BEG2(top, sync)

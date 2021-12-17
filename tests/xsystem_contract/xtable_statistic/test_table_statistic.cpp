@@ -23,6 +23,7 @@
 #include "tests/xelection/xmocked_vnode_service.h"
 #include "xelection/xvnode_house.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
+#include "xdata/xnative_contract_address.h"
 
 #include <gtest/gtest.h>
 
