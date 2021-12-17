@@ -13,6 +13,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xlightunit.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract_new.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract_new.h"

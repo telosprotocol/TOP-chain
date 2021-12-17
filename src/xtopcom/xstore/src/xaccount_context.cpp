@@ -21,6 +21,7 @@
 #include "xbasic/xutility.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtx_factory.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"

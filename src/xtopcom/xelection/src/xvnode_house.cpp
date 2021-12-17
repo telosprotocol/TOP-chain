@@ -7,6 +7,7 @@
 #include "xelection/xvnode_house.h"
 #include "xmbus/xevent_behind.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xblock.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"

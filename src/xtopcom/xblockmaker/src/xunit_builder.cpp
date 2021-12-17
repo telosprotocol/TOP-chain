@@ -11,6 +11,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xfullunit.h"
+#include "xdata/xnative_contract_address.h"
 #include "xstore/xaccount_context.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xtxexecutor/xtransaction_executor.h"

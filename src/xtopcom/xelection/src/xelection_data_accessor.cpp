@@ -8,7 +8,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xelection/xdata_accessor_error.h"
 
 #include <inttypes.h>

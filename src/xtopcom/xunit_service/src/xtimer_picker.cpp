@@ -6,6 +6,7 @@
 
 #include "xdata/xemptyblock.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xunit_service/xcons_utl.h"
 #include "xvm/manager/xmessage_ids.h"
 #include "xBFT/src/xtimercertview.h"

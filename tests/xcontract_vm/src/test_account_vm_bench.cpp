@@ -5,6 +5,7 @@
 #include "xcontract_vm/xaccount_vm.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xpbase/base/top_utils.h"
 #include "xvledger/xvcanvas.h"

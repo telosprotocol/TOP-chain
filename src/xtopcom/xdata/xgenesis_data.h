@@ -4,19 +4,9 @@
 
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include "xcommon/xaddress.h"
-#include "xcommon/xsharding_info.h"
-#include <unordered_map>
-#include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
-#include "xdata/xtransaction.h"
-#include "xdata/xnative_contract_address.h"
-#include "xbase/xobject_ptr.h"
-#include "xcommon/xip.h"
+
+#include <string>
 
 namespace top { namespace data {
 

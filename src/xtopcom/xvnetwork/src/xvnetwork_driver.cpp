@@ -11,6 +11,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xbook_id_mapping.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmetrics/xmetrics.h"
 #include "xvnetwork/xvnetwork_error.h"

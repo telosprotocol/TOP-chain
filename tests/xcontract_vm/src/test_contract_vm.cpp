@@ -11,6 +11,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xpbase/base/top_utils.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"

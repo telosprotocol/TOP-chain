@@ -7,8 +7,6 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xbook_id_mapping.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xnative_contract_addr_type.h"
-#include "xrouter/xroute_helper.h"
 #include "xrouter/xrouter.h"
 #include "xvm/manager/xcontract_address_map.h"
 

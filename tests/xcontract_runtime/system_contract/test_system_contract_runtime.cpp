@@ -9,6 +9,7 @@
 #include "xcontract_vm/xaccount_vm.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xdata_common.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdb/xdb_face.h"
 #include "xdb/xdb_factory.h"

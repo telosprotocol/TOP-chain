@@ -23,6 +23,7 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"

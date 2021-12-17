@@ -6,7 +6,7 @@
 #include "xcommon/xip.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
-#include "xdata/xgenesis_data.h"
+#include "xutility/xhash.h"
 
 #include <cstdint>
 #include <cstdlib>
@@ -31,7 +31,6 @@ print_help(std::string const & executable_name) {
     std::cout << "  " << "15: edge zone index" << std::endl;
 }
 
-using namespace top::data;
 
 int main(int argc, char * argv[]) {
     std::ios_base::sync_with_stdio(false);
