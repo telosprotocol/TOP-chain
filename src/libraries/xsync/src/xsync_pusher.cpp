@@ -63,11 +63,12 @@ std::set<uint32_t>  calc_push_select(uint32_t dst_count, uint32_t random) {
 }
 
 xsync_pusher_t::xsync_pusher_t(std::string vnode_id,
-    xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender, xrole_chains_mgr_t *role_chains_mgr):
+    xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender, xrole_chains_mgr_t *role_chains_mgr, xsync_store_face_t *sync_store):
 m_vnode_id(vnode_id),
 m_role_xips_mgr(role_xips_mgr),
 m_sync_sender(sync_sender),
-m_role_chains_mgr(role_chains_mgr) {
+m_role_chains_mgr(role_chains_mgr),
+m_sync_store(sync_store) {
 
 }
 
@@ -150,7 +151,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
                 vnetwork::xvnode_address_t &target_addr = (*object)[dst_idx];
                 auto found = validator_auditor_neighbours.find(target_addr.account_address());
                 if (found == validator_auditor_neighbours.end()) {
-                    xsync_dbg("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                    xsync_info("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
                         self_addr.to_string().c_str(),
                         target_addr.to_string().c_str(),
                         block->get_height());
@@ -165,12 +166,33 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {
         std::vector<uint32_t> push_edge_arcs = calc_push_mapping(neighbor_number, edge_archive_list.size(), self_position, random);
-        xsync_dbg("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
+        xsync_info("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
             push_edge_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_edge_arcs) {
             m_sync_sender->push_newblock(block, self_addr, edge_archive_list[dst_idx]);
         }
     }
+}
+int xsync_pusher_t::get_chain_info(const vnetwork::xvnode_address_t &network_self, std::vector<xchain_state_info_t>& info_list) {
+    const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);
+    const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
+    
+    for (const auto & it : chains) {
+        const std::string & address = it.first;
+        const xchain_info_t & chain_info = it.second;
+
+        xchain_state_info_t info;
+        info.address = address;
+        info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
+        info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+        info_list.push_back(info);
+    }
+
+    xsync_info("xsync_pusher_t::get_chain_info: %s count(%d)", network_self.to_string().c_str(), info_list.size());
+    if (info_list.empty()) {
+        return 1;
+    }
+    return 0;
 }
 void xsync_pusher_t::on_timer() {
     if (m_time_rejecter.reject()){
@@ -255,10 +277,14 @@ void xsync_pusher_t::on_timer() {
                 vnetwork::xvnode_address_t &target_addr = (*object)[dst_idx];
                 auto found = validator_auditor_neighbours.find(target_addr.account_address());
                 if (found == validator_auditor_neighbours.end()) {
-                    xsync_dbg("xsync_pusher_t, send_query_archive_height, send, src=%s dst=%s",
+                    xsync_info("xsync_pusher_t, send_query_archive_height, send, src=%s dst=%s",
                         self_addr.to_string().c_str(), target_addr.to_string().c_str());
-                    xsync_query_height_t info;
-                    m_sync_sender->send_query_archive_height(info, self_addr, target_addr);
+                    //xsync_query_height_t info;
+                    std::vector<xchain_state_info_t> info_list;
+                    get_chain_info(self_addr, info_list);
+                    if (info_list.empty())
+                        break;
+                    m_sync_sender->send_query_archive_height(info_list, self_addr, target_addr);
                 } else {
                     xsync_dbg("xsync_pusher_t, send_query_archive_height, not find, src=%s dst=%s",
                         self_addr.to_string().c_str(), target_addr.to_string().c_str());
