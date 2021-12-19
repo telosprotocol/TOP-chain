@@ -1098,14 +1098,43 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
     XMETRICS_GAUGE(metrics::xsync_recv_query_archive_height, 1);
     xsync_dbg("recv_query_archive_height.");
 
-    auto ptr = make_object_ptr<xsync_query_height_t>();
+    // auto ptr = make_object_ptr<xsync_query_height_t>();
+    auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
 
     if (!(common::has<common::xnode_type_t::storage>(network_self.type()) || (common::has<common::xnode_type_t::fullnode>(network_self.type())))) {
         return;
     }
 
-    const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);
+    std::vector<xchain_state_info_t> &info_list = ptr->info_list;
+    xsync_info("xsync_handler recv_query_archive_height %" PRIx64 " wait(%ldms) count:%u %s",
+        msg_hash, get_time()-recv_time, (uint32_t)info_list.size(), from_address.to_string().c_str());
+
+    if (info_list.size() > 500) {
+        return;
+    }
+
+    std::shared_ptr<xrole_chains_t> role_chains = m_role_chains_mgr->get_role(network_self);
+    if (role_chains == nullptr) {
+        xsync_dbg("xsync_handler recv_query_archive_height network address %s is not exist", network_self.to_string().c_str());
+        return;
+    }
+
+    const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
+    std::vector<xchain_state_info_t> rsp_info_list;
+    for (auto &it: info_list) {
+        const std::string &address = it.address;
+        auto it2 = chains.find(address);
+        if (it2 == chains.end()) {
+            xsync_dbg("xsync_handler recv_query_archive_height chain address %s not exist", address.c_str());
+            continue;
+        }
+        xchain_state_info_t info;
+        info.address = address;
+        info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
+        info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+        rsp_info_list.push_back(info);
+/*    const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);
     const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
     std::vector<xchain_state_info_t> info_list;
     for (const auto & it : chains) {
@@ -1117,14 +1146,15 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
         info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
         info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
         info_list.push_back(info);
+        */
     }
 
-    xsync_info("recv_query_archive_height, send height info %s count(%d)", network_self.to_string().c_str(), info_list.size());
-    if (info_list.empty()) {
+    xsync_info("recv_query_archive_height, send height info %s count(%d)", network_self.to_string().c_str(), rsp_info_list.size());
+    if (rsp_info_list.empty()) {
         return;
     }
 
-    m_sync_sender->send_archive_height_list(info_list, network_self, from_address);
+    m_sync_sender->send_archive_height_list(rsp_info_list, network_self, from_address);
 }
 // val recv height list from arc
 void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
