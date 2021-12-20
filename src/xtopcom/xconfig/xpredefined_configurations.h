@@ -236,6 +236,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives, std::uint32_t
 // vote:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num, uint16_t, normal, 1, 1, std::numeric_limits<uint16_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_pernode_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
+
 
 // reward:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio, uint32_t, critical, 8, 0, 100);   // mean 8%
@@ -273,7 +275,9 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore, std::uint64_t, normal
 #ifdef SLASH_TEST
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_collection_interval, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(slash_interval_time_block, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block, std::uint32_t, normal, 16, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(slash_interval_table_block, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value, std::uint32_t, normal, 30, 0, 100);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit, std::uint64_t, normal, 1 * 10000, 0, 1000000); // validator credit score 0.01;
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit, std::uint64_t, normal, 1 * 10000, 0, 1000000);   // auditor credit score 0.01
@@ -282,7 +286,9 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration, std::uint64
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_collection_interval, xinterval_t, normal, 66, 0, std::numeric_limits<xinterval_t>::max()); // 11minute(just for a prime time)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block, xinterval_t, normal, 8640, 0, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(slash_interval_time_block, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block, std::uint32_t, normal, 368640, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(slash_interval_table_block, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value, std::uint32_t, normal, 10, 0, 100);
 #if defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit, std::uint64_t, normal, 1 * 30000, 0, 1000000); // validator credit score 0.03;

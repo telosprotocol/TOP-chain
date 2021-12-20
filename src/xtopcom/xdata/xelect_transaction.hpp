@@ -54,6 +54,10 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_collection_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(slash_interval_time_block);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(slash_interval_table_block);
+#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);                                 // default minimun 0.1
@@ -120,6 +124,9 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_num);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_pernode_num);
+#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio);
