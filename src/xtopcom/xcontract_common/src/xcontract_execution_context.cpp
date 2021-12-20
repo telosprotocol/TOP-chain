@@ -539,8 +539,7 @@ data::xproperty_asset xtop_contract_execution_context::asset() const {
     return asset_out;
 }
 
-xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std::error_code & ec) {
-    xcontract_execution_fee_t fee_change;
+void xtop_contract_execution_context::nonce_preprocess(std::error_code & ec) {
     auto const stage_ = consensus_action_stage();
     auto const last_nonce_ = last_nonce();
     auto const nonce_ = nonce();
@@ -561,18 +560,35 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
         if (state_nonce != last_nonce_) {
             xwarn("account nonce not matched. last nonce %" PRIu64 " state stored last noce %" PRIu64, last_nonce_, state_nonce);
             ec = error::xerrc_t::nonce_mismatch;
-            return {};
+            return;
         }
         contract_state()->latest_sendtx_nonce(nonce_);
         contract_state()->latest_sendtx_hash(hash_);
         contract_state()->latest_followup_tx_nonce(nonce_);
         contract_state()->latest_followup_tx_hash(hash_);
     }
-
-    // default action
     if (stage_ == data::xconsensus_action_stage_t::send) {
         auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
         contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num + 1);
+    } else if (stage_ == data::xconsensus_action_stage_t::recv) {
+        // left it in final pack because recv count is special
+        // auto old_recv_tx_num = contract_state()->recvtx_num();
+        // contract_state()->recvtx_num(old_recv_tx_num + 1);
+    } else if (stage_ == data::xconsensus_action_stage_t::confirm) {
+        auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
+        assert(old_unconfirm_tx_num > 0);
+        contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1);
+    } else if (stage_ == data::xconsensus_action_stage_t::self) {
+    } else {
+        assert(false);
+    }
+}
+
+xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std::error_code & ec) {
+    xcontract_execution_fee_t fee_change;
+    auto const stage_ = consensus_action_stage();
+    // default action
+    if (stage_ == data::xconsensus_action_stage_t::send) {
         fee_change = execute_default_source_action(ec);
     } else if (stage_ == data::xconsensus_action_stage_t::recv) {
         // left it in final pack because recv count is special
@@ -580,9 +596,6 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
         // contract_state()->recvtx_num(old_recv_tx_num + 1);
         fee_change = execute_default_target_action(ec);
     } else if (stage_ == data::xconsensus_action_stage_t::confirm) {
-        auto old_unconfirm_tx_num = contract_state()->unconfirm_sendtx_num();
-        assert(old_unconfirm_tx_num > 0);
-        contract_state()->unconfirm_sendtx_num(old_unconfirm_tx_num - 1);
         fee_change = execute_default_confirm_action(ec);
     } else if (stage_ == data::xconsensus_action_stage_t::self) {
         fee_change = execute_default_target_action(ec);
