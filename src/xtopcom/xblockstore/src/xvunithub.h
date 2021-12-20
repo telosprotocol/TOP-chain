@@ -114,8 +114,8 @@ namespace top
 
         public:
             virtual bool exist_genesis_block(const base::xvaccount_t & account, const int atag = 0) override;
-            virtual void create_genesis_block(const base::xvaccount_t & account, std::error_code & ec) override;
-            virtual void register_create_genesis_callback(std::function<void(base::xvaccount_t const &, std::error_code &)> cb) override;
+            virtual base::xauto_ptr<base::xvblock_t> create_genesis_block(const base::xvaccount_t & account, std::error_code & ec) override;
+            virtual void register_create_genesis_callback(std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> cb) override;
 
         public:
             // genesis connected information
@@ -158,7 +158,7 @@ namespace top
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;
-            std::function<void(base::xvaccount_t const &, std::error_code &)> m_create_genesis_block_cb;
+            std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> m_create_genesis_block_cb;
         };
 
     };//end of namespace of vstore

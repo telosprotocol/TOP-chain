@@ -486,8 +486,9 @@ TEST_F(test_genesis, test_create_genesis_block_before_init) {
 
     base::xvaccount_t account{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"};
     EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
-    m_genesis_manager->create_genesis_block(account, ec);
+    auto vblock_g = m_genesis_manager->create_genesis_block(account, ec);
     EXPECT_EQ(bool(ec), false);
+    m_blockstore->store_block(account, vblock_g.get());
 
     EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
     EXPECT_EQ(m_blockstore->get_latest_executed_block_height(account), 0);
@@ -555,48 +556,49 @@ TEST_F(test_genesis, test_init_genesis_block) {
     EXPECT_EQ(m_genesis_manager->m_genesis_accounts_data.size(), 0);
 }
 
-// TEST_F(test_genesis, test_create_genesis_block_after_init) {
-//     std::error_code ec;
-//     m_genesis_manager->init_genesis_block(ec);
-//     EXPECT_EQ(bool(ec), false);
-//     // contract account
-//     {
-//         base::xvaccount_t contract{sys_contract_rec_registration_addr};
-//         EXPECT_EQ(m_blockstore->exist_genesis_block(contract), true);
-//         m_genesis_manager->m_exist_accounts.insert(common::xaccount_address_t{contract.get_account()});
-//         m_genesis_manager->create_genesis_block(contract, ec);
-//         EXPECT_EQ(bool(ec), false);
-//         auto vblock = m_blockstore->get_genesis_block(contract);
-//         auto bstate = m_statestore->get_block_state(vblock.get());
-//         auto property_set = bstate->get_all_property_names();
-//         EXPECT_EQ(property_set.empty(), false);
-//         EXPECT_EQ(property_set.count(xstake::XPORPERTY_CONTRACT_REG_KEY), true);
-//     }
-//     // datauser account
-//     {
-//         base::xvaccount_t datauser{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"};
-//         EXPECT_EQ(m_blockstore->exist_genesis_block(datauser), true);
-//         m_genesis_manager->m_exist_accounts.insert(common::xaccount_address_t{datauser.get_account()});
-//         m_genesis_manager->create_genesis_block(datauser, ec);
-//         EXPECT_EQ(bool(ec), false);
-//         auto vblock = m_blockstore->get_genesis_block(datauser);
-//         auto bstate = m_statestore->get_block_state(vblock.get());
-//         auto property_set = bstate->get_all_property_names();
-//         EXPECT_EQ(property_set.count(XPROPERTY_BALANCE_AVAILABLE), true);
-//     }
-//     // common account
-//     {
-//         base::xvaccount_t account{"T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv"};
-//         EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
-//         m_genesis_manager->create_genesis_block(account, ec);
-//         EXPECT_EQ(bool(ec), false);
-//         EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
-//         auto vblock = m_blockstore->get_genesis_block(account);
-//         auto bstate = m_statestore->get_block_state(vblock.get());
-//         auto property_set = bstate->get_all_property_names();
-//         EXPECT_EQ(property_set.empty(), true);
-//     }
-// }
+TEST_F(test_genesis, test_create_genesis_block_after_init) {
+    std::error_code ec;
+    m_genesis_manager->init_genesis_block(ec);
+    EXPECT_EQ(bool(ec), false);
+    // contract account
+    {
+        base::xvaccount_t contract{sys_contract_rec_registration_addr};
+        EXPECT_EQ(m_blockstore->exist_genesis_block(contract), true);
+        m_genesis_manager->m_exist_accounts.insert(common::xaccount_address_t{contract.get_account()});
+        m_genesis_manager->create_genesis_block(contract, ec);
+        EXPECT_EQ(bool(ec), false);
+        auto vblock = m_blockstore->get_genesis_block(contract);
+        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto property_set = bstate->get_all_property_names();
+        EXPECT_EQ(property_set.empty(), false);
+        EXPECT_EQ(property_set.count(xstake::XPORPERTY_CONTRACT_REG_KEY), true);
+    }
+    // datauser account
+    {
+        base::xvaccount_t datauser{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"};
+        EXPECT_EQ(m_blockstore->exist_genesis_block(datauser), true);
+        m_genesis_manager->m_exist_accounts.insert(common::xaccount_address_t{datauser.get_account()});
+        m_genesis_manager->create_genesis_block(datauser, ec);
+        EXPECT_EQ(bool(ec), false);
+        auto vblock = m_blockstore->get_genesis_block(datauser);
+        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto property_set = bstate->get_all_property_names();
+        EXPECT_EQ(property_set.count(XPROPERTY_BALANCE_AVAILABLE), true);
+    }
+    // common account
+    {
+        base::xvaccount_t account{"T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv"};
+        EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
+        auto vblock_g = m_genesis_manager->create_genesis_block(account, ec);
+        m_blockstore->store_block(account, vblock_g.get());
+        EXPECT_EQ(bool(ec), false);
+        EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
+        auto vblock = m_blockstore->get_genesis_block(account);
+        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto property_set = bstate->get_all_property_names();
+        EXPECT_EQ(property_set.empty(), true);
+    }
+}
 
 TEST_F(test_genesis, test_blockstore_callback) {
     base::xvaccount_t account{"T00000LLhsJByy2XRLh1jPm7AHZ3X2CpzyxGzfoa"};
