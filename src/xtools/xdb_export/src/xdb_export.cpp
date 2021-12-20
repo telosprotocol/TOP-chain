@@ -1177,7 +1177,8 @@ void xdb_export_tools_t::set_confirmed_txinfo_to_json(json & j, const tx_ext_t &
 
 void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {
     uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp - send_txinfo.timestamp;
-    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp > send_txinfo.fire_timestamp ? confirm_txinfo.timestamp - send_txinfo.fire_timestamp : 0;
+    uint64_t adjust_tx_fire_timestamp = send_txinfo.fire_timestamp < send_txinfo.timestamp ? send_txinfo.fire_timestamp : send_txinfo.timestamp;
+    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp - adjust_tx_fire_timestamp;
 
     table_info.total_confirm_time_from_send += delay_from_send_to_confirm;
     if (delay_from_send_to_confirm > table_info.max_confirm_time_from_send) {
@@ -1187,6 +1188,7 @@ void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_inf
     if (delay_from_fire_to_confirm > table_info.max_confirm_time_from_fire) {
         table_info.max_confirm_time_from_fire = delay_from_fire_to_confirm;
     }
+    xassert(table_info.total_confirm_time_from_fire >= table_info.total_confirm_time_from_send);
 }
 
 void xdb_export_tools_t::query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json) {
