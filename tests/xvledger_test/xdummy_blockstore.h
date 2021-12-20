@@ -178,10 +178,11 @@ public:
         return false;
     }
 
-    void create_genesis_block(base::xvaccount_t const & account, std::error_code & ec) override {
+    base::xauto_ptr<base::xvblock_t> create_genesis_block(base::xvaccount_t const & account, std::error_code & ec) override {
+        return nullptr;
     }
 
-    void register_create_genesis_callback(std::function<void(base::xvaccount_t const &, std::error_code &)> cb) override {
+    void register_create_genesis_callback(std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> cb) override {
     }
     
     // genesis connected  blocks
