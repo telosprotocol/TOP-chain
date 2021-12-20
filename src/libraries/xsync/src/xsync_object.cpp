@@ -294,7 +294,15 @@ std::string xtop_sync_object::status() const {
 
     return result;
 }
-
+std::string xtop_sync_object::auto_prune_data(const std::string& prune) const {
+    std::string prune_enable = prune;
+    top::base::xstring_utl::tolower_string(prune_enable);
+    if (prune_enable == "on")
+        base::xvchain_t::instance().enable_auto_prune(true);
+    else
+        base::xvchain_t::instance().enable_auto_prune(false);    
+    return "";
+}
 std::map<std::string, std::vector<std::string>> xtop_sync_object::get_neighbors() const {
     return m_peerset->get_neighbors();
 }

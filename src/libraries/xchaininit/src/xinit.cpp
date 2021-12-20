@@ -529,7 +529,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("================================================");
     xinfo("topio start ok");
     xinfo("================================================");
-
+  
     // make block here
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));

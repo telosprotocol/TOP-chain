@@ -96,6 +96,7 @@ public:
     std::string help() const override;
     std::string status() const override;
     std::map<std::string, std::vector<std::string>> get_neighbors() const override;
+    std::string auto_prune_data(const std::string& prune) const override;
 
     void add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
     void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
