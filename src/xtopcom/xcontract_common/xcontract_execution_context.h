@@ -87,6 +87,7 @@ public:
     uint32_t last_action_recv_tx_use_send_tx_tgas() const;
     data::enum_xunit_tx_exec_status last_action_exec_status() const;
 
+    void nonce_preprocess(std::error_code & ec);
     xcontract_execution_fee_t action_preprocess(std::error_code & ec);
 
 private:

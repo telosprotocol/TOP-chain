@@ -78,6 +78,15 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     auto observed_exectx = top::make_observer(execution_context.get());
     std::error_code ec;
 
+    observed_exectx->nonce_preprocess(ec);
+    if (ec) {
+        xwarn("[xtop_action_session::xtop_action_session] nonce_preprocess failed, category: %s, msg: %s", ec.category().name(), ec.message().c_str());
+        result.status.ec = ec;
+        return result;
+    }
+
+    auto start_bin_size = observed_exectx->contract_state()->binlog_size();
+
     result.output.fee_change = observed_exectx->action_preprocess(ec);
     if (ec) {
         xwarn("[xtop_action_session::xtop_action_session] action_preprocess failed, category: %s, msg: %s", ec.category().name(), ec.message().c_str());
@@ -111,6 +120,15 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(std
     result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;
+    }
+
+    auto end_bin_size = observed_exectx->contract_state()->binlog_size();
+
+    xdbg("[xtop_action_session::xtop_action_session] op code size, %" PRIu64 " -> %" PRIu64, start_bin_size, end_bin_size);
+    if (observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::send || observed_exectx->consensus_action_stage() == data::xconsensus_action_stage_t::self) {
+        if (start_bin_size == end_bin_size) {
+            result.status.ec = error::xerrc_t::account_state_not_changed;
+        }
     }
 
     return result;
