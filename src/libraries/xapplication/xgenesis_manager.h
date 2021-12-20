@@ -32,7 +32,8 @@ public:
     /// @brief Create genesis block of the specific account.
     /// @param account Account which need to create genesis block.
     /// @param ec Log the error code.
-    void create_genesis_block(base::xvaccount_t const & account, std::error_code & ec);
+    /// @return Block created.
+    base::xauto_ptr<base::xvblock_t> create_genesis_block(base::xvaccount_t const & account, std::error_code & ec);
 
 private:
     /// @brief Create genesis block of root account.
@@ -43,24 +44,37 @@ private:
     /// @brief Create genesis block of contract account.
     /// @param account Contract account.
     /// @param ec Log the error code.
-    void create_genesis_of_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
+    /// @return Block created.
+    base::xauto_ptr<base::xvblock_t> create_genesis_of_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
 
     /// @brief Create genesis block of genesis account.
     /// @param account Genesis account.
     /// @param data Data of genesis account, which means balance.
     /// @param ec Log the error code.
-    void create_genesis_of_genesis_account(base::xvaccount_t const & account, uint64_t const data, xenum_create_src_t src, std::error_code & ec);
+    /// @return Block created.
+    base::xauto_ptr<base::xvblock_t> create_genesis_of_genesis_account(base::xvaccount_t const & account, uint64_t const data, xenum_create_src_t src, std::error_code & ec);
 
     /// @brief Create genesis block of user account who has specific data.
     /// @param account User account.
     /// @param data Data of user account which recorded in file "xchain_data_new_horizons.h".
     /// @param ec Log the error code.
-    void create_genesis_of_datauser_account(base::xvaccount_t const & account, chain_data::data_processor_t const & data, xenum_create_src_t src, std::error_code & ec);
+    /// @return Block created.
+    base::xauto_ptr<base::xvblock_t> create_genesis_of_datauser_account(base::xvaccount_t const & account,
+                                                                        chain_data::data_processor_t const & data,
+                                                                        xenum_create_src_t src,
+                                                                        std::error_code & ec);
 
     /// @brief Create genesis block of none data account.
     /// @param account Common account.
     /// @param ec Log the error code.
-    void create_genesis_of_common_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
+    /// @return Block created.
+    base::xauto_ptr<base::xvblock_t> create_genesis_of_common_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
+
+    /// @brief Store genesis block created.
+    /// @param account Account.
+    /// @param block Block to store.
+    /// @param ec Log the error code.
+    void store_block(base::xvaccount_t const & account, base::xvblock_t * block, std::error_code & ec);
 
     /// @brief Load accounts of different types.
     void load_accounts();

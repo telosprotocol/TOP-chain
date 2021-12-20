@@ -871,11 +871,14 @@ namespace top
                 //genesis block but dont have data at DB, create it ondemand
                 if (0 == target_height) {
                     std::error_code ec;
-                    store::get_vblockstore()->create_genesis_block(get_account(), ec);
+                    auto vblock = store::get_vblockstore()->create_genesis_block(get_account(), ec);
                     if (ec) {
                         xwarn(
                             "xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!", get_account().c_str(), ec.category().name(), ec.message().c_str());
                     } else {
+                        if (vblock != nullptr) {
+                            store_block(vblock.get());
+                        }
                         return 1;  // genesis always be 1 block at height(0)
                     }
                 }
@@ -1171,13 +1174,17 @@ namespace top
                 if (!genesis_index)  // if not existing at cache
                 {
                     std::error_code ec;
-                    store::get_vblockstore()->create_genesis_block(new_raw_block->get_account(), ec);
+                    auto vblock = store::get_vblockstore()->create_genesis_block(new_raw_block->get_account(), ec);
                     if (ec) {
                         xwarn("xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!",
                               new_raw_block->get_account().c_str(),
                               ec.category().name(),
                               ec.message().c_str());
                         return false;
+                    } else {
+                        if (vblock != nullptr) {
+                            store_block(vblock.get());
+                        }
                     }
                 }
             }
