@@ -4,6 +4,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <iostream>
+#include <atomic>
+#include <thread>
 #include "xvmigrate.h"
 #include "xdbmigrate.h"
 #include "xblockdb_v2.h"
@@ -100,6 +102,9 @@ namespace top
                 _src_dbstore->load_blocks(address, h, blocks);
                 // store table block to dst db
                 for (auto & block : blocks) {
+                    // reset block local flags
+                    block->reset_block_flags();
+                    block->set_block_flag(enum_xvblock_flag_authenticated);
                     _dst_blockstore->store_block(address, block.get());
                     count++;
                 }
@@ -110,6 +115,15 @@ namespace top
             uint64_t dst_db_min_height_new = get_v3_db_genesis_height(address, _dst_dbstore, _dst_blockstore);
             xinfo("db_delta_migrate_v2_to_v3_block migrated_done.address=%s,srcmeta=%s,dst_meta=%s,dst_height=%ld,count=%ld", address.get_account().c_str(),src_meta->clone_block_meta().ddump().c_str(),dst_meta_new->clone_block_meta().ddump().c_str(),dst_db_min_height_new,count);
             return true;
+        }
+
+
+        void  db_delta_migrate_v2_to_v3_addresses(const std::vector<std::string> & addresses, xblockdb_v2_t* _src_dbstore, base::xvblockstore_t* _dst_blockstore, uint64_t & total_count)
+        {
+            for (auto & addr : addresses) {
+                base::xvaccount_t _vaddr(addr);
+                db_delta_migrate_v2_to_v3_block(_vaddr, _src_dbstore, _dst_blockstore, total_count);
+            }
         }
 
         bool db_delta_migrate_v2_to_v3(const std::string & src_db_path, base::xvblockstore_t* dst_blockstore)
@@ -140,21 +154,37 @@ namespace top
             }
 
             xobject_ptr_t<xblockdb_v2_t> _vblockdb = make_object_ptr<xblockdb_v2_t>(src_dbstore.get());
-            uint64_t total_count = 0;
+            uint64_t total_count{0};
             // migrate delta table-blocks
             std::vector<std::string> all_table_addrs = data::xblocktool_t::make_all_table_addresses();
-            for (auto & addr : all_table_addrs) {
-                base::xvaccount_t _vaddr(addr);
-                db_delta_migrate_v2_to_v3_block(_vaddr, _vblockdb.get(), dst_blockstore, total_count);
+            all_table_addrs.push_back(sys_drand_addr);
+
+            const size_t THREAD_NUM = 8;
+            uint64_t thread_total_count[THREAD_NUM];
+            memset(thread_total_count, 0, sizeof(thread_total_count));
+            std::vector<std::string> thread_address[THREAD_NUM];
+            size_t thread_index = 0;
+            for (size_t i = 0; i < all_table_addrs.size(); i++) {
+                auto & addr = all_table_addrs[i];
+                thread_address[thread_index].push_back(addr);                
+                // std::cout << "db_delta_migrate_v2_to_v3 thread_index=" << thread_index << " addr=" << addr << std::endl;
+                thread_index++;
+                thread_index = thread_index % THREAD_NUM;
             }
 
-            // migrate delta drand-blocks
-            db_delta_migrate_v2_to_v3_block(base::xvaccount_t(sys_drand_addr), _vblockdb.get(), dst_blockstore, total_count);
-
-            // migrate delta tc-blocks
+            std::vector<std::thread> all_thread;
+            for (size_t i = 0; i < THREAD_NUM; i++) {
+                std::vector<std::string> addresses = thread_address[i];
+                std::thread th(db_delta_migrate_v2_to_v3_addresses, addresses, _vblockdb.get(), dst_blockstore, std::ref(thread_total_count[i]));
+                all_thread.emplace_back(std::move(th));
+            }
+            for (size_t i = 0; i < THREAD_NUM; i++) {
+                all_thread[i].join();
+                total_count += thread_total_count[i];
+            }
             int64_t end_s = base::xtime_utl::gettimeofday();
             xkinfo("db_delta_migrate_v2_to_v3 finish.total_time_s = %ld,total_count=%ld", end_s - begin_s, total_count);
-            std::cout << "db_delta_migrate_v2_to_v3 finish.total_time_s = " << end_s - begin_s << " total_count=" << total_count << std::endl;
+            std::cout << "db_delta_migrate_v2_to_v3 finish.thread = " << THREAD_NUM << " total_time_s = " << end_s - begin_s << " total_count=" << total_count << std::endl;
             return true;
         }
     
