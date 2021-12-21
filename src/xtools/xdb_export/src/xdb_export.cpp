@@ -526,7 +526,7 @@ void xdb_export_tools_t::query_meta(std::string const & account, json & result) 
     result["index_meta"]["account_flag"] = index_meta.m_account_flag;
     auto sync_meta = meta_data.clone_sync_meta();
     result["sync_meta"]["highest_genesis_connect_height"] = sync_meta._highest_genesis_connect_height;
-    result["sync_meta"]["highest_genesis_connect_hash"] = sync_meta._highest_genesis_connect_hash;
+    result["sync_meta"]["highest_genesis_connect_hash"] = base::xstring_utl::to_hex(sync_meta._highest_genesis_connect_hash);
     result["sync_meta"]["highest_sync_height"] = sync_meta._highest_sync_height;
 }
 
