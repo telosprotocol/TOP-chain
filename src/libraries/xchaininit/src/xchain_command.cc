@@ -1130,7 +1130,7 @@ int db_download(const std::string datadir, const std::string& download_addr, std
             }
         }
         pclose(output);
-        printf("file length: %lu\n", file_length);
+        printf("file length: %llu\n", static_cast<unsigned long long>(file_length));
         if (file_length == 0) {
             return 0;
         }
@@ -1141,7 +1141,7 @@ int db_download(const std::string datadir, const std::string& download_addr, std
         printf("get free space fail: %s\n", datadir.c_str());
         return 0;
     }
-    printf("free space: %lu\n", free_space);
+    printf("free space: %llu\n", static_cast<unsigned long long>(free_space));
     if (free_space < file_length / 2 * 3) {
         printf("No enough free disk space.\n");
         return 0;
