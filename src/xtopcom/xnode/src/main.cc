@@ -31,6 +31,7 @@
 #include "topio_setproctitle.h"
 #include "safebox_http.h"
 #include "CLI11.hpp"
+#include "xnode/xconfig.h"
 
  // nlohmann_json
  #include <nlohmann/json.hpp>
@@ -1201,17 +1202,12 @@ int StartNodeWithConfig(config_t& config) {
         std::cout << "empty config_file for topio(xtopchain mode)" << std::endl;
         return -1;
     }
-    std::cout << "###################start topio with xtopchain mode##################" << std::endl;
+    std::cout << "======================================================start topio in xtopchain mode===================================================================" << std::endl;
     config.so_func_name = "init_component";
     return load_lib(config);
 }
 
 int StartNode(config_t& config) {
-    if (!config.config_file.empty()) {
-        // xtopchain mode
-        return StartNodeWithConfig(config);
-    }
-
     if (check_process_running(config.pid_file)) {
         std::cout << "topio already running, Aborting!" << std::endl;
         return -1;
@@ -1224,10 +1220,32 @@ int StartNode(config_t& config) {
     }
 
 
-    if (!load_keystore(config)) {
-        //std::cout << "decrypt_keystore failed, exit" << std::endl;
-        return -1;
+    if (config.config_file.empty()) { //load from keystore
+        if (!load_keystore(config)) {
+                //std::cout << "decrypt_keystore failed, exit" << std::endl;
+                return -1;
+        }
+
+        if (!config.genesis) {
+            // check miner info
+            config.so_func_name = "check_miner_info";
+            int miner_status = load_lib(config);
+            if (miner_status != 0) {
+                // check miner info not ok: not registered or pub key not matched
+                std::cout << "Start node failed." << std::endl;
+                return false;
+            }
+        }
+
+    } else { //read from config
+        auto & topio_config = top::topio::xtopio_config_t::get_instance();
+        topio_config.load_config_file(config.config_file);
+        config.node_id =  topio_config.get_string("node_id");
+        config.pub_key = topio_config.get_string("public_key");
+        std::cout << "node_id: " << config.node_id << "\n";
+        std::cout << "public_key: " << config.pub_key << "\n";
     }
+
 
 #ifdef DEBUG
     std::cout << "datadir:       " << config.datadir << std::endl
@@ -1235,16 +1253,19 @@ int StartNode(config_t& config) {
         << "public_key:    " << config.pub_key << std::endl;
 #endif
 
+    generate_extra_config(config);
 
-    if (!config.genesis) {
-        // check miner info
-        config.so_func_name = "check_miner_info";
-        int miner_status = load_lib(config);
-        if (miner_status != 0) {
-            // check miner info not ok: not registered or pub key not matched
-            std::cout << "Start node failed." << std::endl;
-            return false;
+    // judge if using config file
+    if (!config.config_file.empty()) {
+        // using config
+        int res = StartNodeWithConfig(config);
+        if (res != 0) {
+            std::cout << "Start node failed!\n";
+            return res;
         }
+
+        std::cout << "Start node successfully.\n";
+        return 0;
     }
 
     if (config.daemon) {
@@ -1269,8 +1290,6 @@ int StartNode(config_t& config) {
     out_pid.flush();
     out_pid.close();
     pid_file = config.pid_file;
-
-    generate_extra_config(config);
 
     config.so_func_name = "init_noparams_component";
     if (!config.multiple_process) {

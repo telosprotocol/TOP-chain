@@ -169,7 +169,7 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON"
         echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (all fork points are forked BY DEFAULT)"
     ;;
-    metrics_dataobject) 
+    metrics_dataobject)
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_METRICS_DATAOBJECT=ON"
         echo "BUILD WITH ENABLE_METRICS_DATAOBJECT"
     ;;

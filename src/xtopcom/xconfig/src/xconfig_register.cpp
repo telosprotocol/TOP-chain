@@ -95,7 +95,6 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(ip);
     XADD_OFFCHAIN_PARAMETER(root_hash);
 
-    XADD_OFFCHAIN_PARAMETER(platform_first_node);
     XADD_OFFCHAIN_PARAMETER(platform_business_port);
     XADD_OFFCHAIN_PARAMETER(platform_public_endpoints);
     XADD_OFFCHAIN_PARAMETER(platform_url_endpoints);
@@ -150,6 +149,17 @@ void xconfig_register_t::dump() {
     m_param_lock.release_read();
     std::cout << "=======config dump end======" << std::endl;
 }
+
+ void xconfig_register_t::log_dump() const {
+    xinfo("xconfig_register_t::log_dump");
+    xinfo("=======================current load config dump start=============================");
+    m_param_lock.lock_read();
+    for (const auto& entry : m_params_map) {
+        xinfo("%s : %s", entry.first.c_str(), entry.second.c_str());
+    }
+    m_param_lock.release_read();
+    xinfo("=======================current load config dump end=============================");
+ }
 
 size_t xconfig_register_t::size() {
     m_param_lock.lock_read();

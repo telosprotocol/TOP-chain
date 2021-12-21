@@ -22,10 +22,9 @@ LocalNodeInfo::LocalNodeInfo() {
 LocalNodeInfo::~LocalNodeInfo() {
 }
 
-bool LocalNodeInfo::Init(const std::string & local_ip, uint16_t local_port, bool first_node, base::KadmliaKeyPtr kadmlia_key) {
+bool LocalNodeInfo::Init(const std::string & local_ip, uint16_t local_port, base::KadmliaKeyPtr kadmlia_key) {
     local_ip_ = local_ip;
     local_port_ = local_port;
-    first_node_ = first_node;
     kadmlia_key_ = kadmlia_key;
     if (true) {
         public_ip_ = local_ip_;
@@ -46,7 +45,6 @@ void LocalNodeInfo::Reset() {
     kadmlia_key_ = nullptr;
     local_ip_ = "";
     local_port_ = 0;
-    first_node_ = false;
     public_ip_ = "";
     public_port_ = 0;
 }

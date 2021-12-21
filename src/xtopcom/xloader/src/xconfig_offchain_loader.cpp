@@ -58,7 +58,7 @@ bool xconfig_offchain_loader_t::fetch_all(std::map<std::string, std::string>& ma
         }
         bool ret = reader.parse(config_content, json_root);
         if (!ret) {
-            std::cout << "parse config file " << config_content << " failed" << std::endl;
+            std::cout << "parse config file " << m_config_file << " failed" << std::endl;
             return false;
         }
     }

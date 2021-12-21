@@ -75,13 +75,6 @@ RootRoutingTable::RootRoutingTable(std::shared_ptr<transport::Transport> transpo
 // }
 
 bool RootRoutingTable::Init() {
-    // first node will directly set public ip:port
-    // other nodes need to set this value after bootstrap response.
-    if (get_local_node_info()->first_node()) {
-        get_local_node_info()->set_public_ip(get_local_node_info()->local_ip());
-        get_local_node_info()->set_public_port(get_local_node_info()->local_port());
-    }
-
     {
         std::unique_lock<std::mutex> lock_hash(node_hash_map_mutex_);
         NodeInfoPtr node_ptr;
@@ -213,6 +206,11 @@ int RootRoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>>
         return kKadFailed;
     }
 
+    for (auto & kv : boot_endpoints) {
+        std::string endpoint_ip_port = kv.first + ":" + std::to_string(kv.second);
+        m_endpoint_ip_port.insert(endpoint_ip_port);
+    }
+
     int retried_times = 0;
     uint32_t wait_time = 4;
     // while (retried_times < kJoinRetryTimes) {
@@ -269,7 +267,7 @@ bool RootRoutingTable::SetJoin(const std::string & boot_id, const std::string & 
     joined_ = true;
     set_bootstrap_id(boot_id);
     set_bootstrap_ip(boot_ip);
-    set_bootstrap_port(boot_port);
+    set_bootstrap_port(boot_port);    
     xinfo("SetJoin(%s:%d-%s) success", boot_ip.c_str(), boot_port, boot_id.c_str());
     return true;
 }
@@ -300,7 +298,7 @@ void RootRoutingTable::SendToNClosestNode(transport::protobuf::RoutingMessage & 
         return;
     }
 
-    if (!get_local_node_info()->first_node() && !joined_) {
+    if (!joined_) {
         return;
     }
 
@@ -429,7 +427,7 @@ void RootRoutingTable::SetFindNeighbourIntervalKeepOrMid() {
 }
 
 void RootRoutingTable::FindNeighbours() {
-    if (destroy_) {
+    if (destroy_ || !joined_) {
         return;
     }
 
@@ -548,10 +546,6 @@ int RootRoutingTable::AddNode(NodeInfoPtr node) {
         no_lock_for_use_nodes_ = std::make_shared<std::vector<NodeInfoPtr>>(nodes());
     }
 
-    std::unique_lock<std::mutex> lock(joined_mutex_);
-    if (!joined_) {
-        joined_ = true;
-    }
     return kKadSuccess;
 }
 
@@ -1201,6 +1195,13 @@ bool RootRoutingTable::IsDestination(const std::string & des_node_id, bool check
 
 void RootRoutingTable::HandleFindNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     xdbg("bluefindnodes from %s %s:%d", HexSubstr(message.src_node_id()).c_str(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
+    
+    if (!joined_) {
+        // forbidden handle bootstrap request when offline or self not join network yet
+        TOP_WARN("forbidden HandleBootstrapJoinRequest when offline or self not join network yet");
+        return;
+    }
+    
     if (message.des_node_id() != get_local_node_info()->kad_key()) {
         xwarn("find nodes must direct![des: %s] [local: %s] [msg.src: %s] [msg.is_root: %d]",
               (message.des_node_id()).c_str(),
@@ -1444,11 +1445,16 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
                  packet.get_from_ip_port());
         }
 
-        if (!joined_) {
-            if (!SetJoin(message.src_node_id(), handshake.public_ip(), handshake.public_port())) {
-                xinfo("ignore BootstrapJoinResponse because this node already joined");
-            }
-        }
+        // if (!joined_) {
+        //     if (!SetJoin(message.src_node_id(), handshake.public_ip(), handshake.public_port())) {
+        //         xinfo("ignore BootstrapJoinResponse because this node already joined");
+        //     }
+        // }
+        return;
+    }
+
+    if (!joined_) {
+        TOP_WARN("forbidden kHandshakeRequest when offline or self not join network yet");
         return;
     }
 
@@ -1494,6 +1500,12 @@ void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMe
         return;
     }
 
+    if (!joined_ && m_endpoint_ip_port.find(packet.get_from_ip_addr() + ":" + std::to_string(packet.get_from_ip_port())) == m_endpoint_ip_port.end()) {
+        // forbidden handle bootstrap request when offline or self not join network yet
+        TOP_WARN("forbidden HandleBootstrapJoinRequest when offline or self not join network yet");
+        return;
+    }
+
     NodeInfoPtr node_ptr;
     node_ptr.reset(new NodeInfo(message.src_node_id()));
     node_ptr->public_ip = packet.get_from_ip_addr();
@@ -1502,12 +1514,6 @@ void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMe
     node_ptr->xid = join_req.xid();
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
     SendBootstrapJoinResponse(message, packet);
-
-    if (!joined_) {
-        // forbidden handle bootstrap request when offline or self not join network yet
-        TOP_WARN("forbidden HandleBootstrapJoinRequest when offline or self not join network yet");
-        return;
-    }
 
     xdbg("[%llu] get node(%s:%d-%llu)", get_local_node_info()->service_type().value(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
     if (AddNode(node_ptr) == kKadSuccess) {

@@ -23,7 +23,7 @@ public:
     LocalNodeInfo();
     ~LocalNodeInfo();
 
-    bool Init(const std::string & local_ip, uint16_t local_port, bool first_node, base::KadmliaKeyPtr kadmlia_key);
+    bool Init(const std::string & local_ip, uint16_t local_port, base::KadmliaKeyPtr kadmlia_key);
     void Reset();
     std::string kad_key();
     std::string root_kad_key();
@@ -33,12 +33,6 @@ public:
     }
     uint16_t local_port() {
         return local_port_;
-    }
-    bool first_node() {
-        return first_node_;
-    }
-    void set_first_node(bool first_node) {
-        first_node_ = first_node;
     }
     std::string public_ip() {
         std::unique_lock<std::mutex> lock(public_mutex_);
@@ -95,7 +89,6 @@ private:
     uint16_t local_port_{0};
     uint16_t rpc_http_port_{0};
     uint16_t rpc_ws_port_{0};
-    bool first_node_{false};
     std::mutex public_mutex_;
     std::string public_ip_;
     uint16_t public_port_{0};

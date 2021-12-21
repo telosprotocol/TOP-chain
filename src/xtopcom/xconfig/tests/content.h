@@ -20,7 +20,6 @@ const char * config_content = R"({
     "public_key": "AqlqnzLxVyy7sT6/GYk1oc3RhbBGAqcI57pvQfy7cds3",
     "sign_key": "8wEE4qlZplj1gjp1Pndl/Jm2ESp/M2QUQvD3vG1EpMo=",
     "platform":{
-        "first_node" : false,
         "http_test" : false,
         "http_port" : 8101,
         "business_port" : 9101,

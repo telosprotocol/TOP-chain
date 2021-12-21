@@ -37,9 +37,8 @@
     "fullnode_start_nodes": "T00000LcgRxQUB9yxpQESEABw9LitLnKykbhiQko.0.BMGtv0AcFM/hF3kRAYqEEmcLZFOINBdq82Hwaiz0+NPJNj3m5ZKEyjffbfuOS3vuiGEhnIpHWnfn0lznpdXW6PA=",
     "chain_name": "galileo",
     "platform": {
-        "first_node": false,
         "business_port": 9106,
-        "public_endpoints": "127.0.0.1:9000",
+        "public_endpoints": "127.0.0.1:9000,127.0.0.1:9002,127.0.0.1:9003,127.0.0.1:9004",
         "show_cmd": false
     }
 }
