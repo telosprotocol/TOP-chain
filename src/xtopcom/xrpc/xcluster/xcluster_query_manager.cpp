@@ -192,7 +192,7 @@ void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
         jv["first_timerblock_hash"] = bp->get_block_hash_hex_str();
         jv["first_timerblock_stamp"] = static_cast<xJson::UInt64>(bp->get_timestamp());
     }
-    jv["init_total_locked_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token));
+    jv["init_total_locked_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit));
     jv["total_gas_shard"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));
     jv["validator_group_count"] = XGET_CONFIG(validator_group_count);
     auto onchain_total_lock_tgas_token = store::xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();

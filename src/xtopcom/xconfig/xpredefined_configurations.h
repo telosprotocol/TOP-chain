@@ -348,15 +348,30 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle, xinterval_t, normal, 
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle, xinterval_t, normal, 24 * 60 * 6, 1, std::numeric_limits<xinterval_t>::max());
 #endif
+
+#ifdef ENABLE_SCALE
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval, xinterval_t, normal, 2 * 6, 1, std::numeric_limits<xinterval_t>::max());
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval, xinterval_t, normal, 24 * 60 * 6, 1, std::numeric_limits<xinterval_t>::max());
+#endif
+
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit, uint32_t, normal, ASSET_uTOP(100000), 1, std::numeric_limits<uint32_t>::max());
 #ifdef ENABLE_SCALE
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_staked_delay_time, xinterval_t, normal, 6, 1, std::numeric_limits<xinterval_t>::max());
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_staked_delay_time, xinterval_t, normal, 24 * 60 * 6, 1, std::numeric_limits<xinterval_t>::max());
 #endif
+
+#ifdef ENABLE_SCALE
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_deposit_delay_time, xinterval_t, normal, 6, 1, std::numeric_limits<xinterval_t>::max());
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_deposit_delay_time, xinterval_t, normal, 24 * 60 * 6, 1, std::numeric_limits<xinterval_t>::max());
+#endif
+
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account, uint64_t, normal, 1000000, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_contract, uint64_t, normal, 50000000, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token, uint64_t, normal, ASSET_TOP(1000000000), 1, std::numeric_limits<uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit, uint64_t, normal, ASSET_TOP(1000000000), 1, std::numeric_limits<uint64_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num, std::uint32_t, critical, 21, 1, std::numeric_limits<uint32_t>::max());
 
