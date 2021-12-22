@@ -3,7 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xsync/xsync_store.h"
+
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_log.h"
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_store_shadow.h"
