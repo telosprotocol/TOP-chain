@@ -590,7 +590,13 @@ bool check_process_running(const std::string &pid_file) {
     bzero(buff, sizeof(buff));
     in_pid.getline(buff, 16);
     in_pid.close();
-    uint32_t topio_pid = std::stoi(std::string(buff));
+    uint32_t topio_pid;
+    try {
+        topio_pid = std::stoi(std::string(buff));
+    } catch(...) {
+        std::cout << "topio.pid error." << std::endl;
+        return false;
+    }
 
     // kill 0 test process running or not
     if (kill(topio_pid, 0) == -1) {
