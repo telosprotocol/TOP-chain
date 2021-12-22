@@ -145,7 +145,7 @@ void get_block_handle::getGeneralInfos() {
     xJson::Value j;
     j["shard_num"] = XGET_CONFIG(validator_group_count);
     j["shard_gas"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));
-    j["init_pledge_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token));
+    j["init_pledge_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit));
     j["genesis_time"] = static_cast<xJson::UInt64>(xrootblock_t::get_rootblock()->get_cert()->get_gmtime());
     auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
     j["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
