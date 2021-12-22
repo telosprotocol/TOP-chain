@@ -98,11 +98,20 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval); // new name of 'usedgas_decay_cycle'
+#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_staked_delay_time);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_deposit_delay_time);
+#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_contract);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit);
+#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_name_max_len);
