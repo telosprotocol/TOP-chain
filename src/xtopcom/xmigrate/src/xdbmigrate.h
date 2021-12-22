@@ -3,8 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <thread>
 #include "../xvmigrate.h"
 #include "xvledger/xvdbstore.h"
+#include "xvledger/xvdbfilter.h"
 #include "xdb/xdb_face.h"
 
 namespace top
@@ -69,6 +71,7 @@ namespace top
         public:
             static const char* get_register_key(){return "/init/migrate/db";}
             static bool  db_scan_callback(const std::string& key, const std::string& value,void*cookie);
+            static bool  db_scan_callback_with_multi_thread(const std::string& key, const std::string& value,void*cookie);
         protected:
             xdbmigrate_t();
             virtual ~xdbmigrate_t();
@@ -83,7 +86,13 @@ namespace top
             virtual bool  close(bool force_async = true)    override;//close module
         protected:
             virtual bool  run(const int32_t cur_thread_id,const uint64_t timenow_ms) override;//process
-            bool  db_scan_callback(const std::string& key, const std::string& value);
+            bool          db_scan_callback(const std::string& key, const std::string& value);
+            void          scan_key_without_multi_thread();
+            void          scan_key_with_multi_thread();
+            bool          db_scan_callback_with_multi_thread(const std::string& key, const std::string& value);            
+            void          thread_process_dbevent(uint32_t thread_index);
+            size_t        thread_dbevent_set(uint32_t thread_index, xdbevent_t* dbevent);
+            std::vector<xdbevent_t*> thread_dbevent_get(uint32_t thread_index);
         private:
             xmigratedb_t*             m_src_store_ptr;//source db
             xmigratedb_t*             m_dst_store_ptr;//target db
@@ -91,6 +100,13 @@ namespace top
             uint64_t                  m_scaned_keys_num{0};
             uint64_t                  m_total_keys_num{0};
             std::string               m_dst_db_version;
+            const static uint32_t     THREAD_NUM{8};
+            uint32_t                  m_thread_index_set{0};
+            std::mutex                th_locks[THREAD_NUM];
+            std::vector<xdbevent_t*> th_dbevents[THREAD_NUM];
+            std::vector<std::thread> all_thread;
+            std::atomic<bool>         b_key_scan_finish{false};
+            std::atomic<uint32_t>     m_processed_count{0};
         };
     
         template<uint32_t migrate_version>
