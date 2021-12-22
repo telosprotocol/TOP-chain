@@ -775,7 +775,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             ((data::xblock_t*)local_block)->dump_header().c_str());
         return false;
     }
-    if (local_block->get_cert()->get_hash_to_sign() != proposal_block->get_cert()->get_hash_to_sign()) {
+    if(!local_block->get_cert()->is_equal(*proposal_block->get_cert())){
         xerror("xtable_maker_t::verify_proposal_with_local fail-cert hash not match. proposal:%s local:%s",
             ((data::xblock_t*)proposal_block)->dump_cert().c_str(),
             ((data::xblock_t*)local_block)->dump_cert().c_str());

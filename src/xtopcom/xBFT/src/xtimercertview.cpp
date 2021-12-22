@@ -369,8 +369,9 @@ void xconspacemaker_t::on_timeout_stage2(base::xvblock_t *vote) {
     auto sign = get_vcertauth()->do_sign(xip_addr, vote, base::xtime_utl::get_fast_random64());
     vote->set_verify_signature(sign);
     XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_tc, 1);
+    #ifdef DEBUG
     xassert(get_vcertauth()->verify_sign(xip_addr, vote) == base::enum_vcert_auth_result::enum_successful);
-
+    #endif
     base::xauto_ptr<xtimeout_msg_t> msg = new xtimeout_msg_t{vote};
 
     std::string msg_stream;

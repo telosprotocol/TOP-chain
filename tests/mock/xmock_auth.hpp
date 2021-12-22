@@ -42,6 +42,11 @@ public:
         return bin + random_seed_string;
     }
 
+    const std::string do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,
+                              const uint64_t random_seed, const std::string sign_hash) override {
+        return do_sign(signer, sign_for_cert, random_seed);
+    }
+
     const std::string do_sign(const xvip2_t & signer,const base::xvblock_t * sign_for_block,const uint64_t random_seed) override {
         return do_sign(signer, sign_for_block->get_cert(), random_seed);
     }
@@ -49,6 +54,11 @@ public:
     base::enum_vcert_auth_result verify_sign(const xvip2_t & signer,const base::xvqcert_t * test_for_cert,const std::string & block_account) override {
         return base::enum_vcert_auth_result::enum_successful;
     }
+
+    base::enum_vcert_auth_result verify_sign(const xvip2_t & signer,const xvqcert_t * test_for_cert,
+                                             const std::string & block_account, const std::string sign_hash) override {
+        return base::enum_vcert_auth_result::enum_successful;
+    } 
 
     base::enum_vcert_auth_result verify_sign(const xvip2_t & signer,const base::xvblock_t * test_for_block) override {
         return base::enum_vcert_auth_result::enum_successful;

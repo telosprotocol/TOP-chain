@@ -343,10 +343,10 @@ namespace top
             }
         }
 
-        std::string  xvblockbuild_t::build_mpt_root(const std::vector<std::string> & elements)
+        std::string  xvblockbuild_t::build_mpt_root(const std::vector<std::string> & elements ,bool leaf_hash)
         {
-            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle; // TODO(jimmy)
-            std::string root = merkle.calc_root(elements);
+            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(elements, leaf_hash); // TODO(jimmy)
+            std::string root = merkle.calc_root_hash(elements, leaf_hash);
             xassert(!root.empty());
             return root;
         }
@@ -917,29 +917,34 @@ namespace top
 #endif
             std::string parent_cert_bin;
             parent->get_cert()->serialize_to_string(parent_cert_bin);
-            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
-            for (auto & _unit : units) {
-                if (!_unit->get_cert()->get_extend_cert().empty()) { // already set extend cert
+            xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
+            if(xvblock_fork_t::is_block_match_version(parent->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
+                merkle.calc_root_hash(out_leafs, false);
+            }else{
+                merkle.calc_root_hash(out_leafs);
+            }
+            
+            for(unsigned int leaf_index = 0; leaf_index < out_leafs.size(); leaf_index++){
+                if (!units[leaf_index]->get_cert()->get_extend_cert().empty()) { // already set extend cert
                     xassert(false);
                     return true;
                 }
-                std::string _leaf = get_table_out_merkle_leaf(_unit.get());
+                auto const &_leaf = out_leafs[leaf_index];
                 base::xmerkle_path_256_t path;
                 bool ret = xvblockmaker_t::calc_merkle_path(_leaf, path, merkle);
                 if (!ret) {
                     xerror("xvtableblock_maker_t::units_set_parent_cert fail calc merkle path");
                     return false;
                 }
-
-                _unit->set_extend_cert(parent_cert_bin);
+                units[leaf_index]->set_extend_cert(parent_cert_bin);
 
                 base::xstream_t _stream(base::xcontext_t::instance());
                 path.serialize_to(_stream);
                 std::string extend_data = std::string((char *)_stream.data(), _stream.size());
-                _unit->set_extend_data(extend_data);
+                units[leaf_index]->set_extend_data(extend_data);
 
-                _unit->set_block_flag(base::enum_xvblock_flag_authenticated);
-                xassert(!_unit->get_block_hash().empty());
+                units[leaf_index]->set_block_flag(base::enum_xvblock_flag_authenticated);
+                xassert(!units[leaf_index]->get_block_hash().empty());
             }
             return true;
         }
@@ -1021,7 +1026,12 @@ namespace top
             if (output_leafs.empty()) {
                 return true;
             }
-            std::string root_hash = build_mpt_root(output_leafs);
+            std::string root_hash;
+            if(xvblock_fork_t::is_block_match_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
+                root_hash = build_mpt_root(output_leafs, false);
+            } else {
+                root_hash = build_mpt_root(output_leafs);
+            }
             if (root_hash.empty()) {
                 xassert(false);
                 return false;
