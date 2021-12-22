@@ -4,6 +4,7 @@
 #include "xstake/xstake_algorithm.h"
 
 #include "xbasic/xutility.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, xstake)
@@ -304,9 +305,18 @@ int32_t xslash_info::do_read(base::xstream_t & stream) {
 
 void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
     uint64_t slash_numerator{0};
+    uint64_t config_min{0};
     if (common::has<common::xnode_type_t::validator>(node_type)) {
-        slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(backward_validator_slash_credit);
-        auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
+        auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+        if (!chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.onchain_parameter_name_fork_point, logic_clock)) {
+            slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(backward_validator_slash_credit);
+            config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
+        } else {
+            slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_slash_creditscore );
+            config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
+        }
+
         if (slash_numerator > m_validator_credit_numerator) {
             xwarn("[slash_credit_score] slash validator credit to min!");
             m_validator_credit_numerator = config_min;
@@ -320,8 +330,16 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
 
 
     } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
-        slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(backward_auditor_slash_credit);
-        auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
+        auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+        if (!chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.onchain_parameter_name_fork_point, logic_clock)) {
+            slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(backward_auditor_slash_credit);
+            config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
+        } else {
+            slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_slash_creditscore);
+            config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
+        }
+
         if (slash_numerator > m_auditor_credit_numerator) {
             xwarn("[slash_credit_score] slash auditor credit to min!");
             m_auditor_credit_numerator = config_min;
@@ -340,7 +358,13 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
 void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     uint64_t award_numerator{0};
     if (common::has<common::xnode_type_t::validator>(node_type)) {
-        award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit);
+        auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+        if (!chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.onchain_parameter_name_fork_point, logic_clock)) {
+            award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit);
+        } else {
+            award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
+        }
         m_validator_credit_numerator += award_numerator;
         if (m_validator_credit_numerator > m_validator_credit_denominator) {
             xwarn("[award_credit_score] award validator credit up to max!");
@@ -349,7 +373,13 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
         }
 
     } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
-        award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
+        auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
+        if (!chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.onchain_parameter_name_fork_point, logic_clock)) {
+            award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
+        } else {
+            award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
+        }
         m_auditor_credit_numerator += award_numerator;
         if (m_auditor_credit_numerator > m_auditor_credit_denominator) {
             xwarn("[award_credit_score] award auditor credit up to max!");

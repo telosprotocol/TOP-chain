@@ -70,6 +70,19 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(backward_node_lock_duration_increment);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration);
 #if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_slash_threshold_value);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_slash_threshold_value);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);                        // default minimun 0.1
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(validator_slash_creditscore);            // validator credit score 0.1
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(auditor_slash_creditscore);              // auditor credit score 0.1
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_awardcredit_threshold_value);  // award node persent
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_awardcredit_threshold_value);          // award node vote
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);                     // validator credit score 0.03;
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);                       // auditor credit score 0.03
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(slash_nodedeposit_lock_duration_increment);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(slash_max_nodedeposit_lock_duration);
+#endif
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
 #endif
 
