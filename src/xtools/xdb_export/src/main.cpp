@@ -42,8 +42,8 @@ void usage() {
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db new_path" << std::endl;
-    std::cout << "        - parse_db new_path" << std::endl;
+    std::cout << "        - check_archive_db <new_path>" << std::endl;
+    std::cout << "        - parse_db <new_path>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -72,7 +72,8 @@ int main(int argc, char ** argv) {
         }
     }
 #ifdef XDB_EXPORT_LOG
-    xinit_log("./xdb_export.log", true, true);
+    mkdir("log", 0750);
+    xinit_log("./log/xdb_export.log", true, true);
     xset_log_level(enum_xlog_level_debug);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
@@ -113,7 +114,7 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         tools_v3.query_archive_db();
         return 0;
-    } 
+    }
     if (function_name == "parse_db") {
         if (argc != 4) {
             usage();
@@ -125,7 +126,10 @@ int main(int argc, char ** argv) {
         mkdir(dir.c_str(), 0750);
         tools_v3.set_outfile_folder(dir);
         auto const & table_account_vec = tools_v3.get_table_accounts();
+        auto t1 = base::xtime_utl::time_now_ms();
         tools_v3.query_table_unit_info(table_account_vec);
+        auto t2 = base::xtime_utl::time_now_ms();
+        std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
         return 0;
     }
 
