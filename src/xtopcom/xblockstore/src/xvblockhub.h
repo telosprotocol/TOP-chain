@@ -18,7 +18,7 @@ namespace top
         class xblockacct_t : public xvblockplugin_t
         {
         protected:
-            enum{enum_max_cached_blocks = 32};
+            enum{enum_max_cached_blocks = 16};
         public:
             uint64_t            get_latest_cert_block_height() const {return m_meta->_highest_cert_block_height;}
 

@@ -65,7 +65,7 @@ namespace top
                 m_last_access_time_ms = last_access_time;
         }
         
-        bool xvactplugin_t::is_live(const uint64_t timenow_ms)
+        bool xvactplugin_t::is_live(const uint64_t timenow_ms, const uint64_t idle_timeout_ms)
         {
             if(is_closing() || is_close() )
                 return false;
@@ -74,7 +74,8 @@ namespace top
                 return true;
             
             const uint64_t last_time_ms = m_last_access_time_ms;
-            if( timenow_ms > (last_time_ms + m_idle_timeout_ms) )
+            uint64_t idle_timeout_ms_tmp = (idle_timeout_ms == 0) ? m_idle_timeout_ms : idle_timeout_ms;
+            if( timenow_ms > (last_time_ms + idle_timeout_ms_tmp) )
                 return false;
             
             return true;

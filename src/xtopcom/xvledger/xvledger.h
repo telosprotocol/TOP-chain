@@ -109,7 +109,7 @@ namespace top
             bool                    set_index_meta(const xindxmeta_t & new_meta);
             
         private: //only open for table object
-            virtual bool            is_live(const uint64_t timenow_ms) override;//test whether has been idel status
+            virtual bool            is_live(const uint64_t timenow_ms, const uint64_t idle_timeout_ms) override;//test whether has been idel status
             virtual bool            close(bool force_async = true) override;
             virtual bool            stop(); //convert to closing status if possible
             //return status of currently,return true when it is idled
@@ -185,6 +185,8 @@ namespace top
             virtual bool               on_process_close();//send process_close event to every objects
         private:
             xspinlock_t&               get_spin_lock()  {return m_spin_lock;}
+
+            uint64_t                   calculate_plugin_idle_timeout_ms() const;
             
         private:
             std::recursive_mutex   m_lock;
