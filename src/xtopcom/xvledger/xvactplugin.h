@@ -57,6 +57,7 @@ namespace top
             //test whether has been idle status
             inline bool             is_closing() const {return (m_is_closing != 0);}
             virtual bool            is_live(const uint64_t timenow_ms) override;
+            bool                    is_timeout(const uint64_t timenow_ms, const uint64_t idle_timeout_ms) const;
             
         protected: //for generel purpose we place all kind of APIs ,but each plugin may just has 0 or 1 ptr
             virtual const xblockmeta_t*     get_block_meta() const {return NULL;}

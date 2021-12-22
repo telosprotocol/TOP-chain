@@ -185,6 +185,8 @@ namespace top
             virtual bool               on_process_close();//send process_close event to every objects
         private:
             xspinlock_t&               get_spin_lock()  {return m_spin_lock;}
+
+            uint64_t                   calculate_plugin_idle_timeout_ms() const;
             
         private:
             std::recursive_mutex   m_lock;

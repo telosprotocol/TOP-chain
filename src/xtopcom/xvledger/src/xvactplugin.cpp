@@ -73,11 +73,16 @@ namespace top
             if(get_refcount() > 2) //note: table & account may hold each reference. so other holding if > 2
                 return true;
             
+            return false;
+        }
+
+        bool xvactplugin_t::is_timeout(const uint64_t timenow_ms, const uint64_t idle_timeout_ms) const {
             const uint64_t last_time_ms = m_last_access_time_ms;
-            if( timenow_ms > (last_time_ms + m_idle_timeout_ms) )
-                return false;
-            
-            return true;
+            uint64_t idle_timeout_ms_tmp = (idle_timeout_ms == 0) ? m_idle_timeout_ms : idle_timeout_ms;
+            if( timenow_ms > (last_time_ms + idle_timeout_ms_tmp) ) {
+                return true;
+            }
+            return false;
         }
         
         xvstateplugin_t::xvstateplugin_t(xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms)

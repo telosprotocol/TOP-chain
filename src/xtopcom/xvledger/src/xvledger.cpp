@@ -994,11 +994,32 @@ namespace top
             }
             return true;
         }
+
+        uint64_t xvtable_t::calculate_plugin_idle_timeout_ms() const {
+            auto plugins_size = m_monitor_plugins.size();
+            if (plugins_size > 6000) {
+                return 10000;
+            } else if (plugins_size > 5000) {
+                return 12000;
+            } else if (plugins_size > 4000) {
+                return 15000;
+            } else if (plugins_size > 3000) {
+                return 20000;
+            } else if (plugins_size > 2000) {
+                return 30000;
+            } else if (plugins_size > 1500) {
+                return 40000;
+            } else if (plugins_size > 1200) {
+                return 50000;
+            }
+            return base::enum_plugin_idle_timeout_ms;
+        }
         
         bool   xvtable_t::on_timer_for_plugins(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms)
         {
             std::deque<xvactplugin_t*> _remonitor_list;
             
+            auto idle_timeout_ms = calculate_plugin_idle_timeout_ms();
             int   expired_items_count = 0;
             auto  expire_it = m_monitor_plugins.begin();
             while(expire_it != m_monitor_plugins.end())
@@ -1010,7 +1031,7 @@ namespace top
                 xvactplugin_t* _test_for_plugin = expire_it->second;
                 if(_test_for_plugin != nullptr)
                 {
-                    if(_test_for_plugin->is_live(current_time_ms) == false)//quick test
+                    if(!_test_for_plugin->is_live(current_time_ms) && _test_for_plugin->is_timeout(current_time_ms, idle_timeout_ms))//quick test
                     {
                         if(_test_for_plugin->is_close())//has been closed by on_process_close()
                         {
