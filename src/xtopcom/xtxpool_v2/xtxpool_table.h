@@ -86,7 +86,11 @@ public:
                     xtxpool_role_info_t * shard,
                     xtxpool_statistic_t * statistic,
                     std::set<base::xtable_shortid_t> * all_sid_set = nullptr)
-      : m_para(para), m_table_state_cache(para, table_addr), m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set), m_txmgr_table(&m_xtable_info, para) {
+      : m_para(para)
+      , m_table_state_cache(para, table_addr)
+      , m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set)
+      , m_txmgr_table(&m_xtable_info, para)
+      , m_unconfirm_id_height(m_xtable_info.get_short_table_id()) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
