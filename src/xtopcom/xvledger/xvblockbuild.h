@@ -106,7 +106,7 @@ namespace top
             void            set_input(xvinput_t* _input);
             void            set_output(xvoutput_t* _output);
             void            set_block(xvblock_t* _block);
-            static std::string     build_mpt_root(const std::vector<std::string> & elements);
+            static std::string     build_mpt_root(const std::vector<std::string> & elements, bool leaf_hash = true);
             void            set_block_flags(xvblock_t* block);
 
             base::enum_xvblock_level        get_block_level_from_account(const std::string & account);
