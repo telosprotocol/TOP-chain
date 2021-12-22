@@ -194,7 +194,7 @@ std::string xtransaction_face_t::assemble_lock_token_param(const uint64_t amount
     stream << xaction_lock_account_token::UT_time; // unlock_type
     stream << static_cast<uint32_t>(1); // size
     // convert redeem_frozen_interval from timer_interval to second
-    auto const redeem_frozen_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_staked_delay_time);
+    auto const redeem_frozen_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(unlock_gas_deposit_delay_time);
     stream << std::to_string(redeem_frozen_interval * 10);
     return std::string((char*)stream.data(), stream.size());
 }
