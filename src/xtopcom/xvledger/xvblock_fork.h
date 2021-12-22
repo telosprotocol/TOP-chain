@@ -15,11 +15,12 @@ namespace top
             enum_xvblock_fork_version_init              = 0x000100,  // 0.1.0 init version
             enum_xvblock_fork_version_table_prop_prove  = 0x010000,  // 1.0.0 table block input action include prop hashs for prove receiptid state
             enum_xvblock_fork_version_unit_opt          = 0x020000,  // 2.0.0 unit block not include txaction but only txhash and state
+            enum_xvblock_fork_version_3_0_0             = 0x030000,  // 3.0.0: 1.table-block add gmtime  2.table-unit merkle leaf remove repeat hash calc
         };
 
         // XTODO need change old and new version when block structure changed
-        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_table_prop_prove;
-        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_unit_opt;
+        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_unit_opt;
+        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_3_0_0;
 
         typedef std::function<bool(uint64_t clock) noexcept> xvblock_fork_check_fun_t;
 

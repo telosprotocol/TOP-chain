@@ -52,6 +52,10 @@ const std::string xschnorrcert_t::do_sign(const xvip2_t & signer, const base::xv
     return bin + random_seed_string;
 }
 
+const std::string   xschnorrcert_t::do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_block,const uint64_t random_seed, const std::string sign_hash){
+    return do_sign(signer, sign_for_block, random_seed);
+}
+
 const std::string xschnorrcert_t::do_sign(const xvip2_t & signer, const base::xvblock_t * sign_for_block, const uint64_t random_seed) {
     return do_sign(signer, sign_for_block->get_cert(), random_seed);
 }
@@ -61,6 +65,11 @@ base::enum_vcert_auth_result xschnorrcert_t::verify_sign(const xvip2_t & signer,
 }
 
 base::enum_vcert_auth_result xschnorrcert_t::verify_sign(const xvip2_t & signer, const base::xvblock_t * test_for_block) {
+    return base::enum_vcert_auth_result::enum_successful;
+}
+
+base::enum_vcert_auth_result xschnorrcert_t::verify_sign(const xvip2_t & signer,const base::xvqcert_t * test_for_cert,
+                                                         const std::string & block_account, const std::string sign_hash) {
     return base::enum_vcert_auth_result::enum_successful;
 }
 
