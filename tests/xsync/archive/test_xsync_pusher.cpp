@@ -73,7 +73,7 @@ TEST(xsync_pusher, test_push_block) {
     xsync_sender_t sync_sender("", make_observer(&vhost), &role_xips_mgr);
     
     xrole_chains_mgr_t role_chains_mgr("");
-    xsync_pusher_t sync_pusher("", &role_xips_mgr, &sync_sender, &role_chains_mgr);
+    xsync_pusher_t sync_pusher("", &role_xips_mgr, &sync_sender, &role_chains_mgr, nullptr);
 
     std::set<uint16_t> table_ids;
     for (uint16_t i=0; i<64; i++)
