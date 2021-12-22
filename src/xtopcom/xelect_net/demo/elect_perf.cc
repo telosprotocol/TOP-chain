@@ -16,16 +16,18 @@ namespace elect {
 
 ElectPerf::ElectPerf() {
 #define IS_BROADCAST(message) (message.broadcast())
-#define IS_RRS_GOSSIP_MESSAGE(message) message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8
-#define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
+#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == kGossipRRS)
+#define IS_RRS_PULLED_MESSAGE(message) (message.ack_id() == 181819 || message.ack.id() == 99)
 #define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
 #define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
-#define MESSAGE_FEATURE(message) "msg_hash", message.msg_hash(), "msg_size", message.gossip().block().size()
+#define MESSAGE_FEATURE(message)                                                                                                                                                   \
+    "msg_hash", message.gossip().header_hash().empty() ? std::to_string(message.msg_hash()) : message.gossip().header_hash(), "msg_size", message.gossip().block().size()
 #define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
 #define PACKET_SIZE(packet) "packet_size", packet.get_size()
 #define NOW_TIME "timestamp", GetCurrentTimeMsec()
 
     wrouter::WrouterRegisterMessageHandler(kTestMessageType, [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
+        
         XMETRICS_PACKET_INFO("p2ptest_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
         // if (IS_RRS_GOSSIP_MESSAGE(message)) {
         //     XMETRICS_PACKET_INFO("p2pperf_vhostrecv_info",
@@ -121,7 +123,7 @@ xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
         //                      GetCurrentTimeMicSec(),
         //                      "is_broadcast",
         //                      static_cast<uint64_t>(message.broadcast()));
-        ret["msghash"].append(msg_hash);
+        ret["msghash"].append(header_hash);
 
         wrouter::Wrouter::Instance()->send(message);
         ++send_count;
@@ -207,7 +209,7 @@ xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
         //                      GetCurrentTimeMicSec(),
         //                      "is_broadcast",
         //                      static_cast<uint64_t>(message.broadcast()));
-        ret["msghash"].append(msg_hash);
+        ret["msghash"].append(header_hash);
 
         wrouter::Wrouter::Instance()->send(message);
         ++send_count;
@@ -286,7 +288,7 @@ xJson::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id
         //                      GetCurrentTimeMicSec(),
         //                      "is_broadcast",
         //                      static_cast<uint64_t>(message.broadcast()));
-        ret["msghash"].append(msg_hash);
+        ret["msghash"].append(header_hash);
 
         wrouter::Wrouter::Instance()->send(message);
         ++send_count;

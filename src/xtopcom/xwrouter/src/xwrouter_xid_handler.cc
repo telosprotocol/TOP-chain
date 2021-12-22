@@ -55,7 +55,7 @@ kadmlia::RootRoutingTablePtr WrouterXidHandler::FindRootRoutingTable() {
 }
 
 int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & message) {
-    assert(message.has_msg_hash());
+    // assert(message.has_msg_hash());
     if (message.hop_num() >= kadmlia::kHopToLive) {
         xwarn("stop SendPacket hop_num(%d) beyond max_hop_num(%d)", message.hop_num(), kadmlia::kHopToLive);
         return enum_xerror_code_fail;
@@ -231,7 +231,7 @@ int32_t WrouterXidHandler::SendRumor(transport::protobuf::RoutingMessage & messa
 
 int32_t WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & message) {
     assert(message.has_is_root() && message.is_root());
-    assert(message.has_msg_hash());
+    // assert(message.has_msg_hash());
 
     RootRoutingTablePtr routing_table;
     routing_table = FindRootRoutingTable();

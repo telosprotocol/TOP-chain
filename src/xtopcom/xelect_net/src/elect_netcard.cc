@@ -368,7 +368,7 @@ int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbf
 }
 
 #define IS_BROADCAST(message) (message.broadcast())
-#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8)
+#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == kGossipRRS)
 #define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
 #define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
 #define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()

@@ -27,7 +27,7 @@
                              "hop_num",                                                                                                                                            \
                              message.hop_num(),                                                                                                                                    \
                              "msg_hash",                                                                                                                                           \
-                             message.msg_hash(),                                                                                                                                   \
+                             message.gossip().header_hash().empty() ? std::to_string(message.msg_hash()) : message.gossip().header_hash(),                                         \
                              "msg_size",                                                                                                                                           \
                              message.data().size(),                                                                                                                                \
                              "is_root",                                                                                                                                            \

@@ -30,8 +30,6 @@ using CommandProc = std::function<void(const Arguments &)>;
 using RpcCommandProc = std::function<xJson::Value(const Arguments &)>;
 using MapCommands = std::map<std::string, CommandProc>;
 
-class ServiceDemo;
-
 namespace kadmlia {
 class RoutingTable;
 struct NodeInfo;
