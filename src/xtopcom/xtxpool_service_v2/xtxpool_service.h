@@ -63,6 +63,7 @@ public:
     };
     void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
     void send_receipt_id_state(uint64_t now) override;
+    bool is_running() const override;
 
 private:
     bool is_belong_to_service(base::xtable_index_t tableid) const;
