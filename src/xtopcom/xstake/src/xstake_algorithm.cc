@@ -305,8 +305,9 @@ int32_t xslash_info::do_read(base::xstream_t & stream) {
 void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
     uint64_t slash_numerator{0};
     if (common::has<common::xnode_type_t::validator>(node_type)) {
-        slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(backward_validator_slash_credit);
-        auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
+        slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_slash_creditscore);
+        auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
+
         if (slash_numerator > m_validator_credit_numerator) {
             xwarn("[slash_credit_score] slash validator credit to min!");
             m_validator_credit_numerator = config_min;
@@ -320,8 +321,9 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
 
 
     } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
-        slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(backward_auditor_slash_credit);
-        auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
+        slash_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_slash_creditscore);
+        auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
+
         if (slash_numerator > m_auditor_credit_numerator) {
             xwarn("[slash_credit_score] slash auditor credit to min!");
             m_auditor_credit_numerator = config_min;
@@ -340,7 +342,7 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
 void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     uint64_t award_numerator{0};
     if (common::has<common::xnode_type_t::validator>(node_type)) {
-        award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit);
+        award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
         m_validator_credit_numerator += award_numerator;
         if (m_validator_credit_numerator > m_validator_credit_denominator) {
             xwarn("[award_credit_score] award validator credit up to max!");
@@ -349,7 +351,7 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
         }
 
     } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
-        award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
+        award_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
         m_auditor_credit_numerator += award_numerator;
         if (m_auditor_credit_numerator > m_auditor_credit_denominator) {
             xwarn("[award_credit_score] award auditor credit up to max!");
