@@ -70,6 +70,7 @@ public:
     xdownloader_t(std::string vnode_id, xsync_store_face_t *sync_store,
                 const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
                 const observer_ptr<base::xvcertauth_t> &certauth,
+                xrole_xips_manager_t *role_xips_mgr,
                 xrole_chains_mgr_t *role_chains_mgr, xsync_sender_t *sync_sender,
                 const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, xsync_ratelimit_face_t *ratelimit, xsync_store_shadow_t * shadow);
 
@@ -97,6 +98,7 @@ protected:
     xsync_store_face_t *m_sync_store{};
     observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
     observer_ptr<base::xvcertauth_t> m_certauth;
+    xrole_xips_manager_t *m_role_xips_mgr;
     xrole_chains_mgr_t *m_role_chains_mgr;
     xsync_sender_t *m_sync_sender{};
     xsync_ratelimit_face_t *m_ratelimit;
