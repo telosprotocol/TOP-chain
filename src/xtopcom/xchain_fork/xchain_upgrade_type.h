@@ -65,7 +65,6 @@ namespace top {
          */
         struct xtop_chain_fork_config {
             top::optional<xfork_point_t> block_fork_point;  // should always keep block fork point
-            top::optional<xfork_point_t> table_statistic_info_fork_point;
             top::optional<xfork_point_t> blacklist_function_fork_point;
             top::optional<xfork_point_t> node_initial_credit_fork_point;
         };
