@@ -41,13 +41,6 @@ namespace top
     
         bool  xvblockprune_impl::recycle(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)//recylce any qualified blocks under account
         {
-            //only prune new blocks with new key of db
-            if(  (0 == account_meta._lowest_vkey2_block_height)
-               ||(((uint64_t)-1) == account_meta._lowest_vkey2_block_height) )//not inited
-            {
-                return false;
-            }
-    
             //only prune blocks before full_block
             if(0 == account_meta._highest_full_block_height)
                 return false;

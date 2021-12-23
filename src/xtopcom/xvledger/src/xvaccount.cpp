@@ -160,7 +160,7 @@ namespace top
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
-            _lowest_vkey2_block_height     = (uint64_t)-1;//init as max value
+            _lowest_vkey2_block_height     = 0;
             _highest_deleted_block_height  = 0;
             _highest_cert_block_height     = 0;
             _highest_lock_block_height     = 0;
