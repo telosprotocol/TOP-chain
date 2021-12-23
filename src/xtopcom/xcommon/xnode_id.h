@@ -62,6 +62,9 @@ public:
     explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value);
     explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
+    static xtop_node_id build_from(std::string const & input, std::error_code & ec);
+    static xtop_node_id build_from(std::string const & input);
+
     bool empty() const noexcept;
     bool has_value() const noexcept;
     std::string const & value() const noexcept;
