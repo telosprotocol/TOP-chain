@@ -344,7 +344,6 @@ void xtxpool_table_t::refresh_table() {
 
     uint64_t left_end = 0;
     uint64_t right_end = 0;
-    m_unconfirm_id_height.refresh(m_para->get_receiptid_state_cache());
     bool ret = m_unconfirm_id_height.get_lacking_section(m_para->get_receiptid_state_cache(), m_xtable_info.get_all_table_sids(), left_end, right_end, load_table_block_num_max);
     if (ret) {
         uint64_t load_height_max = right_end;

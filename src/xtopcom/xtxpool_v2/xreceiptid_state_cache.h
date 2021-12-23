@@ -25,8 +25,8 @@ public:
     uint64_t get_height(base::xtable_shortid_t table_id) const;
     base::xreceiptid_state_ptr_t get_table_receiptid_state(base::xtable_shortid_t table_id) const;
     // bool is_all_table_state_cached(const std::set<base::xtable_shortid_t> & all_table_sids) const;
-    void get_unconfirm_id_saction_as_sender(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const;
-    void get_unconfirm_id_saction_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const;
+    void get_unconfirm_id_section_as_sender(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const;
+    void get_unconfirm_id_section_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const;
     bool get_min_unconfirm_id_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & min_unconfirm_id) const;
 
 private:
