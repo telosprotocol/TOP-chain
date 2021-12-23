@@ -255,7 +255,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         return xblockmaker_error_proposal_bad_consensus_para;
     }
 
-    sys_contract_sync(tablestate);
+    sys_contract_sync(commit_tablestate);
 
     int32_t verify_ret = m_table_maker->verify_proposal(proposal_block, table_para, cs_para);
     if (verify_ret != xsuccess) {
