@@ -191,7 +191,6 @@ namespace top
 
             virtual bool                  store_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0)  = 0;
             virtual bool                  delete_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
-            virtual bool                  check_block(base::xvblock_t* block,const int atag = 0) = 0;
 
             //better performance for batch operations
             virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks,const int atag = 0) = 0;
