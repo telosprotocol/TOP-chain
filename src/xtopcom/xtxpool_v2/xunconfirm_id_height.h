@@ -24,10 +24,11 @@ public:
     }
     void update_confirm_id(uint64_t confirm_id);
     void add_id_height(uint64_t receipt_id, uint64_t height, uint64_t time);
-    bool get_min_height(uint64_t min_unconfirmid, uint64_t & min_height, bool & need_sync) const;
+    bool get_min_height(uint64_t & min_height) const;
     bool get_height_by_id(uint64_t receipt_id, uint64_t & height) const;
     bool get_resend_id_height(uint64_t & receipt_id, uint64_t & height, uint64_t cur_time) const;
     uint32_t size() const;
+    bool is_lacking() const;
 
 private:
     uint64_t m_confirm_id{0};
@@ -55,21 +56,18 @@ public:
                         const std::set<base::xtable_shortid_t> & all_table_sids,
                         uint64_t self_height,
                         uint64_t & min_height,
-                        bool & need_sync) const;
+                        bool check_lacking,
+                        bool & is_lacking) const;
     bool get_height_by_id(base::xtable_shortid_t table_sid, uint64_t receipt_id, uint64_t & height) const;
     std::vector<xresend_id_height_t> get_resend_id_height_list(uint64_t cur_time) const;
     uint32_t size() const;
-    void refresh(const xreceiptid_state_cache_t & receiptid_state_cache);
 
 private:
-    virtual void get_unconfirm_id_saction(const xreceiptid_state_cache_t & receiptid_state_cache,
+    virtual void get_unconfirm_id_section(const xreceiptid_state_cache_t & receiptid_state_cache,
                                           base::xtable_shortid_t self_table_id,
                                           base::xtable_shortid_t peer_table_id,
                                           uint64_t & confirm_id,
                                           uint64_t & unconfirm_id_max) const = 0;
-    virtual uint64_t get_confirm_id_max(const xreceiptid_state_cache_t & receiptid_state_cache,
-                                        base::xtable_shortid_t self_table_id,
-                                        base::xtable_shortid_t peer_table_id) const = 0;
     virtual bool is_sender() const = 0;
     base::xtable_shortid_t m_self_table_sid;
     std::map<base::xtable_shortid_t, std::shared_ptr<xunconfirm_id_height_list_t>> m_table_sid_unconfirm_list_map;
@@ -81,12 +79,11 @@ public:
     }
 
 private:
-    void get_unconfirm_id_saction(const xreceiptid_state_cache_t & receiptid_state_cache,
+    void get_unconfirm_id_section(const xreceiptid_state_cache_t & receiptid_state_cache,
                                   base::xtable_shortid_t self_table_id,
                                   base::xtable_shortid_t peer_table_id,
                                   uint64_t & confirm_id,
                                   uint64_t & unconfirm_id_max) const override;
-    uint64_t get_confirm_id_max(const xreceiptid_state_cache_t & receiptid_state_cache, base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id) const override;
     bool is_sender() const override;
 };
 
@@ -96,12 +93,11 @@ public:
     }
 
 private:
-    void get_unconfirm_id_saction(const xreceiptid_state_cache_t & receiptid_state_cache,
+    void get_unconfirm_id_section(const xreceiptid_state_cache_t & receiptid_state_cache,
                                   base::xtable_shortid_t self_table_id,
                                   base::xtable_shortid_t peer_table_id,
                                   uint64_t & confirm_id,
                                   uint64_t & unconfirm_id_max) const override;
-    uint64_t get_confirm_id_max(const xreceiptid_state_cache_t & receiptid_state_cache, base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id) const override;
     bool is_sender() const override;
 };
 
@@ -144,16 +140,15 @@ public:
                              uint16_t max_lacking_num) const;
     void update_unconfirm_id_height(uint64_t table_height, uint64_t time, const std::vector<xtx_id_height_info> & tx_id_height_infos);
     void update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
-    // void update_this_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id);
     bool get_sender_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const;
     bool get_receiver_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const;
     std::vector<xresend_id_height_t> get_sender_resend_id_height_list(uint64_t cur_time) const;
     std::vector<xresend_id_height_t> get_receiver_resend_id_height_list(uint64_t cur_time) const;
     void cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
-    void refresh(const xreceiptid_state_cache_t & receiptid_state_cache);
     bool get_min_height(const xreceiptid_state_cache_t & receiptid_state_cache,
                         const std::set<base::xtable_shortid_t> & all_table_sids,
                         uint64_t & min_height,
+                        bool check_lacking,
                         bool & need_sync) const;
 
 private:
