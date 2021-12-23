@@ -125,7 +125,8 @@ xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
         //                      static_cast<uint64_t>(message.broadcast()));
         ret["msghash"].append(header_hash);
 
-        wrouter::Wrouter::Instance()->send(message);
+        std::error_code ec;
+        wrouter::Wrouter::Instance()->send(message, ec);
         ++send_count;
     }
 
@@ -211,7 +212,8 @@ xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
         //                      static_cast<uint64_t>(message.broadcast()));
         ret["msghash"].append(header_hash);
 
-        wrouter::Wrouter::Instance()->send(message);
+        std::error_code ec;
+        wrouter::Wrouter::Instance()->send(message, ec);
         ++send_count;
     }
 
@@ -290,7 +292,8 @@ xJson::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id
         //                      static_cast<uint64_t>(message.broadcast()));
         ret["msghash"].append(header_hash);
 
-        wrouter::Wrouter::Instance()->send(message);
+        std::error_code ec;
+        wrouter::Wrouter::Instance()->send(message, ec);
         ++send_count;
     }
     total_send_count += send_count;

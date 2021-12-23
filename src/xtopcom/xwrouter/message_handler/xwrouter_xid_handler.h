@@ -49,8 +49,8 @@ public:
     ~WrouterXidHandler();
 
 public:
-    virtual int32_t SendPacket(transport::protobuf::RoutingMessage & message);
-    virtual int32_t RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    void SendPacket(transport::protobuf::RoutingMessage & message, std::error_code & ec);
+    int32_t RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
 private:
     kadmlia::RootRoutingTablePtr FindRootRoutingTable();
@@ -62,15 +62,15 @@ private:
     bool RumorPacketCheck(transport::protobuf::RoutingMessage & message);
     bool BroadcastPacketCheck(transport::protobuf::RoutingMessage & message);
 
-    int32_t SendRumor(transport::protobuf::RoutingMessage & message);
-    int32_t SendBroadcast(transport::protobuf::RoutingMessage & message);
-    int32_t SendGeneral(transport::protobuf::RoutingMessage & message);
+    void SendRumor(transport::protobuf::RoutingMessage & message, std::error_code & ec);
+    void SendBroadcast(transport::protobuf::RoutingMessage & message, std::error_code & ec);
+    void SendGeneral(transport::protobuf::RoutingMessage & message, std::error_code & ec);
 
     // judge packet arrive the dest or not
     int32_t JudgeOwnPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
     // int32_t GossipBroadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
-    int32_t SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride);
+    void SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride, std::error_code & ec);
     bool HandleSystemMessage(transport::protobuf::RoutingMessage & message);
 
 private:

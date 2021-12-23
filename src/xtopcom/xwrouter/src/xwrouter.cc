@@ -62,7 +62,7 @@ void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transpo
 #define PACKET_SIZE(packet) "packet_size", packet.get_size()
 #define NOW_TIME "timestamp", GetCurrentTimeMsec()
 
-int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
+void Wrouter::send(transport::protobuf::RoutingMessage & message, std::error_code & ec) {
     // if (message.has_broadcast() && message.broadcast()) {
     if (!message.has_msg_hash()) {
         auto gossip = message.mutable_gossip();
@@ -91,7 +91,8 @@ int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
               GetCurrentTimeMsec());
 #endif
     }
-    return wxid_handler_->SendPacket(message);
+    wxid_handler_->SendPacket(message, ec);
+    return;
 }
 
 // called by MultilayerNetwork::RegisterCallbackForMultiThreadHandler

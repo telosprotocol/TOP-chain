@@ -122,7 +122,8 @@ void xshard_rpc_handler::shard_process_request(const xrpc_msg_request_t & edge_m
             std::error_code ec;
             this->m_shard_vhost->send_to(edge_sender, msg, ec);
             if (ec) {
-                assert(false);
+                // todo?
+                // assert(false);
             }
         }
     });
