@@ -8,6 +8,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_store_shadow.h"
 #include "xchain_fork/xchain_upgrade_center.h"
+#include "xdata/xcheckpoint.h"
 NS_BEG2(top, sync)
 
 xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow):
@@ -163,8 +164,13 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
 }
 
 uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const std::string & account) {
-    base::xvaccount_t _vaddress(account);
-    return 0;
+    common::xaccount_address_t _vaddress(account);
+    std::error_code err;
+    auto checkpoint = xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
+    if (err) {
+        return 0;
+    }
+    return checkpoint.height;
 }
 
 uint64_t xsync_store_t::get_latest_mutable_connected_checkpoint_height(const std::string & account) {
