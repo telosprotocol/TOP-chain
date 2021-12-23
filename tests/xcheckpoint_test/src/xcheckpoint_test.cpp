@@ -1,7 +1,7 @@
 #define private public
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/xcheckpoint_test/xcheckpoint_test_fixture.h"
-#include "xblockstore/src/xcheckpoint.h"
+#include "xdata/xcheckpoint.h"
 #include "xvledger/xvblockstore.h"
 
 #include <gtest/gtest.h>
@@ -109,7 +109,36 @@ std::vector<std::string> table_1_block_str = {
     "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",
 };
 
-#ifdef GENERATE_ORIGIN_TABLE_CHAIN
+static bool check_block(base::xvblock_t * block) {
+    // step 1: verify checkpoint
+    auto const & account = block->get_account();
+    auto const & checkpoints = xchain_checkpoint_t::checkpoints(account);
+    if (checkpoints.empty()) {
+        return true;
+    }
+    auto const height = block->get_height();
+    auto const & hash = block->get_block_hash();
+    auto it = checkpoints.find(height);
+    if (it != checkpoints.end() && it->second != hash) {
+        return false;
+    }
+    // step 2: check latest checkpoint
+    for (auto it = checkpoints.crbegin(); it != checkpoints.crend(); it++) {
+        auto const block_vec = blockstore->load_block_object(account, it->first).get_vector();
+        if (block_vec.empty()) {
+            continue;
+        }
+        for (auto const & one_block : block_vec) {
+            if (one_block->get_block_hash() == it->second) {
+                return true;
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+#    if 0
 TEST(xtest_checkpoint_fixture_t, generate_chain) {
     // generate block str for test
     const uint64_t count = 32;
@@ -152,11 +181,11 @@ TEST(xtest_checkpoint_fixture_t, generate_chain) {
     }
 }
 
-#else
+#    else
 
 TEST(xtest_checkpoint_fixture_t, test_init_checkpoint) {
     // chain_checkpoint::xchain_checkpoint_t::init();
-    auto const & checkpoints_0 = store::xchain_checkpoint_t::checkpoints(TABLE_0);
+    auto const & checkpoints_0 = data::xchain_checkpoint_t::checkpoints(TABLE_0);
     EXPECT_EQ(checkpoints_0.size(), 3);
 
     auto it = checkpoints_0.begin();
@@ -169,7 +198,7 @@ TEST(xtest_checkpoint_fixture_t, test_init_checkpoint) {
     EXPECT_EQ(it->first, 20);
     EXPECT_EQ(base::xstring_utl::to_hex(it->second), "f2c810091ee336f1d7ebe2d462886f52d02a152d5b6f35cc8521ecea2ff16afa");
 
-    auto const & checkpoints_1 = store::xchain_checkpoint_t::checkpoints(TABLE_1);
+    auto const & checkpoints_1 = data::xchain_checkpoint_t::checkpoints(TABLE_1);
     EXPECT_EQ(checkpoints_1.size(), 2);
 
     it = checkpoints_1.begin();
@@ -181,7 +210,7 @@ TEST(xtest_checkpoint_fixture_t, test_init_checkpoint) {
 }
 
 TEST(xtest_checkpoint_fixture_t, store_block_success_with_right_checkpoints) {
-    auto const & checkpoints = store::xchain_checkpoint_t::checkpoints(TABLE_0);
+    auto const & checkpoints = data::xchain_checkpoint_t::checkpoints(TABLE_0);
     EXPECT_EQ(checkpoints.size(), 3);
     const uint64_t count = 32;
     xcheckpoint_datamock_table_t mocktable0{0};
@@ -191,8 +220,8 @@ TEST(xtest_checkpoint_fixture_t, store_block_success_with_right_checkpoints) {
         xvaccount_t table_account{mocktable0.get_account()};
         EXPECT_EQ(table_account.get_account(), TABLE_0);
         for (auto const & block : blocks) {
+            EXPECT_EQ(check_block(block.get()), true);
             EXPECT_EQ(blockstore->store_block(table_account, block.get()), true);
-            // printf("hash: %s\n", block->get_block_hash_hex_str().c_str());
         }
         for (auto const & block_str_ser : table_0_block_str) {
             auto block_str = base::xstring_utl::base64_decode(block_str_ser);
@@ -204,10 +233,73 @@ TEST(xtest_checkpoint_fixture_t, store_block_success_with_right_checkpoints) {
             }
             block_ptr->reset_block_flags();
             block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
-            // printf("hash: %s\n", block_ptr->get_block_hash_hex_str().c_str());
 
             mocktable0.on_table_finish(block_ptr);
+            EXPECT_EQ(check_block(block_ptr.get()), true);
             EXPECT_EQ(blockstore->store_block(table_account, block_ptr.get()), true);
+            
+            
+            auto height = block_ptr->get_height();
+            if (height == 1 || height == 5 || height == 20) {
+                auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block_ptr.get());
+                EXPECT_EQ(bstate->get_block_height(), height);
+                EXPECT_EQ(bstate->get_address(), block_ptr->get_account());
+                EXPECT_EQ(bstate->get_last_block_hash(), block_ptr->get_last_block_hash());
+                printf("height: %lu\n", height);
+                base::xstream_t stream(base::xcontext_t::instance());
+                std::string bin;
+                bstate->serialize_to_string(bin);
+                auto bin_ser = base::xstring_utl::to_hex(bin);
+                printf("%s\n", bin_ser.c_str());
+            }
+        }
+        auto latest_block = blockstore->get_latest_connected_block(table_account);
+        EXPECT_EQ(latest_block->get_height(), count - 2);
+    }
+}
+
+TEST(xtest_checkpoint_fixture_t, store_block_success_with_right_checkpoints_2) {
+    auto const & checkpoints = data::xchain_checkpoint_t::checkpoints(TABLE_1);
+    const uint64_t count = 32;
+    xcheckpoint_datamock_table_t mocktable1{1};
+    {
+        auto const & blocks = mocktable1.get_history_tables();
+        EXPECT_EQ(blocks.size(), 1);
+        xvaccount_t table_account{mocktable1.get_account()};
+        EXPECT_EQ(table_account.get_account(), TABLE_1);
+        for (auto const & block : blocks) {
+            EXPECT_EQ(check_block(block.get()), true);
+            EXPECT_EQ(blockstore->store_block(table_account, block.get()), true);
+        }
+        for (auto const & block_str_ser : table_1_block_str) {
+            auto block_str = base::xstring_utl::base64_decode(block_str_ser);
+            base::xstream_t stream(base::xcontext_t::instance(), (unsigned char *)block_str.data(), block_str.size());
+            xblock_ptr_t block_ptr;
+            {
+                xblock_t * _data_obj = dynamic_cast<xblock_t *>(xblock_t::full_block_read_from(stream));
+                block_ptr.attach(_data_obj);
+            }
+            block_ptr->reset_block_flags();
+            block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
+
+            mocktable1.on_table_finish(block_ptr);
+            EXPECT_EQ(check_block(block_ptr.get()), true);
+            EXPECT_EQ(blockstore->store_block(table_account, block_ptr.get()), true);
+            
+            
+            auto height = block_ptr->get_height();
+            if (height == 6 || height == 21) {
+                auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block_ptr.get());
+                EXPECT_EQ(bstate->get_block_height(), height);
+                EXPECT_EQ(bstate->get_address(), block_ptr->get_account());
+                EXPECT_EQ(bstate->get_last_block_hash(), block_ptr->get_last_block_hash());
+                printf("height: %lu\n", height);
+                base::xstream_t stream(base::xcontext_t::instance());
+                std::string bin;
+                bstate->serialize_to_string(bin);
+                auto bin_ser = base::xstring_utl::to_hex(bin);
+                printf("%s\n", bin_ser.c_str());
+            }
         }
         auto latest_block = blockstore->get_latest_connected_block(table_account);
         EXPECT_EQ(latest_block->get_height(), count - 2);
@@ -225,11 +317,9 @@ TEST(xtest_checkpoint_fixture_t, test_fork_before_all_checkpoints) {
         EXPECT_EQ(table_account.get_account(), TABLE_1);
         for (auto const & block : blocks) {
             if (block->get_height() == 6) {
-                // EXPECT_EQ(check_block(checkpoints, block), false);
-                EXPECT_EQ(blockstore->check_block(block.get()), false);
+                EXPECT_EQ(check_block(block.get()), false);
             } else {
-                // EXPECT_EQ(check_block(checkpoints, block), true);
-                EXPECT_EQ(blockstore->check_block(block.get()), true);
+                EXPECT_EQ(check_block(block.get()), true);
             }
         }
         for (auto const & block : blocks) {
@@ -259,11 +349,9 @@ TEST(xtest_checkpoint_fixture_t, test_fork_before_all_checkpoints) {
         EXPECT_EQ(blocks.size(), 7);
         for (auto const & block : blocks) {
             if (block->get_height() == 6) {
-                // EXPECT_EQ(check_block(checkpoints, block), false);
-                EXPECT_EQ(blockstore->check_block(block.get()), false);
+                EXPECT_EQ(check_block(block.get()), false);
             } else {
-                // EXPECT_EQ(check_block(checkpoints, block), true);
-                EXPECT_EQ(blockstore->check_block(block.get()), true);
+                EXPECT_EQ(check_block(block.get()), true);
             }
         }
         for (auto const & block : blocks) {
@@ -273,7 +361,7 @@ TEST(xtest_checkpoint_fixture_t, test_fork_before_all_checkpoints) {
 }
 
 TEST(xtest_checkpoint_fixture_t, test_fork_between_checkpoints) {
-    auto const & checkpoints = store::xchain_checkpoint_t::checkpoints(TABLE_1);
+    auto const & checkpoints = data::xchain_checkpoint_t::checkpoints(TABLE_1);
     EXPECT_EQ(checkpoints.size(), 2);
     // fork at the checkpoint has to be failed(fork from height 15, checkpoint height 6/21)
     {
@@ -298,18 +386,16 @@ TEST(xtest_checkpoint_fixture_t, test_fork_between_checkpoints) {
         EXPECT_EQ(blocks.size(), 22);
         for (auto const & block : blocks) {
             if (block->get_height() == 21) {
-                // EXPECT_EQ(check_block(checkpoints, block), false);
-                EXPECT_EQ(blockstore->check_block(block.get()), false);
+                EXPECT_EQ(check_block(block.get()), false);
             } else {
-                // EXPECT_EQ(check_block(checkpoints, block), true);
-                EXPECT_EQ(blockstore->check_block(block.get()), true);
+                EXPECT_EQ(check_block(block.get()), true);
             }
         }
     }
 }
 
 TEST(xtest_checkpoint_fixture_t, test_fork_at_checkpoint) {
-    auto const & checkpoints = store::xchain_checkpoint_t::checkpoints(TABLE_1);
+    auto const & checkpoints = data::xchain_checkpoint_t::checkpoints(TABLE_1);
     EXPECT_EQ(checkpoints.size(), 2);
     // fork at the checkpoint has to be failed(fork from height 6, checkpoint height 6)
     {
@@ -334,11 +420,9 @@ TEST(xtest_checkpoint_fixture_t, test_fork_at_checkpoint) {
         EXPECT_EQ(blocks.size(), 7);
         for (auto const & block : blocks) {
             if (block->get_height() == 6) {
-                // EXPECT_EQ(check_block(checkpoints, block), false);
-                EXPECT_EQ(blockstore->check_block(block.get()), false);
+                EXPECT_EQ(check_block(block.get()), false);
             } else {
-                // EXPECT_EQ(check_block(checkpoints, block), true);
-                EXPECT_EQ(blockstore->check_block(block.get()), true);
+                EXPECT_EQ(check_block(block.get()), true);
             }
         }
     }
@@ -365,18 +449,16 @@ TEST(xtest_checkpoint_fixture_t, test_fork_at_checkpoint) {
         EXPECT_EQ(blocks.size(), 22);
         for (auto const & block : blocks) {
             if (block->get_height() == 21) {
-                // EXPECT_EQ(check_block(checkpoints, block), false);
-                EXPECT_EQ(blockstore->check_block(block.get()), false);
+                EXPECT_EQ(check_block(block.get()), false);
             } else {
-                // EXPECT_EQ(check_block(checkpoints, block), true);
-                EXPECT_EQ(blockstore->check_block(block.get()), true);
+                EXPECT_EQ(check_block(block.get()), true);
             }
         }
     }
 }
 
 TEST(xtest_checkpoint_fixture_t, test_fork_after_all_checkpoints) {
-    auto const & checkpoints = store::xchain_checkpoint_t::checkpoints(TABLE_1);
+    auto const & checkpoints = data::xchain_checkpoint_t::checkpoints(TABLE_1);
     EXPECT_EQ(checkpoints.size(), 2);
     // fork after the checkpoint will not failed(fork from height 22, checkpoint height 21)
     {
@@ -408,10 +490,8 @@ TEST(xtest_checkpoint_fixture_t, test_fork_after_all_checkpoints) {
                 old_block_ptr.attach(_data_obj);
             }
             auto const & new_block = blocks[i];
-            // EXPECT_EQ(check_block(checkpoints, old_block_ptr), true);
-            // EXPECT_EQ(check_block(checkpoints, new_block), true);
-            EXPECT_EQ(blockstore->check_block(old_block_ptr.get()), true);
-            EXPECT_EQ(blockstore->check_block(new_block.get()), true);
+            EXPECT_EQ(check_block(old_block_ptr.get()), true);
+            EXPECT_EQ(check_block(new_block.get()), true);
             EXPECT_EQ(old_block_ptr->get_height(), new_block->get_height());
             EXPECT_NE(old_block_ptr->get_block_hash(), new_block->get_block_hash());
         }
@@ -448,11 +528,11 @@ TEST(xtest_checkpoint_fixture_t, test_latest_checkpoints_check) {
         auto const & blocks_add = mocktable1.get_history_tables();
         EXPECT_EQ(blocks_add.size(), 33);
         auto const & block_new = blocks_add[32];
-        ASSERT_FALSE(blockstore->store_block(table_account, block_new.get()));
+        ASSERT_FALSE(check_block(block_new.get()));
     }
 }
 
-#endif
+#    endif
 #endif
 
 NS_END3
