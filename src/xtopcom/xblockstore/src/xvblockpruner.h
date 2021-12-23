@@ -48,9 +48,10 @@ namespace top
             bool  recycle_table(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
             //mange to prune unit blocks
             bool  recycle_unit(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
+            bool  recycle_drand_timer(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
 
         private:
-            uint64_t get_prune_boundary(const base::xvaccount_t & account_obj);
+            bool get_prune_boundary(const base::xvaccount_t & account_obj, uint64_t &height);
         private:
             base::xvdbstore_t *  m_xvdb_ptr{NULL};
             std::map<std::string, std::map<chainbase::enum_xmodule_type, uint64_t>> m_prune_boundary;
