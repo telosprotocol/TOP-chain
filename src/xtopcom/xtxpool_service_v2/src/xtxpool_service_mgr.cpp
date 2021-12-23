@@ -226,6 +226,9 @@ void xtxpool_service_mgr::on_timer() {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto & iter : m_service_map) {
             auto service = iter.second;
+            if (!service->is_running()) {
+                continue;
+            }
             // only receipt sender need recover unconfirmed txs.
             if (service->is_send_receipt_role()) {
                 pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
