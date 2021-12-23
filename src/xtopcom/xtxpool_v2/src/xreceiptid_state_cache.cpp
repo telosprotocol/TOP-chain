@@ -101,7 +101,7 @@ base::xreceiptid_state_ptr_t xreceiptid_state_cache_t::get_table_receiptid_state
 //     return true;
 // }
 
-void xreceiptid_state_cache_t::get_unconfirm_id_saction_as_sender(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const {
+void xreceiptid_state_cache_t::get_unconfirm_id_section_as_sender(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const {
     std::lock_guard<std::mutex> lck(m_mutex);
     uint64_t sendid_max = 0;
     uint64_t confirmid_max = 0;
@@ -118,7 +118,7 @@ void xreceiptid_state_cache_t::get_unconfirm_id_saction_as_sender(base::xtable_s
     unconfirm_id_max = sendid_max;
 }
 
-void xreceiptid_state_cache_t::get_unconfirm_id_saction_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const {
+void xreceiptid_state_cache_t::get_unconfirm_id_section_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const {
     std::lock_guard<std::mutex> lck(m_mutex);
     uint64_t recvid_max = 0;
     uint64_t confirmid_max = 0;

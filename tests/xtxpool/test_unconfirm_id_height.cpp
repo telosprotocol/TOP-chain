@@ -59,21 +59,23 @@ TEST_F(test_unconfirm_id_height, processed_table_height) {
 
 TEST_F(test_unconfirm_id_height, unconfirm_id_height_list) {
     xunconfirm_id_height_list_t unconfirm_list(1, 1, true);
-    bool need_sync = false;
+    bool is_lacking = false;
+    uint64_t min_height = 0;
     unconfirm_list.add_id_height(101, 1000, 100000);
     unconfirm_list.update_confirm_id(99);
-    uint64_t min_height = 0;
-    bool ret = unconfirm_list.get_min_height(99, min_height, need_sync);
+    is_lacking = unconfirm_list.is_lacking();
+    bool ret = unconfirm_list.get_min_height(min_height);
     ASSERT_EQ(ret, false);
     ASSERT_EQ(min_height, 0);
-    ASSERT_EQ(need_sync, true);
+    ASSERT_EQ(is_lacking, true);
 
-    need_sync = false;
+    is_lacking = false;
     unconfirm_list.update_confirm_id(100);
-    ret = unconfirm_list.get_min_height(100, min_height, need_sync);
+    is_lacking = unconfirm_list.is_lacking();
+    ret = unconfirm_list.get_min_height(min_height);
     ASSERT_EQ(ret, true);
     ASSERT_EQ(min_height, 1000);
-    ASSERT_EQ(need_sync, false);
+    ASSERT_EQ(is_lacking, false);
 
     uint64_t height = 0;
     ret = unconfirm_list.get_height_by_id(101, height);
@@ -92,10 +94,11 @@ TEST_F(test_unconfirm_id_height, unconfirm_id_height_list) {
     height = 0;
     ret = unconfirm_list.get_height_by_id(101, height);
     ASSERT_EQ(ret, false);
-    ret = unconfirm_list.get_min_height(101, min_height, need_sync);
+    is_lacking = unconfirm_list.is_lacking();
+    ret = unconfirm_list.get_min_height(min_height);
     ASSERT_EQ(ret, true);
     ASSERT_EQ(min_height, 1001);
-    ASSERT_EQ(need_sync, true);
+    ASSERT_EQ(is_lacking, true);
 }
 
 TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
@@ -110,24 +113,24 @@ TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
     receiptid_state->add_pair(1, pair1);
     receiptid_state_cache.update_table_receiptid_state(receiptid_state);
 
-    bool need_sync = false;
+    bool is_lacking = false;
     table_unconfirm.add_id_height(1, 101, 1000, 100000);
     table_unconfirm.update_confirm_id(1, 99);
     uint64_t min_height = 0;
-    bool ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1000, min_height, need_sync);
+    bool ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1000, min_height, true, is_lacking);
     ASSERT_EQ(ret, false);
     ASSERT_EQ(min_height, 0);
-    ASSERT_EQ(need_sync, true);
+    ASSERT_EQ(is_lacking, true);
 
-    need_sync = false;
+    is_lacking = false;
     table_unconfirm.update_confirm_id(1, 100);
     receiptid_state->set_tableid_and_height(1, 1001);
     xreceiptid_pair_t pair2(101, 100, 100);
     receiptid_state->add_pair(1, pair2);
-    ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1001, min_height, need_sync);
+    ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1001, min_height, true, is_lacking);
     ASSERT_EQ(ret, true);
     ASSERT_EQ(min_height, 1000);
-    ASSERT_EQ(need_sync, false);
+    ASSERT_EQ(is_lacking, false);
 
     uint64_t height = 0;
     ret = table_unconfirm.get_height_by_id(1, 101, height);
@@ -149,8 +152,8 @@ TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
     receiptid_state->set_tableid_and_height(1, 1002);
     xreceiptid_pair_t pair3(103, 100, 101);
     receiptid_state->add_pair(1, pair3);
-    ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1002, min_height, need_sync);
+    ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1002, min_height, true, is_lacking);
     ASSERT_EQ(ret, true);
     ASSERT_EQ(min_height, 1001);
-    ASSERT_EQ(need_sync, true);
+    ASSERT_EQ(is_lacking, true);
 }
