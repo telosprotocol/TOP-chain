@@ -43,7 +43,7 @@ uint64_t xunit_bstate_t::get_free_tgas() const {
 
 // how many tgas you can get from pledging 1TOP
 uint32_t xunit_bstate_t::get_token_price(uint64_t onchain_total_pledge_token) {
-    uint64_t initial_total_pledge_token = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token);
+    uint64_t initial_total_pledge_token = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit);
     xdbg("tgas_disk get total pledge token from beacon: %llu, %llu", initial_total_pledge_token, onchain_total_pledge_token);
     uint64_t total_pledge_token = onchain_total_pledge_token + initial_total_pledge_token;
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard) * XGET_CONFIG(validator_group_count) * TOP_UNIT / total_pledge_token;
@@ -83,7 +83,7 @@ uint64_t xunit_bstate_t::get_used_tgas() const {
 uint64_t xunit_bstate_t::calc_decayed_tgas(uint64_t timer_height) const {
     uint32_t last_hour = get_last_tx_hour();
     uint64_t used_tgas{0};
-    uint32_t decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle);
+    uint32_t decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval);
     if (timer_height <= last_hour) {
         used_tgas = get_used_tgas();
     } else if (timer_height - last_hour < decay_time) {
