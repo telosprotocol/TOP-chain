@@ -32,6 +32,19 @@ xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t tab
   , m_assigned_table_id{table_id} {
 }
 
+xtop_node_id xtop_node_id::build_from(std::string const & account_string, std::error_code & ec) {
+    try {
+        return build_from(account_string);
+    } catch (top::error::xtop_error_t const & eh) {
+        ec = eh.code();
+    }
+    return xtop_node_id{};
+}
+
+xtop_node_id xtop_node_id::build_from(std::string const & account_string) {
+    return xtop_node_id{account_string};
+}
+
 bool xtop_node_id::empty() const noexcept {
     return m_account_string.empty();
 }
