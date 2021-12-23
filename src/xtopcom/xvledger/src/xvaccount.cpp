@@ -158,6 +158,24 @@ namespace top
             return false;
         }
 
+        bool  xvaccount_t::is_timer_address() const
+        {
+            if (get_addr_type() == enum_vaccount_addr_type_timer)
+            {
+                return true;
+            }
+            return false;
+        }
+        
+        bool  xvaccount_t::is_drand_address() const
+        {
+            if(get_addr_type() == enum_vaccount_addr_type_drand)
+            {
+                return true;
+            }
+            return false;
+        }
+
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
