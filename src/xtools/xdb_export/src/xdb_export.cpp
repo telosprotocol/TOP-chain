@@ -639,28 +639,76 @@ void xdb_export_tools_t::query_archive_db() {
     std::ofstream file(filename);
     // step 1: check table
     std::cout << "step 1 ===> checking table accounts..." << std::endl;
-    auto const table_accounts = xdb_export_tools_t::get_table_accounts();
-    for (auto const & table : table_accounts) {
-        uint32_t error_num = 0;
-        error_num += query_block_continuity_and_integrity(table, query_account_table, file);
-        error_num += query_cert_continuity(table, query_account_table, file);
-        if (error_num) {
-            std::cout << "table: " << table << ", check not ok, error num: " << error_num << std::endl;
-        } else {
-            std::cout << "table: " << table << ", check ok" << std::endl;
+    {
+        auto const table_accounts = xdb_export_tools_t::get_table_accounts();
+        const uint32_t thread_num = 4;
+        uint32_t accounts_per_thread = table_accounts.size() / thread_num;
+        std::vector<std::vector<std::string>> account_vec_split;
+        for (size_t i = 0; i < thread_num; i++) {
+            uint32_t start_index = i * accounts_per_thread;
+            uint32_t end_index = (i == (thread_num - 1)) ? table_accounts.size() : ((i + 1) * accounts_per_thread);
+            std::vector<std::string> thread_accounts;
+            for (auto j = start_index; j < end_index; j++) {
+                thread_accounts.emplace_back(table_accounts[j]);
+            }
+            account_vec_split.emplace_back(thread_accounts);
+        }
+        auto thread_helper = [&account_vec_split, &file](xdb_export_tools_t * arg, int index) {
+            for (auto const & account : account_vec_split[index]) {
+                uint32_t error_num = 0;
+                error_num += arg->query_block_continuity_and_integrity(account, query_account_table, file);
+                error_num += arg->query_cert_continuity(account, query_account_table, file);
+                if (error_num) {
+                    std::cout << "table: " << account << ", check not ok, error num: " << error_num << std::endl;
+                } else {
+                    std::cout << "table: " << account << ", check ok" << std::endl;
+                }
+            }
+        };
+        std::vector<std::thread> all_thread;
+        for (size_t i = 0; i < thread_num; i++) {
+            std::thread th(thread_helper, this, i);
+            all_thread.emplace_back(std::move(th));
+        }
+        for (size_t i = 0; i < thread_num; i++) {
+            all_thread[i].join();
         }
     }
     // step 2: check unit
     std::cout << "step 2 ===> checking unit accounts..." << std::endl;
-    auto const unit_accounts = get_db_unit_accounts();
-    for (auto const & unit : unit_accounts) {
-        uint32_t error_num = 0;
-        error_num += query_block_continuity_and_integrity(unit, query_account_unit, file);
-        error_num += query_cert_continuity(unit, query_account_unit, file);
-        if (error_num) {
-            std::cout << "unit: " << unit << ", check not ok, error num: " << error_num << std::endl;
-        } else {
-            std::cout << "unit: " << unit << ", check ok" << std::endl;
+    {
+        auto const unit_accounts = get_db_unit_accounts();
+        const uint32_t thread_num = 4;
+        uint32_t accounts_per_thread = unit_accounts.size() / thread_num;
+        std::vector<std::vector<std::string>> account_vec_split;
+        for (size_t i = 0; i < thread_num; i++) {
+            uint32_t start_index = i * accounts_per_thread;
+            uint32_t end_index = (i == (thread_num - 1)) ? unit_accounts.size() : ((i + 1) * accounts_per_thread);
+            std::vector<std::string> thread_accounts;
+            for (auto j = start_index; j < end_index; j++) {
+                thread_accounts.emplace_back(unit_accounts[j]);
+            }
+            account_vec_split.emplace_back(thread_accounts);
+        }
+        auto thread_helper = [&account_vec_split, &file](xdb_export_tools_t * arg, int index) {
+            for (auto const & account : account_vec_split[index]) {
+                uint32_t error_num = 0;
+                error_num += arg->query_block_continuity_and_integrity(account, query_account_unit, file);
+                error_num += arg->query_cert_continuity(account, query_account_unit, file);
+                if (error_num) {
+                    std::cout << "unit: " << account << ", check not ok, error num: " << error_num << std::endl;
+                } else {
+                    std::cout << "unit: " << account << ", check ok" << std::endl;
+                }
+            }
+        };
+        std::vector<std::thread> all_thread;
+        for (size_t i = 0; i < thread_num; i++) {
+            std::thread th(thread_helper, this, i);
+            all_thread.emplace_back(std::move(th));
+        }
+        for (size_t i = 0; i < thread_num; i++) {
+            all_thread[i].join();
         }
     }
     // step 3: check drand
