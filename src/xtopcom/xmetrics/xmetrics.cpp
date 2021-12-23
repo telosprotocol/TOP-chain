@@ -181,6 +181,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_block_meta_write);
         RETURN_METRICS_NAME(store_block_meta_read);
 
+        RETURN_METRICS_NAME(store_dbsize_block_index_table_write);
+        RETURN_METRICS_NAME(store_dbsize_block_index_unit_write);
+        RETURN_METRICS_NAME(store_dbsize_block_index_other_write);
         RETURN_METRICS_NAME(store_dbsize_block_unit_empty);
         RETURN_METRICS_NAME(store_dbsize_block_unit_light);
         RETURN_METRICS_NAME(store_dbsize_block_unit_full);

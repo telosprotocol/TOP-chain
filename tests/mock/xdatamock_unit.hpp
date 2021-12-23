@@ -35,6 +35,8 @@ class xlightunit_builder_mock_t : public blockmaker::xlightunit_builder_t {
         xaccount_ptr_t proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
 
         std::shared_ptr<store::xaccount_context_t> _account_context = std::make_shared<store::xaccount_context_t>(proposal_state);
+        std::vector<xcons_transaction_ptr_t> succ_txs;
+        std::vector<xcons_transaction_ptr_t> unchange_txs;
         for (auto & tx : input_txs) {
             _account_context->add_transaction(tx);
 
@@ -44,6 +46,13 @@ class xlightunit_builder_mock_t : public blockmaker::xlightunit_builder_t {
                 _account_context->top_token_transfer_in(1);  // TODO(jimmy)
             }
             tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+            // if no succ tx except confirm transfer, no unit block needed 
+            if (tx->is_confirm_tx() && tx->get_transaction()->get_tx_type() == xtransaction_type_transfer) {
+                tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+                unchange_txs.push_back(tx);
+            } else {
+                succ_txs.push_back(tx);
+            }
         }
         _account_context->finish_exec_all_txs(input_txs);
         xtransaction_result_t result;
@@ -52,7 +61,8 @@ class xlightunit_builder_mock_t : public blockmaker::xlightunit_builder_t {
 
         xlightunit_block_para_t lightunit_para;
         // set lightunit para by tx result
-        lightunit_para.set_input_txs(input_txs);
+        lightunit_para.set_input_txs(succ_txs);
+        lightunit_para.set_unchange_txs(unchange_txs);
         lightunit_para.set_account_unconfirm_sendtx_num(proposal_state->get_unconfirm_sendtx_num());
         lightunit_para.set_fullstate_bin(result.m_full_state);
         lightunit_para.set_binlog(result.m_property_binlog);
@@ -185,28 +195,30 @@ class xdatamock_unit {
 
     void clear_exec_txs() {m_exec_txs.clear();}
     const std::vector<xcons_transaction_ptr_t> & get_exec_txs() const {return m_exec_txs;}
+    void clear_unchange_txs() {m_unchange_txs.clear();}
+    const std::vector<xcons_transaction_ptr_t> & get_unchange_txs() const {return m_unchange_txs;}
 
     xblock_ptr_t generate_unit(const base::xreceiptid_state_ptr_t & receiptid_state, const data::xblock_consensus_para_t & cs_para) {
         xblock_ptr_t prev_block = get_cert_block();
         xblock_ptr_t proposal_block = nullptr;
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
-        if (prev_block->is_lightunit() && prev_block->get_height() > (prev_block->get_last_full_block_height() + enum_default_fullunit_interval_unit_count)) {
-            xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
-            proposal_block = m_fullunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para); // no need xblock_builder_para_ptr_t
-            std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-            m_exec_txs = lightunit_build_para->get_pack_txs();
-        } else if (!m_current_txs.empty()) {
-            xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
-            proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);
-            std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-            m_exec_txs = lightunit_build_para->get_pack_txs();
-        } else {
-            if (get_cert_block()->get_height() != 0
-                && (get_cert_block()->get_block_class() == base::enum_xvblock_class_light || get_lock_block()->get_block_class() == base::enum_xvblock_class_light) ) {
-                proposal_block = m_emptyunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, m_default_builder_para);
+        if (!m_current_txs.empty()) {
+            if (prev_block->is_lightunit() && prev_block->get_height() > (prev_block->get_last_full_block_height() + enum_default_fullunit_interval_unit_count)) {
+                xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
+                proposal_block = m_fullunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para); // no need xblock_builder_para_ptr_t
+                std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+                m_exec_txs = lightunit_build_para->get_pack_txs();
+                m_unchange_txs = lightunit_build_para->get_unchange_txs();
+            } else {
+                xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_current_txs, receiptid_state, m_default_resources);
+                proposal_block = m_lightunit_builder->build_block(prev_block, m_unit_bstate->get_bstate(), cs_para, build_para);
+                std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+                m_exec_txs = lightunit_build_para->get_pack_txs();
+                m_unchange_txs = lightunit_build_para->get_unchange_txs();
             }
         }
+
         m_current_txs.clear();  // clear txs after make unit
         return proposal_block;
     }
@@ -277,6 +289,7 @@ class xdatamock_unit {
     xaccount_ptr_t                          m_unit_bstate{nullptr};
     std::vector<xcons_transaction_ptr_t>    m_current_txs;
     std::vector<xcons_transaction_ptr_t>    m_exec_txs;
+    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
     std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     std::vector<xblock_ptr_t>               m_history_units;
     xblock_builder_face_ptr_t               m_fullunit_builder;

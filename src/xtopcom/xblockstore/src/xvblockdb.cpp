@@ -22,11 +22,14 @@ namespace top
             if (metrics_type == enum_blockstore_metrics_type_block_index)
             {
                 if (_level == base::enum_xvblock_level_table) {
-                    XMETRICS_GAUGE(metrics::store_block_index_table_write, bin_size);
+                    XMETRICS_GAUGE(metrics::store_block_index_table_write, 1);
+                    XMETRICS_GAUGE(metrics::store_dbsize_block_index_table_write, bin_size);
                 } else if (_level == base::enum_xvblock_level_unit) {
-                    XMETRICS_GAUGE(metrics::store_block_index_unit_write, bin_size);
+                    XMETRICS_GAUGE(metrics::store_block_index_unit_write, 1);
+                    XMETRICS_GAUGE(metrics::store_dbsize_block_index_unit_write, bin_size);
                 } else {
-                    XMETRICS_GAUGE(metrics::store_block_index_other_write, bin_size);
+                    XMETRICS_GAUGE(metrics::store_block_index_other_write, 1);
+                    XMETRICS_GAUGE(metrics::store_dbsize_block_index_other_write, bin_size);
                 }
             }
             else if (metrics_type == enum_blockstore_metrics_type_block_object)

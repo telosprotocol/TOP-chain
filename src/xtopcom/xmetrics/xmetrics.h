@@ -197,6 +197,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_block_meta_write,
     store_block_meta_read,
 
+    store_dbsize_block_index_table_write,
+    store_dbsize_block_index_unit_write,
+    store_dbsize_block_index_other_write,
     store_dbsize_block_unit_empty,
     store_dbsize_block_unit_light,
     store_dbsize_block_unit_full,

@@ -394,7 +394,7 @@ namespace top
         {
             if(vmeta_bin.empty() == false)
             {
-                XMETRICS_GAUGE(metrics::store_block_meta_write, vmeta_bin.size());
+                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
                 const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {

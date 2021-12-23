@@ -31,6 +31,7 @@ class xdatamock_table : public base::xvaccount_t {
     : base::xvaccount_t(xblocktool_t::make_address_shard_table_account(tableid)) {
         m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
         m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
+        m_emptytable_builder = std::make_shared<xemptytable_builder_t>();
 
         xblock_ptr_t _block = build_genesis_table_block();
         on_table_finish(_block);
@@ -117,11 +118,11 @@ class xdatamock_table : public base::xvaccount_t {
     void    push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {        
         for (auto & tx : txs) {
             push_tx(tx);
-                xtransaction_ptr_t raw_tx_ptr;
-                auto raw_tx = tx->get_transaction();
-                raw_tx->add_ref();
-                raw_tx_ptr.attach(raw_tx);
-                m_raw_txs[tx->get_tx_hash()] = raw_tx_ptr;
+            xtransaction_ptr_t raw_tx_ptr;
+            auto raw_tx = tx->get_transaction();
+            raw_tx->add_ref();
+            raw_tx_ptr.attach(raw_tx);
+            m_raw_txs[tx->get_tx_hash()] = raw_tx_ptr;
         }
     }
     void    push_tx(const xcons_transaction_ptr_t & tx) {
@@ -286,7 +287,10 @@ class xdatamock_table : public base::xvaccount_t {
             if (unit != nullptr) {
                 units.push_back(unit);
             }
+            
             auto txs = mockunit.get_exec_txs();
+            auto unchange_txs = mockunit.get_unchange_txs();
+            txs.insert(txs.end(), unchange_txs.begin(), unchange_txs.end());
             // if (unit != nullptr && unit->get_block_class() == enum_xvblock_class_full) {
             //     EXPECT_EQ(txs.size(), 1);
             // }
@@ -296,13 +300,21 @@ class xdatamock_table : public base::xvaccount_t {
                 txs_info.push_back(txinfo);
             }
             mockunit.clear_exec_txs();
+            mockunit.clear_unchange_txs();
         }
-        xassert(units.size() > 0);
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
         xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(units, m_default_resources, txs_info);
-        xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
+
+        xblock_ptr_t proposal_block;
+        if (txs_info.empty()) {
+            proposal_block = m_emptytable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
+        } else {
+            proposal_block = m_lighttable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
+        }
+
+        // std::cout << "table height: " << proposal_block->get_height() << " addr " << proposal_block->get_account() << " class " << proposal_block->get_block_class() << " unit size " << units.size() << " tx size " << txs_info.size() << std::endl;
         return proposal_block;
     }
 
@@ -335,6 +347,7 @@ class xdatamock_table : public base::xvaccount_t {
     std::vector<xdatamock_unit>     m_mock_units;
     xblock_builder_face_ptr_t       m_fulltable_builder;
     xblock_builder_face_ptr_t       m_lighttable_builder;
+    xblock_builder_face_ptr_t       m_emptytable_builder;
     xblockmaker_resources_ptr_t     m_default_resources{nullptr};
     uint32_t                        m_config_fulltable_interval{enum_default_full_table_interval_count};
 };

@@ -277,7 +277,7 @@ TEST_F(test_block_store_load, mock_table_unit_1) {
         xassert(_tableblock3->get_block_class() == base::enum_xvblock_class_light);
         std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
         _tableblock3->extract_sub_blocks(sub_blocks);
-        xassert(sub_blocks.size() == 1);
+        xassert(sub_blocks.size() == 0);
     }    
 }
 
@@ -362,6 +362,10 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     std::cout << "db_value_size=" << db_meta.m_db_value_size << std::endl;
     std::cout << "key_count=" << db_meta.m_key_count << std::endl;
 
+    // index may be written multiple times
+    std::cout << "store_dbsize_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_index_table_write) << std::endl;
+    std::cout << "store_dbsize_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_index_unit_write) << std::endl;
+    std::cout << "store_dbsize_block_index_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_index_other_write) << std::endl;
     std::cout << "store_dbsize_block_unit_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_unit_empty) << std::endl;
     std::cout << "store_dbsize_block_unit_light=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_unit_light) << std::endl;
     std::cout << "store_dbsize_block_unit_full=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_dbsize_block_unit_full) << std::endl;
