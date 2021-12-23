@@ -13,6 +13,8 @@
 #include "xsync/xsync_ratelimit.h"
 #include "xsync/xrequest.h"
 #include "xsync/xsync_task.h"
+#include "xsync/xrole_chains_mgr.h"
+#include "xsync/xrole_xips_manager.h"
 
 NS_BEG2(top, sync)
 
@@ -102,7 +104,8 @@ class xchain_object_t {
 class xchain_downloader_t : public xchain_downloader_face_t {
 public:
     xchain_downloader_t(std::string vnode_id,
-        xsync_store_face_t *sync_store, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
+        xsync_store_face_t *sync_store, xrole_xips_manager_t *role_xips_mgr,
+        xrole_chains_mgr_t *role_chains_mgr, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
         const observer_ptr<base::xvcertauth_t> &certauth,
         xsync_sender_t *sync_sender, xsync_ratelimit_face_t *ratelimit,
         const std::string &address);
@@ -164,6 +167,8 @@ private:
     uint32_t m_continuous_times{0};
     std::set<uint64_t> m_wait_committed_event_group;
     uint64_t m_refresh_time;
+    xrole_xips_manager_t *m_role_xips_mgr;
+    xrole_chains_mgr_t *m_role_chains_mgr;
 };
 
 NS_END2

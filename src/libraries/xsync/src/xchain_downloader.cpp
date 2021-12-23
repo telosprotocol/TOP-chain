@@ -15,6 +15,7 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xsync/xsync_store_shadow.h"
+#include "xsync/xsync_pusher.h"
 
 NS_BEG2(top, sync)
 
@@ -25,6 +26,8 @@ using namespace data;
 
 xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
                                  xsync_store_face_t * sync_store,
+                                 xrole_xips_manager_t *role_xips_mgr,
+                                 xrole_chains_mgr_t *role_chains_mgr,
                                  const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
                                  const observer_ptr<base::xvcertauth_t> &certauth,
                                  xsync_sender_t *sync_sender,
@@ -37,7 +40,9 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
   m_sync_sender(sync_sender),
   m_ratelimit(ratelimit),
   m_address(address),
-  m_sync_range_mgr(vnode_id, address) {
+  m_sync_range_mgr(vnode_id, address),
+  m_role_xips_mgr(role_xips_mgr),
+  m_role_chains_mgr(role_chains_mgr) {
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
     XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
 }
@@ -375,13 +380,64 @@ bool xchain_downloader_t::send_request(int64_t now) {
         return false;
     }
 
+    std::string address;
+    xsync_roles_t roles = m_role_chains_mgr->get_roles();
+    vnetwork::xvnode_address_t self_addr;
+    common::xnode_type_t node_type;
+    for (const auto &role_it: roles) {
+        self_addr = role_it.first;
+        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
+        node_type = self_addr.type();
+
+        if (common::has<common::xnode_type_t::fullnode>(node_type)) {
+            address = self_addr.to_string();
+            break;
+        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
+            continue;
+        } else {
+            continue;
+        }
+    }
+    if (address.empty()) { // not fullnode
+        XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
+        m_request->send_time = now;
+        int64_t queue_cost = m_request->send_time - m_request->create_time;
+        xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s",
+                   m_request->owner.c_str(),
+                   m_request->start_height,
+                   m_request->start_height + m_request->count - 1,
+                   queue_cost,
+                   m_request->target_addr.to_string().c_str());
+        return m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, m_request->self_addr, m_request->target_addr);
+    }
+
+    std::vector<vnetwork::xvnode_address_t> all_neighbors = m_role_xips_mgr->get_all_neighbors(self_addr);
+    all_neighbors.push_back(self_addr);
+    std::sort(all_neighbors.begin(), all_neighbors.end());
+    uint32_t neighbor_number = all_neighbors.size();
+    int32_t self_position = -1;
+    for (uint32_t i=0; i<all_neighbors.size(); i++) {
+        if (all_neighbors[i] == self_addr) {
+            self_position = i;
+            break;
+        }
+    }
+
+    std::vector<vnetwork::xvnode_address_t> archive_lists = m_role_xips_mgr->get_archive_list();
+    std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_lists.size(), self_position, 0);
+    if (push_arcs.empty()) {
+        xsync_info("xchain_downloader_t::send_request, not find archive.");
+        return false;
+    }
+
     XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
     m_request->send_time = now;
     int64_t queue_cost = m_request->send_time - m_request->create_time;
-    xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s",
+    vnetwork::xvnode_address_t &target_addr = archive_lists[push_arcs[0]];
+    xsync_info("chain_downloader send sync request(block) from fullnode. %s,range[%lu,%lu] get_token_cost(%ldms) %s,%s",
                 m_request->owner.c_str(), m_request->start_height, m_request->start_height+m_request->count-1,
-                queue_cost, m_request->target_addr.to_string().c_str());
-    return m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, m_request->self_addr, m_request->target_addr);
+                queue_cost, self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    return m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, self_addr, target_addr);
 }
 
 bool xchain_downloader_t::send_request(int64_t now, const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta) {
@@ -539,7 +595,7 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
         if (account_prefix == sys_contract_beacon_table_block_addr) {
             // ignore
         } else if (account_prefix == sys_contract_zec_table_block_addr) {
-            if (!check_behind(end_height, sys_contract_rec_elect_rec_addr)) {
+            if (!check_behind(end_height, sys_contract_rec_elect_zec_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }
@@ -554,12 +610,12 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
         }
     }
 
-    int ret = 0;    
-    if (sync_policy == enum_chain_sync_policy_fast) {
+    int ret = m_sync_range_mgr.set_behind_info(start_height, end_height, sync_policy, self_addr, target_addr);    
+/*    if (sync_policy == enum_chain_sync_policy_fast) {
         ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_policy_fast, self_addr, target_addr);
     } else {
         ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_policy_full,self_addr, target_addr);
-    }
+    }*/
 
     if (!ret) {
         return finish;

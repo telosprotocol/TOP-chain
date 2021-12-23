@@ -137,6 +137,9 @@ uint64_t xsync_store_t::get_latest_start_block_height(const std::string & accoun
         return _full_block->get_height();
     } else if (sync_policy == enum_chain_sync_policy_full) {
         return get_genesis_block_height(account);
+    } else if (sync_policy == enum_chain_sync_policy_checkpoint) {
+        // need to fix: checkpoint
+        return get_latest_immutable_connected_checkpoint_height(account);
     }
 
     return 0;
@@ -149,7 +152,9 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
         connect_height = m_blockstore->get_latest_connected_block_height(account);
     } else if (sync_policy == enum_chain_sync_policy_full) {
         connect_height = m_shadow->genesis_connect_height(account);
-        //connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
+    } else if (sync_policy == enum_chain_sync_policy_checkpoint) {
+        // need to fix: checkpoint
+        connect_height = get_latest_mutable_connected_checkpoint_height(account);
     }
 
     if (connect_height == 0) {
