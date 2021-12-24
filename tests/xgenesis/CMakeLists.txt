@@ -7,4 +7,4 @@ add_executable(xgenesis_test ${genesis_test_src} ${main})
 
 #add_dependencies(xgenesis_test xxbase xstore)
 
-target_link_libraries(xgenesis_test PRIVATE xapplication xblockstore xstore xxbase xcommon gtest pthread jsoncpp)
+target_link_libraries(xgenesis_test PRIVATE xloader xgenesis xtxstore xblockstore xstore xxbase xcommon gtest pthread jsoncpp)

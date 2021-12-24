@@ -3,20 +3,21 @@
 #include "nlohmann/json.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 #include "xapplication/xerror/xerror.h"
-#include "xapplication/xgenesis_manager.h"
 #include "xblockstore/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
+#include "xgenesis/xerror/xerror.h"
+#include "xgenesis/xgenesis_manager.h"
 #include "xstake/xstake_algorithm.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 
-using namespace top::application;
+using namespace top::genesis;
 using json = nlohmann::json;
 
-NS_BEG3(top, tests, application)
+NS_BEG3(top, tests, genesis)
 
 mock::xvchain_creator creator;
 
@@ -412,13 +413,6 @@ public:
     void SetUp() override {
         m_store = creator.get_xstore();
         m_blockstore = creator.get_blockstore();
-        std::error_code ec;
-        static bool init;
-        if (!init) {
-            m_blockstore->create_genesis_block(base::xvaccount_t{"T00000LLhsJByy2XRLh1jPm7AHZ3X2CpzyxGzfoa"}, ec);
-            EXPECT_EQ(ec, make_error_code(store::error::xenum_errc::store_create_genesis_cb_not_register));
-            init = true;
-        }
         m_statestore = creator.get_xblkstatestore();
         m_genesis_manager = make_unique<xgenesis_manager_t>(top::make_observer(m_blockstore), make_observer(m_store));
         contract::xcontract_deploy_t::instance().deploy_sys_contracts();
@@ -472,7 +466,7 @@ TEST_F(test_genesis, test_root_not_ready) {
     base::xvaccount_t account{std::string{"T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv"}};
     std::error_code ec;
     m_genesis_manager->create_genesis_block(account, ec);
-    std::error_code ec_cmp = top::application::error::xenum_errc::genesis_root_has_not_ready;
+    std::error_code ec_cmp = top::genesis::error::xenum_errc::genesis_root_has_not_ready;
     EXPECT_EQ(ec, ec_cmp);
 }
 
@@ -546,8 +540,6 @@ TEST_F(test_genesis, test_init_genesis_block) {
     for (auto const & pair : m_genesis_manager->m_user_accounts_data) {
         EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.value()), true);
     }
-    EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{"T00000LKnhu8oSgf4x5hPWUuHB8uC8YQsB1zeDhx"}), true);
-    EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{"T00000LKsHzz6D7TEXX3fTiRogHE2nkreR2USoLN"}), true);
 
     EXPECT_EQ(m_genesis_manager->m_root_finish, true);
     EXPECT_EQ(m_genesis_manager->m_init_finish, true);
