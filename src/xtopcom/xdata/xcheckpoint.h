@@ -25,12 +25,8 @@ using xcheckpoints_state_map_t = std::map<common::xaccount_address_t, std::strin
 
 class xtop_chain_checkpoint {
 public:
-    /// @brief Get cp data of specific table and height.
-    /// @param account Table account only.
-    /// @param cp_clock Clock of checkpoint.
-    /// @param ec Error code.
-    /// @return Cp data which include hash and clock.
-    static xcheckpoint_data_t get_checkpoint(common::xaccount_address_t const & account, const uint64_t cp_clock, std::error_code & ec);
+    /// @brief Load all cp data and state into memory.
+    static void load();
 
     /// @brief Get latest cp data of specific table.
     /// @param account Table account only.
