@@ -176,7 +176,7 @@ namespace top
             if((int)m_all_blocks.size() > keep_blocks_count)
             {
                 if ((int)m_all_blocks.size() > keep_blocks_count * 2) {
-                    xerror("xblockacct_t::clean_blocks account:%s cache size:%u is more than 2 times of upper limmit:%u", get_account().c_str(), m_all_blocks.size(), keep_blocks_count);
+                    xwarn("xblockacct_t::clean_blocks account:%s cache size:%u is more than 2 times of upper limmit:%u", get_account().c_str(), m_all_blocks.size(), keep_blocks_count);
                 }
 
                 for(auto height_it = m_all_blocks.begin(); height_it != m_all_blocks.end();)//search from lowest hight to higher
