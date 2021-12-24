@@ -364,10 +364,6 @@ void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t 
 
 std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
     std::map<std::string, uint64_t> table_height_map;
-    if (!m_para->get_receiptid_state_cache().is_all_table_state_cached(m_all_table_sids)) {
-        xdbg("xtxpool_t::get_min_keep_heights fail state not enough");
-        return table_height_map;
-    }
 
     for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
         auto table = m_tables[base::enum_chain_zone_consensus_index][i];
