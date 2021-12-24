@@ -8,4 +8,4 @@ add_executable(xcheckpoint_test ${main} ${src} ${checkpoint_header} ${blockstore
 
 #add_dependencies(xcheckpoint_test)
 
-target_link_libraries(xcheckpoint_test PRIVATE xtxstore xblockstore xblockmaker gtest)
+target_link_libraries(xcheckpoint_test PRIVATE xtxstore xblockstore xblockmaker xdata gtest)
