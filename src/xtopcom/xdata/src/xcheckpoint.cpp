@@ -12,89 +12,108 @@
 #include "xdata/xerror/xerror.h"
 #include "xvledger/xvaccount.h"
 
+#include <fstream>
+
 template <class K, class V, class dummy_compare, class A>
 using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
 using json = nlohmann::basic_json<my_workaround_fifo_map>;
 
+#define TABLE_STATE_KEY "table_state"
+#define TABLE_DATA_KEY "table_data"
+#define UNIT_STATE_KEY "unit_state"
+#define UNIT_DATA_KEY "unit_data"
 #define BLOCK_HEIGHT_KEY "height"
 #define BLOCK_HASH_KEY "hash"
-#define TABLE_STATE_KEY "table_state"
-#define UNIT_STATE_KEY "unit_state"
 
 namespace top {
 namespace data {
 
-auto load_data = []() -> xcheckpoints_map_t {
-    xcheckpoints_map_t m;
-    auto j = json::parse(checkpoint_data());
-    for (auto it = j.cbegin(); it != j.cend(); it++) {
-        auto clock_str = static_cast<std::string>(it.key());
-        auto clock = base::xstring_utl::touint64(clock_str);
-        auto const & data_map = it.value();
-        for (auto it_in = data_map.cbegin(); it_in != data_map.cend(); it_in++) {
-            xcheckpoint_data_t data;
-            auto account_str = static_cast<std::string>(it_in.key());
-            data.height = base::xstring_utl::touint64(it_in->at(BLOCK_HEIGHT_KEY).get<std::string>());
-            data.hash = base::xstring_utl::from_hex(it_in->at(BLOCK_HASH_KEY).get<std::string>());
-            m[common::xaccount_address_t{account_str}].emplace(std::make_pair(clock, data));
-        }
-    }
-    j.clear();
-    return m;
-};
+xcheckpoints_map_t xtop_chain_checkpoint::m_checkpoints_map;
+xcheckpoints_state_map_t xtop_chain_checkpoint::m_checkpoints_state_map;
 
-auto load_state = []() -> xcheckpoints_state_map_t {
-    xcheckpoints_state_map_t m;
-    auto j = json::parse(checkpoint_state());
-    for (auto it = j.cbegin(); it != j.cend(); it++) {
-        auto const & state_map = it.value();
-        for (auto it_in = state_map.cbegin(); it_in != state_map.cend(); it_in++) {
-            auto table_str = static_cast<std::string>(it_in.key());
-            auto table_state_str = static_cast<std::string>(it_in->at(TABLE_STATE_KEY).get<std::string>());
-            m.emplace(std::make_pair(common::xaccount_address_t{table_str}, table_state_str));
-            auto const & unit_map = it_in->at(UNIT_STATE_KEY);
-            for (auto it_unit = unit_map.cbegin(); it_unit != unit_map.cend(); it_unit++) {
-                xcheckpoint_data_t data;
-                auto unit_str = static_cast<std::string>(it_in.key());
-                auto unit_state_str = static_cast<std::string>(it_in.value().get<std::string>());
-                m.emplace(std::make_pair(common::xaccount_address_t{unit_str}, unit_state_str));
+void xtop_chain_checkpoint::load() {
+    json j_data;
+    json j_state;
+#ifdef CHECKPOINT_TEST
+#    define CHECKPOINT_DATA_FILE "checkpoint_data.json"
+#    define CHECKPOINT_STATE_FILE "checkpoint_state.json"
+    std::ifstream data_file(CHECKPOINT_DATA_FILE);
+    if (data_file.good()) {
+        data_file >> j_data;
+    }
+    std::ifstream state_file(CHECKPOINT_STATE_FILE);
+    if (state_file.good()) {
+        state_file >> j_state;
+    }
+    data_file.close();
+    state_file.close();
+#else
+    j_data = json::parse(checkpoint_data());
+    j_state = json::parse(checkpoint_state());
+#endif
+    auto load_data = [](json j, uint64_t & latest_cp) -> xcheckpoints_map_t {
+        xcheckpoints_map_t m;
+        for (auto it = j.cbegin(); it != j.cend(); it++) {
+            auto clock_str = static_cast<std::string>(it.key());
+            auto clock = base::xstring_utl::touint64(clock_str);
+            latest_cp = clock;
+            auto const & data_map = it.value();
+            // table
+            for (auto it_table = data_map.cbegin(); it_table != data_map.cend(); it_table++) {
+                auto table_str = static_cast<std::string>(it_table.key());
+                auto const & table_data = it_table->at(TABLE_DATA_KEY);
+                {
+                    data::xcheckpoint_data_t data;
+                    data.height = base::xstring_utl::touint64(table_data.at(BLOCK_HEIGHT_KEY).get<std::string>());
+                    data.hash = base::xstring_utl::from_hex(table_data.at(BLOCK_HASH_KEY).get<std::string>());
+                    m[common::xaccount_address_t{table_str}].emplace(std::make_pair(clock, data));
+                }
+                auto const & unit_data_map = it_table->at(UNIT_DATA_KEY);
+                // unit
+                for (auto it_unit = unit_data_map.cbegin(); it_unit != unit_data_map.cend(); it_unit++) {
+                    auto unit_str = static_cast<std::string>(it_unit.key());
+                    auto const & unit_data = it_unit.value();
+                    data::xcheckpoint_data_t data;
+                    data.height = base::xstring_utl::touint64(unit_data.at(BLOCK_HEIGHT_KEY).get<std::string>());
+                    data.hash = base::xstring_utl::from_hex(unit_data.at(BLOCK_HASH_KEY).get<std::string>());
+                    m[common::xaccount_address_t{unit_str}].emplace(std::make_pair(clock, data));
+                }
             }
         }
-    }
-    j.clear();
-    return m;
-};
-
-xcheckpoints_map_t xtop_chain_checkpoint::m_checkpoints_map = load_data();
-xcheckpoints_state_map_t xtop_chain_checkpoint::m_checkpoints_state_map = load_state();
-
-xcheckpoint_data_t xtop_chain_checkpoint::get_checkpoint(common::xaccount_address_t const & account, const uint64_t cp_clock, std::error_code & ec) {
-    if (account.type() != base::enum_vaccount_addr_type_block_contract) {
-        xwarn("[xtop_chain_checkpoint::get_checkpoint] %s not a table account!", account.c_str());
-        ec = error::xenum_errc::checkpoint_account_type_invalid;
-        return {};
-    }
-    auto it = m_checkpoints_map.find(account);
-    if (it == m_checkpoints_map.end()) {
-        xwarn("[xtop_chain_checkpoint::get_checkpoint] %s not found!", account.c_str());
-        ec = error::xenum_errc::checkpoint_not_found;
-        return {};
-    }
-    auto it_h = it->second.find(cp_clock);
-    if (it_h == it->second.end()) {
-        xwarn("[xtop_chain_checkpoint::get_checkpoint] %s clock %lu checkpoint not found!", account.c_str(), clock);
-        ec = error::xenum_errc::checkpoint_not_found;
-        return {};
-    }
-    return it_h->second;
+        return m;
+    };
+    auto load_state = [](json j, uint64_t & latest_cp) -> xcheckpoints_state_map_t {
+        xcheckpoints_state_map_t m;
+        xassert(j.size() <= 1);     // latest only
+        for (auto it = j.cbegin(); it != j.cend(); it++) {
+            auto clock_str = static_cast<std::string>(it.key());
+            auto clock = base::xstring_utl::touint64(clock_str);
+            latest_cp = clock;
+            auto const & state_map = it.value();
+            // table
+            for (auto it_table = state_map.cbegin(); it_table != state_map.cend(); it_table++) {
+                auto table_str = static_cast<std::string>(it_table.key());
+                auto table_state = base::xstring_utl::from_hex(it_table->at(TABLE_STATE_KEY).get<std::string>());
+                m[common::xaccount_address_t{table_str}] = table_state;
+                auto const & unit_state_map = it_table->at(UNIT_STATE_KEY);
+                // unit
+                for (auto it_unit = unit_state_map.cbegin(); it_unit != unit_state_map.cend(); it_unit++) {
+                    auto unit_str = static_cast<std::string>(it_unit.key());
+                    auto unit_state = base::xstring_utl::from_hex(it_unit.value().get<std::string>());
+                    m[common::xaccount_address_t{unit_str}] = unit_state;
+                }
+            }
+        }
+        return m;
+    };
+    uint64_t latest_data_cp{0};
+    uint64_t latest_state_cp{0};
+    m_checkpoints_map = load_data(j_data, latest_data_cp);
+    m_checkpoints_state_map = load_state(j_state, latest_state_cp);
+    xassert(latest_data_cp == latest_state_cp);
 }
 
 xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(common::xaccount_address_t const & account, std::error_code & ec) {
-    if (account.type() != base::enum_vaccount_addr_type_block_contract) {
-        xwarn("[xtop_chain_checkpoint::get_checkpoints] %s not a table account!", account.c_str());
-        ec = error::xenum_errc::checkpoint_account_type_invalid;
-        return {};
-    }
     auto it = m_checkpoints_map.find(account);
     if (it == m_checkpoints_map.end()) {
         xwarn("[xtop_chain_checkpoint::get_checkpoints] %s not found!", account.c_str());
@@ -105,11 +124,6 @@ xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(common::xaccount
 }
 
 xcheckpoints_t xtop_chain_checkpoint::get_checkpoints(common::xaccount_address_t const & account, std::error_code & ec) {
-    if (account.type() != base::enum_vaccount_addr_type_block_contract) {
-        xwarn("[xtop_chain_checkpoint::get_checkpoints] %s not a table account!", account.c_str());
-        ec = error::xenum_errc::checkpoint_account_type_invalid;
-        return {};
-    }
     auto it = m_checkpoints_map.find(account);
     if (it == m_checkpoints_map.end()) {
         xwarn("[xtop_chain_checkpoint::get_checkpoints] %s not found!", account.c_str());
