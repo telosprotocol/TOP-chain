@@ -1163,11 +1163,15 @@ namespace top
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {
                 // meta is not 100% reliable, query to ensure the existence of genesis block
-                base::xauto_ptr<base::xvbindex_t> genesis_index(query_index(0, 0));
-                if(!genesis_index)//if not existing at cache
+                std::vector<base::xvbindex_t*> _indexes(read_index(0));
+                if(_indexes.empty())//if not existing at cache
                 {
                     base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
                     store_block(generis_block.get());
+                } else {
+                    for (auto it = _indexes.begin(); it != _indexes.end(); ++it) {
+                        (*it)->release_ref();   //release ptr that reference added by read_index_from_db
+                    }
                 }
             }
 
