@@ -19,8 +19,8 @@ static std::string xwrouter_errc_map(int const errc) noexcept {
         return "not_find_routing_table";
     case xwrouter_error_t::empty_dst_address:
         return "empty_dst_address";
-    case xwrouter_error_t::routing_find_zero_closest_nodes:
-        return "routing_find_zero_closest_nodes";
+    case xwrouter_error_t::routing_table_find_closest_nodes_fail:
+        return "routing_table_find_closest_nodes_fail";
     case xwrouter_error_t::crossing_network_fail:
         return "crossing_network_fail";
     case xwrouter_error_t::multi_send_partial_fail:

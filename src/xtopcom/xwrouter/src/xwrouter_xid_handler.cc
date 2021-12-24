@@ -154,7 +154,7 @@ void WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & messag
         routing_table->GetClosestNodes(des_xid, 8);
         std::vector<kadmlia::NodeInfoPtr> nodes = routing_table->GetClosestNodes(des_xid, 8);
         if (nodes.empty()) {
-            ec = xwrouter::xwrouter_error_t::routing_find_zero_closest_nodes, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
             return;
         }
         TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("SendData", message);
@@ -189,7 +189,7 @@ void WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & messag
         nodes.push_back(routing_table->GetNode(des_xid));
 
         if (nodes.empty()) {
-            ec = xwrouter::xwrouter_error_t::routing_find_zero_closest_nodes, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
             return;
         }
         TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("SendData", message);
@@ -264,7 +264,7 @@ void WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & mess
     assert(gossip_type == kGossipBloomfilter || gossip_type == kGossipRRS);
     neighbors = routing_table->GetUnLockNodes();
     if (!neighbors) {
-        ec = xwrouter::xwrouter_error_t::routing_find_zero_closest_nodes, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
@@ -286,7 +286,7 @@ void WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & mess
 void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride, std::error_code & ec) {
     assert(!ec);
     if (neighbors.empty()) {
-        ec = xwrouter::xwrouter_error_t::routing_find_zero_closest_nodes, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
@@ -353,7 +353,7 @@ void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, 
 
     if (message.broadcast()) {
         if (rest_neighbors.empty()) {
-            ec = xwrouter::xwrouter_error_t::routing_find_zero_closest_nodes, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
             return;
         }
         std::for_each(rest_neighbors.begin(), rest_neighbors.end(), each_call);

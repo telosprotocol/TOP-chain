@@ -14,7 +14,7 @@ enum class xtop_wrouter_error {
     hop_num_beyond_max,
     not_find_routing_table,
     empty_dst_address,
-    routing_find_zero_closest_nodes,
+    routing_table_find_closest_nodes_fail,
     crossing_network_fail,
     multi_send_partial_fail,
     serialized_fail,
