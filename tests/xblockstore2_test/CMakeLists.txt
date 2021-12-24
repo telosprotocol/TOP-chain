@@ -13,6 +13,7 @@ target_link_libraries(xblockstore2_test PRIVATE
     xtxstore
     xblockmaker
     xdata
+    xgenesis
     gtest
 )
 

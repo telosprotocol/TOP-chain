@@ -1,3 +1,8 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#pragma once
+
 #include "xapplication/xerror/xerror.h"
 #include "xbasic/xmemory.hpp"
 #include "xchain_upgrade/xchain_data_processor.h"
@@ -8,7 +13,8 @@
 #include <mutex>
 #include <system_error>
 
-NS_BEG2(top, application)
+namespace top {
+namespace genesis {
 
 enum xtop_enum_create_src {
     init,
@@ -96,4 +102,5 @@ private:
 };
 using xgenesis_manager_t = xtop_genesis_manager;
 
-NS_END2
+}  // namespace genesis
+}  // namespace top

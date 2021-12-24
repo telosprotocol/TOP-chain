@@ -69,7 +69,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
     // genesis blocks should init imediately after db created
-    m_genesis_manager = make_unique<xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
 
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
@@ -88,8 +88,6 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 }
 
 void xtop_application::start() {
-
-
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);

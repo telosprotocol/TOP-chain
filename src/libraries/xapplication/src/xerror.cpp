@@ -31,15 +31,6 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::load_election_data_missing_state:
         return "load election data failed due to missing bstate";
 
-    case xerrc_t::genesis_root_has_not_ready:
-        return "genesis root has not ready";
-
-    case xerrc_t::genesis_block_store_failed:
-        return "genesis block store failed";
-
-    case xerrc_t::genesis_set_data_state_failed:
-        return "genesis set data state failed";
-
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }
