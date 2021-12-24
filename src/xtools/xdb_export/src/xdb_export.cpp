@@ -9,6 +9,8 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
+#include "xdepends/include/asio/post.hpp"
+#include "xdepends/include/asio/thread_pool.hpp"
 #include "xelection/xvnode_house.h"
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
@@ -844,6 +846,117 @@ uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, 
         }
     }
     return error_num;
+}
+
+void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
+    json j;
+    auto const clock_str = base::xstring_utl::tostring(clock);
+    auto const & tables = get_table_accounts();
+    std::vector<json> j_data(tables.size());
+    std::vector<json> j_state(tables.size());
+    asio::thread_pool pool(4);
+
+    auto start_time = base::xtime_utl::time_now_ms();
+    for (size_t i = 0; i < tables.size(); i++) {
+        asio::post(pool, std::bind(&xdb_export_tools_t::query_checkpoint_internal, this, tables[i], clock, std::ref(j_data[i]), std::ref(j_state[i])));
+    }
+    pool.join();
+    for (size_t i = 0; i < tables.size(); i++) {
+        j["data"][clock_str][tables[i]] = std::move(j_data[i]);
+        j["state"][clock_str][tables[i]] = std::move(j_state[i]);
+    }
+    auto end_time = base::xtime_utl::time_now_ms();
+
+    generate_json_file("checkpoint_data.json", j["data"]);
+    generate_json_file("checkpoint_state.json", j["state"]);
+    std::cout << "===> "
+              << " query_checkpoint total time: " << (end_time - start_time) / 1000 << "s." << std::endl;
+}
+
+void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, const uint64_t clock, json & j_data, json & j_state) {
+    auto const genesis_block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table);
+    if (nullptr == genesis_block) {
+        std::cerr << table << " genesis block nullptr!" << std::endl;
+        return;
+    }
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table, genesis_block.get())) {
+        std::cerr << table << " genesis block load_block_output failed!" << std::endl;
+        return;
+    }
+    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*genesis_block.get());
+    if (genesis_block->get_block_class() != base::enum_xvblock_class_nil) {
+        std::string binlog = genesis_block->get_binlog();
+        if(false == current_state->apply_changes_of_binlog(binlog)) {
+            std::cerr << table << " genesis block apply_changes_of_binlog failed!" << std::endl;
+            return;
+        }
+    }
+    auto const height = m_blockstore->get_latest_committed_block_height(table);
+    auto table_height = genesis_block->get_height();
+    auto table_hash = genesis_block->get_block_hash();
+    for (size_t h = 1; h <= height; h++) {
+        auto const vblock = m_blockstore->load_block_object(table, h, 0, false);
+        if (vblock == nullptr) {
+            std::cerr << table << " height " << h << " block nullptr!" << std::endl;
+            break;
+        }
+        if (vblock->get_clock() > clock) {
+            break;
+        }
+        xassert(vblock->get_height() == current_state->get_block_height() + 1);
+        table_height = vblock->get_height();
+        table_hash = vblock->get_block_hash();
+        current_state = make_object_ptr<base::xvbstate_t>(*vblock.get(), *current_state.get());
+        if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table, vblock.get())) {
+                std::cerr << table << " height " << h << " load_block_output false!" << std::endl;
+                return;
+            }
+            xassert(!vblock->get_binlog_hash().empty());
+            std::string binlog = vblock->get_binlog();
+            xassert(!binlog.empty());
+            if(false == current_state->apply_changes_of_binlog(binlog)) {
+                std::cerr << table << " height " << h << " apply_changes_of_binlog false!" << std::endl;
+                return;
+            }
+        }
+    }
+    j_data["table_data"]["height"] = base::xstring_utl::tostring(table_height);
+    j_data["table_data"]["hash"] = base::xstring_utl::to_hex(table_hash);
+    std::string bin_data;
+    current_state->serialize_to_string(bin_data);
+    j_state["table_state"] = base::xstring_utl::to_hex(bin_data);
+
+    auto const & table_bstate = std::make_shared<xtable_bstate_t>(current_state.get());
+    auto const & table_units = table_bstate->get_all_accounts();
+    json j_unit_data;
+    json j_unit_state;
+    for (auto const & unit : table_units) {
+        base::xaccount_index_t index;
+        if (table_bstate->get_account_index(unit, index) == false) {
+            std::cerr << table << " " << unit << " get index failed!" << std::endl;
+            continue;
+        }
+        auto const unit_height = index.get_latest_unit_height();
+        auto const & unit_vblock = m_blockstore->load_block_object(unit, unit_height, 0, false);
+        if (unit_vblock == nullptr) {
+            std::cerr << unit << " height " << unit_height << " block nullptr!" << std::endl;
+            continue;
+        }
+        auto const & unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
+        if (unit_vblock == nullptr) {
+            std::cerr << unit << " height " << unit_height << " state nullptr!" << std::endl;
+            continue;
+        }
+        j_unit_data[unit]["height"] = base::xstring_utl::tostring(unit_height);
+        j_unit_data[unit]["hash"] = base::xstring_utl::to_hex(unit_vblock->get_block_hash());
+        std::string bin_data;
+        unit_bstate->serialize_to_string(bin_data);
+        j_unit_state[unit] = base::xstring_utl::to_hex(bin_data);
+    }
+    j_data["unit_data"] = j_unit_data;
+    j_state["unit_state"] = j_unit_state;
+    std::cout << table << " cp checkout finish!" << std::endl;
 }
 
 std::set<std::string> xdb_export_tools_t::query_db_unit_accounts() {

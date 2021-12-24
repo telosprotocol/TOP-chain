@@ -41,6 +41,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::election_data_start_time_invalid:
         return "election data start time invalid";
 
+    case xerrc_t::checkpoint_not_found:
+        return "checkpoint not found";
+
     default:
         return "unknown data module error";
     }

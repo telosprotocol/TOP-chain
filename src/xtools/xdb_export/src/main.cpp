@@ -276,6 +276,12 @@ int main(int argc, char ** argv) {
         tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
+    } else if (function_name == "checkpoint") {
+        if (argc < 4) {
+            usage();
+            return -1;
+        }
+        tools.query_checkpoint(std::stoi(argv[3]));
     } else {
         usage();
     }
