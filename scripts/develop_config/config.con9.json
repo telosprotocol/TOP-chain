@@ -13,6 +13,7 @@
     "rec_election_interval": "191",
     "zec_election_interval": "111",
     "archive_election_interval": "13",
+    "auto_prune_data": "on",
     "ip": "127.0.0.1",
     "node_id": "T00000LatrpqMPYXZiGyPiAayYGzXRjZusSNqXyi",
     "http_port": 19081,
