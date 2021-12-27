@@ -1,5 +1,4 @@
 {
-
     "zone_election_trigger_interval": 5,
     "min_election_committee_size": "6",
     "max_election_committee_size": "8",

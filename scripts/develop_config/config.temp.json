@@ -14,6 +14,7 @@
     "rec_election_interval": "191",
     "zec_election_interval": "111",
     "archive_election_interval": "13",
+    "auto_prune_data": "on",
     "genesis_deadline": "360",
     "genesis_min_group_size": "3",
     "auto_prune_data": "on",
