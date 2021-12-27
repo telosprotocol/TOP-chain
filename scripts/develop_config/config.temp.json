@@ -16,6 +16,7 @@
     "archive_election_interval": "13",
     "genesis_deadline": "360",
     "genesis_min_group_size": "3",
+    "auto_prune_data": "on",
     "ip": "127.0.0.1",
     "node_id": "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu",
     "http_port": 19081,
