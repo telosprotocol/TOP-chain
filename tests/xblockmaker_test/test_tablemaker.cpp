@@ -853,9 +853,11 @@ TEST_F(test_tablemaker, version_1) {
             }
         }
 
-        auto units = proposal_block->get_tableblock_units(false);
+        std::vector<xobject_ptr_t<base::xvblock_t>> units;
+        proposal_block->extract_sub_blocks(units);        
         EXPECT_EQ(units.size(), 1);
-        for (auto & unit : units) {
+        for (auto & v : units) {
+            xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(v);
             auto txs = unit->get_txs();
             EXPECT_EQ(txs.size(), tx_cnt);
 
@@ -957,9 +959,11 @@ TEST_F(test_tablemaker, version_2) {
             }
         }
 
-        auto units = proposal_block->get_tableblock_units(false);
+        std::vector<xobject_ptr_t<base::xvblock_t>> units;
+        proposal_block->extract_sub_blocks(units);
         EXPECT_EQ(units.size(), 1);
-        for (auto & unit : units) {
+        for (auto & v : units) {
+            xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(v);
             auto txs = unit->get_txs();
             EXPECT_EQ(txs.size(), 0);
             
