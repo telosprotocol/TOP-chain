@@ -153,6 +153,11 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_ratio_annual_total_reward);
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_mining_annual_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(mining_annual_ratio_from_reserve_pool);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(reward_distribute_interval);
+#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(validator_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);

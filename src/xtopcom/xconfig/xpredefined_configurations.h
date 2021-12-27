@@ -195,6 +195,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval, std::uint6
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal, 5, 1, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 10, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 60, 1, std::numeric_limits<xinterval_t>::max());  // 10 minutes
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_distribute_interval, xinterval_t, normal, 60, 1, std::numeric_limits<xinterval_t>::max());  // 10 minutes
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval, xinterval_t, normal, 20, 1, std::numeric_limits<xinterval_t>::max()); // 200 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 100, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 100, 0, std::numeric_limits<uint64_t>::max());
@@ -207,8 +208,10 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());
 #if defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 8640, 1, std::numeric_limits<xinterval_t>::max()); // 24 hours
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_distribute_interval, xinterval_t, normal, 8640, 1, std::numeric_limits<xinterval_t>::max()); // 24 hours
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 4297, 1, std::numeric_limits<xinterval_t>::max()); // 12 hours
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_distribute_interval, xinterval_t, normal, 4297, 1, std::numeric_limits<xinterval_t>::max()); // 12 hours
 #endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
@@ -241,7 +244,9 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_pernode_num, uint32_t, normal, 1
 
 // reward:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio, uint32_t, critical, 8, 0, 100);   // mean 8%
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(mining_annual_ratio_from_reserve_pool, uint32_t, critical, 8, 0, 100);   // mean 8%
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_ratio_annual_total_reward, uint32_t, critical, 2, 0, 100); // mean 2%
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mining_annual_ratio, uint32_t, critical, 2, 0, 100); // mean 2%
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio, uint16_t, critical, 20, 0, 100);      // mean 20%
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio, uint16_t, critical, 4, 0, 100); // mean 4%
