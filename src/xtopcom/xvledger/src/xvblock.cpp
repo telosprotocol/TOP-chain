@@ -1616,6 +1616,9 @@ namespace top
             if(m_vbstate_ptr != NULL)
                 m_vbstate_ptr->release_ref();
             
+            m_input_bin         = other.m_input_bin;
+            m_output_bin        = other.m_output_bin;
+            
             m_cert_hash         = other.m_cert_hash;
             m_vheader_ptr       = other.m_vheader_ptr;
             m_vqcert_ptr        = other.m_vqcert_ptr;
@@ -1930,11 +1933,47 @@ namespace top
     
         xvinput_t *  xvblock_t::get_input() const
         {
+            if(m_vinput_ptr != nullptr)
+                return m_vinput_ptr;
+            
+            //on-demand create input object
+            xvinput_t* & this_input_ptr = *(xvinput_t**)&m_vinput_ptr;//force to non-const
+            
+            xassert(m_input_bin.empty() == false);
+            xvinput_t*  vinput_ptr = xvblock_t::create_input_object(m_input_bin);
+            if(nullptr == vinput_ptr)//exception case
+            {
+                xassert(vinput_ptr != NULL); //should has value
+                vinput_ptr = new xvinput_t();
+            }
+ 
+            xvinput_t * old_ptr = xatomic_t::xexchange(this_input_ptr,vinput_ptr);
+            if(old_ptr != nullptr)//very very rase case
+                xcontext_t::instance().delay_release_object(old_ptr);
+            
             return m_vinput_ptr;
         }
     
         xvoutput_t*  xvblock_t::get_output() const
         {
+            if(m_voutput_ptr != nullptr)
+                return m_voutput_ptr;
+            
+            //on-demand create output object
+            xvoutput_t* & this_output_ptr = *(xvoutput_t**)&m_voutput_ptr;//force to non-const
+            
+            xassert(m_output_bin.empty() == false);
+            xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(m_output_bin);
+            if(nullptr == voutput_ptr)//exception case
+            {
+                xassert(voutput_ptr != NULL); //should has value
+                voutput_ptr = new xvoutput_t(); //given empty one
+            }
+            
+            xvoutput_t * old_ptr = xatomic_t::xexchange(this_output_ptr, voutput_ptr);
+            if(old_ptr != nullptr)//very very rase case
+                xcontext_t::instance().delay_release_object(old_ptr);
+            
             return m_voutput_ptr;
         }
         
@@ -2403,17 +2442,7 @@ namespace top
                 xassert(qcert_ptr != NULL); //should has value
                 if(qcert_ptr != NULL)
                 {
-                    #if DEBUG
-                        const std::string vcert_hash = qcert_ptr->hash(vqcert_bin);
-                        if( (m_cert_hash.empty() == false) && (vcert_hash != m_cert_hash) ) //test match
-                        {
-                            xerror("xvblock_t::do_read, vqcert not match with stored hash, vcert_hash:%s but ask %s",vcert_hash.c_str(),m_cert_hash.c_str());
-                        }   
-                        else
-                    #endif
-                        {
-                            m_vqcert_ptr = qcert_ptr;
-                        }
+                    m_vqcert_ptr = qcert_ptr;//note: is_deliver(true) may verify "hash(qcert) == m_cert_hash"
                 }
             }
             if(NULL == m_vqcert_ptr) {
@@ -2454,46 +2483,56 @@ namespace top
             }
             
             //------------------------------data verify------------------------------//
-            if(get_header()->get_block_characters() & enum_xvblock_character_certify_header_only)
+            if( (stream.get_cookie() & enum_xvblock_flag_stored) == 0)//ignore check for local & stored block
             {
-                const std::string vheader_bin_hash = get_cert()->hash(vheader_bin);
-                const std::string vinput_bin_hash  = get_cert()->hash(vinput_bin);
-                const std::string voutput_bin_hash = get_cert()->hash(voutput_bin);
-                if(vheader_bin_hash != get_cert()->get_header_hash()) //check with cert
+                if(get_header()->get_block_characters() & enum_xvblock_character_certify_header_only)
                 {
-                    xerror("xvblock_t::do_read, xvheader_t not match with xvqcert, vheader_hash:%s but ask %s",vheader_bin_hash.c_str(),get_header_hash().c_str());
-                    return enum_xerror_code_bad_block;
+                    const std::string vheader_bin_hash = get_cert()->hash(vheader_bin);
+                    const std::string vinput_bin_hash  = get_cert()->hash(vinput_bin);
+                    const std::string voutput_bin_hash = get_cert()->hash(voutput_bin);
+                    if(vheader_bin_hash != get_cert()->get_header_hash()) //check with cert
+                    {
+                        xerror("xvblock_t::do_read, xvheader_t not match with xvqcert, vheader_hash:%s but ask %s",vheader_bin_hash.c_str(),get_header_hash().c_str());
+                        return enum_xerror_code_bad_block;
+                    }
+                    if(vinput_bin_hash != get_input_hash()) //nil block may nil input hash
+                    {
+                        xerror("xvblock_t::do_read, corrupt xvinput_t, vinput_bin_hash:%s but ask %s",vinput_bin_hash.c_str(),get_input_hash().c_str());
+                        return enum_xerror_code_bad_block;
+                    }
+                    if(voutput_bin_hash != get_output_hash())//nil block may nil input hash
+                    {
+                        xerror("xvblock_t::do_read, corrupt xvoutput_t, voutput_bin_hash:%s but ask %s",voutput_bin_hash.c_str(),get_output_hash().c_str());
+                        return enum_xerror_code_bad_block;
+                    }
                 }
-                if(vinput_bin_hash != get_input_hash()) //nil block may nil input hash
+                else //qcert.header_hash = hash(header+input+output)
                 {
-                    xerror("xvblock_t::do_read, corrupt xvinput_t, vinput_bin_hash:%s but ask %s",vinput_bin_hash.c_str(),get_input_hash().c_str());
-                    return enum_xerror_code_bad_block;
-                }
-                if(voutput_bin_hash != get_output_hash())//nil block may nil input hash
-                {
-                    xerror("xvblock_t::do_read, corrupt xvoutput_t, voutput_bin_hash:%s but ask %s",voutput_bin_hash.c_str(),get_output_hash().c_str());
-                    return enum_xerror_code_bad_block;
-                }
-            }
-            else //qcert.header_hash = hash(header+input+output)
-            {
-                const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
-                const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
-                if(get_cert()->get_header_hash() != vheader_input_output_hash)
-                {
-                    xerror("xvblock_t::do_read, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());
-                    return enum_xerror_code_bad_block;
+                    const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+                    const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
+                    if(get_cert()->get_header_hash() != vheader_input_output_hash)
+                    {
+                        xerror("xvblock_t::do_read, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());
+                        return enum_xerror_code_bad_block;
+                    }
                 }
             }
             
             //------------------------------create input/output object------------------------------//
             if(vinput_bin.empty() == false)
             {
-                xvinput_t*  vinput_ptr = xvblock_t::create_input_object(vinput_bin);
-                xassert(vinput_ptr != NULL); //should has value
-                if(vinput_ptr != NULL)
+                if( (stream.get_cookie() & enum_xvblock_flag_stored) == 0)//not local & stored block
                 {
-                    m_vinput_ptr = vinput_ptr;
+                    xvinput_t*  vinput_ptr = xvblock_t::create_input_object(vinput_bin);
+                    xassert(vinput_ptr != NULL); //should has value
+                    if(vinput_ptr != NULL)
+                    {
+                        m_vinput_ptr = vinput_ptr;
+                    }
+                }
+                else //copy binary to create xvinput_t later (to improve performance) for local block
+                {
+                    m_input_bin = vinput_bin;
                 }
             }
             else //for nil block
@@ -2503,11 +2542,18 @@ namespace top
             
             if(voutput_bin.empty() == false)
             {
-                xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(voutput_bin);
-                xassert(voutput_ptr != NULL); //should has value
-                if(voutput_ptr != NULL)
+                if( (stream.get_cookie() & enum_xvblock_flag_stored) == 0)//not local & stored block
                 {
-                    m_voutput_ptr = voutput_ptr;
+                    xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(voutput_bin);
+                    xassert(voutput_ptr != NULL); //should has value
+                    if(voutput_ptr != NULL)
+                    {
+                        m_voutput_ptr = voutput_ptr;
+                    }
+                }
+                else //copy binary to create xvinput_t later (to improve performance) for local block
+                {
+                    m_output_bin = voutput_bin;
                 }
             }
             else //for nil block
@@ -2515,11 +2561,23 @@ namespace top
                 m_voutput_ptr = new xvoutput_t(); //creat an empty object
             }
             
-            //to prevent be attacked by bad data,throw error
-            if( (NULL == m_vheader_ptr) || (NULL == m_vqcert_ptr) ||  (NULL == m_vinput_ptr) || (NULL == m_voutput_ptr) )
+            if( (stream.get_cookie() & enum_xvblock_flag_stored) == 0)//not local & stored block
             {
-                return enum_xerror_code_bad_block;
+                //to prevent be attacked by bad data,throw error
+                if( (NULL == m_vheader_ptr) || (NULL == m_vqcert_ptr) ||  (NULL == m_vinput_ptr) || (NULL == m_voutput_ptr) )
+                {
+                    return enum_xerror_code_bad_block;
+                }
             }
+            else
+            {
+                //to prevent be attacked by bad data,throw error
+                if( (NULL == m_vheader_ptr) || (NULL == m_vqcert_ptr))
+                {
+                    return enum_xerror_code_bad_block;
+                }
+            }
+
             return (begin_size - stream.size());
         }
     
@@ -2711,12 +2769,14 @@ namespace top
         }
     
         //create a  xvheader_t from bin data(could be from DB or from network)
-        base::xvblock_t*  xvblock_t::create_block_object(const std::string & vblock_serialized_data)
+        base::xvblock_t*  xvblock_t::create_block_object(const std::string & vblock_serialized_data,const int32_t cookie)
         {
             if(vblock_serialized_data.empty()) //check first
                 return NULL;
             
             xstream_t _stream(xcontext_t::instance(),(uint8_t*)vblock_serialized_data.data(),(uint32_t)vblock_serialized_data.size());
+            _stream.set_cookie(cookie); //assign cookie into stream to carry
+            
             xdataunit_t*  _data_obj_ptr = xdataunit_t::read_from(_stream);
             if(NULL == _data_obj_ptr)
             {
@@ -2737,11 +2797,15 @@ namespace top
                 _data_obj_ptr->release_ref();
                 return NULL;
             }
-            if((block_ptr->get_input() == NULL) || (block_ptr->get_output() == NULL) )
+            
+            if( (cookie & enum_xvblock_flag_stored) == 0 ) //just check for non-local object right now
             {
-                xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
-                _data_obj_ptr->release_ref();
-                return NULL;
+                if((block_ptr->get_input() == NULL) || (block_ptr->get_output() == NULL) )
+                {
+                    xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
+                    _data_obj_ptr->release_ref();
+                    return NULL;
+                }
             }
             
             block_ptr->dump2(); //genereate dump information before return, to improve performance
