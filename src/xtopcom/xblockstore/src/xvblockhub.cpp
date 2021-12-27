@@ -157,6 +157,9 @@ namespace top
             if(base::enum_xvblock_level_table == m_meta->_block_level)
                 return (enum_max_cached_blocks << 1);//cache to max 128 block
 
+            if(base::enum_xvblock_level_unit == m_meta->_block_level)
+                return (enum_max_cached_blocks >> 2);//cache to max 8 block for unit
+
             return enum_max_cached_blocks;
         }
     
@@ -175,7 +178,7 @@ namespace top
         {
             if((int)m_all_blocks.size() > keep_blocks_count)
             {
-                if ((int)m_all_blocks.size() > keep_blocks_count * 2) {
+                if ((int)m_all_blocks.size() > keep_blocks_count * 3) {
                     // XTODO need fix this issue
                     xwarn("xblockacct_t::clean_blocks account:%s cache size:%u is more than 2 times of upper limmit:%u", get_account().c_str(), m_all_blocks.size(), keep_blocks_count);
                 }

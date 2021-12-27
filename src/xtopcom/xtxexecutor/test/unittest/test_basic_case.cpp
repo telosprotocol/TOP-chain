@@ -445,7 +445,8 @@ TEST_F(test_basic_case, blockstore_store_block_4) {
     base::xvblock_t* taccount1_genesis_block = test_blocktuil::create_genesis_empty_table(taccount1);
     data::xtable_block_t* tableblock1 = (data::xtable_block_t*)test_blocktuil::create_next_tableblock(table_para, taccount1_genesis_block);
     {
-        auto & units = tableblock1->get_tableblock_units(true);
+        std::vector<xobject_ptr_t<base::xvblock_t>> units;
+        tableblock1->extract_sub_blocks(units);
         xassert(units.size() != 0);
         for (auto & cache_unit : units) {
             ASSERT_FALSE(cache_unit->get_block_hash().empty());
