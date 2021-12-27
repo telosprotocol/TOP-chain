@@ -144,10 +144,12 @@ TEST_F(reference_block, creation) {
         // std::cout << proposal_block->dump() << std::endl << std::endl;
         // std::cout << proposal_block->get_account() << " " << proposal_block->get_height() << " " << proposal_block->get_block_hash_hex_str() << std::endl;
         EXPECT_EQ(proposal_block->get_block_hash_hex_str(), table_1[i]);
-        auto units = proposal_block->get_tableblock_units(false);
+
+        std::vector<xobject_ptr_t<base::xvblock_t>> units;
+        proposal_block->extract_sub_blocks(units);        
         if (!proposal_block->is_fullblock()) {
             EXPECT_EQ(units.size(), 1);
-            auto unit = units[0];
+            xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(units[0]);
             // std::cout << unit->dump() << std::endl << std::endl;
             // std::cout << unit->get_account() << " " << unit->get_height() << " " << unit->get_block_hash_hex_str() << std::endl;
             EXPECT_EQ(unit->get_block_hash_hex_str(), oUvF_unit[unit->get_height()]);
