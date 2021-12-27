@@ -7,7 +7,7 @@
 namespace top {
 
 static std::string const g_mainnet_genesis_config =
-R"T(
+    R"T(
 {
     "accounts": {
         "genesis_funds_account": {
@@ -90,7 +90,7 @@ R"T(
 )T";
 
 static std::string const g_testnet_genesis_config =
-R"T(
+    R"T(
 {
     "accounts": {
         "genesis_funds_account": {
@@ -173,7 +173,7 @@ R"T(
 )T";
 
 static std::string const g_dev_genesis_config =
-R"T(
+    R"T(
 {
     "genesis": {
         "accounts": {
@@ -231,6 +231,7 @@ R"T(
     "rec_election_interval": "191",
     "zec_election_interval": "111",
     "archive_election_interval": "13",
+    "auto_prune_data": "on",
     "http_port": 19081,
     "grpc_port": 19082,
     "dht_port": 19083,
@@ -241,7 +242,7 @@ R"T(
 )T";
 
 static std::string const g_ci_genesis_config =
-R"T(
+    R"T(
 {
     "accounts": {
         "genesis_funds_account": {
@@ -282,7 +283,7 @@ R"T(
 )T";
 
 static std::string const g_bounty_genesis_config =
-R"T(
+    R"T(
 {
     "accounts": {
         "genesis_funds_account": {
@@ -366,4 +367,4 @@ const std::string & get_genesis_info() {
 #endif
 }
 
-}
+}  // namespace top
