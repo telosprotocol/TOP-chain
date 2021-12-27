@@ -396,6 +396,8 @@ void xdb_export_tools_t::query_meta(std::string const & account, json & result) 
     result["block_meta"]["highest_full_block_height"] = block_meta._highest_full_block_height;
     result["block_meta"]["highest_connect_block_height"] = block_meta._highest_connect_block_height;
     result["block_meta"]["highest_connect_block_hash"] = base::xstring_utl::to_hex(block_meta._highest_connect_block_hash);
+    result["block_meta"]["highest_mutable_cp_connect_block_height"] = block_meta._highest_mutable_cp_connect_block_height;
+    result["block_meta"]["highest_mutable_cp_connect_block_hash"] = base::xstring_utl::to_hex(block_meta._highest_mutable_cp_connect_block_hash);
     result["block_meta"]["block_level"] = block_meta._block_level;
     auto state_meta = meta_data.clone_state_meta();
     result["state_meta"]["lowest_execute_block_height"] = state_meta._lowest_execute_block_height;
