@@ -146,8 +146,8 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
             updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height, min_height);
             // height = m_sync_store->get_latest_genesis_connected_block_height(address);
             // updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::genesis_height, height, min_height);
-            height = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
-            updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::immutable_checkpoint_height, height, min_height);
+            // height = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
+            // updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::immutable_checkpoint_height, height, min_height);
             height = m_sync_store->get_latest_mutable_connected_checkpoint_height(address);
             updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height, min_height);
             if (updated) {
