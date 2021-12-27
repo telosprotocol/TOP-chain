@@ -1020,3 +1020,74 @@ TEST_F(test_tablemaker, fullunit) {
         }
     }
 }
+
+TEST_F(test_tablemaker, make_proposal_table_block_compare) {
+
+    struct timeval old_make_beg, old_make_end, new_make_beg, new_make_end;
+
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    uint64_t max_block_height = 1000000;
+    mock::xdatamock_table mocktable;
+
+    mocktable.genrate_table_chain(10);
+    auto table_blocks = mocktable.get_history_tables();
+
+    base::xstream_t stream(base::xcontext_t::instance());
+    table_blocks[0]->serialize_to(stream);
+    std::string block_str =  std::string((const char *)stream.data(), stream.size());
+   
+    std::cout << "table_block_compare_count " <<  max_block_height << std::endl;
+    gettimeofday(&old_make_beg, NULL);
+    for(uint64_t i=0; i < max_block_height; i++) {
+      base::xauto_ptr<base::xvblock_t> test_block(base::xvblock_t::create_block_object(block_str));
+    }
+    gettimeofday(&old_make_end, NULL);
+    uint64_t old_make_ms = (old_make_end.tv_sec - old_make_beg.tv_sec) * 1000 + (old_make_end.tv_usec - old_make_beg.tv_usec) / 1000;
+    std::cout << "old_make_ms " <<  old_make_ms << " ms" << std::endl;
+
+    gettimeofday(&new_make_beg, NULL);
+    for(uint64_t i=0; i < max_block_height; i++) {
+      base::xauto_ptr<base::xvblock_t> test_block(base::xvblock_t::create_block_object(block_str,  base::enum_xvblock_flag_stored));
+    }
+    gettimeofday(&new_make_end, NULL);
+    uint64_t new_make_ms = (new_make_end.tv_sec - new_make_beg.tv_sec) * 1000 + (new_make_end.tv_usec - new_make_beg.tv_usec) / 1000;
+    std::cout << "new_make_ms " <<  new_make_ms << " ms" << std::endl;
+}
+
+TEST_F(test_tablemaker, make_proposal_unit_block_compare) {
+
+   struct timeval old_make_beg, old_make_end, new_make_beg, new_make_end;
+
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    uint64_t max_block_height = 1000000;
+    mock::xdatamock_table mocktable;
+
+    mocktable.genrate_table_chain(10);
+    auto unit_block = mocktable.get_mock_units();  
+    base::xstream_t stream(base::xcontext_t::instance());
+    unit_block[0].get_lock_block()->serialize_to(stream);
+    std::string block_str = std::string((const char *)stream.data(), stream.size());
+
+    std::cout << "unit_block_compare_count " <<  max_block_height << std::endl;
+    gettimeofday(&old_make_beg, NULL);
+    for(uint64_t i=0; i < max_block_height; i++) {
+      base::xauto_ptr<base::xvblock_t> test_block(base::xvblock_t::create_block_object(block_str));
+    }
+    gettimeofday(&old_make_end, NULL);
+    uint64_t old_make_ms = (old_make_end.tv_sec - old_make_beg.tv_sec) * 1000 + (old_make_end.tv_usec - old_make_beg.tv_usec) / 1000;
+    std::cout << "old_make_ms " <<  old_make_ms << " ms" << std::endl;
+
+    gettimeofday(&new_make_beg, NULL);
+    for(uint64_t i=0; i < max_block_height; i++) {
+      base::xauto_ptr<base::xvblock_t> test_block(base::xvblock_t::create_block_object(block_str,  base::enum_xvblock_flag_stored));
+    }
+    gettimeofday(&new_make_end, NULL);
+    uint64_t new_make_ms = (new_make_end.tv_sec - new_make_beg.tv_sec) * 1000 + (new_make_end.tv_usec - new_make_beg.tv_usec) / 1000;
+    std::cout << "new_make_ms " <<  new_make_ms << " ms" << std::endl;
+}

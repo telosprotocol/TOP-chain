@@ -613,7 +613,7 @@ namespace top
             static  const std::string  create_header_path(const std::string & account,const uint64_t height);
 
         public: //create object from serialized data
-            static xvblock_t*          create_block_object(const std::string  & vblock_serialized_data);
+            static xvblock_t*          create_block_object(const std::string  & vblock_serialized_data,const int32_t cookie = 0);
             static xvheader_t*         create_header_object(const std::string & vheader_serialized_data);
             static xvqcert_t*          create_qcert_object(const std::string  & vqcert_serialized_data);
             static xvinput_t*          create_input_object(const std::string  & vinput_serialized_data);
@@ -781,6 +781,9 @@ namespace top
             xvqcert_t*                  m_next_next_qcert;  //temporary hold ptr of next and next hqc to proov this block as commited
 
         private://just using them at running and stored in sepereated place than xvblock_t.
+            std::string                 m_input_bin;  //carry binary input to create object on_demand
+            std::string                 m_output_bin; //carry binary output to create object on_demand
+            
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
             std::string                 m_offblock_snapshot;  // for sync set and cache
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())

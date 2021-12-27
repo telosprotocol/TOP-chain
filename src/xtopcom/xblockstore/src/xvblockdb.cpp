@@ -503,7 +503,9 @@ namespace top
                     return false;
                 }
                 
-                base::xauto_ptr<base::xvblock_t> new_block_ptr(base::xvblock_t::create_block_object(blockobj_bin));
+                int32_t stream_cookie = base::enum_xvblock_flag_stored;
+                
+                base::xauto_ptr<base::xvblock_t> new_block_ptr(base::xvblock_t::create_block_object(blockobj_bin,stream_cookie));
                 if(!new_block_ptr)
                 {
                     xerror("xvblockdb_t::read_block_object_from_db,bad data at DB for key(%s)",blockobj_key.c_str());
