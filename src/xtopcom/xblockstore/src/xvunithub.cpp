@@ -387,6 +387,19 @@ namespace top
             return account_obj->load_index(latest_genesis_height,0);
         }
 
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_mutable_cp_connected_block(const base::xvaccount_t & account,bool ask_full_search,const int atag)//block has connected to genesis
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_mutable_cp_connected_index(ask_full_search),0,false, atag);
+        }
+
+        base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::get_latest_mutable_cp_connected_index(const base::xvaccount_t & account,bool ask_full_search,const int atag) //block has connected to genesis
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->load_latest_mutable_cp_connected_index(ask_full_search);
+        }
+
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_committed_full_block(const base::xvaccount_t & account,const int atag)
         {
             auto connect_block = get_latest_connected_block(account, atag);
@@ -437,6 +450,13 @@ namespace top
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
             METRICS_TAG(atag, 1);
             return account_obj->get_sync_meta()._highest_genesis_connect_height;
+        }
+
+        uint64_t xvblockstore_impl::get_latest_mutable_cp_connected_block_height(const base::xvaccount_t & account,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_mutable_cp_connected_block_height();            
         }
 
         uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & address,const int atag)
