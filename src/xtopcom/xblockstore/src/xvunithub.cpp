@@ -47,6 +47,12 @@ namespace top
                     }
                 }
 
+                // TODO(jimmy) here may delete future for performance
+                if (m_raw_ptr->get_cached_size() >= (m_raw_ptr->get_max_cache_size() * 2))
+                {
+                    m_raw_ptr->clean_caches(false,false);//light cleanup
+                }
+
                 //then release raw ptr
                 xblockacct_t * old_ptr = m_raw_ptr;
                 m_raw_ptr = NULL;
