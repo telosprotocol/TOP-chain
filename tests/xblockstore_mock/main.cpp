@@ -120,7 +120,8 @@ void blockstore_perf_test(xvblockstore_t*& blockstore, test_blockmock_t& blockmo
                 data::xtable_block_t* commit_tableblock = dynamic_cast<data::xtable_block_t*>(commit_block.get());
                 assert(commit_tableblock != nullptr);
                 // get unit addresses from commit tableblock
-                auto & cache_units = commit_tableblock->get_tableblock_units(true);
+                std::vector<xobject_ptr_t<base::xvblock_t>> cache_units;
+                commit_tableblock->extract_sub_blocks(cache_units);
                 for (auto & cache_unit : cache_units) {
                     // check the units in the pending set
                     const std::string& addr = cache_unit->get_account();
