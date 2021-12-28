@@ -32,6 +32,7 @@
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xdata/xtransaction_v2.h"
+#include "xgenesis/xgenesis_manager.h"
 
 
 using namespace top;
@@ -60,15 +61,15 @@ public:
         top::base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(mbus.get()), timer_driver));
         auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto& config_center = top::config::xconfig_register_t::get_instance();
-
+        std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+        contract::xcontract_deploy_t::instance().deploy_sys_contracts();
+        contract::xcontract_manager_t::instance().instantiate_sys_contracts();
+        contract::xcontract_manager_t::instance().register_address();
+        std::error_code ec;
+        m_genesis_manager->init_genesis_block(ec);
         config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus.get()), make_observer(chain_timer));
         config_center.add_loader(loader);
         config_center.load();
-
-        // table slash statistic contract
-        xcontract_manager_t::instance().register_contract<xtable_statistic_info_collection_contract>(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xtopchain_network_id);
-        xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xaccount_address_t{shard_table_slash_addr});
-        xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{shard_table_slash_addr}, m_blockstore.get());
     }
 
     void TearDown(){

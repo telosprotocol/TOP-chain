@@ -43,9 +43,8 @@ public:
 
 private:
     /// @brief Create genesis block of root account.
-    /// @param account Root account.
     /// @param ec Log the error code.
-    void create_genesis_of_root_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
+    void create_genesis_of_root_account(std::error_code & ec);
 
     /// @brief Create genesis block of contract account.
     /// @param account Contract account.
@@ -94,11 +93,9 @@ private:
     bool m_root_finish{false};
     std::mutex m_lock;
 
-    common::xaccount_address_t m_root_account;
     std::set<common::xaccount_address_t> m_contract_accounts;
     std::map<common::xaccount_address_t, uint64_t> m_genesis_accounts_data;
     std::map<common::xaccount_address_t, chain_data::data_processor_t> m_user_accounts_data;
-    std::set<common::xaccount_address_t> m_exist_accounts;
 };
 using xgenesis_manager_t = xtop_genesis_manager;
 

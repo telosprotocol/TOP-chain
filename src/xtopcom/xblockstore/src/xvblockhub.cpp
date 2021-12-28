@@ -6,10 +6,8 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
-#include "xblockstore/xblockstore_face.h"
 #include "xmetrics/xmetrics.h"
 #include "xvblockhub.h"
-#include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
 
 #ifdef __ALLOW_FORK_LOCK__
@@ -871,7 +869,7 @@ namespace top
                 //genesis block but dont have data at DB, create it ondemand
                 if (0 == target_height) {
                     std::error_code ec;
-                    auto vblock = store::get_vblockstore()->create_genesis_block(get_account(), ec);
+                    auto vblock = base::xvchain_t::instance().get_xblockstore()->create_genesis_block(get_account(), ec);
                     if (ec) {
                         xwarn(
                             "xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!", get_account().c_str(), ec.category().name(), ec.message().c_str());
@@ -1174,7 +1172,7 @@ namespace top
                 if (!genesis_index)  // if not existing at cache
                 {
                     std::error_code ec;
-                    auto vblock = store::get_vblockstore()->create_genesis_block(new_raw_block->get_account(), ec);
+                    auto vblock = base::xvchain_t::instance().get_xblockstore()->create_genesis_block(get_account(), ec);
                     if (ec) {
                         xwarn("xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!",
                               new_raw_block->get_account().c_str(),

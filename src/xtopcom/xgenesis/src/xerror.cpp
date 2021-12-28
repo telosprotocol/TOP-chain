@@ -25,6 +25,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::genesis_set_data_state_failed:
         return "genesis set data state failed";
 
+    case xerrc_t::genesis_account_invalid:
+        return "genesis account invalid";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }
