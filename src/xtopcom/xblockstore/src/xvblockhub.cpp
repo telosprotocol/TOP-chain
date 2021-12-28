@@ -1342,6 +1342,10 @@ namespace top
                 if(new_raw_block->get_height() != 0)//genesis block might be created by load_index
                     update_meta();
                 
+                if (final_cached_index->is_timer_address()) {
+                    push_event(enum_blockstore_event_stored, final_cached_index);
+                }
+
                 if(false == keep_raw_block_ptr)
                     final_cached_index->reset_this_block(NULL);
 
