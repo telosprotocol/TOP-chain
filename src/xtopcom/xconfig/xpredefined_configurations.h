@@ -217,7 +217,12 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval, xinterval_t, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 #endif
+
+#if defined(XCHAIN_FORKED_BY_DEFAULT)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
+#else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 12, 1, std::numeric_limits<xinterval_t>::max());
+#endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit, std::uint64_t, normal, ASSET_TOP(1000000), 0, std::numeric_limits<std::uint64_t>::max());
 // mainnet node active
 
@@ -337,6 +342,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, false, fal
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, true, false, true); // mainnet defaults to open
 #endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(blacklist, char const *, normal, "", "", "");
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance, std::uint32_t, critical, 300, 1, std::numeric_limits<uint32_t>::max()); // the transaction should arrive any
                                                                                                                                            // nodes in 5 minutes
