@@ -77,27 +77,18 @@ class xtable_block_t : public xblock_t {
     virtual std::vector<base::xvaction_t> get_tx_actions() const;
     virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const;
 
- protected:
-    void                    unpack_proposal_units(std::vector<xblock_ptr_t> & units) const;
-    const std::vector<xblock_ptr_t> &      unpack_and_get_units(bool need_parent_cert) const;
-
  public:  // tableblock api
     std::string     tableblock_dump() const;
 
  public:  // implement block common api
     uint32_t        get_txs_count() const override;
     int64_t         get_pledge_balance_change_tgas() const override;
-    const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
     virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
     virtual bool    extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) override;
     void update_txs_by_actions(const std::vector<base::xvaction_t> & actions, std::vector<xlightunit_tx_info_ptr_t> & txs) const;
     const std::vector<xlightunit_tx_info_ptr_t> get_txs() const override;
     bool extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
 
- private:
-    mutable std::once_flag              m_once_unpack_flag;
-    mutable std::once_flag              m_once_set_parent_cert_flag;
-    mutable std::vector<xblock_ptr_t>   m_cache_units;  // delay load
 };
 
 

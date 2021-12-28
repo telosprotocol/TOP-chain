@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xsync/xsync_store_shadow.h"
+#include <algorithm>
 #include "xsync/xdownloader.h"
 #include "xbase/xbase.h"
 NS_BEG2(top, sync)
@@ -285,8 +286,21 @@ void xsync_chain_spans_t::initialize() {
         m_account.c_str(), m_connect_to_genesis_height);
     xsync_span_dao::read_span_height_from_db(m_store, m_account, m_connect_to_genesis_height);
     uint64_t height = m_store->get_latest_genesis_connected_block_height(m_account);
-    xinfo("xsync_store_shadow_t::initialize after, account:%s, new height=%llu, old height=%llu",
-        m_account.c_str(), m_connect_to_genesis_height, height);
+    uint64_t height_old = height;
+    height = std::max(height, m_connect_to_genesis_height);
+    while (1) {
+        auto vbindex = m_store->load_block_object(m_account, height + 1);
+        if (vbindex == nullptr)
+            break;
+
+        if (!vbindex->check_block_flag(enum_xvblock_flag_committed))
+            break;
+
+        height = vbindex->get_height();
+    }
+    xinfo("xsync_store_shadow_t::initialize after, account:%s, height=%llu, updated height=%llu, old = %llu",
+        m_account.c_str(), m_connect_to_genesis_height, height, height_old);
+
     if (height > m_connect_to_genesis_height) {
         xobject_ptr_t<xcommon_span_t> span = make_object_ptr<xcommon_span_t>(height + 1);
         m_connect_to_genesis_span = span;
