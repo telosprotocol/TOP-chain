@@ -104,8 +104,8 @@ void check_standby_str(std::string const & str){
                 std::vector<std::string> type_stake;
                 top::base::xstring_utl::split_string(each_pair, '.', type_stake);
                 std::string node_type_str = type_stake[0];
-                CHECK(
-                    (node_type_str == "rec" || node_type_str == "zec" || node_type_str == "adv" || node_type_str == "con" || node_type_str == "edge" || node_type_str == "archive"),
+                CHECK((node_type_str == "rec" || node_type_str == "zec" || node_type_str == "adv" || node_type_str == "con" || node_type_str == "edge" ||
+                       node_type_str == "archive" || node_type_str == "fullnode"),
                     "node_type wrong!");
 
                 uint64_t stake = static_cast<std::uint64_t>(std::atoi(type_stake[1].c_str()));
@@ -151,6 +151,11 @@ int main(int argc, char * argv[]) {
     config_center.get(std::string("standby_start_nodes"),standby_start_nodes_info);
     CHECK(!standby_start_nodes_info.empty(),"standby_start_nodes info is empty");
     check_standby_str(standby_start_nodes_info);
+
+    std::string fullnode_start_nodes_info;
+    config_center.get(std::string("fullnode_start_nodes"), fullnode_start_nodes_info);
+    CHECK(!fullnode_start_nodes_info.empty(), "fullnode_start_nodes info is empty");
+    check_str("fullnode", fullnode_start_nodes_info);
 
     std::cout << std::endl << std::endl << "result: OK! config file format right" << std::endl;
     return 0;
