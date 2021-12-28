@@ -81,11 +81,18 @@ namespace top
                         auto event = block_events[index];
                         if(event.get_index() != NULL) //still valid
                         {
-                            if(enum_blockstore_event_committed == event.get_type())
-                            {
-                                m_store_ptr->on_block_prune(event);
-                                break;
-                            }
+                            if (event.get_index()->is_timer_address()) {
+                                if (enum_blockstore_event_stored == event.get_type()) {
+                                    m_store_ptr->on_block_prune(event);
+                                    break;
+                                }
+                            } else {
+                                if(enum_blockstore_event_committed == event.get_type())
+                                {
+                                    m_store_ptr->on_block_prune(event);
+                                    break;
+                                }
+                            }                            
                         }
                     }
                 }
