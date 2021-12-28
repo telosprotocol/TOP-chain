@@ -48,8 +48,8 @@ namespace top
             bool  recycle_table(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
             //mange to prune unit blocks
             bool  recycle_unit(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
-            bool  recycle_drand_timer(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
-
+            bool  recycle_timer(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
+            bool  recycle_drand(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta);
         private:
             bool get_prune_boundary(const base::xvaccount_t & account_obj, uint64_t &height);
         private:
