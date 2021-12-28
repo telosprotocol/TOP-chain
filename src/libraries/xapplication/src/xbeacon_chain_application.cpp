@@ -95,14 +95,14 @@ static top::data::election::xelection_result_store_t load_election_data(observer
             // TODO(jimmy)
             ec = error::xerrc_t::load_election_data_missing_state;
 
-            xerror("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
+            xwarn("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
                    ec.category().name(),
                    ec.message().c_str(),
                    contract_address.c_str(),
                    property_name.c_str(),
                    block_height_upper_limit);
             // shouldn't happen. if happens, something goes wrong and we don't known how to fix it. let it crash and perform a postmortem analysis is the best solution.
-            top::error::throw_error(ec);
+            // top::error::throw_error(ec);
 
             break;
         }
@@ -188,8 +188,9 @@ void xtop_beacon_chain_application::load_last_election_data() {
                                                                          block_height,
                                                                          ec);
             if (ec) {
-                xwarn("xbeacon_chain_application::load_last_election_data fail to load election data. addr %s; property %s; from height %" PRIu64, addr.c_str(), property.c_str(), block_height);
-                continue;
+                xerror("xbeacon_chain_application::load_last_election_data fail to load election data. addr %s; property %s; from height %" PRIu64, addr.c_str(), property.c_str(), block_height);
+                top::error::throw_error(ec);
+                // continue;
             }
 
             if ((addr == sys_contract_rec_elect_rec_addr || addr == sys_contract_rec_elect_zec_addr || addr == sys_contract_zec_elect_consensus_addr) && block_height != 0) {
