@@ -738,13 +738,25 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
     }
     auto const committd_height = m_blockstore->get_latest_committed_block_height(account);
     auto const connected_height = m_blockstore->get_latest_connected_block_height(account);
+    auto const genesis_height_str = m_blockstore->get_genesis_height(account);
+    uint64_t span_genesis_height = 0;
+    if (!genesis_height_str.empty()) {
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)genesis_height_str.c_str(), genesis_height_str.size());
+        stream >> span_genesis_height;
+    }    
     file << "[info] " << type_str << ": " << account << ", committd_height: " << committd_height << ", connected_height: " << connected_height
          << ", genesis_connected_height: " << m_blockstore->get_latest_genesis_connected_block_height(account)
-         << ", executed_height: " << m_blockstore->get_latest_executed_block_height(account) << std::endl;
+         << ", executed_height: " << m_blockstore->get_latest_executed_block_height(account) 
+         << ", span_genesis_height " << span_genesis_height << std::endl;
     if (committd_height != connected_height) {
         file << "[warn] " << type_str << ": " << account << ", committd_height and connected_height not equal, " << committd_height << ", " << connected_height << std::endl;
         error_num++;
     }
+    if (committd_height != span_genesis_height) {
+        file << "[warn] " << type_str << ": " << account << ", committd_height and span_genesis_height not equal, " << committd_height << ", " << span_genesis_height << std::endl;
+        error_num++;
+    }    
+
     for (size_t h = 0; h < connected_height; h++) {
         auto const block = m_blockstore->load_block_object(account, h, 0, true);
         if (block == nullptr) {
