@@ -56,6 +56,7 @@ TEST_F(test_block_connected, block_connect_discrete) {
         auto curr_block = tables[i].get();
         ASSERT_TRUE(blockstore->store_block(account, curr_block));
     }
+    EXPECT_EQ(missing_height - 1 - 2, blockstore->update_get_latest_cp_connected_block_height(account));
 
     for (uint64_t i = missing_height + 1; i <= count; i++) {
         auto curr_block = tables[i].get();
@@ -64,6 +65,7 @@ TEST_F(test_block_connected, block_connect_discrete) {
 
     base::xauto_ptr<xvblock_t> latest_block = blockstore->get_latest_connected_block(address);
     EXPECT_EQ(latest_block->get_height(), missing_height - 1 - 2);
+    EXPECT_EQ(missing_height - 1 - 2, blockstore->update_get_latest_cp_connected_block_height(account));
 
     auto curr_block = tables[missing_height].get();
     ASSERT_TRUE(blockstore->store_block(account, curr_block));
@@ -71,6 +73,7 @@ TEST_F(test_block_connected, block_connect_discrete) {
     base::xauto_ptr<xvblock_t> connected_block = blockstore->get_latest_connected_block(address);
     ASSERT_TRUE(connected_block != nullptr);
     EXPECT_EQ(connected_block->get_height(), count - 2);
+    EXPECT_EQ(count - 2, blockstore->update_get_latest_cp_connected_block_height(account));
 }
 
 TEST_F(test_block_connected, block_connect_discrete_1) {
