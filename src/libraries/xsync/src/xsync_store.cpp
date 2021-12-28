@@ -175,7 +175,7 @@ uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const s
 
 uint64_t xsync_store_t::get_latest_mutable_connected_checkpoint_height(const std::string & account) {
     base::xvaccount_t _vaddress(account);
-    return 0;
+    return m_blockstore->get_latest_mutable_cp_connected_block_height(_vaddress);;
 }
 
 uint64_t xsync_store_t::get_latest_deleted_block_height(const std::string & account) {
@@ -185,7 +185,18 @@ uint64_t xsync_store_t::get_latest_deleted_block_height(const std::string & acco
 
 uint64_t xsync_store_t::get_latest_block_with_state(const std::string & account) {
     base::xvaccount_t _vaddress(account);
-    return 0;
+    auto _block = m_blockstore->get_latest_committed_full_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
+    if (false == m_blockstore->load_block_output(_vaddress, _block.get())
+        || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
+        xerror("xsync_store_t::get_latest_full_block fail-load block input or output. block=%s", _block->dump().c_str());
+        return 0;
+    }
+
+    if (_block->get_height() > 500) {
+        return _block->get_height() - 500;
+    } else {
+        return 0;
+    }
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {

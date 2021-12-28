@@ -144,11 +144,11 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
             bool updated = false;
             uint64_t height = m_sync_store->get_latest_block_with_state(address);
             updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height, min_height);
-            // height = m_sync_store->get_latest_genesis_connected_block_height(address);
-            // updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::genesis_height, height, min_height);
-            // height = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
-            // updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::immutable_checkpoint_height, height, min_height);
+            uint64_t height1 = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
             height = m_sync_store->get_latest_mutable_connected_checkpoint_height(address);
+            if (height1 < height) {
+                height = height1;
+            }
             updated = updated | xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height, min_height);
             if (updated) {
                 base::xvaccount_t _vaddr(address);
