@@ -218,15 +218,7 @@ public:
         return "";
     }
 
-    base::xauto_ptr<base::xvblock_t> get_latest_mutable_cp_connected_block(const base::xvaccount_t & account, bool ask_full_search, const int atag = 0) override {
-        return nullptr;
-    }
-
-    base::xauto_ptr<base::xvbindex_t> get_latest_mutable_cp_connected_index(const base::xvaccount_t & account, bool ask_full_search, const int atag = 0) override {
-        return nullptr;
-    }
-
-    uint64_t get_latest_mutable_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+    uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
         return 0;
     }
 };

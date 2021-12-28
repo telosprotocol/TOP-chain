@@ -466,8 +466,8 @@ namespace top
             uint64_t    _highest_full_block_height;    //latest full-block height for this account
             uint64_t    _highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
             std::string _highest_connect_block_hash;
-            uint64_t    _highest_mutable_cp_connect_block_height;
-            std::string _highest_mutable_cp_connect_block_hash;
+            uint64_t    _highest_cp_connect_block_height;
+            std::string _highest_cp_connect_block_hash;
             uint8_t     _block_level;       //set per block 'enum_xvblock_level,each account has unique level
         };
     
@@ -554,7 +554,7 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
-            static void update_meta_with_checkpoint(xvactmeta_t* meta_ptr, const std::string & account);
+            void init_checkpoint_meta(xvactmeta_t* meta_ptr, const std::string & account);
 
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;
@@ -597,8 +597,8 @@ namespace top
             using xblockmeta_t::_highest_full_block_height;    //latest full-block height for this account
             using xblockmeta_t::_highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
             using xblockmeta_t::_highest_connect_block_hash;
-            using xblockmeta_t::_highest_mutable_cp_connect_block_height;
-            using xblockmeta_t::_highest_mutable_cp_connect_block_hash;
+            using xblockmeta_t::_highest_cp_connect_block_height;
+            using xblockmeta_t::_highest_cp_connect_block_hash;
             
         private: //from sync meta
             using xsyncmeta_t::_highest_genesis_connect_height;//indicated the last block who is connected to genesis block
