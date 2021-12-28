@@ -105,7 +105,7 @@ private:
     void query_table_unit_state(std::string const & table, json & result);
     void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
-    void query_checkpoint_internal(std::string const & table, const uint64_t clock, json & j_data, json & j_state);
+    void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data, json & j_state);
     uint32_t query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file);
     uint32_t query_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
     uint32_t query_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
