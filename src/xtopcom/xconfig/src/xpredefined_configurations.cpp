@@ -79,6 +79,7 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len);
 // whitelist
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist);  // default not open
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(blacklist);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(mining_annual_ratio_from_reserve_pool);
