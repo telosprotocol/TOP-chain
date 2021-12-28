@@ -24,7 +24,7 @@ namespace top
 
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
-            uint64_t            get_latest_mutable_cp_connected_block_height() const { return m_meta->_highest_mutable_cp_connect_block_height; }
+            uint64_t            update_get_latest_cp_connected_block_height();  // block has connected to mutable checkpoint
             uint64_t            get_latest_deleted_block_height() const { return m_meta->_highest_deleted_block_height; }
         public:
             xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
@@ -90,7 +90,6 @@ namespace top
             base::xvbindex_t*      load_latest_locked_index();      //block with locked status
             base::xvbindex_t*      load_latest_committed_index();   //block with committed status
             base::xvbindex_t*      load_latest_connected_index();   //block has connected to the last full
-            base::xvbindex_t*      load_latest_mutable_cp_connected_index(bool ask_full_search);  //block has connected to mutable checkpoint;
 
             base::xvbindex_t*      load_latest_full_index();        //block has full state,genesis is a full block
             base::xvbindex_t*      load_latest_committed_full_index();  // full block with committed status
@@ -125,6 +124,7 @@ namespace top
             base::xvbindex_t*   cache_index(base::xvbindex_t* this_block,std::map<uint64_t,base::xvbindex_t*> & target_height_map);
 
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
+            void                fully_update_cp_connect();
             bool                full_connect_to(base::xvbindex_t* this_block);//connect to all the way to fullblock or geneis
             bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
 

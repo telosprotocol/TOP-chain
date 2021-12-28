@@ -160,15 +160,13 @@ namespace top
             virtual xauto_ptr<xvblock_t>  get_latest_connected_block(const xvaccount_t & account,const int atag = 0)  = 0;//block connected to genesis or fullblock
             virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account,bool ask_full_search = true,const int atag = 0) = 0; //block has connected to genesis
             virtual xauto_ptr<xvbindex_t> get_latest_genesis_connected_index(const xvaccount_t & account,bool ask_full_search = true,const int atag = 0) = 0; //block has connected to genesis
-            virtual xauto_ptr<xvblock_t>  get_latest_mutable_cp_connected_block(const base::xvaccount_t & account,bool ask_full_search,const int atag = 0) = 0;
-            virtual xauto_ptr<xvbindex_t> get_latest_mutable_cp_connected_index(const base::xvaccount_t & account,bool ask_full_search,const int atag = 0) = 0;
 
             virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account,const int atag = 0)  = 0; // full block with committed status, genesis is a full block
             virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account,const int atag = 0)      = 0; //better performance for batch operations
             virtual uint64_t get_latest_committed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
-            virtual uint64_t get_latest_mutable_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_deleted_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual bool                  set_latest_executed_info(const xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
