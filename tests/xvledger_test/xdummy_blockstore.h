@@ -210,6 +210,18 @@ public:
     const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override {
         return "";
     }
+
+    base::xauto_ptr<base::xvblock_t> get_latest_mutable_cp_connected_block(const base::xvaccount_t & account, bool ask_full_search, const int atag = 0) override {
+        return nullptr;
+    }
+
+    base::xauto_ptr<base::xvbindex_t> get_latest_mutable_cp_connected_index(const base::xvaccount_t & account, bool ask_full_search, const int atag = 0) override {
+        return nullptr;
+    }
+
+    uint64_t get_latest_mutable_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+        return 0;
+    }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;
 
