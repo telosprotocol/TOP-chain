@@ -854,13 +854,15 @@ void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
     json j;
     auto const clock_str = base::xstring_utl::tostring(clock);
     auto const & tables = get_table_accounts();
+    auto const & genesis_only = get_special_genesis_accounts();
     std::vector<json> j_data(tables.size());
     std::vector<json> j_state(tables.size());
     asio::thread_pool pool(4);
 
     auto start_time = base::xtime_utl::time_now_ms();
     for (size_t i = 0; i < tables.size(); i++) {
-        asio::post(pool, std::bind(&xdb_export_tools_t::query_checkpoint_internal, this, tables[i], clock, std::ref(j_data[i]), std::ref(j_state[i])));
+        asio::post(pool, std::bind(&xdb_export_tools_t::query_checkpoint_internal, this, tables[i], genesis_only, clock, std::ref(j_data[i]), std::ref(j_state[i])));
+        break;
     }
     pool.join();
     for (size_t i = 0; i < tables.size(); i++) {
@@ -875,7 +877,7 @@ void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
               << " query_checkpoint total time: " << (end_time - start_time) / 1000 << "s." << std::endl;
 }
 
-void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, const uint64_t clock, json & j_data, json & j_state) {
+void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data, json & j_state) {
     auto const genesis_block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table);
     if (nullptr == genesis_block) {
         std::cerr << table << " genesis block nullptr!" << std::endl;
@@ -946,7 +948,7 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, co
             continue;
         }
         auto const & unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        if (unit_vblock == nullptr) {
+        if (unit_bstate == nullptr) {
             std::cerr << unit << " height " << unit_height << " state nullptr!" << std::endl;
             continue;
         }
@@ -955,6 +957,29 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, co
         std::string bin_data;
         unit_bstate->serialize_to_string(bin_data);
         j_unit_state[unit] = base::xstring_utl::to_hex(bin_data);
+    }
+    base::xvaccount_t table_account{table};
+    auto table_shortid = table_account.get_tableid().to_table_shortid();
+    for (auto const & genesis : genesis_only) {
+        base::xvaccount_t genesis_account{genesis};
+        if (table_shortid != genesis_account.get_tableid().to_table_shortid() || table_units.count(genesis)) {
+            continue;
+        }
+        auto const & unit_vblock = m_blockstore->get_genesis_block(genesis);
+        if (unit_vblock == nullptr) {
+            std::cerr << genesis << " genesis block nullptr!" << std::endl;
+            continue;
+        }
+        auto const & unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
+        if (unit_bstate == nullptr) {
+            std::cerr << genesis << " genesis state nullptr!" << std::endl;
+            continue;
+        }
+        j_unit_data[genesis]["height"] = base::xstring_utl::tostring(0);
+        j_unit_data[genesis]["hash"] = base::xstring_utl::to_hex(unit_vblock->get_block_hash());
+        std::string bin_data;
+        unit_bstate->serialize_to_string(bin_data);
+        j_unit_state[genesis] = base::xstring_utl::to_hex(bin_data);
     }
     j_data["unit_data"] = j_unit_data;
     j_state["unit_state"] = j_unit_state;
