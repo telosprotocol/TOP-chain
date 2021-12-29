@@ -131,7 +131,7 @@ public:
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}
     std::string get_block_owner()const {return get_account();}
-    uint64_t    get_timestamp() const {return get_cert()->get_gmtime();}
+    uint64_t    get_timestamp() const {return get_cert()->get_clock_level_gmtime();}
 
  private:
     static std::map<std::string, std::string>      m_empty_map;
@@ -147,7 +147,7 @@ class xblock_consensus_para_t {
  public:
     xblock_consensus_para_t() = default;
 
-    xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height);
+    xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime);
     xblock_consensus_para_t(const xvip2_t & validator, base::xvblock_t* prev_block);
 
  public:
@@ -172,11 +172,13 @@ class xblock_consensus_para_t {
     void    set_parent_height(uint64_t height) const {m_parent_height = height;}
     void    set_timeofday_s(uint64_t now) {m_timeofday_s = now;}
     void    set_clock(uint64_t clock) {m_clock = clock;}
+    void    set_gmtime(uint64_t gmtime) {m_gmtime = gmtime;}
 
  public:
     const std::string &     get_extra_data() const {return m_extra_data;}
     const std::string &     get_random_seed() const {return m_random_seed;}
     uint64_t                get_clock() const {return m_clock;}
+    uint64_t                get_gmtime() const {return m_gmtime;}
     uint64_t                get_viewid() const {return m_viewid;}
     uint32_t                get_viewtoken() const {return m_viewtoken;}
     uint64_t                get_timestamp() const {return (uint64_t)(m_clock * 10) + base::TOP_BEGIN_GMTIME;}
@@ -202,6 +204,7 @@ class xblock_consensus_para_t {
     uint32_t        m_viewtoken{0};
     uint64_t        m_viewid{0};
     uint64_t        m_proposal_height{0};
+    uint64_t        m_gmtime{0};
 
     xvip2_t         m_validator;
     xvip2_t         m_auditor;

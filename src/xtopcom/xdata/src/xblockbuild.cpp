@@ -195,6 +195,7 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblo
     } else if (prev_block->get_block_level() == base::enum_xvblock_level_table) {
         build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+        build_para.set_gmtime(para.get_gmtime());
     } else {
         build_para.set_basic_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator());
     }
@@ -257,6 +258,7 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     build_para.set_extra_data(bodypara.get_extra_data()); // only light-table need extra data
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+    build_para.set_gmtime(para.get_gmtime());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
@@ -497,6 +499,7 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
+    build_para.set_gmtime(para.get_gmtime());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);

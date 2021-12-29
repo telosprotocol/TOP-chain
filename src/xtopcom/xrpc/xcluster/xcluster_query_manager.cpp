@@ -190,7 +190,7 @@ void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         jv["first_timerblock_hash"] = bp->get_block_hash_hex_str();
-        jv["first_timerblock_stamp"] = static_cast<xJson::UInt64>(bp->get_timestamp());
+        jv["first_timerblock_stamp"] = static_cast<xJson::UInt64>(bp->get_clock_level_gmtime());
     }
     jv["init_total_locked_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token));
     jv["total_gas_shard"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));

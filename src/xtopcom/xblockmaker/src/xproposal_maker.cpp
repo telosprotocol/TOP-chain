@@ -139,7 +139,20 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
     XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
-    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height());
+    uint64_t gmtime = proposal_block->get_second_level_gmtime();
+    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), gmtime);
+
+    // verify gmtime valid
+    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
+        if ( (gmtime > (now + 60)) || (gmtime < (now - 60))) { // the gmtime of leader should in +-60s with backup node
+            xwarn("xproposal_maker_t::verify_proposal fail-gmtime not match. proposal=%s,leader_gmtime=%ld,backup_gmtime=%ld",
+                proposal_block->dump().c_str(), gmtime, now);
+            XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
+            return xblockmaker_error_proposal_outofdate;
+        }
+    }    
 
     auto cert_block = get_blockstore()->get_latest_cert_block(*m_table_maker);
     if (proposal_block->get_height() < cert_block->get_height()) {

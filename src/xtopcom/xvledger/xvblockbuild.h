@@ -35,6 +35,7 @@ namespace top
                                         uint64_t _parent_height, const std::string & _justify_hash);
             void    set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
                                         const std::string & _justify_hash);
+            void    set_gmtime(uint64_t gmtime) {m_gmtime = gmtime;}
             // some optional parameters
             void    set_extra_data(const std::string & _extra_data) {m_extra_data = _extra_data;}
             // std::string get_header_extra(const xlightunit_block_para_t & bodypara) const;
@@ -57,6 +58,7 @@ namespace top
             std::string         m_last_block_hash;
             std::string         m_last_full_block_hash;
             uint64_t            m_last_full_block_height{0};
+            uint64_t            m_gmtime{0};
 
             // qcert paras
             uint64_t            m_clock{0};

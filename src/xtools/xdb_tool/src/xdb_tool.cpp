@@ -274,7 +274,7 @@ void xdb_tool::specific_clockheight(uint64_t start_gmttime, uint64_t end_gmttime
             auto vblock = blockstore_->load_block_object((std::string)top::sys_contract_zec_elect_consensus_addr, i, 0, false);
             xblock_t* block = dynamic_cast<xblock_t*>(vblock.get());
             std::stringstream outstr;
-            auto gmt_time = block->get_timestamp();
+            auto gmt_time = block->get_second_level_gmtime();
             if (gmt_time >= start_gmttime && gmt_time <= end_gmttime) {
                 outstr << gmt_time;
 
