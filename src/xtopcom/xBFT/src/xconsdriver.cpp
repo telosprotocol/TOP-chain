@@ -324,8 +324,8 @@ namespace top
                || (_peer_block->get_account() != packet.get_block_account())
                || (_peer_block->get_viewid()  != packet.get_block_viewid())
                || (_peer_block->get_viewtoken() != packet.get_block_viewtoken())
-               || (_peer_block->is_input_ready(true) == false)  //input must be present right now
-               || (_peer_block->is_output_ready(true) == false) //output must be present right now
+               || (_peer_block->is_input_ready() == false)  
+               || (_peer_block->is_output_ready() == false) 
                )
             {
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal=%s <!=> packet=%s,at node=0x%llx",_peer_block->dump().c_str(),packet.dump().c_str(),get_xip2_low_addr());
