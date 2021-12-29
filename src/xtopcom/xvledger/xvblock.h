@@ -113,7 +113,7 @@ namespace top
             enum_xvblock_character_pruneable           = 0x02,
         };
 
-        constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
+        constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;//1573189200 == 2019-11-08 05:00:00  UTC
         const std::string HEADER_KEY_TXS("t");
         class xvheader_extra {
         public:
@@ -194,6 +194,7 @@ namespace top
             inline const std::string &         get_comments()   const {return m_comments;}
             inline const std::string&          get_input_hash() const {return m_input_hash;}
             inline const std::string&          get_output_hash()const {return m_output_hash;}
+            uint64_t                           get_second_level_gmtime() const; //XTODO only table account set second gmtime now
 
             //part#2: information about previouse blocks
             inline const std::string &         get_last_block_hash()        const {return m_last_block_hash;}
@@ -224,6 +225,7 @@ namespace top
             inline void                 set_last_full_block(const std::string & hash,const uint64_t height) {m_last_full_block_hash = hash;m_last_full_block_height = height;}
 
             inline void                 set_extra_data(const std::string& extradata){m_extra_data = extradata;}
+            void                        set_second_level_gmtime(const uint64_t gmtime_seconds_now);
             
         public:
             int32_t             serialize_to(xstream_t & stream); //serialize header and object,return how many bytes is writed
@@ -251,6 +253,7 @@ namespace top
             std::string         m_comments;     //reserved to put comments,may fill any data you want
             std::string         m_input_hash;   //just hash(binary data of input),reserved for future
             std::string         m_output_hash;  //just hash(binary data of output),reserved for future
+            uint32_t            m_relative_gmtime;  //seconds since 2019-11-08 05:00:00 UTC(2019-11-08 13:00:00 UTC+8)
 
             //note: Block Hash = hash(xvqcert_t)
             //information about previouse blocks
@@ -352,7 +355,7 @@ namespace top
         public:
             inline  uint64_t           get_clock()     const {return m_clock;} //start/create time of this cert
             inline  uint64_t           get_expired()   const {return (m_expired == (uint32_t)-1) ? ((uint64_t)-1) : (m_clock + m_expired);}//return absolute clock'height
-            inline  uint64_t           get_gmtime()    const {return ((uint64_t)(m_clock * 10) + TOP_BEGIN_GMTIME);}//return standard gmt times
+            inline  uint64_t           get_clock_level_gmtime() const {return ((uint64_t)(m_clock * 10) + TOP_BEGIN_GMTIME);}//return standard gmt times
             inline  uint64_t           get_drand_height() const {return  m_drand_height;}
 
             inline uint64_t            get_nonce()     const {return m_nonce;}
@@ -451,7 +454,6 @@ namespace top
             uint64_t            m_parent_height;    //height of container(like tableblock) that carry this sub-block
             uint64_t            m_parent_viewid;    //viewid of container(like tableblock) that carry this sub-block
             uint64_t            m_drand_height;     //height/round of d-rand
-            uint32_t            m_relative_gmtime;  //seconds since 2019-11-08 05:00:00 UTC(2019-11-08 13:00:00 UTC+8)
 
             xvip2_t             m_validator;        //XIP address about who issue this block or who is leader
             xvip2_t             m_auditor;          //XIP address(wild* address) about who(a cluster or a subset) should audit this block
@@ -658,6 +660,8 @@ namespace top
             inline  enum_xvblock_class  get_block_class() const {return m_vheader_ptr->get_block_class();}
             inline  enum_xvblock_type   get_block_type()  const {return m_vheader_ptr->get_block_type();}
             inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
+            inline  uint64_t            get_clock_level_gmtime() const {return m_vqcert_ptr->get_clock_level_gmtime();}  // clock level gmtime used for tx execute, it will 
+            uint64_t                    get_second_level_gmtime() const;  // second level gmtime used for performance statistics
 
             //note:block'hash actually = cert'hash
             inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}

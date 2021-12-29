@@ -92,7 +92,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_current_sender_confirmed_receipt_id(uint64_t receiptid) {m_execute_state.set_sender_confirmed_receipt_id(receiptid);}
 
     uint64_t                get_receipt_clock() const {return get_prove_cert()->get_clock();}
-    uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_gmtime();}
+    uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_clock_level_gmtime();}
     bool                    is_receipt_valid() const {return m_receipt->is_valid();}
 
  public:  // for debug use
