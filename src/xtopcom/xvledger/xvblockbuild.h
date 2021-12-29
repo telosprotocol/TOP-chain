@@ -206,11 +206,13 @@ namespace top
         public:
             xtable_inentity_extend_t();
             xtable_inentity_extend_t(xvheader_t* header, xvqcert_t* qcert);
+            xtable_inentity_extend_t(xvheader_t* header, xvqcert_t* qcert, std::string &sign_hash);
             ~xtable_inentity_extend_t();
         public:
             const xobject_ptr_t<xvheader_t> &       get_unit_header() const {return m_unit_header;}
             const std::string &                     get_unit_justify_hash() const {return m_unit_justify_hash;}
             const std::string &                     get_unit_output_root_hash() const {return m_unit_output_root_hash;}
+            const std::string &                     get_unit_output_sign_hash() const {return m_unit_output_sign_hash;}
             int32_t    serialize_to_string(std::string & _str);
             int32_t    serialize_from_string(const std::string & _str);
 
@@ -221,7 +223,7 @@ namespace top
             xobject_ptr_t<xvheader_t>   m_unit_header{nullptr};
             std::string                 m_unit_justify_hash;
             std::string                 m_unit_output_root_hash;
-            std::string                 m_unit_input_root_hash;  // not set now, may be used future
+            std::string                 m_unit_output_sign_hash;  // it save sign_hash
         };
 
         // xvtablemaker is just for batch units maker
@@ -229,7 +231,8 @@ namespace top
         public:
             static std::vector<std::string> get_table_out_merkle_leafs(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units);
             static std::string              get_table_out_merkle_leaf(base::xvblock_t* _unit);
-            static bool                     units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent);
+            static bool                     units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent, 
+                                                                  const std::vector<std::string> &units_hashs);
             static xtable_unit_resource_ptr_t   query_unit_resource(const base::xvblock_t* _tableblock, uint32_t index);
         public:
             xvtableblock_maker_t();
@@ -244,6 +247,7 @@ namespace top
             virtual bool                    make_output_root(xvoutput_t* output_obj) override;
         private:
             std::vector<xobject_ptr_t<xvblock_t>>   m_batch_units;
+            std::vector<std::string>                m_output_leafs;
         };
 
     }//end of namespace of base

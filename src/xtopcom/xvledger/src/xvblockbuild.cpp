@@ -735,11 +735,11 @@ namespace top
                 return nullptr;
             }
             if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-                if (false == build_input()) {
+                if (false == build_output()) {
                     xassert(false);
                     return nullptr;
                 }
-                if (false == build_output()) {
+                if (false == build_input()) {
                     xassert(false);
                     return nullptr;
                 }
@@ -813,7 +813,15 @@ namespace top
             m_unit_header = header;
             m_unit_justify_hash = qcert->get_justify_cert_hash();
             m_unit_output_root_hash = qcert->get_output_root_hash();
-            m_unit_input_root_hash = std::string();  // not set now, may be used future
+            m_unit_output_sign_hash = std::string();  // not set now, may be used future
+        }
+        xtable_inentity_extend_t::xtable_inentity_extend_t(xvheader_t* header, xvqcert_t* qcert, std::string &sign_hash)
+        {
+            header->add_ref();
+            m_unit_header = header;
+            m_unit_justify_hash = qcert->get_justify_cert_hash();
+            m_unit_output_root_hash = qcert->get_output_root_hash();
+            m_unit_output_sign_hash = sign_hash; 
         }
         xtable_inentity_extend_t::~xtable_inentity_extend_t() {
         }
@@ -828,7 +836,7 @@ namespace top
             stream.write_compact_var(vheader_bin);
             stream.write_compact_var(m_unit_justify_hash);
             stream.write_compact_var(m_unit_output_root_hash);
-            stream.write_compact_var(m_unit_input_root_hash);
+            stream.write_compact_var(m_unit_output_sign_hash);
             return (stream.size() - begin_size);
         }
 
@@ -845,7 +853,7 @@ namespace top
             }
             stream.read_compact_var(m_unit_justify_hash);
             stream.read_compact_var(m_unit_output_root_hash);
-            stream.read_compact_var(m_unit_input_root_hash);
+            stream.read_compact_var(m_unit_output_sign_hash);
             return (begin_size - stream.size());
         }
         int32_t xtable_inentity_extend_t::serialize_to_string(std::string & _str) {
@@ -897,8 +905,9 @@ namespace top
             return _unit->get_cert()->get_hash_to_sign();
         }
 
-        bool xvtableblock_maker_t::units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent) {
-            std::vector<std::string> out_leafs = get_table_out_merkle_leafs(units);
+        bool xvtableblock_maker_t::units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent, 
+                                                         const std::vector<std::string> &units_hashs) {
+            const  std::vector<std::string> &out_leafs = units_hashs;
 #ifdef  VBLOCKBUILD_CHECK_ENALBE // for debug check
             {
                 std::string root_hash = xvblockbuild_t::build_mpt_root(out_leafs);
@@ -966,10 +975,11 @@ namespace top
             all_input_entities.push_back(get_input_entity());
 
             const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
-            for (auto & _unit : _batch_units) {
+            for(unsigned int unit_index = 0; unit_index < _batch_units.size(); unit_index++){
+                auto & _unit = _batch_units[unit_index];
                 auto & unit_input_entitys = _unit->get_input()->get_entitys();
                 std::string extend_bin;
-                xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert());
+                xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert(), m_output_leafs[unit_index]);
                 extend.serialize_to_string(extend_bin);
 
                 xvinentity_t* new_entity = nullptr;
@@ -1022,15 +1032,15 @@ namespace top
 
         bool    xvtableblock_maker_t::make_output_root(xvoutput_t* output_obj) {
             // table output root = merkle(all units sign hash)
-            std::vector<std::string> output_leafs = get_table_out_merkle_leafs(get_batch_units());
-            if (output_leafs.empty()) {
+            m_output_leafs = get_table_out_merkle_leafs(get_batch_units());
+            if (m_output_leafs.empty()) {
                 return true;
             }
             std::string root_hash;
             if(xvblock_fork_t::is_block_match_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
-                root_hash = build_mpt_root(output_leafs, false);
+                root_hash = build_mpt_root(m_output_leafs, false);
             } else {
-                root_hash = build_mpt_root(output_leafs);
+                root_hash = build_mpt_root(m_output_leafs);
             }
             if (root_hash.empty()) {
                 xassert(false);

@@ -428,6 +428,7 @@ std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_fr
 #endif
     base::xvaccount_t _vtable_addr(_tableblock->get_account());
     std::vector<xobject_ptr_t<base::xvblock_t>> _batch_units;
+    std::vector<std::string>                    _batch_units_hashs;
 
     const std::vector<base::xventity_t*> & _table_inentitys = _tableblock->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _table_outentitys = _tableblock->get_output()->get_entitys();
@@ -477,9 +478,10 @@ std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_fr
         _unit->get_cert()->set_parent_viewid(_tableblock->get_viewid());
 
         _batch_units.push_back(_unit);
+        _batch_units_hashs.push_back(extend.get_unit_output_sign_hash());
     }
 
-    base::xvtableblock_maker_t::units_set_parent_cert(_batch_units, _tableblock);
+    base::xvtableblock_maker_t::units_set_parent_cert(_batch_units, _tableblock, _batch_units_hashs);
 #ifdef DEBUG
     for (auto & v : _batch_units) {
         xassert(!v->get_cert()->get_extend_cert().empty());
