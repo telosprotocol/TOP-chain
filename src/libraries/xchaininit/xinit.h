@@ -17,7 +17,7 @@ xcontext_t::enum_global_object_key const enum_xtop_global_object_unit_service{ s
 
 int topchain_init(const std::string& config_file, const std::string& config_extra);
 int topchain_noparams_init(const std::string& pub_key, const std::string& pri_key, const std::string& node_id, const std::string& datadir, const std::string& config_extra);
-bool check_miner_info(const std::string &pub_key, const std::string &node_id);
+bool check_miner_info(const std::string &pub_key, const std::string &node_id, std::string& miner_type);
 bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result); // load white/black list
 
 }
