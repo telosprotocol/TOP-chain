@@ -84,6 +84,7 @@ namespace top
         }
         void xbbuild_para_t::set_default_qcert() {
             m_clock = 0;
+            m_gmtime = 0;
             m_viewtoken = -1;
             m_viewid = 0;
             set_empty_xip2(m_validator);
@@ -205,18 +206,18 @@ namespace top
             _header->set_block_type(_para.m_type);
             _header->set_last_full_block(_para.m_last_full_block_hash, _para.m_last_full_block_height);
             _header->set_extra_data(_para.m_extra_data);
-
+            _header->set_second_level_gmtime(_para.m_gmtime);
             if (_para.m_height == 0) {
                 _header->set_block_version(xvblock_fork_t::get_block_init_version());
-                xdbg("xvblockbuild_t::create_header set init version for genesis.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());                
+                xdbg("xvblockbuild_t::create_header set init version for genesis.account=%s,height=%ld,clock=%ld,version=0x%x,gmtime=%ld",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version(),_para.m_gmtime);                
             } else {
                 xassert(_para.m_clock != 0);
                 if (xvblock_fork_t::instance().is_forked(_para.m_clock)) {
                     _header->set_block_version(xvblock_fork_t::get_block_fork_new_version());
-                    xdbg("xvblockbuild_t::create_header set new version.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
+                    xdbg("xvblockbuild_t::create_header set new version.account=%s,height=%ld,clock=%ld,version=0x%x,gmtime=%ld",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version(),_para.m_gmtime);
                 } else {
                     _header->set_block_version(xvblock_fork_t::get_block_fork_old_version());
-                    xdbg("xvblockbuild_t::create_header set old version.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
+                    xdbg("xvblockbuild_t::create_header set old version.account=%s,height=%ld,clock=%ld,version=0x%x,gmtime=%ld",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version(),_para.m_gmtime);
                 }
             }
             return _header;

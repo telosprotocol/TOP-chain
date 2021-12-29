@@ -34,8 +34,8 @@ uint256_t                               xblock_t::m_empty_uint256;
 std::string                             xblock_t::m_empty_string;
 std::vector<xobject_ptr_t<xblock_t>>    xblock_t::m_empty_blocks;
 
-xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height)
-: m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height) {
+xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime)
+: m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height), m_gmtime(_gmtime) {
     set_empty_xip2(m_validator);
     set_empty_xip2(m_auditor);
     char local_param_buf[128];

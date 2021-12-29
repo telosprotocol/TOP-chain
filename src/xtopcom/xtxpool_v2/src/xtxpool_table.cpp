@@ -268,7 +268,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
     if (update_txmgr) {
         update_id_state(update_id_state_para_vec);
     }
-    m_unconfirm_id_height.update_unconfirm_id_height(table_block->get_height(), table_block->get_cert()->get_gmtime(), tx_id_height_infos);
+    m_unconfirm_id_height.update_unconfirm_id_height(table_block->get_height(), table_block->get_cert()->get_clock_level_gmtime(), tx_id_height_infos);
 }
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {

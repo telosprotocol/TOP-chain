@@ -146,7 +146,7 @@ void get_block_handle::getGeneralInfos() {
     j["shard_num"] = XGET_CONFIG(validator_group_count);
     j["shard_gas"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));
     j["init_pledge_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token));
-    j["genesis_time"] = static_cast<xJson::UInt64>(xrootblock_t::get_rootblock()->get_cert()->get_gmtime());
+    j["genesis_time"] = static_cast<xJson::UInt64>(xrootblock_t::get_rootblock()->get_cert()->get_clock_level_gmtime());
     auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
     j["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
     std::map<std::string, std::string> ms;
@@ -1030,7 +1030,7 @@ void get_block_handle::set_shared_info(xJson::Value & root, xblock_t * bp) {
     }
     root["hash"] = bp->get_block_hash_hex_str();
     root["prev_hash"] = to_hex_str(bp->get_last_block_hash());
-    root["timestamp"] = static_cast<unsigned long long>(bp->get_timestamp());
+    root["timestamp"] = static_cast<unsigned long long>(bp->get_clock_level_gmtime());
 }
 
 void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {

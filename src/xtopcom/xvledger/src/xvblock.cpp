@@ -8,6 +8,7 @@
 #include "xbase/xutl.h"
 #include "../xvstate.h"
 #include "../xvblock.h"
+#include "../xvblock_fork.h"
 #include "xmetrics/xmetrics.h"
 
 #ifdef DEBUG
@@ -80,6 +81,7 @@ namespace top
             m_height    = 0;
             m_weight    = 1;
             m_last_full_block_height = 0;
+            m_relative_gmtime = 0;
         }
         
         xvheader_t::xvheader_t(const std::string & intput_hash,const std::string & output_hash)
@@ -95,6 +97,7 @@ namespace top
             
             m_input_hash  = intput_hash;
             m_output_hash = output_hash;
+            m_relative_gmtime = 0;
         }
         
         xvheader_t::~xvheader_t()
@@ -123,6 +126,7 @@ namespace top
             m_last_full_block_hash  = other.m_last_full_block_hash;
             m_last_full_block_height= other.m_last_full_block_height;
             m_extra_data            = other.m_extra_data;
+            m_relative_gmtime   = other.m_relative_gmtime;
      
             return *this;
         }
@@ -239,7 +243,28 @@ namespace top
             }
             return true;
         }
-    
+
+      void    xvheader_t::set_second_level_gmtime(const uint64_t gmtime_seconds_now) //gmtime_now could be get from (xtime_utl:gmttime_ms()/1000)
+        {
+            if(gmtime_seconds_now > TOP_BEGIN_GMTIME)
+            {
+                m_relative_gmtime = (uint32_t)(gmtime_seconds_now - TOP_BEGIN_GMTIME);
+            }
+            else
+            {
+                m_relative_gmtime = 0;
+                xassert(gmtime_seconds_now == 0);
+            }
+        }
+
+        uint64_t  xvheader_t::get_second_level_gmtime()    const
+        {
+            if (m_relative_gmtime != 0) {
+                return m_relative_gmtime + TOP_BEGIN_GMTIME;
+            }
+            return 0;
+        }
+
         int32_t   xvheader_t::serialize_to_string(std::string & bin_data)
         {
             base::xautostream_t<1024> _stream(base::xcontext_t::instance());
@@ -290,6 +315,10 @@ namespace top
                 stream.write_tiny_string(m_last_full_block_hash);
                 
                 stream.write_compact_var(m_extra_data);
+                if (base::xvblock_fork_t::instance().is_block_match_version(get_block_version(), enum_xvblock_fork_version_3_0_0)) {
+                    stream.write_compact_var(m_relative_gmtime);
+                    xdbg("jimmy xvheader_t::do_write account=%s,version=0x%x,gmtime=%d",m_account.c_str(),get_block_version(),m_relative_gmtime);
+                }
             }
 
             return (stream.size() - begin_size);
@@ -316,6 +345,9 @@ namespace top
                 stream.read_tiny_string(m_last_full_block_hash);
                 
                 stream.read_compact_var(m_extra_data);
+                if (base::xvblock_fork_t::instance().is_block_match_version(get_block_version(), enum_xvblock_fork_version_3_0_0)) {
+                    stream.read_compact_var(m_relative_gmtime);
+                }
             }
          
             return (begin_size - stream.size());
@@ -333,7 +365,6 @@ namespace top
             m_parent_height = 0;
             m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
-            m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
             m_validator.high_addr   = 0;
             m_auditor.low_addr      = 0;
@@ -342,8 +373,7 @@ namespace top
             m_cryptos   = 0;
             m_modified_count = 0;
             m_nonce      = (uint64_t)-1;
-            m_view_token = xtime_utl::get_fast_randomu();
-            set_gmtime(xtime_utl::gettimeofday());
+            m_view_token = 0; // xtime_utl::get_fast_randomu();
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -359,7 +389,6 @@ namespace top
             m_parent_height = 0;
             m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
-            m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
             m_validator.high_addr   = 0;
             m_auditor.low_addr      = 0;
@@ -370,8 +399,7 @@ namespace top
             
             m_header_hash = header_hash;
             m_nonce      = (uint64_t)-1;
-            m_view_token = xtime_utl::get_fast_randomu();
-            set_gmtime(xtime_utl::gettimeofday());
+            m_view_token = 0; // xtime_utl::get_fast_randomu();
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -387,7 +415,6 @@ namespace top
             m_parent_height = 0;
             m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
-            m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
             m_validator.high_addr   = 0;
             m_auditor.low_addr      = 0;
@@ -396,8 +423,7 @@ namespace top
             m_cryptos   = 0;
             m_modified_count = 0;
             m_nonce      = (uint64_t)-1;
-            m_view_token = xtime_utl::get_fast_randomu();
-            set_gmtime(xtime_utl::gettimeofday());
+            m_view_token = 0; // xtime_utl::get_fast_randomu();
             
             *this = other;
             
@@ -422,7 +448,6 @@ namespace top
             m_nonce             = other.m_nonce;
             m_consensus         = other.m_consensus;
             m_cryptos           = other.m_cryptos;
-            m_relative_gmtime   = other.m_relative_gmtime;
  
             m_header_hash       = other.m_header_hash;
             m_input_root_hash   = other.m_input_root_hash;
@@ -547,47 +572,6 @@ namespace top
                 else
                 {
                     m_expired = 0;
-                }
-                add_modified_count();
-                return;
-            }
-            xassert(0);
-        }
-        
-        /*
-        void    xvqcert_t::set_gmtime(const uint64_t gmtime_seconds_now) //gmtime_now could be get from (xtime_utl:gmttime_ms()/1000)
-        {
-            if(is_allow_modify())
-            {
-                if(0 == m_clock) //not allow modify it after set_clock()
-                {
-                    if(gmtime_seconds_now > (uint64_t)1573189200) //1573189200 == 2019-11-08 05:00:00  UTC
-                    {
-                        m_clock = (uint64_t)(gmtime_seconds_now - 1573189200) / 10;
-                        xinfo("xvqcert_t::set_gmtime,good gmtime_seconds_now=%" PRIu64 "",gmtime_seconds_now);
-                    }
-                    else
-                    {
-                        xwarn("xvqcert_t::set_gmtime,bad gmtime_seconds_now=%" PRIu64 " < 946713600",gmtime_seconds_now);
-                    }
-                    add_modified_count();
-                }
-                return;
-            }
-            xassert(0);
-        }
-     */
-      void    xvqcert_t::set_gmtime(const uint64_t gmtime_seconds_now) //gmtime_now could be get from (xtime_utl:gmttime_ms()/1000)
-        {
-            if(is_allow_modify())
-            {
-                if(gmtime_seconds_now > (uint64_t)1573189200) //1573189200 == 2019-11-08 05:00:00  UTC
-                {
-                    m_relative_gmtime = (uint32_t)(gmtime_seconds_now - 1573189200);
-                }
-                else
-                {
-                    m_relative_gmtime = 0;
                 }
                 add_modified_count();
                 return;
@@ -2303,6 +2287,15 @@ namespace top
                 return this;
             
             return xdataobj_t::query_interface(_enum_xobject_type_);
+        }
+
+        uint64_t xvblock_t::get_second_level_gmtime() const
+        {
+            uint64_t gmtime = get_header()->get_second_level_gmtime();
+            if (0 == gmtime) {
+                gmtime = get_cert()->get_clock_level_gmtime();  // return clock level for old blocks
+            }
+            return gmtime;
         }
         
         const std::string   xvblock_t::get_block_path() const //path pointed to vblock at DB/disk
