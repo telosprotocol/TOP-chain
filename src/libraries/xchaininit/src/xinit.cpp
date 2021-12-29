@@ -294,7 +294,7 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
 
 }
 
-bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
+bool check_miner_info(const std::string &pub_key, const std::string &node_id, std::string& miner_type) {
     g_userinfo.account = node_id;
     if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
@@ -319,6 +319,8 @@ bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
         if (response.contains("data")) {
             auto data = response["data"];
             auto node_sign_key = data["node_sign_key"].get<std::string>();
+            miner_type = data["registered_node_type"].get<std::string>();
+            // std::cout << "miner type: " <<miner_type <<std::endl;
             if (node_sign_key != pub_key) {
                 std::cout << "The minerkey does not match miner account." << std::endl
                     << g_userinfo.account << " account's miner key is "
