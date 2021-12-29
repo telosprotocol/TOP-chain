@@ -451,7 +451,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            
+
             *this = obj;
         }
     
@@ -460,7 +460,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            
+
             *this = obj;
         }
     
@@ -686,7 +686,7 @@ namespace top
             //     stream << _highest_genesis_connect_height;
             //     stream.write_tiny_string(_highest_genesis_connect_hash);
             //     stream << _highest_sync_height;
-                
+
             //     //from here we introduce version control for meta
             //     stream << _meta_spec_version;
             //     stream << _block_level;
@@ -727,7 +727,7 @@ namespace top
 
                 stream.write_compact_var(_highest_connect_block_height);
                 stream.write_compact_var(_highest_connect_block_hash);
-                
+
                 stream.write_compact_var(_highest_genesis_connect_height);
                 stream.write_compact_var(_highest_genesis_connect_hash);
                 
@@ -736,8 +736,8 @@ namespace top
                 stream.write_compact_var(m_latest_tx_nonce);
                 stream.write_compact_var(m_account_flag);
 
-                stream.write_compact_var(_highest_mutable_cp_connect_block_height);
-                stream.write_compact_var(_highest_mutable_cp_connect_block_hash);
+                stream.write_compact_var(_highest_cp_connect_block_height);
+                stream.write_compact_var(_highest_cp_connect_block_hash);
             // }
         
             return (stream.size() - begin_size);
@@ -809,7 +809,7 @@ namespace top
                 
                 stream.read_compact_var(_highest_connect_block_height);
                 stream.read_compact_var(_highest_connect_block_hash);
-                
+
                 stream.read_compact_var(_highest_genesis_connect_height);
                 stream.read_compact_var(_highest_genesis_connect_hash);
                 
