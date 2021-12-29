@@ -15,6 +15,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -182,6 +183,40 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
     return true;
 }
 
+bool xbatch_packer::connect_to_checkpoint() {
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    uint64_t clock = m_para->get_resources()->get_chain_timer()->logic_time();
+    if (!chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_fork_point, clock)) {
+        return true;
+    }
+
+    auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_cp_connected_block_height(get_account());
+    auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
+    if (latest_cp_connect_height != latest_connect_height) {
+        xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu", latest_cp_connect_height, latest_connect_height);
+        auto latest_full_height = m_para->get_resources()->get_vblockstore()->get_latest_committed_full_block(get_account())->get_height();
+        if (latest_full_height < latest_cp_connect_height) {
+            xerror("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,full:%llu", latest_cp_connect_height, latest_full_height);
+        } else {
+            uint32_t sync_num = latest_full_height - latest_cp_connect_height - 1;
+            while (sync_num > 1) {
+                auto block = m_para->get_resources()->get_vblockstore()->load_block_index(get_account(), latest_cp_connect_height + sync_num);
+                if (block.get_vector().empty()) {
+                    break;
+                } else {
+                    sync_num /= 2;
+                }
+            }
+            xinfo("connect_to_checkpoint cp_connect:%llu,sync_num:%u", latest_cp_connect_height, sync_num);
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
+                get_account(), latest_cp_connect_height + 1, sync_num, false, "checkpoint connect fall behind", false);
+            m_para->get_resources()->get_bus()->push_event(ev);
+        }
+        return false;
+    }
+    return true;
+}
+
 // view updated and the judge is_leader
 // then start new consensus from leader
 bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
@@ -196,6 +231,10 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto local_xip = get_xip2_addr();
     if (xcons_utl::xip_equals(m_faded_xip2, local_xip)) {
         xdbg_info("xbatch_packer::on_view_fire local_xip equal m_fade_xip2 %s . fade round should not make proposal", xcons_utl::xip_to_hex(m_faded_xip2).c_str());
+        return false;
+    }
+
+    if (!connect_to_checkpoint()) {
         return false;
     }
 
@@ -274,6 +313,9 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
 bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_id, const int64_t current_time_ms, const int32_t start_timeout_ms, int32_t & in_out_cur_interval_ms) {
     if (!m_is_leader || m_leader_packed) {
         return true;
+    }
+    if (!connect_to_checkpoint()) {
+        return false;
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
