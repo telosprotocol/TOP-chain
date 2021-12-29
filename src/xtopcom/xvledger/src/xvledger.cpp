@@ -348,6 +348,14 @@ namespace top
             const uint64_t atom_copy = base::xatomic_t::xload( meta_ptr->get_state_meta()._highest_execute_block_height);
             return atom_copy;
         }
+
+        uint64_t   xvaccountobj_t::get_lowest_executed_block_height()
+        {
+            //note:meta_ptr never be destroy,it is safe to get it without lock
+            xvactmeta_t * meta_ptr = get_meta();
+            const uint64_t atom_copy = base::xatomic_t::xload( meta_ptr->get_state_meta()._lowest_execute_block_height);
+            return atom_copy;
+        }
       
         bool   xvaccountobj_t::recover_meta(xvactmeta_t & _meta)//recover at account level if possible
         {
