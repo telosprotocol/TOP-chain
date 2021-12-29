@@ -68,6 +68,7 @@ protected:
     void    invoke_sync(const std::string & account, const std::string & reason);
 
 private:
+    bool    connect_to_checkpoint();
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);

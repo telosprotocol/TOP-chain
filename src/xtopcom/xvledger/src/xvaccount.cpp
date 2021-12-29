@@ -7,6 +7,8 @@
 #include "../xvaccount.h"
 #include "../xvledger.h"
 #include "xbase/xcontext.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcheckpoint.h"
 #include "xmetrics/xmetrics.h"
 
@@ -433,7 +435,7 @@ namespace top
             set_unit_flag(enum_xdata_flag_fragment);
             
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            _meta_spec_version = 2;     //version #2 now
+            _meta_spec_version = 3;     //version #2 now
 
             #ifdef DEBUG
             m_account_address = _account.get_address();
@@ -454,10 +456,6 @@ namespace top
         {
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
             set_unit_flag(enum_xdata_flag_fragment);
-            
-            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            _meta_spec_version = 2;     //version #2 now
-            
             *this = obj;
         }
     
@@ -466,10 +464,6 @@ namespace top
         {
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
             set_unit_flag(enum_xdata_flag_fragment);
-            
-            _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            _meta_spec_version = 2;     //version #2 now
-            
             *this = obj;
         }
     
@@ -594,6 +588,10 @@ namespace top
             {
                 _highest_execute_block_height = height;
                 _highest_execute_block_hash   = blockhash;
+                const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
+                if (_highest_execute_block_height > safe_distance) {
+                    _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
+                }
                 add_modified_count();
                 return true;
             }
@@ -673,14 +671,13 @@ namespace top
                 stream << _highest_full_block_height;
                 stream << _highest_connect_block_height;
                 stream.write_tiny_string(_highest_connect_block_hash);
-                stream << _highest_cp_connect_block_height;
-                stream.write_tiny_string(_highest_cp_connect_block_hash);
                 stream.write_tiny_string(_highest_execute_block_hash);
                 stream << _highest_genesis_connect_height;
                 stream.write_tiny_string(_highest_genesis_connect_hash);
                 stream << _highest_sync_height;
                 
                 //from here we introduce version control for meta
+                _meta_spec_version = 3;
                 stream << _meta_spec_version;
                 stream << _block_level;
                 stream << cur_process_id;
@@ -699,9 +696,13 @@ namespace top
                     stream.write_compact_var(_lowest_execute_block_height);
                     stream.write_compact_var(_lowest_vkey2_block_height);
                 }
+
+                stream << _highest_cp_connect_block_height;
+                stream.write_tiny_string(_highest_cp_connect_block_hash);
             }
             else //new compact mode
             {
+                _meta_spec_version = 3;
                 stream << _meta_spec_version;
                 stream << _block_level;
                 stream << cur_process_id;
@@ -720,9 +721,6 @@ namespace top
 
                 stream.write_compact_var(_highest_connect_block_height);
                 stream.write_compact_var(_highest_connect_block_hash);
-                
-                stream.write_compact_var(_highest_cp_connect_block_height);
-                stream.write_compact_var(_highest_cp_connect_block_hash);
 
                 stream.write_compact_var(_highest_genesis_connect_height);
                 stream.write_compact_var(_highest_genesis_connect_hash);
@@ -731,6 +729,9 @@ namespace top
                 stream.write_compact_var(m_latest_unit_viewid);
                 stream.write_compact_var(m_latest_tx_nonce);
                 stream.write_compact_var(m_account_flag);
+                
+                stream.write_compact_var(_highest_cp_connect_block_height);
+                stream.write_compact_var(_highest_cp_connect_block_hash);
             }
         
             return (stream.size() - begin_size);
@@ -750,8 +751,6 @@ namespace top
                 stream >> _highest_full_block_height;
                 stream >> _highest_connect_block_height;
                 stream.read_tiny_string(_highest_connect_block_hash);
-                stream >> _highest_cp_connect_block_height;
-                stream.read_tiny_string(_highest_cp_connect_block_hash);
                 stream.read_tiny_string(_highest_execute_block_hash);
                 stream >> _highest_genesis_connect_height;
                 stream.read_tiny_string(_highest_genesis_connect_hash);
@@ -773,6 +772,12 @@ namespace top
                     
                     stream.read_compact_var(_lowest_execute_block_height);
                     stream.read_compact_var(_lowest_vkey2_block_height);
+                }
+
+                if (_meta_spec_version >=3)
+                {
+                    stream >> _highest_cp_connect_block_height;
+                    stream.read_tiny_string(_highest_cp_connect_block_hash);
                 }
             }
             else //new compact mode
@@ -796,9 +801,6 @@ namespace top
                 stream.read_compact_var(_highest_connect_block_height);
                 stream.read_compact_var(_highest_connect_block_hash);
 
-                stream.read_compact_var(_highest_cp_connect_block_height);
-                stream.read_compact_var(_highest_cp_connect_block_hash);
-                
                 stream.read_compact_var(_highest_genesis_connect_height);
                 stream.read_compact_var(_highest_genesis_connect_hash);
                 
@@ -806,6 +808,12 @@ namespace top
                 stream.read_compact_var(m_latest_unit_viewid);
                 stream.read_compact_var(m_latest_tx_nonce);
                 stream.read_compact_var(m_account_flag);
+
+                if (_meta_spec_version >=3)
+                {
+                    stream.read_compact_var(_highest_cp_connect_block_height);
+                    stream.read_compact_var(_highest_cp_connect_block_hash);
+                }
             }
             
             return (begin_size - stream.size());
