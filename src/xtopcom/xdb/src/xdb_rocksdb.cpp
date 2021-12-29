@@ -499,6 +499,9 @@ bool xdb::xdb_impl::close()
         
         delete old_db_ptr;
         old_db_ptr = NULL;
+
+        xkinfo("xdb_impl::close,db_root_dir=%s",m_db_name.c_str());
+        printf("xdb_impl::close,db_root_dir=%s \n",m_db_name.c_str());
     }
     return true;
 }
