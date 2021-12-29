@@ -24,6 +24,7 @@ namespace top
 
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
+            uint64_t            get_latest_cp_connected_block_height() const { return m_meta->_highest_cp_connect_block_height; }
             uint64_t            update_get_latest_cp_connected_block_height();  // block has connected to mutable checkpoint
             uint64_t            get_latest_deleted_block_height() const { return m_meta->_highest_deleted_block_height; }
         public:
