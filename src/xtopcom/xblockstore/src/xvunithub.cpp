@@ -465,6 +465,18 @@ namespace top
             return account_obj->get_latest_executed_block_height();
         }
 
+        uint64_t xvblockstore_impl::get_lowest_executed_block_height(const base::xvaccount_t & address,const int atag)
+        {
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("invalid account=%s",address.get_address().c_str());
+                return 0;
+            }
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_lowest_executed_block_height();
+        }
+
         uint64_t xvblockstore_impl::get_latest_deleted_block_height(const base::xvaccount_t & address,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,address);

@@ -7,6 +7,8 @@
 #include "../xvaccount.h"
 #include "../xvledger.h"
 #include "xbase/xcontext.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcheckpoint.h"
 #include "xmetrics/xmetrics.h"
 
@@ -586,6 +588,10 @@ namespace top
             {
                 _highest_execute_block_height = height;
                 _highest_execute_block_hash   = blockhash;
+                const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
+                if (_highest_execute_block_height > safe_distance) {
+                    _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
+                }
                 add_modified_count();
                 return true;
             }
@@ -690,7 +696,7 @@ namespace top
                     stream.write_compact_var(_lowest_execute_block_height);
                     stream.write_compact_var(_lowest_vkey2_block_height);
                 }
-                
+
                 stream << _highest_cp_connect_block_height;
                 stream.write_tiny_string(_highest_cp_connect_block_hash);
             }

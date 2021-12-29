@@ -74,13 +74,17 @@ public:
         return 0;
     }
 
-    uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag) {
+    uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag) override {
         return 0;         
     }
 
     uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override {
         return 0;
     }
+
+    uint64_t get_lowest_executed_block_height(const base::xvaccount_t & address,const int atag = 0) override {
+        return 0;
+    } 
 
     uint64_t get_latest_deleted_block_height(const base::xvaccount_t & account,const int atag = 0) override {
         return 0;
