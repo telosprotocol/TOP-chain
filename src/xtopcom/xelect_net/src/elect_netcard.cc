@@ -28,6 +28,17 @@ namespace elect {
 std::mutex EcNetcard::register_msg_handler_mutex_;
 bool EcNetcard::rumor_msg_handler_registered_ = false;
 
+#define IS_BROADCAST(message) (message.broadcast())
+#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == kGossipRRS)
+#define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
+#define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
+#define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
+#define MESSAGE_FEATURE(message)                                                                                                                                                   \
+    "msg_hash", message.gossip().header_hash().empty() ? std::to_string(message.msg_hash()) : message.gossip().header_hash(), "msg_size", message.gossip().block().size()
+#define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
+#define PACKET_SIZE(packet) "packet_size", packet.get_size()
+#define NOW_TIME "timestamp", GetCurrentTimeMsec()
+
 EcNetcard::~EcNetcard() {
     UnInit();
     TOP_INFO("EcNetcard::UnInit");
@@ -239,6 +250,11 @@ void EcNetcard::broadcast(base::KadmliaKeyPtr const & send_kad_key,
     // root broadcast
     GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, ec);
     // GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, ec);
+#ifdef XENABLE_P2P_TEST
+    if (!ec) {
+        XMETRICS_PACKET_INFO("p2ptest_send_broadcast_info", MESSAGE_BASIC_INFO(pbft_message), MESSAGE_FEATURE(pbft_message), IS_ROOT_BROADCAST(pbft_message), NOW_TIME);
+    }
+#endif
     return;
 }
 
@@ -365,16 +381,6 @@ void EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pb
     return;
 }
 
-#define IS_BROADCAST(message) (message.broadcast())
-#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == kGossipRRS)
-#define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
-#define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
-#define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
-#define MESSAGE_FEATURE(message) "msg_hash", message.msg_hash(), "msg_size", message.gossip().block().size()
-#define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
-#define PACKET_SIZE(packet) "packet_size", packet.get_size()
-#define NOW_TIME "timestamp", GetCurrentTimeMsec()
-
 void EcNetcard::HandleRumorMessage(
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) const {
@@ -406,7 +412,12 @@ void EcNetcard::HandleRumorMessage(
     message.set_msg_hash(msg_hash);
 
     if (IS_BROADCAST(message)) {
-#ifdef XENABLE_P2P_BENDWIDTH
+
+#if defined(XENABLE_P2P_TEST)
+        if (message.is_root()) {
+            XMETRICS_PACKET_INFO("p2ptest_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
+        }
+#elif defined(XENABLE_P2P_BENDWIDTH)
         XMETRICS_PACKET_INFO(
             "p2pbroadcast_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
 #else
