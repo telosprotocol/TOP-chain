@@ -73,7 +73,7 @@ namespace top
         uint64_t get_v3_db_genesis_height(const base::xvaccount_t & address, base::xvdbstore_t* _dst_dbstore, base::xvblockstore_t* _dst_blockstore) {
             uint64_t height;
             if (address.get_address() == sys_drand_addr) {
-                height = _dst_blockstore->get_latest_committed_block_height(address);
+                height = _dst_blockstore->get_latest_connected_block_height(address);
             } else {
                 height = xblockdb_v2_t::get_v3_genesis_height(_dst_dbstore, address);
             }
