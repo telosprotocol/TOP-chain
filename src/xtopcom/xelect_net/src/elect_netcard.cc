@@ -248,8 +248,8 @@ void EcNetcard::broadcast(base::KadmliaKeyPtr const & send_kad_key,
     pbft_message.set_data(vdata);
 
     // root broadcast
-    GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, ec);
-    // GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, ec);
+    // GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, ec);
+    GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, ec);
 #ifdef XENABLE_P2P_TEST
     if (!ec) {
         XMETRICS_PACKET_INFO("p2ptest_send_broadcast_info", MESSAGE_BASIC_INFO(pbft_message), MESSAGE_FEATURE(pbft_message), IS_ROOT_BROADCAST(pbft_message), NOW_TIME);
