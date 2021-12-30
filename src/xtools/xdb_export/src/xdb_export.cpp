@@ -243,12 +243,41 @@ void xdb_export_tools_t::query_block_exist(std::string const & address, const ui
     std::cout << "account: " << address << " , height: " << height << " , block exist, total num: " << block_vec.size() << std::endl;
     for (auto const & block : block_vec) {
         if (block != nullptr) {
-            std::cout << block->dump2() << std::endl;
+            std::cout << block->dump2() ;//<< std::endl;
+            printf("real-flags=0x%x\n", (int32_t)block->get_block_flags());
         } else {
             std::cerr << "exist one null block!!!" << std::endl;
         }
     }
+
+    auto const block_bindex_vec = m_blockstore->load_block_index(address, height).get_vector();
+    // std::cout << "account: " << address << " , height: " << height << " , block exist, total num: " << block_vec.size() << std::endl;
+    for (auto const & block : block_bindex_vec) {
+        if (block != nullptr) {
+            std::cout << block->dump() ;//<< std::endl;
+            printf("real-flags=0x%x\n", (int32_t)block->get_block_flags());
+        } else {
+            std::cerr << "exist one null block!!!" << std::endl;
+        }
+    }    
 }
+
+void xdb_export_tools_t::read_meta(std::string const & address) {
+    base::xvaccount_t _vaddr{address};
+    std::string new_meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
+    std::string value = base::xvchain_t::instance().get_xdbstore()->get_value(new_meta_key);
+    base::xvactmeta_t* _meta = new base::xvactmeta_t(_vaddr);  // create empty meta default
+    if (!value.empty()) {
+        if (_meta->serialize_from_string(value) <= 0) {
+            std::cerr << "meta serialize_from_string fail !!!" << std::endl;
+        } else {
+            std::cout << "meta serialize_from_string succ,meta=" << _meta->clone_block_meta().ddump() << std::endl;
+        }
+    } else {
+        std::cerr << "meta value empty !!!" << std::endl;
+    }    
+}
+
 
 void xdb_export_tools_t::query_block_info(std::string const & account, std::string const & param) {
     xJson::Value root;
@@ -1287,6 +1316,7 @@ void xdb_export_tools_t::query_block_info(std::string const & account, const uin
         return;
     }
     root = dynamic_cast<chain_info::get_block_handle *>(m_getblock.get())->get_block_json(bp);
+    root["real-flags"] = base::xstring_utl::tostring((int32_t)bp->get_block_flags());
 }
 
 void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit, json & j_table) {
