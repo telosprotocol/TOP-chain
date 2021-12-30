@@ -46,6 +46,7 @@ public:
     // set folder
     void set_outfile_folder(std::string const & folder);
     void compact_db();
+    void read_meta(std::string const & address);
 
 private:
     struct tx_ext_t {
