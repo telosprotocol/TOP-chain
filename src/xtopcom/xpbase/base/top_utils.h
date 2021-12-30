@@ -51,6 +51,7 @@ int32_t RandomInt32();
 uint32_t RandomUint32();
 uint64_t RandomUint64();
 uint16_t RandomUint16();
+uint8_t RandomUint8();
 
 template <typename String> String GetRandomString(size_t size) {
     std::uniform_int_distribution<> distribution(0, 255);

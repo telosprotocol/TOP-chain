@@ -85,9 +85,22 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
 }
 
 void ServiceNodes::OnCacheElectNodesAsync(base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & node_vec) {
-    for (auto & n : node_vec) {
-        AddNode(service_type, n);
+    // v0 is kroot, v1 && v2 is different ver.
+    if (service_type.value() == kRoot || service_type.ver() == base::now_service_type_ver) {
+        for (auto & n : node_vec) {
+            AddNode(service_type, n);
+        }
+    } else {
+        xdbg("recv from other version nodes info");
+        base::ServiceType o_service_type = MultiRouting::Instance()->transform_service_type(service_type);
+        std::vector<kadmlia::NodeInfoPtr> o_node_ver = MultiRouting::Instance()->transform_node_vec(service_type, node_vec);
+
+        for (auto & n : o_node_ver) {
+            AddNode(o_service_type, n);
+        }
     }
+
+    return;
 }
 
 bool ServiceNodes::CheckHasNode(base::KadmliaKeyPtr kad_key) {
@@ -222,7 +235,9 @@ void ServiceNodes::GetAllServicesNodes(std::vector<kadmlia::NodeInfoPtr> & node_
 bool ServiceNodes::AddNode(base::ServiceType service_type, kadmlia::NodeInfoPtr node) {
     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node->node_id);
     base::ServiceType node_service_type = kad_key->GetServiceType();
-    if (node_service_type != service_type) {
+    if (service_type.value() == kRoot) { // avoid V0 bug... 
+        service_type = node_service_type;
+    } else if (node_service_type != service_type) {
         TOP_WARN("node[%s](%s:%d)node_service_type: %llu not equal service_type: %llu",
                  (node->node_id).c_str(),
                  (node->public_ip).c_str(),

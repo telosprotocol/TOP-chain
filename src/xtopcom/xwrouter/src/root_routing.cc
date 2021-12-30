@@ -137,7 +137,6 @@ void RootRouting::OnCacheElectNodesAsync(GetRootNodesV2AsyncCallback cb,
                                          base::xpacket_t & packet) {
     xdbg("%s bluerootasync routing callback", transport::FormatMsgid(message).c_str());
     if (status == kKadSuccess) {
-        std::vector<kadmlia::NodeInfoPtr> nodes;
         do {
             if (!message.has_data() || message.data().empty()) {
                 xwarn("%s message has no data!", transport::FormatMsgid(message).c_str());
@@ -157,23 +156,26 @@ void RootRouting::OnCacheElectNodesAsync(GetRootNodesV2AsyncCallback cb,
                 xwarn("%s message root message ParseFromString!", transport::FormatMsgid(message).c_str());
                 break;
             }
+            std::vector<kadmlia::NodeInfoPtr> nodes;
+            
+            auto message_src_service_type = base::ServiceType(message.src_service_type());
             for (int i = 0; i < nodes_res.nodes_size(); ++i) {
-                if (base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType() != des_service_type) {
-                    xdbg("[RootRouting::OnCacheElectNodesAsync] not this service type? des:%s get:%s",
-                         des_service_type.info().c_str(),
-                         base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType().info().c_str());
-                    continue;
-                }
+                // if (base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType() != message_src_service_type) {
+                //     xdbg("[RootRouting::OnCacheElectNodesAsync] not this service type? des:%s get:%s",
+                //          des_service_type.info().c_str(),
+                //          base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType().info().c_str());
+                //     continue;
+                // }
                 NodeInfoPtr node_ptr;
                 node_ptr.reset(new NodeInfo(nodes_res.nodes(i).id()));
                 node_ptr->public_ip = nodes_res.nodes(i).public_ip();
                 node_ptr->public_port = nodes_res.nodes(i).public_port();
-                node_ptr->xid = des_kroot_id;
-                node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
+                // node_ptr->xid = des_kroot_id;
+                // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
                 nodes.push_back(node_ptr);
             }
 
-            cb(des_service_type, nodes);
+            cb(message_src_service_type, nodes);
             return;
         } while (0);
     } else {

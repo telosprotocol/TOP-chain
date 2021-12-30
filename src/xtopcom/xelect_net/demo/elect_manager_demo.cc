@@ -38,7 +38,7 @@ void ElectManagerDemo::OnElectUpdated(json all_info) {
             std::cout << std::setw(20) << node_id << std::setw(36) << xipstr << std::endl;
             elect_data.push_back(router_node);
         }
-        ElectManager::OnElectUpdated(elect_data);
+        ElectManager::OnElectUpdated(elect_data, elect_data[0].m_xip2.group_xip2(), {elect_data[0].m_xip2.height(), elect_data[0].m_xip2.height()});
     }
 }
 
