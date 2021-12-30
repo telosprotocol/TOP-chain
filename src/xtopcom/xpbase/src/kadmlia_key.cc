@@ -4,7 +4,6 @@
 
 #include "xpbase/base/kad_key/kadmlia_key.h"
 
-
 #include "xbase/xutl.h"
 #include "xutility/xhash.h"
 
@@ -16,11 +15,16 @@ namespace top {
 
 namespace base {
 /**
- * [network_id:21]-[zone_id:7]-[cluster_id:7]-[group_id:8]-[height:21]
+ * old: [network_id:21]-[zone_id:7]-[cluster_id:7]-[group_id:8]-[height:21]
+ * new:
+ * [ver:1]-[network_id:20]-[zone_id:7]-[cluster_id:7]-[group_id:8]-[height:21]
  */
 #define kRootNetworkId 0xFFFFFULL
+#define set_kad_service_ver(service_id, ver)                                   \
+    assert(ver == 0 || ver == 1);                                              \
+    ((service_id |= ((uint64_t)(ver)&0x1ULL) << 63))
 #define set_kad_network_id(service_id, network_id)                             \
-    ((service_id |= ((uint64_t)(network_id)&0x1FFFFFULL) << 43))
+    ((service_id |= ((uint64_t)(network_id)&0x0FFFFFULL) << 43))
 #define set_kad_zone_id(service_id, zone_id)                                   \
     ((service_id |= ((uint64_t)(zone_id)&0x7F) << 36))
 #define set_kad_cluster_id(service_id, cluster_id)                             \
@@ -32,18 +36,24 @@ namespace base {
 // #define set_kad_root(service_id) ((service_id |= (0xFFFFFFULL)))
 
 ServiceType::ServiceType(uint64_t type) : m_type{type} {
+    update_info();
+}
+
+void ServiceType::update_info(){
     std::string info{""};
-    info += " [network " + std::to_string((type >> 43)) + "]-";
-    info += "[zone " + std::to_string((type << 21) >> (21 + 36)) + "]-";
-    info += "[cluster " + std::to_string((type << 28) >> (28 + 29)) + "]-";
-    info += "[group " + std::to_string((type << 35) >> (35 + 21)) + "]-";
-    info += "[height " + std::to_string((type << 43) >> 43) + "]";
+    info += "[ver " + std::to_string((m_type >> 63)) + "]-";
+    info += "[network " + std::to_string((m_type << 1) >> (1 + 43)) + "]-";
+    info += "[zone " + std::to_string((m_type << 21) >> (21 + 36)) + "]-";
+    info += "[cluster " + std::to_string((m_type << 28) >> (28 + 29)) + "]-";
+    info += "[group " + std::to_string((m_type << 35) >> (35 + 21)) + "]-";
+    info += "[height " + std::to_string((m_type << 43) >> 43) + "]";
     m_info = info;
 }
 
 #define IS_BROADCAST_HEIGHT(service_type_value)                                \
     ((service_type_value & 0x1FFFFFULL) == 0x1FFFFFULL)
-#define BROADCAST_HEIGHT(service_type_value) ((service_type_value | 0x1FFFFFULL))
+#define BROADCAST_HEIGHT(service_type_value)                                   \
+    ((service_type_value | 0x1FFFFFULL))
 
 bool ServiceType::operator==(ServiceType const &other) const {
     if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type)) {
@@ -75,10 +85,55 @@ bool ServiceType::IsBroadcastService() const {
 
 uint64_t ServiceType::value() const { return m_type; }
 
+service_type_ver ServiceType::ver() const {
+    return static_cast<base::service_type_ver>(m_type >> 63);
+}
+
+common::xnetwork_id_t ServiceType::network_id() const {
+    return common::xnetwork_id_t{
+            static_cast<uint32_t>((m_type << 1) >> (1 + 43))};
+}
+
+common::xzone_id_t ServiceType::zone_id() const {
+    return common::xzone_id_t{
+            static_cast<uint8_t>((m_type << 21) >> (21 + 36))};
+}
+common::xcluster_id_t ServiceType::cluster_id() const {
+    return common::xcluster_id_t{
+            static_cast<uint8_t>((m_type << 28) >> (28 + 29))};
+}
+common::xgroup_id_t ServiceType::group_id() const {
+    return common::xgroup_id_t{
+            static_cast<uint8_t>((m_type << 35) >> (35 + 21))};
+}
+uint64_t ServiceType::height() const { return (m_type << 43) >> 43; }
+
+void ServiceType::set_ver(uint64_t new_ver) {
+    m_type &= ((m_type << 1) >> 1);
+    m_type |= ((uint64_t)(new_ver) << 63);
+    update_info();
+}
+
+void ServiceType::set_height(uint64_t new_height) {
+    m_type &= ((uint64_t)0xFFFFFFFFFFE00000ULL);
+    m_type |= ((uint64_t)(new_height));
+    update_info();
+}
+
+bool ServiceType::is_root_service() const {
+    return (((m_type << 1) >> (43 + 1)) == kRootNetworkId);
+}
+
+common::xip2_t ServiceType::group_xip2() const {
+    common::xip2_t res{network_id(), zone_id(), cluster_id(), group_id()};
+    return res;
+}
+
 std::string ServiceType::info() const { return m_info; }
 
 ServiceType CreateServiceType(common::xip2_t const &xip) {
     uint64_t res{0};
+    set_kad_service_ver(res, static_cast<size_t>(now_service_type_ver));
     set_kad_network_id(res, xip.network_id().value());
     set_kad_zone_id(res, xip.zone_id().value());
     set_kad_cluster_id(res, xip.cluster_id().value());
@@ -138,9 +193,7 @@ KadmliaKey::KadmliaKey(std::string const &from_str) {
     xip_ = common::xip2_t{low_part, high_part};
 }
 
-std::string KadmliaKey::Get() {
-    return xip_.to_string();
-}
+std::string KadmliaKey::Get() { return xip_.to_string(); }
 
 ServiceType KadmliaKey::GetServiceType() { return CreateServiceType(xip_); }
 

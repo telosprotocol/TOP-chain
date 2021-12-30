@@ -16,6 +16,13 @@ namespace top {
 
 namespace base {
 
+enum service_type_ver {
+    service_type_height_use_version = 0,
+    service_type_height_use_blk_height = 1,
+};
+
+static const service_type_ver now_service_type_ver = service_type_ver::service_type_height_use_version;
+
 class ServiceType {
 public:
     ServiceType() {}
@@ -34,6 +41,22 @@ public:
 
     uint64_t value() const;
     std::string info() const;
+
+    bool is_root_service() const;
+    common::xip2_t group_xip2() const;
+
+    service_type_ver ver() const;
+    
+    common::xnetwork_id_t network_id() const;
+    common::xzone_id_t zone_id() const;
+    common::xcluster_id_t cluster_id() const;
+    common::xgroup_id_t group_id() const;
+    uint64_t height() const;
+
+    void set_ver(uint64_t new_ver); 
+    void set_height(uint64_t new_height); 
+private:
+    void update_info();
 
 private:
     uint64_t m_type{0};
@@ -70,8 +93,8 @@ public:
 
     inline uint8_t slot_id() const { return xip_.slot_id().value(); }
 
-    // use xip2 height as version
-    // inline uint64_t version() const { return xip_.height(); }
+    // blk_height or version
+    inline uint64_t version() const { return xip_.height(); }
 
 private:
     common::xip2_t xip_;

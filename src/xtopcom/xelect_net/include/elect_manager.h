@@ -25,12 +25,12 @@ public:
     ~ElectManager() = default;
 
 public:
-    void OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid);
+    void OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid, std::uint64_t const associated_blk_height);
 
     void OnElectQuit(const common::xip2_t & xip2);
 
 private:
-    void OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data);
+    void OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data, common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info);
     void UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> const & elect_data, wrouter::WrouterTableNodes const & self_wrouter_nodes);
 
 private:
