@@ -120,12 +120,14 @@ void xevent_monitor_t::process_event(const mbus::xevent_ptr_t& e) {
 xdownloader_t::xdownloader_t(std::string vnode_id, xsync_store_face_t *sync_store,
             const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
             const observer_ptr<base::xvcertauth_t> &certauth,
+            xrole_xips_manager_t *role_xips_mgr,
             xrole_chains_mgr_t *role_chains_mgr, xsync_sender_t *sync_sender,
             const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, xsync_ratelimit_face_t *ratelimit, xsync_store_shadow_t * shadow):
 m_vnode_id(vnode_id),
 m_sync_store(sync_store),
 m_mbus(mbus),
 m_certauth(certauth),
+m_role_xips_mgr(role_xips_mgr),
 m_role_chains_mgr(role_chains_mgr),
 m_sync_sender(sync_sender),
 m_ratelimit(ratelimit),
@@ -393,7 +395,8 @@ xchain_downloader_face_ptr_t xdownloader_t::find_chain_downloader(uint32_t idx, 
 
 xchain_downloader_face_ptr_t xdownloader_t::create_chain_downloader(uint32_t idx, const std::string &address) {
 
-    xchain_downloader_face_ptr_t account = std::make_shared<xchain_downloader_t>(m_vnode_id, m_sync_store, m_mbus, m_certauth, m_sync_sender, m_ratelimit, address);
+    xchain_downloader_face_ptr_t account = std::make_shared<xchain_downloader_t>(m_vnode_id, m_sync_store, m_role_xips_mgr, 
+        m_role_chains_mgr, m_mbus, m_certauth, m_sync_sender, m_ratelimit, address);
     m_vector_chains[idx][address] = account;
     return account;
 }
