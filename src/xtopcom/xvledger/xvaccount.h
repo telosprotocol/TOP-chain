@@ -569,7 +569,7 @@ namespace top
             xsyncmeta_t  &  get_sync_meta();
             
             void    update_meta_process_id(const uint16_t _process_id);
-            void    init_serialize_version();
+
         protected:
             //not safe for multiple threads
             virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary
