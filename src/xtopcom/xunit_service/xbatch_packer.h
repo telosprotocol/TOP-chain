@@ -70,6 +70,7 @@ private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
+    bool    check_is_leader(const xvip2_t & leader_xip_validator, const xvip2_t & leader_xip_auditor) const;
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;

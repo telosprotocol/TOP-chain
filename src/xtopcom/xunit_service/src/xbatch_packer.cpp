@@ -425,14 +425,23 @@ bool xbatch_packer::set_start_time(const common::xlogic_time_t& start_time) {
     return true;
 }
 
+bool xbatch_packer::check_is_leader(const xvip2_t & leader_xip_validator, const xvip2_t & leader_xip_auditor) const {
+    auto xip = get_xip2_addr();
+    bool is_leader = xcons_utl::xip_equals(xip, leader_xip_validator) || xcons_utl::xip_equals(xip, leader_xip_auditor);
+
+    if (!is_leader && m_last_xip2.low_addr != 0 && m_last_xip2.high_addr != 0) {
+        if (xcons_utl::xip_equals(m_last_xip2, leader_xip_validator) || xcons_utl::xip_equals(m_last_xip2, leader_xip_auditor)) {
+            is_leader = true;
+        }
+    }
+    return is_leader;
+}
+
 bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     xcsaccount_t::on_proposal_finish(event, from_child, cur_thread_id, timenow_ms);
     xconsensus::xproposal_finish * _evt_obj = (xconsensus::xproposal_finish *)&event;
-    auto xip = get_xip2_addr();
-    bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_validator())
-                  || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor())
-                  || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_validator())
-                  || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
+    bool is_leader = check_is_leader(_evt_obj->get_target_proposal()->get_cert()->get_validator(), _evt_obj->get_target_proposal()->get_cert()->get_auditor());
+
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
 
         // accumulated table failed value
