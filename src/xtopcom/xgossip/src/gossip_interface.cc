@@ -13,6 +13,36 @@
 #include <cinttypes>
 #include <unordered_set>
 
+#ifdef XENABLE_P2P_TEST
+#    include "xmetrics/xmetrics.h"
+
+#    define METRICS_SEND_RECORD(message)                                                                                                                                           \
+        XMETRICS_PACKET_INFO("p2ptest_send_record",                                                                                                                                \
+                             "src_node_id",                                                                                                                                        \
+                             message.src_node_id(),                                                                                                                                \
+                             "dst_node_id",                                                                                                                                        \
+                             message.des_node_id(),                                                                                                                                \
+                             "dst_ip_port",                                                                                                                                        \
+                             node_info_ptr->public_ip + ":" + std::to_string(node_info_ptr->public_port),                                                                          \
+                             "hop_num",                                                                                                                                            \
+                             message.hop_num(),                                                                                                                                    \
+                             "msg_hash",                                                                                                                                           \
+                             message.gossip().header_hash().empty() ? std::to_string(message.msg_hash()) : message.gossip().header_hash(),                                         \
+                             "msg_size",                                                                                                                                           \
+                             message.data().size(),                                                                                                                                \
+                             "is_root",                                                                                                                                            \
+                             message.is_root(),                                                                                                                                    \
+                             "is_broadcast",                                                                                                                                       \
+                             message.broadcast(),                                                                                                                                  \
+                             "timestamp",                                                                                                                                          \
+                             GetCurrentTimeMsec());
+
+#else
+
+#    define METRICS_SEND_RECORD(message)
+
+#endif
+
 namespace top {
 
 namespace gossip {
@@ -48,11 +78,13 @@ void GossipInterface::Send(transport::protobuf::RoutingMessage & message, const 
         TOP_WARN2("wrouter message SerializeToString failed");
         return;
     }
-    auto each_call = [this, &data](kadmlia::NodeInfoPtr node_info_ptr) {
+    auto each_call = [this, &data, &message](kadmlia::NodeInfoPtr node_info_ptr) {
         if (!node_info_ptr) {
             TOP_WARN2("kadmlia::NodeInfoPtr null");
             return false;
         }
+
+        METRICS_SEND_RECORD(message);
 
         if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
             TOP_WARN2("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
@@ -80,6 +112,8 @@ void GossipInterface::MutableSend(transport::protobuf::RoutingMessage & message,
             return false;
         }
 
+        METRICS_SEND_RECORD(message);
+
         if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
             TOP_WARN2("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
             return false;
@@ -100,11 +134,13 @@ void GossipInterface::MutableSendHash(transport::protobuf::RoutingMessage & mess
         return;
     }
 
-    auto each_call = [this, &data](kadmlia::NodeInfoPtr node_info_ptr) {
+    auto each_call = [this, &data, &message](kadmlia::NodeInfoPtr node_info_ptr) {
         if (!node_info_ptr) {
             TOP_WARN2("kadmlia::NodeInfoPtr null");
             return false;
         }
+
+        METRICS_SEND_RECORD(message);
 
         if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
             TOP_WARN2("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
@@ -135,12 +171,12 @@ std::vector<kadmlia::NodeInfoPtr> GossipInterface::GetRandomNodes(std::vector<ka
 
 void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes) {
     for (uint32_t i = 0; i < dispatch_nodes.size(); ++i) {
-        auto nodes = dispatch_nodes[i].nodes;
+        auto node_info_ptr = dispatch_nodes[i].nodes;
         auto gossip = message.mutable_gossip();
 
         gossip->set_sit1(dispatch_nodes[i].sit1);
         gossip->set_sit2(dispatch_nodes[i].sit2);
-        xdbg("[debug] send to %s:%d % " PRIu64 " % " PRIu64, nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
+        xdbg("[debug] send to %s:%d % " PRIu64 " % " PRIu64, node_info_ptr->public_ip.c_str(), node_info_ptr->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
 
         std::string data;
         if (!message.SerializeToString(&data)) {
@@ -148,8 +184,14 @@ void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message
             return;
         }
 
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, nodes->public_ip, nodes->public_port, nodes->udp_property)) {
-            xinfo("SendDispatch send to (%s:%d) failed % " PRIu64 " % " PRIu64, nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
+        METRICS_SEND_RECORD(message);
+
+        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
+            xinfo("SendDispatch send to (%s:%d) failed % " PRIu64 " % " PRIu64,
+                  node_info_ptr->public_ip.c_str(),
+                  node_info_ptr->public_port,
+                  dispatch_nodes[i].sit1,
+                  dispatch_nodes[i].sit2);
             continue;
         }
     };

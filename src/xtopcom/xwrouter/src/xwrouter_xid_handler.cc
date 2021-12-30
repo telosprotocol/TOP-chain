@@ -17,6 +17,7 @@
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/multi_routing/service_node_cache.h"
+#include "xwrouter/xwrouter_error.h"
 
 #include <algorithm>
 
@@ -63,21 +64,22 @@ kadmlia::RootRoutingTablePtr WrouterXidHandler::FindRootRoutingTable() {
     return MultiRouting::Instance()->GetRootRoutingTable();
 }
 
-int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & message) {
-    assert(message.has_msg_hash());
+void WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & message, std::error_code & ec) {
+    // assert(message.has_msg_hash());
     if (message.hop_num() >= kadmlia::kHopToLive) {
-        xwarn("stop SendPacket hop_num(%d) beyond max_hop_num(%d)", message.hop_num(), kadmlia::kHopToLive);
-        return enum_xerror_code_fail;
+        ec = xwrouter::xwrouter_error_t::hop_num_beyond_max, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
     }
 
     // root broadcast might have empyt src && dst node id
     if (BroadcastPacketCheck(message)) {
-        return SendBroadcast(message);
+        SendBroadcast(message, ec);
+        return;
     }
 
     if (message.des_node_id().empty()) {
-        xwarn("send illegal");
-        return enum_xerror_code_fail;
+        ec = xwrouter::xwrouter_error_t::empty_dst_address, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
     }
 
     if (message.src_node_id().empty()) {
@@ -90,19 +92,21 @@ int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & mess
         } else {
             auto elect_routing_table = FindElectRoutingTable(service_type);
             if (!elect_routing_table) {
-                xwarn("FindRoutingTable failed");
-                return enum_xerror_code_fail;
+                ec = xwrouter::xwrouter_error_t::not_find_routing_table, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+                return;
             }
             message.set_src_node_id(elect_routing_table->get_local_node_info()->kad_key());
         }
     }
 
     if (RumorPacketCheck(message)) {
-        return SendRumor(message);
+        SendRumor(message, ec);
+        return;
     }
 
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("SendPacket base xid", message);
-    return SendGeneral(message);
+    SendGeneral(message, ec);
+    return;
 }
 
 int32_t WrouterXidHandler::RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
@@ -117,11 +121,13 @@ int32_t WrouterXidHandler::RecvPacket(transport::protobuf::RoutingMessage & mess
         return kRecvOwn;
     }
     case kJudgeOwnNoAndContinue: {
-        SendPacket(message);
+        std::error_code ec;
+        SendPacket(message, ec);
         return kRecvOk;
     }
     case kJudgeOwnYesAndContinue: {
-        SendPacket(message);
+        std::error_code ec;
+        SendPacket(message, ec);
         return kRecvOwn;
     }
     default:
@@ -136,7 +142,8 @@ base::ServiceType WrouterXidHandler::ParserServiceType(const std::string & kad_k
     return kad_key_ptr->GetServiceType();
 }
 
-int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & message) {
+void WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & message, std::error_code & ec) {
+    assert(!ec);
     if (message.des_node_id().empty()) {
         assert(false);
     }
@@ -146,8 +153,8 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
     if (message.has_is_root() && message.is_root()) {
         RootRoutingTablePtr routing_table = FindRootRoutingTable();
         if (!routing_table) {
-            xwarn("kroot routing_table not ready, send failed");
-            return enum_xerror_code_fail;
+            ec = xwrouter::xwrouter_error_t::not_find_routing_table, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            return;
         }
 
         xdbg("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
@@ -156,12 +163,12 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
         routing_table->GetClosestNodes(des_xid, 8);
         std::vector<kadmlia::NodeInfoPtr> nodes = routing_table->GetClosestNodes(des_xid, 8);
         if (nodes.empty()) {
-            xwarn("GetClosestNodes failed[%d][%d]", routing_table->nodes_size(), routing_table->get_local_node_info()->kadmlia_key()->xnetwork_id());
-            return enum_xerror_code_fail;
+            ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            return;
         }
         TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("SendData", message);
-        return SendData(message, nodes, kBroadcastGeneral, false);
-
+        SendData(message, nodes, kBroadcastGeneral, false, ec);
+        return;
     } else {
         ElectRoutingTablePtr routing_table = FindElectRoutingTable(service_type);
         if (!routing_table) {
@@ -173,12 +180,14 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
             kadmlia::NodeInfoPtr des_node_ptr;
             if (!wrouter::ServiceNodes::Instance()->GetRootNodes(service_type, message.des_node_id(), des_node_ptr) || !des_node_ptr) {
                 xwarn("crossing network failed, can't find des nodes of service_type: %s des_node_id: %s", service_type.info().c_str(),message.des_node_id().c_str());
-                return enum_xerror_code_fail;
+                ec = xwrouter::xwrouter_error_t::crossing_network_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+                return;
             }
 
             des_nodes.push_back(des_node_ptr);
             xdbg("crossing network begin, des_nodes size: %d", des_nodes.size());
-            return SendData(message, des_nodes, kBroadcastGeneral, false);
+            SendData(message, des_nodes, kBroadcastGeneral, false, ec);
+            return;
         }
 
         xdbg("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
@@ -190,19 +199,20 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
         nodes.push_back(routing_table->GetNode(des_xid));
 
         if (nodes.empty()) {
-            xwarn("GetClosestNodes failed[%d][%d]", routing_table->nodes_size(), routing_table->get_local_node_info()->kadmlia_key()->xnetwork_id());
-            return enum_xerror_code_fail;
+            ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            return;
         }
         TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("SendData", message);
-        return SendData(message, nodes, kBroadcastGeneral, false);
+        SendData(message, nodes, kBroadcastGeneral, false, ec);
     }
 }
 
-int32_t WrouterXidHandler::SendRumor(transport::protobuf::RoutingMessage & message) {
+void WrouterXidHandler::SendRumor(transport::protobuf::RoutingMessage & message, std::error_code & ec) {
     assert(message.has_is_root() && message.is_root() == false);
     assert(!message.src_node_id().empty());
     assert(!message.des_node_id().empty());
     assert(message.has_msg_hash());
+    assert(!ec);
 
     base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
     xdbg("[WrouterXidHandler::SendRumor] service_type: %s %s", des_service_type.info().c_str(), des_service_type.info().c_str());
@@ -215,11 +225,13 @@ int32_t WrouterXidHandler::SendRumor(transport::protobuf::RoutingMessage & messa
         std::vector<kadmlia::NodeInfoPtr> des_nodes;
         if (!wrouter::ServiceNodes::Instance()->GetRootNodes(des_service_type, des_nodes) || des_nodes.empty()) {
             xwarn("crossing network failed, can't find des nodes of service_type: %s %s", des_service_type.info().c_str(), message.des_node_id().c_str());
-            return enum_xerror_code_fail;
+            ec = xwrouter::xwrouter_error_t::crossing_network_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            return;
         }
 
         xdbg("crossing network begin, des_nodes size: %d", des_nodes.size());
-        return SendData(message, des_nodes, 3, true);
+        SendData(message, des_nodes, 3, true, ec);
+        return;
     }
 
     // return GossipBroadcast(message, routing_table);
@@ -235,12 +247,13 @@ int32_t WrouterXidHandler::SendRumor(transport::protobuf::RoutingMessage & messa
         assert(false);
         break;
     }
-    return enum_xcode_successful;
+    return;
 }
 
-int32_t WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & message) {
+void WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & message, std::error_code & ec) {
     assert(message.has_is_root() && message.is_root());
-    assert(message.has_msg_hash());
+    // assert(message.has_msg_hash());
+    assert(!ec);
 
     RootRoutingTablePtr routing_table;
     routing_table = FindRootRoutingTable();
@@ -248,8 +261,8 @@ int32_t WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & m
     xdbg("sendgossip routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
 
     if (!routing_table) {
-        xwarn("FindRoutingTable failed");
-        return enum_xerror_code_fail;
+        ec = xwrouter::xwrouter_error_t::not_find_routing_table, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
     }
 
     // return GossipBroadcast(message, routing_table);
@@ -262,8 +275,8 @@ int32_t WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & m
     assert(gossip_type == kGossipBloomfilter || gossip_type == kGossipRRS);
     neighbors = routing_table->GetUnLockNodes();
     if (!neighbors) {
-        xwarn("GetUnLockNodes empty");
-        return enum_xerror_code_fail;
+        ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
     }
 
     switch (gossip_type) {
@@ -278,44 +291,14 @@ int32_t WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & m
         assert(false);
         break;
     }
-    return enum_xcode_successful;
+    return;
 }
 
-// int32_t WrouterXidHandler::GossipBroadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table) {
-//     uint32_t gossip_type = message.gossip().gossip_type();
-//     if (gossip_type == 0) {
-//         gossip_type = kGossipBloomfilter;
-//     }
-//     std::shared_ptr<std::vector<top::kadmlia::NodeInfoPtr>> neighbors;
-//     if (gossip_type == kGossipBloomfilter || kGossipRRS) {
-//         neighbors = routing_table->GetUnLockNodes();
-//         if (!neighbors) {
-//             xwarn("GetUnLockNodes empty");
-//             return enum_xerror_code_fail;
-//         }
-//     }
-//     switch (gossip_type) {
-//     case kGossipBloomfilter:
-//         bloom_gossip_ptr_->Broadcast(routing_table->get_local_node_info()->hash64(), message, neighbors);
-//         break;
-//     case kGossipBloomfilterAndLayered:
-//         bloom_layer_gossip_ptr_->Broadcast(message, routing_table);
-//         break;
-//     case kGossipRRS:
-//         gossip_rrs_ptr_->Broadcast(routing_table->get_local_node_info()->hash64(), message, neighbors);
-//         break;
-//     default:
-//         xwarn("invalid gossip_type:%d", gossip_type);
-//         assert(false);
-//         break;
-//     }
-//     return enum_xcode_successful;
-// }
-
-int32_t WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride) {
+void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride, std::error_code & ec) {
+    assert(!ec);
     if (neighbors.empty()) {
-        xwarn("invliad neighbors");
-        return enum_xerror_code_fail;
+        ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
     }
 
     std::vector<NodeInfoPtr> rest_neighbors;
@@ -361,28 +344,40 @@ int32_t WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & messag
     }
 
     std::string data;
+    std::size_t success_send_count = 0;
     if (!message.SerializeToString(&data)) {
-        xwarn("wrouter message SerializeToString failed");
-        return enum_xerror_code_fail;
+        ec = xwrouter::xwrouter_error_t::serialized_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
     }
-    auto each_call = [this, &data](kadmlia::NodeInfoPtr node_info_ptr) {
+    auto each_call = [this, &data, &success_send_count](kadmlia::NodeInfoPtr node_info_ptr) {
         if (!node_info_ptr) {
             xwarn("kadmlia::NodeInfoPtr null");
-            return false;
+            return;
         }
         if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
             xwarn("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
-            return false;
+            return;
         }
-        return true;
+        success_send_count = success_send_count + 1;
+        return;
     };
 
     if (message.broadcast()) {
+        if (rest_neighbors.empty()) {
+            ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+            return;
+        }
         std::for_each(rest_neighbors.begin(), rest_neighbors.end(), each_call);
+
+        if (success_send_count < rest_neighbors.size()) {
+            ec = xwrouter::xwrouter_error_t::multi_send_partial_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        }
     } else {
         std::for_each(neighbors.begin(), neighbors.begin() + 1, each_call);
+        if (success_send_count < neighbors.size()) {
+            ec = xwrouter::xwrouter_error_t::multi_send_partial_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        }
     }
-    return enum_xcode_successful;
 }
 
 bool WrouterXidHandler::HandleSystemMessage(transport::protobuf::RoutingMessage & message) {

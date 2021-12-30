@@ -25,33 +25,6 @@ public:
     ~ElectPerf();
     void PrintRoutingTable(top::kadmlia::RoutingTablePtr & routing_table);
 
-    // Entire network broadcast
-    void TestChainTrade(uint32_t test_num,
-                        uint32_t test_len,
-                        uint32_t gossip_type,
-                        uint32_t backup,
-                        uint32_t neighbors_num,
-                        uint32_t stop_times,
-                        uint32_t max_hop_num,
-                        uint32_t evil_rate,
-                        uint32_t layer_switch_hop_num,
-                        uint32_t left_overlap,
-                        uint32_t right_overlap);
-
-    void TestChainTradeServiceNet(const std::string & src_node_id,
-                                  const std::string & des_node_id,
-                                  uint32_t test_num,
-                                  uint32_t test_len,
-                                  uint32_t gossip_type,
-                                  uint32_t backup,
-                                  uint32_t neighbors_num,
-                                  uint32_t stop_times,
-                                  uint32_t max_hop_num,
-                                  uint32_t evil_rate,
-                                  uint32_t layer_switch_hop_num,
-                                  uint32_t left_overlap,
-                                  uint32_t right_overlap);
-
     xJson::Value rpc_broadcast_all(uint32_t test_num,
                                    uint32_t test_len,
                                    uint32_t gossip_type,

@@ -129,6 +129,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXENABLE_P2P_BENDWIDTH=ON"
         echo "BUILD WITH ENABLE P2P BENDWIDTH"
     ;;
+    p2p_test)
+        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_P2P_TEST=ON"
+        echo "BUILD WITH ENABLE P2P TEST"
+    ;;
     no_tx_batch)
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"

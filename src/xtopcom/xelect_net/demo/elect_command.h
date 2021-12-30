@@ -30,8 +30,6 @@ using CommandProc = std::function<void(const Arguments &)>;
 using RpcCommandProc = std::function<xJson::Value(const Arguments &)>;
 using MapCommands = std::map<std::string, CommandProc>;
 
-class ServiceDemo;
-
 namespace kadmlia {
 class RoutingTable;
 struct NodeInfo;
@@ -60,7 +58,7 @@ public:
      * @brief start loop and waiting for commands
      *
      */
-    void Run();
+    void Run(uint16_t delta = 0);
     /**
      * @brief stop loop and exit ElectCommands
      *
@@ -79,15 +77,13 @@ public:
      *
      * @param cmdline command that to be executed
      */
-    void ProcessCommand(const std::string & cmdline);
 
     xJson::Value ProcessRpcCommand(const std::string & cmdline, uint64_t cmd_index);
 
     void get_udp_instruction();
-    void get_rpc_instruction();
+    void get_rpc_instruction(uint16_t delta);
 
 private:
-    void AddCommand(const std::string & cmd_name, CommandProc cmd_proc);
     void AddBaseCommands();
     virtual void AddExtraCommands() {
     }

@@ -147,7 +147,8 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                           vaddr.to_string().c_str(),
                           msg.hash(),
                           static_cast<std::uint32_t>(msg.id()));
-                    assert(false);
+                    // todo ?
+                    // assert(false);
                 }
             } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
@@ -199,7 +200,8 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
     std::error_code ec;
     m_cluster_vhost->send_to(edge_sender, msg, ec);
     if (ec) {
-        assert(false);
+        // todo ?
+        // assert(false);
     }
 }
 
@@ -210,7 +212,8 @@ void xcluster_rpc_handler::cluster_process_response(const xmessage_t & msg, cons
         std::error_code ec;
         m_cluster_vhost->send_to(shard_msg.m_source_address, msg, ec);
         if (ec) {
-            assert(false);
+            // todo ?
+            // assert(false);
         }
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[global_trace][advance_rpc][send] src %s send msg %" PRIx64 " to dst %s",
