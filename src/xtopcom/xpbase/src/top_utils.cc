@@ -90,6 +90,8 @@ uint64_t RandomUint64() { return RandomInt<uint64_t>(); }
 
 uint16_t RandomUint16() { return RandomInt<uint16_t>(); }
 
+uint8_t RandomUint8() { return RandomInt<uint8_t>(); }
+
 std::string HexEncode(const std::string& str) {
     auto size(str.size());
     std::string hex_output(size * 2, 0);

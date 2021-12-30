@@ -48,7 +48,16 @@ WrouterXidHandler::~WrouterXidHandler() {
 }
 
 kadmlia::ElectRoutingTablePtr WrouterXidHandler::FindElectRoutingTable(base::ServiceType service_type) {
-    return MultiRouting::Instance()->GetElectRoutingTable(service_type);
+    auto routing_table = MultiRouting::Instance()->GetElectRoutingTable(service_type);
+    // when recv a message. it not possible to duduce service ver from dst xip.
+    // thus at version 1 (NOT 2). should add compatablity with two version. 
+    if (!routing_table) {
+        // service_type.set_ver(base::service_type_height_use_version);// version two
+        service_type.set_ver(base::service_type_height_use_blk_height); // version one
+        routing_table = MultiRouting::Instance()->GetElectRoutingTable(service_type);
+    }
+    return routing_table;
+    // return MultiRouting::Instance()->GetElectRoutingTable(service_type);
 }
 kadmlia::RootRoutingTablePtr WrouterXidHandler::FindRootRoutingTable() {
     return MultiRouting::Instance()->GetRootRoutingTable();
@@ -156,14 +165,14 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
     } else {
         ElectRoutingTablePtr routing_table = FindElectRoutingTable(service_type);
         if (!routing_table) {
-            xdbg("FindRoutingTable failed of service_type: %llu, try crossing network", service_type.value());
+            xdbg("FindRoutingTable failed of service_type: %s, try crossing network", service_type.info().c_str());
 
-            xdbg("crossing network from local_xid: %s to des: %llu", (global_xid->Get()).c_str(), service_type.value());
+            xdbg("crossing network from local_xid: %s to des: %s", (global_xid->Get()).c_str(), service_type.info().c_str());
 
             std::vector<kadmlia::NodeInfoPtr> des_nodes;
             kadmlia::NodeInfoPtr des_node_ptr;
             if (!wrouter::ServiceNodes::Instance()->GetRootNodes(service_type, message.des_node_id(), des_node_ptr) || !des_node_ptr) {
-                xwarn("crossing network failed, can't find des nodes of service_type: %llu des_node_id: %s", service_type.value(),message.des_node_id().c_str());
+                xwarn("crossing network failed, can't find des nodes of service_type: %s des_node_id: %s", service_type.info().c_str(),message.des_node_id().c_str());
                 return enum_xerror_code_fail;
             }
 
@@ -196,16 +205,16 @@ int32_t WrouterXidHandler::SendRumor(transport::protobuf::RoutingMessage & messa
     assert(message.has_msg_hash());
 
     base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
-    xdbg("[WrouterXidHandler::SendRumor] service_type: %lld %s", des_service_type.value(), des_service_type.info().c_str());
+    xdbg("[WrouterXidHandler::SendRumor] service_type: %s %s", des_service_type.info().c_str(), des_service_type.info().c_str());
     ElectRoutingTablePtr routing_table = FindElectRoutingTable(des_service_type);
 
     // local does'nt have way to des, using root or find des-nodes first
     if (!routing_table || routing_table->nodes_size() == 0) {
-        xdbg("crossing network from local_xid: %s to des: %llu %s", global_xid->Get().c_str(), des_service_type.value(), message.des_node_id().c_str());
+        xdbg("crossing network from local_xid: %s to des: %s %s", global_xid->Get().c_str(), des_service_type.info().c_str(), message.des_node_id().c_str());
 
         std::vector<kadmlia::NodeInfoPtr> des_nodes;
         if (!wrouter::ServiceNodes::Instance()->GetRootNodes(des_service_type, des_nodes) || des_nodes.empty()) {
-            xwarn("crossing network failed, can't find des nodes of service_type: %llu %s", des_service_type.value(), message.des_node_id().c_str());
+            xwarn("crossing network failed, can't find des nodes of service_type: %s %s", des_service_type.info().c_str(), message.des_node_id().c_str());
             return enum_xerror_code_fail;
         }
 
@@ -475,12 +484,17 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
     } else {
         ElectRoutingTablePtr routing_table = FindElectRoutingTable(service_type);
         if (!routing_table) {
-            xwarn("FindRoutingTable failed, judge own packet: type(%d) failed", message.type());
+            xwarn("FindRoutingTable failed, judge own packet: type(%d) failed service_type: %s", message.type(), service_type.info().c_str());
             TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnNoAndContinue", message);
             return kJudgeOwnNoAndContinue;
         }
         std::string match_kad_id = routing_table->get_local_node_info()->kad_key();
         if (message.des_node_id().compare(match_kad_id) == 0) {
+            TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
+            return kJudgeOwnYes;
+        }
+        // for compatibility , here should once more do fuzzy identification :
+        if (base::GetKadmliaKey(message.des_node_id())->slot_id() == routing_table->get_local_node_info()->kadmlia_key()->slot_id()) {
             TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
             return kJudgeOwnYes;
         }
