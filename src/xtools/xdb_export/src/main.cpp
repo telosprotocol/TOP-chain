@@ -44,6 +44,7 @@ void usage() {
     std::cout << "        - check_balance" << std::endl;
     std::cout << "        - check_archive_db <new_path>" << std::endl;
     std::cout << "        - parse_db <new_path>" << std::endl;
+    std::cout << "        - read_meta <account>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -211,6 +212,13 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
+    }  else if (function_name == "read_meta") {
+        if (argc < 4) {
+            usage();
+            return -1;
+        }
+        std::string address = argv[3];
+        tools.read_meta(address);
     } else if (function_name == "check_block_info") {
         if (argc < 5) {
             usage();
