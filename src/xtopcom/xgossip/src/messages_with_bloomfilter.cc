@@ -39,21 +39,15 @@ bool MessageWithBloomfilter::StopGossip(const MessageKey & msg_key, uint32_t sto
     if (stop_times <= 0) {
         stop_times = kGossipSendoutMaxTimes;
     }
-    std::unique_lock<std::mutex> lock(messsage_bloomfilter_map_mutex_);
-    auto iter = messsage_bloomfilter_map_.find(msg_key);
-    if (iter != messsage_bloomfilter_map_.end()) {
-        TOP_DEBUG("msg_hash:%u stop_times:%d", msg_key.msg_hash, iter->second);
-        if (iter->second >= stop_times) {
+    uint8_t exist_value = 0;
+    if (message_bloomfilter_map_.get(msg_key, exist_value)) {
+        TOP_DEBUG("msg_hash:%u stop_times:%d", msg_key.msg_hash, exist_value);
+        if (exist_value >= stop_times) {
             return true;
         }
-        ++(iter->second);
+        message_bloomfilter_map_.put(msg_key, exist_value + 1);
     } else {
-        messsage_bloomfilter_map_[msg_key] = 1;
-    }
-
-    // (Charlie): avoid memory crash
-    if (messsage_bloomfilter_map_.size() >= kMaxMessageQueueSize) {
-        messsage_bloomfilter_map_.clear();
+        message_bloomfilter_map_.put(msg_key, 1);
     }
     return false;
 }

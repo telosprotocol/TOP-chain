@@ -113,7 +113,8 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                           vd->address().to_string().c_str(),
                           dst.to_string().c_str(),
                           msg.hash());
-                    assert(false);
+                    // todo ?
+                    // assert(false);
                 }
             } else {
                 auto count = 0;
@@ -138,7 +139,8 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                         std::error_code ec;
                         vd->send_to(cluster.second.address, msg, ec);
                         if (ec) {
-                            assert(false);
+                            // todo ?
+                            // assert(false);
                         }
                     }
                     ++count;
