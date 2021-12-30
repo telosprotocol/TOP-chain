@@ -389,8 +389,12 @@ namespace top
         xvactmeta_t::xvactmeta_t(const xvaccount_t & _account)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
+            //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
+            set_unit_flag(enum_xdata_flag_fragment);
+            
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            init_serialize_version();
+            _meta_spec_version = 2;     //version #2 now
+
             #ifdef DEBUG
             m_account_address = _account.get_address();
             #else
@@ -406,8 +410,11 @@ namespace top
         xvactmeta_t::xvactmeta_t(xvactmeta_t && obj)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
+            //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
+            set_unit_flag(enum_xdata_flag_fragment);
+            
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            init_serialize_version();
+            _meta_spec_version = 2;     //version #2 now
             
             *this = obj;
         }
@@ -415,8 +422,12 @@ namespace top
         xvactmeta_t::xvactmeta_t(const xvactmeta_t & obj)
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
+            //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
+            set_unit_flag(enum_xdata_flag_fragment);
+            
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            init_serialize_version();
+            _meta_spec_version = 2;     //version #2 now
+            
             *this = obj;
         }
     
@@ -604,47 +615,75 @@ namespace top
             return xdataobj_t::query_interface(_enum_xobject_type_);
         }
 
-        void  xvactmeta_t::init_serialize_version()
-        {
-            _meta_spec_version = 3;     //version #3 now            
-            //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
-            set_unit_flag(enum_xdata_flag_fragment);
-        }
-
         int32_t   xvactmeta_t::do_write(xstream_t & stream)//serialize whole object to binary
         {
             const int32_t begin_size = stream.size();
-
+            
             const uint16_t cur_process_id = (uint16_t)base::xvchain_t::instance().get_current_process_id();
-            
-            init_serialize_version();
+            //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
+            if(check_unit_flag(enum_xdata_flag_fragment) == false)//old format
+            {
+                stream << _highest_cert_block_height;
+                stream << _highest_lock_block_height;
+                stream << _highest_commit_block_height;
+                stream << _highest_execute_block_height;
+                stream << _highest_full_block_height;
+                stream << _highest_connect_block_height;
+                stream.write_tiny_string(_highest_connect_block_hash);
+                stream.write_tiny_string(_highest_execute_block_hash);
+                stream << _highest_genesis_connect_height;
+                stream.write_tiny_string(_highest_genesis_connect_hash);
+                stream << _highest_sync_height;
+                
+                //from here we introduce version control for meta
+                stream << _meta_spec_version;
+                stream << _block_level;
+                stream << cur_process_id;
+                stream << _highest_deleted_block_height;
+                
+                //keep above unchanged and compatible with old format
+                
+                //added since version#2 of _meta_spec_version
+                if(_meta_spec_version >= 2)
+                {
+                    stream.write_compact_var(m_latest_unit_height);
+                    stream.write_compact_var(m_latest_unit_viewid);
+                    stream.write_compact_var(m_latest_tx_nonce);
+                    stream.write_compact_var(m_account_flag);
+                    
+                    stream.write_compact_var(_lowest_execute_block_height);
+                    stream.write_compact_var(_lowest_vkey2_block_height);
+                }
+            }
+            else //new compact mode
+            {
+                stream << _meta_spec_version;
+                stream << _block_level;
+                stream << cur_process_id;
+                
+                stream.write_compact_var(_highest_cert_block_height);
+                stream.write_compact_var(_highest_lock_block_height);
+                stream.write_compact_var(_highest_commit_block_height);
+                stream.write_compact_var(_highest_full_block_height);
+                stream.write_compact_var(_highest_deleted_block_height);
+                stream.write_compact_var(_lowest_vkey2_block_height);
+                stream.write_compact_var(_highest_sync_height);
+                
+                stream.write_compact_var(_lowest_execute_block_height);
+                stream.write_compact_var(_highest_execute_block_height);
+                stream.write_compact_var(_highest_execute_block_hash);
 
-            stream << _meta_spec_version;
-            stream << _block_level;
-            stream << cur_process_id;
-            
-            stream.write_compact_var(_highest_cert_block_height);
-            stream.write_compact_var(_highest_lock_block_height);
-            stream.write_compact_var(_highest_commit_block_height);
-            stream.write_compact_var(_highest_full_block_height);
-            stream.write_compact_var(_highest_deleted_block_height);
-            stream.write_compact_var(_lowest_vkey2_block_height);
-            stream.write_compact_var(_highest_sync_height);
-            
-            stream.write_compact_var(_lowest_execute_block_height);
-            stream.write_compact_var(_highest_execute_block_height);
-            stream.write_compact_var(_highest_execute_block_hash);
-
-            stream.write_compact_var(_highest_connect_block_height);
-            stream.write_compact_var(_highest_connect_block_hash);
-            
-            stream.write_compact_var(_highest_genesis_connect_height);
-            stream.write_compact_var(_highest_genesis_connect_hash);
-            
-            stream.write_compact_var(m_latest_unit_height);
-            stream.write_compact_var(m_latest_unit_viewid);
-            stream.write_compact_var(m_latest_tx_nonce);
-            stream.write_compact_var(m_account_flag);
+                stream.write_compact_var(_highest_connect_block_height);
+                stream.write_compact_var(_highest_connect_block_hash);
+                
+                stream.write_compact_var(_highest_genesis_connect_height);
+                stream.write_compact_var(_highest_genesis_connect_hash);
+                
+                stream.write_compact_var(m_latest_unit_height);
+                stream.write_compact_var(m_latest_unit_viewid);
+                stream.write_compact_var(m_latest_tx_nonce);
+                stream.write_compact_var(m_account_flag);
+            }
         
             return (stream.size() - begin_size);
         }
@@ -698,7 +737,6 @@ namespace top
             else //new compact mode
             {
                 stream >> _meta_spec_version;
-                xassert(_meta_spec_version >= 3);
                 stream >> _block_level;
                 stream >> _meta_process_id;
                 
