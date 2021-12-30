@@ -695,8 +695,8 @@ namespace top
             }
             else //new compact mode
             {
-                xassert(_meta_spec_version >= 3);
                 stream >> _meta_spec_version;
+                xassert(_meta_spec_version >= 3);
                 stream >> _block_level;
                 stream >> _meta_process_id;
                 
