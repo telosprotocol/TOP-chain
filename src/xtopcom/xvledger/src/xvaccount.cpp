@@ -724,6 +724,15 @@ namespace top
                     stream.read_compact_var(_lowest_execute_block_height);
                     stream.read_compact_var(_lowest_vkey2_block_height);
                 }
+
+                // XTODO restore to default value for old db
+                if ( (0 != _lowest_vkey2_block_height) || (0 != _highest_deleted_block_height) )
+                {
+                    xwarn("xvactmeta_t::do_read restore default value._lowest_vkey2_block_height=%ld,_highest_deleted_block_height=%ld",_lowest_vkey2_block_height,_highest_deleted_block_height);
+                    _lowest_vkey2_block_height     = 0;
+                    _highest_deleted_block_height  = 0;
+                    add_modified_count();
+                }
             }
             else //new compact mode
             {
