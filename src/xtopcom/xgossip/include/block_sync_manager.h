@@ -40,7 +40,6 @@ typedef std::shared_ptr<SyncAskFilter> SyncAskFilterPtr;
 class BlockSyncManager {
 public:
     static BlockSyncManager * Instance();
-    void SetRoutingTablePtr(kadmlia::RootRoutingTablePtr & routing_table);
     void NewBroadcastMessage(transport::protobuf::RoutingMessage & message);
 
 private:
@@ -51,7 +50,6 @@ private:
     uint32_t GetBlockMsgType(const std::string & header_hash);
     void AddHeaderHashToQueue(const std::string & header_hash, base::ServiceType service_type);
     void CheckHeaderHashQueue();
-    base::ServiceType GetRoutingServiceType(const std::string & des_node_id);
     void SendSyncAsk(std::shared_ptr<SyncBlockItem> & sync_item);
     void HandleSyncAsk(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
     void HandleSyncAck(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
@@ -68,7 +66,7 @@ private:
     base::TimerRepeated timer_{base::TimerManager::Instance(), "BlockSyncManager"};
     std::map<std::string, std::chrono::steady_clock::time_point> requested_headers_;
     std::mutex requested_headers_mutex_;
-    std::shared_ptr<HeaderBlockData> header_block_data_{nullptr};
+    std::shared_ptr<HeaderBlockDataCache> header_block_data_{nullptr};
     kadmlia::RootRoutingTablePtr routing_table_;
 
     std::mutex sync_ask_filter_map_mutex_;

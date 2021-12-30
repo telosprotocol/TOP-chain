@@ -340,6 +340,10 @@ if (XENABLE_P2P_BENDWIDTH)
     add_definitions(-DXENABLE_P2P_BENDWIDTH)
 endif()
 
+if (XENABLE_P2P_TEST)
+    add_definitions(-DXENABLE_P2P_TEST)
+endif()
+
 if (NO_TX_BATCH)
     add_definitions(-DNO_TX_BATCH)
 endif()
