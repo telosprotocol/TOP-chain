@@ -4,10 +4,13 @@
 
 
 #include "xchain_fork/xchain_upgrade_center.h"
+
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xchain_names.h"
 #include "xvledger/xvblock.h"
+
+#include <cinttypes>
 
 namespace top {
     namespace chain_fork {
@@ -81,6 +84,13 @@ namespace top {
 
             xdbg("xtop_chain_fork_config_center::is_forked target:%llu, fork point:%llu", target, fork_point.value().point);
             return  target >= fork_point.value().point;
+        }
+
+        bool xtop_chain_fork_config_center::is_forked(top::optional<xfork_point_t> const & fork_point, uint64_t fork_point_offset, uint64_t target) noexcept {
+            auto const fork_point_value = (fork_point.has_value() ? fork_point.value().point : static_cast<uint64_t>(0)) + fork_point_offset;
+
+            xdbg("xtop_chain_fork_config_center::is_forked target:%" PRIu64 ", fork point:%" PRIu64, target, fork_point_value);
+            return target >= fork_point_value;
         }
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
