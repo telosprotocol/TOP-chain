@@ -390,7 +390,7 @@ namespace top
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            init_serialize_version();
             #ifdef DEBUG
             m_account_address = _account.get_address();
             #else
@@ -407,6 +407,7 @@ namespace top
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
+            init_serialize_version();
             
             *this = obj;
         }
@@ -415,6 +416,7 @@ namespace top
             :xdataobj_t(xdataunit_t::enum_xdata_type_vaccountmeta)
         {
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
+            init_serialize_version();
             *this = obj;
         }
     
