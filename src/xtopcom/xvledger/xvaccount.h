@@ -543,6 +543,8 @@ namespace top
         protected:
             xvactmeta_t(xvactmeta_t && move);
             xvactmeta_t & operator = (const xvactmeta_t & obj);
+        public:
+            virtual int32_t     serialize_from(xstream_t & stream) override;
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
@@ -569,6 +571,7 @@ namespace top
             xsyncmeta_t  &  get_sync_meta();
             
             void    update_meta_process_id(const uint16_t _process_id);
+            void    init_version_control();
 
         protected:
             //not safe for multiple threads
