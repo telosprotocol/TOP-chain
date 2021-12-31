@@ -4,6 +4,7 @@
 
 #include "xunit_service/xbatch_packer.h"
 
+#include "xblockmaker/xblockmaker_error.h"
 #include "xBFT/xconsevent.h"
 #include "xcommon/xip.h"
 #include "xcommon/xnode_type.h"
@@ -184,36 +185,20 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
 }
 
 bool xbatch_packer::connect_to_checkpoint() {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    uint64_t clock = m_para->get_resources()->get_chain_timer()->logic_time();
-    if (!chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_fork_point, clock)) {
-        return true;
+    auto local_xip = get_xip2_addr();
+    common::xip2_t xip2(local_xip.low_addr, local_xip.high_addr);
+    common::xnode_type_t node_type = common::node_type_from(xip2.zone_id(), xip2.cluster_id(), xip2.group_id());
+    xdbg("connect_to_checkpoint node type:%s", common::to_string(node_type).c_str());
+
+    if (common::has<common::xnode_type_t::auditor>(node_type)) {
+        auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_cp_connected_block_height(get_account());
+        auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
+        if (latest_cp_connect_height != latest_connect_height) {
+            xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu", latest_cp_connect_height, latest_connect_height);
+            return false;
+        }
     }
 
-    auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_cp_connected_block_height(get_account());
-    auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
-    if (latest_cp_connect_height != latest_connect_height) {
-        xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu", latest_cp_connect_height, latest_connect_height);
-        auto latest_full_height = m_para->get_resources()->get_vblockstore()->get_latest_committed_full_block(get_account())->get_height();
-        if (latest_full_height < latest_cp_connect_height) {
-            xerror("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,full:%llu", latest_cp_connect_height, latest_full_height);
-        } else {
-            uint32_t sync_num = latest_full_height - latest_cp_connect_height - 1;
-            while (sync_num > 1) {
-                auto block = m_para->get_resources()->get_vblockstore()->load_block_index(get_account(), latest_cp_connect_height + sync_num);
-                if (block.get_vector().empty()) {
-                    break;
-                } else {
-                    sync_num /= 2;
-                }
-            }
-            xinfo("connect_to_checkpoint cp_connect:%llu,sync_num:%u", latest_cp_connect_height, sync_num);
-            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                get_account(), latest_cp_connect_height + 1, sync_num, false, "checkpoint connect fall behind", false);
-            m_para->get_resources()->get_bus()->push_event(ev);
-        }
-        return false;
-    }
     return true;
 }
 
@@ -231,10 +216,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto local_xip = get_xip2_addr();
     if (xcons_utl::xip_equals(m_faded_xip2, local_xip)) {
         xdbg_info("xbatch_packer::on_view_fire local_xip equal m_fade_xip2 %s . fade round should not make proposal", xcons_utl::xip_to_hex(m_faded_xip2).c_str());
-        return false;
-    }
-
-    if (!connect_to_checkpoint()) {
         return false;
     }
 
@@ -306,6 +287,9 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     }
 
     m_is_leader = true;
+    if (!connect_to_checkpoint()) {
+        return false;
+    }
     m_leader_packed = start_proposal(latest_blocks, calculate_min_tx_num(true));
     return true;
 }
@@ -419,6 +403,9 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
 
 int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
     XMETRICS_TIME_RECORD("cons_tableblock_verify_proposal_time_consuming");
+    if (!connect_to_checkpoint()) {
+        return blockmaker::xblockmaker_error_proposal_cannot_connect_to_cp;
+    }
     return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
 }
 
