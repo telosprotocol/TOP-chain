@@ -1523,7 +1523,7 @@ namespace top
                 }
                 else
                 {
-                    base::xvbindex_t* genesis_index = load_index(0, base::enum_xvblock_flag_committed);
+                    base::xauto_ptr<base::xvbindex_t> genesis_index = load_index(0, base::enum_xvblock_flag_committed);
                     if (genesis_index == nullptr)
                     {
                         return;
