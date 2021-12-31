@@ -1030,11 +1030,8 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
     
     base::xvaccount_t _vaddr(ptr->address);
     if (ptr->end_height % 50 == 0) {
-        if (!store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, ptr->end_height)) {
-            xsync_warn("refresh_block_recycler_rule error.");
-        } else {
-            xsync_info("refresh_block_recycler_rule succ: %s,%d", ptr->address.c_str(), ptr->end_height);
-        }
+        xsync_prune_sigleton_t::instance().update(ptr->address, enum_height_type::confirm_height, ptr->end_height);
+        xsync_info("refresh_block_recycler_rule succ: %s,%d", ptr->address.c_str(), ptr->end_height);
     }
 
     uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
