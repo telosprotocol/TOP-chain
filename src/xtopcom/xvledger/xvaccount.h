@@ -554,7 +554,7 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
-            void init_checkpoint_meta(xvactmeta_t* meta_ptr, const std::string & account);
+            void init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account);
 
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;
@@ -583,6 +583,7 @@ namespace top
         protected:
             //not safe for multiple threads
             virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary
+            void update_cp_connect(const uint64_t cp_connect_height, const std::string & cp_connect_hash);
             virtual int32_t   do_read(xstream_t & stream) override; //serialize from binary and regeneate content
             
             //caller respond to cast (void*) to related  interface ptr
