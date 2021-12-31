@@ -18,6 +18,7 @@ enum enum_height_type {
     deleted_height,
     // genesis_height,
     latest_state_height,
+    confirm_height,
     end,
 };
 
@@ -27,7 +28,8 @@ public:
     }
     void add(const std::string address);
     void del(const std::string address);
-    bool update(const std::string address, const enum_height_type height_type, const uint64_t height, uint64_t &min_height);
+    bool update(const std::string address, const enum_height_type height_type, const uint64_t height);
+    bool get_height(const std::string address, uint64_t &min_height);
 
 private:
     std::map<std::string, std::map<enum_height_type, uint64_t>> m_prune_accounts;
