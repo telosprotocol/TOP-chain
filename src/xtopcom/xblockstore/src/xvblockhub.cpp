@@ -770,16 +770,7 @@ namespace top
                 }
             }
             */
-           // checkpoint does not have this account
-           if (0 == m_meta->_highest_cp_connect_block_height && m_meta->_highest_cp_connect_block_hash.empty()) {
-               if (0 == load_index(0)) {
-                   return 0;
-               } else {
-                   base::xvbindex_t* genesis_index = load_index(0, base::enum_xvblock_flag_committed);
-                   m_meta->_highest_cp_connect_block_hash = genesis_index->get_block_hash();
-               }
-           }
-
+            xdbg("update_get_latest_cp_connected_block_height height:%llu, hash:%s, account:%s", m_meta->_highest_cp_connect_block_height, m_meta->_highest_cp_connect_block_hash.c_str(), get_account().c_str());
             fully_update_cp_connect();
 
             //connected block must be committed as well
@@ -1523,6 +1514,23 @@ namespace top
         }
 
         void xblockacct_t::fully_update_cp_connect() {
+            if( (0 == m_meta->_highest_cp_connect_block_height) && m_meta->_highest_cp_connect_block_hash.empty())
+            {
+                xwarn("fully_update_cp_connect uninitialized meta account:%s", get_account().c_str());
+                if (0 == load_index(0))
+                {
+                    return;
+                }
+                else
+                {
+                    base::xvbindex_t* genesis_index = load_index(0, base::enum_xvblock_flag_committed);
+                    if (genesis_index == nullptr)
+                    {
+                        return;
+                    }
+                    m_meta->_highest_cp_connect_block_hash = genesis_index->get_block_hash();
+                }
+            }
             const uint64_t old_highest_cp_connect_block_height = m_meta->_highest_cp_connect_block_height;
             for(uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
             {
@@ -1534,33 +1542,8 @@ namespace top
                 if(!next_commit) //dont have commited block
                     break;
 
-                if( (0 == m_meta->_highest_cp_connect_block_height) && m_meta->_highest_cp_connect_block_hash.empty())
-                {
-                    xerror("fully_update_cp_connect uninitialized meta: %s", get_account().c_str());
-                    std::error_code ec;
-                    common::xaccount_address_t addr{get_account()};
-                    // bad performance ?
-                    auto cp = data::xtop_chain_checkpoint::get_latest_checkpoint(addr, ec);
-                    if (ec) {
-                        xinfo("fully_update_cp_connect fail! account: %s, err: %s", get_account().c_str(), ec.message().c_str());
-                    }
-                    xinfo("fully_update_cp_connect account:%s, cp height:%llu, meta height:%llu, hash:%s", 
-                    get_account().c_str(), cp.height, m_meta->_highest_cp_connect_block_height, m_meta->_highest_cp_connect_block_hash.c_str());
-                    //could be exception case that not event inited yet,so makeup
-                    if (cp.height > try_height)
-                    {
-                        m_meta->_highest_cp_connect_block_height = cp.height;
-                        m_meta->_highest_cp_connect_block_hash   = cp.hash;
-                        h = cp.height;
-                    }
-                    else
-                    {
-                        m_meta->_highest_cp_connect_block_height = next_commit->get_height();
-                        m_meta->_highest_cp_connect_block_hash   = next_commit->get_block_hash();
-                    }
-                }
-                else if(   (next_commit->get_height() == (m_meta->_highest_cp_connect_block_height + 1))
-                        && (next_commit->get_last_block_hash() == m_meta->_highest_cp_connect_block_hash) )
+                if((next_commit->get_height() == (m_meta->_highest_cp_connect_block_height + 1))
+                && (next_commit->get_last_block_hash() == m_meta->_highest_cp_connect_block_hash))
                 {
                     m_meta->_highest_cp_connect_block_height = next_commit->get_height();
                     m_meta->_highest_cp_connect_block_hash   = next_commit->get_block_hash();
@@ -1574,12 +1557,12 @@ namespace top
             const int  geneis_connect_step = (int)(m_meta->_highest_cp_connect_block_height - old_highest_cp_connect_block_height);
             if(geneis_connect_step > 64)
             {
-                xwarn("xblockacct_t::load_latest_genesis_connected_index,navigate big step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
+                xwarn("xblockacct_t::fully_update_cp_connect,navigate big step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
                 (int)(geneis_connect_step) ,m_meta->_highest_cp_connect_block_height,m_meta->_highest_commit_block_height,get_address().c_str());
             }
             else
             {
-                xinfo("xblockacct_t::load_latest_genesis_connected_index,navigate small step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
+                xdbg("xblockacct_t::fully_update_cp_connect,navigate small step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
                 (int)(geneis_connect_step) ,m_meta->_highest_cp_connect_block_height,m_meta->_highest_commit_block_height,get_address().c_str());
             }
 
@@ -1624,6 +1607,7 @@ namespace top
             {
                 m_meta->_highest_cp_connect_block_height = this_block_height;
                 m_meta->_highest_cp_connect_block_hash   = this_block->get_block_hash();
+                xdbg("full_connect_to cp_connect height:%llu, hash:%s, account:%s", this_block_height, base::xstring_utl::to_hex(this_block->get_block_hash()).c_str(), get_account().c_str());
             }
 
             bool  cp_connect_more = true;// connect all the way to checkpoint block
