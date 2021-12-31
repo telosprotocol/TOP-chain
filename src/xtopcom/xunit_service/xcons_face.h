@@ -97,8 +97,16 @@ public:
 class xleader_election_face {
 public:
     // judge node is leader according viewid account and existed data
-    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
+    virtual const std::vector<xvip2_t> get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode , uint16_t select_count) = 0;
 
+    const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode){
+        std::vector<xvip2_t> leader_xip =  get_leader_xip(viewId, account, prev_block, local, candidate, version, rotate_mode, 1);
+        if (leader_xip.size() != 1)  {
+            xunit_warn("[xrotate_leader_election] get_leader_xip size%d is error", leader_xip.size());
+            return xvip2_t{(uint64_t)-1, (uint64_t)-1};
+        }
+        return leader_xip[0];
+    }
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face() = 0;
 };

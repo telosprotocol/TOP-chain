@@ -144,12 +144,13 @@ xvip2_t xelection_cache_imp::get_group_xip2(xvip2_t const & xip) {
 xrandom_leader_election::xrandom_leader_election(const xobject_ptr_t<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
   : m_blockstore(block_store), m_elector(face) {}
 
-xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xelection_round_t& version, uint64_t factor) {
+std::vector<xvip2_t> get_leader(const xelection_cache_face::elect_set & nodes, const common::xelection_round_t& version, uint64_t factor, uint16_t select_count) {
     assert(version.has_value());
-    if (nodes.empty()) {
-        xunit_warn("[xunitservice] leader_election candidates empty");
-        return xvip2_t{(uint64_t)-1, (uint64_t)-1};
+    if (nodes.empty() || select_count < 1) {
+        xunit_warn("[xunitservice] leader_election candidates empty and select %d error.", select_count);
+        return {};
     }
+    std::vector<xvip2_t> leader_vector;
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> reliable_candidates;
     uint32_t default_leader_election_round = XGET_CONFIG(leader_election_round);
@@ -169,15 +170,18 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
 
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> leaders;
     if (!reliable_candidates.empty()) {
-        leaders = common::select<xvip2_t>(reliable_candidates, factor, 1);
+        leaders = common::select<xvip2_t>(reliable_candidates, factor, select_count);
     } else {
-        leaders = common::select<xvip2_t>(candidates, factor, 1);
+        leaders = common::select<xvip2_t>(candidates, factor, select_count);
     }
 
-    return leaders[0].second;
+    for (auto &v:leaders) {
+       leader_vector.push_back(v.second);
+    }
+    return leader_vector;
 }
 
-const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
+const std::vector<xvip2_t> xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode, uint16_t select_count) {
     // TODO(justin): leader maybe cross group for auditor & validator
     // if (!is_xip2_group_equal(local, candidate)) {
     //     xunit_warn("[xunitservice] recv invalid candidiate %s at %s not equal group", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
@@ -194,22 +198,26 @@ const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std
         }
     }
 
+    std::vector<xvip2_t> leader_xip;
     if (rotate_mode != enum_rotate_mode_no_rotate) {
         auto str = prev_block->get_block_hash();
         random = base::xhash64_t::digest(str) + random;
         // auditor will always trust validator leader
         if (xcons_utl::is_auditor(local)) {
             if (xcons_utl::is_validator(candidate)) {
-                return local;
+                leader_xip.push_back(local);
+                return leader_xip;
             } else {
                 return {};
             }
         }
     }
 
-    xvip2_t leader_xip = get_leader(elect_set, version, random);
-    xunit_dbg_info("[xunitservice] xrandom_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s",
-        account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(), xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str());
+    leader_xip = get_leader(elect_set, version, random, select_count);
+    for(auto &v: leader_xip) {
+        xunit_dbg_info("[xunitservice] xrandom_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s",
+        account.c_str(), viewId, random, xcons_utl::xip_to_hex(v).c_str(), xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str());
+    }
     return leader_xip;
 }
 
@@ -322,7 +330,7 @@ bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
     return rotate;
 }
 
-const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
+const  std::vector<xvip2_t>  xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode,uint16_t select_count) {
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
     bool leader = false;
@@ -374,10 +382,12 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
         }
     }
 
-    xvip2_t leader_xip = get_leader(elect_set, version, random);
-    xunit_dbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,prev_validator=%d,electsize:%d",
-        account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(),
+    std::vector<xvip2_t>  leader_xip = get_leader(elect_set, version, random, select_count);
+    for(auto &v: leader_xip) {
+        xunit_dbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,prev_validator=%d,electsize:%d",
+        account.c_str(), viewId, random, xcons_utl::xip_to_hex(v).c_str(),
         xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str(), prev_is_validator, elect_set.size());
+    }
     return leader_xip;
 }
 

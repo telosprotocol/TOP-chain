@@ -17,6 +17,7 @@
 #include <inttypes.h>
 
 NS_BEG2(top, xunit_service)
+#define   TC_LEADER_SELECT_COUNT   (3)
 
 xtimer_picker_t::xtimer_picker_t(base::xcontext_t &                               _context,
                                  const int32_t                                    target_thread_id,
@@ -148,13 +149,19 @@ bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobjec
     }
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
     xunit_dbg("[xtimer_picker_t::on_time_cert_event] broadcast timer cert block %s, height %" PRIu64, tc_block->get_account().c_str(), tc_block->get_height());
-    xvip2_t leader_xip = m_leader_selector->get_leader_xip(tc_block->get_viewid(), get_account(), nullptr, local_xip, local_xip, election_epoch, enum_rotate_mode_no_rotate);
-    if (xcons_utl::xip_equals(leader_xip, local_xip)) {
-        auto    network_proxy = m_params->get_resources()->get_network();
-        if (network_proxy != nullptr) {
-            xunit_info("[timer_picker::on_time_cert_event] sendout on_time_cert_event src %" PRIx64 ".%" PRIx64 " dst %" PRIx64 ".%" PRIx64, get_xip2_addr().low_addr, get_xip2_addr().high_addr, to_addr.low_addr, to_addr.high_addr);
-            network_proxy->send_out(contract::xmessage_block_broadcast_id, local_xip, to_addr, tc_block);
-            XMETRICS_GAUGE_SET_VALUE(metrics::clock_leader_broadcast_height, tc_block->get_height());
+    std::vector<xvip2_t> leader_xip = m_leader_selector->get_leader_xip(tc_block->get_viewid(), get_account(), nullptr, local_xip, local_xip, election_epoch, enum_rotate_mode_no_rotate, TC_LEADER_SELECT_COUNT);
+    if (leader_xip.size() != TC_LEADER_SELECT_COUNT) {
+       xunit_warn("xtimer_picker_t::on_time_cert_event leader_xip size=%d error", leader_xip.size());
+    }   
+    for (auto &xip: leader_xip) {
+        if (xcons_utl::xip_equals(xip, local_xip)) {
+            auto    network_proxy = m_params->get_resources()->get_network();
+            if (network_proxy != nullptr) {
+                xunit_info("[timer_picker::on_time_cert_event] sendout on_time_cert_event src %" PRIx64 ".%" PRIx64 " dst %" PRIx64 ".%" PRIx64,
+                        get_xip2_addr().low_addr, get_xip2_addr().high_addr, to_addr.low_addr, to_addr.high_addr);
+                network_proxy->send_out(contract::xmessage_block_broadcast_id, local_xip, to_addr, tc_block);
+                XMETRICS_GAUGE_SET_VALUE(metrics::clock_leader_broadcast_height, tc_block->get_height());
+            }
         }
     }
 
