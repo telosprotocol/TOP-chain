@@ -50,7 +50,7 @@ class xunit_bstate_t {
     uint64_t            get_last_tx_hour() const ;
     uint64_t            get_used_tgas() const ;
     uint64_t            calc_decayed_tgas(uint64_t timer_height) const ;
-    static uint32_t     get_token_price(uint64_t onchain_total_pledge_token) ;
+    static uint32_t     get_token_price(uint64_t onchain_total_gas_deposit) ;
     uint64_t            get_available_tgas(uint64_t timer_height, uint32_t token_price) const ;
 
  public:  // property apis
