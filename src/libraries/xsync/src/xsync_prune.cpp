@@ -35,14 +35,14 @@ void xsync_prune_t::del(const std::string address) {
     m_prune_accounts.erase(address);
 }
 
-bool xsync_prune_t::update(const std::string address, const enum_height_type height_type, const uint64_t height, uint64_t &min_height) {
+bool xsync_prune_t::update(const std::string address, const enum_height_type height_type, const uint64_t height) {
     std::unique_lock<std::mutex> lock(m_lock);
     if (m_min_height_accounts.find(address) == m_min_height_accounts.end()) {
         return false;
     }
 
     if (m_prune_accounts[address][height_type] >= height) {
-        return false;
+        return true;
     }
 
     m_prune_accounts[address][height_type] = height;
@@ -57,11 +57,17 @@ bool xsync_prune_t::update(const std::string address, const enum_height_type hei
 
     if (m_min_height_accounts[address] < min) {
         m_min_height_accounts[address] = min;
-        min_height = min;
-        return true;
     }
-
-    return false;
+    return true;
 }
 
+bool xsync_prune_t::get_height(const std::string address, uint64_t &min_height) {
+    std::unique_lock<std::mutex> lock(m_lock);
+    if (m_min_height_accounts.find(address) == m_min_height_accounts.end()) {
+        return false;
+    }
+
+    min_height = m_min_height_accounts[address];
+    return true;
+}
 NS_END2
