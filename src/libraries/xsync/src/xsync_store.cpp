@@ -190,18 +190,7 @@ uint64_t xsync_store_t::get_latest_deleted_block_height(const std::string & acco
 
 uint64_t xsync_store_t::get_latest_block_with_state(const std::string & account) {
     base::xvaccount_t _vaddress(account);
-    auto _block = m_blockstore->get_latest_committed_full_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
-    if (false == m_blockstore->load_block_output(_vaddress, _block.get())
-        || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
-        xerror("xsync_store_t::get_latest_full_block fail-load block input or output. block=%s", _block->dump().c_str());
-        return 0;
-    }
-
-    if (_block->get_height() > 500) {
-        return _block->get_height() - 500;
-    } else {
-        return 0;
-    }
+    return m_blockstore->get_lowest_executed_block_height(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {
@@ -310,19 +299,40 @@ bool xsync_store_t::remove_empty_unit_forked() {
         return true;
     }
 
-    auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
-    if (vb == nullptr) {
-        return false;
+    set_fork_point();
+    return m_remove_empty_unit_forked;
+}
+
+bool xsync_store_t::is_full_node_forked() {
+    if (m_full_node_forked) {
+        return true;
     }
 
-    xdbg("xsync_store_t::remove_empty_unit_forked clock:%llu", vb->get_height());
+    set_fork_point();
+    return m_full_node_forked;
+}
+
+void xsync_store_t::set_fork_point() {
+    auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    if (vb == nullptr) {
+        return;
+    }
+
+    xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     bool forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, vb->get_height());
     if (forked) {
         xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
         m_remove_empty_unit_forked = true;
     }
-    return m_remove_empty_unit_forked;
+
+    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_fork_point, vb->get_clock());
+    if (forked) {
+        xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
+        m_full_node_forked = true;
+    }
+
+    return;
 }
 
 NS_END2
