@@ -410,7 +410,9 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 }
 
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
-    m_last_xip2 = get_xip2_addr();
+    if (!is_xip2_empty(get_xip2_addr())) {
+        m_last_xip2 = get_xip2_addr();
+    }
     xunit_dbg("xbatch_packer::reset_xip_addr %s,last xip:%s node:%s this:%p", xcons_utl::xip_to_hex(new_addr).c_str(), xcons_utl::xip_to_hex(m_last_xip2).c_str(), m_para->get_resources()->get_account().c_str(), this);
     return xcsaccount_t::reset_xip_addr(new_addr);
 }
@@ -449,21 +451,23 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         } else {
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 0);
         }
-         xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
+         xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
              is_leader,
              _evt_obj->get_error_code(),
              _evt_obj->get_target_proposal()->dump().c_str(),
-             xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+             xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
+             xcons_utl::xip_to_hex(m_last_xip2).c_str());
     } else {
 
         // reset to 0
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
 
-        xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
+        xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
             is_leader,
             _evt_obj->get_target_proposal()->dump().c_str(),
-            xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+            xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
+            xcons_utl::xip_to_hex(m_last_xip2).c_str());
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
         xdbgassert(vblock->is_input_ready(true));
