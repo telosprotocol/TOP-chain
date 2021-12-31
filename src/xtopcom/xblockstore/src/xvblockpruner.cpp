@@ -75,13 +75,13 @@ namespace top
         bool  xvblockprune_impl::recycle_table(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
             #if 0
-            if(account_meta._highest_full_block_height <= enum_reserved_blocks_count || account_meta._highest_mutable_cp_connect_block_height <= enum_reserved_blocks_count) //start prune at least > 8
+            if(account_meta._highest_full_block_height <= enum_reserved_blocks_count || account_meta._highest_cp_connect_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
             
             //[lower_bound_height,upper_bound_height)
             uint64_t upper_bound_height = 0;
-            if (account_meta._highest_full_block_height > account_meta._highest_mutable_cp_connect_block_height) {
-                upper_bound_height = account_meta._highest_mutable_cp_connect_block_height - enum_reserved_blocks_count;
+            if (account_meta._highest_full_block_height > account_meta._highest_cp_connect_block_height) {
+                upper_bound_height = account_meta._highest_cp_connect_block_height - enum_reserved_blocks_count;
             } else {
                 upper_bound_height = account_meta._highest_full_block_height - enum_reserved_blocks_count;
             }
@@ -167,11 +167,11 @@ namespace top
 
         bool  xvblockprune_impl::recycle_drand(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
-            if(account_meta._highest_mutable_cp_connect_block_height <= enum_min_batch_recycle_blocks_count) //start prune at least > 8
+            if(account_meta._highest_cp_connect_block_height <= enum_min_batch_recycle_blocks_count) //start prune at least > 8
                 return false;
             
             //[lower_bound_height,upper_bound_height)
-            uint64_t upper_bound_height = account_meta._highest_mutable_cp_connect_block_height - enum_min_batch_recycle_blocks_count;
+            uint64_t upper_bound_height = account_meta._highest_cp_connect_block_height - enum_min_batch_recycle_blocks_count;
             const uint64_t lower_bound_height = std::max(account_meta._lowest_vkey2_block_height,account_meta._highest_deleted_block_height) + 1;
             
             xinfo("xvblockprune_impl::recycle account %s, upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
