@@ -145,6 +145,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_packtx_fail_nonce_contious);
         RETURN_METRICS_NAME(cons_packtx_fail_transfer_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_load_origintx);
+        RETURN_METRICS_NAME(cons_packtx_with_threshold);
 
         RETURN_METRICS_NAME(clock_aggregate_height);
         RETURN_METRICS_NAME(clock_leader_broadcast_height);

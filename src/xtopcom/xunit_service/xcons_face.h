@@ -136,7 +136,7 @@ enum e_cons_type {
 class xproposal_maker_face {
  public:
     virtual bool                        can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
-    virtual xblock_ptr_t                make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
+    virtual xblock_ptr_t                make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
     virtual int                         verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
 };
 
