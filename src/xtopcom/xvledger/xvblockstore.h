@@ -168,6 +168,7 @@ namespace top
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_lowest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_deleted_block_height(const xvaccount_t & account,const int atag = 0) = 0;
