@@ -40,8 +40,8 @@ xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, u
     set_empty_xip2(m_auditor);
     char local_param_buf[128];
     xprintf(local_param_buf,sizeof(local_param_buf),
-        "{%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 "}",
-        _account.c_str(), _proposal_height, _viewid, _viewtoken, _clock);
+        "{%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",gmt=%" PRIu64 "}",
+        _account.c_str(), _proposal_height, _viewid, _viewtoken, _clock, _gmtime);
     m_dump_str = std::string(local_param_buf);
 }
 
