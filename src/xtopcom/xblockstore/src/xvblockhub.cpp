@@ -1539,7 +1539,7 @@ namespace top
                     break;
                 
                 base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
-                if(!next_commit) //dont have commited block
+                if(!next_commit) //don't have commited block
                     break;
 
                 if((next_commit->get_height() == (m_meta->_highest_cp_connect_block_height + 1))
