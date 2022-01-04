@@ -184,11 +184,13 @@ bool xbatch_packer::connect_to_checkpoint() {
     common::xnode_type_t node_type = common::node_type_from(xip2.zone_id(), xip2.cluster_id(), xip2.group_id());
     xdbg("connect_to_checkpoint node type:%s", common::to_string(node_type).c_str());
 
-    if (common::has<common::xnode_type_t::auditor>(node_type)) {
+    if (common::has<common::xnode_type_t::rec>(node_type)
+     || common::has<common::xnode_type_t::zec>(node_type)
+     || common::has<common::xnode_type_t::auditor>(node_type)) {
         auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_cp_connected_block_height(get_account());
         auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
         if (latest_cp_connect_height != latest_connect_height) {
-            xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu,account:%s", latest_cp_connect_height, latest_connect_height,get_account().c_str());
+            xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu,account:%s", latest_cp_connect_height, latest_connect_height, get_account().c_str());
             return false;
         }
     }
