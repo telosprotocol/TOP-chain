@@ -453,6 +453,20 @@ namespace top
             return account_obj->update_get_latest_cp_connected_block_height();            
         }
 
+        uint64_t xvblockstore_impl::update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag)
+        {
+            uint64_t cp_connect_height = update_get_latest_cp_connected_block_height(account, atag);
+            // guarantee the returned height has already been persisted to disk
+            if (cp_connect_height > base::enum_account_save_meta_interval)
+            {
+                return cp_connect_height - base::enum_account_save_meta_interval;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
         uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & address,const int atag)
         {
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
