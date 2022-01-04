@@ -804,7 +804,16 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
             if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) || common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
-                xsync_prune_sigleton_t::instance().add(it.second.address);
+                std::set<enum_height_type> types;
+                if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
+                    types.insert(mutable_checkpoint_height);
+                    types.insert(latest_state_height);
+                    xsync_kinfo("xsync_handler add_role_phase1 add fullnode %s", it.second.address.c_str());
+                } else {
+                    types.insert(confirm_height);
+                    xsync_kinfo("xsync_handler add_role_phase1 add validator %s", it.second.address.c_str());
+                }
+                xsync_prune_sigleton_t::instance().add(it.second.address, types);
                 base::xvaccount_t _vaddr(it.second.address);
                 store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
                 store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
@@ -850,14 +859,25 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
-            xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_remove_role_t>(it.second.address);
             if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) || common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
-                if (!m_role_chains_mgr->exists(it.second.address)) {
+                std::set<enum_height_type> types;
+                if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
+                    types.insert(mutable_checkpoint_height);
+                    types.insert(latest_state_height);
+                    xsync_kinfo("xsync_handler remove_role_phase1 del fullnode %s", it.second.address.c_str());
+                } else {
+                    types.insert(confirm_height);
+                    xsync_kinfo("xsync_handler remove_role_phase1 del validator %s", it.second.address.c_str());
+                }
+                xsync_prune_sigleton_t::instance().del(it.second.address, types);
+                if (xsync_prune_sigleton_t::instance().empty(it.second.address)){
                     base::xvaccount_t _vaddr(it.second.address);
+                    xsync_kinfo("xsync_handler remove_role_phase1 unwatch %s", it.second.address.c_str());
                     store::unwatch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
                 }
             }
-
+            
+            xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_remove_role_t>(it.second.address);
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
         }
