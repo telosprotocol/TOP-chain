@@ -72,6 +72,7 @@ namespace top
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override; // first advance checkpoint meta, then return the fresh meta 
+            virtual uint64_t update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual bool     set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override;
             virtual uint64_t get_lowest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
