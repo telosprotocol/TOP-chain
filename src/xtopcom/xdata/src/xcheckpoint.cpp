@@ -109,7 +109,9 @@ void xtop_chain_checkpoint::load() {
     uint64_t latest_data_cp{0};
     uint64_t latest_state_cp{0};
     m_checkpoints_map = load_data(j_data, latest_data_cp);
+    j_data.clear();
     m_checkpoints_state_map = load_state(j_state, latest_state_cp);
+    j_state.clear();
     xassert(latest_data_cp == latest_state_cp);
 }
 
