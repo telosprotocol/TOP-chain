@@ -326,6 +326,132 @@ namespace top
             return true;
         }
         
+        std::vector<xdbevent_t*> xdbmigrate_t::thread_dbevent_get(uint32_t thread_index)
+        {
+            std::lock_guard<std::mutex> _lock(th_locks[thread_index]);
+            auto & events_queue = th_dbevents[thread_index];
+            if (events_queue.empty()) {
+                return {};
+            }
+            
+            std::vector<xdbevent_t*> events = events_queue;
+            events_queue.clear();
+            return events;
+        }
+        size_t xdbmigrate_t::thread_dbevent_set(uint32_t thread_index, xdbevent_t* dbevent)
+        {
+            std::lock_guard<std::mutex> _lock(th_locks[thread_index]);
+            th_dbevents[thread_index].push_back(dbevent);
+            return th_dbevents[thread_index].size();
+        }
+
+        void xdbmigrate_t::thread_process_dbevent(uint32_t thread_index)
+        {
+            std::cout << "xdbmigrate_t::thread_process_dbevent begin.thread_index=" << thread_index << " current_time_s = " << base::xtime_utl::gettimeofday() << std::endl;
+            bool is_empty = false;
+            uint32_t total_count = 0;
+            do
+            {
+                is_empty = false;
+                std::vector<xdbevent_t*> events = thread_dbevent_get(thread_index);
+                if (!events.empty()) {
+                    for (auto & event : events) {
+                        m_filter_objects[0]->push_event_back(*event, nullptr);
+                        event->release_ref();
+                    }
+                    total_count += (uint32_t)events.size();
+                    m_processed_count += (uint32_t)events.size();
+                } else {
+                    is_empty = true;
+                    sleep(1);
+                }
+            } while (!b_key_scan_finish || !is_empty);
+
+            // do again when b_key_scan_finish == true
+            do
+            {
+                is_empty = false;
+                std::vector<xdbevent_t*> events = thread_dbevent_get(thread_index);
+                if (!events.empty()) {
+                    for (auto & event : events) {
+                        m_filter_objects[0]->push_event_back(*event, nullptr);
+                        event->release_ref();
+                    }
+                    total_count += (uint32_t)events.size();
+                    m_processed_count += (uint32_t)events.size();
+                } else {
+                    is_empty = true;
+                }
+            } while (!b_key_scan_finish || !is_empty);
+            std::cout << "xdbmigrate_t::thread_process_dbevent end.thread_index=" << thread_index << " total_count = " << total_count << " current_time_s = " << base::xtime_utl::gettimeofday() << std::endl;
+        }
+
+        bool  xdbmigrate_t::db_scan_callback_with_multi_thread(const std::string& key, const std::string& value,void*cookie)
+        {
+            xdbmigrate_t * pthis = (xdbmigrate_t*)cookie;
+            return pthis->db_scan_callback_with_multi_thread(key,value);
+        }
+
+        bool  xdbmigrate_t::db_scan_callback_with_multi_thread(const std::string& key, const std::string& value)
+        {
+            if(is_close()) //stop handle it while closed
+            {
+                xerror("xdbmigrate_t::db_scan_callback_with_multi_thread,closed");
+                return false; //stop scan when return false
+            }
+               
+            if(m_filter_objects.empty() == false)
+            {
+                enum_xdbkey_type db_key_type = xvdbkey_t::get_dbkey_type(key);//carry real type
+                xdbevent_t* db_event = new xdbevent_t(key,value,db_key_type,m_src_store_ptr,m_dst_store_ptr,enum_xdbevent_code_transfer);
+
+                xdbg("xdbmigrate_t::db_scan_callback_with_multi_thread key=%s,key_type=%d", key.c_str(), db_key_type);
+
+                if(db_event->get_event_code() == enum_xdbevent_code_transfer)
+                {
+                    if(m_src_store_ptr == m_dst_store_ptr)//same store
+                        db_event->set_event_flag(xdbevent_t::enum_dbevent_flag_key_stored);
+                }
+                
+                uint32_t thread_index = m_scaned_keys_num++ % THREAD_NUM;
+                size_t queue_size = thread_dbevent_set(thread_index, db_event);
+
+                if (m_scaned_keys_num - m_processed_count > 1000000) {
+                    sleep(5);
+                    // std::cout << "xdbmigrate_t::db_scan_callback_with_multi_thread wait process.m_scaned_keys_num=" << m_scaned_keys_num << " m_processed_count=" << m_processed_count << std::endl;
+                }
+
+                if (m_scaned_keys_num % 1000000 == 0)
+                {
+                    xinfo("xdbmigrate_t::db_scan_callback_with_multi_thread total estimate num = %ld, current num = %ld", m_total_keys_num, m_scaned_keys_num);
+                    std::cout << "xdbmigrate_t::db_scan_callback_with_multi_thread total estimate num = " << m_total_keys_num << " m_scaned_keys_num=" << m_scaned_keys_num << " m_processed_count=" << m_processed_count << " current_time_s = " << base::xtime_utl::gettimeofday() << std::endl;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        void xdbmigrate_t::scan_key_with_multi_thread()
+        {
+            b_key_scan_finish = false;            
+            for (uint32_t i = 0; i < THREAD_NUM; i++) {
+                std::thread th(&xdbmigrate_t::thread_process_dbevent, this, i);
+                all_thread.emplace_back(std::move(th));
+            }
+            sleep(1);
+            m_src_store_ptr->read_range("", db_scan_callback_with_multi_thread,this);
+
+            b_key_scan_finish = true;
+            for (size_t i = 0; i < THREAD_NUM; i++) {
+                all_thread[i].join();
+            }
+        }
+
+        void xdbmigrate_t::scan_key_without_multi_thread()
+        {
+            m_src_store_ptr->read_range("", db_scan_callback,this);
+        }
+
         bool  xdbmigrate_t::run(const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
             xkinfo("xdbmigrate_t::run");
@@ -338,7 +464,11 @@ namespace top
                     xinfo("xdbmigrate_t::run begin. src db total estimate num = %ld", m_total_keys_num);
                     std::cout << "xdbmigrate_t::run begin. src db total estimate num = " << m_total_keys_num << std::endl;
 
-                     m_src_store_ptr->read_range("", db_scan_callback,this);
+#if 1  // XTODO  use multi thread for better performance
+                    scan_key_with_multi_thread();
+#else
+                    scan_key_without_multi_thread();
+#endif
 
 #if 0  // TODO(jimmy)
                     std::string begin_key;

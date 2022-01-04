@@ -244,7 +244,7 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
         default_db_options.bottommost_compression_opts.enabled = true;
         
         xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_high_compress");
-        printf("xdb_impl::setup_default_db_options() as xdb_kind_high_compress \n");
+        // printf("xdb_impl::setup_default_db_options() as xdb_kind_high_compress \n");
     }
     else if((db_kinds & xdb_kind_bottom_compress) != 0) //disable level'compression but keep bottom one
     {
@@ -254,7 +254,7 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
         default_db_options.bottommost_compression_opts.enabled = true;
         
         xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_bottom_compress");
-        printf("xdb_impl::setup_default_db_options() as xdb_kind_bottom_compress \n");
+        // printf("xdb_impl::setup_default_db_options() as xdb_kind_bottom_compress \n");
     }
     else if((db_kinds & xdb_kind_no_compress) != 0) //disable compress
     {
@@ -264,7 +264,7 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
         default_db_options.bottommost_compression_opts.enabled = false;
         
         xkinfo("xdb_impl::setup_default_db_options() as xdb_kind_no_compress");
-        printf("xdb_impl::setup_default_db_options() as xdb_kind_no_compress \n");
+        // printf("xdb_impl::setup_default_db_options() as xdb_kind_no_compress \n");
     }
     else //normal & default compression
     {
@@ -274,7 +274,7 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
         default_db_options.bottommost_compression_opts.enabled = true;
         
         xkinfo("xdb_impl::setup_default_db_options() as default_compress");
-        printf("xdb_impl::setup_default_db_options() as default_compress \n");
+        // printf("xdb_impl::setup_default_db_options() as default_compress \n");
     }
 
     return ;
@@ -379,7 +379,7 @@ xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,uint6
                 cf_config.cf_option.compression_per_level[it] = rocksdb::kNoCompression;
             }
             xkinfo("xdb_impl::setup_level_style_cf,Options.compression[%d] = %d \n",(int)it,(int)cf_config.cf_option.compression_per_level[it]);
-            printf("xdb_impl::setup_level_style_cf,Options.compression[%d] = %d \n",(int)it,(int)cf_config.cf_option.compression_per_level[it]);
+            // printf("xdb_impl::setup_level_style_cf,Options.compression[%d] = %d \n",(int)it,(int)cf_config.cf_option.compression_per_level[it]);
         }
     }
     
@@ -425,13 +425,13 @@ bool xdb::xdb_impl::open()
         if((m_db_kinds & xdb_kind_readonly) != 0)
         {
             xkinfo("xdb_impl::open() as readonly cf=%zu", column_families.size());
-            printf("xdb_impl::open() as readonly cf=%zu\n", column_families.size());
+            // printf("xdb_impl::open() as readonly cf=%zu\n", column_families.size());
             s = rocksdb::DB::OpenForReadOnly(m_options, m_db_name, column_families, &cf_handles, &m_db);
         }
         else
         {
             xkinfo("xdb_impl::open() as read_write cf=%zu", column_families.size());
-            printf("xdb_impl::open() as read_write cf=%zu\n", column_families.size());
+            // printf("xdb_impl::open() as read_write cf=%zu\n", column_families.size());
             s = rocksdb::DB::Open(m_options, m_db_name, column_families, &cf_handles, &m_db);
         }
         
@@ -499,6 +499,9 @@ bool xdb::xdb_impl::close()
         
         delete old_db_ptr;
         old_db_ptr = NULL;
+
+        xkinfo("xdb_impl::close,db_root_dir=%s",m_db_name.c_str());
+        printf("xdb_impl::close,db_root_dir=%s \n",m_db_name.c_str());
     }
     return true;
 }

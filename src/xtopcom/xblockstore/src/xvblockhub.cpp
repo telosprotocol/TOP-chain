@@ -157,6 +157,9 @@ namespace top
             if(base::enum_xvblock_level_table == m_meta->_block_level)
                 return (enum_max_cached_blocks << 1);//cache to max 128 block
 
+            if(base::enum_xvblock_level_unit == m_meta->_block_level)
+                return (enum_max_cached_blocks >> 2);//cache to max 8 block for unit
+
             return enum_max_cached_blocks;
         }
     
@@ -175,8 +178,9 @@ namespace top
         {
             if((int)m_all_blocks.size() > keep_blocks_count)
             {
-                if ((int)m_all_blocks.size() > keep_blocks_count * 2) {
-                    xerror("xblockacct_t::clean_blocks account:%s cache size:%u is more than 2 times of upper limmit:%u", get_account().c_str(), m_all_blocks.size(), keep_blocks_count);
+                if ((int)m_all_blocks.size() > keep_blocks_count * 3) {
+                    // XTODO need fix this issue
+                    xwarn("xblockacct_t::clean_blocks account:%s cache size:%u is more than 2 times of upper limmit:%u", get_account().c_str(), m_all_blocks.size(), keep_blocks_count);
                 }
 
                 for(auto height_it = m_all_blocks.begin(); height_it != m_all_blocks.end();)//search from lowest hight to higher
@@ -1162,11 +1166,15 @@ namespace top
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {
                 // meta is not 100% reliable, query to ensure the existence of genesis block
-                base::xauto_ptr<base::xvbindex_t> genesis_index(query_index(0, 0));
-                if(!genesis_index)//if not existing at cache
+                std::vector<base::xvbindex_t*> _indexes(read_index(0));
+                if(_indexes.empty())//if not existing at cache
                 {
                     base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
                     store_block(generis_block.get());
+                } else {
+                    for (auto it = _indexes.begin(); it != _indexes.end(); ++it) {
+                        (*it)->release_ref();   //release ptr that reference added by read_index_from_db
+                    }
                 }
             }
 

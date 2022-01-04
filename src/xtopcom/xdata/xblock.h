@@ -122,7 +122,6 @@ public:
     virtual xlightunit_tx_info_ptr_t    get_tx_info(const std::string & txhash) const;
     virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}
     virtual uint32_t                    get_txs_count() const {return 0;}
-    virtual const std::vector<xobject_ptr_t<xblock_t>> & get_tableblock_units(bool need_parent_cert) const {return m_empty_blocks;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
     virtual uint32_t                    get_unconfirm_sendtx_num() const {return 0;}
     xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;

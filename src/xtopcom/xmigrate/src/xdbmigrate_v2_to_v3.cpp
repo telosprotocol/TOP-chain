@@ -73,7 +73,7 @@ namespace top
         uint64_t get_v3_db_genesis_height(const base::xvaccount_t & address, base::xvdbstore_t* _dst_dbstore, base::xvblockstore_t* _dst_blockstore) {
             uint64_t height;
             if (address.get_address() == sys_drand_addr) {
-                height = _dst_blockstore->get_latest_committed_block_height(address);
+                height = _dst_blockstore->get_latest_connected_block_height(address);
             } else {
                 height = xblockdb_v2_t::get_v3_genesis_height(_dst_dbstore, address);
             }
@@ -182,6 +182,14 @@ namespace top
                 all_thread[i].join();
                 total_count += thread_total_count[i];
             }
+
+            if (total_count > 50000) {
+                // do compact if migrate blocks too much
+                std::string begin_key;
+                std::string end_key;
+                base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
+            }
+
             int64_t end_s = base::xtime_utl::gettimeofday();
             xkinfo("db_delta_migrate_v2_to_v3 finish.total_time_s = %ld,total_count=%ld", end_s - begin_s, total_count);
             std::cout << "db_delta_migrate_v2_to_v3 finish.thread = " << THREAD_NUM << " total_time_s = " << end_s - begin_s << " total_count=" << total_count << std::endl;

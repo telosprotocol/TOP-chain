@@ -65,9 +65,19 @@ osname_darwin="Darwin"
 ntpd_path="/usr/sbin/ntpd"
 ntpd_service="ntp.service"
 
+function init_os_config() {
+    sed -i "/ulimit\s-n/d"     /etc/profile
+    sed -i '$a\ulimit -n 65535'        /etc/profile
+    source /etc/profile
+    echo "set ulimit -n 65535"
+}
+
 if [ $osinfo = ${ubuntu_os} ]
 then
     echo "Ubuntu"
+
+    init_os_config
+
     ntpd_service="ntp.service"
     if [ ! -f "$ntpd_path" ]; then
         echo "prepare topio runtime environment, please wait for seconds..."
@@ -83,6 +93,9 @@ then
 elif [ $osinfo = ${centos_os} ]
 then
     echo "Centos"
+
+    init_os_config
+
     if [ $centos_os_version = 7 ]; then
         ntpd_service="ntpd.service"
         if [ ! -f "$ntpd_path" ]; then

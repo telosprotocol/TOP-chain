@@ -344,8 +344,7 @@ void xtxpool_table_t::refresh_table() {
 
     uint64_t left_end = 0;
     uint64_t right_end = 0;
-    m_unconfirm_id_height.refresh(m_xtable_info.get_short_table_id(), m_para->get_receiptid_state_cache());
-    bool ret = m_unconfirm_id_height.get_lacking_section(left_end, right_end, load_table_block_num_max);
+    bool ret = m_unconfirm_id_height.get_lacking_section(m_para->get_receiptid_state_cache(), m_xtable_info.get_all_table_sids(), left_end, right_end, load_table_block_num_max);
     if (ret) {
         uint64_t load_height_max = right_end;
         uint64_t load_height_min = left_end;
@@ -359,7 +358,7 @@ void xtxpool_table_t::refresh_table() {
             load_height_min = (load_height_max >= load_table_block_num_max) ? (load_height_max + 1 - load_table_block_num_max) : 1;
         }
 
-        for (uint64_t height = load_height_max - 1; height >= load_height_min; height--) {
+        for (uint64_t height = load_height_max; height >= load_height_min; height--) {
             base::xauto_ptr<base::xvblock_t> commit_block =
                 m_para->get_vblockstore()->load_block_object(m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_refresh_table);
 

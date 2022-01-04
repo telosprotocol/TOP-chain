@@ -11,7 +11,6 @@
 NS_BEG2(top, db_export)
 class xdb_export_tools_t {
 public:
-    enum enum_query_account_version { QUERY_ACCOUNT_V1 = 0, QUERY_ACCOUNT_V2 };
     enum enum_query_account_type { query_account_table = 0, query_account_unit, query_account_system};
 
     xdb_export_tools_t(std::string const & db_path);
@@ -26,9 +25,6 @@ public:
     void query_block_exist(std::string const & address, const uint64_t height);
     // query block detailed info(use grpc interface)
     void query_block_info(std::string const & account, std::string const & param);
-    // query block and state basic info
-    void query_block_state_basic(std::vector<std::string> const & account_vec, std::string const & param);
-    void query_block_state_basic(std::string const & account, std::string const & param);
     // query block basic info
     void query_block_basic(std::string const & account, std::string const & param);
     void query_block_basic(std::vector<std::string> const & account_vec, std::string const & param);
@@ -50,6 +46,7 @@ public:
     // set folder
     void set_outfile_folder(std::string const & folder);
     void compact_db();
+    void read_meta(std::string const & address);
 
 private:
     struct tx_ext_t {
@@ -93,8 +90,7 @@ private:
     };
 
     std::set<std::string> query_db_unit_accounts();
-    std::set<std::string> generate_db_unit_accounts_file(enum_query_account_version version);
-    std::set<std::string> query_unit_account(std::string const & account);
+    std::set<std::string> generate_db_unit_accounts_file();
     std::set<std::string> query_unit_account2(std::string const & account);
     void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s = -1, int init_e = -1);
     void query_sync_result(std::string const & account, json & result_json);
@@ -119,7 +115,11 @@ private:
     void set_confirmed_txinfo_to_json(json & j, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
     void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
 
+    std::set<std::string> get_special_genesis_accounts();
+    std::set<std::string> get_db_unit_accounts_v2();
     void load_db_unit_accounts_info();
+    void generate_db_unit_accounts_data_file();
+    void generate_account_info_file(std::string const & account, const uint64_t height);
     void generate_json_file(std::string const & filename, json const & j);
 
     std::unique_ptr<xbase_timer_driver_t> m_timer_driver;

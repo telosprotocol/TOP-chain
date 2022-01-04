@@ -156,10 +156,6 @@ void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & 
 }
 
 void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) {
-    if (status() != enum_txpool_service_status_running) {
-        return;
-    }
-
     auto joined_round = m_vnet_driver->joined_election_round().value();
     auto cur_round = m_vnet_driver->address().election_round().value();
     if (joined_round == cur_round && joined_round > pull_lacking_permission_max_round_num_of_first_join_round) {
@@ -773,7 +769,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
 }
 
 void xtxpool_service::send_receipt_id_state(uint64_t now) {
-    if (status() == enum_txpool_service_status_running && m_is_send_receipt_role) {
+    if (m_is_send_receipt_role) {
         for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
             if (!xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(now, table_id, m_shard_size, m_node_id)) {
                 continue;
@@ -781,6 +777,10 @@ void xtxpool_service::send_receipt_id_state(uint64_t now) {
             send_table_receipt_id_state(table_id);
         }
     }
+}
+
+bool xtxpool_service::is_running() const {
+    return (status() == enum_txpool_service_status_running);
 }
 
 // void xtxpool_service::send_neighbor_sync_req(base::xtable_shortid_t table_sid) {

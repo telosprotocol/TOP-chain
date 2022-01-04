@@ -78,4 +78,68 @@ base::xreceiptid_state_ptr_t xreceiptid_state_cache_t::get_table_receiptid_state
     return nullptr;
 }
 
+// bool xreceiptid_state_cache_t::is_all_table_state_cached(const std::set<base::xtable_shortid_t> & all_table_sids) const {
+//     std::lock_guard<std::mutex> lck(m_mutex);
+//     if (m_all_cached) {
+//         return true;
+//     }
+//     if (all_table_sids.size() != m_receiptid_state_map.size()) {
+//         xdbg("xreceiptid_state_cache_t::is_all_table_state_cached all_table_sids size:%u,m_receiptid_state_map size:%u", all_table_sids.size(), m_receiptid_state_map.size());
+//         return false;
+//     }
+
+//     for (auto & receiptid_state : m_receiptid_state_map) {
+//         auto & table_sid = receiptid_state.first;
+//         auto it = all_table_sids.find(table_sid);
+//         if (it == all_table_sids.end()) {
+//             xerror("xreceiptid_state_cache_t::is_all_table_state_cached a illegal table sid(%d) state founded!!!", table_sid);
+//             return false;
+//         }
+//     }
+//     xdbg("xreceiptid_state_cache_t::is_all_table_state_cached succ");
+//     m_all_cached = true;
+//     return true;
+// }
+
+void xreceiptid_state_cache_t::get_unconfirm_id_section_as_sender(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    uint64_t sendid_max = 0;
+    uint64_t confirmid_max = 0;
+    auto iter_self = m_receiptid_state_map.find(table_id);
+    if (iter_self != m_receiptid_state_map.end()) {
+        auto & table_receiptid_state = iter_self->second;
+        base::xreceiptid_pair_t pair;
+        table_receiptid_state->find_pair(peer_table_id, pair);
+        sendid_max = pair.get_sendid_max();
+        confirmid_max = pair.get_confirmid_max();
+    }
+
+    confirm_id = confirmid_max;
+    unconfirm_id_max = sendid_max;
+}
+
+void xreceiptid_state_cache_t::get_unconfirm_id_section_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    uint64_t recvid_max = 0;
+    uint64_t confirmid_max = 0;
+    auto iter_self = m_receiptid_state_map.find(table_id);
+    if (iter_self != m_receiptid_state_map.end()) {
+        auto & table_receiptid_state = iter_self->second;
+        base::xreceiptid_pair_t pair;
+        table_receiptid_state->find_pair(peer_table_id, pair);
+        recvid_max = pair.get_recvid_max();
+    }
+
+    auto iter_peer = m_receiptid_state_map.find(peer_table_id);
+    if (iter_peer != m_receiptid_state_map.end()) {
+        auto & table_receiptid_state = iter_peer->second;
+        base::xreceiptid_pair_t pair;
+        table_receiptid_state->find_pair(table_id, pair);
+        confirmid_max = pair.get_confirmid_max();
+    }
+
+    confirm_id = confirmid_max;
+    unconfirm_id_max = recvid_max;
+}
+
 NS_END2

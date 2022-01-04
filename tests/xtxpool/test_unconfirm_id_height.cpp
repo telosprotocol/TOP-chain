@@ -58,58 +58,102 @@ TEST_F(test_unconfirm_id_height, processed_table_height) {
 }
 
 TEST_F(test_unconfirm_id_height, unconfirm_id_height_list) {
-    xunconfirm_id_height_list_t unconfirm_list;
-    ASSERT_EQ(unconfirm_list.is_all_loaded(), false);
-    unconfirm_list.update_confirm_id(99);
-    ASSERT_EQ(unconfirm_list.is_all_loaded(), true);
+    xunconfirm_id_height_list_t unconfirm_list(1, 1, true);
+    bool is_lacking = false;
+    uint64_t min_height = 0;
     unconfirm_list.add_id_height(101, 1000, 100000);
-    ASSERT_EQ(unconfirm_list.is_all_loaded(), false);
+    unconfirm_list.update_confirm_id(99);
+    is_lacking = unconfirm_list.is_lacking();
+    bool ret = unconfirm_list.get_min_height(min_height);
+    ASSERT_EQ(ret, false);
+    ASSERT_EQ(min_height, 0);
+    ASSERT_EQ(is_lacking, true);
+
+    is_lacking = false;
     unconfirm_list.update_confirm_id(100);
-    ASSERT_EQ(unconfirm_list.is_all_loaded(), true);
-    uint64_t height;
-    bool ret = unconfirm_list.get_height_by_id(101, height);
+    is_lacking = unconfirm_list.is_lacking();
+    ret = unconfirm_list.get_min_height(min_height);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(min_height, 1000);
+    ASSERT_EQ(is_lacking, false);
+
+    uint64_t height = 0;
+    ret = unconfirm_list.get_height_by_id(101, height);
     ASSERT_EQ(ret, true);
     ASSERT_EQ(height, 1000);
-    ret = unconfirm_list.get_height_by_id(102, height);
-    ASSERT_EQ(ret, false);
-    unconfirm_list.add_id_height(102, 1001, 100010);
-    ret = unconfirm_list.get_height_by_id(102, height);
+
+    uint64_t receipt_id = 0;
+    height = 0;
+    ret = unconfirm_list.get_resend_id_height(receipt_id, height, 100060);
     ASSERT_EQ(ret, true);
-    ASSERT_EQ(height, 1001);
-    uint64_t receiptid;
-    ret = unconfirm_list.get_resend_id_height(receiptid, height, 100030);
+    ASSERT_EQ(receipt_id, 101);
+    ASSERT_EQ(height, 1000);
+
+    unconfirm_list.add_id_height(103, 1010, 100100);
+    unconfirm_list.update_confirm_id(101);
+    height = 0;
+    ret = unconfirm_list.get_height_by_id(101, height);
     ASSERT_EQ(ret, false);
-    ret = unconfirm_list.get_resend_id_height(receiptid, height, 100070);
+    is_lacking = unconfirm_list.is_lacking();
+    ret = unconfirm_list.get_min_height(min_height);
     ASSERT_EQ(ret, true);
-    ASSERT_EQ(receiptid, 102);
-    ASSERT_EQ(height, 1001);
+    ASSERT_EQ(min_height, 1001);
+    ASSERT_EQ(is_lacking, true);
 }
 
 TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
-    xtable_unconfirm_id_height_t table_unconfirm;
-    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), true);
-    table_unconfirm.update_confirm_id(0, 99);
-    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), true);
-    table_unconfirm.add_id_height(0, 101, 1000, 100000);
-    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), false);
-    table_unconfirm.update_confirm_id(0, 100);
-    ASSERT_EQ(table_unconfirm.is_all_unconfirm_id_recovered(), true);
-    uint64_t height;
-    bool ret = table_unconfirm.get_height_by_id(0, 101, height);
+    xtable_unconfirm_id_height_as_sender_t table_unconfirm(1);
+
+    std::set<base::xtable_shortid_t> all_table_sids;
+    all_table_sids.insert(1);
+
+    xreceiptid_state_cache_t receiptid_state_cache;
+    xreceiptid_state_ptr_t receiptid_state = std::make_shared<xreceiptid_state_t>(1, 1000);
+    xreceiptid_pair_t pair1(101, 99, 99);
+    receiptid_state->add_pair(1, pair1);
+    receiptid_state_cache.update_table_receiptid_state(receiptid_state);
+
+    bool is_lacking = false;
+    table_unconfirm.add_id_height(1, 101, 1000, 100000);
+    table_unconfirm.update_confirm_id(1, 99);
+    uint64_t min_height = 0;
+    bool ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1000, min_height, true, is_lacking);
+    ASSERT_EQ(ret, false);
+    ASSERT_EQ(min_height, 0);
+    ASSERT_EQ(is_lacking, true);
+
+    is_lacking = false;
+    table_unconfirm.update_confirm_id(1, 100);
+    receiptid_state->set_tableid_and_height(1, 1001);
+    xreceiptid_pair_t pair2(101, 100, 100);
+    receiptid_state->add_pair(1, pair2);
+    ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1001, min_height, true, is_lacking);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(min_height, 1000);
+    ASSERT_EQ(is_lacking, false);
+
+    uint64_t height = 0;
+    ret = table_unconfirm.get_height_by_id(1, 101, height);
     ASSERT_EQ(ret, true);
     ASSERT_EQ(height, 1000);
-    ret = table_unconfirm.get_height_by_id(0, 102, height);
+
+    uint64_t receipt_id = 0;
+    height = 0;
+    auto resend_id_height_list = table_unconfirm.get_resend_id_height_list(100060);
+    ASSERT_EQ(resend_id_height_list.empty(), false);
+    ASSERT_EQ(resend_id_height_list[0].receipt_id, 101);
+    ASSERT_EQ(resend_id_height_list[0].height, 1000);
+
+    table_unconfirm.add_id_height(1, 103, 1010, 100100);
+    table_unconfirm.update_confirm_id(1, 101);
+    height = 0;
+    ret = table_unconfirm.get_height_by_id(1, 101, height);
     ASSERT_EQ(ret, false);
-    table_unconfirm.add_id_height(0, 102, 1001, 100010);
-    ret = table_unconfirm.get_height_by_id(0, 102, height);
+    receiptid_state->set_tableid_and_height(1, 1002);
+    xreceiptid_pair_t pair3(103, 100, 101);
+    receiptid_state->add_pair(1, pair3);
+    ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1002, min_height, true, is_lacking);
     ASSERT_EQ(ret, true);
-    ASSERT_EQ(height, 1001);
-    uint64_t receiptid;
-    auto id_height_list = table_unconfirm.get_resend_id_height_list(10030);
-    ASSERT_EQ(id_height_list.size(), 0);
-    id_height_list = table_unconfirm.get_resend_id_height_list(100070);
-    ASSERT_EQ(id_height_list.size(), 1);
-    ASSERT_EQ(id_height_list[0].table_sid, 0);
-    ASSERT_EQ(id_height_list[0].receipt_id, 102);
-    ASSERT_EQ(id_height_list[0].height, 1001);
+    ASSERT_EQ(min_height, 1001);
+    ASSERT_EQ(is_lacking, true);
 }

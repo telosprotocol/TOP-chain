@@ -265,11 +265,9 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_state_chang
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {
         return vblock;
     }
-    if (vblock->get_block_class() == base::enum_xvblock_class_full) {
-        if (base::xvblock_fork_t::is_block_match_version(vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-            return vblock;
-        }
-        return nullptr;
+    if (vblock->get_block_class() == base::enum_xvblock_class_full &&
+        base::xvblock_fork_t::is_block_match_version(vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+        return vblock;
     }
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
@@ -277,11 +275,9 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_state_chang
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;
         }
-        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full) {
-            if (base::xvblock_fork_t::is_block_match_version(prev_vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-                return prev_vblock;
-            }
-            return nullptr;
+        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full &&
+            base::xvblock_fork_t::is_block_match_version(prev_vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+            return prev_vblock;
         }
         current_height = prev_vblock->get_height();
     }
