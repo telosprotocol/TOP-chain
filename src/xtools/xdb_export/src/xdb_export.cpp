@@ -853,8 +853,8 @@ uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, 
 void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
     json j;
     auto const clock_str = base::xstring_utl::tostring(clock);
-    auto const & tables = get_table_accounts();
-    auto const & genesis_only = get_special_genesis_accounts();
+    auto const tables = get_table_accounts();
+    auto genesis_only = get_special_genesis_accounts();
     std::vector<json> j_data(tables.size());
     std::vector<json> j_state(tables.size());
     asio::thread_pool pool(4);
@@ -862,7 +862,6 @@ void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
     auto start_time = base::xtime_utl::time_now_ms();
     for (size_t i = 0; i < tables.size(); i++) {
         asio::post(pool, std::bind(&xdb_export_tools_t::query_checkpoint_internal, this, tables[i], genesis_only, clock, std::ref(j_data[i]), std::ref(j_state[i])));
-        break;
     }
     pool.join();
     for (size_t i = 0; i < tables.size(); i++) {
