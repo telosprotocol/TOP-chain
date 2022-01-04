@@ -229,6 +229,10 @@ public:
     uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
         return 0;
     }
+
+    uint64_t update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+        return 0;
+    }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;
 
