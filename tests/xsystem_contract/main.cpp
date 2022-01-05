@@ -4,6 +4,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
 #include "xdata/xrootblock.h"
+#include "xloader/xconfig_genesis_loader.h"
 
 #include <gtest/gtest.h>
 #include <chrono>
@@ -31,9 +32,11 @@ public:
 
 int main(int argc, char * argv[]) {
     new xhashtest_t();
-    top::data::xrootblock_para_t para;
-    para.m_tcc_accounts = {"T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy", "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo"};
-    top::data::xrootblock_t::init(para);
+
+    auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>(std::string{});
+    data::xrootblock_para_t rootblock_para;
+    genesis_loader->extract_genesis_para(rootblock_para);
+    top::data::xrootblock_t::init(rootblock_para);
 
     testing::InitGoogleTest(&argc, argv);
     xinit_log("./xsystem_contract_test.log", true, true);
