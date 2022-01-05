@@ -5,7 +5,6 @@
 #include "xvnetwork/xvhost.h"
 
 #include "xbase/xlog.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xscope_executer.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"

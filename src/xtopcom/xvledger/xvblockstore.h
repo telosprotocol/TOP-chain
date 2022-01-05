@@ -212,8 +212,10 @@ namespace top
             virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type,const int atag = 0) = 0;
 
         public:
-            //check if genesis block exist
-            virtual bool                  exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) = 0;
+            // check if genesis block exist
+            virtual bool exist_genesis_block(const base::xvaccount_t & account, const int atag = 0) = 0;
+            virtual base::xauto_ptr<base::xvblock_t> create_genesis_block(const base::xvaccount_t & account, std::error_code & ec) = 0;
+            virtual void register_create_genesis_callback(std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> cb) = 0;
 
         public:
             // genesis connected  blocks

@@ -34,7 +34,7 @@ protected:
 };
 
 TEST_F(test_chain_creator, test_1) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
@@ -60,7 +60,7 @@ TEST_F(test_chain_creator, test_2_BENCH) {
     int count = 100;
     while ( count -- > 0 )
     {
-        mock::xvchain_creator creator;
+        mock::xvchain_creator creator(true);
         creator.create_blockstore_with_xstore();
         base::xvblockstore_t* blockstore = creator.get_blockstore();
 
@@ -84,7 +84,7 @@ TEST_F(test_chain_creator, test_2_BENCH) {
 }
 
 TEST_F(test_chain_creator, test_3_BENCH) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 

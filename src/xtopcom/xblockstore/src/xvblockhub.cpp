@@ -8,7 +8,6 @@
 #include "xbase/xcontext.h"
 #include "xmetrics/xmetrics.h"
 #include "xvblockhub.h"
-#include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
 
 #ifdef __ALLOW_FORK_LOCK__
@@ -872,11 +871,18 @@ namespace top
                 }
                 
                 //genesis block but dont have data at DB, create it ondemand
-                if(0 == target_height)
-                {
-                    base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
-                    store_block(generis_block.get());
-                    return 1; //genesis always be 1 block at height(0)
+                if (0 == target_height) {
+                    std::error_code ec;
+                    auto vblock = base::xvchain_t::instance().get_xblockstore()->create_genesis_block(get_account(), ec);
+                    if (ec) {
+                        xwarn(
+                            "xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!", get_account().c_str(), ec.category().name(), ec.message().c_str());
+                    } else {
+                        if (vblock != nullptr) {
+                            store_block(vblock.get());
+                        }
+                        return 1;  // genesis always be 1 block at height(0)
+                    }
                 }
                 xdbg("xblockacct_t::load_index(),fail found index for addr=%s at height=%" PRIu64 "", get_account().c_str(), target_height);
                 return 0;
@@ -1169,8 +1175,19 @@ namespace top
                 std::vector<base::xvbindex_t*> _indexes(read_index(0));
                 if(_indexes.empty())//if not existing at cache
                 {
-                    base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
-                    store_block(generis_block.get());
+                    std::error_code ec;
+                    auto vblock = base::xvchain_t::instance().get_xblockstore()->create_genesis_block(get_account(), ec);
+                    if (ec) {
+                        xwarn("xblockacct_t::store_block, %s create_genesis_block error, category: %s, msg: %s!",
+                              new_raw_block->get_account().c_str(),
+                              ec.category().name(),
+                              ec.message().c_str());
+                        return false;
+                    } else {
+                        if (vblock != nullptr) {
+                            store_block(vblock.get());
+                        }
+                    }
                 } else {
                     for (auto it = _indexes.begin(); it != _indexes.end(); ++it) {
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db

@@ -6,6 +6,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
+#include "xblockstore/xerror/xerror.h"
 #include "xvunithub.h"
 #include "xvledger/xvdrecycle.h"
 #include "xvledger/xunit_proof.h"
@@ -1183,6 +1184,20 @@ namespace top
                 target_block->release_ref();
 
             return (nullptr != target_block);
+        }
+
+        base::xauto_ptr<base::xvblock_t> xvblockstore_impl::create_genesis_block(const base::xvaccount_t & account, std::error_code & ec)
+        {
+            if (!m_create_genesis_block_cb) {
+                ec = error::xenum_errc::store_create_genesis_cb_not_register;
+                return nullptr;
+            }
+            return m_create_genesis_block_cb(account, ec);
+        }
+
+        void xvblockstore_impl::register_create_genesis_callback(std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> cb)
+        {
+            m_create_genesis_block_cb = cb;
         }
 
         bool xvblockstore_impl::set_genesis_height(const base::xvaccount_t & account, const std::string &height)

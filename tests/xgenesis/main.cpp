@@ -1,12 +1,13 @@
 #include "xbase/xhash.h"
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
-#include "xmetrics/xmetrics.h"
-#include "xutility/xhash.h"
 #include "xdata/xrootblock.h"
 #include "xloader/xconfig_genesis_loader.h"
+#include "xmetrics/xmetrics.h"
+#include "xutility/xhash.h"
 
 #include <gtest/gtest.h>
+
 #include <chrono>
 
 using namespace top;
@@ -35,15 +36,21 @@ int main(int argc, char * argv[]) {
 
     auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>(std::string{});
     data::xrootblock_para_t rootblock_para;
-    genesis_loader->extract_genesis_para(rootblock_para);
-    top::data::xrootblock_t::init(rootblock_para);
+    if (false == genesis_loader->extract_genesis_para(rootblock_para)) {
+        std::cout << "create_rootblock extract genesis para fail" << std::endl;
+        return false;
+    }
+    if (false == data::xrootblock_t::init(rootblock_para)) {
+        std::cout << "create_rootblock rootblock init fail" << std::endl;
+        return false;
+    }
 
     testing::InitGoogleTest(&argc, argv);
-    xinit_log("./xsystem_contract_test.log", true, true);
+    xinit_log("./xgenesis_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
 
     XMETRICS_INIT();
     auto result = RUN_ALL_TESTS();
-    std::this_thread::sleep_for(std::chrono::seconds(4));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     return result;
 }

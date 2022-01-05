@@ -14,5 +14,5 @@ add_definitions(
 IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net xchain_timer xvnetwork xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xtxstore xBFT xelection xrpc xsync xtopcl xmbus xbasic xcertauth)
 ELSE()
-    target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net xchain_timer xvnetwork xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xtxstore xBFT xelection xrpc xsync xtopcl xmbus xbasic xcertauth intel_aes64)
+    target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net xchain_timer xvnetwork xgenesis xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xtxstore xBFT xelection xrpc xsync xtopcl xmbus xbasic xcertauth intel_aes64)
 ENDIF()

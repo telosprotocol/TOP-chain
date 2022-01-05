@@ -112,7 +112,7 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}    
 
  private:
-    xvchain_creator                 m_creator;
+    xvchain_creator                 m_creator{true};
     xobject_ptr_t<base::xvcertauth_t>   m_ca{nullptr};
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus{nullptr};
     xobject_ptr_t<xtxpool_face_t>   m_txpool{nullptr};

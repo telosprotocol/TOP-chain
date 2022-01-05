@@ -6,7 +6,6 @@
 
 #include "xapplication/xapplication.h"
 #include "xapplication/xerror/xerror.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xscope_executer.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
