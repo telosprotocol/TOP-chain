@@ -285,8 +285,10 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_is_leader = true;
 
     if (!connect_to_checkpoint()) {
+        XMETRICS_GAUGE(metrics::cons_cp_check_succ, 0);
         return false;
     }
+    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     m_leader_packed = start_proposal(latest_blocks);
     return true;
 }
@@ -296,8 +298,10 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
         return true;
     }
     if (!connect_to_checkpoint()) {
+        XMETRICS_GAUGE(metrics::cons_cp_check_succ, 0);
         return false;
     }
+    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
     m_leader_packed = start_proposal(latest_blocks);

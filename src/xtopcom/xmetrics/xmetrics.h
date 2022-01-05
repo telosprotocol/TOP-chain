@@ -122,6 +122,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     cons_view_fire_clock_delay,
     cons_view_fire_succ,
+    cons_cp_check_succ,
     cons_view_fire_is_leader,
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
