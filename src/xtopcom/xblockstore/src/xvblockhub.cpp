@@ -1572,6 +1572,7 @@ namespace top
                 {
                     m_meta->_highest_cp_connect_block_height = next_commit->get_height();
                     m_meta->_highest_cp_connect_block_hash   = next_commit->get_block_hash();
+                    update_meta();
                 }
                 else
                 {
@@ -1590,8 +1591,6 @@ namespace top
                 xdbg("xblockacct_t::fully_update_cp_connect,navigate small step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
                 (int)(geneis_connect_step) ,m_meta->_highest_cp_connect_block_height,m_meta->_highest_commit_block_height,get_address().c_str());
             }
-
-            update_meta();
         }
 
         //note: genesis block must has been  connected-status
