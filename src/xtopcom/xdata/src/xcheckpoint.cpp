@@ -40,10 +40,14 @@ void xtop_chain_checkpoint::load() {
     std::ifstream data_file(CHECKPOINT_DATA_FILE);
     if (data_file.good()) {
         data_file >> j_data;
+    } else {
+        xwarn("[xtop_chain_checkpoint::load] file %s open error, none cp data used!", CHECKPOINT_DATA_FILE);
     }
     std::ifstream state_file(CHECKPOINT_STATE_FILE);
     if (state_file.good()) {
         state_file >> j_state;
+    } else {
+        xwarn("[xtop_chain_checkpoint::load] file %s open error, none cp state used!", CHECKPOINT_STATE_FILE);
     }
     data_file.close();
     state_file.close();
@@ -113,6 +117,7 @@ void xtop_chain_checkpoint::load() {
     m_checkpoints_state_map = load_state(j_state, latest_state_cp);
     j_state.clear();
     xassert(latest_data_cp == latest_state_cp);
+    xinfo("[xtop_chain_checkpoint::load] cp size: %zu, %zu", m_checkpoints_map.size(), m_checkpoints_state_map.size());
 }
 
 xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(common::xaccount_address_t const & account, std::error_code & ec) {
