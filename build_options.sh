@@ -178,7 +178,7 @@ do
         echo "BUILD WITH DISABLE_CORE_SIGNAL_CAPTURE"
     ;;
     *)
-        CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
+        echo "unknown build option: "$option
     ;;
     esac
 done
