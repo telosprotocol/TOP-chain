@@ -144,7 +144,7 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
             uint64_t height = m_sync_store->get_latest_block_with_state(address);
             xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);
             uint64_t height1 = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
-            height = m_sync_store->get_latest_mutable_connected_checkpoint_height(address);
+            height = m_sync_store->get_latest_stable_connected_checkpoint_height(address);
             if (height1 > height) {
                 height = height1;
             }
