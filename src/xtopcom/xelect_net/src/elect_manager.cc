@@ -18,7 +18,9 @@ namespace elect {
 ElectManager::ElectManager(transport::TransportPtr transport, const base::Config & config) : transport_(transport), config_(config) {
 }
 
-void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid) {
+void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t & election_result_store,
+                                  common::xzone_id_t const & zid,
+                                  std::uint64_t const associated_blk_height) {
     using top::data::election::xelection_cluster_result_t;
     using top::data::election::xelection_group_result_t;
     using top::data::election::xelection_info_bundle_t;
@@ -41,10 +43,11 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                     auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
                     auto const & group_result = top::get<xelection_group_result_t>(group_result_info);
 
-                    common::xip2_t xip2{network_id, zid, cluster_id, group_id};
+                    common::xip2_t group_xip{network_id, zid, cluster_id, group_id};
 
                     auto const & size = static_cast<uint16_t>(group_result.size());
-                    auto const & height = group_result.group_version().value();  // use group_version as xip height;
+                    auto const & version_height = group_result.group_version().value();  // use group_version as xip height;
+                    auto const & blk_height = associated_blk_height;                     // use blk_height as xip height;
 
                     std::vector<wrouter::WrouterTableNodes> elect_data;
                     for (auto const & node_info : group_result) {
@@ -56,7 +59,13 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                             continue;
                         }
 
-                        common::xip2_t xip2_{network_id, zid, cluster_id, group_id, slot_id, size, height};
+                        common::xip2_t xip2_{network_id,
+                                             zid,
+                                             cluster_id,
+                                             group_id,
+                                             slot_id,
+                                             size,
+                                             base::now_service_type_ver == base::service_type_height_use_version ? version_height : blk_height};
 
                         wrouter::WrouterTableNodes router_node{xip2_, node_id.to_string()};
                         xdbg("[ElectManager::OnElectUpdated] %s %s", xip2_.to_string().c_str(), node_id.to_string().c_str());
@@ -64,17 +73,20 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                         // ElectNetNode enode{node_id.to_string(), election_info.consensus_public_key.to_string(), xip, "", associated_gid, version};
                         elect_data.push_back(router_node);
                     }
-                    OnElectUpdated(elect_data);
+                    OnElectUpdated(elect_data, group_xip, std::make_pair(version_height, blk_height));
                 }
             }
         }
     }
 }
 
-void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data) {
+void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data,
+                                  common::xip2_t const & group_xip,
+                                  std::pair<uint64_t, uint64_t> const & routing_table_info) {
     // for(auto const &wrouter_node:elect_data){
     // }
     wrouter::SmallNetNodes::Instance()->AddNode(elect_data);
+    wrouter::MultiRouting::Instance()->add_routing_table_info(group_xip, routing_table_info);
     for (auto const & wrouter_node : elect_data) {
         if (global_node_id != wrouter_node.node_id) {
             xdbg("node id not match self:%s iter:%s", global_node_id.c_str(), wrouter_node.node_id.c_str());
@@ -143,7 +155,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
                 auto const & node_info = last_round_routing_table_ptr->GetNode(last_election_xip2);
                 // here is possible to be nullptr (ths dst node never connected in this p2p)
                 // but set it anyway, must be sure the index is same in every correct nodes
-                // since the dst node(elected out) wasn't even be online in the whole last round, 
+                // since the dst node(elected out) wasn't even be online in the whole last round,
                 // make sure won't core dump while try send packet.
                 // assert(node_info != nullptr);
                 last_round_out_nodes_map.insert({last_election_xip2, last_round_routing_table_ptr->GetNode(last_election_xip2)});
@@ -162,8 +174,9 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
 
 void ElectManager::OnElectQuit(const common::xip2_t & xip2) {
     auto service_type = base::GetKadmliaKey(xip2)->GetServiceType();
+    wrouter::MultiRouting::Instance()->delete_routing_table_info(service_type.group_xip2(), service_type.height());
     wrouter::MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
-    xdbg("OnElectQuit service_type:%lld xip2:%s", service_type.value(), xip2.to_string().c_str());
+    xdbg("OnElectQuit service_type:%s xip2:%s", service_type.info().c_str(), xip2.to_string().c_str());
 }
 
 }  // namespace elect

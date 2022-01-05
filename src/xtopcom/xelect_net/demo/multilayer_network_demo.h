@@ -37,6 +37,7 @@ public:
 
 private:
     int ParseParams(int argc, char ** argv, top::ArgsParser & args_parser);
+    bool ResetEdgeConfig(top::ArgsParser & args_parser, top::base::Config & edge_config);
     bool GenerateXelectNetDemoNodes(const top::base::Config & edge_config);
 
 private:

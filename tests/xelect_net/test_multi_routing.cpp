@@ -44,8 +44,9 @@ void xtop_test_elect_net_fixture::TearDown() {
 
 void create_new_routing_table(std::shared_ptr<top::elect::ElectManager> test_elect_manager,
                               const top::data::election::xelection_result_store_t & election_result_store,
-                              const top::common::xzone_id_t & zid) {
-    test_elect_manager->OnElectUpdated(election_result_store, zid);
+                              const top::common::xzone_id_t & zid,
+                              uint64_t const associated_blk_height) {
+    test_elect_manager->OnElectUpdated(election_result_store, zid,associated_blk_height);
 }
 
 void try_get_routing_table(const top::base::ServiceType & service_type) {
@@ -57,7 +58,7 @@ void try_get_routing_table(const top::base::ServiceType & service_type) {
     rt->GetRandomNodes(vec, rt->nodes_size());
 }
 
-TEST_F(xtop_test_elect_net_fixture, TOP_4008) {
+TEST_F(xtop_test_elect_net_fixture, TOP_4008_BENCH) {
     auto const node_type = common::xnode_type_t::consensus_auditor;
     auto const net_id = common::xnetwork_id_t{255};
     auto const zid = common::xconsensus_zone_id;
@@ -76,7 +77,7 @@ TEST_F(xtop_test_elect_net_fixture, TOP_4008) {
         
         e.result_of(net_id).result_of(node_type).result_of(common::xdefault_cluster_id).result_of(common::xdefault_group_id).group_version() =
             top::common::xelection_round_t{index};
-        std::thread t1 = std::thread(&create_new_routing_table, test_elect_manager, e, zid);
+        std::thread t1 = std::thread(&create_new_routing_table, test_elect_manager, e, zid, index *2);
 
         t2.join();
         t1.join();
