@@ -183,6 +183,11 @@ uint64_t xsync_store_t::get_latest_mutable_connected_checkpoint_height(const std
     return m_blockstore->update_get_latest_cp_connected_block_height(_vaddress);
 }
 
+uint64_t xsync_store_t::get_latest_stable_connected_checkpoint_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->update_get_db_latest_cp_connected_block_height(_vaddress);
+}
+
 uint64_t xsync_store_t::get_latest_deleted_block_height(const std::string & account) {
     base::xvaccount_t _vaddress(account);
     return m_blockstore->get_latest_deleted_block_height(_vaddress);
