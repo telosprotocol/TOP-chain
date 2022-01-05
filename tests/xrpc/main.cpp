@@ -7,6 +7,7 @@
 #include "xbase/xcontext.h"
 #include "xdata/xrootblock.h"
 #include "xutility/xhash.h"
+#include "xloader/xconfig_genesis_loader.h"
 
 class xhashtest_t : public top::base::xhashplugin_t
 {
@@ -32,11 +33,14 @@ int main(int argc, char * argv[])
 {
     new xhashtest_t();
 
+    auto genesis_loader = std::make_shared<top::loader::xconfig_genesis_loader_t>(std::string{});
+    top::data::xrootblock_para_t rootblock_para;
+    genesis_loader->extract_genesis_para(rootblock_para);
+    top::data::xrootblock_t::init(rootblock_para);
+
     testing::InitGoogleTest(&argc, argv);
     xinit_log("./xrpc_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
-    top::data::xrootblock_para_t para;
-    top::data::xrootblock_t::init(para);
     XMETRICS_INIT();
     return RUN_ALL_TESTS();
 }

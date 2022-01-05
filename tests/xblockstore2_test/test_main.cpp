@@ -5,6 +5,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xutility/xhash.h"
 #include "xdata/xrootblock.h"
+#include "xloader/xconfig_genesis_loader.h"
 
 using namespace std;
 using namespace top;
@@ -32,6 +33,11 @@ int main(int argc, char **argv) {
     cout << "xblockstore test main run" << endl;
     // printf("Running main() from gtest_main.cc\n");
     new xhashtest_t();
+
+    auto genesis_loader = std::make_shared<top::loader::xconfig_genesis_loader_t>(std::string{});
+    top::data::xrootblock_para_t rootblock_para;
+    genesis_loader->extract_genesis_para(rootblock_para);
+    top::data::xrootblock_t::init(rootblock_para);
 
     XMETRICS_INIT();
     data::xrootblock_para_t para;
