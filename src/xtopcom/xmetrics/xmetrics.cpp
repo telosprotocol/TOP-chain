@@ -106,6 +106,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_view_fire_succ);
+        RETURN_METRICS_NAME(cons_cp_check_succ);
         RETURN_METRICS_NAME(cons_view_fire_is_leader);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
