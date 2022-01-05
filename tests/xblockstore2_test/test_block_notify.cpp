@@ -116,7 +116,7 @@ TEST_F(test_block_notify, disorder_commit) {
                 }
             };
 
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     auto mb = creator.get_mbus();
     uint32_t id1 = mb->add_listener(top::mbus::xevent_major_type_store, listener1);
 

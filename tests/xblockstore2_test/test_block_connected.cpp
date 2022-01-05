@@ -38,7 +38,7 @@ protected:
 };
 
 TEST_F(test_block_connected, block_connect_discrete) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
@@ -74,7 +74,7 @@ TEST_F(test_block_connected, block_connect_discrete) {
 }
 
 TEST_F(test_block_connected, block_connect_discrete_1) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
@@ -132,7 +132,7 @@ TEST_F(test_block_connected, block_connect_discrete_1) {
 }
 
 TEST_F(test_block_connected, store_block_in_unorder_1) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
@@ -170,7 +170,7 @@ TEST_F(test_block_connected, store_block_in_unorder_1) {
 }
 
 TEST_F(test_block_connected, store_block_in_unorder_2) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 

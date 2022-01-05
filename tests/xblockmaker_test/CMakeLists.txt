@@ -10,7 +10,7 @@ add_executable(xblockmaker_test ${test_dir})
 target_link_libraries(xblockmaker_test PRIVATE
     xblockmaker
     xblockstore xtxstore
-    xvm xcertauth xvnetwork xchain_upgrade xstake xgenesis
+    xvm xcertauth xvnetwork xchain_upgrade xstake xloader xgenesis
     gtest
 )
 
