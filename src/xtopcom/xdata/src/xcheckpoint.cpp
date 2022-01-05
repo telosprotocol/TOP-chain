@@ -55,7 +55,7 @@ void xtop_chain_checkpoint::load() {
     j_data = json::parse(checkpoint_data());
     j_state = json::parse(checkpoint_state());
 #endif
-    auto load_data = [](json j, uint64_t & latest_cp) -> xcheckpoints_map_t {
+    auto load_data = [](json & j, uint64_t & latest_cp) -> xcheckpoints_map_t {
         xcheckpoints_map_t m;
         for (auto it = j.cbegin(); it != j.cend(); it++) {
             auto clock_str = static_cast<std::string>(it.key());
@@ -86,7 +86,7 @@ void xtop_chain_checkpoint::load() {
         }
         return m;
     };
-    auto load_state = [](json j, uint64_t & latest_cp) -> xcheckpoints_state_map_t {
+    auto load_state = [](json & j, uint64_t & latest_cp) -> xcheckpoints_state_map_t {
         xcheckpoints_state_map_t m;
         xassert(j.size() <= 1);     // latest only
         for (auto it = j.cbegin(); it != j.cend(); it++) {
