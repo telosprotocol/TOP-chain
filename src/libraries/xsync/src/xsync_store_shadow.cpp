@@ -448,6 +448,15 @@ void xsync_store_shadow_t::set_downloader(xdownloader_t *downloader) {
 }
 
 xsync_store_shadow_t::~xsync_store_shadow_t() {
+    std::unordered_map<std::string, std::shared_ptr<xsync_chain_spans_t>> chain_spans;
+    {
+        std::unique_lock<std::mutex> lck(m_lock);
+        chain_spans = m_chain_spans;
+    }
+
+    for (auto span:chain_spans) {
+        span.second->save();
+    }    
     m_sync_store->remove_listener(mbus::xevent_major_type_store, m_listener_id);
 }
 
