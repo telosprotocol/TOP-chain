@@ -856,7 +856,6 @@ void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
     std::vector<json> j_state(tables.size());
     asio::thread_pool pool(4);
 
-    auto start_time = base::xtime_utl::time_now_ms();
     for (size_t i = 0; i < tables.size(); i++) {
         asio::post(pool, std::bind(&xdb_export_tools_t::query_checkpoint_internal, this, tables[i], genesis_only, clock, std::ref(j_data[i]), std::ref(j_state[i])));
     }
@@ -865,12 +864,9 @@ void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
         j["data"][clock_str][tables[i]] = std::move(j_data[i]);
         j["state"][clock_str][tables[i]] = std::move(j_state[i]);
     }
-    auto end_time = base::xtime_utl::time_now_ms();
 
     generate_json_file("checkpoint_data.json", j["data"]);
     generate_json_file("checkpoint_state.json", j["state"]);
-    std::cout << "===> "
-              << " query_checkpoint total time: " << (end_time - start_time) / 1000 << "s." << std::endl;
 }
 
 void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data, json & j_state) {
