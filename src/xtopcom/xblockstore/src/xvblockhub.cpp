@@ -200,7 +200,8 @@ namespace top
                        && (old_height_it->first != m_meta->_highest_commit_block_height)  //keep latest_committed block
                        && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
                        && (old_height_it->first != m_meta->_highest_cert_block_height)    //keep latest_cert block
-                       && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block
+                       && (old_height_it->first != m_meta->_highest_connect_block_height) //keep latest_connect_block
+                       && (old_height_it->first != m_meta->_highest_cp_connect_block_height))//keep latest_cp_connect_block
                     {
                         auto & view_map = old_height_it->second;
                         #ifdef ENABLE_METRICS
@@ -772,14 +773,7 @@ namespace top
             */
             xdbg("update_get_latest_cp_connected_block_height height:%llu, hash:%s, account:%s", m_meta->_highest_cp_connect_block_height, m_meta->_highest_cp_connect_block_hash.c_str(), get_account().c_str());
             fully_update_cp_connect();
-
-            //connected block must be committed as well
-            base::xvbindex_t* result = query_index(m_meta->_highest_cp_connect_block_height,base::enum_xvblock_flag_committed);
-            if(result != nullptr)
-            {
-                return m_meta->_highest_cp_connect_block_height;
-            }
-            return 0;
+            return m_meta->_highest_cp_connect_block_height;
         }
 
         base::xvbindex_t*  xblockacct_t::load_latest_full_index()
@@ -1540,7 +1534,10 @@ namespace top
                 
                 base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
                 if(!next_commit) //don't have commited block
+                {
+                    xwarn("xblockacct_t::fully_update_cp_connect not existed, account:%s,height:%llu", get_account().c_str(), try_height);
                     break;
+                }
 
                 if((next_commit->get_height() == (m_meta->_highest_cp_connect_block_height + 1))
                 && (next_commit->get_last_block_hash() == m_meta->_highest_cp_connect_block_hash))
@@ -1551,6 +1548,8 @@ namespace top
                 }
                 else
                 {
+                    xerror("xblockacct_t::fully_update_cp_connect mismatch account:%s,height:%llu,cur_hash:%s,next_hash:%s", get_account().c_str(), m_meta->_highest_cp_connect_block_height, 
+                            base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), base::xstring_utl::to_hex(next_commit->get_last_block_hash()).c_str());
                     break;
                 }
             }
