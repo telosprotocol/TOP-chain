@@ -20,7 +20,7 @@ public:
     std::vector<std::string> get_db_unit_accounts();
     void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table);
     void query_table_latest_fullblock();
-    void query_table_tx_info(std::vector<std::string> const & address_vec, const uint32_t start_timestamp, const uint32_t end_timestamp);
+    void query_tx_info(std::vector<std::string> const & tables, const uint32_t thread_num, const uint32_t start_timestamp, const uint32_t end_timestamp);
     // query if a specific block is exist(include num)
     void query_block_exist(std::string const & address, const uint64_t height);
     // query block detailed info(use grpc interface)
@@ -95,7 +95,7 @@ private:
     void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s = -1, int init_e = -1);
     void query_sync_result(std::string const & account, json & result_json);
     void query_table_latest_fullblock(std::string const & account, json & j);
-    void query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json);
+    void query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp);
     void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root);
     void query_block_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_block_basic(std::string const & account, const uint64_t h, json & result);
