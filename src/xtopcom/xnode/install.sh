@@ -177,7 +177,10 @@ else
 fi
 
 echo $topio_home
-
+if [ ! -d "$TOPIO_HOME" ]; then
+sed -i "/TOPIO_HOME/d"     /etc/profile
+sed -i '$a\export TOPIO_HOME='$topio_home        /etc/profile
+fi
 
 echo ""
 echo "############now will register topio as service##############"
