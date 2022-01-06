@@ -39,7 +39,7 @@ public:
 
     // std::string m_account{""};
     // uint64_t m_account_mortgage{0};
-    // common::xminer_type_t m_registered_role{common::xminer_type_t::invalid};
+    // common::xminer_type_t m_registered_miner_type{common::xminer_type_t::invalid};
     // uint64_t m_vote_amount{0};
     // uint64_t m_auditor_credit_numerator{0};
     // uint64_t m_auditor_credit_denominator{1000000};
