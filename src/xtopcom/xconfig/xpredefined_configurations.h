@@ -93,7 +93,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 13, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
 #else
-#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_BY_DEFAULT) >= 102060
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10206
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval,
                                       xinterval_t,
                                       normal,
@@ -227,7 +227,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 #endif
 
-#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_BY_DEFAULT) >= 102060
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10206
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 12, 1, std::numeric_limits<xinterval_t>::max());
