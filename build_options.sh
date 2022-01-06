@@ -165,8 +165,8 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DSTORE_UNIT_BLOCK=ON"
         echo "BUILD WITH store unit block tool"
     ;;
-    chain_forked_by_default)
-        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON"
+    chain_forked_by_default*)
+        CMAKE_EXTRA_OPTIONS+=" -DX""${option^^}"
         echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (all fork points are forked BY DEFAULT)"
     ;;
     metrics_dataobject)
