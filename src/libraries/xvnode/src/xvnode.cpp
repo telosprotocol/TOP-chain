@@ -124,9 +124,9 @@ void xtop_vnode::start() {
     assert(m_router != nullptr);
     assert(m_logic_timer != nullptr);
     assert(m_vhost != nullptr);
-
+    
+    top::store::install_block_recycler(m_store.get());
     sync_add_vnet();
-
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
                                  common::has<common::xnode_type_t::storage_exchange>(vnetwork_driver()->type()));
@@ -196,8 +196,6 @@ void xtop_vnode::driver_removed() {
 bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type, base::xvdbstore_t* xvdb_ptr)
 {
     xinfo("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
-    
-    top::store::install_block_recycler(xvdb_ptr);
     
     if(base::xvchain_t::instance().is_auto_prune_enable() == false)
         return false;//not allow change anymore
