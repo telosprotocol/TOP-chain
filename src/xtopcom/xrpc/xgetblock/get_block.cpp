@@ -67,7 +67,7 @@ void get_block_handle::getAccount() {
     if (account.empty()) {
         xwarn("getAccount:account is empty ");
         return;
-    }  
+    }
     try {
         m_js_rsp["value"] = parse_account(account);
     } catch (exception & e) {
@@ -145,7 +145,7 @@ void get_block_handle::getGeneralInfos() {
     xJson::Value j;
     j["shard_num"] = XGET_CONFIG(validator_group_count);
     j["shard_gas"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));
-    j["init_pledge_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit));
+    j["initial_total_gas_deposit"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit));
     j["genesis_time"] = static_cast<xJson::UInt64>(xrootblock_t::get_rootblock()->get_cert()->get_gmtime());
     auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
     j["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
@@ -533,7 +533,7 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
         tx->add_ref();
         tx_ptr.attach(tx);
-        
+
         const xtx_exec_json_key jk(rpc_version);
         xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
         // burn tx & self tx only 1 consensus
@@ -720,7 +720,7 @@ void get_block_handle::getTransaction() {
                 action.set_action_name(tx->get_target_action_name());
                 action.set_action_param(tx->get_target_action_para());
                 auto jta = parse_action(action);
-                
+
                 if (version == RPC_VERSION_V2) {
                     m_js_rsp["value"]["original_tx_info"]["sender_action_param"] = jsa;
                     m_js_rsp["value"]["original_tx_info"]["receiver_action_param"] = jta;
@@ -1024,9 +1024,9 @@ void get_block_handle::set_shared_info(xJson::Value & root, xblock_t * bp) {
     root["owner"] = bp->get_block_owner();
     root["height"] = static_cast<unsigned long long>(bp->get_height());
     if (bp->is_unitblock()) {
-        root["table_height"] = static_cast<unsigned long long>(bp->get_parent_block_height());    
+        root["table_height"] = static_cast<unsigned long long>(bp->get_parent_block_height());
     } else {
-        root["table_height"] = static_cast<unsigned long long>(bp->get_height());    
+        root["table_height"] = static_cast<unsigned long long>(bp->get_height());
     }
     root["hash"] = bp->get_block_hash_hex_str();
     root["prev_hash"] = to_hex_str(bp->get_last_block_hash());
