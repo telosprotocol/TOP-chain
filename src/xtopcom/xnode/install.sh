@@ -257,4 +257,3 @@ echo "install $topio_name done, good luck"
 echo "now run command to check md5:  topio -v"
 echo "now run command for help info: topio -h"
 topio node safebox
-exit 0
