@@ -118,7 +118,7 @@ std::string xtop_sync_object::status() const {
     std::string result;
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
 
-    for (int32_t i = enum_chain_sync_policy_full; i >= 0; i--) {
+    for (int32_t i = enum_chain_sync_policy_checkpoint; i >= 0; i--) {
         bool display_zec = false;
         bool display_shard = false;        
         uint64_t total_beacon_cur_height = 0;
@@ -221,8 +221,12 @@ std::string xtop_sync_object::status() const {
         // total
         if (i == enum_chain_sync_policy_fast) {
             result += "fast-sync-mode, total:";
-        } else {
+        } else if (i == enum_chain_sync_policy_full) {
             result += "full-sync-mode, total:";
+        } else if (i == enum_chain_sync_policy_checkpoint) {
+            result += "checkpoint-sync-mode, total:";
+        } else {
+            continue;
         }
 
         if (total_max_height == 0) {
