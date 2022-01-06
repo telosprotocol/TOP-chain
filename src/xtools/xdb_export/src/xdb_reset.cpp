@@ -402,7 +402,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
                 if (reg_node_info.m_genesis_node) {
                     j["registered_node_type"] = std::string{"advance,validator,edge"};
                 } else {
-                    j["registered_node_type"] = common::to_string(reg_node_info.m_registered_role);
+                    j["registered_node_type"] = common::to_string(reg_node_info.miner_type());
                 }
                 j["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
                 j["auditor_credit"] = static_cast<double>(reg_node_info.m_auditor_credit_numerator) / reg_node_info.m_auditor_credit_denominator;

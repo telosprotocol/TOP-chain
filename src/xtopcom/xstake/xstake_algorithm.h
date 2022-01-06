@@ -113,7 +113,7 @@ typedef uint64_t    top::xstake::uint128_t;
 // typedef uint128_t top::xstake::uint128_t;
 
 struct xreward_node_record final : xserializable_based_on<void> {
-    // common::xminer_type_t m_registered_role {common::xminer_type_t::invalid};
+    // common::xminer_type_t m_registered_miner_type {common::xminer_type_t::invalid};
     top::xstake::uint128_t m_accumulated{0};
     top::xstake::uint128_t m_unclaimed{0};
     uint64_t m_last_claim_time{0};
@@ -327,6 +327,9 @@ template <>
 bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type);
 
 struct xreg_node_info final : public xserializable_based_on<void> {
+private:
+    common::xminer_type_t m_registered_miner_type{common::xminer_type_t::invalid};
+
 public:
     xreg_node_info() = default;
     xreg_node_info(xreg_node_info const &) = default;
@@ -397,7 +400,7 @@ public:
      * @return false
      */
     bool is_invalid_node() const noexcept {
-        return m_registered_role == common::xminer_type_t::invalid;
+        return m_registered_miner_type == common::xminer_type_t::invalid;
     }
 
     /**
@@ -453,14 +456,10 @@ public:
 
     uint64_t fullnode_stake() const noexcept;
 
-    /**
-     * @brief Get role type
-     *
-     * @return common::xminer_type_t
-     */
-    common::xminer_type_t get_role_type() const noexcept {
-        return m_registered_role;
-    }
+    /// @brief Get miner type.
+    common::xminer_type_t miner_type() const noexcept;
+
+    void miner_type(common::xminer_type_t new_miner_type) noexcept;
 
     /**
      * @brief Get auditor stake
@@ -492,7 +491,7 @@ public:
 
     template <common::xminer_type_t MinerTypeV>
     bool miner_type_has() const noexcept {
-        return common::has<MinerTypeV>(m_registered_role);
+        return common::has<MinerTypeV>(m_registered_miner_type);
     }
 
     /**
@@ -517,7 +516,6 @@ public:
 
     common::xaccount_address_t m_account{};
     uint64_t m_account_mortgage{0};
-    common::xminer_type_t m_registered_role{common::xminer_type_t::invalid};
     uint64_t m_vote_amount{0};
     uint64_t m_auditor_credit_numerator{0};
     uint64_t m_auditor_credit_denominator{1000000};
@@ -556,7 +554,7 @@ class xtop_account_registration_info final : public xserializable_based_on<void>
 private:
     common::xaccount_address_t m_account{};
     uint64_t m_account_mortgage{0};
-    common::xminer_type_t m_registered_role{common::xminer_type_t::invalid};
+    common::xminer_type_t m_registered_miner_type{common::xminer_type_t::invalid};
     uint64_t m_vote_amount{0};
     uint64_t m_auditor_credit_numerator{0};
     uint64_t m_auditor_credit_denominator{1000000};
