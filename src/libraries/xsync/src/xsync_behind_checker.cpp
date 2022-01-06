@@ -96,6 +96,9 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             } else if (sync_policy == enum_chain_sync_policy_full) {
                 sync_mode = "full";
                 gap_metric_tag_name = "xsync_full_mode_gap_" + address;
+            } else if (sync_policy == enum_chain_sync_policy_checkpoint) {
+                sync_mode = "cp";
+                gap_metric_tag_name = "xsync_cp_mode_gap_" + address;
             }
 #ifdef ENABLE_METRICS
             uint64_t gap_between_interval = 0;
