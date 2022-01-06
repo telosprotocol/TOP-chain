@@ -90,13 +90,11 @@ namespace top
             upper_bound_height = upper_bound_height - (enum_min_batch_recycle_blocks_count << 1);
 
             uint64_t boundary;
-            bool success = get_prune_boundary(account_obj, boundary);
-            if (success) {
-                if (boundary < upper_bound_height) {
-                    upper_bound_height = boundary;
-                }
+            get_prune_boundary(account_obj, boundary);
+            if (boundary < upper_bound_height) {
+                upper_bound_height = boundary;
             }
-
+            
             xdbg("xvblockprune_impl::recycle account %s, adjust upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
                 upper_bound_height, lower_bound_height, account_meta._highest_connect_block_height);
             if (lower_bound_height >= upper_bound_height) {
