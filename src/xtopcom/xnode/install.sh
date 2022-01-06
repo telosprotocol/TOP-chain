@@ -180,6 +180,7 @@ echo $topio_home
 if [ ! -d "$TOPIO_HOME" ]; then
 sed -i "/TOPIO_HOME/d"     /etc/profile
 sed -i '$a\export TOPIO_HOME='$topio_home        /etc/profile
+source /etc/profile
 fi
 
 echo ""
