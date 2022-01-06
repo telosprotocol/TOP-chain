@@ -355,7 +355,7 @@ static void parse_reg_node_map(std::map<std::string, std::string> const & map, j
         if (reg_node_info.m_genesis_node) {
             j_node["registered_node_type"] = std::string{"advance,validator,edge"};
         } else {
-            j_node["registered_node_type"] = common::to_string(reg_node_info.m_registered_role);
+            j_node["registered_node_type"] = common::to_string(reg_node_info.miner_type());
         }
         j_node["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
         {
