@@ -29,6 +29,7 @@
 #include "xtopcl/include/api_method.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmigrate/xvmigrate.h"
+#include "xdata/xcheckpoint.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -199,6 +200,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
         user_params.signkey
     };
 
+    data::xchain_checkpoint_t::load();
     if (false == db_migrate(v2_db_path)) {
         return 1;
     }
@@ -520,6 +522,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
         user_params.signkey
     };
 
+    data::xchain_checkpoint_t::load();
     std::string v2_db_path = datadir + OLD_DB_PATH;
     if (false == db_migrate(v2_db_path)) {
         return 1;
