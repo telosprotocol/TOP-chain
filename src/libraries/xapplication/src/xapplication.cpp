@@ -94,7 +94,6 @@ void xtop_application::start() {
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
-    data::xchain_checkpoint_t::load();
 
     chain_fork::xtop_chain_fork_config_center::init();
     base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
