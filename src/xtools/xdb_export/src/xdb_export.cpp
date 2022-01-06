@@ -17,6 +17,9 @@
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
 
+#include "xdepends/include/asio/post.hpp"
+#include "xdepends/include/asio/thread_pool.hpp"
+
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
@@ -178,64 +181,23 @@ void xdb_export_tools_t::query_table_latest_fullblock() {
     std::cout << "===> " << filename << " generated success!" << std::endl;
 }
 
-void xdb_export_tools_t::query_table_tx_info(std::vector<std::string> const & address_vec, const uint32_t start_timestamp, const uint32_t end_timestamp) {
-#if 1  // TODO(jimmy) use two thread
-    auto query_and_make_file = [start_timestamp, end_timestamp](xdb_export_tools_t *arg, std::string account) {
-        json result_json;
-        arg->query_table_tx_info(account, start_timestamp, end_timestamp, result_json);
-        std::string filename = "./all_table_tx_info/" + account + "_tx_info.json";
-        std::ofstream out_json(filename);
-        out_json << std::setw(4) << result_json[account];
-        std::cout << "===> " << filename << " generated success!" << std::endl; 
-    };
-    mkdir("all_table_tx_info", 0750);
-    uint32_t thread_num = 4;
-    std::cout << "query_table_tx_info with thread num " << thread_num << std::endl;
-    if (address_vec.size() < thread_num) {
-        query_and_make_file(this, address_vec[0]);
+void xdb_export_tools_t::query_tx_info(std::vector<std::string> const & tables, const uint32_t thread_num, const uint32_t start_timestamp, const uint32_t end_timestamp) {
+    uint32_t threads = 0;
+
+    std::cout << "start_timestamp: " << start_timestamp << ", end_timestamp: " << end_timestamp << std::endl;
+    if (thread_num != 0) {
+        threads = thread_num;
+        std::cout << "use thread num: " << threads << std::endl;
     } else {
-        std::vector<std::vector<std::string>> address_vec_split;
-        uint32_t address_per_thread = address_vec.size() / thread_num;
-        for (size_t i = 0; i < thread_num; i++) {
-            uint32_t start_index = i * address_per_thread;
-            uint32_t end_index = (i == (thread_num - 1)) ? address_vec.size() : ((i + 1) * address_per_thread);
-            std::vector<std::string> thread_address;
-            for (auto j = start_index; j < end_index; j++) {
-                thread_address.emplace_back(address_vec[j]);
-            }
-            address_vec_split.emplace_back(thread_address);
-        }
-        auto thread_helper = [&query_and_make_file, &address_vec_split](xdb_export_tools_t *arg, int index) {
-            for (auto const & _p : address_vec_split[index]) {
-                query_and_make_file(arg, _p);
-            }
-        };
-        std::vector<std::thread> all_thread;
-        int finish_num = 0;
-        for (auto i = 0U; i < thread_num; i++) {
-            std::thread th(thread_helper, this, i);
-            all_thread.emplace_back(std::move(th));
-        }
-        for (auto i = 0U; i < thread_num; i++) {
-            all_thread[i].join();
-        }
+        // default
+        threads = 4;
+        std::cout << "use default thread num: " << threads << std::endl;
     }
-#else
-    mkdir("all_table_tx_info", 0750);
-    for (size_t i = 0; i < address_vec.size(); i++) {
-        auto t0 = xtime_utl::time_now_ms();
-        json result_json;
-        query_table_tx_info(address_vec[i], start_timestamp, end_timestamp, result_json);
-        auto t1 = xtime_utl::time_now_ms();
-        std::string filename = "./all_table_tx_info/" + address_vec[i] + "_tx_info.json";
-        std::ofstream out_json(filename);
-        out_json << std::setw(4) << result_json[address_vec[i]];
-        std::cout << "===> " << filename << " generated success!" << std::endl;
-        result_json.clear();
-        auto t2 = xtime_utl::time_now_ms();
-        std::cout << "table=" << address_vec[i] << " t1-t0=" << t1 - t0 << " t2-t1=" << t2 - t1 << std::endl;
+    asio::thread_pool pool(threads);
+    for (size_t i = 0; i < tables.size(); i++) {
+        asio::post(pool, std::bind(&xdb_export_tools_t::query_tx_info_internal, this, tables[i], start_timestamp, end_timestamp));
     }
-#endif
+    pool.join();
 }
 
 void xdb_export_tools_t::query_block_exist(std::string const & address, const uint64_t height) {
@@ -1158,7 +1120,7 @@ void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_inf
     xassert(table_info.total_confirm_time_from_fire >= table_info.total_confirm_time_from_send);
 }
 
-void xdb_export_tools_t::query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json) {
+void xdb_export_tools_t::query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp) {
     auto const block_height = m_blockstore->get_latest_committed_block_height(account);
     std::map<std::string, tx_ext_t> sendonly;  // sendtx without confirmed
     std::map<std::string, tx_ext_t> confirmonly;  // confirmtx without send
@@ -1169,16 +1131,6 @@ void xdb_export_tools_t::query_table_tx_info(std::string const & account, const 
     json j; // the total json
 
     xdbtool_table_info_t table_info;
-    int tableid{-1};
-    {
-        std::vector<std::string> parts;
-        if(base::xstring_utl::split_string(account,'@',parts) >= 2) {
-            tableid = base::xstring_utl::toint32(parts[1]);
-        } else {
-            std::cout << account << " parse table id error" << tableid << std::endl;
-            return;
-        }
-    }
     auto t1 = base::xtime_utl::time_now_ms();
     base::xvaccount_t _vaccount(account);
     for (uint64_t h = 0; h <= block_height; h++) {
@@ -1295,8 +1247,8 @@ void xdb_export_tools_t::query_table_tx_info(std::string const & account, const 
         set_txinfos_to_json(txs_multi_txs_j, multi_txs);
         j["multi detail"] = txs_multi_txs_j;            
     }
-    result_json[account] = j;
     auto t3 = base::xtime_utl::time_now_ms();
+    generate_json_file(std::string{account + "_tx_info.json"}, j);
     std::cout << "block_height=" << block_height << " t2-t1=" << t2-t1 << " t3-t2=" << t3-t2 << std::endl;
 }
 
