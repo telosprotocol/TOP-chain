@@ -818,6 +818,13 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
                 store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
                 store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
             }
+
+            if (common::has<common::xnode_type_t::consensus>(vnetwork_driver->type())) {
+                base::xvaccount_t _vaddr(it.second.address);
+                store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
+                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
+            }
+
             xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_add_role_t>(it.second.address);
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
@@ -861,6 +868,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         for (const auto &it: chains) {
             if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) || common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
                 std::set<enum_height_type> types;
+                #if 0
                 if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
                     types.insert(mutable_checkpoint_height);
                     types.insert(latest_state_height);
@@ -869,6 +877,12 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
                     types.insert(confirm_height);
                     xsync_kinfo("xsync_handler remove_role_phase1 del validator %s", it.second.address.c_str());
                 }
+                #else
+                if (!common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
+                    types.insert(confirm_height);
+                    xsync_kinfo("xsync_handler remove_role_phase1 del validator %s", it.second.address.c_str());
+                }
+                #endif
                 xsync_prune_sigleton_t::instance().del(it.second.address, types);
                 if (xsync_prune_sigleton_t::instance().empty(it.second.address)){
                     base::xvaccount_t _vaddr(it.second.address);
