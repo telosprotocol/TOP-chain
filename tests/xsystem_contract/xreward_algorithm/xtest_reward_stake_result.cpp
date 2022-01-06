@@ -367,7 +367,7 @@ public:
         for (size_t i = 0; i < account_num; i++) {
             xstake::xreg_node_info node;
             node.m_account = common::xaccount_address_t{test_accounts[i]};
-            node.m_registered_role = common::xminer_type_t::advance;
+            node.miner_type(common::xminer_type_t::advance);
             node.m_vote_amount = 10;
             node.m_account_mortgage = 10*TOP_UNIT; 
             map_nodes.insert({node.m_account, node});
@@ -486,7 +486,7 @@ public:
         for (size_t i = 0; i < account_num; i++) {
             xstake::xreg_node_info node;
             node.m_account = common::xaccount_address_t{test_accounts[i]};
-            node.m_registered_role = common::xminer_type_t::advance;
+            node.miner_type(common::xminer_type_t::advance);
             node.m_vote_amount = 10;
             node.m_account_mortgage = 10*TOP_UNIT; 
             map_nodes.insert({node.m_account, node});

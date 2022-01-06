@@ -277,23 +277,23 @@ bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_
 }
 
 bool xreg_node_info::could_be_rec() const noexcept {
-    return could_be<common::xnode_type_t::rec>(m_registered_role);
+    return could_be<common::xnode_type_t::rec>(m_registered_miner_type);
 }
 
 bool xreg_node_info::could_be_zec() const noexcept {
-    return could_be<common::xnode_type_t::zec>(m_registered_role);
+    return could_be<common::xnode_type_t::zec>(m_registered_miner_type);
 }
 
 bool xreg_node_info::could_be_auditor() const noexcept {
-    return could_be<common::xnode_type_t::consensus_auditor>(m_registered_role);
+    return could_be<common::xnode_type_t::consensus_auditor>(m_registered_miner_type);
 }
 
 bool xreg_node_info::could_be_validator() const noexcept {
-    return could_be<common::xnode_type_t::consensus_validator>(m_registered_role);
+    return could_be<common::xnode_type_t::consensus_validator>(m_registered_miner_type);
 }
 
 bool xreg_node_info::could_be_archive() const noexcept {
-    return could_be<common::xnode_type_t::storage_archive>(m_registered_role);
+    return could_be<common::xnode_type_t::storage_archive>(m_registered_miner_type);
 }
 
 bool xreg_node_info::legacy_could_be_archive() const noexcept {
@@ -301,15 +301,15 @@ bool xreg_node_info::legacy_could_be_archive() const noexcept {
 }
 
 bool xreg_node_info::could_be_edge() const noexcept {
-    return could_be<common::xnode_type_t::edge>(m_registered_role);
+    return could_be<common::xnode_type_t::edge>(m_registered_miner_type);
 }
 
 bool xreg_node_info::could_be_exchange() const noexcept {
-    return could_be<common::xnode_type_t::storage_exchange>(m_registered_role);
+    return could_be<common::xnode_type_t::storage_exchange>(m_registered_miner_type);
 }
 
 bool xreg_node_info::could_be_fullnode() const noexcept {
-    return could_be<common::xnode_type_t::fullnode>(m_registered_role);
+    return could_be<common::xnode_type_t::fullnode>(m_registered_miner_type);
 }
 
 bool xreg_node_info::can_be_rec() const noexcept {
@@ -345,7 +345,7 @@ bool xreg_node_info::can_be_exchange() const noexcept {
 }
 
 bool xreg_node_info::can_be_fullnode() const noexcept {
-    return can_be_auditor();
+    return could_be_auditor();
 }
 
 uint64_t xreg_node_info::deposit() const noexcept {
@@ -416,11 +416,21 @@ uint64_t xreg_node_info::fullnode_stake() const noexcept {
     return 0;
 }
 
+common::xminer_type_t xreg_node_info::miner_type() const noexcept {
+    return m_registered_miner_type;
+}
+
+void xreg_node_info::miner_type(common::xminer_type_t new_miner_type) noexcept {
+    if (m_registered_miner_type != new_miner_type) {
+        m_registered_miner_type = new_miner_type;
+    }
+}
+
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
     stream << m_account.value();
     stream << m_account_mortgage;
-    ENUM_SERIALIZE(stream, m_registered_role);
+    ENUM_SERIALIZE(stream, m_registered_miner_type);
     stream << m_vote_amount;
     stream << m_auditor_credit_numerator;
     stream << m_auditor_credit_denominator;
@@ -445,7 +455,7 @@ int32_t xreg_node_info::do_read(base::xstream_t & stream) {
     stream >> account;
     m_account = common::xaccount_address_t{account};
     stream >> m_account_mortgage;
-    ENUM_DESERIALIZE(stream, m_registered_role);
+    ENUM_DESERIALIZE(stream, m_registered_miner_type);
     stream >> m_vote_amount;
     stream >> m_auditor_credit_numerator;
     stream >> m_auditor_credit_denominator;
