@@ -24,7 +24,7 @@ pwd
 username=`whoami`
 if [ $username != 'root' ]; then
     echo "Permission denied, please retry with root"
-    exit -1
+    return
 fi
 
 
@@ -86,7 +86,7 @@ then
         echo_and_run echo "apt install -y ntp > /dev/null 2>&1" | bash
         if [ $? != 0 ]; then
             echo "install ntp failed"
-            exit -1
+            return
         fi
     fi
 
@@ -104,7 +104,7 @@ then
             echo_and_run echo "yum install -y ntp > /dev/null 2>&1" | bash
             if [ $? != 0 ]; then
                 echo "install ntp failed"
-                exit -1
+                return
             fi
         fi
     elif [ $centos_os_version = 8 ]; then
@@ -112,7 +112,7 @@ then
         echo_and_run echo "yum -y install chrony > /dev/null 2>&1" | bash
     else
         echo "Not Support Centos-Version:$centos_os_version"
-        exit -1
+        return
     fi
 else
     echo "unknow osinfo:$osinfo"
@@ -127,24 +127,24 @@ else
     run_status=$?
     if [ $run_status != 0 ]; then
         echo "enable $ntpd_service failed: $run_status"
-        exit -1
+        return
     fi
     echo_and_run echo "systemctl start $ntpd_service" | bash
     run_status=$?
     if [ $run_status != 0 ]; then
         echo "start $ntpd_service failed: $run_status"
-        exit -1
+        return
     fi
 fi
 
 if [ ! -x "$topio_name" ]; then
     echo "not found $topio_name"
-    exit -1
+    return
 fi
 
 if [ ! -x "$libxtopchain_name" ]; then
     echo "not found $libxtopchain_name"
-    exit -1
+    return
 fi
 
 INSTALL_TOPIO_BIN_PATH="/usr/bin/"
@@ -240,13 +240,13 @@ timedatectl  set-timezone UTC
 which $topio_name
 if [ $? != 0 ]; then
     echo "install topio failed"
-    exit -1
+    return
 fi
 
 #systemctl status topio.service
 #if [ $? != 0 ]; then
 #    echo "install topio failed"
-#    exit -1
+#    return
 #fi
 
 echo ""
