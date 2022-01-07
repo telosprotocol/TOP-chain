@@ -7,7 +7,7 @@
 using namespace top;
 using namespace top::db_export;
 
-#define XDB_EXPORT_LOG
+// #define XDB_EXPORT_LOG
 
 class xtop_hash_t : public top::base::xhashplugin_t {
 public:
@@ -38,7 +38,7 @@ void usage() {
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
+    std::cout << "        - check_tx_info [starttime] [endtime] [threads]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
@@ -158,16 +158,20 @@ int main(int argc, char ** argv) {
             }
         }
     } else if (function_name == "check_tx_info") {
+        uint32_t thread_num = 0;
         uint32_t start_timestamp = 0;
         uint32_t end_timestamp = UINT_MAX;
         char * start_time_str = nullptr;
         char * end_time_str = nullptr;
-        if (argc == 5) {
+        if (argc == 4) {
+            thread_num = std::stoi(argv[3]);
+        } else if (argc == 5) {
             start_time_str = argv[3];
             end_time_str = argv[4];
         } else if (argc == 6) {
-            start_time_str = argv[4];
-            end_time_str = argv[5];
+            start_time_str = argv[3];
+            end_time_str = argv[4];
+            thread_num = std::stoi(argv[5]);
         }
         if (argc >= 5) {
             int year, month, day, hour, minute,second;
@@ -193,19 +197,13 @@ int main(int argc, char ** argv) {
                 tm_.tm_isdst = 0;
                 end_timestamp = mktime(&tm_);
             }
-            std::cout << "start_timestamp: " << start_timestamp << ", end_timestamp: " << end_timestamp << std::endl;
         }
 
-        if (argc == 3 || argc == 5) {
-            auto const account_vec = xdb_export_tools_t::get_table_accounts();
-            tools.query_table_tx_info(account_vec, start_timestamp, end_timestamp);
-        } else if (argc == 4 || argc == 6) {
-            std::vector<std::string> account = {argv[3]};
-            tools.query_table_tx_info(account, start_timestamp, end_timestamp);
-        } else {
-            usage();
-            return -1;
-        }
+        std::string dir{"all_table_tx_info/"};
+        mkdir(dir.c_str(), 0750);
+        tools.set_outfile_folder(dir);
+        auto const account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.query_tx_info(account_vec, thread_num, start_timestamp, end_timestamp);
     } else if (function_name == "check_block_exist") {
         if (argc < 5) {
             usage();
