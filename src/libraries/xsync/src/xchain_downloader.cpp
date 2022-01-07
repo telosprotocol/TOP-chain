@@ -411,29 +411,15 @@ bool xchain_downloader_t::send_request(int64_t now) {
         return m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, m_request->self_addr, m_request->target_addr);
     }
 
-    std::vector<vnetwork::xvnode_address_t> all_neighbors = m_role_xips_mgr->get_all_neighbors(self_addr);
-    all_neighbors.push_back(self_addr);
-    std::sort(all_neighbors.begin(), all_neighbors.end());
-    uint32_t neighbor_number = all_neighbors.size();
-    int32_t self_position = -1;
-    for (uint32_t i=0; i<all_neighbors.size(); i++) {
-        if (all_neighbors[i] == self_addr) {
-            self_position = i;
-            break;
-        }
-    }
-
-    std::vector<vnetwork::xvnode_address_t> archive_lists = m_role_xips_mgr->get_archive_list();
-    std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, archive_lists.size(), self_position, 0);
-    if (push_arcs.empty()) {
+    std::vector<vnetwork::xvnode_address_t> addresses = m_role_xips_mgr->get_rand_archives(1);
+    if (addresses.empty()) {
         xsync_info("xchain_downloader_t::send_request, not find archive.");
         return false;
     }
-
     XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
     m_request->send_time = now;
     int64_t queue_cost = m_request->send_time - m_request->create_time;
-    vnetwork::xvnode_address_t &target_addr = archive_lists[push_arcs[0]];
+    vnetwork::xvnode_address_t &target_addr = addresses[0];
     xsync_info("chain_downloader send sync request(block) from fullnode. %s,range[%lu,%lu] get_token_cost(%ldms) %s,%s",
                 m_request->owner.c_str(), m_request->start_height, m_request->start_height+m_request->count-1,
                 queue_cost, self_addr.to_string().c_str(), target_addr.to_string().c_str());
