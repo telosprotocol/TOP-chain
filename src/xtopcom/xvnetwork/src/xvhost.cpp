@@ -110,10 +110,12 @@ void xtop_vhost::stop() {
     m_network_driver->unregister_message_ready_notify();
 }
 
+// [Deprecated]
 void xtop_vhost::send(xmessage_t const & message,
                       common::xnode_address_t const & src,
                       common::xnode_address_t const & dst,
                       network::xtransmission_property_t const & transmission_property) {
+    assert(false);
     if (!running()) {
         xwarn("[vnetwork] vhost not run");
         return;
@@ -201,7 +203,35 @@ void xtop_vhost::send(xmessage_t const & message,
     }
 }
 
+void xtop_vhost::send_to_through_frozen(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
+    assert(src.zone_id() == common::xfrozen_zone_id);
+    assert(src.cluster_id() == common::xdefault_cluster_id);
+    assert(src.group_id() == common::xdefault_group_id);
+
+    if (!running()) {
+        ec = xvnetwork_errc2_t::vhost_not_run;
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+    if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id()) || common::broadcast(dst.cluster_id()) || common::broadcast(dst.group_id()) ||
+        common::broadcast(dst.slot_id())) {
+        ec = xvnetwork_errc2_t::invalid_dst_address;
+        xwarn("%s %s. dst address is a broadcast address %s", vnetwork_category2().name(), ec.message().c_str(), dst.to_string().c_str());
+        return;
+    }
+
+    xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
+    assert(common::get_message_category(vmsg.message_id()) == xmessage_category_sync);
+    auto bytes = codec::msgpack_encode(vmsg);
+
+    m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
+
+    msg_metrics(vmsg, metrics::message_send_category_begin);
+}
+
 void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
+    assert(src.zone_id() != common::xfrozen_zone_id);
+    assert(dst.zone_id() != common::xfrozen_zone_id);
     if (!running()) {
         ec = xvnetwork_errc2_t::vhost_not_run;  
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
@@ -219,20 +249,22 @@ void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_addr
     auto bytes = codec::msgpack_encode(vmsg);
     // m_network_driver->send_to(dst.account_address(), bytes, {});
 
-    auto message_type = vmsg.message_id();
-    if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
-        src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
-        (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
-         message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
-        m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
-    } else {
-        m_network_driver->send_to(convert_to_p2p_xip2(src), convert_to_p2p_xip2(dst), bytes, ec);
-    }
+    // auto message_type = vmsg.message_id();
+    // if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
+    //     src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
+    //     (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
+    //      message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
+    //     m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
+    // } else {
+    m_network_driver->send_to(convert_to_p2p_xip2(src), convert_to_p2p_xip2(dst), bytes, ec);
+    // }
     
     msg_metrics(vmsg, metrics::message_send_category_begin);
 }
 
 void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
+    assert(src.zone_id() != common::xfrozen_zone_id);
+    assert(dst.zone_id() != common::xfrozen_zone_id);
     if (!running()) {
         ec = xvnetwork_errc2_t::vhost_not_run;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
@@ -271,17 +303,17 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes.size());
 #endif
-        auto message_type = vmsg.message_id();
-        if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
-            src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
-            (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
-                message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
-            m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
-            msg_metrics(vmsg, metrics::message_send_category_begin);
-        } else {
-            m_network_driver->spread_rumor(convert_to_p2p_xip2(src), convert_to_p2p_xip2(dst), bytes, ec);
-            msg_metrics(vmsg, metrics::message_rumor_category_begin);
-        }
+        // auto message_type = vmsg.message_id();
+        // if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
+        //     src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
+        //     (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
+        //         message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
+        //     m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
+        //     msg_metrics(vmsg, metrics::message_send_category_begin);
+        // } else {
+        m_network_driver->spread_rumor(convert_to_p2p_xip2(src), convert_to_p2p_xip2(dst), bytes, ec);
+        msg_metrics(vmsg, metrics::message_rumor_category_begin);
+        // }
         // m_network_driver->spread_rumor(bytes);
     } else if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id())) {
         // broadcast in the specified network

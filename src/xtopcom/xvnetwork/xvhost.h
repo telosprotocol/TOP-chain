@@ -65,6 +65,7 @@ public:
 
     common::xnode_id_t const & host_node_id() const noexcept override final;
 
+    // [Deprecated]
     void send(xmessage_t const & message,
               xvnode_address_t const & src,
               xvnode_address_t const & dst,
@@ -75,6 +76,7 @@ public:
     // void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override;
     // void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override;
 
+    void send_to_through_frozen(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override;
     void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override;
     void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override;
 
