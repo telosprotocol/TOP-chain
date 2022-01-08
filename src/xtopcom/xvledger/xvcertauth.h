@@ -53,9 +53,13 @@ namespace top
             //random_seed allow pass a customzied random seed to provide unique signature,it ask xvcertauth_t generate one if it is 0
             //signature by owner ' private-key
             virtual const std::string   do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,const uint64_t random_seed)   = 0;
+            virtual const std::string   do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_block,const uint64_t random_seed, 
+                                                const std::string sign_hash)= 0;
             virtual const std::string   do_sign(const xvip2_t & signer,const base::xvblock_t * sign_for_block,const uint64_t random_seed)= 0;
             
             virtual enum_vcert_auth_result   verify_sign(const xvip2_t & signer,const xvqcert_t * test_for_cert,const std::string & block_account)  = 0;
+            virtual enum_vcert_auth_result   verify_sign(const xvip2_t & signer,const xvqcert_t * test_for_cert,
+                                                         const std::string & block_account, const std::string sign_hash)  = 0;   
             virtual enum_vcert_auth_result   verify_sign(const xvip2_t & signer,const xvblock_t * test_for_block) = 0;
             
         public:
