@@ -652,7 +652,7 @@ void xdb::xdb_impl::handle_error(const rocksdb::Status& status) const {
     if (status.ok())
         return;
     const string errmsg = "[xdb] rocksDB error: " + status.ToString() + " ,db name " + m_db_name;
-    xwarn("%s", errmsg.c_str());
+    xerror("%s", errmsg.c_str());
     // throw xdb_error(errmsg);
 }
 

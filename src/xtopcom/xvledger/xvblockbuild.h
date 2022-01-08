@@ -37,7 +37,6 @@ namespace top
                                         const std::string & _justify_hash);
             // some optional parameters
             void    set_extra_data(const std::string & _extra_data) {m_extra_data = _extra_data;}
-            // std::string get_header_extra(const xlightunit_block_para_t & bodypara) const;
             uint64_t get_clock() const {return m_clock;}
             uint64_t get_height() const {return m_height;}
 
@@ -91,6 +90,7 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t> create_new_block();
             void    init_qcert(const xbbuild_para_t & _para);
             void    init_header(const xbbuild_para_t & _para);
+            void    set_header_extra(const std::string & _extra);
 
         public:
             xvheader_t*     get_header() const {return m_header_ptr;}

@@ -157,7 +157,7 @@ class xdatamock_table : public base::xvaccount_t {
         cs_para.update_latest_cert_block(get_cert_block());
         cs_para.update_latest_lock_block(get_lock_block());
         cs_para.update_latest_commit_block(get_commit_block());
-        cs_para.set_tableblock_consensus_para(1,"1",1,"1");
+        cs_para.set_tableblock_consensus_para(1,"1",1,1);
         cs_para.set_clock(clock);
         return cs_para;
     }
@@ -177,7 +177,7 @@ class xdatamock_table : public base::xvaccount_t {
         if ( (m_config_fulltable_interval != 0) && (((prev_tableblock->get_height() + 1) % m_config_fulltable_interval) == 0) ) {
             proposal_block = generate_full_table(cs_para);
         } else {
-            cs_para.set_tableblock_consensus_para(1, "1", 1, "1"); // TODO(jimmy) for light-table
+            cs_para.set_tableblock_consensus_para(1, "1", 1, 1); // TODO(jimmy) for light-table
             proposal_block = generate_batch_table(cs_para);
         }
         do_multi_sign(proposal_block);
@@ -291,7 +291,7 @@ class xdatamock_table : public base::xvaccount_t {
             //     EXPECT_EQ(txs.size(), 1);
             // }
             for (auto & tx : txs) {
-                base::xvaction_t _action = data::make_action(tx);
+                base::xvaction_t _action = data::xblockaction_build_t::make_tx_action(tx);
                 xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
                 txs_info.push_back(txinfo);
             }

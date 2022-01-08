@@ -15,9 +15,63 @@
 
 NS_BEG2(top, data)
 
-base::xvaction_t make_action(const xcons_transaction_ptr_t & tx);
+// XTODO keep old structure for compatibility
+class xtableheader_extra_t : public xserializable_based_on<void> {
+ protected:
+    enum xblockheader_extra_data_type : uint16_t {
+        enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
+        enum_extra_data_type_tgas_second_level_gmtime               = 1,
+    };
+ public:
+    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime);
+
+ protected:
+    int32_t do_write(base::xstream_t & stream) const override;
+    int32_t do_read(base::xstream_t & stream) override;
+ public:
+    int32_t deserialize_from_string(const std::string & extra_data);
+    int32_t serialize_to_string(std::string & extra_data);
+
+ public:
+    uint64_t get_tgas_total_lock_amount_property_height() const;
+    void     set_tgas_total_lock_amount_property_height(uint64_t height);
+    uint64_t get_second_level_gmtime() const;
+    void     set_second_level_gmtime(uint64_t gmtime);
+
+ private:
+    std::map<uint16_t, std::string>  m_paras;
+};
+
+class xunitheader_extra_t {
+ private:
+    static XINLINE_CONSTEXPR char const * KEY_HEADER_KEY_TXS              = "t";
+ public:
+    static std::string build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara);
+ public:
+    int32_t serialize_to_string(std::string & str) const;
+    int32_t do_write(base::xstream_t & stream) const;
+    int32_t serialize_from_string(const std::string & _data);
+    int32_t do_read(base::xstream_t & stream);
+    void insert(const std::string & key, const std::string & val);
+    std::string get_val(const std::string & key) const;
+
+ public:
+    std::vector<base::xvtxkey_t>    get_txkeys() const;
+    void    set_txkeys(const base::xvtxkey_vec_t & txkeys);
+
+ private:
+    std::map<std::string, std::string> m_map;
+};
+
+
+class xblockaction_build_t {
+ public:
+    static base::xvaction_t make_tx_action(const xcons_transaction_ptr_t & tx);
+    static base::xvaction_t make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result = {});
+    static base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string & target_uri, uint32_t block_version, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height);
+};
+
 xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx);
-std::string get_header_extra(const xlightunit_block_para_t & bodypara);
 
 class xlightunit_build_t : public base::xvblockmaker_t {
  public:

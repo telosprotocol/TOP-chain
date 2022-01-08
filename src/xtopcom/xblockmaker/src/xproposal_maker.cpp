@@ -10,6 +10,7 @@
 #include "xstore/xtgas_singleton.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xblockbuild.h"
 #include "xtxpool_v2/xtxpool_tool.h"
 #include "xmbus/xevent_behind.h"
 
@@ -147,7 +148,20 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
     XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
-    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height());
+    uint64_t gmtime = proposal_block->get_second_level_gmtime();
+    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), gmtime);
+
+    // verify gmtime valid
+    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
+        if ( (gmtime > (now + 60)) || (gmtime < (now - 60))) { // the gmtime of leader should in +-60s with backup node
+            xwarn("xproposal_maker_t::verify_proposal fail-gmtime not match. proposal=%s,leader_gmtime=%ld,backup_gmtime=%ld",
+                proposal_block->dump().c_str(), gmtime, now);
+            XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
+            return xblockmaker_error_proposal_outofdate;
+        }
+    }    
 
     auto cert_block = get_blockstore()->get_latest_cert_block(*m_table_maker);
     if (proposal_block->get_height() < cert_block->get_height()) {
@@ -402,17 +416,13 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
         xwarn("xproposal_maker_t::leader_set_consensus_para fail-leader_get_total_lock_tgas_token. %s", cs_para.dump().c_str());
         return ret;
     }
-    xblockheader_extra_data_t blockheader_extradata;
-    blockheader_extradata.set_tgas_total_lock_amount_property_height(property_height);
-    std::string extra_data;
-    blockheader_extradata.serialize_to_string(extra_data);
     xassert(cs_para.get_drand_block() != nullptr);
     std::string random_seed = calc_random_seed(latest_cert_block, cs_para.get_drand_block()->get_cert(), cs_para.get_viewtoken());
     cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_tableblock_consensus_para(cs_para.get_drand_block()->get_height(),
                                             random_seed,
                                             total_lock_tgas_token,
-                                            extra_data);
+                                            property_height);
     xdbg_info("xtable_blockmaker_t::set_consensus_para %s random_seed=%s,tgas_token=%" PRIu64 ",tgas_height=%" PRIu64 " leader",
         cs_para.dump().c_str(), random_seed.c_str(), total_lock_tgas_token, property_height);
     return true;
@@ -435,7 +445,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
         xassert(!proposal->get_header()->get_extra_data().empty());
         if (!proposal->get_header()->get_extra_data().empty()) {
             const std::string & extra_data = proposal->get_header()->get_extra_data();
-            xblockheader_extra_data_t blockheader_extradata;
+            xtableheader_extra_t blockheader_extradata;
             int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
             if (ret <= 0) {
                 xerror("xtable_blockmaker_t::verify_block fail-extra data invalid");
@@ -454,7 +464,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
         cs_para.set_tableblock_consensus_para(proposal->get_cert()->get_drand_height(),
                                               random_seed,
                                               total_lock_tgas_token,
-                                              proposal->get_header()->get_extra_data());
+                                              property_height);
         xdbg_info("xtable_blockmaker_t::set_consensus_para proposal=%s,random_seed=%s,tgas_token=%" PRIu64 " backup",
             proposal->dump().c_str(), random_seed.c_str(), total_lock_tgas_token);
     }

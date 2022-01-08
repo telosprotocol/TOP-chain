@@ -221,7 +221,7 @@ bool xconspacemaker_t::on_receive_timeout(xvip2_t const & from_addr, base::xcspd
         return true;
     }
 
-    uint32_t expect_version = base::xvblock_fork_t::instance().is_forked(msg->block->get_clock()) ? base::xvblock_fork_t::get_block_fork_new_version() : base::xvblock_fork_t::get_block_fork_old_version();
+    uint32_t expect_version = base::xvblock_fork_t::instance().get_expect_block_version(msg->block->get_clock());
     if (msg->block->get_block_version() != expect_version) {
         xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} version unmatch clock %" PRIu64" block:%s,expect_version=0x%x,actual_version=0x%x",
             from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str(), expect_version, msg->block->get_block_version());
