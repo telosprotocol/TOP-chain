@@ -22,25 +22,28 @@ namespace top {
     #endif
 
             xchain_fork_config_t  mainnet_chain_config{
-                xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "block fork point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
             };
 
             // !!!change!!! fork time for galileo
             xchain_fork_config_t  testnet_chain_config{
-                xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "block fork point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
            };
 
             xchain_fork_config_t default_chain_config {
-                xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "block fork point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
             };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
@@ -48,6 +51,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "v3 block fork point"},
         };
 
         // !!!change!!! fork time for galileo
@@ -56,6 +60,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "v3 block fork point"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -64,6 +69,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 0, "table statistic info fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 0, "v3 block fork point"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
@@ -85,7 +91,7 @@ namespace top {
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
             xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
-            return  xtop_chain_fork_config_center::is_forked(_fork_config.block_fork_point, target);
+            return  xtop_chain_fork_config_center::is_forked(_fork_config.V3_0_0_0_block_fork_point, target);
         }
 
         bool xtop_chain_fork_config_center::is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept {
