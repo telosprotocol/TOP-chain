@@ -19,57 +19,6 @@ namespace top
     namespace base
     {
         //////////////////////////////////xvblock and related implementation /////////////////////////////
-        int32_t xvheader_extra::serialize_to_string(std::string & str) const {
-            base::xstream_t _stream(base::xcontext_t::instance());
-            auto size = do_write(_stream);
-            str.clear();
-            str.assign((const char*)_stream.data(), _stream.size());
-            return str.size();
-        }
-
-        int32_t xvheader_extra::do_write(base::xstream_t & stream) const {
-            const int32_t begin_size = stream.size();
-            stream << static_cast<uint32_t>(m_map.size());
-            for (auto pair : m_map) {
-                stream.write_compact_var(pair.first);
-                stream.write_compact_var(pair.second);
-            }
-            return (stream.size() - begin_size);
-        }
-
-        int32_t xvheader_extra::serialize_from_string(const std::string & _data) {
-            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)_data.data(),(uint32_t)_data.size());
-            const int result = do_read(_stream);
-            return result;
-        }
-
-        int32_t xvheader_extra::do_read(base::xstream_t & stream) {
-            const int32_t begin_size = stream.size();
-            uint32_t size;
-            stream >> size;
-            for (uint32_t i = 0; i < size; ++i) {
-                std::string key;
-                std::string val;
-                stream.read_compact_var(key);
-                stream.read_compact_var(val);
-                m_map[key] = val;
-            }
-            return (begin_size - stream.size());
-        }
-
-        void xvheader_extra::insert(const std::string & key, const std::string & val) {
-            m_map[key] = val;
-        }
-
-        std::string xvheader_extra::get_val(const std::string & key) const {
-            auto it = m_map.find(key);
-            if (it != m_map.end()) {
-                return it->second;
-            } else {
-                return "";
-            }
-        }
-
         xvheader_t::xvheader_t()  //just use when seralized from db/store
             :xobject_t(enum_xobject_type_vheader)
         {
@@ -333,7 +282,6 @@ namespace top
             m_parent_height = 0;
             m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
-            m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
             m_validator.high_addr   = 0;
             m_auditor.low_addr      = 0;
@@ -342,8 +290,7 @@ namespace top
             m_cryptos   = 0;
             m_modified_count = 0;
             m_nonce      = (uint64_t)-1;
-            m_view_token = xtime_utl::get_fast_randomu();
-            set_gmtime(xtime_utl::gettimeofday());
+            m_view_token = 0; // xtime_utl::get_fast_randomu();
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -359,7 +306,6 @@ namespace top
             m_parent_height = 0;
             m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
-            m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
             m_validator.high_addr   = 0;
             m_auditor.low_addr      = 0;
@@ -370,8 +316,7 @@ namespace top
             
             m_header_hash = header_hash;
             m_nonce      = (uint64_t)-1;
-            m_view_token = xtime_utl::get_fast_randomu();
-            set_gmtime(xtime_utl::gettimeofday());
+            m_view_token = 0; // xtime_utl::get_fast_randomu();
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -387,7 +332,6 @@ namespace top
             m_parent_height = 0;
             m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
-            m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
             m_validator.high_addr   = 0;
             m_auditor.low_addr      = 0;
@@ -396,8 +340,7 @@ namespace top
             m_cryptos   = 0;
             m_modified_count = 0;
             m_nonce      = (uint64_t)-1;
-            m_view_token = xtime_utl::get_fast_randomu();
-            set_gmtime(xtime_utl::gettimeofday());
+            m_view_token = 0; // xtime_utl::get_fast_randomu();
             
             *this = other;
             
@@ -422,7 +365,6 @@ namespace top
             m_nonce             = other.m_nonce;
             m_consensus         = other.m_consensus;
             m_cryptos           = other.m_cryptos;
-            m_relative_gmtime   = other.m_relative_gmtime;
  
             m_header_hash       = other.m_header_hash;
             m_input_root_hash   = other.m_input_root_hash;
@@ -547,47 +489,6 @@ namespace top
                 else
                 {
                     m_expired = 0;
-                }
-                add_modified_count();
-                return;
-            }
-            xassert(0);
-        }
-        
-        /*
-        void    xvqcert_t::set_gmtime(const uint64_t gmtime_seconds_now) //gmtime_now could be get from (xtime_utl:gmttime_ms()/1000)
-        {
-            if(is_allow_modify())
-            {
-                if(0 == m_clock) //not allow modify it after set_clock()
-                {
-                    if(gmtime_seconds_now > (uint64_t)1573189200) //1573189200 == 2019-11-08 05:00:00  UTC
-                    {
-                        m_clock = (uint64_t)(gmtime_seconds_now - 1573189200) / 10;
-                        xinfo("xvqcert_t::set_gmtime,good gmtime_seconds_now=%" PRIu64 "",gmtime_seconds_now);
-                    }
-                    else
-                    {
-                        xwarn("xvqcert_t::set_gmtime,bad gmtime_seconds_now=%" PRIu64 " < 946713600",gmtime_seconds_now);
-                    }
-                    add_modified_count();
-                }
-                return;
-            }
-            xassert(0);
-        }
-     */
-      void    xvqcert_t::set_gmtime(const uint64_t gmtime_seconds_now) //gmtime_now could be get from (xtime_utl:gmttime_ms()/1000)
-        {
-            if(is_allow_modify())
-            {
-                if(gmtime_seconds_now > (uint64_t)1573189200) //1573189200 == 2019-11-08 05:00:00  UTC
-                {
-                    m_relative_gmtime = (uint32_t)(gmtime_seconds_now - 1573189200);
-                }
-                else
-                {
-                    m_relative_gmtime = 0;
                 }
                 add_modified_count();
                 return;
