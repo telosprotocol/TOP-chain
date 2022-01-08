@@ -918,12 +918,13 @@ namespace top
             std::string parent_cert_bin;
             parent->get_cert()->serialize_to_string(parent_cert_bin);
             xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
-            for (auto & _unit : units) {
+            for (size_t leaf_index = 0; leaf_index < out_leafs.size(); leaf_index++) {
+                auto & _unit = units[leaf_index];
                 if (!_unit->get_cert()->get_extend_cert().empty()) { // already set extend cert
                     xassert(false);
                     return true;
                 }
-                std::string _leaf = get_table_out_merkle_leaf(_unit.get());
+                auto const &_leaf = out_leafs[leaf_index];
                 base::xmerkle_path_256_t path;
                 bool ret = xvblockmaker_t::calc_merkle_path(_leaf, path, merkle);
                 if (!ret) {
