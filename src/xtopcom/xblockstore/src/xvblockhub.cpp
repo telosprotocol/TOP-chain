@@ -8,7 +8,6 @@
 #include "xbase/xcontext.h"
 #include "xmetrics/xmetrics.h"
 #include "xvblockhub.h"
-#include "xvcheckpoint.h"
 #include "xvledger/xvdbkey.h"
 #include "xdata/xcheckpoint.h"
 

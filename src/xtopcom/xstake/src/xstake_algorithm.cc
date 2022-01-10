@@ -69,15 +69,11 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
     auto CFG_VALIDATORS_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators);
     auto CFG_EDGES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_edges);
     auto CFG_ARCHIVES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives);
-    uint32_t CFG_FULLNODES_MIN = 0;
-    if (fullnode_enabled) {
-        CFG_FULLNODES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_fullnodes);
-    }
     auto CFG_TOTAL_VOTES_MIN = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes);
 
     xinfo(
         "[check_registered_nodes_active] auditor_num: %u, AUDITORS_MIN: %u, validator_num: %u, VALIDATORS_MIN: %u, archive_num: %u, ARCHIVES_MIN: %u, edge_num: %u, EDGES_MIN: %u, "
-        "fullnode_num: %u, FULLNODES_MIN: %u total_votes: %llu, TOTAL_VOTES_MIN: %llu",
+        "fullnode_num: %u, total_votes: %llu, TOTAL_VOTES_MIN: %llu",
         auditor_num,
         CFG_AUDITORS_MIN,
         validator_num,
@@ -87,12 +83,11 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         edge_num,
         CFG_EDGES_MIN,
         fullnode_num,
-        CFG_FULLNODES_MIN,
         total_votes,
         CFG_TOTAL_VOTES_MIN);
 
     return auditor_num >= CFG_AUDITORS_MIN && validator_num >= CFG_VALIDATORS_MIN && edge_num >= CFG_EDGES_MIN && archive_num >= CFG_ARCHIVES_MIN &&
-           fullnode_num >= CFG_FULLNODES_MIN && total_votes >= CFG_TOTAL_VOTES_MIN;
+           total_votes >= CFG_TOTAL_VOTES_MIN;
 }
 
 int32_t xreward_node_record::do_write(base::xstream_t & stream) const {

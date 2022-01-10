@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xerror/xchain_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xdata/xelection/xelection_group_result.h"
 #include "xdata/xerror/xerror.h"
 

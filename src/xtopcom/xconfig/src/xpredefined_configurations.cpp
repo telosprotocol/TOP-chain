@@ -115,7 +115,6 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_auditors);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_edges);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_fullnodes);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes);
 
 // xstake contracts
