@@ -32,7 +32,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
-#if defined(XCHAIN_FORKED_BY_DEFAULT)
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10208
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval);
 #endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
@@ -46,7 +46,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size);
-#if defined(XCHAIN_FORKED_BY_DEFAULT)
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10208
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_fullnode_group_size);
 #endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size);
@@ -145,9 +145,6 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_edges);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives);
-#if defined(XCHAIN_FORKED_BY_DEFAULT)
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_fullnodes);
-#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes);
 
         // xstake contracts
