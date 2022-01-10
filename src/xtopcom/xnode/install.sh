@@ -177,11 +177,9 @@ else
 fi
 
 echo $topio_home
-if [ ! -d "$TOPIO_HOME" ]; then
 sed -i "/TOPIO_HOME/d"     /etc/profile
 sed -i '$a\export TOPIO_HOME='$topio_home        /etc/profile
 source /etc/profile
-fi
 
 echo ""
 echo "############now will register topio as service##############"
@@ -257,3 +255,5 @@ echo "install $topio_name done, good luck"
 echo "now run command to check md5:  topio -v"
 echo "now run command for help info: topio -h"
 topio node safebox
+chgrp -R $username $topio_home
+chown -R $username $topio_home
