@@ -247,9 +247,6 @@ fi
 #    return
 #fi
 
-chgrp -R $username $topio_home
-chown -R $username $topio_home
-
 echo ""
 echo "install topio.service ok"
 echo "now you can use systemctl start/status/stop topio"
@@ -258,3 +255,5 @@ echo "install $topio_name done, good luck"
 echo "now run command to check md5:  topio -v"
 echo "now run command for help info: topio -h"
 topio node safebox
+chgrp -R $username $topio_home
+chown -R $username $topio_home
