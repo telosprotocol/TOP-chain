@@ -65,7 +65,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_xcscoreobj_t,
     dataobject_xblock_maker_t,
     dataobject_xblockacct_t,
-    dataobject_xtxpool_table_info_t,    
+    dataobject_xtxpool_table_info_t,
     dataobject_xacctmeta_t,
     // db bock key, see xvdbkey for specific info
     // 't/', 'i/', 'b/'
@@ -263,7 +263,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_transport_recv,
     message_transport_send,
 
-    // sync 
+    // sync
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
@@ -563,7 +563,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xevent_major_type_store,
     xevent_major_type_sync_executor,
     xevent_major_type_network,
-    xevent_major_type_dispatch,      
+    xevent_major_type_dispatch,
     xevent_major_type_deceit,
     xevent_major_type_consensus,
     xevent_major_type_transaction,
@@ -644,6 +644,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     //bft
     bft_verify_vote_msg_fail,
+    contract_table_statistic_empty_ptr,
 
     e_simple_total,
 };
@@ -893,10 +894,10 @@ public:
 #define XMETRICS_GAUGE_SET_VALUE(TAG, value) top::metrics::e_metrics::get_instance().gauge_set_value(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
-#ifndef ENABLE_METRICS_DATAOBJECT                                                                             
+#ifndef ENABLE_METRICS_DATAOBJECT
     #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)
 #else
-    #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)   XMETRICS_GAUGE(TAG, value) 
+    #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)   XMETRICS_GAUGE(TAG, value)
 #endif
 
 class simple_metrics_tickcounter {
@@ -923,7 +924,7 @@ private:
 
 #else
 #define XMETRICS_INIT()
-#define XMETRICS_INIT2(log_path) 
+#define XMETRICS_INIT2(log_path)
 #define XMETRICS_UNINT()
 #define XMETRICS_TIME_RECORD(metrics_name)
 #define XMETRICS_TIME_RECORD_KEY(metrics_name, key)
