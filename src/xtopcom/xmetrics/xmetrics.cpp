@@ -89,7 +89,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_tableblock_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_total_succ);
         RETURN_METRICS_NAME(cons_pacemaker_tc_discontinuity);
-        
+
         RETURN_METRICS_NAME(cons_table_leader_make_proposal_succ);
         RETURN_METRICS_NAME(cons_table_backup_verify_proposal_succ);
         RETURN_METRICS_NAME(cons_fail_make_proposal_table_state);
@@ -237,7 +237,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_transport_recv);
         RETURN_METRICS_NAME(message_transport_send);
 
-        // sync 
+        // sync
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
         RETURN_METRICS_NAME(xsync_recv_invalid_block);
@@ -514,7 +514,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_store);
         RETURN_METRICS_NAME(xevent_major_type_sync_executor);
         RETURN_METRICS_NAME(xevent_major_type_network);
-        RETURN_METRICS_NAME(xevent_major_type_dispatch);      
+        RETURN_METRICS_NAME(xevent_major_type_dispatch);
         RETURN_METRICS_NAME(xevent_major_type_deceit);
         RETURN_METRICS_NAME(xevent_major_type_consensus);
         RETURN_METRICS_NAME(xevent_major_type_transaction);
@@ -524,7 +524,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_role);
         RETURN_METRICS_NAME(xevent_major_type_blockfetcher);
         RETURN_METRICS_NAME(xevent_major_type_sync);
-    
+
         RETURN_METRICS_NAME(rpc_edge_tx_request);
         RETURN_METRICS_NAME(rpc_edge_query_request);
         RETURN_METRICS_NAME(rpc_auditor_tx_request);
@@ -592,6 +592,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         //bft
         RETURN_METRICS_NAME(bft_verify_vote_msg_fail);
+        RETURN_METRICS_NAME(contract_table_statistic_empty_ptr);
 
         default: assert(false); return nullptr;
     }
@@ -667,9 +668,9 @@ void e_metrics::run_process() {
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
         update_dump();
     }
-    
+
     top::metrics::handler::metrics_log_close();
-  
+
 }
 
 void e_metrics::process_message_queue() {
