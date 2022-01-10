@@ -18,10 +18,16 @@
 #include "xbase/xlog.h"
 #include "xdb/xdb.h"
 #include "xmetrics/xmetrics.h"
+#include <sys/sysinfo.h>
 
 using std::string;
 
 namespace top { namespace db {
+
+typedef enum {
+    DB_OPTIONS_DEFAULT = 0,
+    DB_OPTIONS_ADVANCED = 1,
+} DB_OPTIONS_TYPE;
 
 class xdb_rocksdb_transaction_t : public xdb_transaction_t {
 public:
@@ -168,7 +174,7 @@ public:
     
     xColumnFamily setup_default_cf();//setup Default ColumnFamily(CF),and for read&write as well
     xColumnFamily setup_universal_style_cf(const std::string & name,uint64_t memtable_memory_budget = 64 * 1024 * 1024,int num_levels = 5);
-    xColumnFamily setup_level_style_cf(const std::string & name,uint64_t memtable_memory_budget = 128 * 1024 * 1024,int num_levels = 7);
+    xColumnFamily setup_level_style_cf(const std::string & name,std::shared_ptr<rocksdb::Cache> &block_cache, uint64_t memtable_memory_budget,int num_levels = 7);
     xColumnFamily setup_fifo_style_cf(const std::string & name,uint64_t ttl = 14 * 24 * 60 * 60);//setup ColumnFamily(CF) of log only,delete after 14 day as default setting);
 
  public:
@@ -277,6 +283,9 @@ void xdb::xdb_impl::setup_default_db_options(rocksdb::Options & default_db_optio
         // printf("xdb_impl::setup_default_db_options() as default_compress \n");
     }
 
+    //test max_open_files limit
+    default_db_options.max_open_files = 4000;
+
     return ;
 }
 
@@ -350,8 +359,7 @@ xColumnFamily xdb::xdb_impl::setup_universal_style_cf(const std::string & name,u
     return cf_config;
 }
 
-//setup ColumnFamily(CF) based by OptimizeLevelStyleCompaction
-xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,uint64_t memtable_memory_budget,int num_levels)
+ xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,std::shared_ptr<rocksdb::Cache> &block_cache, uint64_t memtable_memory_budget ,int num_levels)
 {
     xColumnFamily  cf_config;
     cf_config.cf_name = name;
@@ -362,10 +370,15 @@ xColumnFamily xdb::xdb_impl::setup_level_style_cf(const std::string & name,uint6
         cf_config.cf_option.num_levels = num_levels;
     cf_config.cf_option.OptimizeLevelStyleCompaction(memtable_memory_budget);
 
-    const size_t block_size = 8 * 1024; //default is 4K -> 8K
-    std::shared_ptr<rocksdb::Cache> block_cache = rocksdb::NewLRUCache(32 << 20);//default 8M -> 32M
-    //4 Block CF -> 4 * 32 = 128M block caches
-    setup_default_cf_options(cf_config,block_size,block_cache);
+    if(NULL == block_cache) {
+        const size_t block_size = 8 * 1024; //adv size 8K
+        std::shared_ptr<rocksdb::Cache> new_cache = rocksdb::NewLRUCache(32 << 20);//32M
+        setup_default_cf_options(cf_config,block_size,new_cache);
+    } else {
+        const size_t block_size = 4 * 1024; //4K
+        setup_default_cf_options(cf_config,block_size,block_cache);
+    }
+
     if(false == cf_config.cf_option.compression_opts.enabled)//force turn off for each level
     {
         xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
@@ -517,8 +530,17 @@ xdb::xdb_impl::xdb_impl(const int db_kinds,const std::string& db_root_dir,std::v
         m_cf_handles[i] = NULL; //force to reset
     }
     
-    xkinfo("xdb_impl::init,db_root_dir=%s",db_root_dir.c_str());
-    printf("xdb_impl::init,db_root_dir=%s \n",db_root_dir.c_str());
+    struct sysinfo si;
+    sysinfo(&si);
+    DB_OPTIONS_TYPE  cache_type;
+    //free mem < 2.5G
+    if (si.totalram <= 2.5*1024*1024*1024L) {
+        cache_type = DB_OPTIONS_DEFAULT;
+    } else {
+        cache_type = DB_OPTIONS_ADVANCED;
+    }
+
+    xkinfo("xdb_impl::init,db_root_dir=%s,memory Totalram %ld, Available: %ld.cache_type:%d",db_root_dir.c_str(), si.totalram, si.freeram, cache_type);
     
     m_db_name = db_root_dir;
     xdb::xdb_impl::setup_default_db_options(m_options,m_db_kinds);//setup base options first
@@ -541,10 +563,21 @@ xdb::xdb_impl::xdb_impl(const int db_kinds,const std::string& db_root_dir,std::v
 
     if ((m_db_kinds & xdb_kind_no_multi_cf) == 0)
     {
-        cf_list.push_back(setup_level_style_cf("1")); //block 'cf[1]
-        cf_list.push_back(setup_level_style_cf("2")); //block 'cf[2]
-        cf_list.push_back(setup_level_style_cf("3")); //block 'cf[3]
-        cf_list.push_back(setup_level_style_cf("4")); //block 'cf[4]
+        if(DB_OPTIONS_DEFAULT == cache_type) {
+            uint64_t memory_budget = 64 * 1024 * 1024;
+            std::shared_ptr<rocksdb::Cache> block_cache = rocksdb::NewLRUCache(8 << 20);//default 8M
+            cf_list.push_back(setup_level_style_cf("1", block_cache, memory_budget)); //block 'cf[1]
+            cf_list.push_back(setup_level_style_cf("2", block_cache, memory_budget)); //block 'cf[2]
+            cf_list.push_back(setup_level_style_cf("3", block_cache, memory_budget)); //block 'cf[3]
+            cf_list.push_back(setup_level_style_cf("4", block_cache, memory_budget)); //block 'cf[4]
+        } else {
+            uint64_t memory_budget = 128 * 1024 * 1024;
+            std::shared_ptr<rocksdb::Cache> block_cache = NULL; //block_cache is NULL 
+            cf_list.push_back(setup_level_style_cf("1", block_cache, memory_budget)); //block 'cf[1]
+            cf_list.push_back(setup_level_style_cf("2", block_cache, memory_budget)); //block 'cf[2]
+            cf_list.push_back(setup_level_style_cf("3", block_cache, memory_budget)); //block 'cf[3]
+            cf_list.push_back(setup_level_style_cf("4", block_cache, memory_budget)); //block 'cf[4]
+        }
         //cf_list.push_back(setup_fifo_style_cf("f"));  //fifo
         //XTODO,add other CF here
     }
