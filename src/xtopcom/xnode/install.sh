@@ -177,11 +177,9 @@ else
 fi
 
 echo $topio_home
-if [ ! -d "$TOPIO_HOME" ]; then
 sed -i "/TOPIO_HOME/d"     /etc/profile
 sed -i '$a\export TOPIO_HOME='$topio_home        /etc/profile
 source /etc/profile
-fi
 
 echo ""
 echo "############now will register topio as service##############"
@@ -248,6 +246,9 @@ fi
 #    echo "install topio failed"
 #    return
 #fi
+
+chgrp -R $username $topio_home
+chown -R $username $topio_home
 
 echo ""
 echo "install topio.service ok"
