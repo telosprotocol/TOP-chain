@@ -5,7 +5,7 @@
 #include "xdata/xelection/xelection_group_result.h"
 
 #include "xbase/xlog.h"
-#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xutility.h"
 #include "xdata/xerror/xerror.h"
 

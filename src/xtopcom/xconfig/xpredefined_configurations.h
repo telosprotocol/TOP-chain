@@ -255,7 +255,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes, std::uint64_t, n
 #endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_edges, std::uint32_t, normal, 1, 0, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives, std::uint32_t, normal, 1, 0, std::numeric_limits<std::uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_fullnodes, std::uint32_t, normal, 1, 0, std::numeric_limits<std::uint32_t>::max());
 // vote:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num, uint16_t, normal, 1, 1, std::numeric_limits<uint16_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
