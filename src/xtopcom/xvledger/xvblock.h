@@ -113,19 +113,8 @@ namespace top
             enum_xvblock_character_pruneable           = 0x02,
         };
 
-        constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
-        const std::string HEADER_KEY_TXS("t");
-        class xvheader_extra {
-        public:
-            int32_t serialize_to_string(std::string & str) const;
-            int32_t do_write(base::xstream_t & stream) const;
-            int32_t serialize_from_string(const std::string & _data);
-            int32_t do_read(base::xstream_t & stream);
-            void insert(const std::string & key, const std::string & val);
-            std::string get_val(const std::string & key) const;
-        private:
-            std::map<std::string, std::string> m_map;
-        };
+        constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;//1573189200 == 2019-11-08 05:00:00  UTC
+
         //The definition of version defintion for binary of node and block:[8:Features][8:MAJOR][8:MINOR][8:PATCH]
             //Features: added new featurs that need most node agree then make it effect,refer BIP8 spec
             //MAJOR： version when make incompatible API changes
@@ -451,7 +440,6 @@ namespace top
             uint64_t            m_parent_height;    //height of container(like tableblock) that carry this sub-block
             uint64_t            m_parent_viewid;    //viewid of container(like tableblock) that carry this sub-block
             uint64_t            m_drand_height;     //height/round of d-rand
-            uint32_t            m_relative_gmtime;  //seconds since 2019-11-08 05:00:00 UTC(2019-11-08 13:00:00 UTC+8)
 
             xvip2_t             m_validator;        //XIP address about who issue this block or who is leader
             xvip2_t             m_auditor;          //XIP address(wild* address) about who(a cluster or a subset) should audit this block
@@ -658,6 +646,8 @@ namespace top
             inline  enum_xvblock_class  get_block_class() const {return m_vheader_ptr->get_block_class();}
             inline  enum_xvblock_type   get_block_type()  const {return m_vheader_ptr->get_block_type();}
             inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
+            inline  uint64_t            get_timestamp()   const {return m_vqcert_ptr->get_gmtime();}  // default timestamp is clock level gmtime, which is used for tx execute
+            virtual uint64_t            get_second_level_gmtime() const {return 0;}  // table-block has second level gmtime used for performance statistics
 
             //note:block'hash actually = cert'hash
             inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}

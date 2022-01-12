@@ -66,7 +66,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
                     std::error_code broadcast_ec;
                     network->broadcast(to.xip2(), msg, broadcast_ec);
                     if (broadcast_ec) {
-                        xerror("validator forward to auditor failed. src %s dst %s", network->address().to_string().c_str(), to.to_string().c_str());
+                        xwarn("validator forward to auditor failed. src %s dst %s", network->address().to_string().c_str(), to.to_string().c_str());
                     }
                     forward = true;
 #ifdef DEBUG

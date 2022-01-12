@@ -1369,8 +1369,15 @@ namespace top
                         }
                     }
 
+                    if (NULL == _proposal->get_proposal_cert()) {
+                        xwarn("xBFTdriver_t::fire_verify_proposal_job,fail-bad signature tested by verify_sign for cert is null,at node=0x%llx",
+                              replica_xip.low_addr);
+                        return true;
+                    }
+
                     XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
-                    if(get_vcertauth()->verify_sign(leader_xip,_proposal->get_proposal_cert(),_proposal->get_block()->get_account()) == base::enum_vcert_auth_result::enum_successful)//first verify leader'signature as well
+                    const std::string sign_hash = _proposal->get_proposal_cert()->get_hash_to_sign();
+                    if(get_vcertauth()->verify_sign(leader_xip,_proposal->get_proposal_cert(),_proposal->get_block()->get_account(), sign_hash) == base::enum_vcert_auth_result::enum_successful)//first verify leader'signature as well
                     {
                         const int result_of_verify_proposal = verify_proposal(_proposal->get_block(),_bind_xclock_cert,this);
                         _proposal->set_result_of_verify_proposal(result_of_verify_proposal);
@@ -1381,7 +1388,7 @@ namespace top
                             _proposal->get_proposal_cert()->set_audit_signature(empty); //reset cert
 
                             XMETRICS_GAUGE(metrics::cpu_ca_do_sign_xbft, 1);
-                            const std::string signature = get_vcertauth()->do_sign(replica_xip, _proposal->get_proposal_cert(),base::xtime_utl::get_fast_random64());//sign for this proposal at replica side
+                            const std::string signature = get_vcertauth()->do_sign(replica_xip, _proposal->get_proposal_cert(),base::xtime_utl::get_fast_random64(), sign_hash);//sign for this proposal at replica side
 
                             if(_proposal->get_proposal_cert()->is_validator(replica_xip.low_addr))
                                 _proposal->get_proposal_cert()->set_verify_signature(signature); //verification node

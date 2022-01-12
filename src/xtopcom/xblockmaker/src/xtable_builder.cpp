@@ -140,7 +140,6 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     xtable_block_para_t lighttable_para;
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
-    lighttable_para.set_extra_data(cs_para.get_extra_data());
     lighttable_para.set_tgas_balance_change(lighttable_build_para->get_tgas_balance_change());
     std::string fullstate_bin;
     proposal_bstate->take_snapshot(fullstate_bin);

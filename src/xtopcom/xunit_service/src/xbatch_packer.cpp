@@ -19,7 +19,8 @@
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
 
-#define CONFIRM_DELAY_TOO_MUCH_TIME (20)
+#define MIN_TRANSACTION_NUM_FOR_FIRST_PACKING (10)
+
 
 xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
                              base::xtable_index_t                             &tableid,
@@ -112,7 +113,7 @@ void xbatch_packer::invoke_sync(const std::string & account, const std::string &
 #endif
 }
 
-bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
+bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t min_tx_num) {
     if (latest_blocks.get_latest_cert_block() == nullptr
         || latest_blocks.get_latest_locked_block() == nullptr
         || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future        
@@ -123,7 +124,8 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     }
 
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
-    xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1);
+    uint64_t gmtime = base::xtime_utl::gettimeofday();
+    xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, gmtime);
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
@@ -156,7 +158,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     set_xip(proposal_para, local_xip);  // set leader xip
 
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
-    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
+    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num);
     if (proposal_block == nullptr) {
         xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
@@ -175,6 +177,8 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);
     xunit_info("xbatch_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
             proposal_block->dump().c_str(), this, m_para->get_resources()->get_account().c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
+    
+    XMETRICS_GAUGE(metrics::cons_packtx_with_threshold, (min_tx_num > 0) ? 1 : 0);
     return true;
 }
 
@@ -263,7 +267,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     }
 
     m_is_leader = true;
-    m_leader_packed = start_proposal(latest_blocks);
+    m_leader_packed = start_proposal(latest_blocks, calculate_min_tx_num(true));
     return true;
 }
 
@@ -273,7 +277,7 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
-    m_leader_packed = start_proposal(latest_blocks);
+    m_leader_packed = start_proposal(latest_blocks, calculate_min_tx_num(false));
     return true;
 }
 
@@ -544,6 +548,14 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
         XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
     }
+}
+
+uint32_t xbatch_packer::calculate_min_tx_num(bool first_packing) {
+    uint32_t min_tx_num = 0;
+    if (first_packing) {
+        min_tx_num = MIN_TRANSACTION_NUM_FOR_FIRST_PACKING;
+    }
+    return min_tx_num;
 }
 
 NS_END2

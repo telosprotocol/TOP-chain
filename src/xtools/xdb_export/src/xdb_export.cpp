@@ -999,7 +999,7 @@ void xdb_export_tools_t::read_info_from_table_block(const data::xblock_t * block
         table_info.light_table_block_num++;
     }
 
-    const uint64_t timestamp = block->get_timestamp();
+    const uint64_t timestamp = block->get_second_level_gmtime();
 
     auto unit_headers = block->get_sub_block_headers();
     table_info.total_unit_block_num += unit_headers.size();
@@ -1088,7 +1088,8 @@ void xdb_export_tools_t::set_txinfos_to_json(json & j, const std::vector<tx_ext_
 
 void xdb_export_tools_t::set_confirmed_txinfo_to_json(json & j, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {
     uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp - send_txinfo.timestamp;
-    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp > send_txinfo.fire_timestamp;
+    uint64_t adjust_tx_fire_timestamp = send_txinfo.fire_timestamp < send_txinfo.timestamp ? send_txinfo.fire_timestamp : send_txinfo.timestamp;
+    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp - adjust_tx_fire_timestamp;
 
     json tx;
     tx["time cost"] = delay_from_send_to_confirm;
@@ -1104,10 +1105,13 @@ void xdb_export_tools_t::set_confirmed_txinfo_to_json(json & j, const tx_ext_t &
     j[send_txinfo.hash] = tx;
 }
 
-void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {
-    uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp - send_txinfo.timestamp;
+void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {    
+    // the second level timestamp of confirm block may less than send block
+    uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp > send_txinfo.timestamp ? (confirm_txinfo.timestamp - send_txinfo.timestamp) : 0;
+    // the timestamp of send block may less than the timestamp of tx fire_timestamp
     uint64_t adjust_tx_fire_timestamp = send_txinfo.fire_timestamp < send_txinfo.timestamp ? send_txinfo.fire_timestamp : send_txinfo.timestamp;
-    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp - adjust_tx_fire_timestamp;
+    // the second level timestamp of confirm block may less than send block
+    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp > adjust_tx_fire_timestamp ? (confirm_txinfo.timestamp - adjust_tx_fire_timestamp) : 0;
 
     table_info.total_confirm_time_from_send += delay_from_send_to_confirm;
     if (delay_from_send_to_confirm > table_info.max_confirm_time_from_send) {
@@ -1145,7 +1149,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
             m_blockstore->load_block_input(_vaccount, vblock.get());
         }
 
-        const uint64_t timestamp = block->get_timestamp();
+        const uint64_t timestamp = block->get_second_level_gmtime();
         if (timestamp < start_timestamp || timestamp > end_timestamp) {
             continue;
         }

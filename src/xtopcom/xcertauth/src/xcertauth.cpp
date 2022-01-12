@@ -35,9 +35,13 @@ namespace top
             //random_seed allow pass a customzied random seed to provide unique signature,it ask xvcertauth_t generate one if it is 0
             //signature by owner ' private-key
             virtual const std::string    do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,const uint64_t random_seed)  override;
+            virtual const std::string    do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert, 
+                                                 const uint64_t random_seed, const std::string sign_hash) override;
             virtual const std::string    do_sign(const xvip2_t & signer,const base::xvblock_t * sign_for_block,const uint64_t random_seed) override;
 
             virtual base::enum_vcert_auth_result     verify_sign(const xvip2_t & signer,const base::xvqcert_t * test_for_cert,const std::string & block_account)  override;
+            virtual base::enum_vcert_auth_result     verify_sign(const xvip2_t & signer,const base::xvqcert_t * test_for_cert,
+                                                                 const std::string & block_account, const std::string sign_hash) override;
             virtual base::enum_vcert_auth_result     verify_sign(const xvip2_t & signer,const base::xvblock_t * test_for_block) override;
 
         public:
@@ -60,7 +64,8 @@ namespace top
 
         private:
             const std::string   do_sign_impl(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,const uint64_t random_seed);
-            base::enum_vcert_auth_result            verify_sign_impl(const xvip2_t & signer,const base::xvqcert_t * test_for_cert);
+            const std::string   do_sign_impl(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,const uint64_t random_seed, const std::string ask_sign_hash);
+            base::enum_vcert_auth_result            verify_sign_impl(const xvip2_t & signer,const base::xvqcert_t * test_for_cert, const std::string ask_verify_hash);
             base::enum_vcert_auth_result            verify_muti_sign_impl(const base::xvqcert_t * test_for_cert);
 
             xauthscheme_t*       get_auth_scheme(const base::xvqcert_t * test_for_cert);
@@ -206,6 +211,16 @@ namespace top
         ///////////////////////////////////////////do_sign/////////////////////////////////////////////////////////
         const std::string    xauthcontext_t_impl::do_sign_impl(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,const uint64_t random_seed)
         {
+            if (NULL == sign_for_cert) {
+                xerror("xauthcontext_t_impl::do_sign_impl, sign_for_cert is null ");
+                return std::string();
+            }
+            const std::string ask_sign_hash = sign_for_cert->get_hash_to_sign();
+            return do_sign_impl(signer, sign_for_cert, random_seed, ask_sign_hash);
+        }
+        const std::string   xauthcontext_t_impl::do_sign_impl(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,
+                                                              const uint64_t random_seed, const std::string ask_sign_hash)
+        {
             if(sign_for_cert->get_consensus_type() != base::enum_xconsensus_type_xhbft)
             {
                 xerror("xauthcontext_t_impl::do_sign,fail-cert_auth requrest enum_xconsensus_type_xhbft for cert:%s",sign_for_cert->dump().c_str());
@@ -224,7 +239,6 @@ namespace top
                 xerror("xauthcontext_t_impl::do_sign,fail-found target nodes for signer(%" PRIx64 " : %" PRIx64 ")",signer.high_addr,signer.low_addr);
                 return std::string();
             }
-            const std::string ask_sign_hash = sign_for_cert->get_hash_to_sign();
             const uint64_t auth_mutisign_token = sign_for_cert->get_viewid() + sign_for_cert->get_viewtoken();
             return auth_scheme_obj->do_sign(*signer_node, ask_sign_hash, random_seed,auth_mutisign_token);
         }
@@ -233,12 +247,21 @@ namespace top
             if(NULL == sign_for_cert)
                 return std::string();
 
+            const std::string ask_sign_hash = sign_for_cert->get_hash_to_sign();
+            return do_sign(signer, sign_for_cert, random_seed, ask_sign_hash);
+        }
+        const std::string  xauthcontext_t_impl::do_sign(const xvip2_t & signer, const base::xvqcert_t * sign_for_cert, 
+                                                        const uint64_t random_seed, const std::string sign_hash)
+        {
+             if(NULL == sign_for_cert)
+                return std::string();
+
             if(false == sign_for_cert->is_valid()) //do valid test before do sign cert
             {
                 xerror("xauthcontext_t_impl::do_sign,fail-pass the valid test for cert:%s",sign_for_cert->dump().c_str());
                 return std::string();
             }
-            return do_sign_impl(signer,sign_for_cert,random_seed);
+            return do_sign_impl(signer, sign_for_cert, random_seed, sign_hash);
         }
         const std::string    xauthcontext_t_impl::do_sign(const xvip2_t & signer,const base::xvblock_t * sign_for_block,const uint64_t random_seed)
         {
@@ -254,7 +277,7 @@ namespace top
         }
 
         ///////////////////////////////////////////verify_sign/////////////////////////////////////////////////////////
-        base::enum_vcert_auth_result   xauthcontext_t_impl::verify_sign_impl(const xvip2_t & signer,const base::xvqcert_t * test_for_cert)
+        base::enum_vcert_auth_result   xauthcontext_t_impl::verify_sign_impl(const xvip2_t & signer,const base::xvqcert_t * test_for_cert, const std::string ask_verify_hash)
         {
             if(test_for_cert->get_consensus_type() != base::enum_xconsensus_type_xhbft)
             {
@@ -274,7 +297,6 @@ namespace top
                 return base::enum_vcert_auth_result::enum_nodes_notfound;
             }
             const uint64_t auth_mutisign_token = test_for_cert->get_viewid() + test_for_cert->get_viewtoken();
-            const std::string ask_verify_hash = test_for_cert->get_hash_to_sign();
             if(test_for_cert->is_validator(signer))
             {
                 if(verify_scheme_obj->verify_sign(*verify_node, ask_verify_hash, test_for_cert->get_verify_signature(),auth_mutisign_token))
@@ -293,6 +315,15 @@ namespace top
             if(NULL == test_for_cert)
                 return base::enum_vcert_auth_result::enum_bad_cert;
 
+            const std::string sign_hash = test_for_cert->get_hash_to_sign();
+            return verify_sign(signer, test_for_cert, block_account, sign_hash);
+        }
+        base::enum_vcert_auth_result     xauthcontext_t_impl::verify_sign(const xvip2_t & signer,const base::xvqcert_t * test_for_cert,
+                                                     const std::string & block_account, const std::string sign_hash)
+        {
+            if(NULL == test_for_cert)
+                return base::enum_vcert_auth_result::enum_bad_cert;
+
             if(false == verify_validator_addr(block_account,test_for_cert))
             {
                 xerror("xauthcontext_t_impl::verify_sign,fail-validator address for block:%s",test_for_cert->dump().c_str());
@@ -304,7 +335,7 @@ namespace top
                 xerror("xauthcontext_t_impl::verify_sign,fail-an undeliver cert:%s",test_for_cert->dump().c_str());
                 return base::enum_vcert_auth_result::enum_bad_cert;
             }
-            base::enum_vcert_auth_result result = verify_sign_impl(signer,test_for_cert);
+            base::enum_vcert_auth_result result = verify_sign_impl(signer,test_for_cert, sign_hash);
             if(result != base::enum_vcert_auth_result::enum_successful)
                 xwarn("xauthcontext_t_impl::verify_sign,fail-with error code:%d",result);
             return result;

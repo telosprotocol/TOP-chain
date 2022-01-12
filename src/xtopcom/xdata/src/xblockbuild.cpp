@@ -15,6 +15,7 @@
 #include "xvledger/xventity.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
+#include "xvledger/xvblock_fork.h"
 
 NS_BEG2(top, data)
 
@@ -24,54 +25,181 @@ XINLINE_CONSTEXPR char const * BLD_URI_LIGHT_UNIT       = "b_lu//"; //xvcontract
 XINLINE_CONSTEXPR char const * BLD_URI_FULL_UNIT        = "b_fu//"; //xvcontract_t::create_contract_uri(b_fu, {}, 0)
 XINLINE_CONSTEXPR char const * BLD_URI_ROOT_BLOCK       = "b_rb//"; //xvcontract_t::create_contract_uri(b_rb, {}, 0)
 
-base::xvaction_t make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result = {}) {
-    std::string caller_addr;  // empty means version0, no caller addr
-    // std::string contract_addr;
-    // std::string contract_name; // empty means version0, default contract
-    // uint32_t    contract_version = 0;
-    // std::string target_uri = xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
-    std::string method_name = "b";
-    std::string tx_hash;
-
-    base::xvaction_t _tx_action(tx_hash, caller_addr, target_uri, method_name);
-    if (!action_result.empty()) {
-        base::xvalue_t _action_result(action_result);
-        _tx_action.copy_result(_action_result);
-    }
-    xassert(!_tx_action.get_method_uri().empty());
-    return _tx_action;
+int32_t xtableheader_extra_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << m_paras;
+    return CALC_LEN();
 }
 
-base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string & target_uri, uint32_t block_version, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height) {
-    if (base::xvblock_fork_t::is_block_match_version(block_version, base::enum_xvblock_fork_version_table_prop_prove)) {
-        // xassert(!para.get_property_hashs().empty());  // XTODO maybe empty for only self txs
-        xassert(height > 0);
-        xtableblock_action_t _action(target_uri, property_hashs, tableid, height);       
-        return static_cast<base::xvaction_t>(_action);
+int32_t xtableheader_extra_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> m_paras;
+    return CALC_LEN();
+}
+
+int32_t xtableheader_extra_t::deserialize_from_string(const std::string & extra_data) {
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)extra_data.data(), (uint32_t)extra_data.size());
+    return serialize_from(_stream);
+}
+
+int32_t xtableheader_extra_t::serialize_to_string(std::string & extra_data) {
+    if (!m_paras.empty()) {
+        base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+        int32_t ret = serialize_to(_stream);
+        extra_data.clear();
+        extra_data.assign((const char *)_stream.data(), _stream.size());
+        return ret;
+    }
+    return 0;
+}
+
+uint64_t xtableheader_extra_t::get_tgas_total_lock_amount_property_height() const {
+    auto iter = m_paras.find(enum_extra_data_type_tgas_total_lock_amount_property_height);
+    if (iter == m_paras.end()) {
+        return 0;
     } else {
-        base::xvaction_t _action = make_block_build_action(target_uri);
-        return _action;
+        return base::xstring_utl::touint64(iter->second);
     }
 }
 
-std::string get_header_extra(const xlightunit_block_para_t & bodypara) {
+void xtableheader_extra_t::set_tgas_total_lock_amount_property_height(uint64_t height) {
+    std::string height_str = base::xstring_utl::tostring(height);
+    m_paras[enum_extra_data_type_tgas_total_lock_amount_property_height] = height_str;
+}
+
+uint64_t xtableheader_extra_t::get_second_level_gmtime() const {
+    auto iter = m_paras.find(enum_extra_data_type_tgas_second_level_gmtime);
+    if (iter == m_paras.end()) {
+        return 0;
+    } else {
+        return base::xstring_utl::touint64(iter->second);
+    }
+}
+
+void     xtableheader_extra_t::set_second_level_gmtime(uint64_t gmtime) {
+    std::string value = base::xstring_utl::tostring(gmtime);
+    m_paras[enum_extra_data_type_tgas_second_level_gmtime] = value;
+}
+
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime) {
+    if (_tableheader->get_height() == 0) {
+        // genesis block should not set extra
+        return {};
+    }
+
+    xtableheader_extra_t header_extra;  
+    if (base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
+        // before v3.0.0, only light-table set tgas height
+        if (_tableheader->get_block_class() == base::enum_xvblock_class_light) {
+            header_extra.set_tgas_total_lock_amount_property_height(tgas_height);
+        } else {
+            return {};
+        }
+    } else {
+        // after v3.0.0, only light-table set tgas height, and all class table should set gmtime
+        if (_tableheader->get_block_class() == base::enum_xvblock_class_light) {
+            header_extra.set_tgas_total_lock_amount_property_height(tgas_height);
+        }
+        header_extra.set_second_level_gmtime(gmtime);
+    }
+    std::string extra_string;
+    header_extra.serialize_to_string(extra_string);
+    return extra_string;
+}
+
+
+int32_t xunitheader_extra_t::serialize_to_string(std::string & str) const {
+    base::xstream_t _stream(base::xcontext_t::instance());
+    auto size = do_write(_stream);
+    str.clear();
+    str.assign((const char*)_stream.data(), _stream.size());
+    return str.size();
+}
+
+int32_t xunitheader_extra_t::do_write(base::xstream_t & stream) const {
+    const int32_t begin_size = stream.size();
+    stream << static_cast<uint32_t>(m_map.size());
+    for (auto pair : m_map) {
+        stream.write_compact_var(pair.first);
+        stream.write_compact_var(pair.second);
+    }
+    return (stream.size() - begin_size);
+}
+
+int32_t xunitheader_extra_t::serialize_from_string(const std::string & _data) {
+    base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)_data.data(),(uint32_t)_data.size());
+    const int result = do_read(_stream);
+    return result;
+}
+
+int32_t xunitheader_extra_t::do_read(base::xstream_t & stream) {
+    const int32_t begin_size = stream.size();
+    uint32_t size;
+    stream >> size;
+    for (uint32_t i = 0; i < size; ++i) {
+        std::string key;
+        std::string val;
+        stream.read_compact_var(key);
+        stream.read_compact_var(val);
+        m_map[key] = val;
+    }
+    return (begin_size - stream.size());
+}
+
+void xunitheader_extra_t::insert(const std::string & key, const std::string & val) {
+    m_map[key] = val;
+}
+
+std::string xunitheader_extra_t::get_val(const std::string & key) const {
+    auto it = m_map.find(key);
+    if (it != m_map.end()) {
+        return it->second;
+    } else {
+        return "";
+    }
+}
+
+std::vector<base::xvtxkey_t>    xunitheader_extra_t::get_txkeys() const {
+    auto txs_str = get_val(KEY_HEADER_KEY_TXS);
+    if (txs_str.empty()) {
+        return std::vector<base::xvtxkey_t>{};
+    }
+
+    base::xvtxkey_vec_t txs;
+    txs.serialize_from_string(txs_str);
+    return txs.get_txkeys();
+}
+
+void    xunitheader_extra_t::set_txkeys(const base::xvtxkey_vec_t & txkeys) {
+    xassert(!txkeys.get_txkeys().empty());
+    std::string str;
+    txkeys.serialize_to_string(str);
+
+    insert(KEY_HEADER_KEY_TXS, str);
+}
+
+std::string xunitheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara) {
+    if ( (_tableheader->get_height() == 0) // genesis block should not set extra
+        || (_tableheader->get_block_class() == base::enum_xvblock_class_nil)// nil unit should not set extra
+        || (base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) ) { // before unit opt version should not set extra
+        return {};
+    }
+
     base::xvtxkey_vec_t txs;
     for (auto & tx : bodypara.get_input_txs()) {
         base::xvtxkey_t tx_key(tx->get_tx_hash(), tx->get_tx_subtype());
         txs.push_back(tx_key);
-        xdbg("xlightunit_build_t::get_header_extra tx hash:%s, type:%s", tx->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
+        xdbg("xunitheader_extra_t::build_extra_string tx=%s", tx_key.get_tx_dump_key().c_str());
     }
-    std::string str;
-    txs.serialize_to_string(str);
 
-    base::xvheader_extra he;
-    he.insert(base::HEADER_KEY_TXS, str);
+    xunitheader_extra_t he;
+    he.set_txkeys(txs);
     std::string he_str;
     he.serialize_to_string(he_str);
     return he_str;
 }
 
-base::xvaction_t make_action(const xcons_transaction_ptr_t & tx) {
+base::xvaction_t xblockaction_build_t::make_tx_action(const xcons_transaction_ptr_t & tx) {
     std::string caller_addr;  // empty means version0, no caller addr
     std::string contract_addr = tx->get_account_addr();
     std::string contract_name; // empty means version0, default contract
@@ -89,26 +217,47 @@ base::xvaction_t make_action(const xcons_transaction_ptr_t & tx) {
     return _tx_action;
 }
 
+base::xvaction_t xblockaction_build_t::make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result) {
+    std::string caller_addr;  // empty means version0, no caller addr
+    // std::string contract_addr;
+    // std::string contract_name; // empty means version0, default contract
+    // uint32_t    contract_version = 0;
+    // std::string target_uri = xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
+    std::string method_name = "b";
+    std::string tx_hash;
+
+    base::xvaction_t _tx_action(tx_hash, caller_addr, target_uri, method_name);
+    if (!action_result.empty()) {
+        base::xvalue_t _action_result(action_result);
+        _tx_action.copy_result(_action_result);
+    }
+    xassert(!_tx_action.get_method_uri().empty());
+    return _tx_action;
+}
+
+base::xvaction_t xblockaction_build_t::make_table_block_action_with_table_prop_prove(const std::string & target_uri, uint32_t block_version, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height) {
+    if (base::xvblock_fork_t::is_block_match_version(block_version, base::enum_xvblock_fork_version_table_prop_prove)) {
+        // xassert(!para.get_property_hashs().empty());  // XTODO maybe empty for only self txs
+        xassert(height > 0);
+        xtableblock_action_t _action(target_uri, property_hashs, tableid, height);       
+        return static_cast<base::xvaction_t>(_action);
+    } else {
+        base::xvaction_t _action = xblockaction_build_t::make_block_build_action(target_uri);
+        return _action;
+    }
+}
+
 xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
-    base::xvaction_t _action = data::make_action(tx);
+    base::xvaction_t _action = xblockaction_build_t::make_tx_action(tx);
     xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
     return txinfo;
 }
 
-bool xlightunit_build_t::should_build_unit_opt(const uint64_t clock, const uint64_t height) {
-    // genesis block never fork
-    if (height > 0 && base::xvblock_fork_t::instance().is_forked(clock)) {
-        return true;
-    }
-    return false;
-}
-
 xlightunit_build_t::xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara) {
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, base::enum_xvblock_level_unit, base::enum_xvblock_class_light, xrootblock_t::get_rootblock_hash());
-    if (should_build_unit_opt(build_para.get_clock(), build_para.get_height())) {
-        build_para.set_extra_data(get_header_extra(bodypara));
-    }
     init_header_qcert(build_para);
+    std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);
+    set_header_extra(extra_data);
     build_block_body(bodypara);
 }
 
@@ -116,10 +265,9 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xlight
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_txs);
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                   para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
-    if (should_build_unit_opt(build_para.get_clock(), build_para.get_height())) {
-        build_para.set_extra_data(get_header_extra(bodypara));
-    }
     init_header_qcert(build_para);
+    std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);
+    set_header_extra(extra_data);
     build_block_body(bodypara);
 }
 xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
@@ -133,7 +281,7 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
     if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
         xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
         for (auto & tx : para.get_input_txs()) {
-            base::xvaction_t _action = make_action(tx);
+            base::xvaction_t _action = xblockaction_build_t::make_tx_action(tx);
             input_actions.push_back(_action);
         }
         set_input_entity(input_actions);
@@ -154,7 +302,7 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
         set_output_entity(base::xvoutentity_t::key_name_unconfirm_tx_count(), unconfirm_tx_num_str);
     } else {
         xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
-        base::xvaction_t _action = make_block_build_action(BLD_URI_LIGHT_UNIT);
+        base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_LIGHT_UNIT);
         input_actions.push_back(_action);
         set_input_entity(input_actions);
     }
@@ -199,6 +347,10 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblo
         build_para.set_basic_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator());
     }
     init_header_qcert(build_para);
+    if ((prev_block->get_block_level() == base::enum_xvblock_level_table)) {
+        std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+        set_header_extra(_extra_data);
+    }
 }
 
 xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block) {
@@ -219,12 +371,10 @@ xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfulluni
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
-
-    if (xlightunit_build_t::should_build_unit_opt(build_para.get_clock(), build_para.get_height())) {
-        build_para.set_extra_data(get_header_extra(bodypara));
-    }
     
     init_header_qcert(build_para);
+    std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);
+    set_header_extra(extra_data);
     build_block_body(bodypara);
 }
 
@@ -235,7 +385,7 @@ xfullunit_build_t::xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* 
 
 bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_FULL_UNIT);
+    base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_FULL_UNIT);
     set_input_entity(_action);
 
     xdbg("fullunit block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
@@ -253,18 +403,19 @@ base::xauto_ptr<base::xvblock_t> xfullunit_build_t::create_new_block() {
 
 xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para) {
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_batch);
-    xassert(!bodypara.get_extra_data().empty());
-    build_para.set_extra_data(bodypara.get_extra_data()); // only light-table need extra data
+
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+    set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
 
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_table_block_action_with_table_prop_prove(BLD_URI_LIGHT_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
+    base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_LIGHT_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     xdbg("xlighttable_build_t::build_block_body. account=%s,height=%ld,version=%ld,tx size:%zu", account.get_account().c_str(), height, get_header()->get_block_version(), para.get_txs().size());
     if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
         set_input_entity(_action);
@@ -499,12 +650,14 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
                                     para.get_drand_height(), para.get_justify_cert_hash());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+    set_header_extra(_extra_data);    
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
 
 bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
+    base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
     xdbg("xfulltable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
     // #2 set output entitys and resources
@@ -535,7 +688,7 @@ xrootblock_build_t::xrootblock_build_t(base::enum_xchain_id chainid, const std::
 
 bool xrootblock_build_t::build_block_body(const xrootblock_para_t & para) {
     // #1 set input entitys and resources
-    base::xvaction_t _action = make_block_build_action(BLD_URI_ROOT_BLOCK);
+    base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_ROOT_BLOCK);
     set_input_entity(_action);
 
     xobject_ptr_t<xrootblock_input_t> input = make_object_ptr<xrootblock_input_t>();
