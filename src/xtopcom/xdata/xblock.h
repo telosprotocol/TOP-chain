@@ -168,7 +168,7 @@ class xblock_consensus_para_t {
     const xvip2_t &         get_validator() const {return m_validator;}
     const xvip2_t &         get_auditor() const {return m_auditor;}
     uint64_t                get_total_lock_tgas_token() const {return m_total_lock_tgas_token;}
-    uint64_t                get_tgas_height() const {return m_m_total_lock_tgas_token_property_height;}
+    uint64_t                get_tgas_height() const {return m_total_lock_tgas_token_property_height;}
     const std::string &     get_justify_cert_hash() const {return m_justify_cert_hash;}
     uint64_t                get_proposal_height() const {return m_proposal_height;}
     const std::string &     get_table_account() const {return m_account;}
@@ -190,7 +190,7 @@ class xblock_consensus_para_t {
     uint64_t        m_drand_height{0};
     std::string     m_random_seed;
     uint64_t        m_total_lock_tgas_token{0};
-    uint64_t        m_m_total_lock_tgas_token_property_height{0};
+    uint64_t        m_total_lock_tgas_token_property_height{0};
     std::string     m_dump_str;
     xblock_ptr_t    m_drand_block{nullptr};
     xblock_ptr_t    m_latest_cert_block{nullptr};
