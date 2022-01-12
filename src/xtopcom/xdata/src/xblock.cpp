@@ -96,7 +96,7 @@ void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t drand_heigh
     m_drand_height = drand_height;
     m_random_seed = random_seed;
     m_total_lock_tgas_token = total_lock_tgas_token;
-    m_m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
+    m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
 }
 
 xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
