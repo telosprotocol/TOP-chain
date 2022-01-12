@@ -454,7 +454,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         ->check(CLI::Range((uint16_t)0, (uint16_t)100))
         ->default_val(0);
     registerMiner_app->add_option(
-        "-m,--miner_key", node_sign_key, "Use your default account‘s owner key or worker key for mining. The default is the owner key. Please pass in the public key here.");
+        "-m,--miner_key", node_sign_key, "Use your default account's owner key or worker key for mining. The default is the owner key. Please pass in the public key here.");
     registerMiner_app->callback(std::bind(&ApiMethod::register_node,
                                           &topcl.api,
                                           std::ref(registerMiner_amount),

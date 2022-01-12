@@ -38,11 +38,11 @@ int main(int argc, char * argv[]) {
     data::xrootblock_para_t rootblock_para;
     if (false == genesis_loader->extract_genesis_para(rootblock_para)) {
         std::cout << "create_rootblock extract genesis para fail" << std::endl;
-        return false;
+        return 0;
     }
     if (false == data::xrootblock_t::init(rootblock_para)) {
         std::cout << "create_rootblock rootblock init fail" << std::endl;
-        return false;
+        return 0;
     }
 
     testing::InitGoogleTest(&argc, argv);

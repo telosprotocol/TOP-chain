@@ -876,6 +876,13 @@ namespace top
         //load every index of block at target_height into cache layer
         int   xblockacct_t::load_index(const uint64_t target_height)
         {
+            uint64_t delete_height = get_latest_deleted_block_height();
+            if (delete_height > 0 && target_height <= delete_height)
+            {
+                xerror("xblockacct_t::load_index load account:%s height:%llu lower than delete height, meta:%s", get_account().c_str(), target_height, dump().c_str());
+                return 0;
+            }
+
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height
             {
@@ -1553,13 +1560,18 @@ namespace top
             for(uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
             {
                 const uint64_t try_height = m_meta->_highest_cp_connect_block_height + 1;
+                if (try_height < get_latest_deleted_block_height())
+                {
+                    xwarn("xblockacct_t::fully_update_cp_connect height:%llu lower than delete height, meta:%s", try_height, dump().c_str());
+                    return;
+                }
                 if(load_index(try_height) == 0) //missed block
                     break;
                 
                 base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
                 if(!next_commit) //don't have commited block
                 {
-                    xwarn("xblockacct_t::fully_update_cp_connect not existed, account:%s,height:%llu", get_account().c_str(), try_height);
+                    xwarn("xblockacct_t::fully_update_cp_connect account:%s,height:%llu not commit, highest_commit_height:%llu", get_account().c_str(), try_height, m_meta->_highest_commit_block_height);
                     break;
                 }
 
@@ -1645,6 +1657,11 @@ namespace top
                 for(uint64_t h = m_meta->_highest_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_connect_block_height + 1;
+                    if (try_height < get_latest_deleted_block_height())
+                    {
+                        xwarn("xblockacct_t::full_connect_to height:%llu lower than delete height, meta:%s", try_height, dump().c_str());
+                        return;
+                    }
                     if(load_index(try_height) == 0) //missed block
                         break;
                     
