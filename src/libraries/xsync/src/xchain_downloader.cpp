@@ -101,6 +101,13 @@ bool xchain_downloader_t::on_timer(int64_t now) {
             } else {
                 interval.first = m_chain_objects[index].height();
             }
+        } else if (index == enum_chain_sync_policy_checkpoint) {
+            uint64_t cp_height = m_sync_store->get_latest_end_block_height(m_address, enum_chain_sync_policy_checkpoint);
+            if (cp_height > m_chain_objects[index].height()) {
+                interval.first = cp_height + 1;
+            } else {
+                interval.first = m_chain_objects[index].height();
+            }
         }
 
         m_current_object_index = index;
