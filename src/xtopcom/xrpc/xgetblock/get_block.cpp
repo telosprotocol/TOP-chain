@@ -132,7 +132,7 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["group_id"] = addr.group_id().value();
 
         const std::string prop_name(XPROPERTY_PLEDGE_VOTE_KEY);
-        query_account_property(result_json, account, prop_name);
+        query_account_property(result_json, account, prop_name, false);
         result_json["vote_staked_index"] = result_json[XPROPERTY_PLEDGE_VOTE_KEY];
         result_json.removeMember(XPROPERTY_PLEDGE_VOTE_KEY);
         return result_json;
@@ -177,7 +177,7 @@ void get_block_handle::getCGP() {
     xJson::Value j;
     std::string addr = sys_contract_rec_tcc_addr;
     std::string prop_name = ONCHAIN_PARAMS;
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, false);
     m_js_rsp["value"] = j[prop_name];
 }
 
@@ -740,7 +740,7 @@ void get_block_handle::getRecs() {
     xJson::Value j;
     std::string addr = sys_contract_rec_elect_rec_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_0";
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, false);
     m_js_rsp["value"] = j["root_beacon"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -750,7 +750,7 @@ void get_block_handle::getZecs() {
     xJson::Value j;
     std::string addr = sys_contract_rec_elect_zec_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_0";
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, false);
     m_js_rsp["value"] = j["sub_beacon"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -759,7 +759,7 @@ void get_block_handle::getEdges() {
     xJson::Value j;
     std::string addr = sys_contract_rec_elect_edge_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_1";
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, false);
     m_js_rsp["value"] = j["edge"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -768,7 +768,7 @@ void get_block_handle::getArcs() {
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
     auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
-    query_account_property(j, addr, property_name);
+    query_account_property(j, addr, property_name, false);
     m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::storage_archive)];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -777,18 +777,27 @@ void get_block_handle::getExchangeNodes() {
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
     auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
-    query_account_property(j, addr, property_name);
+    query_account_property(j, addr, property_name, false);
     m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::storage_exchange)];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
 
 void get_block_handle::getFullNodes() {
+    xJson::Value j;
+    std::string const addr = sys_contract_rec_elect_archive_addr;
+    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    query_account_property(j, addr, property_name, true);
+    m_js_rsp["value"] = j[common::to_presentation_string_compatible(common::xnode_type_t::storage_exchange)];
+    m_js_rsp["chain_id"] = j["chain_id"];
+}
+
+void get_block_handle::getFullNodes2() {
     std::string const addr = sys_contract_rec_elect_fullnode_addr;
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
     assert(property_names.size() == 1);
     for (auto const & property : property_names) {
         xJson::Value j;
-        query_account_property(j, addr, property);
+        query_account_property(j, addr, property, false);
         m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::fullnode)];
         m_js_rsp["chain_id"] = j["chain_id"];
     }
@@ -799,7 +808,7 @@ void get_block_handle::getConsensus() {
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
     for (auto const & property : property_names) {
         xJson::Value j;
-        query_account_property(j, addr, property);
+        query_account_property(j, addr, property, false);
         std::string cluster_name = "cluster" + property.substr(property.find('_') + 1);
         m_js_rsp["value"][cluster_name] = j;
     }
@@ -819,7 +828,7 @@ void get_block_handle::getStandbys() {
     xJson::Value j;
     std::string addr = sys_contract_rec_standby_pool_addr;
     std::string prop_name = XPROPERTY_CONTRACT_STANDBYS_KEY;
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, false);
     m_js_rsp["value"] = j;
 }
 
@@ -827,7 +836,7 @@ void get_block_handle::queryNodeInfo() {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
-    query_account_property(jv, contract_addr, prop_name);
+    query_account_property(jv, contract_addr, prop_name, false);
     m_js_rsp["value"] = jv[prop_name];
 }
 
@@ -847,7 +856,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
                 xdbg("target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
                 xJson::Value j;
 
-                query_account_property(j, shard_reward_addr.value(), prop_name);
+                query_account_property(j, shard_reward_addr.value(), prop_name, false);
 
                 auto tmp = j[prop_name];
                 for (auto i : tmp.getMemberNames()) {
@@ -861,7 +870,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
                 for (int sub_map_no = 1; sub_map_no <= 4; sub_map_no++) {
                     std::string prop_name = std::string(xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE) + "-" + std::to_string(sub_map_no);
                     xdbg("[get_block_handle::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-                    query_account_property(j, shard_reward_addr.value(), prop_name);
+                    query_account_property(j, shard_reward_addr.value(), prop_name, false);
                     auto tmp = j[prop_name];
                     for (auto i : tmp.getMemberNames()) {
                         xdbg("[get_block_handle::parse_sharding_reward] --- %s", i.c_str());
@@ -874,7 +883,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
         auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
         auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, table_id);
         xdbg("[get_block_handle::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-        query_account_property(jv, shard_reward_addr.value(), prop_name);
+        query_account_property(jv, shard_reward_addr.value(), prop_name, false);
         jv = jv[prop_name][target];
     }
 
@@ -1124,13 +1133,13 @@ bool is_prop_name_not_set_property(const std::string & prop_name) {
     return false;
 }
 
-bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate) {
+bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode) {
     if (is_prop_name_already_set_property(prop_name)) {
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, jph);
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jph);
         return true;
     } else if (is_prop_name_not_set_property(prop_name)) {
         xJson::Value jm;
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, jm);
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jm);
         jph[prop_name] = jm;
         return true;
     }
@@ -1166,7 +1175,7 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
     return false;
 }
 
-void get_block_handle::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate) {
+void get_block_handle::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode) {
     if (unitstate == nullptr) {
         xwarn("get_block_handle::query_account_property fail-query unit state.account=%s", owner.c_str());
         return;
@@ -1175,7 +1184,7 @@ void get_block_handle::query_account_property_base(xJson::Value & jph, const std
         xwarn("get_block_handle::query_account_property fail-find property.account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
         return;
     }
-    if (true == query_special_property(jph, owner, prop_name, unitstate)) {
+    if (true == query_special_property(jph, owner, prop_name, unitstate, compatible_mode)) {
         return;
     }
 
@@ -1208,14 +1217,14 @@ void get_block_handle::query_account_property_base(xJson::Value & jph, const std
     }
 }
 
-void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name) {
+void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, bool compatible_mode) {
     xdbg("get_block_handle::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
     // load newest account state
     xaccount_ptr_t unitstate = m_store->query_account(owner);
-    query_account_property_base(jph, owner, prop_name, unitstate);
+    query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode);
 }
 
-void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height) {
+void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, bool compatible_mode) {
     xdbg("get_block_handle::query_account_property account=%s,prop_name=%s,height=%llu", owner.c_str(), prop_name.c_str(),height);
     // load newest account state
     base::xvaccount_t _vaddr(owner);
@@ -1236,7 +1245,7 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
         unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
     }
 
-    query_account_property_base(jph, owner, prop_name, unitstate);
+    query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode);
 }
 
 void get_block_handle::set_accumulated_issuance_yearly(xJson::Value & j, const std::string & value) {
