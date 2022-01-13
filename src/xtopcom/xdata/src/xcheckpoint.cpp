@@ -37,6 +37,7 @@ void xtop_chain_checkpoint::load() {
 #ifdef CHECKPOINT_TEST
 #    define CHECKPOINT_DATA_FILE "checkpoint_data.json"
 #    define CHECKPOINT_STATE_FILE "checkpoint_state.json"
+    xinfo("[xtop_chain_checkpoint::load] load from file");
     std::ifstream data_file(CHECKPOINT_DATA_FILE);
     if (data_file.good()) {
         data_file >> j_data;
@@ -52,6 +53,7 @@ void xtop_chain_checkpoint::load() {
     data_file.close();
     state_file.close();
 #else
+    xinfo("[xtop_chain_checkpoint::load] load from code");
     j_data = json::parse(checkpoint_data());
     j_state = json::parse(checkpoint_state());
 #endif
