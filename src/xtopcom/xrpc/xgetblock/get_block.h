@@ -66,6 +66,7 @@ public:
         REGISTER_QUERY_METHOD(getArcs);
         REGISTER_QUERY_METHOD(getExchangeNodes);
         REGISTER_QUERY_METHOD(getFullNodes);
+        REGISTER_QUERY_METHOD(getFullNodes2);
         REGISTER_QUERY_METHOD(getConsensus);
         REGISTER_QUERY_METHOD(getStandbys);
         REGISTER_QUERY_METHOD(queryNodeInfo);
@@ -94,9 +95,9 @@ public:
         return rsp;
     }
     xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
-    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height);
+    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, bool compatible_mode);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, bool compatible_mode);
     void getLatestBlock();
     void getLatestFullBlock();
     void getBlockByHeight();
@@ -119,6 +120,7 @@ public:
     void getArcs();
     void getExchangeNodes();
     void getFullNodes();
+    void getFullNodes2();
     void getConsensus();
     void getStandbys();
     void queryNodeInfo();
