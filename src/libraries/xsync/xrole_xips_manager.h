@@ -14,7 +14,6 @@
 #include "xdata/xgenesis_data.h"
 #include "xrouter/xrouter.h"
 #include "xvnetwork/xvhost_face.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
 
 NS_BEG2(top, sync)
 
@@ -26,17 +25,20 @@ struct xrole_xips_t {
     xip_vector_ptr parent_xips{};
     xip_vector_ptr orig_neighbour_xips{}; // for special cases
     std::set<uint16_t> set_table_ids;
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_vnetwork_driver;
 
     xrole_xips_t(const vnetwork::xvnode_address_t& _self_xip,
                  const xip_vector_ptr& neighbour_xips_ptr,
                  const xip_vector_ptr& parent_xips_ptr,
                  const xip_vector_ptr& orig_neighbour_xips_ptr,
-                 const std::set<uint16_t> &_set_table_ids) :
+                 const std::set<uint16_t> &_set_table_ids,
+                 const std::shared_ptr<vnetwork::xvnetwork_driver_face_t>& network_driver) :
     self_xip(_self_xip),
     neighbour_xips(neighbour_xips_ptr),
     parent_xips(parent_xips_ptr),
     orig_neighbour_xips(orig_neighbour_xips_ptr),
-    set_table_ids(_set_table_ids) {}
+    set_table_ids(_set_table_ids),
+    m_vnetwork_driver(network_driver) {}
 
     xrole_xips_t() = default;
     xrole_xips_t(const xrole_xips_t& other) = default;
