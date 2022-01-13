@@ -130,6 +130,25 @@ void xlighttable_builder_t::make_light_table_binlog_v2(const xobject_ptr_t<base:
 
     data::xtable_bstate_t proposal_tbstate(proposal_bstate.get());
 
+    std::map<std::string, uint64_t> account_nonce_map;
+
+    for (auto & tx_info : txs_info) {
+        if (!tx_info->is_send_tx() && !tx_info->is_self_tx()) {
+            continue;
+        }
+        auto & account = tx_info->get_raw_tx()->get_source_addr();
+        auto tx_nonce = tx_info->get_last_trans_nonce() + 1;
+        auto it = account_nonce_map.find(account);
+        if (it == account_nonce_map.end()) {
+            account_nonce_map[account] = tx_nonce;
+        } else {
+            uint64_t & nonce_tmp = it->second;
+            if (tx_nonce > nonce_tmp) {
+                account_nonce_map[account] = tx_nonce;
+            }
+        }
+    }
+
     // make account index property binlog
     for (auto & unit : units) {
         // read old index
@@ -142,15 +161,6 @@ void xlighttable_builder_t::make_light_table_binlog_v2(const xobject_ptr_t<base:
             has_unconfirm_sendtx = false;
         } else if (unit->get_block_class() == base::enum_xvblock_class_light) {
             has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
-            auto & tx_infos = unit->get_txs();
-            for (auto & tx_info : tx_infos) {
-                if (tx_info->is_send_tx() || tx_info->is_self_tx()) {
-                    uint64_t tx_nonce = tx_info->get_last_trans_nonce() + 1;
-                    if (tx_nonce > nonce) {
-                        nonce = tx_nonce;
-                    }
-                }
-            }
         }
         // update light-unit consensus flag, light-unit must push to committed status for receipt make
         base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
@@ -165,7 +175,16 @@ void xlighttable_builder_t::make_light_table_binlog_v2(const xobject_ptr_t<base:
                 // do nothing
             }
         }
+        
+        auto it = account_nonce_map.find(unit->get_account());
+        if (it != account_nonce_map.end()) {
+            uint64_t & nonce_tmp = it->second;
+            if (nonce_tmp > nonce) {
+                nonce = nonce_tmp;
+            }
+        }
 
+        xdbg("nathan test account:%s,nonce:%llu", unit->get_account().c_str(), nonce);
         xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
         proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
     }
@@ -243,8 +262,7 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     std::map<std::string, std::string> property_hashs;  // need put in table self action for prove
     std::string property_binlog;
 
-    base::enum_xvblock_fork_version expect_version = (base::enum_xvblock_fork_version)base::xvblock_fork_t::instance().get_expect_block_version(cs_para.get_clock());
-    if (base::xvblock_fork_t::is_block_match_version(base::enum_xvblock_fork_version_3_0_0, expect_version)) {
+    if (base::xvblock_fork_t::is_block_match_version(_temp_header->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
         make_light_table_binlog_v2(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs, txs_info);
     } else {
         make_light_table_binlog_v1(proposal_bstate, lighttable_build_para->get_batch_units(), property_binlog, property_hashs, txs_info);
