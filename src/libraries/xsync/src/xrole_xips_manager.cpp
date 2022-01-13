@@ -35,7 +35,7 @@ void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip,
     for (auto p: parents)
         xsync_dbg("xrole_xips_manager_t::add_role, parents: %s", p.to_string().c_str());
     m_map[self_xip] = {self_xip, create_xip_vector_ptr(neighbours, self_xip), create_xip_vector_ptr(parents, self_xip),
-                        std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours), table_ids};
+                        std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours), table_ids, network_driver};
 
     m_vnetwork_driver = network_driver;
     m_self_xip = self_xip;
@@ -178,10 +178,14 @@ bool xrole_xips_manager_t::vrf_gossip_with_archive(base::xvblock_t *time_vblock,
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_all_neighbors(const vnetwork::xvnode_address_t& self_addr) {
     if (m_vnetwork_driver == nullptr)
         return {};
-    if ((m_vnetwork_driver->type() & common::xnode_type_t::edge) != common::xnode_type_t::invalid) {
+//    if ((m_vnetwork_driver->type() & common::xnode_type_t::edge) != common::xnode_type_t::invalid) {
+//        return {};
+//    }
+    if (m_map.find(self_addr) == m_map.end())
         return {};
-    }
-    auto const & neighbors_info = m_vnetwork_driver->neighbors_info2();
+    if (m_map[self_addr].m_vnetwork_driver == nullptr)
+        return {};
+    auto const & neighbors_info = m_map[self_addr].m_vnetwork_driver->neighbors_info2();
     std::vector<common::xnode_address_t> neighbor_addresses;
     for (auto const & info : neighbors_info) {
         if(self_addr != info.second.address) {
