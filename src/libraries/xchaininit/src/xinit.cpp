@@ -156,6 +156,9 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     //wait log path created,and init metrics
     XMETRICS_INIT2(log_path);
 
+    // init checkpoint
+    data::xchain_checkpoint_t::load();
+
     //init data_path into xvchain instance
     //init auto_prune feature
     set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
@@ -200,7 +203,6 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
         user_params.signkey
     };
 
-    data::xchain_checkpoint_t::load();
     if (false == db_migrate(v2_db_path)) {
         return 1;
     }
@@ -458,6 +460,9 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("=== xtopchain start here with noparams ===");
     std::cout << "xnode start begin..." << std::endl;
 
+    // init checkpoint
+    data::xchain_checkpoint_t::load();
+
     //init data_path into xvchain instance
     base::xvchain_t::instance().set_data_dir_path(datadir);
     //init auto_prune feature
@@ -522,7 +527,6 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
         user_params.signkey
     };
 
-    data::xchain_checkpoint_t::load();
     std::string v2_db_path = datadir + OLD_DB_PATH;
     if (false == db_migrate(v2_db_path)) {
         return 1;
