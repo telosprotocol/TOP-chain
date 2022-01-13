@@ -65,7 +65,7 @@ osname_darwin="Darwin"
 ntpd_path="/usr/sbin/ntpd"
 ntpd_service="ntp.service"
 
-function init_os_config() {
+init_os_config() {
     sed -i "/ulimit\s-n/d"     /etc/profile
     sed -i '$a\ulimit -n 65535'        /etc/profile
     source /etc/profile
@@ -177,9 +177,13 @@ else
 fi
 
 echo $topio_home
+if [ -z ${TOPIO_HOME} ];then
 sed -i "/TOPIO_HOME/d"     /etc/profile
 sed -i '$a\export TOPIO_HOME='$topio_home        /etc/profile
 source /etc/profile
+else
+echo $TOPIO_HOME
+fi
 
 echo ""
 echo "############now will register topio as service##############"
