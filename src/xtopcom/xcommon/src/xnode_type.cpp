@@ -125,6 +125,14 @@ std::string to_presentation_string(xnode_type_t const type) {
     return name;
 }
 
+std::string to_presentation_string_compatible(xnode_type_t const type) {
+    if (type == xnode_type_t::storage_exchange) {
+        return std::string{"full_node"};
+    } else {
+        return to_presentation_string(type);
+    }
+}
+
 xnode_type_t &
 operator &=(xnode_type_t & lhs, xnode_type_t const rhs) noexcept {
     lhs = lhs & rhs;
