@@ -1660,7 +1660,7 @@ namespace top
                     if (try_height < get_latest_deleted_block_height())
                     {
                         xwarn("xblockacct_t::full_connect_to height:%llu lower than delete height, meta:%s", try_height, dump().c_str());
-                        return;
+                        break;
                     }
                     if(load_index(try_height) == 0) //missed block
                         break;

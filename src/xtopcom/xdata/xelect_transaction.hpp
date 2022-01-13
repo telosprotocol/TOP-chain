@@ -150,9 +150,6 @@ public:
         // xstake contracts
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_edge_deposit);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit);
-#if defined(XCHAIN_FORKED_BY_DEFAULT)
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_fullnode_deposit);
-#endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_deposit);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_deposit);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval);
