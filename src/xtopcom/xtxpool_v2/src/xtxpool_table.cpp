@@ -127,7 +127,20 @@ int32_t xtxpool_table_t::push_receipt_real(const std::shared_ptr<xtx_entry> & tx
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
         m_xtable_info.get_statistic()->inc_push_tx_receipt_fail_num(1);
+    } else {
+        if (tx->get_tx()->is_recv_tx()) {
+            auto account_addr = tx->get_tx()->get_account_addr();
+            base::xaccount_index_t account_index;
+            bool ret2 = m_table_state_cache.get_account_index(account_addr, account_index);
+            if (ret2) {
+                base::xvaccount_t _account_vaddress(account_addr);
+                xblocktool_t::check_lacking_unit_and_try_sync(_account_vaddress, account_index, m_para->get_vblockstore(), "txpool");
+            } else {
+                xtxpool_warn("xtxpool_table_t::push_receipt_real get account index fail account:%s", account_addr.c_str());
+            }
+        }
     }
+
     return ret;
 }
 
