@@ -68,7 +68,8 @@ namespace top {
             top::optional<xfork_point_t> blacklist_function_fork_point;
             top::optional<xfork_point_t> node_initial_credit_fork_point;
             top::optional<xfork_point_t> V3_0_0_0_block_fork_point;
-            top::optional<xfork_point_t> enable_fullnode_fork_point;
+            top::optional<xfork_point_t> enable_fullnode_election_fork_point;
+            top::optional<xfork_point_t> enable_fullnode_related_func_fork_point;
         };
         using xchain_fork_config_t = xtop_chain_fork_config;
     }
