@@ -13,6 +13,7 @@ struct xtransaction_cache_data_t {
     xtransaction_ptr_t tran;
     xJson::Value jv;
     data::xlightunit_action_ptr_t   recv_txinfo{nullptr};
+    std::string rpc_version;
 };
 class xtransaction_cache_t{
 public:
@@ -20,7 +21,7 @@ public:
     xtransaction_cache_t() {
     }
     ~xtransaction_cache_t() {}
-    bool tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx);
+    bool tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx, std::string const & version);
     int tx_find(const std::string& tx_hash);
     int tx_get_json(const std::string& tx_hash, xJson::Value & jv);
     int tx_set_json(const std::string& tx_hash, const xJson::Value & jv);

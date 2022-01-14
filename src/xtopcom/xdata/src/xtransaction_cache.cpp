@@ -3,7 +3,7 @@
 
 namespace top { namespace data {
 
-bool xtransaction_cache_t::tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx) {
+bool xtransaction_cache_t::tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx, std::string const & version) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto iter = m_trans.find(tx_hash);
     if (iter != m_trans.end()) {
@@ -13,6 +13,7 @@ bool xtransaction_cache_t::tx_add(const std::string& tx_hash, const xtransaction
 
     xtransaction_cache_data_t cache_data;
     cache_data.tran = tx;
+    cache_data.rpc_version = version;
     m_trans[tx_hash] = cache_data;
     xdbg("add cache: %s, size:%d", tx_hash.c_str(), sizeof(tx_hash) + sizeof(cache_data));
     XMETRICS_GAUGE(metrics::txstore_request_origin_tx, 1);
