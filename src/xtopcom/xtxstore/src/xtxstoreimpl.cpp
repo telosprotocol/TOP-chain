@@ -190,9 +190,9 @@ bool xtxstoreimpl::store_tx_obj(const std::string & raw_tx_hash, base::xdataunit
     return base::xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key, raw_tx_bin);
 }
 
-bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) {
+bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr, std::string const & version) {
     if (strategy_permission(m_tx_cache_strategy)) {
-        return m_tx_prepare_mgr->transaction_cache()->tx_add(tx_hash, tx_ptr);
+        return m_tx_prepare_mgr->transaction_cache()->tx_add(tx_hash, tx_ptr, version);
     }
     return false;
 }

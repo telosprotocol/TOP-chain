@@ -246,7 +246,8 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
 
         std::string hash((char *)json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
         if (m_txstore != nullptr) {
-            m_txstore->tx_cache_add(hash, tx);
+            const string & version = json_proc.m_request_json["version"].asString();
+            m_txstore->tx_cache_add(hash, tx, version);
         }
     }
 
