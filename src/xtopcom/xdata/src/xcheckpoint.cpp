@@ -18,6 +18,9 @@ template <class K, class V, class dummy_compare, class A>
 using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
 using json = nlohmann::basic_json<my_workaround_fifo_map>;
 
+#define USE_TABLE_STATE true
+#define USE_UNIT_STATE false
+
 #define TABLE_STATE_KEY "table_state"
 #define TABLE_DATA_KEY "table_data"
 #define UNIT_STATE_KEY "unit_state"
@@ -98,15 +101,19 @@ void xtop_chain_checkpoint::load() {
             auto const & state_map = it.value();
             // table
             for (auto it_table = state_map.cbegin(); it_table != state_map.cend(); it_table++) {
+                if (USE_TABLE_STATE) {
                 auto table_str = static_cast<std::string>(it_table.key());
                 auto table_state = base::xstring_utl::from_hex(it_table->at(TABLE_STATE_KEY).get<std::string>());
                 m[common::xaccount_address_t{table_str}] = table_state;
+                }
+                if (USE_UNIT_STATE) {
                 auto const & unit_state_map = it_table->at(UNIT_STATE_KEY);
                 // unit
                 for (auto it_unit = unit_state_map.cbegin(); it_unit != unit_state_map.cend(); it_unit++) {
                     auto unit_str = static_cast<std::string>(it_unit.key());
                     auto unit_state = base::xstring_utl::from_hex(it_unit.value().get<std::string>());
                     m[common::xaccount_address_t{unit_str}] = unit_state;
+                    }
                 }
             }
         }
@@ -119,7 +126,7 @@ void xtop_chain_checkpoint::load() {
     m_checkpoints_state_map = load_state(j_state, latest_state_cp);
     j_state.clear();
     xassert(latest_data_cp == latest_state_cp);
-    xinfo("[xtop_chain_checkpoint::load] cp size: %zu, %zu", m_checkpoints_map.size(), m_checkpoints_state_map.size());
+    xinfo("[xtop_chain_checkpoint::load] cp data size: %zu, state size: %zu, latest cp: %lu", m_checkpoints_map.size(), m_checkpoints_state_map.size(), latest_data_cp);
 }
 
 xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(common::xaccount_address_t const & account, std::error_code & ec) {
