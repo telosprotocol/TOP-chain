@@ -189,7 +189,7 @@ bool xbatch_packer::connect_to_checkpoint() {
     if (common::has<common::xnode_type_t::rec>(node_type)
      || common::has<common::xnode_type_t::zec>(node_type)
      || common::has<common::xnode_type_t::auditor>(node_type)) {
-        auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_cp_connected_block_height(get_account());
+        auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->update_get_latest_cp_connected_block_height(get_account());
         auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
         if (latest_cp_connect_height != latest_connect_height) {
             xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu,account:%s", latest_cp_connect_height, latest_connect_height, get_account().c_str());
