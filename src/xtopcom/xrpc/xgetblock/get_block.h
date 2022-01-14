@@ -45,6 +45,13 @@ public:
     std::string m_recv = "recv_unit_info";
     std::string m_confirm = "confirm_unit_info";
 };
+
+enum class xtop_enum_full_node_compatible_mode {
+    incompatible,
+    compatible,
+};
+using xfull_node_compatible_mode_t = xtop_enum_full_node_compatible_mode;
+
 class get_block_handle : public rpc::xrpc_handle_face_t {
 public:
     get_block_handle(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync)
@@ -96,8 +103,8 @@ public:
     }
     xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
     void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, bool compatible_mode);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, bool compatible_mode);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
     void getLatestBlock();
     void getLatestFullBlock();
     void getBlockByHeight();
