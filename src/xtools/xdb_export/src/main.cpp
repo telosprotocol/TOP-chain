@@ -42,9 +42,9 @@ void usage() {
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db <new_path>" << std::endl;
+    std::cout << "        - check_archive_db" << std::endl;
     std::cout << "        - parse_checkpoint <height>" << std::endl;
-    std::cout << "        - parse_db <new_path>" << std::endl;
+    std::cout << "        - parse_db" << std::endl;
     std::cout << "        - read_meta <account>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
@@ -183,9 +183,7 @@ int main(int argc, char ** argv) {
             }
         }
 
-        std::string dir{"all_table_tx_info/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("all_table_tx_info/");
         auto const account_vec = xdb_export_tools_t::get_table_accounts();
         tools.query_tx_info(account_vec, thread_num, start_timestamp, end_timestamp);
     } else if (function_name == "check_block_exist") {
@@ -212,9 +210,7 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        std::string dir{"all_block_basic_info/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("all_block_basic_info/");
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_block_basic(unit_account_vec, "all");
@@ -228,9 +224,7 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        std::string dir{"all_state_basic_info/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("all_state_basic_info/");
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_state_basic(unit_account_vec, "all");
@@ -261,10 +255,6 @@ int main(int argc, char ** argv) {
     } else if (function_name == "check_balance") {
         tools.query_balance();
     } else if (function_name == "check_archive_db") {
-        if (argc != 4) {
-            usage();
-            return -1;
-        }
         auto t1 = base::xtime_utl::time_now_ms();
         tools.query_archive_db();
         auto t2 = base::xtime_utl::time_now_ms();
@@ -279,9 +269,7 @@ int main(int argc, char ** argv) {
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_checkpoint total time: " << (t2 - t1) / 1000 << "s." << std::endl;
     } else if (function_name == "parse_db") {
-        std::string dir{"parse_db_result/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("parse_db_result/");
         auto const table_account_vec = tools.get_table_accounts();
         auto t1 = base::xtime_utl::time_now_ms();
         tools.query_table_unit_info(table_account_vec);
