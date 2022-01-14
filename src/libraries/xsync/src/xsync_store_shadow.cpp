@@ -6,6 +6,9 @@
 #include <algorithm>
 #include "xsync/xdownloader.h"
 #include "xbase/xbase.h"
+
+#include <cinttypes>
+
 NS_BEG2(top, sync)
 
 xcommon_span_t::xcommon_span_t(){    
@@ -288,16 +291,22 @@ void xsync_chain_spans_t::initialize() {
     uint64_t height = m_store->get_latest_genesis_connected_block_height(m_account);
     uint64_t height_old = height;
     height = std::max(height, m_connect_to_genesis_height);
-    while (1) {
-        auto vbindex = m_store->load_block_object(m_account, height + 1);
-        if (vbindex == nullptr)
-            break;
+    auto const last_deleted_height = m_store->get_latest_deleted_block_height(m_account);
+    if (height > last_deleted_height) {
+        while (true) {
+            auto vbindex = m_store->load_block_object(m_account, height + 1);
+            if (vbindex == nullptr)
+                break;
 
-        if (!vbindex->check_block_flag(enum_xvblock_flag_committed))
-            break;
+            if (!vbindex->check_block_flag(enum_xvblock_flag_committed))
+                break;
 
-        height = vbindex->get_height();
+            height = vbindex->get_height();
+        }
+    } else {
+        xinfo("xsync_store_shadow_t::initialize height %" PRIu64 " last deleted blk height %" PRIu64, height, last_deleted_height);
     }
+
     xinfo("xsync_store_shadow_t::initialize after, account:%s, height=%llu, updated height=%llu, old = %llu",
         m_account.c_str(), m_connect_to_genesis_height, height, height_old);
 
