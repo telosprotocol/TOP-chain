@@ -4,9 +4,13 @@ name: CI
 
 on:
   push:
-    branches: [ dev/fast_sync_develop ]
+    branches:
+      - master
+      - 'feat/v*'
   pull_request:
-    branches: [ dev/fast_sync_develop ]
+    branches:
+      - master
+      - 'feat/v*'
 
 jobs:
   build:
