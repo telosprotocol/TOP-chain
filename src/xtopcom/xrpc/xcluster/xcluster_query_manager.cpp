@@ -127,7 +127,7 @@ void xcluster_query_manager::get_property(xjson_proc_t & json_proc) {
     const std::string & prop_name = json_proc.m_request_json["params"]["data"].asString();
 #if 1
     xJson::Value result_json;
-    m_bh.query_account_property(result_json, account, prop_name, false);
+    m_bh.query_account_property(result_json, account, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     json_proc.m_response_json["data"] = result_json;
 #else
     string value{};
@@ -199,7 +199,7 @@ void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     jv["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
 
     xJson::Value tj;
-    m_bh.query_account_property(tj, sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, false);
+    m_bh.query_account_property(tj, sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, chain_info::xfull_node_compatible_mode_t::incompatible);
     jv["network_activate_time"] = tj[xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY]["activation_time"].asUInt64();
 
     json_proc.m_response_json["data"] = jv;
@@ -366,7 +366,7 @@ void xcluster_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
-    m_bh.query_account_property(jv, contract_addr, prop_name, false);
+    m_bh.query_account_property(jv, contract_addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
 
     if (target == "") {
         json_proc.m_response_json["data"] = jv[prop_name];
@@ -386,7 +386,7 @@ void xcluster_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     std::string addr = sys_contract_zec_elect_consensus_addr;
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
     for (auto property : property_names) {
-        m_bh.query_account_property(j, addr, property, false);
+        m_bh.query_account_property(j, addr, property, chain_info::xfull_node_compatible_mode_t::incompatible);
         if (j[common::to_presentation_string(common::xnode_type_t::consensus_auditor)].isMember(target)) {
             ev.push_back("auditor");
         }
@@ -397,26 +397,26 @@ void xcluster_query_manager::getElectInfo(xjson_proc_t & json_proc) {
 
     addr = sys_contract_rec_elect_archive_addr;
     std::string prop_name = data::election::get_property_by_group_id(common::xarchive_group_id);
-    m_bh.query_account_property(j, addr, prop_name, false);
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     if (j[common::to_presentation_string(common::xnode_type_t::storage_archive)].isMember(target)) {
         ev.push_back("archiver");
     }
     prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
-    m_bh.query_account_property(j, addr, prop_name, false);
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
         ev.push_back("exchange");
     }
 
     addr = sys_contract_rec_elect_edge_addr;
     prop_name = data::election::get_property_by_group_id(common::xdefault_group_id);
-    m_bh.query_account_property(j, addr, prop_name, false);
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     if (j[common::to_presentation_string(common::xnode_type_t::edge)].isMember(target)) {
         ev.push_back("edger");
     }
 
     addr = sys_contract_rec_elect_fullnode_addr;
     prop_name = data::election::get_property_by_group_id(common::xdefault_group_id);
-    m_bh.query_account_property(j, addr, prop_name, false);
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     if (j[common::to_presentation_string(common::xnode_type_t::fullnode)].isMember(target)) {
         ev.push_back(common::to_presentation_string(common::xnode_type_t::fullnode));
     }
@@ -450,7 +450,7 @@ void xcluster_query_manager::set_sharding_vote_prop(xjson_proc_t & json_proc, st
         auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
         auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_vote_addr}, table_id);
         xdbg("account: %s, target: %s, addr: %s, prop: %s", owner.c_str(), target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-        m_bh.query_account_property(jv, shard_reward_addr.value(), prop_name, false);
+        m_bh.query_account_property(jv, shard_reward_addr.value(), prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
         json_proc.m_response_json["data"] = jv[prop_name][target];
     }
 }
@@ -493,7 +493,7 @@ void xcluster_query_manager::queryProposal(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_tcc_addr;
     std::string prop_name = PROPOSAL_MAP_ID;
-    m_bh.query_account_property(jv, contract_addr, prop_name, false);
+    m_bh.query_account_property(jv, contract_addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
 
     if (target == "") {
         json_proc.m_response_json["data"] = jv[prop_name];
@@ -510,7 +510,7 @@ void xcluster_query_manager::getStandbys(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string addr = sys_contract_rec_standby_pool_addr;
     std::string prop_name = XPROPERTY_CONTRACT_STANDBYS_KEY;
-    m_bh.query_account_property(jv, addr, prop_name, false);
+    m_bh.query_account_property(jv, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     if (target == "") {
         json_proc.m_response_json["data"] = jv;
     } else {
@@ -529,7 +529,7 @@ void xcluster_query_manager::getCGP(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string addr = sys_contract_rec_tcc_addr;
     std::string prop_name = ONCHAIN_PARAMS;
-    m_bh.query_account_property(jv, addr, prop_name, false);
+    m_bh.query_account_property(jv, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     json_proc.m_response_json["data"] = jv[prop_name];
 }
 
