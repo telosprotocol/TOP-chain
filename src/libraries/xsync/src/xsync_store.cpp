@@ -331,7 +331,7 @@ void xsync_store_t::set_fork_point() {
         m_remove_empty_unit_forked = true;
     }
 
-    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_fork_point, vb->get_clock());
+    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, vb->get_clock());
     if (forked) {
         xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
         m_full_node_forked = true;
