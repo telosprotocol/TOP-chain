@@ -346,6 +346,23 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
             return key_path;
         }
+
+        const std::string xvdbkey_t::get_account_prefix_key(const std::string & key,enum_xdbkey_type key_type)
+        {
+            std::vector<std::string> values;
+            base::xstring_utl::split_string(key, '/', values);
+             if (values[2][0] != 'T')
+                {
+                    const std::string addr = xvaccount_t::compact_address_from(values[2]);
+                    const std::string account_key = values[0] + "/" + values[1] +"/"+ addr;
+                    return account_key;
+
+                }else{
+                    const std::string account_key = values[0] + "/" + values[1]+"/"+ values[2];
+                     return account_key;
+                }
+            return key;
+        }
     
     }//end of namespace of base
 }//end of namespace top

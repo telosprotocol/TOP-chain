@@ -48,6 +48,10 @@ public:
     void compact_db();
     void read_meta(std::string const & address);
 
+   static bool  db_scan_key_callback(const std::string& key, const std::string& value,void*cookie);
+    bool  db_scan_key_callback(const std::string& key, const std::string& value);
+    void parse_all();
+ 
 private:
     struct tx_ext_t {
         std::string hash{""};
@@ -132,6 +136,27 @@ private:
 
     std::map<std::string, std::map<std::string, base::xaccount_index_t>> m_db_units_info;
     std::string m_outfile_folder;
+    
+    struct xdbtool_parse_info_t {
+        uint32_t count;
+        uint32_t input_count;
+        uint32_t output_count; 
+        uint32_t proof_count;
+        uint32_t block_count; 
+        uint32_t state_count; 
+        uint32_t account_number;
+        uint64_t size;
+        uint64_t input_size;
+        uint64_t output_size;
+        uint64_t proof_size;
+        uint64_t block_size;
+        uint64_t state_size;
+    };
+    void parse_info_set(xdbtool_parse_info_t &info, int db_key_type,uint64_t value_size);
+    std::map<std::string, xdbtool_parse_info_t> m_db_parse_info;
+    uint64_t  m_info_key_count;
+    uint64_t  m_info_account_count;
+    uint64_t  m_info_xvid_count;
 };
 
 NS_END2

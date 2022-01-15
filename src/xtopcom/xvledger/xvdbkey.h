@@ -101,6 +101,7 @@ namespace top
            static const std::string  create_prunable_block_output_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
+           static const std::string  get_account_prefix_key(const std::string & key,enum_xdbkey_type key_type);
        };
 
     }//end of namespace of base
