@@ -204,7 +204,7 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
         return false;
     }
 
-    if (!common::has<common::xnode_type_t::storage>(node_type)) {        
+    if (!(common::has<common::xnode_type_t::storage>(node_type) ||common::has<common::xnode_type_t::rec>(node_type))) {
         if (top::store::enable_block_recycler(true))
             xinfo("enable_block_recycler ok.");
         else
