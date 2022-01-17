@@ -91,13 +91,11 @@ void catch_system_signals()
     signal(SIGHUP, SIG_IGN); //disable HUP signal
     
 #ifndef DISABLE_CORE_SIGNAL_CAPTURE
-#ifndef DEBUG
     //config signal of cores
     sigaction(SIGSEGV, &_sys_sigact, NULL);
     sigaction(SIGILL, &_sys_sigact, NULL);
     sigaction(SIGFPE, &_sys_sigact, NULL);
     sigaction(SIGABRT, &_sys_sigact, NULL);
-#endif
 #endif
     
     //config user 'signal
