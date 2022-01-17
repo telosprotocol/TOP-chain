@@ -14,7 +14,7 @@ bool xtransaction_cache_t::tx_add(const std::string& tx_hash, const xtransaction
     xtransaction_cache_data_t cache_data;
     cache_data.tran = tx;
     m_trans[tx_hash] = cache_data;
-    xdbg("add cache: %s, size:%d", tx_hash.c_str(), sizeof(tx_hash) + sizeof(cache_data));
+    xdbg("add cache: %s, size:%d", top::HexEncode(tx_hash).c_str(), sizeof(tx_hash) + sizeof(cache_data));
     XMETRICS_GAUGE(metrics::txstore_request_origin_tx, 1);
     XMETRICS_GAUGE(metrics::txstore_cache_origin_tx, 1);
     return true;
@@ -25,11 +25,11 @@ int xtransaction_cache_t::tx_find(const std::string& tx_hash) {
         return 0;
     return 1;
 }
-int xtransaction_cache_t::tx_get_json(const std::string& tx_hash, xJson::Value & jv) {
+int xtransaction_cache_t::tx_get_json(const std::string& tx_hash, const int index, xJson::Value & jv) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_trans.find(tx_hash) == m_trans.end())
         return 0;
-    jv = m_trans[tx_hash].jv;
+    jv = m_trans[tx_hash].jv[index];
     return 1;
 }
 bool xtransaction_cache_t::tx_get(const std::string& tx_hash, xtransaction_cache_data_t& cache_data){
@@ -39,12 +39,12 @@ bool xtransaction_cache_t::tx_get(const std::string& tx_hash, xtransaction_cache
     cache_data = m_trans[tx_hash];
     return true;
 }
-int xtransaction_cache_t::tx_set_json(const std::string& tx_hash, const xJson::Value & jv) {
+int xtransaction_cache_t::tx_set_json(const std::string& tx_hash, const int index, const xJson::Value & jv) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_trans.find(tx_hash) == m_trans.end())
         return 1;
-    m_trans[tx_hash].jv = jv;
-    xdbg("add cache json: %s", tx_hash.c_str());
+    m_trans[tx_hash].jv[index] = jv;
+    xdbg("add cache json: %d, %s", index, top::HexEncode(tx_hash).c_str());
     return 0;
 }
 int xtransaction_cache_t::tx_set_recv_txinfo(const std::string& tx_hash, const data::xlightunit_action_ptr_t tx_info){
@@ -52,7 +52,7 @@ int xtransaction_cache_t::tx_set_recv_txinfo(const std::string& tx_hash, const d
     if (m_trans.find(tx_hash) == m_trans.end())
         return 1;
     m_trans[tx_hash].recv_txinfo = tx_info;
-    xdbg("add cache recv_txinfo: %s", tx_hash.c_str());
+    xdbg("add cache recv_txinfo: %s", top::HexEncode(tx_hash).c_str());
     return 0;
 }
 int xtransaction_cache_t::tx_erase(const std::string& tx_hash) {
@@ -61,7 +61,7 @@ int xtransaction_cache_t::tx_erase(const std::string& tx_hash) {
     if (it == m_trans.end())
         return 1;
     m_trans.erase(it);
-    xdbg("erase cache: %s", tx_hash.c_str());
+    xdbg("erase cache: %s", top::HexEncode(tx_hash).c_str());
     XMETRICS_GAUGE(metrics::txstore_cache_origin_tx, -1);
     return 0;
 }
