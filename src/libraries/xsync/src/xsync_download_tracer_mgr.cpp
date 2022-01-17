@@ -8,9 +8,11 @@ xsync_download_tracer::xsync_download_tracer(){
 }
 
 xsync_download_tracer::xsync_download_tracer(const std::pair<uint64_t, uint64_t> expect_height_interval, 
-    const std::map<std::string, std::string> context) {
+    const std::map<std::string, std::string> context, const vnetwork::xvnode_address_t& src, const vnetwork::xvnode_address_t& dst) {
     m_expect_height_interval = expect_height_interval;
     m_context = context;
+    m_src_addr = src;
+    m_dst_addr = dst;
 }
 
 void xsync_download_tracer::set_trace_height(const uint64_t trace_height) {
@@ -38,7 +40,7 @@ const uint32_t xsync_download_tracer::prior() {
 }
 
 bool xsync_download_tracer_mgr::apply(std::string account, std::pair<uint64_t, uint64_t> expect_height_interval, 
-    const std::map<std::string, std::string> context) {
+    const std::map<std::string, std::string> context, const vnetwork::xvnode_address_t& src, const vnetwork::xvnode_address_t& dst) {
     uint64_t now = xtime_utl::gmttime_ms();
     std::lock_guard<std::mutex> lck(m_lock);
 
@@ -51,7 +53,7 @@ bool xsync_download_tracer_mgr::apply(std::string account, std::pair<uint64_t, u
         return false;
     }
 
-    insert(account, expect_height_interval, context, now);
+    insert(account, expect_height_interval, context, now, src, dst);
     return true;
 }
 
@@ -153,8 +155,8 @@ void xsync_download_tracer_mgr::expire(uint64_t time) {
 }
 
 void xsync_download_tracer_mgr::insert(xchain_account_t account, std::pair<uint64_t, uint64_t> height_interval, 
-    const std::map<std::string, std::string> context, uint64_t now) {
-    xsync_download_tracer tracer(height_interval, context);
+    const std::map<std::string, std::string> context, uint64_t now, const vnetwork::xvnode_address_t& src, const vnetwork::xvnode_address_t& dst) {
+    xsync_download_tracer tracer(height_interval, context, src, dst);
     m_tracers.insert(std::make_pair(account, tracer));
     m_account_elapses.insert(std::make_pair(account, now));
     m_elapses.insert(std::make_pair(now, account));
