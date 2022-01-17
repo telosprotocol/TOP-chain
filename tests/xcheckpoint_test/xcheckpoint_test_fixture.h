@@ -62,7 +62,7 @@ public:
         if ((m_config_fulltable_interval != 0) && (((prev_tableblock->get_height() + 1) % m_config_fulltable_interval) == 0)) {
             proposal_block = generate_full_table(cs_para);
         } else {
-            cs_para.set_tableblock_consensus_para(1, "1", 1, "1");  // TODO(jimmy) for light-table
+            cs_para.set_tableblock_consensus_para(1, "1", 1, 1);  // TODO(jimmy) for light-table
             proposal_block = generate_batch_table(cs_para);
         }
         do_multi_sign(proposal_block);
