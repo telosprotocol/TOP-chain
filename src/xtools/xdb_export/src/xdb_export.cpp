@@ -632,95 +632,58 @@ void xdb_export_tools_t::query_balance() {
 void xdb_export_tools_t::query_archive_db() {
     std::string filename = "check_archive_db.log";
     std::ofstream file(filename);
+    uint32_t total_errors{0};
     // step 1: check table
     std::cout << "step 1 ===> checking table accounts..." << std::endl;
     {
-        auto const table_accounts = xdb_export_tools_t::get_table_accounts();
-        const uint32_t thread_num = 4;
-        uint32_t accounts_per_thread = table_accounts.size() / thread_num;
-        std::vector<std::vector<std::string>> account_vec_split;
-        for (size_t i = 0; i < thread_num; i++) {
-            uint32_t start_index = i * accounts_per_thread;
-            uint32_t end_index = (i == (thread_num - 1)) ? table_accounts.size() : ((i + 1) * accounts_per_thread);
-            std::vector<std::string> thread_accounts;
-            for (auto j = start_index; j < end_index; j++) {
-                thread_accounts.emplace_back(table_accounts[j]);
-            }
-            account_vec_split.emplace_back(thread_accounts);
+        asio::thread_pool pool(4);
+        auto const tables = xdb_export_tools_t::get_table_accounts();
+        for (size_t i = 0; i < tables.size(); i++) {
+            asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, tables[i], query_account_table, std::ref(file), std::ref(total_errors)));
         }
-        auto thread_helper = [&account_vec_split, &file](xdb_export_tools_t * arg, int index) {
-            for (auto const & account : account_vec_split[index]) {
-                uint32_t error_num = 0;
-                error_num += arg->query_block_continuity_and_integrity(account, query_account_table, file);
-                error_num += arg->query_cert_continuity(account, query_account_table, file);
-                if (error_num) {
-                    std::cout << "table: " << account << ", check not ok, error num: " << error_num << std::endl;
-                } else {
-                    std::cout << "table: " << account << ", check ok" << std::endl;
-                }
-            }
-        };
-        std::vector<std::thread> all_thread;
-        for (size_t i = 0; i < thread_num; i++) {
-            std::thread th(thread_helper, this, i);
-            all_thread.emplace_back(std::move(th));
-        }
-        for (size_t i = 0; i < thread_num; i++) {
-            all_thread[i].join();
-        }
+        pool.join();
     }
     // step 2: check unit
     std::cout << "step 2 ===> checking unit accounts..." << std::endl;
     {
-        auto const unit_accounts = get_db_unit_accounts();
-        const uint32_t thread_num = 4;
-        uint32_t accounts_per_thread = unit_accounts.size() / thread_num;
-        std::vector<std::vector<std::string>> account_vec_split;
-        for (size_t i = 0; i < thread_num; i++) {
-            uint32_t start_index = i * accounts_per_thread;
-            uint32_t end_index = (i == (thread_num - 1)) ? unit_accounts.size() : ((i + 1) * accounts_per_thread);
-            std::vector<std::string> thread_accounts;
-            for (auto j = start_index; j < end_index; j++) {
-                thread_accounts.emplace_back(unit_accounts[j]);
-            }
-            account_vec_split.emplace_back(thread_accounts);
+        asio::thread_pool pool(4);
+        auto const units = get_db_unit_accounts();
+        for (size_t i = 0; i < units.size(); i++) {
+            asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, units[i], query_account_unit, std::ref(file), std::ref(total_errors)));
         }
-        auto thread_helper = [&account_vec_split, &file](xdb_export_tools_t * arg, int index) {
-            for (auto const & account : account_vec_split[index]) {
-                uint32_t error_num = 0;
-                error_num += arg->query_block_continuity_and_integrity(account, query_account_unit, file);
-                error_num += arg->query_cert_continuity(account, query_account_unit, file);
-                if (error_num) {
-                    std::cout << "unit: " << account << ", check not ok, error num: " << error_num << std::endl;
-                } else {
-                    std::cout << "unit: " << account << ", check ok" << std::endl;
-                }
-            }
-        };
-        std::vector<std::thread> all_thread;
-        for (size_t i = 0; i < thread_num; i++) {
-            std::thread th(thread_helper, this, i);
-            all_thread.emplace_back(std::move(th));
-        }
-        for (size_t i = 0; i < thread_num; i++) {
-            all_thread[i].join();
-        }
+        pool.join();
     }
     // step 3: check drand
     std::cout << "step 3 ===> checking drand..." << std::endl;
     {
-        uint32_t error_num = 0;
-        std::string drand{sys_drand_addr};
-        error_num += query_block_continuity(drand, query_account_system, file);
-        error_num += query_cert_continuity(drand, query_account_system, file);
-        if (error_num) {
-            std::cout << "drand: " << drand << ", check not ok, error num: " << error_num << std::endl;
-        } else {
-            std::cout << "drand: " << drand << ", check ok" << std::endl;
-        }
+        query_archive_db_internal(sys_drand_addr, query_account_system, file, total_errors);
     }
     file.flush();
     file.close();
+    if (total_errors == 0) {
+        std::cerr << "total error num: " << total_errors << std::endl;
+        generate_common_file("success", {});
+    }
+}
+
+void xdb_export_tools_t::query_archive_db_internal(std::string const & account, enum_query_account_type type, std::ofstream & file, uint32_t & errors) {
+    uint32_t error_num = 0;
+    if (type == query_account_table || type == query_account_unit) {
+        error_num += query_block_continuity_and_integrity(account, type, file);
+        error_num += query_cert_continuity(account, type, file);
+    } else {
+        error_num += query_block_continuity(account, type, file);
+        error_num += query_cert_continuity(account, type, file);
+    }
+    if (error_num) {
+        std::cout << account << ", type: " << type << ", check not ok, error num: " << error_num << std::endl;
+        {
+            std::lock_guard<std::mutex> guard(m_write_lock);
+            errors += error_num;
+        }
+    } else {
+        // std::cout << account << ", type: " << type << ", check ok" << std::endl;
+    }
 }
 
 uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file) {
@@ -730,6 +693,8 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
         type_str = "table";
     } else if (type == query_account_unit) {
         type_str = "unit";
+    } else {
+        type_str = "system";
     }
     auto const committd_height = m_blockstore->get_latest_committed_block_height(account);
     auto const connected_height = m_blockstore->get_latest_connected_block_height(account);
@@ -743,7 +708,7 @@ uint32_t xdb_export_tools_t::query_block_continuity_and_integrity(std::string co
          << ", genesis_connected_height: " << m_blockstore->get_latest_genesis_connected_block_height(account)
          << ", executed_height: " << m_blockstore->get_latest_executed_block_height(account) 
          << ", span_genesis_height " << span_genesis_height << std::endl;
-    if (committd_height != connected_height) {
+    if (committd_height != connected_height && type == query_account_table) {
         file << "[warn] " << type_str << ": " << account << ", committd_height and connected_height not equal, " << committd_height << ", " << connected_height << std::endl;
         error_num++;
     }
@@ -802,6 +767,8 @@ uint32_t xdb_export_tools_t::query_block_continuity(std::string const & account,
         type_str = "table";
     } else if (type == query_account_unit) {
         type_str = "unit";
+    } else {
+        type_str = "system";
     }
     auto const committd_height = m_blockstore->get_latest_committed_block_height(account);
     auto const connected_height = m_blockstore->get_latest_connected_block_height(account);
@@ -835,6 +802,8 @@ uint32_t xdb_export_tools_t::query_cert_continuity(std::string const & account, 
         type_str = "table";
     } else if (type == query_account_unit) {
         type_str = "unit";
+    }  else {
+        type_str = "system";
     }
     auto const cert_block = m_blockstore->get_latest_cert_block(account);
     if (cert_block == nullptr)  {
@@ -1511,6 +1480,7 @@ void xdb_export_tools_t::load_db_unit_accounts_info() {
 }
 
 void xdb_export_tools_t::set_outfile_folder(std::string const & folder) {
+    mkdir(folder.c_str(), 0750);
     m_outfile_folder = folder;
 }
 
@@ -1609,6 +1579,17 @@ void xdb_export_tools_t::generate_json_file(std::string const & filename, json c
     out_json << std::setw(4) << j;
     out_json.flush();
     out_json.close();
+    std::cout << "===> " << name << " generated success!" << std::endl;
+}
+
+void xdb_export_tools_t::generate_common_file(std::string const & filename, std::string const & data) {
+    std::string name{m_outfile_folder + filename};
+    std::ofstream out_file(name);
+    if (!data.empty()) {
+        out_file << data;
+        out_file.flush();
+    }
+    out_file.close();
     std::cout << "===> " << name << " generated success!" << std::endl;
 }
 
