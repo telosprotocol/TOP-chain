@@ -78,28 +78,36 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     xdbg("xcluster_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
     uint256_t tx_hash = hex_to_uint256(tx_hash_str);
     std::string strHash((char*)tx_hash.data(), tx_hash.size());
-    xtransaction_cache_data_t cache_data;
-    if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, std::make_shared<xtransaction_cache_data_t>(cache_data))) {
-    // if (m_transaction_cache != nullptr && m_transaction_cache->tx_get(strHash, std::make_shared<>(cache_data)) == 1) {
-        const chain_info::xtx_exec_json_key jk(version);
-        if (cache_data.jv[jk.m_send].empty()) {
-            cache_data.jv.removeMember(jk.m_send);
-            xdbg("find tx:%s", tx_hash_str.c_str());
-            xJson::Value result_json;
-            result_json["tx_consensus_state"] = cache_data.jv;
-            // xdbg("json1:%s", cache_data.jv.toStyledString().c_str());
-            m_bh.update_tx_state(result_json, cache_data.jv, version);
 
-            auto ori_tx_info = m_bh.parse_tx(cache_data.tran.get(), version);
+    std::shared_ptr<xtransaction_cache_data_t> cache_data_ptr = std::make_shared<xtransaction_cache_data_t>();
+    if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, cache_data_ptr)) {        
+        const chain_info::xtx_exec_json_key jk(version);
+        std::map<int, xJson::Value> map_jv = cache_data_ptr->jv;
+        if (map_jv.find(base::enum_transaction_subtype_send) == map_jv.end()) {
+            xdbg("not find tx:%s", tx_hash_str.c_str());
+            xJson::Value result_json;
+            xJson::Value jv;
+
+            data::xtransaction_ptr_t tx_ptr = cache_data_ptr->tran;
+            if (map_jv.find(base::enum_transaction_subtype_recv) != map_jv.end()) {
+                jv[jk.m_recv] = map_jv[base::enum_transaction_subtype_recv];
+                if (version == RPC_VERSION_V2)
+                    jv[jk.m_recv]["account"] = tx_ptr->get_target_addr();
+            }
+            if (map_jv.find(base::enum_transaction_subtype_confirm) != map_jv.end()) {
+                jv[jk.m_confirm] = map_jv[base::enum_transaction_subtype_confirm];
+                if (version == RPC_VERSION_V2)
+                    jv[jk.m_confirm]["account"] = tx_ptr->get_source_addr();
+            }
+            result_json["tx_consensus_state"] = jv;
+            m_bh.update_tx_state(result_json, jv, version);
+
+            auto ori_tx_info = m_bh.parse_tx(tx_ptr.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
-            // xdbg("json2:%s", ori_tx_info.toStyledString().c_str());
             json_proc.m_response_json["data"] = result_json;
             return;
         }
     }
-//            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "broadcasting the transaction"};
-//        else
-//            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "waiting for transaction completion"};
 
     xtransaction_t * tx_ptr = nullptr;
     xcons_transaction_ptr_t cons_tx_ptr = nullptr;

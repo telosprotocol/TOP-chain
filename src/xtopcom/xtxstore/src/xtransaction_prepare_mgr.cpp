@@ -5,7 +5,8 @@
 #include "xpbase/base/top_utils.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
-
+#include "xrpc/xgetblock/get_block.h"
+#include "xtxexecutor/xtransaction_fee.h"
 NS_BEG2(top, txexecutor)
 
 xtransaction_prepare_mgr::xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
@@ -62,76 +63,61 @@ void xtransaction_prepare_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 }
 
 int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) {
-    const std::vector<base::xventity_t *> & _table_inentitys = bp->get_input()->get_entitys();
-    uint32_t entitys_count = _table_inentitys.size();
-    xdbg("update_prepare_cache size: %d", entitys_count);
-    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        base::xvinentity_t * _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
-        base::xtable_inentity_extend_t extend;
-        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+    xJson::Value jv;
+    const std::vector<base::xvaction_t> input_actions = bp->get_tx_actions();
+    for(auto action : input_actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            xdbg("empty hash");
+            continue;
+        }
+        base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
+        
+        data::xlightunit_action_ptr_t txaction = std::make_shared<data::xlightunit_action_t>(action);
+        xdbg("tran hash: %s", top::HexEncode(txaction->get_tx_hash().c_str()).c_str());
 
-        const std::vector<base::xvaction_t> & input_actions = _table_unit_inentity->get_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                xdbg("empty hash");
-                continue;
+        data::xlightunit_action_ptr_t recv_txinfo;
+        data::xtransaction_cache_data_t cache_data;
+        if (m_transaction_cache->tx_get(txaction->get_tx_hash(), cache_data) == 0) {
+            xdbg("not find tran: %s", top::HexEncode(txaction->get_tx_hash().c_str()).c_str());
+            continue;
+        }
+        recv_txinfo = cache_data.recv_txinfo;
+
+        data::xtransaction_ptr_t tx_ptr = cache_data.tran;
+
+        jv["height"] = static_cast<xJson::UInt64>(bp->get_height());
+        auto tx_info = bp->get_tx_info(tx_ptr->get_digest_str());
+        if (tx_info != nullptr) {
+            jv["used_gas"] = tx_info->get_used_tgas();
+            if (tx_info->is_self_tx()) {
+                jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
+                jv["used_deposit"] = tx_info->get_used_deposit();
             }
-            data::xlightunit_action_ptr_t txaction = std::make_shared<data::xlightunit_action_t>(action);
-            // data::xtransaction_ptr_t _rawtx = bp->query_raw_transaction(txaction->get_tx_hash());
-            xdbg("tran hash: %s", top::HexEncode(txaction->get_tx_hash().c_str()).c_str());
-
-            xJson::Value ji;
-            data::xlightunit_action_ptr_t recv_txinfo;
-            data::xtransaction_cache_data_t cache_data;
-            if (m_transaction_cache->tx_get(txaction->get_tx_hash(), cache_data) == 0) {
-                xdbg("not find tran: %s", top::HexEncode(txaction->get_tx_hash().c_str()).c_str());
-                continue;
-            }
-            ji = cache_data.jv;
-            recv_txinfo = cache_data.recv_txinfo;
-
-            xJson::Value jv;
-            // jv["unit_hash"] = bp->get_block_hash_hex_str();
-            // jv["unit_hash"] = _unit_header->get_last_block_hash();
-            jv["height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
-
-            jv["used_gas"] = txaction->get_used_tgas();
-            jv["used_deposit"] = txaction->get_used_deposit();
-            if (txaction->is_self_tx()) {
-                jv["exec_status"] = tx_exec_status_to_str(txaction->get_tx_exec_status());
-            }
-            if (txaction->is_confirm_tx()) {
-                // TODO(jimmy) should read recv tx exec status from recv tx unit
+            if (tx_info->is_confirm_tx()) {
+                jv["used_deposit"] = tx_info->get_used_deposit();
                 if (recv_txinfo != nullptr) {
-                    jv["recv_tx_exec_status"] = tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
-                    jv["exec_status"] = tx_exec_status_to_str(txaction->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());
+                    jv["recv_tx_exec_status"] = data::xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+                    jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());
                 }
             }
-            if (txaction->is_recv_tx()) {
-                // recv_txinfo = tx_info;  // TODO(jimmy) refactor here future
-                m_transaction_cache->tx_set_recv_txinfo(txaction->get_tx_hash(), txaction);
-            }
-
-            base::enum_transaction_subtype type = txaction->get_tx_subtype();
-            // xdbg("type:%d,%s", type, jv.toStyledString().c_str());
-            // xdbg("ji:%s", ji.toStyledString().c_str());
-            if (type == base::enum_transaction_subtype_self) {
-                m_transaction_cache->tx_erase(txaction->get_tx_hash());
-                continue;
-            } else if (type == base::enum_transaction_subtype_send)
-                ji["send_block_info"] = jv;
-            else if (type == base::enum_transaction_subtype_recv)
-                ji["recv_block_info"] = jv;
-            else if (type == base::enum_transaction_subtype_confirm)
-                ji["confirm_block_info"] = jv;
-            else
-                continue;
-            m_transaction_cache->tx_set_json(txaction->get_tx_hash(), ji);
-
-            if (type == base::enum_transaction_subtype_confirm)
-                m_transaction_cache->tx_erase(txaction->get_tx_hash());
         }
+        if (_subtype == base::enum_transaction_subtype_self) {
+            m_transaction_cache->tx_erase(txaction->get_tx_hash());
+            continue;
+        } else if (_subtype == base::enum_transaction_subtype_send) {
+            auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
+            jv["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
+            m_transaction_cache->tx_set_json(txaction->get_tx_hash(), base::enum_transaction_subtype_send, jv);
+        } else if (_subtype == base::enum_transaction_subtype_recv) {
+            m_transaction_cache->tx_set_recv_txinfo(txaction->get_tx_hash(), txaction);
+            m_transaction_cache->tx_set_json(txaction->get_tx_hash(), base::enum_transaction_subtype_recv, jv);
+        } else if (_subtype == base::enum_transaction_subtype_confirm) {
+            m_transaction_cache->tx_set_json(txaction->get_tx_hash(), base::enum_transaction_subtype_confirm, jv);
+        } else
+            continue;
+
+        if (_subtype == base::enum_transaction_subtype_confirm)
+            m_transaction_cache->tx_erase(txaction->get_tx_hash());
     }
     return 0;
 }
