@@ -358,6 +358,11 @@ void xcluster_query_manager::getTimerInfo(xjson_proc_t & json_proc) {
     json_proc.m_response_json["data"] = jv;
 }
 
+uint64_t xcluster_query_manager::getTimerHeight() {
+    chain_info::get_block_handle bh(m_store.get(), m_block_store.get(), nullptr);
+    return bh.get_timer_clock();
+}
+
 void xcluster_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();

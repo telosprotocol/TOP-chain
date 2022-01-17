@@ -32,6 +32,7 @@ public:
     void getBlock(xjson_proc_t & json_proc);
     void getChainInfo(xjson_proc_t & json_proc);
     void getIssuanceDetail(xjson_proc_t & json_proc);
+    uint64_t getTimerHeight(); // to be deleted after 1.2.8 fork
     void getTimerInfo(xjson_proc_t & json_proc);
     void queryNodeInfo(xjson_proc_t & json_proc);
     void getElectInfo(xjson_proc_t & json_proc);
