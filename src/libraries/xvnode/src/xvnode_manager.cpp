@@ -4,7 +4,6 @@
 
 #include "xvnode/xvnode_manager.h"
 
-#include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcrypto/xckey.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
@@ -16,7 +15,6 @@
 #include "xvnode/xvnode_role_proxy.h"
 
 #include <algorithm>
-#include <cinttypes>
 
 NS_BEG2(top, vnode)
 
@@ -205,96 +203,9 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
         //  2. fade second
         //  3. start third
 
-        for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes);) {
-            auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
-            assert(vnode != nullptr);
-
-            switch (vnode->rotation_status(time)) {
-            case common::xrotation_status_t::outdated: {
-                if (vnode->faded() && vnode->running()) {
-                    vnode->stop();
-                    m_vnode_proxy->unreg(vnode->address());
-                } else if (common::has<common::xnode_type_t::storage>(vnode->type()) || common::has<common::xnode_type_t::edge>(vnode->type())) {
-                    vnode->fade();
-                    vnode->stop();
-                    m_vnode_proxy->unreg(vnode->address());
-                }
-                xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
-                      vnode.get(),
-                      vnode->address().to_string().c_str(),
-                      vnode->outdate_time(),
-                      time);
-
-                it = m_all_nodes.erase(it);
-                break;
-            }
-
-            default: {
-                ++it;
-                break;
-            }
-            }
-        }
-
-        for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
-            auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
-            assert(vnode != nullptr);
-
-            switch (vnode->rotation_status(time)) {
-            case common::xrotation_status_t::outdated: {
-                assert(false);
-                break;
-            }
-
-            case common::xrotation_status_t::faded: {
-                if (!vnode->faded() && vnode->running()) {
-                    vnode->fade();
-                    m_vnode_proxy->fade(vnode->address());
-
-                    xwarn("[vnode mgr] vnode (%p) at address %s fades at logic time %" PRIu64 " current logic time %" PRIu64,
-                          vnode.get(),
-                          vnode->address().to_string().c_str(),
-                          vnode->fade_time(),
-                          time);
-                }
-
-                break;
-            }
-
-            default: {
-                break;
-            }
-            }
-        }
-
-        for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
-            auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
-            assert(vnode != nullptr);
-
-            switch (vnode->rotation_status(time)) {
-            case common::xrotation_status_t::outdated: {
-                assert(false);
-                break;
-            }
-
-            case common::xrotation_status_t::started: {
-                if (!vnode->running()) {
-                    vnode->start();
-                    xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64,
-                          vnode.get(),
-                          vnode->address().to_string().c_str(),
-                          vnode->start_time(),
-                          time);
-                    m_vnode_proxy->change(vnode->address(), vnode->start_time());
-                }
-                break;
-            }
-
-            default: {
-                break;
-            }
-            }
-        }
+        stop_vnodes_with_lock_hold_outside(time);
+        fade_vnodes_with_lock_hold_outside(time);
+        start_vnodes_with_lock_hold_outside(time);
 
 #if defined(ENABLE_METRICS)
         if (time % 6 == 0) {    // dump per one minute
@@ -370,6 +281,83 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                                  "fullnode", metrics_vnode_status[common::xnode_type_t::fullnode]);
         }
 #endif
+    }
+}
+
+void xtop_vnode_manager::start_vnodes_with_lock_hold_outside(common::xlogic_time_t const time) {
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::rec>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::zec>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::storage_archive>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::storage_exchange>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::fullnode>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::edge>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::consensus_auditor>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::consensus_validator>(time);
+}
+
+void xtop_vnode_manager::fade_vnodes_with_lock_hold_outside(common::xlogic_time_t const time) {
+    for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
+        auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
+        assert(vnode != nullptr);
+
+        switch (vnode->rotation_status(time)) {
+        case common::xrotation_status_t::outdated: {
+            assert(false);
+            break;
+        }
+
+        case common::xrotation_status_t::faded: {
+            if (!vnode->faded() && vnode->running()) {
+                vnode->fade();
+                m_vnode_proxy->fade(vnode->address());
+
+                xwarn("[vnode mgr] vnode (%p) at address %s fades at logic time %" PRIu64 " current logic time %" PRIu64,
+                      vnode.get(),
+                      vnode->address().to_string().c_str(),
+                      vnode->fade_time(),
+                      time);
+            }
+
+            break;
+        }
+
+        default: {
+            break;
+        }
+        }
+    }
+}
+
+void xtop_vnode_manager::stop_vnodes_with_lock_hold_outside(common::xlogic_time_t const time) {
+    for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes);) {
+        auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
+        assert(vnode != nullptr);
+
+        switch (vnode->rotation_status(time)) {
+        case common::xrotation_status_t::outdated: {
+            if (vnode->faded() && vnode->running()) {
+                vnode->stop();
+                m_vnode_proxy->unreg(vnode->address());
+            } else if (common::has<common::xnode_type_t::storage>(vnode->type()) || common::has<common::xnode_type_t::edge>(vnode->type())) {
+                vnode->fade();
+                vnode->stop();
+                m_vnode_proxy->unreg(vnode->address());
+            }
+            xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
+                  vnode.get(),
+                  vnode->address().to_string().c_str(),
+                  vnode->outdate_time(),
+                  time);
+
+            it = m_all_nodes.erase(it);
+            break;
+        }
+
+        default: {
+            ++it;
+            break;
+        }
+        }
     }
 }
 

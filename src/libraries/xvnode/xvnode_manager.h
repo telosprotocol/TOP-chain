@@ -6,6 +6,7 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xtimer_driver_fwd.h"
+#include "xbasic/xutility.h"
 #include "xelect_net/include/elect_main.h"
 #include "xelection/xcache/xgroup_element.h"
 #include "xelection/xcache/xdata_accessor_face.h"
@@ -22,6 +23,7 @@
 #include "xvnode/xvnode_manager_face.h"
 #include "xvnode/xvnode_role_proxy_face.h"
 
+#include <cinttypes>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -95,6 +97,46 @@ public:
 
 private:
     void on_timer(common::xlogic_time_t time);
+
+    void start_vnodes_with_lock_hold_outside(common::xlogic_time_t const time);
+    void fade_vnodes_with_lock_hold_outside(common::xlogic_time_t const time);
+    void stop_vnodes_with_lock_hold_outside(common::xlogic_time_t const time);
+
+    template <common::xnode_type_t NodeTypeV>
+    void start_vnode_with_lock_hold_outside(common::xlogic_time_t const time) {
+        for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
+            auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
+            assert(vnode != nullptr);
+
+            if (!common::has<NodeTypeV>(vnode->type())) {
+                continue;
+            }
+
+            switch (vnode->rotation_status(time)) {
+            case common::xrotation_status_t::outdated: {
+                assert(false);
+                break;
+            }
+
+            case common::xrotation_status_t::started: {
+                if (!vnode->running()) {
+                    vnode->start();
+                    xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64,
+                          vnode.get(),
+                          vnode->address().to_string().c_str(),
+                          vnode->start_time(),
+                          time);
+                    m_vnode_proxy->change(vnode->address(), vnode->start_time());
+                }
+                break;
+            }
+
+            default: {
+                break;
+            }
+            }
+        }
+    }
 };
 using xvnode_manager_t = xtop_vnode_manager;
 
