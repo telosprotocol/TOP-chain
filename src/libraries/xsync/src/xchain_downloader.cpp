@@ -386,26 +386,10 @@ bool xchain_downloader_t::send_request(int64_t now) {
         XMETRICS_COUNTER_INCREMENT("xsync_downloader_overflow", 1);
         return false;
     }
-
-    std::string address;
-    xsync_roles_t roles = m_role_chains_mgr->get_roles();
-    vnetwork::xvnode_address_t self_addr;
-    common::xnode_type_t node_type;
-    for (const auto &role_it: roles) {
-        self_addr = role_it.first;
-        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
-        node_type = self_addr.type();
-
-        if (common::has<common::xnode_type_t::fullnode>(node_type)) {
-            address = self_addr.to_string();
-            break;
-        } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
-            continue;
-        } else {
-            continue;
-        }
-    }
-    if (address.empty()) { // not fullnode
+    
+    vnetwork::xvnode_address_t self_addr = m_request->self_addr;
+    common::xnode_type_t node_type = self_addr.type();
+    if (!common::has<common::xnode_type_t::fullnode>(node_type)) { // not fullnode
         XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
         m_request->send_time = now;
         int64_t queue_cost = m_request->send_time - m_request->create_time;
