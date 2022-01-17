@@ -73,12 +73,12 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
         base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
         
         data::xlightunit_action_ptr_t txaction = std::make_shared<data::xlightunit_action_t>(action);
-        xdbg("tran hash: %s", top::HexEncode(txaction->get_tx_hash().c_str()).c_str());
+        xdbg("tran hash: %s", top::HexEncode(txaction->get_tx_hash()).c_str());
 
         data::xlightunit_action_ptr_t recv_txinfo;
         data::xtransaction_cache_data_t cache_data;
         if (m_transaction_cache->tx_get(txaction->get_tx_hash(), cache_data) == 0) {
-            xdbg("not find tran: %s", top::HexEncode(txaction->get_tx_hash().c_str()).c_str());
+            xdbg("not find tran: %s", top::HexEncode(txaction->get_tx_hash()).c_str());
             continue;
         }
         recv_txinfo = cache_data.recv_txinfo;
