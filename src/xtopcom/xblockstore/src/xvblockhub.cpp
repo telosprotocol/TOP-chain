@@ -1560,7 +1560,7 @@ namespace top
             for(uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
             {
                 const uint64_t try_height = m_meta->_highest_cp_connect_block_height + 1;
-                if (try_height < get_latest_deleted_block_height())
+                if (try_height <= get_latest_deleted_block_height())
                 {
                     xwarn("xblockacct_t::fully_update_cp_connect height:%llu lower than delete height, meta:%s", try_height, dump().c_str());
                     return;
