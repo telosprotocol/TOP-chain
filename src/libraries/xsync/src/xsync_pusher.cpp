@@ -178,13 +178,14 @@ int xsync_pusher_t::get_chain_info(const vnetwork::xvnode_address_t &network_sel
     const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
     
     for (const auto & it : chains) {
+        enum_chain_sync_policy sync_policy = it.second.sync_policy;
         const std::string & address = it.first;
         const xchain_info_t & chain_info = it.second;
 
         xchain_state_info_t info;
         info.address = address;
-        info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
-        info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+        info.start_height = m_sync_store->get_latest_start_block_height(address, sync_policy);
+        info.end_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
         info_list.push_back(info);
     }
 
