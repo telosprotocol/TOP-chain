@@ -60,6 +60,7 @@ std::vector<std::string> xdb_export_tools_t::get_system_contract_accounts() {
         sys_contract_rec_elect_archive_addr,
         sys_contract_rec_elect_rec_addr,
         sys_contract_rec_elect_zec_addr,
+        sys_contract_rec_elect_fullnode_addr,
         sys_contract_rec_tcc_addr,
         sys_contract_rec_standby_pool_addr,
         sys_contract_zec_workload_addr,

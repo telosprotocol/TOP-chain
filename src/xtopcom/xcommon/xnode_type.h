@@ -152,7 +152,8 @@ enum class xenum_node_type : std::uint32_t {
     storage_exchange = storage | exchange,
 
     /// @brief all type
-    real_part_mask    = 0x00FFFFFF,
+    real_part_mask = 0x00FFFFFF,
+    all_types = real_part_mask,
     virtual_part_mask = 0xFF000000
 };
 using xnode_type_t = xenum_node_type;
