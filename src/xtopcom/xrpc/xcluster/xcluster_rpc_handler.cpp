@@ -57,7 +57,7 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
                 auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
                 auto clock = self->m_cluster_query_mgr->getTimerHeight();
                 auto forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, clock);
-                xwarn("xcluster_rpc_handler::on_message clock:%llu, forked:%d", clock, forked);
+                xdbg("xcluster_rpc_handler::on_message clock:%llu, forked:%d", clock, forked);
                 if (forked) {
                     xwarn("xcluster_rpc_handler::on_message auditor tackle query:%" PRIx64, message.hash());
                     return true;
