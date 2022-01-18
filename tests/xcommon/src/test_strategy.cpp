@@ -58,13 +58,13 @@ TEST(xcommon, node_type_strategy2) {
     EXPECT_FALSE(strategy.allow(xnode_type_t::rec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::zec));
     EXPECT_FALSE(strategy.allow(xnode_type_t::archive));
-    EXPECT_FALSE(strategy.allow(xnode_type_t::full_node));
+    EXPECT_FALSE(strategy.allow(xnode_type_t::exchange));
     EXPECT_FALSE(strategy.allow(xnode_type_t::edge));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus_auditor));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus_auditor | xnode_type_t::consensus_validator));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus_validator));
-    EXPECT_FALSE(strategy.allow(xnode_type_t::consensus_auditor | xnode_type_t::storage_full_node));
+    EXPECT_FALSE(strategy.allow(xnode_type_t::consensus_auditor | xnode_type_t::storage_exchange));
     EXPECT_TRUE(strategy.allow(xnode_type_t::consensus_auditor | xnode_type_t::archive));
     EXPECT_FALSE(strategy.allow(xnode_type_t::consensus_auditor | xnode_type_t::storage_archive));
     EXPECT_FALSE(strategy.allow(xnode_type_t::frozen));

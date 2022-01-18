@@ -393,6 +393,8 @@ std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
         }
     }
     return table_height_map;
+}
+
 xtransaction_ptr_t xtxpool_t::get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
