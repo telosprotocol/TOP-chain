@@ -285,6 +285,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
 }
 
 void xtop_vnode_manager::start_vnodes_with_lock_hold_outside(common::xlogic_time_t const time) {
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::frozen>(time);
     start_vnode_with_lock_hold_outside<common::xnode_type_t::rec>(time);
     start_vnode_with_lock_hold_outside<common::xnode_type_t::zec>(time);
     start_vnode_with_lock_hold_outside<common::xnode_type_t::storage_archive>(time);
