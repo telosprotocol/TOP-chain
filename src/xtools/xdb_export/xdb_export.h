@@ -108,9 +108,6 @@ private:
     void query_balance(std::string const & table, json & j_unit, json & j_table);
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data, json & j_state);
     void query_archive_db_internal(std::string const & account, enum_query_account_type type, std::ofstream & file, uint32_t & errors);
-    uint32_t query_block_continuity_and_integrity(std::string const & account, enum_query_account_type type, std::ofstream & file);
-    uint32_t query_block_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
-    uint32_t query_cert_continuity(std::string const & account, enum_query_account_type type, std::ofstream & file);
 
     void read_info_from_table_block(const data::xblock_t * block, xdbtool_table_info_t & table_info, std::vector<tx_ext_t> & txinfos);
     void set_txinfo_to_json(json & j, const tx_ext_t & txinfo);
