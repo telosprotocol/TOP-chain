@@ -1355,7 +1355,8 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                                  sys_contract_rec_elect_archive_addr,
                                                  sys_contract_rec_elect_rec_addr,
                                                  sys_contract_rec_elect_zec_addr,
-                                                 sys_contract_zec_elect_consensus_addr};
+                                                 sys_contract_zec_elect_consensus_addr,
+                                                 sys_contract_rec_elect_fullnode_addr};
     if (sys_block_owner.find(block_owner) != std::end(sys_block_owner)) {
         using top::data::election::xelection_result_store_t;
         auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{block_owner});
@@ -1374,6 +1375,8 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                 zid = common::xedge_zone_id;
             } else if (block_owner == sys_contract_zec_elect_consensus_addr) {
                 zid = common::xdefault_zone_id;
+            } else if (block_owner == sys_contract_rec_elect_fullnode_addr) {
+                zid = common::xfullnode_zone_id;
             } else {
                 zid = common::xcommittee_zone_id;
             }
