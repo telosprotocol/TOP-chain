@@ -18,7 +18,12 @@
 #include "xbase/xlog.h"
 #include "xdb/xdb.h"
 #include "xmetrics/xmetrics.h"
+
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#else
 #include <sys/sysinfo.h>
+#endif
 
 using std::string;
 
@@ -530,18 +535,28 @@ xdb::xdb_impl::xdb_impl(const int db_kinds,const std::string& db_root_dir,std::v
         m_cf_handles[i] = NULL; //force to reset
     }
     
+    uint64_t total_ram = 0;
+    uint64_t free_ram = 0;
+    DB_OPTIONS_TYPE cache_type = DB_OPTIONS_DEFAULT;
+#ifdef __APPLE__
+    size_t len = sizeof(total_ram);
+    int ret = sysctlbyname("hw.memsize", &total_ram, &len, NULL, 0);
+    if (ret != 0)
+    {
+        xwarn("xdb_impl macos sysctlbyname of hw.memsize failed!");
+    }
+#else
     struct sysinfo si;
     sysinfo(&si);
-    DB_OPTIONS_TYPE  cache_type;
-    //free mem < 2.5G
-    if (si.totalram <= 2.5*1024*1024*1024L) {
-        cache_type = DB_OPTIONS_DEFAULT;
-    } else {
+    total_ram = si.totalram;
+    free_ram = si.freeram;
+#endif
+    // total mem > 2.5G
+    if (total_ram > 2.5*1024*1024*1024L) {
         cache_type = DB_OPTIONS_ADVANCED;
     }
 
-    xkinfo("xdb_impl::init,db_root_dir=%s,memory Totalram %ld, Available: %ld.cache_type:%d",db_root_dir.c_str(), si.totalram, si.freeram, cache_type);
-    
+    xkinfo("xdb_impl::init,db_root_dir=%s,memory Totalram %llu, Available: %llu.cache_type:%d",db_root_dir.c_str(), total_ram, free_ram, cache_type);
     m_db_name = db_root_dir;
     xdb::xdb_impl::setup_default_db_options(m_options,m_db_kinds);//setup base options first
     if(db_paths.empty() == false)
