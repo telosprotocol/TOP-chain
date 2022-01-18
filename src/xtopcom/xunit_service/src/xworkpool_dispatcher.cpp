@@ -71,8 +71,11 @@ void xworkpool_dispatcher::chain_timer(common::xlogic_time_t time) {
     auto * blkstore = m_para->get_resources()->get_vblockstore();
     auto timer_block = blkstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr), metrics::blockstore_access_from_us_dispatcher_load_tc);
 
-    xunit_dbg("xworkpool_dispatcher::chain_timer call on_clock, logic time %" PRIu64 " TC %" PRIu64, time, timer_block->get_height());
-    if (time <= timer_block->get_height()) {
+    auto clock = timer_block->get_height();
+
+    xunit_dbg("xworkpool_dispatcher::chain_timer this:%p logic time %" PRIu64 " TC %" PRIu64, this, time, clock);
+    if (time <= clock) {
+        xunit_dbg("xworkpool_dispatcher::chain_timer call on_clock, this:%p logic time %" PRIu64 " TC %" PRIu64, this, time, clock);
         on_clock(timer_block.get());
     }
 }
@@ -82,8 +85,14 @@ void xworkpool_dispatcher::on_clock(base::xvblock_t * clock_block) {
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
+        xunit_dbg("xworkpool_dispatcher::on_clock this:%p m_packers size:%d TC %" PRIu64, this, m_packers.size(), clock_block->get_height());
+        if (m_packers.empty()) {
+            xunit_warn("xworkpool_dispatcher::on_clock m_packers is empty this:%p TC %" PRIu64, this, clock_block->get_height());
+            return;
+        }
         for (auto const & pair : m_packers) {
             auto table_index = pair.first;
+            xunit_dbg("xworkpool_dispatcher::on_clock this:%p table:%d TC %" PRIu64, this, table_index.to_table_shortid(), clock_block->get_height());
             auto worker = get_worker(work_pool, table_index);
             fire_clock(clock_block, worker, pair.second);
         }
@@ -110,7 +119,6 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
     // 2. subscribe tableid
     // 3. reset xip
     xunit_info("xworkpool_dispatcher::start %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
-    m_para->get_resources()->get_chain_timer()->watch(watcher_name(xip), 1, std::bind(&xworkpool_dispatcher::chain_timer, shared_from_this(), std::placeholders::_1));
     auto election_face = m_para->get_resources()->get_election();
     auto elect_face = election_face->get_election_cache_face();
     if (elect_face != nullptr) {
@@ -118,6 +126,8 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
         elect_face->get_tables(xip, &tables);
         subscribe(tables, xip, start_time);
     }
+    m_watcher_name = watcher_name(xip);
+    m_para->get_resources()->get_chain_timer()->watch(m_watcher_name, 1, std::bind(&xworkpool_dispatcher::chain_timer, shared_from_this(), std::placeholders::_1));
     return false;
 }
 
@@ -173,6 +183,7 @@ bool xworkpool_dispatcher::destroy(const xvip2_t & xip) {
     // 1. get tableid from election by xip
     // 2. erase all datas
     xunit_info("xworkpool_dispatcher::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    m_para->get_resources()->get_chain_timer()->unwatch(m_watcher_name);
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto & packer : m_packers) {
         packer.second->close();
@@ -240,7 +251,9 @@ void xworkpool_dispatcher::fire_clock(base::xvblock_t * block, base::xworker_t *
         return true;
     };
     base::xcall_t asyn_call((base::xcallback_t)_call, packer.get(), block);
-    worker->send_call(asyn_call);
+    auto ret = worker->send_call(asyn_call); {
+        xunit_dbg("xworkpool_dispatcher::fire_clock ret:%d TC: %" PRIu64, ret, block->get_height());
+    }
 }
 
 NS_END2
