@@ -52,12 +52,11 @@ public:
 
 private:
     struct tx_ext_t {
-        std::string hash{""};
-        int32_t tableid{-1};
+        std::string hash{};
         uint64_t height{0};
         uint64_t timestamp{0};
-        std::string src{""};
-        std::string target{""};
+        std::string src{};
+        std::string target{};
         uint64_t unit_height{0};
         uint8_t phase{0};
         uint64_t fire_timestamp{0}; // origin tx fire timestamp
@@ -109,11 +108,8 @@ private:
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data, json & j_state);
     void query_archive_db_internal(std::string const & account, enum_query_account_type type, std::ofstream & file, uint32_t & errors);
 
-    void read_info_from_table_block(const data::xblock_t * block, xdbtool_table_info_t & table_info, std::vector<tx_ext_t> & txinfos);
-    void set_txinfo_to_json(json & j, const tx_ext_t & txinfo);
-    void set_txinfos_to_json(json & j, const std::map<std::string, tx_ext_t> & txinfos);
-    void set_txinfos_to_json(json & j, const std::vector<tx_ext_t> & txinfos);
-    void set_confirmed_txinfo_to_json(json & j, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
+    json set_txinfo_to_json(tx_ext_t const & txinfo);
+    json set_txinfo_to_json(tx_ext_t const & send_txinfo, tx_ext_t const & confirm_txinfo);
     void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
 
     std::set<std::string> get_special_genesis_accounts();
