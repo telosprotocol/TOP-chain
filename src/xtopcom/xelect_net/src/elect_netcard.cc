@@ -287,7 +287,7 @@ void EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft
     TOP_DEBUG("kroot broadcast send to self");
 
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
-    if (!ec) {
+    if (ec) {
         xwarn("broadcast fail. %s %s", ec.category().name(), ec.message().c_str());
     }
     return;
@@ -316,7 +316,7 @@ void EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbf
     TOP_DEBUG("kroot broadcast send to self");
 
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
-    if (!ec) {
+    if (ec) {
         xwarn("broadcast fail. %s %s", ec.category().name(), ec.message().c_str());
     }
     return;
