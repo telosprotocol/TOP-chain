@@ -65,7 +65,7 @@ osname_darwin="Darwin"
 ntpd_path="/usr/sbin/ntpd"
 ntpd_service="ntp.service"
 
-function init_os_config() {
+init_os_config() {
     sed -i "/ulimit\s-n/d"     /etc/profile
     sed -i '$a\ulimit -n 65535'        /etc/profile
     source /etc/profile
@@ -177,10 +177,6 @@ else
 fi
 
 echo $topio_home
-sed -i "/TOPIO_HOME/d"     /etc/profile
-sed -i '$a\export TOPIO_HOME='$topio_home        /etc/profile
-source /etc/profile
-
 echo ""
 echo "############now will register topio as service##############"
 echo ""
@@ -255,5 +251,3 @@ echo "install $topio_name done, good luck"
 echo "now run command to check md5:  topio -v"
 echo "now run command for help info: topio -h"
 topio node safebox
-chgrp -R $username $topio_home
-chown -R $username $topio_home
