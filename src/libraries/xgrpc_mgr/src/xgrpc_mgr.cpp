@@ -131,17 +131,18 @@ void handler_mgr::add_handler(std::shared_ptr<xrpc_handle_face_t> handle) {
 bool handler_mgr::handle(std::string request) {
     for (auto v : m_handles) {
         auto ret = v->handle(request);
-        if (ret) {
-            m_response = v->get_response();
+        m_response = v->get_response();
 #ifdef DEBUG
-            std::cout << "======================== request " << request << std::endl;
-            std::cout << "======================== response " << m_response << std::endl;
+        std::cout << "======================== request " << request << std::endl;
+        std::cout << "======================== response " << m_response << std::endl;
 #endif
-            xinfo("grpc request: %s success", request.c_str());
+        if (ret) {
+            xdbg("grpc request:%s success", request.c_str());
             return true;
+        } else {
+            xinfo("grpc request:%s error", request.c_str());
         }
     }
-    xinfo("grpc request: %s error", request.c_str());
     return false;
 }
 
