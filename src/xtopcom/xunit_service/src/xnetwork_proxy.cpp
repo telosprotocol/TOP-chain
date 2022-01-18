@@ -95,7 +95,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
             std::error_code broadcast_ec;
             network->broadcast(dest_to.xip2(), msg, broadcast_ec);
             if (broadcast_ec) {
-                xerror("auditor forward to validator failed. src %s dst %s", network->address().to_string().c_str(), dest_to.to_string().c_str());
+                xwarn("auditor forward to validator failed. src %s dst %s", network->address().to_string().c_str(), dest_to.to_string().c_str());
             }
 #ifdef DEBUG
             xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
