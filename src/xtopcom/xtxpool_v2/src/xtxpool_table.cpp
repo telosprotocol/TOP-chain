@@ -651,6 +651,8 @@ void xtxpool_table_t::get_min_keep_height(std::string & table_addr, uint64_t & h
         height = 0;
         xtxpool_info("xtxpool_table_t::get_min_keep_height fail table:%s", m_xtable_info.get_address().c_str());
     }
+}
+
 xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
     return m_unconfirm_raw_txs.get_raw_tx(peer_table_sid, receipt_id);
 }
