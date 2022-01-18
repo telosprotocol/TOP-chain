@@ -50,6 +50,7 @@ protected:
     xbatch_paker_map                         m_packers;
     std::shared_ptr<xcons_service_para_face> m_para;
     std::shared_ptr<xblock_maker_face>       m_blockmaker;
+    std::string                              m_watcher_name;
 };
 
 NS_END2

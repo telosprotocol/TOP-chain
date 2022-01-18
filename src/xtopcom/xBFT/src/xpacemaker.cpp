@@ -122,6 +122,7 @@ namespace top
             }
             if(false == clock_cert->is_deliver()) //deliver for clock
             {
+                xdbg("xclockcert_view::safe_check_clock_cert is_deliver false TC:%llu", clock_cert->get_clock());
                 return false;
             }
             return true;
@@ -290,7 +291,7 @@ namespace top
         {
             xcsclock_fire * _clock_event = (xcsclock_fire*)&event;
 
-            //xdbg("xclockcert_view::on_clock_fire,recv new clock=%s at node=0x%llx",_clock_event->get_clock_block()->dump().c_str(),get_xip2_addr().low_addr);
+            xdbg("xclockcert_view::on_clock_fire,recv new clock=%s at node=0x%llx",_clock_event->get_clock_block()->dump().c_str(),get_xip2_addr().low_addr);
 
             update_clock_cert(_clock_event->get_clock_block());
             if(_clock_event->get_latest_block() != NULL)
