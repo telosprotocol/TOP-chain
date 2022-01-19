@@ -730,7 +730,7 @@ namespace top
                         else
                         {
                             xerror("xblockacct_t::load_latest_connected_index,account=%s,hash mismatch last=%s,commit=%s,connnect_height=%" PRIu64 "",
-                                get_account().c_str(), m_meta->_highest_connect_block_hash.c_str(), next_commit->get_last_block_hash().c_str(), m_meta->_highest_connect_block_height);
+                            get_account().c_str(), base::xstring_utl::to_hex(m_meta->_highest_connect_block_hash).c_str(), base::xstring_utl::to_hex(next_commit->get_last_block_hash()).c_str(), m_meta->_highest_connect_block_height);
                         }
                     }
                     else
