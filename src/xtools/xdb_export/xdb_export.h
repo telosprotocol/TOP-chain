@@ -42,7 +42,7 @@ public:
     // query balance info
     void query_balance();
     // query archive db integrity and continuity
-    void query_archive_db();
+    void query_archive_db(const uint32_t redundancy);
     // query checkpoint
     void query_checkpoint(const uint64_t clock);
     // set folder
@@ -90,9 +90,6 @@ private:
         uint64_t max_confirm_time_from_fire{0};
     };
 
-    std::set<std::string> query_db_unit_accounts();
-    std::set<std::string> generate_db_unit_accounts_file();
-    std::set<std::string> query_unit_account2(std::string const & account);
     void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s = -1, int init_e = -1);
     void query_sync_result(std::string const & account, json & result_json);
     void query_table_latest_fullblock(std::string const & account, json & j);
@@ -105,8 +102,8 @@ private:
     void query_table_unit_state(std::string const & table, json & result);
     void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
-    void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data, json & j_state);
-    void query_archive_db_internal(std::string const & account, enum_query_account_type type, std::ofstream & file, uint32_t & errors);
+    void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
+    void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_txinfo_to_json(tx_ext_t const & send_txinfo, tx_ext_t const & confirm_txinfo);
@@ -115,7 +112,6 @@ private:
     std::set<std::string> get_special_genesis_accounts();
     std::set<std::string> get_db_unit_accounts_v2();
     void load_db_unit_accounts_info();
-    void generate_db_unit_accounts_data_file();
     void generate_account_info_file(std::string const & account, const uint64_t height);
     void generate_json_file(std::string const & filename, json const & j);
     void generate_common_file(std::string const & filename, std::string const & data);
