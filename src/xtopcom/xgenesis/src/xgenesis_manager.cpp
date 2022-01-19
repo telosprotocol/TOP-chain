@@ -111,11 +111,6 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s", account.get_account().c_str());
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
-    // check
-    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
-        xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.get_account().c_str());
-        return nullptr;
-    }
     // run setup of contract
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v1_t>();
     tx->make_tx_run_contract("setup", "");
@@ -133,6 +128,30 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     // create
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(account.get_account(), tx, result);
     xassert(genesis_block != nullptr);
+    // check
+    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
+        auto const existed_genesis_block = m_blockstore->load_block_object(account, (uint64_t)0, (uint64_t)0, false);
+        if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
+            xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.get_account().c_str());
+            return nullptr;
+        }
+        if (account.get_account().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) {
+            // just delete it here and store new root block after
+            xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
+                  account.get_account().c_str(),
+                  base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
+                  base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
+            m_blockstore->delete_block(account, existed_genesis_block.get());
+        } else {
+            xerror("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, %s, %s",
+                   account.get_account().c_str(),
+                   base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
+                   base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
+            xassert(false);
+            ec = error::xenum_errc::genesis_block_hash_mismatch;
+            return nullptr;
+        }
+    }
     xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
     return genesis_block;
 #endif
