@@ -102,8 +102,18 @@ def main(argv):
             print("\taddress type: unknown cluster id")
     elif zone_id == 3:
         print("\taddress type: frozen")
+    elif zone_id == 13:
+        print("\taddress type: fullnode")
     elif zone_id == 14:
-        print("\taddress type: archive")
+        if cluster_id == 1:
+            if group_id == 1:
+                print("\taddress type: archive")
+            elif group_id == 2:
+                print("\taddress type: exchange")
+            else:
+                print("\taddress type: unknown archive group")
+        else:
+            print("\tinvalid cluster id")
     elif zone_id == 15:
         print("\taddress type: edge")
     else:
