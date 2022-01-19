@@ -773,7 +773,7 @@ namespace top
                 }
             }
             */
-            xdbg("update_get_latest_cp_connected_block_height height:%llu, hash:%s, account:%s", m_meta->_highest_cp_connect_block_height, m_meta->_highest_cp_connect_block_hash.c_str(), get_account().c_str());
+            xdbg("update_get_latest_cp_connected_block_height height:%llu, hash:%s, account:%s", m_meta->_highest_cp_connect_block_height, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), get_account().c_str());
             fully_update_cp_connect();
             return m_meta->_highest_cp_connect_block_height;
         }
