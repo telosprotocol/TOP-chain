@@ -22,8 +22,6 @@
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
-#define DB_UNITS_DATA_FILE "db_unit_accounts_data.json"
-
 NS_BEG2(top, db_export)
 
 xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
@@ -102,9 +100,28 @@ std::vector<std::string> xdb_export_tools_t::get_table_accounts() {
 }
 
 std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
-    auto const s = query_db_unit_accounts();
+    std::set<std::string> accounts;
+    auto const tables = get_table_accounts();
+    for (auto const table : tables) {
+        auto latest_block = m_blockstore->get_latest_committed_block(table);
+        if (latest_block == nullptr) {
+            std::cerr << table << " get_latest_committed_block null!" << std::endl;
+            continue;
+        }
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+        if (bstate == nullptr) {
+            std::cerr << table << " get_block_state null!" << std::endl;
+            continue;
+        }
+        auto table_state = std::make_shared<xtable_bstate_t>(bstate.get());
+        auto const & units = table_state->get_all_accounts();
+        accounts.insert(units.cbegin(), units.cend());
+    }
+
     std::vector<std::string> v;
-    v.assign(s.begin(), s.end());
+    v.assign(accounts.begin(), accounts.end());
+
+    std::cout << "total " << v.size() << " units in db" << std::endl;
     return v;
 }
 
@@ -441,7 +458,7 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
     }
 
     std::set<std::string> genesis_only;
-    auto const accounts_set = query_db_unit_accounts();
+    auto const accounts_set = get_db_unit_accounts_v2();
     auto const contracts = get_system_contract_accounts();
     for (auto const & contract : contracts) {
         if (!accounts_set.count(contract)) {
@@ -626,17 +643,18 @@ void xdb_export_tools_t::query_balance() {
     out_json.close();
 }
 
-void xdb_export_tools_t::query_archive_db() {
+void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
     std::string filename = "check_archive_db.log";
     std::ofstream file(filename);
     uint32_t total_errors{0};
+    std::cout << "redundancy = " << redundancy << std::endl;
     // step 1: check table
     std::cout << "step 1 ===> checking table accounts..." << std::endl;
     {
         asio::thread_pool pool(4);
         auto const tables = xdb_export_tools_t::get_table_accounts();
         for (size_t i = 0; i < tables.size(); i++) {
-            asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, tables[i], query_account_table, std::ref(file), std::ref(total_errors)));
+            asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, tables[i], query_account_table, redundancy, std::ref(file), std::ref(total_errors)));
         }
         pool.join();
     }
@@ -646,16 +664,15 @@ void xdb_export_tools_t::query_archive_db() {
         asio::thread_pool pool(4);
         auto const units = get_db_unit_accounts();
         for (size_t i = 0; i < units.size(); i++) {
-            asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, units[i], query_account_unit, std::ref(file), std::ref(total_errors)));
+            asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, units[i], query_account_unit, 0, std::ref(file), std::ref(total_errors)));
         }
         pool.join();
     }
     // step 3: check drand
     std::cout << "step 3 ===> checking drand..." << std::endl;
     {
-        query_archive_db_internal(sys_drand_addr, query_account_system, file, total_errors);
+        query_archive_db_internal(sys_drand_addr, query_account_system, redundancy, file, total_errors);
     }
-    file.flush();
     file.close();
     if (total_errors != 0) {
         std::cerr << "total error num: " << total_errors << std::endl;
@@ -664,7 +681,7 @@ void xdb_export_tools_t::query_archive_db() {
     }
 }
 
-void xdb_export_tools_t::query_archive_db_internal(std::string const & account, enum_query_account_type type, std::ofstream & file, uint32_t & errors) {
+void xdb_export_tools_t::query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors) {
     uint32_t error_num = 0;
     std::string type_str;
     if (type == query_account_table) {
@@ -695,23 +712,30 @@ void xdb_export_tools_t::query_archive_db_internal(std::string const & account, 
              << ", genesis_connected_height: " << m_blockstore->get_latest_genesis_connected_block_height(account)
              << ", executed_height: " << m_blockstore->get_latest_executed_block_height(account) << ", span_genesis_height " << span_genesis_height << ", latest_cert_height "
              << latest_cert_height << ", latest_cert_hash: " << base::xstring_utl::to_hex(latest_cert_hash) << std::endl;
-        if (committd_height != connected_height) {
+        if (committd_height > connected_height + redundancy) {
             file << "[warn] " << type_str << ": " << account << ", committd_height and connected_height not equal, " << committd_height << ", " << connected_height << std::endl;
             error_num++;
         }
-        if (committd_height != span_genesis_height && type == query_account_table) {
+        if ((committd_height > span_genesis_height + redundancy) && (type == query_account_table)) {
             file << "[warn] " << type_str << ": " << account << ", committd_height and span_genesis_height not equal, " << committd_height << ", " << span_genesis_height
                  << std::endl;
             error_num++;
         }
-        auto latest_cert_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_cert_block.get());
-        if (latest_cert_bstate == nullptr) {
-            file << "[warn] " << type_str << ": " << account << ", latest cert state is nullptr!" << std::endl;
-            error_num++;
-            break;
+        if (redundancy == 0) {
+            auto latest_cert_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_cert_block.get());
+            if (latest_cert_bstate == nullptr) {
+                file << "[warn] " << type_str << ": " << account << ", latest cert state is nullptr!" << std::endl;
+                error_num++;
+                break;
+            }
         }
         auto last_hash = latest_cert_hash;
         auto h = latest_cert_height;
+        if (redundancy > 0) {
+            h = (h > redundancy) ? (h - redundancy) : 0;
+            auto const block = m_blockstore->load_block_object(account, h, 0, false);
+            last_hash = block->get_block_hash();
+        }
         do {
             auto const block = m_blockstore->load_block_object(account, h, last_hash, true);
             if (block == nullptr) {
@@ -894,61 +918,6 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, st
     j_data["unit_data"] = j_unit_data;
     // j_state["unit_state"] = j_unit_state;
     std::cout << table << " cp checkout finish!" << std::endl;
-}
-
-std::set<std::string> xdb_export_tools_t::query_db_unit_accounts() {
-    std::ifstream file_stream("all_account.json");
-    if (!file_stream.good()) {
-        return generate_db_unit_accounts_file();
-    }
-    json j;
-    file_stream >> j;
-    if (!j.empty()) {
-        std::set<std::string> accounts;
-        for (auto _table : j) {
-            for (auto _acc : _table) {
-                accounts.insert(_acc.get<std::string>());
-            }
-        }
-        return accounts;
-    } else {
-        return generate_db_unit_accounts_file();
-    }
-}
-
-std::set<std::string> xdb_export_tools_t::generate_db_unit_accounts_file() {
-    std::set<std::string> accounts;
-    json j;
-    std::cout << "all_account.json generating..." << std::endl;
-    auto const tables = get_table_accounts();
-    for (auto const & table : tables) {
-        auto const & units = query_unit_account2(table);
-        accounts.insert(units.cbegin(), units.cend());
-        for (auto const & unit : units) {
-            j[table].push_back(unit);
-        }
-    }
-
-    std::ofstream file_stream("all_account.json");
-    file_stream << std::setw(4) << j;
-    std::cout << "===> all_account.json generated success!" << std::endl;
-    return accounts;
-}
-
-std::set<std::string> xdb_export_tools_t::query_unit_account2(std::string const & account) {
-    std::set<std::string> accounts_set;
-    auto latest_block = m_blockstore->get_latest_committed_block(account);
-    if (latest_block == nullptr) {
-        std::cerr << account << " get_latest_committed_block null!" << std::endl;
-        return {};
-    }
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
-    if (bstate == nullptr) {
-        std::cerr << account << " get_block_state null!" << std::endl;
-        return {};
-    }
-    auto state = std::make_shared<xtable_bstate_t>(bstate.get());
-    return state->get_all_accounts();
 }
 
 void xdb_export_tools_t::query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s, int init_e) {
@@ -1436,38 +1405,6 @@ std::set<std::string> xdb_export_tools_t::get_special_genesis_accounts() {
     return accounts_set;
 }
 
-void xdb_export_tools_t::generate_db_unit_accounts_data_file() {
-    json j;
-    auto const & tables = get_table_accounts();
-    for (auto const & table : tables) {
-        auto const latest_block = m_blockstore->get_latest_committed_block(table);
-        if (latest_block == nullptr) {
-            std::cerr << table << " get_latest_committed_block null!" << std::endl;
-            continue;
-        }
-        auto const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
-        if (bstate == nullptr) {
-            std::cerr << table << " get_block_state null!" << std::endl;
-            continue;
-        }
-        auto const table_bstate = std::make_shared<xtable_bstate_t>(bstate.get());
-        auto const & table_units = table_bstate->get_all_accounts();
-        json j_table;
-        for (auto const & unit : table_units) {
-            base::xaccount_index_t index;
-            if (table_bstate->get_account_index(unit, index) == false) {
-                std::cerr << table << " " << unit << " get index failed " << std::endl;
-                continue;
-            }
-            std::string bin_data;
-            index.serialize_to(bin_data);
-            j_table[unit] = base::xstring_utl::to_hex(bin_data);
-        }
-        j[table] = j_table;
-    }
-    generate_json_file(DB_UNITS_DATA_FILE, j);
-}
-
 void xdb_export_tools_t::generate_account_info_file(std::string const & account, const uint64_t height) {
     json j;
     for (size_t i = 0; i <= height; i++) {
@@ -1479,15 +1416,9 @@ void xdb_export_tools_t::generate_account_info_file(std::string const & account,
 }
 
 void xdb_export_tools_t::generate_json_file(std::string const & filename, json const & j) {
-    std::string name;
-    if (filename == DB_UNITS_DATA_FILE) {
-        name = filename;
-    } else {
-        name = m_outfile_folder + filename;
-    }
+    std::string name{m_outfile_folder + filename};
     std::ofstream out_json(name);
     out_json << std::setw(4) << j;
-    out_json.flush();
     out_json.close();
     std::cout << "===> " << name << " generated success!" << std::endl;
 }
@@ -1497,7 +1428,6 @@ void xdb_export_tools_t::generate_common_file(std::string const & filename, std:
     std::ofstream out_file(name);
     if (!data.empty()) {
         out_file << data;
-        out_file.flush();
     }
     out_file.close();
     std::cout << "===> " << name << " generated success!" << std::endl;
