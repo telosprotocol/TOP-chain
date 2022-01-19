@@ -150,10 +150,10 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 
 void xtop_beacon_chain_application::load_last_election_data() {
     std::vector<std::string> sys_addr{sys_contract_rec_elect_rec_addr,
-                                      sys_contract_rec_elect_zec_addr,
                                       sys_contract_rec_elect_archive_addr,
                                       sys_contract_rec_elect_fullnode_addr,
                                       sys_contract_rec_elect_edge_addr,
+                                      sys_contract_rec_elect_zec_addr,
                                       sys_contract_zec_elect_consensus_addr};
 
     std::map<std::string, common::xzone_id_t> addr_to_zone_id{{sys_contract_rec_elect_rec_addr, common::xcommittee_zone_id},
