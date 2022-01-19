@@ -16,6 +16,7 @@ enum class xenum_errc {
     ok,
 
     genesis_root_has_not_ready,
+    genesis_block_hash_mismatch,
     genesis_block_store_failed,
     genesis_set_data_state_failed,
     genesis_account_invalid,
