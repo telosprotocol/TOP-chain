@@ -1068,7 +1068,7 @@ void xsync_handler_t::recv_archive_height(uint32_t msg_size,
         xsync_info("refresh_block_recycler_rule succ: %s,%d", ptr->address.c_str(), ptr->end_height);
     }
 
-    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_full);
+    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(ptr->address, enum_chain_sync_policy_fast);
     xsync_dbg("recv_archive_height: %s, %llu, %llu", ptr->address.c_str(), ptr->end_height, latest_end_block_height);
     if (latest_end_block_height < ptr->end_height + 50)  // not send blocks within 50 blocks
         return;
@@ -1246,7 +1246,7 @@ void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
             continue;
         }
 
-        uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
+        uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_fast);
         xsync_dbg("recv_archive_height_list: %s, %llu, %llu", address.c_str(), it.end_height, latest_end_block_height);
         if (latest_end_block_height < it.end_height + 50)  // not send blocks within 50 blocks
             continue;
