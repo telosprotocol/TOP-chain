@@ -5,6 +5,7 @@
 #include "xcommon/xnode_type.h"
 
 #include <cassert>
+#include <type_traits>
 
 NS_BEG2(top, common)
 
@@ -119,6 +120,7 @@ std::string to_presentation_string(xnode_type_t const type) {
 
     default:
         assert(false);
+        name = std::to_string(static_cast<std::underlying_type<xnode_type_t>::type>(type));
         break;
     }
 

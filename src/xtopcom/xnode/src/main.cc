@@ -1260,7 +1260,11 @@ int StartNode(config_t& config) {
                 std::cout << "Start node failed." << std::endl;
                 return false;
             }
+#if defined(XENABLE_MOCK_ZEC_STAKE)
             if (config.token == common::XMINER_TYPE_ADVANCE || config.token == common::XMINER_TYPE_ARCHIVE) {
+#else
+            if (config.token == common::XMINER_TYPE_ADVANCE) {
+#endif
                 std::string dbdir = config.datadir + DB_PATH;
                 std::cout << "checking database directory: " << dbdir << std::endl;
                 if (IsDirEmpty(dbdir.c_str())) {
