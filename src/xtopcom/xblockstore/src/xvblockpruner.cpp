@@ -127,6 +127,8 @@ namespace top
             
             if(lower_bound_height >= upper_bound_height)
                 return false;
+            else if (upper_bound_height - lower_bound_height <= (enum_min_batch_recycle_blocks_count << 1))
+                return false;
             xdbg("xvblockprune_impl::recycle account %s, adjust upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
                 upper_bound_height, lower_bound_height, account_meta._highest_cert_block_height);
 
@@ -156,7 +158,16 @@ namespace top
             xinfo("xvblockprune_impl::recycle account %s, upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
                 upper_bound_height, lower_bound_height, account_meta._highest_commit_block_height);
             
+            uint64_t boundary;
+
+            auto exist = get_prune_boundary(account_obj, boundary);
+            if (!exist) {
+                return false;
+            }
+
             if(lower_bound_height >= upper_bound_height)
+                return false;
+            else if (upper_bound_height - lower_bound_height <= (enum_min_batch_recycle_blocks_count << 1))
                 return false;
 
             xdbg("xvblockprune_impl::recycle account %s, adjust upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
@@ -221,7 +232,7 @@ namespace top
                 }
             } else if (!account_obj.is_drand_address()) {
                 return false;
-            } 
+            }
 
             xinfo("xvblockprune_impl::refresh, account:%s, module:%llx, height:%llu", account_obj.get_address().c_str(), mod_id, permit_prune_upper_boundary);
             
@@ -245,13 +256,13 @@ namespace top
         }
 
         bool  xvblockprune_impl::watch(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) {
-            if(!account_obj.is_table_address()) {
-                return false;
-            }
-
-            // if consensus zone
-            auto zone_id = account_obj.get_zone_index();
-            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+            if(account_obj.is_table_address()) {
+                // if consensus zone
+                auto zone_id = account_obj.get_zone_index();
+                if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                    return false;
+                }
+            } else if (!account_obj.is_drand_address()) {
                 return false;
             }
 
@@ -268,14 +279,14 @@ namespace top
             return true;
         }
 
-        bool  xvblockprune_impl::unwatch(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) {
-            if(!account_obj.is_table_address()) {
-                return false;
-            }
-
-            // if consensus zone
-            auto zone_id = account_obj.get_zone_index();
-            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+        bool  xvblockprune_impl::unwatch(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) { 
+            if(account_obj.is_table_address()) {
+                // if consensus zone
+                auto zone_id = account_obj.get_zone_index();
+                if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                    return false;
+                }
+            } else if (!account_obj.is_drand_address()) {
                 return false;
             }
 
