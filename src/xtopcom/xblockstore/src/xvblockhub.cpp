@@ -1324,9 +1324,6 @@ namespace top
             if(nullptr == block_ptr)
                 return false;
 
-            if(block_ptr->get_height() == 0)
-                return false; //not allow delete genesis block
-
             XMETRICS_GAUGE(metrics::store_block_delete, 1);
 
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ")",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid());
@@ -1342,7 +1339,7 @@ namespace top
                     {
                         //delete data at DB first
                         get_blockdb_ptr()->delete_block(view_it->second);
-
+                        xkinfo("xblockacct_t::delete_block,delete block finish:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ")",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid());
                         //remove entry then
                         view_it->second->close();
                         view_it->second->release_ref();
