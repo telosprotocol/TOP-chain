@@ -827,7 +827,7 @@ namespace top
                     return nullptr;
                 }
                 base::xvaccount_t _vaddr(send_txindex->get_block_addr());
-                base::xauto_ptr<base::xvblock_t> unit_block = load_block_object(_vaddr, send_txindex->get_block_height(), send_txindex->get_block_hash(), true); // TODO(jimmy) false+input
+                base::xauto_ptr<base::xvblock_t> unit_block = load_block_object(_vaddr, send_txindex->get_block_height(), 0, true); // TODO(jimmy) false+input
                 if (nullptr == unit_block)
                 {
                     xwarn("xvblockstore_impl::query_tx fail-send unit not find.account=%s,tx=%s", send_txindex->get_block_addr().c_str(), base::xstring_utl::to_hex(txhash).c_str());
