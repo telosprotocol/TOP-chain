@@ -171,7 +171,7 @@ void RootRouting::OnCacheElectNodesAsync(GetRootNodesV2AsyncCallback cb,
                 node_ptr->public_ip = nodes_res.nodes(i).public_ip();
                 node_ptr->public_port = nodes_res.nodes(i).public_port();
                 // node_ptr->xid = des_kroot_id;
-                // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
+                node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
                 nodes.push_back(node_ptr);
             }
 
