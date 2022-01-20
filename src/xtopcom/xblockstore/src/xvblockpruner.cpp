@@ -161,8 +161,8 @@ namespace top
             uint64_t boundary;
 
             auto exist = get_prune_boundary(account_obj, boundary);
-            if (!exist) {
-                return false;
+            if (exist && (boundary < upper_bound_height)) {
+                upper_bound_height = boundary;
             }
 
             if(lower_bound_height >= upper_bound_height)
