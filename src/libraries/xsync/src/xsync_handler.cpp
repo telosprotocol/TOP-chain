@@ -807,7 +807,10 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
                 std::set<enum_height_type> types;
                 if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
                     types.insert(mutable_checkpoint_height);
-                    types.insert(latest_state_height);
+                    base::xvaccount_t _vaddr(it.second.address);
+                    if (!_vaddr.is_drand_address()) {
+                        types.insert(latest_state_height);
+                    }
                     xsync_kinfo("xsync_handler add_role_phase1 add fullnode %s", it.second.address.c_str());
                 } else {
                     types.insert(confirm_height);
@@ -829,6 +832,20 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
         }
+
+        if (!(common::has<common::xnode_type_t::storage>(vnetwork_driver->type()) ||common::has<common::xnode_type_t::rec>(vnetwork_driver->type()))) {
+            if (store::enable_block_recycler(true))
+                xinfo("enable_block_recycler ok.");
+            else
+                xerror("enable_block_recycler fail.");
+            return;
+        }
+
+        //detect it is archive node
+        if (store::enable_block_recycler(false))
+            xinfo("disable_block_recycler ok.");
+        else
+            xerror("disable_block_recycler fail.");
 
         m_sync_gossip->add_role(addr);
         m_peer_keeper->add_role(addr);
