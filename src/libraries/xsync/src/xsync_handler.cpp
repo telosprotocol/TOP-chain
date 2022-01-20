@@ -833,19 +833,20 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
             m_block_fetcher->push_event(ev);
         }
 
-        if (!(common::has<common::xnode_type_t::storage>(vnetwork_driver->type()) ||common::has<common::xnode_type_t::rec>(vnetwork_driver->type()))) {
-            if (store::enable_block_recycler(true))
-                xinfo("enable_block_recycler ok.");
-            else
-                xerror("enable_block_recycler fail.");
-            return;
+        if (!common::has<common::xnode_type_t::frozen>(vnetwork_driver->type())) {
+            if (!(common::has<common::xnode_type_t::storage>(vnetwork_driver->type()) ||common::has<common::xnode_type_t::rec>(vnetwork_driver->type()))) {
+                if (store::enable_block_recycler(true))
+                    xinfo("enable_block_recycler ok.");
+                else
+                    xerror("enable_block_recycler fail.");
+            } else {
+                //detect it is archive node
+                if (store::enable_block_recycler(false))
+                    xinfo("disable_block_recycler ok.");
+                else
+                    xerror("disable_block_recycler fail.");
+            }
         }
-
-        //detect it is archive node
-        if (store::enable_block_recycler(false))
-            xinfo("disable_block_recycler ok.");
-        else
-            xerror("disable_block_recycler fail.");
 
         m_sync_gossip->add_role(addr);
         m_peer_keeper->add_role(addr);
