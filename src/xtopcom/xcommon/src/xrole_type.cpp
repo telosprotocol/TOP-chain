@@ -33,8 +33,10 @@ std::string to_string(xminer_type_t const role) {
     case xminer_type_t::validator:
         return XMINER_TYPE_VALIDATOR;
 
+#if defined(XENABLE_MOCK_ZEC_STAKE)
     case xminer_type_t::archive:
         return XMINER_TYPE_ARCHIVE;
+#endif
 
     case xminer_type_t::edge:
         return XMINER_TYPE_EDGE;
@@ -68,8 +70,10 @@ common::xminer_type_t to_miner_type(std::string const & node_type) {
         role_type = common::xminer_type_t::advance;
     } else if (node_type == XMINER_TYPE_VALIDATOR) {
         role_type = common::xminer_type_t::validator;
+#if defined(XENABLE_MOCK_ZEC_STAKE)
     } else if (node_type == XMINER_TYPE_ARCHIVE) {
         role_type = common::xminer_type_t::archive;
+#endif
     } else if (node_type == XMINER_TYPE_EXCHANGE) {
         role_type = common::xminer_type_t::exchange;
     }
