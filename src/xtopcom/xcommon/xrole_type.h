@@ -13,14 +13,14 @@
 
 NS_BEG2(top, common)
 
-enum class xenum_lagacy_miner_type : uint32_t {
-    invalid = static_cast<std::underlying_type<xlagacy_node_type_t>::type>(xlagacy_node_type_t::invalid),
-    edge = static_cast<std::underlying_type<xlagacy_node_type_t>::type>(xlagacy_node_type_t::edge),
-    advance = static_cast<std::underlying_type<xlagacy_node_type_t>::type>(common::xlagacy_node_type_t::consensus_auditor),
-    consensus = static_cast<std::underlying_type<xlagacy_node_type_t>::type>(common::xlagacy_node_type_t::consensus_validator),
-    archive = static_cast<std::underlying_type<xlagacy_node_type_t>::type>(xlagacy_node_type_t::archive)
+enum class xenum_legacy_miner_type : uint32_t {
+    invalid = static_cast<std::underlying_type<xlegacy_node_type_t>::type>(xlegacy_node_type_t::invalid),
+    edge = static_cast<std::underlying_type<xlegacy_node_type_t>::type>(xlegacy_node_type_t::edge),
+    advance = static_cast<std::underlying_type<xlegacy_node_type_t>::type>(common::xlegacy_node_type_t::consensus_auditor),
+    consensus = static_cast<std::underlying_type<xlegacy_node_type_t>::type>(common::xlegacy_node_type_t::consensus_validator),
+    archive = static_cast<std::underlying_type<xlegacy_node_type_t>::type>(xlegacy_node_type_t::archive)
 };
-using xlagacy_miner_type_t = xenum_lagacy_miner_type;
+using xlegacy_miner_type_t = xenum_legacy_miner_type;
 
 enum class xenum_miner_type : uint32_t {
     invalid      = 0x00000000,
