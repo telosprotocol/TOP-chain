@@ -166,15 +166,19 @@ bool MultilayerNetwork::Run(const base::Config & config) {
     return true;
 }
 
-int MultilayerNetwork::RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb) {
+bool MultilayerNetwork::RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb) {
     if (GetCoreTransport() == nullptr) {
         xwarn("register node callback fail: core_transport is nullptr");
-        return 1;
+        return false;
     }
 
     GetCoreTransport()->RegisterNodeCallback(cb);
     xinfo("register node callback successful");
-    return 0;
+    return true;
+}
+
+bool MultilayerNetwork::UpdateNodeSizeCallback(std::function<bool(uint64_t & node_size)> cb) {
+    return wrouter::MultiRouting::Instance()->UpdateNodeSizeCallback(cb);
 }
 
 std::shared_ptr<elect::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(const uint32_t & xnetwork_id) const noexcept {

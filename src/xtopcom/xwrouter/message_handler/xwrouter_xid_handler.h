@@ -8,6 +8,8 @@
 #include "xbase/xrouter.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
+#include "xgossip/gossip_interface.h"
+#include "xgossip/include/gossip_rrs.h"
 
 #include <memory>
 
@@ -32,10 +34,6 @@ struct NodeInfo;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
 }  // namespace kadmlia
 
-namespace gossip {
-class GossipInterface;
-}
-
 namespace wrouter {
 
 class WrouterXidHandler {
@@ -43,7 +41,7 @@ public:
     WrouterXidHandler(transport::TransportPtr transport_ptr,
                       std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
                       std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-                      std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr,
+                      std::shared_ptr<gossip::GossipRRS> gossip_rrs_ptr,
                       std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr);
 
     ~WrouterXidHandler();
@@ -51,6 +49,9 @@ public:
 public:
     void SendPacket(transport::protobuf::RoutingMessage & message, std::error_code & ec);
     int32_t RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+
+public:
+    void update_rrs_params(uint32_t t, uint32_t k);
 
 private:
     kadmlia::RootRoutingTablePtr FindRootRoutingTable();
@@ -79,7 +80,7 @@ private:
     transport::TransportPtr transport_ptr_;
     std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr_;
     std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr_;
-    std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr_;
+    std::shared_ptr<gossip::GossipRRS> gossip_rrs_ptr_;
     std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr_;
 };
 

@@ -31,7 +31,7 @@ namespace wrouter {
 WrouterXidHandler::WrouterXidHandler(transport::TransportPtr transport_ptr,
                                      std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
                                      std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-                                     std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr,
+                                     std::shared_ptr<gossip::GossipRRS> gossip_rrs_ptr,
                                      std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr)
   : transport_ptr_(transport_ptr)
   , bloom_gossip_ptr_(bloom_gossip_ptr)
@@ -135,6 +135,11 @@ int32_t WrouterXidHandler::RecvPacket(transport::protobuf::RoutingMessage & mess
     }
 
     return kRecvOk;
+}
+
+void WrouterXidHandler::update_rrs_params(uint32_t t, uint32_t k) {
+    // todo(charles): move rrs_params inside gossip algorithm. and gossip ptr use **respective** type.
+    gossip_rrs_ptr_->update_params(t, k);
 }
 
 base::ServiceType WrouterXidHandler::ParserServiceType(const std::string & kad_key) {
