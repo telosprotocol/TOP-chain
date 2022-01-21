@@ -429,7 +429,7 @@ std::vector<kadmlia::NodeInfoPtr> MultiRouting::transform_node_vec(base::Service
     return res;
 }
 
-bool MultiRouting::UpdateNodeSizeCallback(std::function<bool(uint64_t & node_size)> cb){
+bool MultiRouting::UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb) {
     return rrs_params_mgr_ptr->set_callback(cb);
 }
 
