@@ -55,7 +55,8 @@ bool get_block_handle::handle(std::string request) {
     if (iter != m_query_method_map.end()) {
         iter->second();
     } else {
-        xdbg("get_block action %s nonexist!", action.c_str());
+        xinfo("get_block action:%s not exist!", action.c_str());
+        set_result("Method not Found!");
         return false;
     }
 
