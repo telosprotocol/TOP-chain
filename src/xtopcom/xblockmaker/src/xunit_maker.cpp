@@ -66,7 +66,8 @@ int32_t xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & 
     do {
         m_check_state_success = false;
         // firstly, load connected block, always sync unit from latest connected block
-        if (!xblocktool_t::check_lacking_unit_and_try_sync(*this, commit_account_index, get_blockstore(), "unit_maker")) {
+        uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
+        if (!xblocktool_t::check_lacking_unit_and_try_sync(*this, commit_account_index, latest_connect_height, get_blockstore(), "unit_maker")) {
             break;
         }
 
