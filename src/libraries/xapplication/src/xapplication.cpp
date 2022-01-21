@@ -6,6 +6,7 @@
 
 #include "xapplication/xbeacon_chain_application.h"
 // #include "xapplication/xcons_mgr_builder.h"
+#include "xapplication/xerror/xerror.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xutility.h"
@@ -142,7 +143,7 @@ void xtop_application::start() {
         throw std::logic_error{"register node callback failed!"};
     }
 
-    if (!m_elect_main->UpdateNodeSizeCallback(std::bind(&top::application::xtop_application::update_node_size, this, std::placeholders::_1))) {
+    if (!m_elect_main->UpdateNodeSizeCallback(std::bind(&top::application::xtop_application::update_node_size, this, std::placeholders::_1, std::placeholders::_2))) {
         throw std::logic_error{"update node size callback failed!"};
     }
 
@@ -319,7 +320,8 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
     return store::xstore_success;
 }
 
-bool xtop_application::update_node_size(uint64_t & node_size) {
+void xtop_application::update_node_size(uint64_t & node_size, std::error_code & ec) {
+    assert(!ec);
 #if defined(XBUILD_CI)
     node_size = 50;
 #elif defined(XBUILD_DEV)
@@ -339,14 +341,17 @@ bool xtop_application::update_node_size(uint64_t & node_size) {
         if (!standby_network_storage_result.empty()) {
             node_size = standby_network_storage_result.size();
             xinfo("[update_node_size] success, node_size: %llu", node_size);
-            return true;
+            return;
         } else {
+            ec = error::xerrc_t::load_standby_data_missing_property;
             xinfo("[update_node_size] failed, standby empty?");
             assert(false);
+            return;
         }
     }
+    ec = error::xerrc_t::load_standby_data_missing_block;
     xinfo("[update_node_size] failed, string get failed.");
-    return false;
+    return;
 }
 
 bool xtop_application::is_genesis_node() const noexcept {

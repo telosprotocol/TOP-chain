@@ -55,7 +55,7 @@ public:
     std::vector<kadmlia::NodeInfoPtr> transform_node_vec(base::ServiceType const & service_type, std::vector<kadmlia::NodeInfoPtr> const & node_vec);
 
     // Update RRS N
-    bool UpdateNodeSizeCallback(std::function<bool(uint64_t & node_size)> cb);
+    bool UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb);
 
 private:
     std::shared_ptr<wrouter::RootRouting> root_routing_table_;

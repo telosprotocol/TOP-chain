@@ -21,13 +21,13 @@ public:
     ~RRSParamsMgr() = default;
 
 public:
-    bool set_callback(std::function<bool(uint64_t & node_size)> cb);
+    bool set_callback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb);
 
 private:
     void update_rrs_params_with_node_size();
 
 private:
-    std::function<bool(uint64_t & node_size)> m_callback;
+    std::function<void(uint64_t & node_size, std::error_code & ec)> m_callback;
     base::TimerManager * timer_manager_{base::TimerManager::Instance()};
     std::shared_ptr<base::TimerRepeated> update_rrs_params_timer;
 };

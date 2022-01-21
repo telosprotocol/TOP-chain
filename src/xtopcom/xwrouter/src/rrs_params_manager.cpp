@@ -12,7 +12,7 @@ namespace wrouter {
 
 static const int32_t kUpdateRegisterNodeSizePeriod = 5 * 60 * 1000 * 1000; // 5min
 
-bool RRSParamsMgr::set_callback(std::function<bool(uint64_t & node_size)> cb) {
+bool RRSParamsMgr::set_callback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb) {
     if (m_callback) {
         assert(false); // only allow to set once.
         return false;
@@ -25,7 +25,13 @@ bool RRSParamsMgr::set_callback(std::function<bool(uint64_t & node_size)> cb) {
 
 void RRSParamsMgr::update_rrs_params_with_node_size() {
     uint64_t node_size = 0;
-    if (!m_callback || !m_callback(node_size)) {
+    std::error_code ec;
+    if (!m_callback) {
+        return;
+    }
+    m_callback(node_size, ec);
+    if (ec) {
+        xinfo("update_rrs_params_with_node_size, get_node_size from rec_standby failed %s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
