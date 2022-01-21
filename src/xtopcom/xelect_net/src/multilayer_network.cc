@@ -177,7 +177,7 @@ bool MultilayerNetwork::RegisterNodeCallback(std::function<int32_t(std::string c
     return true;
 }
 
-bool MultilayerNetwork::UpdateNodeSizeCallback(std::function<bool(uint64_t & node_size)> cb) {
+bool MultilayerNetwork::UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb) {
     return wrouter::MultiRouting::Instance()->UpdateNodeSizeCallback(cb);
 }
 
