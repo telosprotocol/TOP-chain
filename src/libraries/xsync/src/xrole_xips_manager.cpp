@@ -36,9 +36,9 @@ void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip,
     for (auto p: parents)
         xsync_dbg("xrole_xips_manager_t::add_role, parents: %s", p.to_string().c_str());
     for (auto a: archives)
-        xsync_dbg("xrole_xips_manager_t::add_role, parents: %s", a.to_string().c_str());
+        xsync_dbg("xrole_xips_manager_t::add_role, archives: %s", a.to_string().c_str());
     for (auto e: edge_archives)
-        xsync_dbg("xrole_xips_manager_t::add_role, parents: %s", e.to_string().c_str());
+        xsync_dbg("xrole_xips_manager_t::add_role, exchange: %s", e.to_string().c_str());
 
     m_map[self_xip] = {self_xip, create_xip_vector_ptr(neighbours, self_xip), create_xip_vector_ptr(parents, self_xip),
                         std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours), table_ids};
