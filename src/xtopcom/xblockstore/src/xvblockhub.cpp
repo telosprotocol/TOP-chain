@@ -879,8 +879,7 @@ namespace top
             uint64_t delete_height = get_latest_deleted_block_height();
             if (target_height != 0 && delete_height > 0 && target_height <= delete_height)
             {
-                xerror("xblockacct_t::load_index load account:%s height:%llu lower than delete height:%llu, meta:%s", get_account().c_str(), target_height, delete_height, dump().c_str());
-                return 0;
+                xwarn("xblockacct_t::load_index load account:%s height:%llu lower than delete height:%llu, meta:%s", get_account().c_str(), target_height, delete_height, dump().c_str());
             }
 
             auto it = m_all_blocks.find(target_height);
