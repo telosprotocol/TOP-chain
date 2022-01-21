@@ -35,6 +35,9 @@ public:
 
     int32_t HandleOwnSyncPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
+public:
+    void update_rrs_params(uint32_t t, uint32_t k);
+
 private:
     Wrouter();
     ~Wrouter();

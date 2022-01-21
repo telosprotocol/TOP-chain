@@ -154,7 +154,7 @@ private:
 
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 
-    void create_thread_pools();
+    void update_node_size(uint64_t & node_size, std::error_code & ec);
 
     bool is_genesis_node() const noexcept;
 

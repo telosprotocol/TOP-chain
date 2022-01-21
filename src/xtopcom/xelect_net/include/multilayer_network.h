@@ -41,7 +41,9 @@ public:
         return elect_manager_;
     }
 
-    int RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb);
+    bool RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb);
+
+    bool UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb);
 
     std::shared_ptr<elect::xnetwork_driver_face_t> GetEcVhost(const uint32_t & xnetwork_id) const noexcept;
 
