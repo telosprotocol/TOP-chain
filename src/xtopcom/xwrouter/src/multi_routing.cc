@@ -23,6 +23,7 @@ namespace wrouter {
 static const int32_t kCheckElectRoutingTableNodesPeriod = 5 * 1000 * 1000;
 
 MultiRouting::MultiRouting() : elect_routing_table_map_(), elect_routing_table_map_mutex_() {
+    rrs_params_mgr_ptr = std::make_shared<RRSParamsMgr>();
     WrouterRegisterMessageHandler(kRootMessage, [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) { HandleRootMessage(message, packet); });
     check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CompleteElectRoutingTable");
     check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CompleteElectRoutingTable, this));
@@ -426,6 +427,10 @@ std::vector<kadmlia::NodeInfoPtr> MultiRouting::transform_node_vec(base::Service
         assert(false);
     }
     return res;
+}
+
+bool MultiRouting::UpdateNodeSizeCallback(std::function<bool(uint64_t & node_size)> cb){
+    return rrs_params_mgr_ptr->set_callback(cb);
 }
 
 void MultiRouting::CheckElectRoutingTableTimer() {

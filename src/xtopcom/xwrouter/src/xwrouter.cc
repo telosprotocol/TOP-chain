@@ -139,6 +139,10 @@ int32_t Wrouter::HandleOwnSyncPacket(transport::protobuf::RoutingMessage & messa
     return enum_xcode_successful;
 }
 
+void Wrouter::update_rrs_params(uint32_t t, uint32_t k) {
+    return wxid_handler_->update_rrs_params(t, k);
+}
+
 }  // namespace wrouter
 
 }  // namespace top
