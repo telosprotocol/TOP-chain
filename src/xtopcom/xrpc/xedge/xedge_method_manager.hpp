@@ -209,6 +209,12 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         xdbg_rpc("[sendTransaction_method] not up to blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
     }
 
+    if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
+        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_whitelist", 1);
+        xdbg_rpc("[sendTransaction_method] in whitelist address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "whitelist check failed"};
+    }
+
     if (m_archive_flag) {
         xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
         txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
