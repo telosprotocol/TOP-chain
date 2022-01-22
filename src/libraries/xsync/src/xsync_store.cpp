@@ -29,6 +29,11 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
 }
 
+bool xsync_store_t::store_block_committed_flag(base::xvblock_t* block) {
+    base::xvaccount_t _vaddress(block->get_account());
+    return m_blockstore->store_committed_unit_block(_vaddress, block); // XTODO also can be used for table-block
+}
+
 bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
     if (blocks.empty()) {
         return true;
@@ -262,6 +267,9 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
 }
 base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height) {
     return m_blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+}
+base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag flag) {
+    return m_blockstore->load_block_object(account, height, flag, false);
 }
 bool xsync_store_t::set_genesis_height(const base::xvaccount_t &account, const std::string &height) {
     return m_blockstore->set_genesis_height(account, height);
