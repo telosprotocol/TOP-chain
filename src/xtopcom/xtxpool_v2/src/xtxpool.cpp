@@ -72,47 +72,53 @@ void xtxpool_t::print_statistic_values() const {
     uint32_t sender_cache_size = 0;
     uint32_t receiver_cache_size = 0;
     uint32_t height_record_size = 0;
+    uint32_t unconfirm_raw_txs_size = 0;
     uint32_t table_sender_cache_size = 0;
     uint32_t table_receiver_cache_size = 0;
     uint32_t table_height_record_size = 0;
+    uint32_t table_unconfirm_raw_txs_size = 0;
 
     for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
         auto table = m_tables[base::enum_chain_zone_consensus_index][i];
         if (table != nullptr) {
-            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
             xinfo(
-                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
             sender_cache_size += table_sender_cache_size;
             receiver_cache_size += table_receiver_cache_size;
             height_record_size += table_height_record_size;
+            unconfirm_raw_txs_size += table_unconfirm_raw_txs_size;
         }
     }
     for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
         auto table = m_tables[base::enum_chain_zone_beacon_index][i];
         if (table != nullptr) {
-            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
             xinfo(
-                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
             sender_cache_size += table_sender_cache_size;
             receiver_cache_size += table_receiver_cache_size;
             height_record_size += table_height_record_size;
+            unconfirm_raw_txs_size += table_unconfirm_raw_txs_size;
         }
     }
     for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
         auto table = m_tables[base::enum_chain_zone_zec_index][i];
         if (table != nullptr) {
-            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+            table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
             xinfo(
-                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size);
+                "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
             sender_cache_size += table_sender_cache_size;
             receiver_cache_size += table_receiver_cache_size;
             height_record_size += table_height_record_size;
+            unconfirm_raw_txs_size += table_unconfirm_raw_txs_size;
         }
     }
 
-    XMETRICS_COUNTER_SET("txpool_sender_unconfirm_cache", sender_cache_size);
-    XMETRICS_COUNTER_SET("txpool_receiver_unconfirm_cache", receiver_cache_size);
-    XMETRICS_COUNTER_SET("txpool_height_record_cache", height_record_size);
+    XMETRICS_GAUGE_SET_VALUE(metrics::txpool_sender_unconfirm_cache, sender_cache_size);
+    XMETRICS_GAUGE_SET_VALUE(metrics::txpool_receiver_unconfirm_cache, receiver_cache_size);
+    XMETRICS_GAUGE_SET_VALUE(metrics::txpool_height_record_cache, height_record_size);
+    XMETRICS_GAUGE_SET_VALUE(metrics::txpool_table_unconfirm_raw_txs, height_record_size);
 }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
@@ -161,9 +167,9 @@ void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t l
 }
 
 void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
-    xtxpool_info("xtxpool_t::subscribe_tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
+    xtxpool_info("xtxpool_t::subscribe_tables zone:%d,front_table_id:%d,back_table_id:%d,node_type:%d", zone, front_table_id, back_table_id, node_type);
     if (front_table_id > back_table_id) {
-        xerror("xtxpool_t::subscribe_tables table id invalidate front_table_id:%d back_table_id%d", front_table_id, back_table_id);
+        xerror("xtxpool_t::subscribe_tables table id invalidate front_table_id:%d back_table_id%d,node_type:%d", front_table_id, back_table_id, node_type);
         return;
     }
     if (!table_zone_subaddr_check(zone, back_table_id)) {
@@ -181,7 +187,7 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
     m_roles[zone].push_back(role);
     role->add_sub_count();
 
-    xtxpool_info("xtxpool_t::subscribe_tables sub tables:zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
+    xtxpool_info("xtxpool_t::subscribe_tables sub tables:zone:%d,front_table_id:%d,back_table_id:%d,node_type:%d", zone, front_table_id, back_table_id, node_type);
 
     uint32_t add_table_num = 0;
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
@@ -203,9 +209,9 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
 }
 
 void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
-    xtxpool_info("xtxpool_t::unsubscribe_tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
+    xtxpool_info("xtxpool_t::unsubscribe_tables zone:%d,front_table_id:%d,back_table_id:%d,node_type:%d", zone, front_table_id, back_table_id, node_type);
     if (front_table_id > back_table_id) {
-        xerror("xtxpool_t::unsubscribe_tables table id invalidate front_table_id:%d back_table_id%d", front_table_id, back_table_id);
+        xerror("xtxpool_t::unsubscribe_tables table id invalidate front_table_id:%d back_table_id%d,node_type:%d", front_table_id, back_table_id, node_type);
         return;
     }
     if (!table_zone_subaddr_check(zone, back_table_id)) {
@@ -217,9 +223,15 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
         if ((*it)->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
             (*it)->del_sub_count();
             if ((*it)->get_sub_count() != 0) {
+                xtxpool_info("xtxpool_t::unsubscribe_tables role sub count is %d,need not clear zone:%d,front_table_id:%d,back_table_id:%d,node_type:%d",
+                             (*it)->get_sub_count(),
+                             zone,
+                             front_table_id,
+                             back_table_id,
+                             node_type);
                 return;
             }
-            xtxpool_info("xtxpool_t::unsubscribe_tables unsub tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
+            xtxpool_info("xtxpool_t::unsubscribe_tables unsub tables zone:%d,front_table_id:%d,back_table_id:%d,node_type:%d", zone, front_table_id, back_table_id, node_type);
             for (uint16_t i = front_table_id; i <= back_table_id; i++) {
                 m_tables[zone][i]->remove_role((*it).get());
                 if (m_tables[zone][i]->no_role()) {
