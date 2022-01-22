@@ -358,17 +358,17 @@ void xtxpool_table_t::refresh_table(bool refresh_state_only) {
             base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_committed_block.get(), metrics::statestore_access_from_txpool_refreshtable);
         if (bstate == nullptr) {
             xtxpool_warn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), latest_committed_block->dump().c_str());
-            return;
+        } else {
+            xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+            update_table_state(tablestate);
         }
-        xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-        update_table_state(tablestate);
-
-        m_unconfirm_raw_txs.refresh(tablestate->get_receiptid_state());
     }
 
     if (refresh_state_only) {
         return;
     }
+
+    m_unconfirm_raw_txs.refresh(m_para->get_receiptid_state_cache().get_table_receiptid_state(m_xtable_info.get_short_table_id()));
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
@@ -668,8 +668,17 @@ void xtxpool_table_t::build_confirm_tx(base::xtable_shortid_t peer_table_sid, st
     }
 }
 
-void xtxpool_table_t::unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const {
+void xtxpool_table_t::unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size, uint32_t & unconfirm_raw_txs_size) const {
     m_unconfirm_id_height.cache_status(sender_cache_size, receiver_cache_size, height_record_size);
+    unconfirm_raw_txs_size = m_unconfirm_raw_txs.size();
+    if (sender_cache_size > 1000 || receiver_cache_size > 1000 || height_record_size > 100 || unconfirm_raw_txs_size > 1000) {
+        xwarn("xtxpool_table_t::unconfirm_cache_status table:%d cache:sender=%u,receiver=%u,height=%u,txs:%u",
+              m_xtable_info.get_short_table_id(),
+              sender_cache_size,
+              receiver_cache_size,
+              height_record_size,
+              unconfirm_raw_txs_size);
+    }
 }
 
 void xtxpool_table_t::get_min_keep_height(std::string & table_addr, uint64_t & height) const {

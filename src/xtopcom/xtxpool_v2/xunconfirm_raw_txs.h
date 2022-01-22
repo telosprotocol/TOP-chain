@@ -30,6 +30,7 @@ public:
     void add_raw_txs(std::vector<xraw_tx_info> raw_txs);
     data::xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
     void refresh(base::xreceiptid_state_ptr_t table_receiptid_state);
+    uint32_t size() const;
 
 private:
     base::xtable_shortid_t m_self_table_sid;
