@@ -376,7 +376,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_alarm_recv_tx_reached_upper_limit,
     txpool_alarm_send_tx_reached_upper_limit,
     txpool_sync_on_demand_unit,
-
+    txpool_sender_unconfirm_cache,
+    txpool_receiver_unconfirm_cache,
+    txpool_height_record_cache,
+    txpool_table_unconfirm_raw_txs,
     // txstore
     txstore_request_origin_tx,
     txstore_cache_origin_tx,

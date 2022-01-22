@@ -118,7 +118,7 @@ public:
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
-    void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
+    void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size, uint32_t & unconfirm_raw_txs_size) const;
     xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
 
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
