@@ -48,6 +48,9 @@ data::xtransaction_ptr_t xunconfirm_raw_txs::get_raw_tx(base::xtable_shortid_t p
 }
 
 void xunconfirm_raw_txs::refresh(base::xreceiptid_state_ptr_t table_receiptid_state) {
+    if (table_receiptid_state == nullptr) {
+        return;
+    }
     std::lock_guard<std::mutex> lck(m_mutex);
     for (auto & raw_tx_cache_pair : m_raw_tx_cache) {
         auto & peer_table_sid = raw_tx_cache_pair.first;
@@ -69,6 +72,15 @@ void xunconfirm_raw_txs::refresh(base::xreceiptid_state_ptr_t table_receiptid_st
             }
         }
     }
+}
+
+uint32_t xunconfirm_raw_txs::size() const {
+    uint32_t num = 0;
+    std::lock_guard<std::mutex> lck(m_mutex);
+    for (auto & cache_pair : m_raw_tx_cache) {
+        num += cache_pair.second.size();
+    }
+    return num;
 }
 
 NS_END2
