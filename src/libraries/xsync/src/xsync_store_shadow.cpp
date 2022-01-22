@@ -294,13 +294,34 @@ void xsync_chain_spans_t::initialize() {
     auto const last_deleted_height = m_store->get_latest_deleted_block_height(m_account);
     if (height > last_deleted_height) {
         while (true) {
-            auto vbindex = m_store->load_block_object(m_account, height + 1);
+            auto vbindex = m_store->load_block_object(m_account, height + 1, enum_xvblock_flag_authenticated);
             if (vbindex == nullptr)
                 break;
+        
+            if (!vbindex->check_block_flag(enum_xvblock_flag_committed)) {
+                bool recover_succ = false;
+                // XTODO try to load next committed block and recover prev un-committed block
+                auto vbindex_next = m_store->load_block_object(m_account, height + 2, enum_xvblock_flag_committed);
+                if ( vbindex_next != nullptr) {
+                    if (vbindex_next->get_last_block_hash() == vbindex->get_block_hash()) {
+                        m_store->store_block_committed_flag(vbindex.get());
 
-            if (!vbindex->check_block_flag(enum_xvblock_flag_committed))
-                break;
+                        auto vbindex_again = m_store->load_block_object(m_account, height + 1, enum_xvblock_flag_committed);
+                        if (vbindex_again == nullptr) {
+                            xerror("xsync_store_shadow_t::initialize recover committed fail.account=%s,height=%ld,block=%s,flags=0x%x",m_account.c_str(),height + 1,vbindex->dump().c_str(),vbindex->get_block_flags());
+                        } else {
+                            recover_succ = true;
+                            xinfo("xsync_store_shadow_t::initialize recover committed succ.account=%s,height=%ld,block=%s,flags=0x%x",m_account.c_str(),height + 1,vbindex->dump().c_str(),vbindex->get_block_flags());
+                        }
+                    } else {
+                        xwarn("xsync_store_shadow_t::initialize recover committed fail for hash unmatch.account=%s,height=%ld,block=%s,flags=0x%x",m_account.c_str(),height + 1,vbindex->dump().c_str(),vbindex->get_block_flags());
+                    }
+                }
 
+                if (!recover_succ) {
+                    break;
+                }
+            }
             height = vbindex->get_height();
         }
     } else {
