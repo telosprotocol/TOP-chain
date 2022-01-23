@@ -227,18 +227,17 @@ void xtxpool_service_mgr::on_timer() {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto & iter : m_service_map) {
             auto service = iter.second;
-            if (!service->is_running()) {
-                continue;
-            }
-            // only receipt sender need recover unconfirmed txs.
-            if (service->is_send_receipt_role()) {
-                pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
-                receipts_recender_service_vec.push_back(service);
-            } else {
-                pull_lacking_receipts_service_vec.push_back(service);
+            if (service->is_running()) {
+                // only receipt sender need recover unconfirmed txs.
+                if (service->is_send_receipt_role()) {
+                    pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
+                    receipts_recender_service_vec.push_back(service);
+                } else {
+                    pull_lacking_receipts_service_vec.push_back(service);
+                }
             }
 
-            if (is_time_for_refresh_table) {
+            if (!service->is_unreged() && is_time_for_refresh_table) {
                 base::enum_xchain_zone_index zone_id;
                 uint32_t fount_table_id;
                 uint32_t back_table_id;
