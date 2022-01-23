@@ -129,9 +129,9 @@ bool xtxpool_service::unreg(const xvip2_t & xip) {
           m_cover_front_table_id,
           m_cover_back_table_id,
           m_is_send_receipt_role);
-    xassert(status() != enum_txpool_service_status_not_run);
+    xassert(status() != enum_txpool_service_status_unreged);
     m_vnet_driver->unregister_message_ready_notify(xmessage_category_txpool);
-    m_status.store(enum_txpool_service_status_not_run, std::memory_order_release);
+    m_status.store(enum_txpool_service_status_unreged, std::memory_order_release);
     return true;
 }
 
@@ -289,7 +289,7 @@ void xtxpool_service::drop_msg(vnetwork::xmessage_t const & message, std::string
 }
 
 void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    if (status() == enum_txpool_service_status_not_run) {
+    if (status() == enum_txpool_service_status_unreged) {
         return;
     }
     (void)sender;
@@ -461,7 +461,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
          tx->get_source_addr().c_str(),
          tx->get_target_addr().c_str(),
          tx->get_digest_hex_str().c_str());
-    if (status() == enum_txpool_service_status_not_run) {
+    if (status() == enum_txpool_service_status_unreged) {
         xwarn(
             "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_digest_hex_str().c_str());
         push_send_fail_record(xtxpool_v2::xtxpool_error_service_not_running);
@@ -793,6 +793,10 @@ void xtxpool_service::send_receipt_id_state(uint64_t now) {
 
 bool xtxpool_service::is_running() const {
     return (status() == enum_txpool_service_status_running);
+}
+
+bool xtxpool_service::is_unreged() const {
+    return (status() == enum_txpool_service_status_unreged);
 }
 
 // void xtxpool_service::send_neighbor_sync_req(base::xtable_shortid_t table_sid) {
