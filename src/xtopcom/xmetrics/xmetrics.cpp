@@ -73,6 +73,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_read_tick);
         RETURN_METRICS_NAME(db_write_tick);
         RETURN_METRICS_NAME(db_delete_tick);
+        RETURN_METRICS_NAME(db_block_cache_size);
+        RETURN_METRICS_NAME(db_memtable_cache_size);
+        RETURN_METRICS_NAME(db_memory_total_size);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);

@@ -221,7 +221,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
 
     // make block here
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
+        std::this_thread::sleep_for(std::chrono::seconds(1200));
     }
     // todo adapter to vnode type
 
@@ -545,7 +546,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
   
     // make block here
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
+        std::this_thread::sleep_for(std::chrono::seconds(1200));
     }
 
     config_center.clear_loaders();

@@ -53,6 +53,7 @@ public:
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     virtual bool             compact_range(const std::string & begin_key,const std::string & end_key) override;
+    virtual void             GetDBMemStatus() const override;
  public:
     virtual std::string         get_store_path() const  override {return m_store_path;}
     virtual bool                open() const override;
