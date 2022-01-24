@@ -99,7 +99,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 
     std::vector<uint16_t> tables = m_vnet_driver->table_ids();
     if (tables.empty()) {
-        xerror("xtxpool_service::set_params, load table failed.xip:{%" PRIu64 ", %" PRIu64 "} node:%s", xip.high_addr, xip.low_addr, m_vnetwork_str.c_str());
+        xerror("xtxpool_service::set_params, load table failed.xip:%" PRIx64 ":%" PRIx64" node:%s", xip.high_addr, xip.low_addr, m_vnetwork_str.c_str());
         return;
     }
     m_cover_front_table_id = tables.front();
@@ -109,7 +109,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 bool xtxpool_service::start(const xvip2_t & xip) {
     m_vnet_driver->register_message_ready_notify(xmessage_category_txpool, std::bind(&xtxpool_service::on_message_receipt, this, std::placeholders::_1, std::placeholders::_2));
 
-    xinfo("xtxpool_service::start node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
+    xinfo("xtxpool_service::start node:%s,xip:%" PRIx64 ":%" PRIx64" zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -121,7 +121,7 @@ bool xtxpool_service::start(const xvip2_t & xip) {
     return true;
 }
 bool xtxpool_service::unreg(const xvip2_t & xip) {
-    xinfo("xtxpool_service::unreg node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
+    xinfo("xtxpool_service::unreg node:%s,xip:%" PRIx64 ":%" PRIx64" zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -136,7 +136,7 @@ bool xtxpool_service::unreg(const xvip2_t & xip) {
 }
 
 bool xtxpool_service::fade(const xvip2_t & xip) {
-    xinfo("xtxpool_service::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service::fade xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     m_status.store(enum_txpool_service_status_faded, std::memory_order_release);
     return true;
 }
@@ -809,7 +809,7 @@ bool xtxpool_service::is_unreged() const {
 //     } else {
 //         set_node_id_to_xip2(neighbor_xip, m_node_id + 1);
 //     }
-//     xdbg("xtxpool_service::send_receipt_sync_req m_xip:{%" PRIu64 ", %" PRIu64 "} ,neighbor_xip:{%" PRIu64 ", %" PRIu64 "}",
+//     xdbg("xtxpool_service::send_receipt_sync_req m_xip:%" PRIx64 ":%" PRIx64" ,neighbor_xip:%" PRIx64 ":%" PRIx64,
 //          m_xip.high_addr,
 //          m_xip.low_addr,
 //          neighbor_xip.high_addr,

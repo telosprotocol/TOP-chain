@@ -94,7 +94,7 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
 xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver, const observer_ptr<router::xrouter_face_t> & router) {
     auto xip = xcons_utl::to_xip2(vnet_driver->address(), true);
     // auto key = xcons_utl::erase_version(xip);
-    xinfo("xtxpool_service_mgr::create network proxy %s xip:{%" PRIu64 ", %" PRIu64 "} ", vnet_driver->address().to_string().c_str(), xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service_mgr::create network proxy %s xip:%" PRIx64 ":%" PRIx64, vnet_driver->address().to_string().c_str(), xip.high_addr, xip.low_addr);
 
     // auto service = find(xip);
     // if (service != nullptr) {
@@ -121,7 +121,7 @@ xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwor
 // destroy useless txpool services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
-    xinfo("xtxpool_service_mgr::destroy xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service_mgr::destroy xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     return true;
 }
 
@@ -139,7 +139,7 @@ std::shared_ptr<xtxpool_service_face> xtxpool_service_mgr::find(const xvip2_t & 
 // init txpool service
 bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) {
     // auto key = xcons_utl::erase_version(xip);
-    xinfo("xtxpool_service_mgr::start xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service_mgr::start xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     std::shared_ptr<xtxpool_service_face> service = find(xip);
     if (service != nullptr) {
         service->set_params(xip, vnet_driver);
@@ -150,7 +150,7 @@ bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetw
 }
 
 bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
-    xinfo("xtxpool_service_mgr::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service_mgr::fade xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     std::shared_ptr<xtxpool_service_face> service = find(xip);
     if (service != nullptr) {
         service->fade(xip);
@@ -162,7 +162,7 @@ bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
 // uninit data
 bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
     // auto key = xcons_utl::erase_version(xip);
-    xinfo("xtxpool_service_mgr::unreg xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service_mgr::unreg xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     bool need_cleanup = false;
     base::enum_xchain_zone_index zone_id;
     uint32_t fount_table_id;
@@ -184,7 +184,7 @@ bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
         // clear txpool tables corresponding to this service
         m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
     } else {
-        xwarn("xtxpool_service_mgr::unreg xip not found:{%" PRIu64 ", %" PRIu64 "}", xip.high_addr, xip.low_addr);
+        xwarn("xtxpool_service_mgr::unreg xip not found:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     }
     return false;
 }
