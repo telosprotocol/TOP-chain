@@ -207,7 +207,7 @@ public:
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     bool compact_range(const std::string & begin_key,const std::string & end_key);
     bool get_estimate_num_keys(uint64_t & num) const;
-    
+    void GetDBMemStatus() const;
     static void destroy(const std::string& m_db_name);
 
  private:
@@ -373,6 +373,8 @@ xColumnFamily xdb::xdb_impl::setup_universal_style_cf(const std::string & name,u
         cf_config.cf_option.num_levels = m_options.num_levels;
     else
         cf_config.cf_option.num_levels = num_levels;
+
+    //cf_config.cf_option.write_buffer_size  = (32 << 20);   //test 
     cf_config.cf_option.OptimizeLevelStyleCompaction(memtable_memory_budget);
 
     if(NULL == block_cache) {
@@ -668,7 +670,11 @@ void xdb::xdb_impl::handle_error(const rocksdb::Status& status) const {
         return;
     const string errmsg = "[xdb] rocksDB error: " + status.ToString() + " ,db name " + m_db_name;
     xerror("%s", errmsg.c_str());
-    // throw xdb_error(errmsg);
+
+    if (status.ToString().find("Bad table magic number") != std::string::npos) {
+        //throw xdb_error(errmsg);
+        exit(1);
+    }
 }
 
 bool xdb::xdb_impl::read(const std::string& key, std::string& value) const {
@@ -893,6 +899,23 @@ bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
     return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
 }
 
+void xdb::xdb_impl::GetDBMemStatus() const
+{
+  if (m_db != nullptr) {   
+        uint64_t  mem_block_all  = 0;   
+        uint64_t  mem_reader_memtable_all = 0; 
+        uint64_t  mem_memory_all = 0; 
+        m_db->GetAggregatedIntProperty("rocksdb.block-cache-usage", &mem_block_all);
+        m_db->GetAggregatedIntProperty("rocksdb.estimate-table-readers-mem", &mem_reader_memtable_all);
+        mem_memory_all = mem_block_all + mem_reader_memtable_all;
+        xinfo("rocksdb mem_block_all: %lld, reader_memtable_all %lld mem_memory_all %lld", mem_block_all, 
+              mem_reader_memtable_all, mem_memory_all);     
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_block_cache_size, mem_block_all);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_memtable_cache_size, mem_reader_memtable_all);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_memory_total_size, mem_memory_all);
+  }
+}
+
 xdb::xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
 : m_db_impl(new xdb_impl(db_kinds,db_root_dir,db_paths)) {
 }
@@ -1002,6 +1025,11 @@ bool xdb::compact_range(const std::string & begin_key,const std::string & end_ke
 bool xdb::get_estimate_num_keys(uint64_t & num) const
 {
     return m_db_impl->get_estimate_num_keys(num);
+}
+
+void xdb::GetDBMemStatus() const
+{
+     return m_db_impl->GetDBMemStatus();
 }
 
 }  // namespace ledger

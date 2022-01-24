@@ -57,7 +57,8 @@ namespace top
             virtual base::xvblock_t* get_vblock_header(const std::string & store_path,const std::string & account,const uint64_t height) const override{return nullptr;}
             virtual bool             get_vblock_input(const std::string & store_path,base::xvblock_t* for_block)  const override{return false;}
             virtual bool             get_vblock_output(const std::string & store_path,base::xvblock_t* for_block) const override{return false;}
-        public:
+            virtual void             GetDBMemStatus() const override {};
+       public:
             bool    open_db();
             bool    close_db();
             virtual std::string      get_store_path() const  override {return m_store_path;}
