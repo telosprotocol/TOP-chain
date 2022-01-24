@@ -35,7 +35,7 @@ m_bus(bus) {
 }
 
 base::xauto_ptr<base::xvnode_t> xvnode_house_t::get_node(const xvip2_t & target_node) const {
-    xdbg("[xvnode_house_t::get_node] target node : {%" PRIu64 ", %" PRIu64 "}", target_node.high_addr, target_node.low_addr);
+    xdbg("[xvnode_house_t::get_node] target node : %" PRIx64 ":%" PRIx64, target_node.high_addr, target_node.low_addr);
     base::xauto_ptr<base::xvnodegroup_t> group_ptr = get_group_internal(target_node);
     if (group_ptr == nullptr) {
         const uint64_t group_key = get_group_key(target_node);
