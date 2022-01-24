@@ -10,6 +10,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvbindex.h"
 #include "xblockstore/xsyncvstore_face.h"
 #include "xsyncbase/xsync_policy.h"
 #include "xmbus/xevent_ports.h"
@@ -58,6 +59,7 @@ public:
     virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
     virtual bool remove_empty_unit_forked() = 0;
     virtual bool is_full_node_forked() = 0;
+    virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
 
@@ -88,6 +90,7 @@ public:
     virtual uint64_t get_latest_stable_connected_checkpoint_height(const std::string & account) override;
     virtual uint64_t get_latest_deleted_block_height(const std::string & account) override;
     virtual uint64_t get_latest_block_with_state(const std::string & account) override;
+    virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -133,6 +136,7 @@ public:
     const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
     bool remove_empty_unit_forked() override;
     bool is_full_node_forked() override;
+    base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 private:
     void set_fork_point();
     std::string m_vnode_id;
