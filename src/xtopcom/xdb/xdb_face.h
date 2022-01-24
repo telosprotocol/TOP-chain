@@ -82,6 +82,7 @@ class xdb_face_t {
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     virtual bool compact_range(const std::string & begin_key,const std::string & end_key) = 0;
+    virtual void GetDBMemStatus() const = 0 ;
     virtual bool get_estimate_num_keys(uint64_t & num) const = 0;
 };
 
