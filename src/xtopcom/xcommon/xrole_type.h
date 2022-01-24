@@ -32,7 +32,7 @@ enum class xenum_miner_type : uint32_t {
     validator    = 0x00000004,
     /// @brief archive miner which will be elected as 'archive' only.
     archive      = 0x00000008,
-    /// @brief special case for full-node. such account will be elected as a special'archive'
+    /// @brief special case for exchange. such account will be elected as a special'archive'
     ///        but its business behavour is untrustable (since no deposit is required)
     ///        which means sync module won't pull data from such 'archive'
     exchange = 0x00000010,
@@ -42,9 +42,10 @@ using xminer_type_t = xenum_miner_type;
 XINLINE_CONSTEXPR char const * XMINER_TYPE_EDGE      = "edge";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_ADVANCE   = "advance";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_VALIDATOR = "validator";
+#if defined(XENABLE_MOCK_ZEC_STAKE)
 XINLINE_CONSTEXPR char const * XMINER_TYPE_ARCHIVE   = "archive";
+#endif
 XINLINE_CONSTEXPR char const * XMINER_TYPE_EXCHANGE  = "exchange";
-// XINLINE_CONSTEXPR char const * XMINER_TYPE_FULL_NODE = "full_node";
 
 std::int32_t
 operator <<(top::base::xstream_t & stream, xminer_type_t const & role_type);
