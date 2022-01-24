@@ -451,7 +451,7 @@ bool xconspacemaker_t::on_object_close() {
 }
 
 bool xconspacemaker_t::reset_xip_addr(const xvip2_t & new_addr) {
-    xinfo("[xconspacemaker_t::reset_xip_addr] new xip {%" PRIu64 ", %" PRIu64 "}", new_addr.high_addr, new_addr.low_addr);
+    xinfo("[xconspacemaker_t::reset_xip_addr] new xip %" PRIx64 ":%" PRIx64, new_addr.high_addr, new_addr.low_addr);
     bool r = xcscoreobj_t::reset_xip_addr(new_addr);
 
     m_vote_cache.clear();
