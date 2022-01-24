@@ -313,5 +313,10 @@ bool   xstore::single_delete(const std::string & target_key)//key must be readon
     return m_db->single_delete(target_key);
 }
 
+void xstore::GetDBMemStatus() const
+{
+    return m_db->GetDBMemStatus();
+}
+
 } // namespace store
 } // namespace top

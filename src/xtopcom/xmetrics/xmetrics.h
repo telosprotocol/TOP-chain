@@ -87,6 +87,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_read_tick,
     db_write_tick,
     db_delete_tick,
+    db_block_cache_size,
+    db_memtable_cache_size,
+    db_memory_total_size,
 
     // consensus
     cons_drand_leader_finish_succ,// TODO(jimmy) delete future
@@ -198,6 +201,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_tx_origin,
     store_block_meta_write,
     store_block_meta_read,
+
 
     store_dbsize_block_unit_empty,
     store_dbsize_block_unit_light,
