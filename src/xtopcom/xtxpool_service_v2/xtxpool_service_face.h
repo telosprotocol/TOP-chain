@@ -60,6 +60,7 @@ public:
     virtual void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) = 0;
     virtual void send_receipt_id_state(uint64_t now) = 0;
     virtual bool is_running()const = 0;
+    virtual bool is_unreged() const = 0;
 };
 
 class xtxpool_proxy_face : public xrequest_tx_receiver_face {
