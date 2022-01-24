@@ -158,6 +158,10 @@ public:
         return false;
     }
 
+    base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override {
+        return nullptr;
+    }
+
     bool store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) override {
         return false;
     }

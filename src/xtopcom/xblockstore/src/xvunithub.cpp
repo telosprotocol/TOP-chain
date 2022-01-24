@@ -882,6 +882,11 @@ namespace top
             return account_obj->try_update_account_index(height, viewid, update_pre_block);
         }
 
+        base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->recover_and_load_commit_index(height);
+        }
+
         base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag)
         {
             //XTODO:tx always not cache now

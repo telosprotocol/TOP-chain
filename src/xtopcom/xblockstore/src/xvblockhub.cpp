@@ -123,9 +123,56 @@ namespace top
                             xwarn("xblockacct_t::recover_meta,recover full_block at height=% " PRId64 " of account(%s)",latest_commit->get_last_full_block_height(),get_address().c_str());
                     }
                 }
+
+                // XTODO recover cp connect block height
+                for (uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; h++)
+                {
+                    auto bindex = recover_and_load_commit_index(h);
+                    if (bindex == nullptr) {
+                        break;
+                    }
+                    if (bindex->get_last_block_hash() != m_meta->_highest_cp_connect_block_hash) {
+                        xerror("xblockacct_t::recover_meta,unmatch cp connect hash.account=%s,height=%ld,cur_hash=%s,next_last_hash=%s",
+                            get_address().c_str(), h, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), base::xstring_utl::to_hex(bindex->get_last_block_hash()).c_str());
+                        break;
+                    }
+                    m_meta->_highest_cp_connect_block_height = bindex->get_height();
+                    m_meta->_highest_cp_connect_block_hash = bindex->get_block_hash();
+                    xwarn("xblockacct_t::recover_meta,recover cp connect height=% " PRId64 " of account(%s)",h,get_address().c_str());
+                }
             }
             
             return recovered_something;
+        }
+
+        base::xauto_ptr<base::xvbindex_t> xblockacct_t::recover_and_load_commit_index(uint64_t height)
+        {
+            if (load_index(height) == 0) {
+                return nullptr;
+            }
+            base::xauto_ptr<base::xvbindex_t> current_index(query_index(height, base::enum_xvblock_flag_authenticated));
+            if (current_index == nullptr) {
+                return nullptr;
+            }
+            if (current_index->check_block_flag(base::enum_xvblock_flag_committed)) {
+                return current_index;
+            }
+            // XTODO try to load next commit-block and recover current index status
+            base::xauto_ptr<base::xvbindex_t> next_index = load_index(height + 1, base::enum_xvblock_flag_committed);
+            if (next_index == nullptr) {
+                return nullptr;
+            }
+
+            base::xauto_ptr<base::xvbindex_t> current_index_again = load_index(height, next_index->get_last_block_hash());
+            if (current_index_again != nullptr) {
+                update_bindex_to_committed(current_index_again.get());
+                xinfo("xblockacct_t::recover_and_load_commit_index recover succ.account=%s,height=%ld,viewid=%ld", get_address().c_str(), height, current_index_again->get_viewid());
+                return current_index_again;
+            }
+
+            xerror("xblockacct_t::recover_and_load_commit_index recover fail.account=%s,height=%ld,cur_hash=%s,last_hash=%s", 
+                get_address().c_str(), height, base::xstring_utl::to_hex(current_index->get_block_hash()).c_str(), base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str());
+            return nullptr;
         }
  
         bool  xblockacct_t::close(bool force_async)
@@ -1075,6 +1122,14 @@ namespace top
             return true;
         }
 
+        void    xblockacct_t::update_bindex_to_committed(base::xvbindex_t* this_block)
+        {
+            xassert(this_block != nullptr);
+            this_block->set_block_flag(base::enum_xvblock_flag_locked);
+            this_block->set_block_flag(base::enum_xvblock_flag_committed);
+            update_bindex(this_block);
+        }
+
         bool    xblockacct_t::store_committed_unit_block(base::xvblock_t* new_raw_block)
         {
             base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
@@ -1085,16 +1140,12 @@ namespace top
                     if (new_raw_block->get_height() > 1) {
                         base::xauto_ptr<base::xvbindex_t> pre_idx(load_index(new_raw_block->get_height() - 1, new_raw_block->get_last_block_hash()));
                         if (pre_idx != nullptr && !pre_idx->check_block_flag(base::enum_xvblock_flag_committed)) {
-                            pre_idx->set_block_flag(base::enum_xvblock_flag_locked);
-                            pre_idx->set_block_flag(base::enum_xvblock_flag_committed);
-                            update_bindex(pre_idx.get());
+                            update_bindex_to_committed(pre_idx.get());
                             xinfo("xblockacct_t::store_committed_unit_block update pre index,store_block,done for pre_idx(%s),dump:%s", pre_idx->dump().c_str(), dump().c_str());
                         }
                     }
 
-                    exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
-                    exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
-                    update_bindex(exist_cert.get());
+                    update_bindex_to_committed(exist_cert.get());
                     xinfo("xblockacct_t::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
                 } else {
                     xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
@@ -1125,17 +1176,12 @@ namespace top
                     xinfo("xblockacct_t::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
                     ret = false;
                 } else {
-                    exist_cert2->set_block_flag(base::enum_xvblock_flag_locked);
-                    exist_cert2->set_block_flag(base::enum_xvblock_flag_committed);
-
-                    update_bindex(exist_cert2.get());
+                    update_bindex_to_committed(exist_cert2.get());
                     xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
                 }
             }
 
-            exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
-            exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
-            update_bindex(exist_cert.get());
+            update_bindex_to_committed(exist_cert.get());
             xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
             return ret;
         }
