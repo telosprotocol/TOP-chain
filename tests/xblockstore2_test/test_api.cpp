@@ -48,7 +48,7 @@ TEST_F(test_api, store_unit_block_1) {
 
     uint64_t max_block_height = 1;
     xdatamock_table mocktable(1, 1);
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
 
     const std::vector<xdatamock_unit> & mockunit = mocktable.get_mock_units();
 
@@ -111,7 +111,7 @@ TEST_F(test_api, store_table_block_1) {
 
     uint64_t max_block_height = 1;
     xdatamock_table mocktable;
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
 
     base::xvaccount_t table_vaddr(mocktable.get_account());
 
@@ -141,7 +141,7 @@ TEST_F(test_api, store_table_block_2) {
 
     uint64_t max_block_height = 10;
     xdatamock_table mocktable;
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
 
     base::xvaccount_t table_vaddr(mocktable.get_account());
 
@@ -171,7 +171,7 @@ TEST_F(test_api, store_table_block_3) {
 
     uint64_t max_block_height = 10;
     xdatamock_table mocktable;
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
 
     base::xvaccount_t table_vaddr(mocktable.get_account());
 
@@ -204,7 +204,7 @@ TEST_F(test_api, store_tx_1) {
 
     uint64_t max_block_height = 10;
     xdatamock_table mocktable;
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
 
     base::xvaccount_t table_vaddr(mocktable.get_account());
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();

@@ -44,8 +44,9 @@ TEST_F(test_block_connected, block_connect_discrete) {
 
     uint64_t count = 19;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    mocktable.store_genesis_units(blockstore);
     xassert(tables.size() == count + 1);
 
     std::string address = mocktable.get_account();
@@ -83,8 +84,9 @@ TEST_F(test_block_connected, block_connect_discrete_1) {
 
     uint64_t count = mock::xdatamock_table::get_full_table_interval_count() + 20;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    mocktable.store_genesis_units(blockstore);
     xassert(tables.size() == count + 1);
 
     std::string address = mocktable.get_account();
@@ -141,7 +143,7 @@ TEST_F(test_block_connected, store_block_in_unorder_1) {
 
     uint64_t count = 10;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
 
@@ -179,7 +181,7 @@ TEST_F(test_block_connected, store_block_in_unorder_2) {
 
     uint64_t count = 10;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
 
@@ -216,7 +218,7 @@ TEST_F(test_block_connected, store_block_in_order_1) {
     uint64_t count = mock::xdatamock_table::get_full_table_interval_count() + 20;
     const uint64_t full_height = mock::xdatamock_table::get_full_table_interval_count();
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
 
@@ -247,7 +249,7 @@ TEST_F(test_block_connected, store_block_in_order_sleep_BENCH) {
 
     uint64_t count = 6;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
 
@@ -582,7 +584,7 @@ TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
     std::string meta_path = "0/" + table_addr + "/meta";
     base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
 
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
     uint64_t cert_height = (uint64_t)tables.size() - 1;

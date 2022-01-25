@@ -67,7 +67,7 @@ TEST_F(test_block_notify, inorder_dup_commit) {
 
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 10;
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 
@@ -122,7 +122,7 @@ TEST_F(test_block_notify, disorder_commit) {
 
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 10;
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 

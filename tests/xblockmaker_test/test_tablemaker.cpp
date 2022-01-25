@@ -821,7 +821,7 @@ TEST_F(test_tablemaker, version_1) {
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
         auto txs = proposal_block->get_txs();
         EXPECT_EQ(txs.size(), tx_cnt);
-        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_table_prop_prove);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_old_version());
 
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 1);
@@ -869,7 +869,7 @@ TEST_F(test_tablemaker, version_1) {
         for (auto & v : units) {
             xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(v);
             auto txs = unit->get_txs();
-            EXPECT_EQ(txs.size(), tx_cnt);
+            EXPECT_EQ(txs.size(), 0);  // unit has none txs
 
             {
                 xJson::Value jv1;
@@ -881,7 +881,8 @@ TEST_F(test_tablemaker, version_1) {
                         auto tx_consensus_phase = tx[hash]["tx_consensus_phase"].asString();
                         EXPECT_EQ(tx_consensus_phase, "send");
                         auto tx_exec_status = tx[hash]["tx_exec_status"].asString();
-                        EXPECT_EQ(tx_exec_status, "success");
+                        // EXPECT_EQ(tx_exec_status, "success");
+                        EXPECT_EQ(tx_exec_status, "");  // XTODO can't make version before enum_xvblock_fork_version_unit_opt
                     }
                 }
             }
@@ -900,8 +901,8 @@ TEST_F(test_tablemaker, version_1) {
         auto headers = proposal_block->get_sub_block_headers();
         EXPECT_EQ(headers.size(), 1);
         for (auto & header : headers) {
-            EXPECT_EQ(header->get_extra_data().empty(), true);
-            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_table_prop_prove);
+            EXPECT_EQ(header->get_extra_data().empty(), false);  // enum_xvblock_fork_version_unit_opt unit has extra
+            EXPECT_EQ(header->get_block_version(), xvblock_fork_t::get_block_fork_old_version());
         }
     }
 }
@@ -934,7 +935,7 @@ TEST_F(test_tablemaker, version_2) {
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
         auto txs = proposal_block->get_txs();
         EXPECT_EQ(txs.size(), tx_cnt);
-        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_unit_opt);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
 
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 1);
@@ -1005,7 +1006,7 @@ TEST_F(test_tablemaker, version_2) {
         EXPECT_EQ(headers.size(), 1);
         for (auto & header : headers) {
             EXPECT_EQ(header->get_extra_data().empty(), false);
-            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_unit_opt);
+            EXPECT_EQ(header->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
         }
     }
 }
@@ -1013,7 +1014,7 @@ TEST_F(test_tablemaker, version_2) {
 TEST_F(test_tablemaker, fullunit) {
     uint64_t count = 25;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, nullptr);
 
     auto & tables = mocktable.get_history_tables();
     auto & fullunit_table = tables[23];
