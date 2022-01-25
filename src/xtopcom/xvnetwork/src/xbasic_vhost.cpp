@@ -5,7 +5,6 @@
 #include "xvnetwork/xbasic_vhost.h"
 
 #include "xbasic/xcrypto_key.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -53,6 +52,13 @@ std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_
 
     std::error_code ec{election::xdata_accessor_errc_t::success};
 
+    return m_election_cache_data_accessor->sharding_nodes(group_addr, election_round, ec);
+}
+
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_of_group(xcluster_address_t const & group_addr,
+                                                                                         common::xelection_round_t const & election_round,
+                                                                                         std::error_code & ec) const {
+    assert(m_election_cache_data_accessor != nullptr);
     return m_election_cache_data_accessor->sharding_nodes(group_addr, election_round, ec);
 }
 

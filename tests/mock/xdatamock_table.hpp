@@ -10,6 +10,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xstore/xstore_face.h"
 #include "xblockmaker/xtable_builder.h"
+#include "xvledger/xvblockstore.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
 #include "tests/mock/xdatamock_address.hpp"
@@ -72,6 +73,14 @@ class xdatamock_table : public base::xvaccount_t {
     xblock_ptr_t                        get_cert_block() const {return m_history_tables.back();}
     xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}
     xblock_ptr_t                        get_commit_block() const { return m_history_tables.size() < 3 ? get_lock_block() : m_history_tables[m_history_tables.size() - 3];}    
+
+    void                                store_genesis_units(base::xvblockstore_t* blockstore) {
+        for (auto & mockunit : m_mock_units) {
+            auto gene_block = mockunit.get_history_units()[0];
+            blockstore->store_block(base::xvaccount_t(mockunit.get_account()), gene_block.get());
+        }
+    }
+
     std::vector<xblock_ptr_t>           get_all_genesis_units() const {
         std::vector<xblock_ptr_t> units;
         for (auto & mockunit : m_mock_units) {
@@ -143,13 +152,18 @@ class xdatamock_table : public base::xvaccount_t {
         return block;
     }
 
-    void    genrate_table_chain(uint64_t max_block_height) {
+    void    genrate_table_chain(uint64_t max_block_height, base::xvblockstore_t* blockstore) {
         for (uint64_t i = 0; i < max_block_height; i++) {
             generate_send_tx(); // auto generate txs internal
             xblock_ptr_t block = generate_tableblock();
             xassert(block != nullptr);
             on_table_finish(block);
         }
+
+        // store genesis units
+        if (blockstore != nullptr) {
+            store_genesis_units(blockstore);
+        }        
     }
 
     xblock_consensus_para_t  init_consensus_para(uint64_t clock = 10000000) {
@@ -157,7 +171,7 @@ class xdatamock_table : public base::xvaccount_t {
         cs_para.update_latest_cert_block(get_cert_block());
         cs_para.update_latest_lock_block(get_lock_block());
         cs_para.update_latest_commit_block(get_commit_block());
-        cs_para.set_tableblock_consensus_para(1,"1",1,"1");
+        cs_para.set_tableblock_consensus_para(1,"1",1,1);
         cs_para.set_clock(clock);
         return cs_para;
     }
@@ -177,7 +191,7 @@ class xdatamock_table : public base::xvaccount_t {
         if ( (m_config_fulltable_interval != 0) && (((prev_tableblock->get_height() + 1) % m_config_fulltable_interval) == 0) ) {
             proposal_block = generate_full_table(cs_para);
         } else {
-            cs_para.set_tableblock_consensus_para(1, "1", 1, "1"); // TODO(jimmy) for light-table
+            cs_para.set_tableblock_consensus_para(1, "1", 1, 1); // TODO(jimmy) for light-table
             proposal_block = generate_batch_table(cs_para);
         }
         do_multi_sign(proposal_block);
@@ -291,7 +305,7 @@ class xdatamock_table : public base::xvaccount_t {
             //     EXPECT_EQ(txs.size(), 1);
             // }
             for (auto & tx : txs) {
-                base::xvaction_t _action = data::make_action(tx);
+                base::xvaction_t _action = data::xblockaction_build_t::make_tx_action(tx);
                 xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
                 txs_info.push_back(txinfo);
             }

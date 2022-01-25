@@ -13,6 +13,6 @@ add_library(xelect_net STATIC ${xelect_net_src} ${xelect_net_proto})
 #add_dependencies(xelect_net xwrouter xkad xpbase xcommon xbasic https_client)
 target_link_libraries(xelect_net PRIVATE xwrouter xkad xpbase xgossip xtransport xcommon xbasic https_client)
 
-if (XENABLE_TESTS)
+if (XENABLE_P2P_TEST)
     add_subdirectory(demo)
 endif()

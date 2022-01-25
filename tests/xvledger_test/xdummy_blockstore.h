@@ -73,8 +73,20 @@ public:
     uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override {
         return 0;
     }
-    
+
+    uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag) override {
+        return 0;         
+    }
+
     uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override {
+        return 0;
+    }
+
+    uint64_t get_lowest_executed_block_height(const base::xvaccount_t & address,const int atag = 0) override {
+        return 0;
+    } 
+
+    uint64_t get_latest_deleted_block_height(const base::xvaccount_t & account,const int atag = 0) override {
         return 0;
     }
 
@@ -146,6 +158,10 @@ public:
         return false;
     }
 
+    base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override {
+        return nullptr;
+    }
+
     bool store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) override {
         return false;
     }
@@ -177,6 +193,13 @@ public:
     bool exist_genesis_block(base::xvaccount_t const & account,const int atag = 0) override {
         return false;
     }
+
+    base::xauto_ptr<base::xvblock_t> create_genesis_block(base::xvaccount_t const & account, std::error_code & ec) override {
+        return nullptr;
+    }
+
+    void register_create_genesis_callback(std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> cb) override {
+    }
     
     // genesis connected  blocks
     bool set_genesis_height(const base::xvaccount_t & account, const std::string &height) override {
@@ -205,6 +228,14 @@ public:
 
     const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override {
         return "";
+    }
+
+    uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+        return 0;
+    }
+
+    uint64_t update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+        return 0;
     }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;

@@ -331,7 +331,13 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_nonconsensus_gr
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    return filter_sender_from_edge(vnetwork_message, ec) && filter_sender_from_storage(vnetwork_message, ec);
+    auto const & sender = vnetwork_message.sender();
+    if (!common::has<common::xnode_type_t::edge>(sender.type()) && !common::has<common::xnode_type_t::storage>(sender.type()) &&
+        !common::has<common::xnode_type_t::fullnode>(sender.type())) {
+        return true;
+    }
+
+    return filter_sender_from_edge(vnetwork_message, ec) && filter_sender_from_storage(vnetwork_message, ec) && filter_sender_from_fullnode(vnetwork_message, ec);
 }
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_consensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -366,6 +372,29 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_
             vnetwork_message.receiver().to_string().c_str(),
             vnetwork_message.sender().to_string().c_str(),
             ec.message().c_str());
+
+    return false;
+}
+
+bool xtop_message_filter_recver_is_validator::filter_sender_from_fullnode(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+    assert(!ec);
+    assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
+
+    if (!common::has<common::xnode_type_t::fullnode>(vnetwork_message.sender().type())) {
+        return true;
+    }
+
+    auto const & recver = vnetwork_message.receiver();
+
+    // fix receiver if necessary.
+    if (recver.logic_epoch().empty()) {
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
+    }
 
     return false;
 }
@@ -966,11 +995,12 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_nonconsensus_grou
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
-    if (!common::has<common::xnode_type_t::edge>(sender.type()) && !common::has<common::xnode_type_t::storage>(sender.type())) {
+    if (!common::has<common::xnode_type_t::edge>(sender.type()) && !common::has<common::xnode_type_t::storage>(sender.type()) &&
+        !common::has<common::xnode_type_t::fullnode>(sender.type())) {
         return true;
     }
 
-    return filter_sender_from_edge(vnetwork_message, ec) && filter_sender_from_storage(vnetwork_message, ec);
+    return filter_sender_from_edge(vnetwork_message, ec) && filter_sender_from_storage(vnetwork_message, ec) && filter_sender_from_fullnode(vnetwork_message, ec);
 }
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_consensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -1017,6 +1047,29 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_edge(xvnetwork_me
         if (ec) {
             return false;
         }
+    }
+
+    return false;
+}
+
+bool xtop_message_filter_recver_is_auditor::filter_sender_from_fullnode(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+    assert(!ec);
+    assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
+
+    auto const & sender = vnetwork_message.sender();
+    if (!common::has<common::xnode_type_t::fullnode>(sender.type())) {
+        return true;
+    }
+
+    auto const & recver = vnetwork_message.receiver();
+    // fix receiver if necessary.
+    if (recver.logic_epoch().empty()) {
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
     }
 
     return false;

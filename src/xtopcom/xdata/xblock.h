@@ -50,27 +50,6 @@ using base::xaccount_index_t;
 using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
 class xblock_consensus_para_t;
 
-class xblockheader_extra_data_t : public xserializable_based_on<void> {
- protected:
-    enum xblockheader_extra_data_type : uint16_t {
-        enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
-    };
-
- public:
-    int32_t do_write(base::xstream_t & stream) const override;
-    int32_t do_read(base::xstream_t & stream) override;
-
-    int32_t deserialize_from_string(const std::string & extra_data);
-    int32_t serialize_to_string(std::string & extra_data);
-
- public:
-    uint64_t get_tgas_total_lock_amount_property_height() const;
-    void     set_tgas_total_lock_amount_property_height(uint64_t height);
-
- private:
-    std::map<uint16_t, std::string>  m_paras;
-};
-
 class xblock_t : public base::xvblock_t {
  public:
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
@@ -124,6 +103,7 @@ public:
     virtual uint32_t                    get_txs_count() const {return 0;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
     virtual uint32_t                    get_unconfirm_sendtx_num() const {return 0;}
+    virtual uint64_t                    get_second_level_gmtime() const override;
     xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;
     uint32_t                            query_tx_size(const std::string & txhash) const;
     std::vector<base::xvtxkey_t>        get_txkeys() const;
@@ -131,7 +111,6 @@ public:
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}
     std::string get_block_owner()const {return get_account();}
-    uint64_t    get_timestamp() const {return get_cert()->get_gmtime();}
 
  private:
     static std::map<std::string, std::string>      m_empty_map;
@@ -147,7 +126,7 @@ class xblock_consensus_para_t {
  public:
     xblock_consensus_para_t() = default;
 
-    xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height);
+    xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime);
     xblock_consensus_para_t(const xvip2_t & validator, base::xvblock_t* prev_block);
 
  public:
@@ -167,16 +146,17 @@ class xblock_consensus_para_t {
     void    set_tableblock_consensus_para(uint64_t drand_height,
                                        const std::string & random_seed,
                                        uint64_t total_lock_tgas_token,
-                                       const std::string & extra_data);
+                                       uint64_t total_lock_tgas_token_property_height);
     void    set_justify_cert_hash(const std::string & justify_cert_hash) const {m_justify_cert_hash = justify_cert_hash;}
     void    set_parent_height(uint64_t height) const {m_parent_height = height;}
     void    set_timeofday_s(uint64_t now) {m_timeofday_s = now;}
     void    set_clock(uint64_t clock) {m_clock = clock;}
+    void    set_gmtime(uint64_t gmtime) {m_gmtime = gmtime;}
 
  public:
-    const std::string &     get_extra_data() const {return m_extra_data;}
     const std::string &     get_random_seed() const {return m_random_seed;}
     uint64_t                get_clock() const {return m_clock;}
+    uint64_t                get_gmtime() const {return m_gmtime;}
     uint64_t                get_viewid() const {return m_viewid;}
     uint32_t                get_viewtoken() const {return m_viewtoken;}
     uint64_t                get_timestamp() const {return (uint64_t)(m_clock * 10) + base::TOP_BEGIN_GMTIME;}
@@ -188,6 +168,7 @@ class xblock_consensus_para_t {
     const xvip2_t &         get_validator() const {return m_validator;}
     const xvip2_t &         get_auditor() const {return m_auditor;}
     uint64_t                get_total_lock_tgas_token() const {return m_total_lock_tgas_token;}
+    uint64_t                get_tgas_height() const {return m_total_lock_tgas_token_property_height;}
     const std::string &     get_justify_cert_hash() const {return m_justify_cert_hash;}
     uint64_t                get_proposal_height() const {return m_proposal_height;}
     const std::string &     get_table_account() const {return m_account;}
@@ -202,13 +183,14 @@ class xblock_consensus_para_t {
     uint32_t        m_viewtoken{0};
     uint64_t        m_viewid{0};
     uint64_t        m_proposal_height{0};
+    uint64_t        m_gmtime{0};
 
     xvip2_t         m_validator;
     xvip2_t         m_auditor;
     uint64_t        m_drand_height{0};
     std::string     m_random_seed;
     uint64_t        m_total_lock_tgas_token{0};
-    std::string     m_extra_data;
+    uint64_t        m_total_lock_tgas_token_property_height{0};
     std::string     m_dump_str;
     xblock_ptr_t    m_drand_block{nullptr};
     xblock_ptr_t    m_latest_cert_block{nullptr};

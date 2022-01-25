@@ -3,7 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xutility.h"
-#include "xbasic/xerror/xthrow_error.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xaddress.h"
 #include "xcommon/xaddress_error.h"
@@ -775,6 +774,15 @@ build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const
         xarchive_zone_id,
         xdefault_cluster_id,
         group_id
+    };
+}
+
+xgroup_address_t build_fullnode_group_address(xnetwork_id_t const & network_id) {
+    return xgroup_address_t{
+        network_id,
+        xfullnode_zone_id,
+        xdefault_cluster_id,
+        xdefault_group_id
     };
 }
 

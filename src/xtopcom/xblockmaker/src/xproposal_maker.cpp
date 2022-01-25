@@ -10,6 +10,7 @@
 #include "xstore/xtgas_singleton.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xblockbuild.h"
 #include "xtxpool_v2/xtxpool_tool.h"
 #include "xmbus/xevent_behind.h"
 
@@ -61,7 +62,7 @@ xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t* bloc
     return tablestate;
 }
 
-xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para) {
+xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
     XMETRICS_TIMER(metrics::cons_make_proposal_tick);
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
@@ -84,6 +85,14 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);
+    if (table_para.get_origin_txs().size() < min_tx_num) {
+        xinfo("xproposal_maker_t::make_proposal tx number too small:%d,min num:%d. %s,cert_height=%" PRIu64 "",
+              table_para.get_origin_txs().size(),
+              min_tx_num,
+              proposal_para.dump().c_str(),
+              latest_cert_block->get_height());
+        return nullptr;
+    }
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
@@ -139,7 +148,20 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
     XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
-    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height());
+    uint64_t gmtime = proposal_block->get_second_level_gmtime();
+    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), gmtime);
+
+    // verify gmtime valid
+    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
+        if ( (gmtime > (now + 60)) || (gmtime < (now - 60))) { // the gmtime of leader should in +-60s with backup node
+            xwarn("xproposal_maker_t::verify_proposal fail-gmtime not match. proposal=%s,leader_gmtime=%ld,backup_gmtime=%ld",
+                proposal_block->dump().c_str(), gmtime, now);
+            XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
+            return xblockmaker_error_proposal_outofdate;
+        }
+    }    
 
     auto cert_block = get_blockstore()->get_latest_cert_block(*m_table_maker);
     if (proposal_block->get_height() < cert_block->get_height()) {
@@ -394,17 +416,13 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
         xwarn("xproposal_maker_t::leader_set_consensus_para fail-leader_get_total_lock_tgas_token. %s", cs_para.dump().c_str());
         return ret;
     }
-    xblockheader_extra_data_t blockheader_extradata;
-    blockheader_extradata.set_tgas_total_lock_amount_property_height(property_height);
-    std::string extra_data;
-    blockheader_extradata.serialize_to_string(extra_data);
     xassert(cs_para.get_drand_block() != nullptr);
     std::string random_seed = calc_random_seed(latest_cert_block, cs_para.get_drand_block()->get_cert(), cs_para.get_viewtoken());
     cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_tableblock_consensus_para(cs_para.get_drand_block()->get_height(),
                                             random_seed,
                                             total_lock_tgas_token,
-                                            extra_data);
+                                            property_height);
     xdbg_info("xtable_blockmaker_t::set_consensus_para %s random_seed=%s,tgas_token=%" PRIu64 ",tgas_height=%" PRIu64 " leader",
         cs_para.dump().c_str(), random_seed.c_str(), total_lock_tgas_token, property_height);
     return true;
@@ -427,7 +445,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
         xassert(!proposal->get_header()->get_extra_data().empty());
         if (!proposal->get_header()->get_extra_data().empty()) {
             const std::string & extra_data = proposal->get_header()->get_extra_data();
-            xblockheader_extra_data_t blockheader_extradata;
+            xtableheader_extra_t blockheader_extradata;
             int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
             if (ret <= 0) {
                 xerror("xtable_blockmaker_t::verify_block fail-extra data invalid");
@@ -446,7 +464,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
         cs_para.set_tableblock_consensus_para(proposal->get_cert()->get_drand_height(),
                                               random_seed,
                                               total_lock_tgas_token,
-                                              proposal->get_header()->get_extra_data());
+                                              property_height);
         xdbg_info("xtable_blockmaker_t::set_consensus_para proposal=%s,random_seed=%s,tgas_token=%" PRIu64 " backup",
             proposal->dump().c_str(), random_seed.c_str(), total_lock_tgas_token);
     }
@@ -497,7 +515,8 @@ void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablest
     base::xvaccount_t _vaddr(addr);
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
-    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, get_blockstore(), "proposal_maker");
+    uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);
+    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, latest_connect_height, get_blockstore(), "proposal_maker");
 }
 
 

@@ -27,7 +27,7 @@ using top::common::xelection_round_t;
 using top::common::xzone_id_t;
 using top::common::xnode_id_t;
 using top::common::xslot_id_t;
-using top::common::xrole_type_t;
+using top::common::xminer_type_t;
 
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;

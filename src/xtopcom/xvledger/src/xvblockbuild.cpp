@@ -208,17 +208,12 @@ namespace top
 
             if (_para.m_height == 0) {
                 _header->set_block_version(xvblock_fork_t::get_block_init_version());
-                xdbg("xvblockbuild_t::create_header set init version for genesis.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());                
             } else {
                 xassert(_para.m_clock != 0);
-                if (xvblock_fork_t::instance().is_forked(_para.m_clock)) {
-                    _header->set_block_version(xvblock_fork_t::get_block_fork_new_version());
-                    xdbg("xvblockbuild_t::create_header set new version.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
-                } else {
-                    _header->set_block_version(xvblock_fork_t::get_block_fork_old_version());
-                    xdbg("xvblockbuild_t::create_header set old version.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
-                }
+                uint32_t expect_version = base::xvblock_fork_t::instance().get_expect_block_version(_para.m_clock);
+                _header->set_block_version(expect_version);
             }
+            xdbg("xvblockbuild_t::create_header.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
             return _header;
         }
 
@@ -229,6 +224,14 @@ namespace top
             }
             xauto_ptr<xvheader_t> _header = create_header(_para);
             set_header(_header.get());
+        }
+
+        void xvblockbuild_t::set_header_extra(const std::string & _extra) {
+            if (get_header() == nullptr) {
+                xassert(false);
+                return;
+            }
+            get_header()->set_extra_data(_extra);
         }
 
         xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block, uint64_t _clock) {
@@ -918,12 +921,13 @@ namespace top
             std::string parent_cert_bin;
             parent->get_cert()->serialize_to_string(parent_cert_bin);
             xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
-            for (auto & _unit : units) {
+            for (size_t leaf_index = 0; leaf_index < out_leafs.size(); leaf_index++) {
+                auto & _unit = units[leaf_index];
                 if (!_unit->get_cert()->get_extend_cert().empty()) { // already set extend cert
                     xassert(false);
                     return true;
                 }
-                std::string _leaf = get_table_out_merkle_leaf(_unit.get());
+                auto const &_leaf = out_leafs[leaf_index];
                 base::xmerkle_path_256_t path;
                 bool ret = xvblockmaker_t::calc_merkle_path(_leaf, path, merkle);
                 if (!ret) {

@@ -395,7 +395,7 @@
 //         xdbg("[xzec_reward_contract::calc_nodes_rewards_v2] map_nodes: account: %s, deposit: %llu, node_type: %s, votes: %llu",
 //             node.m_account.c_str(),
 //             node.get_deposit(),
-//             node.m_genesis_node ? "advance,validator,edge" : common::to_string(node.m_registered_role).c_str(),
+//             node.m_genesis_node ? "advance,validator,edge" : common::to_string(node.m_registered_miner_type).c_str(),
 //             node.m_vote_amount);
 //     }
 
@@ -414,7 +414,7 @@
 // #ifndef XENABLE_MOCK_ZEC_STAKE
 //     ASSERT_TRUE(node_info.m_account_mortgage == node_morgage);
 // #endif
-//     ASSERT_TRUE(node_info.is_auditor_node());
+//     ASSERT_TRUE(node_info.could_be_auditor());
 // }
 
 // TEST_F(test_suite_xcontract_t, setDividendRatio) {
@@ -433,7 +433,7 @@
 
 //     ASSERT_TRUE(node_info.m_account.value() == node_account);
 //     ASSERT_TRUE(node_info.m_support_ratio_numerator == dividend_rate);
-//     ASSERT_TRUE(node_info.is_auditor_node());
+//     ASSERT_TRUE(node_info.could_be_auditor());
 // }
 
 // TEST_F(test_suite_xcontract_t, update_batch_stake) {

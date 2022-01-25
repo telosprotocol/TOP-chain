@@ -44,7 +44,7 @@ TEST_F(test_create_block, create_time_clock) {
 
     uint64_t max_block_height = 3;
     mock::xdatamock_table mocktable(1, 2);
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_block_height + 1);
 
@@ -69,7 +69,7 @@ TEST_F(test_create_block, create_time_gmt) {
 
     uint64_t max_block_height = 3;
     mock::xdatamock_table mocktable(1, 2);
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_block_height + 1);
 

@@ -14,7 +14,6 @@
 #include "xdata/xgenesis_data.h"
 #include "xrouter/xrouter.h"
 #include "xvnetwork/xvhost_face.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
 
 NS_BEG2(top, sync)
 
@@ -26,17 +25,20 @@ struct xrole_xips_t {
     xip_vector_ptr parent_xips{};
     xip_vector_ptr orig_neighbour_xips{}; // for special cases
     std::set<uint16_t> set_table_ids;
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_vnetwork_driver;
 
     xrole_xips_t(const vnetwork::xvnode_address_t& _self_xip,
                  const xip_vector_ptr& neighbour_xips_ptr,
                  const xip_vector_ptr& parent_xips_ptr,
                  const xip_vector_ptr& orig_neighbour_xips_ptr,
-                 const std::set<uint16_t> &_set_table_ids) :
+                 const std::set<uint16_t> &_set_table_ids,
+                 const std::shared_ptr<vnetwork::xvnetwork_driver_face_t>& network_driver) :
     self_xip(_self_xip),
     neighbour_xips(neighbour_xips_ptr),
     parent_xips(parent_xips_ptr),
     orig_neighbour_xips(orig_neighbour_xips_ptr),
-    set_table_ids(_set_table_ids) {}
+    set_table_ids(_set_table_ids),
+    m_vnetwork_driver(network_driver) {}
 
     xrole_xips_t() = default;
     xrole_xips_t(const xrole_xips_t& other) = default;
@@ -76,8 +78,7 @@ public:
     void add_role(const vnetwork::xvnode_address_t& self_xip, 
                   const std::vector<vnetwork::xvnode_address_t>& neighbours,
                   const std::vector<vnetwork::xvnode_address_t>& parents, 
-                  const std::vector<vnetwork::xvnode_address_t>& archives, 
-                  const std::vector<vnetwork::xvnode_address_t>& edge_archives,
+                  const std::shared_ptr<vnetwork::xvnetwork_driver_face_t>& network_driver,
                   const std::set<uint16_t> &table_ids);
 
     /**
@@ -114,6 +115,9 @@ public:
     std::vector<vnetwork::xvnode_address_t> get_rand_archives(uint32_t max_peers);
 
     std::vector<vnetwork::xvnode_address_t> get_archive_list();
+
+    std::vector<vnetwork::xvnode_address_t> get_rand_full_nodes(uint32_t max_peers);
+    std::vector<vnetwork::xvnode_address_t> get_full_nodes();
     std::vector<vnetwork::xvnode_address_t> get_edge_archive_list();
 
     bool get_self_addr(vnetwork::xvnode_address_t& self_addr) const;
@@ -134,9 +138,9 @@ protected:
 protected:
     std::string m_vnode_id;
     mutable std::mutex m_lock;
-    xip_vector_ptr m_archive_xips{};
-    xip_vector_ptr m_edge_archive_xips{};
     std::unordered_map<vnetwork::xvnode_address_t, xrole_xips_t> m_map;
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_vnetwork_driver;
+    vnetwork::xvnode_address_t m_self_xip;
 };
 
 NS_END2

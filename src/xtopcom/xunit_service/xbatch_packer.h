@@ -50,6 +50,7 @@ public:
     virtual bool reset_xip_addr(const xvip2_t & new_addr);
     virtual bool set_fade_xip_addr(const xvip2_t & new_addr);
     virtual bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
+    virtual bool on_replicate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
     virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     virtual bool set_start_time(const common::xlogic_time_t& start_time);
 protected:
@@ -67,9 +68,11 @@ protected:
     void    invoke_sync(const std::string & account, const std::string & reason);
 
 private:
-    bool    start_proposal(base::xblock_mptrs& latest_blocks);
+    bool    connect_to_checkpoint();
+    bool    start_proposal(base::xblock_mptrs& latest_blocks, uint32_t min_tx_num);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
+    uint32_t calculate_min_tx_num(bool first_packing);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
@@ -80,7 +83,7 @@ private:
     std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
     static constexpr uint32_t                m_empty_block_max_num{2};
-    static constexpr uint32_t                m_timer_repeat_time_ms{3000};  // check account by every 3 seconds
+    static constexpr uint32_t                m_timer_repeat_time_ms{1000};  // check account by every 3 seconds
     std::string                              m_account_id;
     std::string                              m_latest_cert_block_hash;
     bool                                     m_can_make_empty_block{false};

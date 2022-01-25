@@ -11,62 +11,71 @@
 
 NS_BEG2(top, common)
 
-std::int32_t operator<<(top::base::xstream_t & stream, xrole_type_t const & role_type) {
-    return stream << static_cast<std::underlying_type<xrole_type_t>::type>(role_type);
+std::int32_t operator<<(top::base::xstream_t & stream, xminer_type_t const & role_type) {
+    return stream << static_cast<std::underlying_type<xminer_type_t>::type>(role_type);
 }
 
-std::int32_t operator>>(top::base::xstream_t & stream, xrole_type_t & role_type) {
-    std::underlying_type<xrole_type_t>::type temp;
+std::int32_t operator>>(top::base::xstream_t & stream, xminer_type_t & role_type) {
+    std::underlying_type<xminer_type_t>::type temp;
     auto r = stream >> temp;
-    role_type = static_cast<xrole_type_t>(temp);
+    role_type = static_cast<xminer_type_t>(temp);
     return r;
 }
 
-std::string to_string(xrole_type_t const role) {
+std::string to_string(xminer_type_t const role) {
     switch (role) {
-    case xrole_type_t::advance:
-        return XNODE_TYPE_ADVANCE;
+    case xminer_type_t::advance:
+        return XMINER_TYPE_ADVANCE;
 
-    case xrole_type_t::full_node:
-        return XNODE_TYPE_FULL_NODE;
+    case xminer_type_t::exchange:
+        return XMINER_TYPE_EXCHANGE;
 
-    case xrole_type_t::validator:
-        return XNODE_TYPE_VALIDATOR;
+    case xminer_type_t::validator:
+        return XMINER_TYPE_VALIDATOR;
 
-    case xrole_type_t::edge:
-        return XNODE_TYPE_EDGE;
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    case xminer_type_t::archive:
+        return XMINER_TYPE_ARCHIVE;
+#endif
+
+    case xminer_type_t::edge:
+        return XMINER_TYPE_EDGE;
 
     default:
         assert(false);
-        return "invalid(" + std::to_string(static_cast<std::underlying_type<xrole_type_t>::type>(role)) + ")";
+        return "invalid(" + std::to_string(static_cast<std::underlying_type<xminer_type_t>::type>(role)) + ")";
     }
 }
 
-xrole_type_t & operator&=(xrole_type_t & lhs, xrole_type_t const rhs) noexcept {
+xminer_type_t & operator&=(xminer_type_t & lhs, xminer_type_t const rhs) noexcept {
     lhs = lhs & rhs;
     return lhs;
 }
 
-xrole_type_t & operator|=(xrole_type_t & lhs, xrole_type_t const rhs) noexcept {
+xminer_type_t & operator|=(xminer_type_t & lhs, xminer_type_t const rhs) noexcept {
     lhs = lhs | rhs;
     return lhs;
 }
 
-bool has(xrole_type_t const target, xrole_type_t const input) noexcept {
+bool has(xminer_type_t const target, xminer_type_t const input) noexcept {
     return target == (target & input);
 }
 
-common::xrole_type_t to_role_type(std::string const & node_type) {
-    common::xrole_type_t role_type = common::xrole_type_t::invalid;
+common::xminer_type_t to_miner_type(std::string const & node_type) {
+    common::xminer_type_t role_type = common::xminer_type_t::invalid;
 
-    if (node_type == XNODE_TYPE_EDGE) {
-        role_type = common::xrole_type_t::edge;
-    } else if (node_type == XNODE_TYPE_ADVANCE) {
-        role_type = common::xrole_type_t::advance;
-    } else if (node_type == XNODE_TYPE_VALIDATOR) {
-        role_type = common::xrole_type_t::validator;
-    } else if (node_type == XNODE_TYPE_FULL_NODE) {
-        role_type = common::xrole_type_t::full_node;
+    if (node_type == XMINER_TYPE_EDGE) {
+        role_type = common::xminer_type_t::edge;
+    } else if (node_type == XMINER_TYPE_ADVANCE) {
+        role_type = common::xminer_type_t::advance;
+    } else if (node_type == XMINER_TYPE_VALIDATOR) {
+        role_type = common::xminer_type_t::validator;
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    } else if (node_type == XMINER_TYPE_ARCHIVE) {
+        role_type = common::xminer_type_t::archive;
+#endif
+    } else if (node_type == XMINER_TYPE_EXCHANGE) {
+        role_type = common::xminer_type_t::exchange;
     }
 
     return role_type;

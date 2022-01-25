@@ -388,23 +388,23 @@ using x16_8_8_vhost_fixture = top::vnetwork::tests::xvhost_fixture_t<16, 8, 8>;
 TEST_F(x16_8_8_vhost_fixture, gossip) {
     // DEFINE_VERSION_AND_NET_ID(0);
 
-    // std::array<common::xrole_type_t, 16> roles{
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge,
-    //     common::xrole_type_t::edge
+    // std::array<common::xminer_type_t, 16> roles{
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge,
+    //     common::xminer_type_t::edge
     // };
 
     // reset_vhost_manager(roles);

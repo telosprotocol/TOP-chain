@@ -18,8 +18,9 @@
 #include "xdata/xblocktool.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
-#include "xmbus/xmessage_bus.h"
 #include "xelect_net/include/elect_vhost_face.h"
+#include "xgenesis/xgenesis_manager.h"
+#include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
@@ -95,6 +96,7 @@ private:
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
     std::vector<std::unique_ptr<xchain_application_t>> m_chain_applications{};
+    std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager;
 
 public:
     xtop_application(xtop_application const &) = delete;
@@ -150,18 +152,9 @@ public:
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;
 
-    bool check_rootblock();
-    bool create_genesis_accounts();
-
-    bool create_genesis_account(std::string const & address, uint64_t const init_balance);
-
-    bool create_genesis_account(std::string const & address, chain_data::data_processor_t const & data);
-
-    bool preprocess_accounts_data();
-
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 
-    void create_thread_pools();
+    void update_node_size(uint64_t & node_size, std::error_code & ec);
 
     bool is_genesis_node() const noexcept;
 

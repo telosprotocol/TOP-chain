@@ -6,7 +6,8 @@
 #include "xbase/xobject.h"
 #include "xvledger/xvbindex.h"
 #include "xvledger/xvstate.h"
- 
+#include "xbasic/xmodule_type.h"
+
 namespace top
 {
     namespace base
@@ -61,6 +62,9 @@ namespace top
             virtual bool   recycle(const xvbindex_t * block) = 0;//recyle one block
             virtual bool   recycle(const std::vector<xvbindex_t*> & mblocks) = 0;//recycle multiple blocks
             virtual bool   recycle(const xvaccount_t & account_obj,xblockmeta_t & account_meta) = 0;//recylce possible blocks under account
+            virtual bool   watch(const chainbase::enum_xmodule_type mod_id, const xvaccount_t & account_obj) = 0; // just for table
+            virtual bool   unwatch(const chainbase::enum_xmodule_type mod_id, const xvaccount_t & account_obj) = 0; // just for table
+            virtual bool   refresh(const chainbase::enum_xmodule_type mod_id, const xvaccount_t & account_obj, uint64_t permit_prune_right_boundary) = 0; // just for table
         };
     
         class xstaterecycler_t : public xvdrecycle_t
@@ -99,11 +103,11 @@ namespace top
             bool              turn_off_recycler(enum_vdata_recycle_type target);
             
         public:
-            xblockrecycler_t* get_block_recycler();
+            xblockrecycler_t* get_block_recycler(bool break_through = false);
             bool              set_block_recycler(xblockrecycler_t& new_recycler);
             
         protected:
-            xvdrecycle_t*     get_recycler(enum_vdata_recycle_type target);
+            xvdrecycle_t*     get_recycler(enum_vdata_recycle_type target, bool break_through = false);
             bool              set_recycler(xvdrecycle_t& new_recycler);
             
         private: //only allow xvchain_t mangage reference

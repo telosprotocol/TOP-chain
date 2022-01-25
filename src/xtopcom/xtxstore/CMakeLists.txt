@@ -9,7 +9,7 @@ add_library(xtxstore STATIC ${src_dir})
 
 add_dependencies(xtxstore xxbase xstore xcommon)
 
-target_link_libraries(xtxstore PRIVATE xxbase xstore xcommon)
+target_link_libraries(xtxstore PRIVATE xxbase xstore xtxexecutor xcommon)
 
 if (BUILD_METRICS)
     target_link_libraries(xtxstore PRIVATE xmetrics)

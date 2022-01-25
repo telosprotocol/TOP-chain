@@ -70,7 +70,7 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     stream.read_compact_var(m_latest_unit_viewid);
     stream.read_compact_var(m_account_flag);
     
-    if(check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
+    if (check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.read_compact_var(m_latest_tx_nonce);
     }
     

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xerror/xchain_error.h"
+#include "xbasic/xerror/xerror.h"
 
 #include <cstdint>
 #include <string>

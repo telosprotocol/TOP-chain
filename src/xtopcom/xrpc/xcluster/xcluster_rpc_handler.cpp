@@ -54,8 +54,17 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
                 self->cluster_process_request(msg, edge_sender, message);
                 XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
             } else {
-                self->cluster_process_query_request(msg, edge_sender, message);
-                XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
+                auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+                auto clock = self->m_cluster_query_mgr->getTimerHeight();
+                auto forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, clock);
+                xdbg("xcluster_rpc_handler::on_message clock:%llu, forked:%d", clock, forked);
+                if (forked) {
+                    xwarn("xcluster_rpc_handler::on_message auditor tackle query:%" PRIx64, message.hash());
+                    return true;
+                } else {
+                    self->cluster_process_query_request(msg, edge_sender, message);
+                    XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
+                }
             }
         } else if (msgid == rpc_msg_response) {
             // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
@@ -147,7 +156,8 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                           vaddr.to_string().c_str(),
                           msg.hash(),
                           static_cast<std::uint32_t>(msg.id()));
-                    assert(false);
+                    // todo ?
+                    // assert(false);
                 }
             } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
@@ -176,7 +186,7 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
 
         m_cluster_query_mgr->call_method(json_proc);
         json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
-        json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
+        json_proc.m_response_json[RPC_ERRMSG] = "Query to Auditors will be Disabled after 1.2.8 Fork, Please Update your Edger Version!!!";
         json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
         response_msg_ptr->m_message_body = json_proc.get_response();
     } catch (const xrpc_error & e) {
@@ -199,7 +209,8 @@ void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_
     std::error_code ec;
     m_cluster_vhost->send_to(edge_sender, msg, ec);
     if (ec) {
-        assert(false);
+        // todo ?
+        // assert(false);
     }
 }
 
@@ -210,7 +221,8 @@ void xcluster_rpc_handler::cluster_process_response(const xmessage_t & msg, cons
         std::error_code ec;
         m_cluster_vhost->send_to(shard_msg.m_source_address, msg, ec);
         if (ec) {
-            assert(false);
+            // todo ?
+            // assert(false);
         }
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[global_trace][advance_rpc][send] src %s send msg %" PRIx64 " to dst %s",

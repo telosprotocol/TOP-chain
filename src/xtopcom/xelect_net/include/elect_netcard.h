@@ -46,11 +46,11 @@ public:
      */
     void Init();
 
-    void send_to(base::KadmliaKeyPtr const & send_kad_key, base::KadmliaKeyPtr const & recv_kad_key, xbyte_buffer_t const & bytes_message, std::error_code const & ec) const;
+    void send_to(base::KadmliaKeyPtr const & send_kad_key, base::KadmliaKeyPtr const & recv_kad_key, xbyte_buffer_t const & bytes_message, std::error_code & ec) const;
 
-    void spread_rumor(base::KadmliaKeyPtr const & send_kad_key, base::KadmliaKeyPtr const & recv_kad_key, xbyte_buffer_t const & bytes_message, std::error_code const & ec) const;
+    void spread_rumor(base::KadmliaKeyPtr const & send_kad_key, base::KadmliaKeyPtr const & recv_kad_key, xbyte_buffer_t const & bytes_message, std::error_code & ec) const;
 
-    void broadcast(base::KadmliaKeyPtr const & send_kad_key, base::KadmliaKeyPtr const & recv_kad_key, xbyte_buffer_t const & bytes_message, std::error_code const & ec) const;
+    void broadcast(base::KadmliaKeyPtr const & send_kad_key, base::KadmliaKeyPtr const & recv_kad_key, xbyte_buffer_t const & bytes_message, std::error_code & ec) const;
 
 
     /**
@@ -68,10 +68,10 @@ public:
     void unregister_message_ready_notify(const uint32_t & xnetwork_id);
 
 protected:
-    int GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const;
-    int GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const;
+    void GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, std::error_code & ec) const;
+    void GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, std::error_code & ec) const;
     // int GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const;
-    int GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const;
+    void GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, std::error_code & ec) const;
 
 private:
     void HandleRumorMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) const;

@@ -189,7 +189,7 @@ int32_t xaccount_context_t::incr_used_tgas(uint64_t num){
 uint64_t xaccount_context_t::calc_decayed_tgas(){
     uint32_t last_hour = get_last_tx_hour();
     uint64_t used_tgas{0};
-    uint32_t decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle);
+    uint32_t decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval);
     if(m_timer_height - last_hour < decay_time){
         used_tgas = (decay_time - (m_timer_height - last_hour)) * get_used_tgas() / decay_time;
     }

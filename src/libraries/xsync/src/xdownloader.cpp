@@ -120,12 +120,14 @@ void xevent_monitor_t::process_event(const mbus::xevent_ptr_t& e) {
 xdownloader_t::xdownloader_t(std::string vnode_id, xsync_store_face_t *sync_store,
             const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
             const observer_ptr<base::xvcertauth_t> &certauth,
+            xrole_xips_manager_t *role_xips_mgr,
             xrole_chains_mgr_t *role_chains_mgr, xsync_sender_t *sync_sender,
             const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, xsync_ratelimit_face_t *ratelimit, xsync_store_shadow_t * shadow):
 m_vnode_id(vnode_id),
 m_sync_store(sync_store),
 m_mbus(mbus),
 m_certauth(certauth),
+m_role_xips_mgr(role_xips_mgr),
 m_role_chains_mgr(role_chains_mgr),
 m_sync_sender(sync_sender),
 m_ratelimit(ratelimit),
@@ -168,6 +170,9 @@ std::string xdownloader_t::get_address_by_event(const mbus::xevent_ptr_t &e) {
     case mbus::xevent_major_type_sync_executor:
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
+            return bme->blocks[0]->get_account();
+        } else if (e->minor_type == mbus::xevent_sync_executor_t::archive_blocks) {
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
             return bme->blocks[0]->get_account();
         } else if (e->minor_type == mbus::xevent_sync_executor_t::chain_snapshot) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_chain_snaphsot_t>(e);
@@ -220,6 +225,8 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
             XMETRICS_TIME_RECORD("sync_cost_response_blocks_event");
             chain_downloader = on_response_event(idx, e);
+        } else if (e->minor_type == mbus::xevent_sync_executor_t::archive_blocks) {
+            chain_downloader = on_archive_blocks(idx, e);
         } else if (e->minor_type == mbus::xevent_sync_executor_t::chain_snapshot) {
             chain_downloader = on_chain_snapshot_response_event(idx, e);
         }
@@ -307,6 +314,25 @@ xchain_downloader_face_ptr_t xdownloader_t::on_response_event(uint32_t idx, cons
 
     return chain_downloader;
 }
+xchain_downloader_face_ptr_t xdownloader_t::on_archive_blocks(uint32_t idx, const mbus::xevent_ptr_t &e) {
+    //xsync_dbg("downloader on_response_event");
+
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
+
+    const std::string &address = bme->blocks[0]->get_account();
+
+    xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, address);
+    if (chain_downloader != nullptr) {
+
+        std::vector<data::xblock_ptr_t> &blocks = bme->blocks;
+        vnetwork::xvnode_address_t &self_addr = bme->self_address;
+        vnetwork::xvnode_address_t &from_addr = bme->from_address;
+
+        chain_downloader->on_archive_blocks(blocks, self_addr, from_addr);
+    }
+
+    return chain_downloader;
+}
 
 // any sync request has event source, only need find, not create
 xchain_downloader_face_ptr_t xdownloader_t::on_chain_snapshot_response_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
@@ -369,7 +395,8 @@ xchain_downloader_face_ptr_t xdownloader_t::find_chain_downloader(uint32_t idx, 
 
 xchain_downloader_face_ptr_t xdownloader_t::create_chain_downloader(uint32_t idx, const std::string &address) {
 
-    xchain_downloader_face_ptr_t account = std::make_shared<xchain_downloader_t>(m_vnode_id, m_sync_store, m_mbus, m_certauth, m_sync_sender, m_ratelimit, address);
+    xchain_downloader_face_ptr_t account = std::make_shared<xchain_downloader_t>(m_vnode_id, m_sync_store, m_role_xips_mgr, 
+        m_role_chains_mgr, m_mbus, m_certauth, m_sync_sender, m_ratelimit, address);
     m_vector_chains[idx][address] = account;
     return account;
 }

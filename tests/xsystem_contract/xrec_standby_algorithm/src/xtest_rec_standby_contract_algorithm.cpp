@@ -35,7 +35,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     xstake::xreg_node_info node_info;
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
-    node_info.m_registered_role = common::xrole_type_t::advance;
+    node_info.miner_type(common::xminer_type_t::advance);
     node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
     node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
@@ -67,7 +67,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_vote_amount = 1000000000;
-    node_info.m_registered_role = common::xrole_type_t::advance;
+    node_info.miner_type(common::xminer_type_t::advance);
     node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
     node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
@@ -80,9 +80,9 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_1);
     EXPECT_TRUE(standby_node_info.is_genesis_node == false);
 
-#define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record)
+#define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record, 0)
 
-    EXPECT_FALSE(rec_standby_on_timer_update);
+    EXPECT_TRUE(rec_standby_on_timer_update);
 
     // changed pub_key in reg && rec_standby on_timer update:
     top::xpublic_key_t pub_key_2{"test_pub_key_2"};
@@ -101,16 +101,16 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     EXPECT_HAS(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
-    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
 
-    change_role_type(xnode_id, common::xrole_type_t::validator);
+    change_role_type(xnode_id, common::xminer_type_t::validator);
     EXPECT_HAS(common::xnode_type_t::consensus_auditor);
     EXPECT_HAS(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
-    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
     // EXPECT_TRUE(rec_standby_on_timer_update);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
@@ -118,16 +118,16 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     // EXPECT_HAS_NOT(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
-    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
 
-    change_role_type(xnode_id, common::xrole_type_t::edge);
+    change_role_type(xnode_id, common::xminer_type_t::edge);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     // EXPECT_HAS_NOT(common::xnode_type_t::rec);
     // EXPECT_HAS_NOT(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
-    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
     // EXPECT_TRUE(rec_standby_on_timer_update);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
@@ -135,16 +135,16 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     // EXPECT_HAS_NOT(common::xnode_type_t::zec);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_validator);
     // EXPECT_HAS(common::xnode_type_t::edge);
-    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
 
-    change_role_type(xnode_id, common::xrole_type_t::full_node);
+    change_role_type(xnode_id, common::xminer_type_t::exchange);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     // EXPECT_HAS_NOT(common::xnode_type_t::rec);
     // EXPECT_HAS_NOT(common::xnode_type_t::zec);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_validator);
     // EXPECT_HAS(common::xnode_type_t::edge);
-    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
     // EXPECT_TRUE(rec_standby_on_timer_update);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
@@ -152,7 +152,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     // EXPECT_HAS_NOT(common::xnode_type_t::zec);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
-    // EXPECT_HAS(common::xnode_type_t::storage_full_node);
+    // EXPECT_HAS(common::xnode_type_t::storage_exchange);
 
 #undef rec_standby_on_timer_update
 #undef EXPECT_HAS
@@ -169,7 +169,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_vote_amount = 1;
-    node_info.m_registered_role = common::xrole_type_t::advance;
+    node_info.miner_type(common::xminer_type_t::advance);
     node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
     node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
@@ -185,7 +185,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
 #define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record)
 #define EXPECT_HAS(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) != standby_node_info.stake_container.end())
 #define EXPECT_HAS_NOT(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) == standby_node_info.stake_container.end())
-    EXPECT_FALSE(node_info.auditor());
+    EXPECT_FALSE(node_info.can_be_auditor());
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
@@ -195,7 +195,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.m_vote_amount = 1000000000;
     EXPECT_TRUE(update_reg_info(node_info));
 
-    EXPECT_TRUE(node_info.auditor());
+    EXPECT_TRUE(node_info.can_be_auditor());
     // EXPECT_TRUE(rec_standby_on_timer_update);
 
     // EXPECT_HAS(common::xnode_type_t::consensus_auditor);

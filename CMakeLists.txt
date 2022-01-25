@@ -340,6 +340,10 @@ if (XENABLE_P2P_BENDWIDTH)
     add_definitions(-DXENABLE_P2P_BENDWIDTH)
 endif()
 
+if (XENABLE_P2P_TEST)
+    add_definitions(-DXENABLE_P2P_TEST)
+endif()
+
 if (NO_TX_BATCH)
     add_definitions(-DNO_TX_BATCH)
 endif()
@@ -396,6 +400,11 @@ if (XCHAIN_FORKED_BY_DEFAULT)
     add_definitions(-DXCHAIN_FORKED_BY_DEFAULT)
 endif()
 
+if (XCHAIN_FORKED_VERSION)
+    add_definitions(-DXCHAIN_FORKED_VERSION=${XCHAIN_FORKED_VERSION})
+    message("XCHAIN_FORKED_VERSION: ${XCHAIN_FORKED_VERSION}")
+endif()
+
 if (ENABLE_METRICS_DATAOBJECT)
     if (NOT BUILD_METRICS)
         message(FATAL_ERROR "should define metrics before metrics_dataobject")
@@ -409,6 +418,10 @@ endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
     add_definitions(-DRELEASEDEBINFO)
+endif()
+
+if (CHECKPOINT_TEST)
+    add_definitions(-DCHECKPOINT_TEST)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
@@ -425,6 +438,7 @@ message(STATUS "XENABLE_VERBOSE_DBG:" ${XENABLE_VERBOSE_DBG})
 message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
+# message(STATUS "XCHAIN_FORKED_VERSION:" ${XCHAIN_FORKED_VERSION})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
 
 find_package(Threads REQUIRED)

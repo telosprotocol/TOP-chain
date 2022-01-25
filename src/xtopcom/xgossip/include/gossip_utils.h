@@ -39,10 +39,37 @@ static const uint32_t kGossipLayerBloomfilterIgnoreLevel = 1u;
 static const uint32_t kGossipLayerStopTimes = 3u;
 
 // rrs_gossip
-static const uint32_t kGossipRRSSwitchLayerHopNum = 2u;
+// ops... default params in mainnet are too small...
+// static const uint32_t kGossipRRSSwitchLayerHopNum = 2u;
+// static const uint32_t kGossipRRSNeighborNum = 3u;
+// static const uint32_t kGossipRRSStopTimes = 3u;
+// static const uint32_t kGossipRRSBloomfilterIgnoreLevel = 1u;
+
+#if defined(XBUILD_CI)
+// 1 + 4 + 16 + 64 = 85
+static const uint32_t kGossipRRSSwitchLayerHopNum = 3u;
+static const uint32_t kGossipRRSNeighborNum = 4u;
+
+#elif defined(XBUILD_DEV)
+// 1 + 3 + 9 + 27 = 40
+static const uint32_t kGossipRRSSwitchLayerHopNum = 3u;
 static const uint32_t kGossipRRSNeighborNum = 3u;
+
+#elif defined(XBUILD_GALILEO)
+// 1 + 5 + 25 + 125 = 156
+static const uint32_t kGossipRRSSwitchLayerHopNum = 3u;
+static const uint32_t kGossipRRSNeighborNum = 5u;
+
+#else // mainnet 
+// 1 + 6 + 36 + 216 + 1296 = 1555
+static const uint32_t kGossipRRSSwitchLayerHopNum = 5u;
+static const uint32_t kGossipRRSNeighborNum = 6u;
+#endif
+
 static const uint32_t kGossipRRSStopTimes = 3u;
 static const uint32_t kGossipRRSBloomfilterIgnoreLevel = 1u;
+
+
 
 }  // namespace gossip
 

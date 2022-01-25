@@ -34,13 +34,13 @@ protected:
 };
 
 TEST_F(test_chain_creator, test_1) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     uint64_t count = 19;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
 
@@ -60,13 +60,13 @@ TEST_F(test_chain_creator, test_2_BENCH) {
     int count = 100;
     while ( count -- > 0 )
     {
-        mock::xvchain_creator creator;
+        mock::xvchain_creator creator(true);
         creator.create_blockstore_with_xstore();
         base::xvblockstore_t* blockstore = creator.get_blockstore();
 
         uint64_t count = 19;
         mock::xdatamock_table mocktable;
-        mocktable.genrate_table_chain(count);
+        mocktable.genrate_table_chain(count, blockstore);
         const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
         xassert(tables.size() == count + 1);
 
@@ -84,7 +84,7 @@ TEST_F(test_chain_creator, test_2_BENCH) {
 }
 
 TEST_F(test_chain_creator, test_3_BENCH) {
-    mock::xvchain_creator creator;
+    mock::xvchain_creator creator(true);
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 

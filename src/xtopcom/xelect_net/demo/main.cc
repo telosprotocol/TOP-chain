@@ -39,6 +39,13 @@ int main(int argc, char ** argv) {
     }
 
     std::string log_path("./log/xtop.log");
+    
+    uint16_t delta = 0;
+    config.Get("node","delta",delta);
+    uint16_t ori_port = 0;
+    config.Get("node","local_port",ori_port);
+    config.Set("node", "local_port", ori_port + delta);
+
     config.Get("log", "path", log_path);
     bool log_debug = true;
     config.Get("log", "debug", log_debug);
@@ -75,7 +82,7 @@ int main(int argc, char ** argv) {
     demo.BuildXelectNetDemoNetwork();
 
     // will block here
-    demo.GetElectCmd().Run();
+    demo.GetElectCmd().Run(delta);
 
     demo.Stop();
 

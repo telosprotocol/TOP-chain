@@ -1,7 +1,6 @@
 #pragma once
 #include "xbasic/xrunnable.h"
 #include "xdata/xchain_param.h"
-#include "xdb/xdb.h"
 #include "xelect_net/include/elect_manager.h"
 #include "xelect_net/include/elect_vhost.h"
 #include "xpbase/base/args_parser.h"
@@ -38,13 +37,13 @@ public:
         return ec_netcard_;
     };
 
-    int InitDb(const base::Config & config);
-
     inline std::shared_ptr<ElectManager> GetElectManager() const noexcept {
         return elect_manager_;
     }
 
-    int RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb);
+    bool RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb);
+
+    bool UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb);
 
     std::shared_ptr<elect::xnetwork_driver_face_t> GetEcVhost(const uint32_t & xnetwork_id) const noexcept;
 
@@ -55,7 +54,6 @@ protected:
         return core_transport_;
     };
     int ResetRootRouting(std::shared_ptr<transport::Transport> transport, const base::Config & config);
-    bool ResetEdgeConfig(top::ArgsParser & args_parser, top::base::Config & edge_config);
 
 private:
     void InitWrouter(top::transport::TransportPtr transport, std::shared_ptr<top::transport::MultiThreadHandler> message_handler);
@@ -63,8 +61,6 @@ private:
     int CreateRootManager(std::shared_ptr<transport::Transport> transport,
                           const top::base::Config & config,
                           const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config);
-    int KadKey_GetFromDb(base::KadmliaKeyPtr & kadkey, const std::string & db_field);
-    int KadKey_StoreInDb(base::KadmliaKeyPtr & kadkey, const std::string & db_field);
 
 private:
     mutable std::mutex vhost_map_mutex_;
@@ -77,7 +73,6 @@ private:
     std::shared_ptr<wrouter::RootRoutingManager> root_manager_ptr_{nullptr};
     transport::TransportPtr core_transport_{nullptr};
     transport::TransportPtr nat_transport_{nullptr};
-    std::shared_ptr<db::xdb_face_t> net_db_{nullptr};
     std::shared_ptr<transport::MultiThreadHandler> multi_message_handler_{nullptr};
     EcNetcardPtr ec_netcard_{nullptr};
 };

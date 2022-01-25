@@ -24,6 +24,9 @@ namespace top
 
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
+            uint64_t            get_latest_cp_connected_block_height() const { return m_meta->_highest_cp_connect_block_height; }
+            uint64_t            update_get_latest_cp_connected_block_height();  // block has connected to mutable checkpoint
+            uint64_t            get_latest_deleted_block_height() const { return m_meta->_highest_deleted_block_height; }
         public:
             xblockacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
         protected:
@@ -104,6 +107,7 @@ namespace top
             
             bool                    set_unit_proof(const std::string& unit_proof, uint64_t height);
             const std::string       get_unit_proof(uint64_t height);
+            base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(uint64_t height);
 
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
@@ -122,6 +126,7 @@ namespace top
             base::xvbindex_t*   cache_index(base::xvbindex_t* this_block,std::map<uint64_t,base::xvbindex_t*> & target_height_map);
 
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
+            void                fully_update_cp_connect();
             bool                full_connect_to(base::xvbindex_t* this_block);//connect to all the way to fullblock or geneis
             bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
 
@@ -134,6 +139,7 @@ namespace top
             bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
 
             void                update_bindex(base::xvbindex_t* this_block);
+            void                update_bindex_to_committed(base::xvbindex_t* this_block);
             
         private:
             virtual bool        init_meta(const base::xvactmeta_t & meta) override;

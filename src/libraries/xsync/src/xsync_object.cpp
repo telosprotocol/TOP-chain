@@ -29,9 +29,9 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     m_sync_sender(top::make_unique<sync::xsync_sender_t>(m_instance, vhost, m_role_xips_mgr.get())),
     m_sync_ratelimit(top::make_unique<sync::xsync_ratelimit_t>(sync_thread, (uint32_t)100)),
     m_peerset(top::make_unique<sync::xsync_peerset_t>(m_instance)),
-    m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get(), m_role_chains_mgr.get(), m_sync_store.get())),
     m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_peerset.get(), m_sync_sender.get())),
-    m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_chains_mgr.get(),
+    m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_xips_mgr.get(), m_role_chains_mgr.get(),
         m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get(), m_store_shadow.get())),
     m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, bus, make_observer(cert_ptr), m_role_chains_mgr.get(), m_sync_store.get(),
         m_sync_broadcast.get(), m_sync_sender.get())),
@@ -118,7 +118,7 @@ std::string xtop_sync_object::status() const {
     std::string result;
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
 
-    for (int32_t i = enum_chain_sync_policy_full; i >= 0; i--) {
+    for (int32_t i = enum_chain_sync_policy_checkpoint; i >= 0; i--) {
         bool display_zec = false;
         bool display_shard = false;        
         uint64_t total_beacon_cur_height = 0;
@@ -142,14 +142,16 @@ std::string xtop_sync_object::status() const {
                 common::has<common::xnode_type_t::edge>(self_addr.type()) ||
                 common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
                 common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
-                common::has<common::xnode_type_t::storage>(self_addr.type())
+                common::has<common::xnode_type_t::storage>(self_addr.type()) || 
+                common::has<common::xnode_type_t::fullnode>(self_addr.type())
             ) {
                 display_zec = true;
             }
 
             if (common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
                 common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
-                common::has<common::xnode_type_t::storage>(self_addr.type())
+                common::has<common::xnode_type_t::storage>(self_addr.type()) || 
+                common::has<common::xnode_type_t::fullnode>(self_addr.type())
             ) {
                 display_shard = true;
             }
@@ -219,8 +221,12 @@ std::string xtop_sync_object::status() const {
         // total
         if (i == enum_chain_sync_policy_fast) {
             result += "fast-sync-mode, total:";
-        } else {
+        } else if (i == enum_chain_sync_policy_full) {
             result += "full-sync-mode, total:";
+        } else if (i == enum_chain_sync_policy_checkpoint) {
+            result += "checkpoint-sync-mode, total:";
+        } else {
+            continue;
         }
 
         if (total_max_height == 0) {

@@ -7,6 +7,9 @@
 #include "../xvaccount.h"
 #include "../xvledger.h"
 #include "xbase/xcontext.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xdata/xcheckpoint.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top
@@ -157,6 +160,24 @@ namespace top
             return false;
         }
 
+        bool  xvaccount_t::is_timer_address() const
+        {
+            if (get_addr_type() == enum_vaccount_addr_type_timer)
+            {
+                return true;
+            }
+            return false;
+        }
+        
+        bool  xvaccount_t::is_drand_address() const
+        {
+            if(get_addr_type() == enum_vaccount_addr_type_drand)
+            {
+                return true;
+            }
+            return false;
+        }
+
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
@@ -166,6 +187,7 @@ namespace top
             _highest_lock_block_height     = 0;
             _highest_commit_block_height   = 0;
             _highest_connect_block_height  = 0;
+            _highest_cp_connect_block_height = 0;
             _highest_full_block_height     = 0;
             _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
         }
@@ -190,6 +212,8 @@ namespace top
             _highest_full_block_height      = obj._highest_full_block_height;
             _highest_connect_block_height   = obj._highest_connect_block_height;
             _highest_connect_block_hash     = obj._highest_connect_block_hash;
+            _highest_cp_connect_block_height= obj._highest_cp_connect_block_height;
+            _highest_cp_connect_block_hash  = obj._highest_cp_connect_block_hash;
             _block_level                    = obj._block_level;
             return *this;
         }
@@ -204,6 +228,8 @@ namespace top
                ||(_highest_deleted_block_height != obj._highest_deleted_block_height)
                ||(_lowest_vkey2_block_height    != obj._lowest_vkey2_block_height)
                ||(_highest_connect_block_hash   != obj._highest_connect_block_hash)
+               ||(_highest_cp_connect_block_height != obj._highest_cp_connect_block_height)
+               ||(_highest_cp_connect_block_hash   != obj._highest_cp_connect_block_hash)
                ||(_block_level != obj._block_level) )
             {
                 return false;
@@ -218,7 +244,8 @@ namespace top
         const std::string xblockmeta_t::ddump() const
         {
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 " ,connected=%" PRIu64 ",full=%" PRIu64 ",deleted=%" PRIu64 ",vkey2=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_connect_block_height,(int64_t)_highest_full_block_height,(int64_t)_highest_deleted_block_height,(int64_t)_lowest_vkey2_block_height);
+            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 " ,connected=%" PRIu64 ",cp_connected=%" PRIu64 ",full=%" PRIu64 ",deleted=%" PRIu64 ",vkey2=%" PRIu64 "}",
+            (int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_connect_block_height,(int64_t)_highest_cp_connect_block_height,(int64_t)_highest_full_block_height,(int64_t)_highest_deleted_block_height,(int64_t)_lowest_vkey2_block_height);
             
             return std::string(local_param_buf);
         }
@@ -370,7 +397,21 @@ namespace top
         {
             return std::string();
         }
-    
+
+        void xvactmeta_t::init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account) {
+            std::error_code ec;
+            common::xaccount_address_t addr{account};
+            // bad performance ?
+            auto cp = data::xtop_chain_checkpoint::get_latest_checkpoint(addr, ec);
+            if (ec) {
+                xinfo("init_cp_connect_meta fail! account: %s, err: %s", account.c_str(), ec.message().c_str());
+                return ;
+            }
+            _highest_cp_connect_block_height = cp.height;
+            _highest_cp_connect_block_hash = cp.hash;
+            xinfo("init_cp_connect_meta account:%s,height:%llu,hash:%s", account.c_str(), _highest_cp_connect_block_height, base::xstring_utl::to_hex(_highest_cp_connect_block_hash).c_str());
+        }
+
         xvactmeta_t*  xvactmeta_t::load(xvaccount_t & _account,const std::string & meta_serialized_data)
         {
             if(meta_serialized_data.empty()) //check first
@@ -383,6 +424,7 @@ namespace top
                 meta_ptr->release_ref();//release bad object
                 return new xvactmeta_t(_account); //return empty meta
             }
+
             return meta_ptr;
         }
         
@@ -397,7 +439,9 @@ namespace top
             #else
             m_account_address = _account.get_xvid_str();
             #endif
-            
+
+            init_cp_connect_meta(this, _account.get_account());
+
             //XTODO,remove below assert when related xbase checked in main-branch
             xassert(__XBASE_MAIN_VERSION_CODE__ >= 1);
             xassert(__XBASE_FEATURE_VERSION_CODE__ >= 3);
@@ -409,7 +453,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            
+
             *this = obj;
         }
     
@@ -418,7 +462,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-            
+
             *this = obj;
         }
     
@@ -459,6 +503,7 @@ namespace top
                ||(new_meta._highest_commit_block_height  < _highest_commit_block_height)
                ||(new_meta._highest_full_block_height    < _highest_full_block_height)
                ||(new_meta._highest_connect_block_height < _highest_connect_block_height)
+               ||(new_meta._highest_cp_connect_block_height < _highest_cp_connect_block_height)
                ||(new_meta._highest_deleted_block_height < _highest_deleted_block_height) )
             {
                 xerror("xvactmeta_t::set_block_meta,try overwrited newer_meta(%s) with old_meta( %s)",xblockmeta_t::ddump().c_str(),new_meta.ddump().c_str());
@@ -542,6 +587,10 @@ namespace top
             {
                 _highest_execute_block_height = height;
                 _highest_execute_block_hash   = blockhash;
+                const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
+                if (_highest_execute_block_height > safe_distance) {
+                    _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
+                }
                 add_modified_count();
                 return true;
             }
@@ -618,7 +667,7 @@ namespace top
         {
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
             set_unit_flag(enum_xdata_flag_fragment);
-            _meta_spec_version = 2;     //version #2 now
+            _meta_spec_version = 3;     //version #3 now
         }
 
         int32_t   xvactmeta_t::do_write(xstream_t & stream)//serialize whole object to binary
@@ -627,7 +676,7 @@ namespace top
             const uint16_t cur_process_id = (uint16_t)base::xvchain_t::instance().get_current_process_id();
 
             xassert(check_unit_flag(enum_xdata_flag_fragment) == true);
-            xassert(_meta_spec_version == 2);
+            xassert(_meta_spec_version == 3);
 
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
             // if(check_unit_flag(enum_xdata_flag_fragment) == false)//old format
@@ -643,7 +692,7 @@ namespace top
             //     stream << _highest_genesis_connect_height;
             //     stream.write_tiny_string(_highest_genesis_connect_hash);
             //     stream << _highest_sync_height;
-                
+
             //     //from here we introduce version control for meta
             //     stream << _meta_spec_version;
             //     stream << _block_level;
@@ -684,7 +733,7 @@ namespace top
 
                 stream.write_compact_var(_highest_connect_block_height);
                 stream.write_compact_var(_highest_connect_block_hash);
-                
+
                 stream.write_compact_var(_highest_genesis_connect_height);
                 stream.write_compact_var(_highest_genesis_connect_hash);
                 
@@ -692,11 +741,38 @@ namespace top
                 stream.write_compact_var(m_latest_unit_viewid);
                 stream.write_compact_var(m_latest_tx_nonce);
                 stream.write_compact_var(m_account_flag);
+
+                stream.write_compact_var(_highest_cp_connect_block_height);
+                stream.write_compact_var(_highest_cp_connect_block_hash);
             // }
         
             return (stream.size() - begin_size);
         }
-    
+
+        void xvactmeta_t::update_cp_connect(const uint64_t cp_connect_height, const std::string & cp_connect_hash)
+        {
+            if (cp_connect_height > _highest_cp_connect_block_height) {
+                _highest_cp_connect_block_height = cp_connect_height;
+                _highest_cp_connect_block_hash = cp_connect_hash;
+            }
+            else if (cp_connect_height == _highest_cp_connect_block_height)
+            {
+                if (_highest_cp_connect_block_height == 0 && _highest_cp_connect_block_hash.empty() && !cp_connect_hash.empty())
+                {
+                    _highest_cp_connect_block_hash = cp_connect_hash;
+                }
+                else if (_highest_cp_connect_block_hash != cp_connect_hash)
+                {
+                    xerror("update_cp_connect hash mismatch height:%llu,db:%s,cp:%s,account:%s",
+                            cp_connect_height, base::xstring_utl::to_hex(cp_connect_hash).c_str(), base::xstring_utl::to_hex(_highest_cp_connect_block_hash).c_str(), m_account_address.c_str());
+                }
+            }
+            else
+            {
+                xinfo("update_cp_connect checkpoint:%llu fresher than meta:%llu,account:%s", _highest_cp_connect_block_height, cp_connect_height, m_account_address.c_str());
+            }
+        }
+
         int32_t   xvactmeta_t::do_read(xstream_t & stream)//serialize from binary and regeneate content
         {
             const int32_t begin_size = stream.size();
@@ -763,7 +839,7 @@ namespace top
                 
                 stream.read_compact_var(_highest_connect_block_height);
                 stream.read_compact_var(_highest_connect_block_hash);
-                
+
                 stream.read_compact_var(_highest_genesis_connect_height);
                 stream.read_compact_var(_highest_genesis_connect_hash);
                 
@@ -771,8 +847,17 @@ namespace top
                 stream.read_compact_var(m_latest_unit_viewid);
                 stream.read_compact_var(m_latest_tx_nonce);
                 stream.read_compact_var(m_account_flag);
+
+                if(_meta_spec_version >= 3)
+                {
+                    uint64_t cp_connect_height = 0;
+                    stream.read_compact_var(cp_connect_height);
+                    std::string cp_connect_hash;
+                    stream.read_compact_var(cp_connect_hash);
+                    update_cp_connect(cp_connect_height, cp_connect_hash);
+                }
             }
-            
+
             init_version_control();  // reinit version control
 
             return (begin_size - stream.size());

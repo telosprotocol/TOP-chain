@@ -49,6 +49,11 @@ public:
         return bin + random_seed_string;
     }
 
+    const std::string do_sign(const xvip2_t & signer,const base::xvqcert_t * sign_for_cert,
+                              const uint64_t random_seed, const std::string sign_hash) override {
+        return do_sign(signer, sign_for_cert, random_seed);
+    }
+
     const std::string do_sign(const xvip2_t & signer,const base::xvblock_t * sign_for_block,const uint64_t random_seed) override {
         return do_sign(signer, sign_for_block->get_cert(), random_seed);
     }
@@ -56,6 +61,11 @@ public:
     base::enum_vcert_auth_result verify_sign(const xvip2_t & signer,const base::xvqcert_t * test_for_cert,const std::string & block_account) override {
         return base::enum_vcert_auth_result::enum_successful;
     }
+
+    base::enum_vcert_auth_result   verify_sign(const xvip2_t & signer,const xvqcert_t * test_for_cert,
+                                               const std::string & block_account, const std::string sign_hash) override {
+        return base::enum_vcert_auth_result::enum_successful;
+    } 
 
     base::enum_vcert_auth_result verify_sign(const xvip2_t & signer,const base::xvblock_t * test_for_block) override {
         return base::enum_vcert_auth_result::enum_successful;
@@ -112,7 +122,7 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}    
 
  private:
-    xvchain_creator                 m_creator;
+    xvchain_creator                 m_creator{true};
     xobject_ptr_t<base::xvcertauth_t>   m_ca{nullptr};
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus{nullptr};
     xobject_ptr_t<xtxpool_face_t>   m_txpool{nullptr};

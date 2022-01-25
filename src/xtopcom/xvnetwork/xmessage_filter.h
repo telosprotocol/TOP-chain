@@ -182,7 +182,13 @@ private:
     /// @return true if vnetwork_message need further verification, otherwise returns false.
     bool filter_sender_from_edge(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
 
-    /// @brief filter message sent from archive or full node directly.
+    /// @brief filter messages sent from fullnode directly.
+    /// @param vnetwork_message message to be verified.
+    /// @param ec error code.
+    /// @return true if vnetwork_message need further verification, otherwise returns false.
+    bool filter_sender_from_fullnode(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+
+    /// @brief filter message sent from archive or exchange directly.
     /// @param vnetwork_message message to be verified.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
@@ -296,7 +302,13 @@ private:
     /// @return true if vnetwork_message need further verification, otherwise returns false.
     bool filter_sender_from_edge(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
 
-    /// @brief filter message sent from archive or full node directly.
+    /// @brief filter messages sent from fullnode directly.
+    /// @param vnetwork_message message to be verified.
+    /// @param ec error code.
+    /// @return true if vnetwork_message need further verification, otherwise returns false.
+    bool filter_sender_from_fullnode(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+
+    /// @brief filter message sent from archive or exchange directly.
     /// @param vnetwork_message message to be verified.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.

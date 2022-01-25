@@ -62,7 +62,9 @@ namespace top
             enum_chain_zone_consensus_index   = 0,  //for consesnus
             enum_chain_zone_beacon_index      = 1,  //for beacon
             enum_chain_zone_zec_index         = 2,  //for election
-            
+            enum_chain_zone_frozen_index      = 3,  // for sync
+
+            enum_chain_zone_fullnode_index    = 13,
             enum_chain_zone_archive_index     = 14, //for archive nodes
             enum_chain_zone_edge_index        = 15, //for edge nodes
         };
@@ -427,6 +429,8 @@ namespace top
             bool                        is_unit_address() const;
             bool                        is_table_address() const;
             bool                        is_contract_address() const;
+            bool                        is_drand_address() const;
+            bool                        is_timer_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;
@@ -462,6 +466,8 @@ namespace top
             uint64_t    _highest_full_block_height;    //latest full-block height for this account
             uint64_t    _highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
             std::string _highest_connect_block_hash;
+            uint64_t    _highest_cp_connect_block_height;
+            std::string _highest_cp_connect_block_hash;
             uint8_t     _block_level;       //set per block 'enum_xvblock_level,each account has unique level
         };
     
@@ -548,7 +554,8 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
-            
+            void init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account);
+
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;
             const xindxmeta_t    clone_index_meta() const;
@@ -576,6 +583,7 @@ namespace top
         protected:
             //not safe for multiple threads
             virtual int32_t   do_write(xstream_t & stream) override; //serialize whole object to binary
+            void update_cp_connect(const uint64_t cp_connect_height, const std::string & cp_connect_hash);
             virtual int32_t   do_read(xstream_t & stream) override; //serialize from binary and regeneate content
             
             //caller respond to cast (void*) to related  interface ptr
@@ -590,7 +598,8 @@ namespace top
             using xblockmeta_t::_highest_full_block_height;    //latest full-block height for this account
             using xblockmeta_t::_highest_connect_block_height; //indicated the last block who is connected all the way to last full-block
             using xblockmeta_t::_highest_connect_block_hash;
-            using xblockmeta_t::_block_level;
+            using xblockmeta_t::_highest_cp_connect_block_height;
+            using xblockmeta_t::_highest_cp_connect_block_hash;
             
         private: //from sync meta
             using xsyncmeta_t::_highest_genesis_connect_height;//indicated the last block who is connected to genesis block

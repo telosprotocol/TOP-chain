@@ -23,6 +23,7 @@ namespace wrouter {
 static const int32_t kCheckElectRoutingTableNodesPeriod = 5 * 1000 * 1000;
 
 MultiRouting::MultiRouting() : elect_routing_table_map_(), elect_routing_table_map_mutex_() {
+    rrs_params_mgr_ptr = std::make_shared<RRSParamsMgr>();
     WrouterRegisterMessageHandler(kRootMessage, [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) { HandleRootMessage(message, packet); });
     check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CompleteElectRoutingTable");
     check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CompleteElectRoutingTable, this));
@@ -195,7 +196,11 @@ void MultiRouting::HandleCacheElectNodesRequest(transport::protobuf::RoutingMess
             continue;
         }
         auto tmp_kad_key = base::GetKadmliaKey(nodes[i]->node_id);
-        if (tmp_kad_key->GetServiceType() != des_service_type) {
+        // routing table's service_type is local data, must be some version with kad_key.
+        // however, dest_service_type might be different version.
+        // So can't compare with des_service_type
+        // // if (tmp_kad_key->GetServiceType() != des_service_type) {
+        if (tmp_kad_key->GetServiceType() != local_node_ptr->service_type()) {
             continue;
         }
         protobuf::NodeInfo * node_info = get_nodes_res.add_nodes();
@@ -231,7 +236,7 @@ void MultiRouting::HandleCacheElectNodesRequest(transport::protobuf::RoutingMess
         std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
         root_routing_table_->SetFreqMessage(res_message);
         res_message.set_is_root(true);
-        res_message.set_src_service_type(message.des_service_type());
+        res_message.set_src_service_type(routing_table->get_local_node_info()->service_type().value());
         res_message.set_des_service_type(kRoot);
         res_message.set_des_node_id(message.src_node_id());
         res_message.set_type(kRootMessage);
@@ -267,8 +272,9 @@ kadmlia::ElectRoutingTablePtr MultiRouting::GetLastRoundRoutingTable(base::Servi
 
 kadmlia::ElectRoutingTablePtr MultiRouting::GetElectRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    auto another_ver_service_type = transform_service_type(service_type);
     for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {
-        if (riter->first == service_type) {
+        if (riter->first == service_type || riter->first == another_ver_service_type) {
             return riter->second;
         }
     }
@@ -355,6 +361,76 @@ void MultiRouting::CheckElectRoutingTable(base::ServiceType service_type) {
         }
         routing_table->HandleElectionNodesInfoFromRoot(res_nodes);
     }
+}
+
+void MultiRouting::add_routing_table_info(common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info) {
+    routing_table_info_mgr.add_routing_table_info(group_xip, routing_table_info.first, routing_table_info.second);
+}
+
+void MultiRouting::delete_routing_table_info(common::xip2_t const & group_xip, uint64_t version_or_blk_height) {
+    routing_table_info_mgr.delete_routing_table_info(group_xip, version_or_blk_height);
+}
+
+base::ServiceType MultiRouting::transform_service_type(base::ServiceType const & service_type) {
+    auto res = service_type;
+    auto ver = service_type.ver();
+
+    if (routing_table_info_mgr.exist_routing_table_info(service_type.group_xip2(), ver, service_type.height())) {
+        auto p = routing_table_info_mgr.get_routing_table_info(service_type.group_xip2(), ver, service_type.height());
+        if (p.first == 0 && p.second == 0)
+            return res;
+        if (ver == base::service_type_height_use_version) {
+            if (p.first == service_type.height()) {
+                res.set_ver(base::service_type_height_use_blk_height);
+                res.set_height(p.second);
+                return res;
+            }
+        } else if (ver == base::service_type_height_use_blk_height) {
+            if (p.second == service_type.height()) {
+                res.set_ver(base::service_type_height_use_version);
+                res.set_height(p.first);
+                return res;
+            }
+        }
+    }
+
+    return res;
+}
+
+std::vector<kadmlia::NodeInfoPtr> MultiRouting::transform_node_vec(base::ServiceType const & service_type, std::vector<kadmlia::NodeInfoPtr> const & node_vec) {
+    auto res = node_vec;
+    if (base::now_service_type_ver == base::service_type_height_use_version && service_type.ver() == base::service_type_height_use_blk_height) {
+        xdbg("from use blk_height to use version");  // V2(peer) -> V1(self)
+        for (auto & _node_info : node_vec) {
+            auto kad_key = base::GetKadmliaKey(_node_info->node_id);
+            xdbg("old node_id: %s",_node_info->node_id.c_str());
+            auto xip2 = kad_key->Xip();
+            auto v1_version = routing_table_info_mgr.get_routing_table_info(xip2.group_xip2(), service_type.ver(), kad_key->version()).first;
+            common::xip2_t new_xip2{xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.slot_id(), xip2.size(), v1_version};
+            kad_key->SetXip(new_xip2);
+            _node_info->node_id = kad_key->Get();
+            xdbg("new node_id: %s",_node_info->node_id.c_str());
+        }
+    } else if (base::now_service_type_ver == base::service_type_height_use_blk_height && service_type.ver() == base::service_type_height_use_version) {
+        xdbg("from use version to use blk_height");  // V1(peer) -> V2(self)
+        for (auto & _node_info : node_vec) {
+            auto kad_key = base::GetKadmliaKey(_node_info->node_id);
+            xdbg("old node_id: %s",_node_info->node_id.c_str());
+            auto xip2 = kad_key->Xip();
+            auto v2_blk_height = routing_table_info_mgr.get_routing_table_info(xip2.group_xip2(), service_type.ver(), kad_key->version()).second;
+            common::xip2_t new_xip2{xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.slot_id(), xip2.size(), v2_blk_height};
+            kad_key->SetXip(new_xip2);
+            _node_info->node_id = kad_key->Get();
+            xdbg("new node_id: %s",_node_info->node_id.c_str());
+        }
+    } else {
+        assert(false);
+    }
+    return res;
+}
+
+bool MultiRouting::UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb) {
+    return rrs_params_mgr_ptr->set_callback(cb);
 }
 
 void MultiRouting::CheckElectRoutingTableTimer() {

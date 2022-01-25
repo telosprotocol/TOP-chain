@@ -10,6 +10,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvbindex.h"
 #include "xblockstore/xsyncvstore_face.h"
 #include "xsyncbase/xsync_policy.h"
 #include "xmbus/xevent_ports.h"
@@ -21,6 +22,7 @@ class xsync_store_face_t {
 public:
     virtual bool store_block(base::xvblock_t* block) = 0;
     virtual bool store_blocks(std::vector<base::xvblock_t*> &blocks) = 0;
+    virtual bool store_block_committed_flag(base::xvblock_t* block) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) = 0;
 
     virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) = 0;
@@ -40,6 +42,11 @@ public:
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) = 0;
     virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
     virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
+    virtual uint64_t get_latest_immutable_connected_checkpoint_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_mutable_connected_checkpoint_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_stable_connected_checkpoint_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_deleted_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_block_with_state(const std::string & account) = 0;
     virtual uint32_t add_listener(int major_type, mbus::xevent_queue_cb_t cb) = 0;
     virtual void remove_listener(int major_type, uint32_t id) = 0;
     virtual bool set_genesis_height(const base::xvaccount_t &account, const std::string &height) = 0;
@@ -51,6 +58,8 @@ public:
     virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) = 0;
     virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
     virtual bool remove_empty_unit_forked() = 0;
+    virtual bool is_full_node_forked() = 0;
+    virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
 
@@ -76,6 +85,12 @@ public:
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
     virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    virtual uint64_t get_latest_immutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_mutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_stable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_deleted_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_block_with_state(const std::string & account) override;
+    virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -83,6 +98,7 @@ public:
     xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow);
     bool store_block(base::xvblock_t* block) override;
     bool store_blocks(std::vector<base::xvblock_t*> &blocks) override;
+    bool store_block_committed_flag(base::xvblock_t* block) override;
     base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) override;
 
     base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) override;
@@ -92,6 +108,7 @@ public:
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) override;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
     base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height);
+    base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag flag);
     bool existed(const std::string & account, const uint64_t height, uint64_t viewid = 0) override;
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
 
@@ -101,6 +118,11 @@ public:
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
     virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    virtual uint64_t get_latest_immutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_mutable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_stable_connected_checkpoint_height(const std::string & account) override;
+    virtual uint64_t get_latest_deleted_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_block_with_state(const std::string & account) override;
 
     virtual bool set_genesis_height(const base::xvaccount_t & account, const std::string &height) override;
     virtual const std::string get_genesis_height(const base::xvaccount_t & account) override;
@@ -113,12 +135,15 @@ public:
     bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) override;
     const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
     bool remove_empty_unit_forked() override;
-    
+    bool is_full_node_forked() override;
+    base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 private:
+    void set_fork_point();
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
     bool m_remove_empty_unit_forked{false};
+    bool m_full_node_forked{false};
 };
 
 NS_END2

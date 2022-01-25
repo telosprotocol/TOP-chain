@@ -17,7 +17,8 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
                                                      xaccount_address_t{sys_contract_rec_elect_zec_addr},
                                                      xaccount_address_t{sys_contract_zec_elect_consensus_addr},
                                                      xaccount_address_t{sys_contract_rec_elect_archive_addr},
-                                                     xaccount_address_t{sys_contract_rec_elect_edge_addr}};
+                                                     xaccount_address_t{sys_contract_rec_elect_edge_addr},
+                                                     xaccount_address_t{sys_contract_rec_elect_fullnode_addr}};
     assert(std::find(sys_addr.begin(), sys_addr.end(), sys_contract_addr) != sys_addr.end());
 
     std::vector<std::string> property_name;
@@ -34,7 +35,7 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
         for (auto index = common::xarchive_group_id_value_begin; index <= archive_group_count; ++index) {
             property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
         }
-    } else if (sys_contract_addr == sys_addr[4]) {
+    } else if (sys_contract_addr == sys_addr[4] || sys_contract_addr == sys_addr[5]) {
         property_name.push_back(get_property_by_group_id(common::xdefault_group_id));
     }
     assert(!property_name.empty());

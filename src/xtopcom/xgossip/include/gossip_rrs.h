@@ -7,6 +7,8 @@
 #include "xgossip/gossip_interface.h"
 #include "xtransport/transport.h"
 
+#include <atomic>
+
 namespace top {
 
 namespace gossip {
@@ -18,6 +20,12 @@ public:
     void Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMessage & message, std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> neighbors) override;
 
     void BroadcastHash(transport::protobuf::RoutingMessage & message, std::vector<kadmlia::NodeInfoPtr> & neighbors);
+
+    void update_params(uint32_t t, uint32_t k);
+
+private:
+    std::atomic<uint32_t> rrs_params_neighbour_num;  // kGossipRRSNeighborNum
+    std::atomic<uint32_t> rrs_params_switch_hash_hop_num;  // kGossipRRSSwitchLayerHopNum
 };
 
 }  // namespace gossip

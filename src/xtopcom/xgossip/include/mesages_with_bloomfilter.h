@@ -24,6 +24,7 @@ public:
     }
     MessageKey(uint32_t hash) : msg_hash(hash) {
     }
+    MessageKey(std::string hash) : msg_hash(std::atoi(hash.c_str())){}
     ~MessageKey() {
     }
 
@@ -82,10 +83,9 @@ private:
                                                               bool & stop_gossip);
 
     // static const uint32_t kMaxMessageQueueSize = 1048576u;
-    static const uint32_t kMaxMessageQueueSize = 100000u;
+    static const uint32_t kMaxMessageQueueSize = 10000u;
 
-    std::unordered_map<MessageKey, uint8_t> messsage_bloomfilter_map_;
-    std::mutex messsage_bloomfilter_map_mutex_;
+    basic::xlru_cache_specialize<MessageKey, uint8_t> message_bloomfilter_map_{kMaxMessageQueueSize};
 
     basic::xlru_cache_specialize<MessageKey,std::pair<uint64_t,uint64_t>> message_dispatch_map_{kMaxMessageQueueSize};
 

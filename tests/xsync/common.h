@@ -112,12 +112,14 @@ public:
         return true;
     }
 
-    void broadcast(top::common::xnode_address_t const & src, top::common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {
+/*    void broadcast(top::common::xnode_address_t const & src, top::common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {
         xmsg_item_frozen_t item;
         item.m_message = message;
         item.m_src = src;
         item.m_dst = dst;
         m_frozen_items.push_back(item);
+    }*/
+    void broadcast(top::common::xnode_address_t const & src, top::common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override {
     }
 
     bool read_frozen_broadcast_msg(top::vnetwork::xmessage_t & message,

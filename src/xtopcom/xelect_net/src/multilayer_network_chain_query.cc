@@ -102,8 +102,9 @@ uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t coun
         std::string header_hash = std::to_string(vhash);
         gossip_block->set_header_hash(header_hash);
         tmp_message.set_id(kadmlia::CallbackManager::MessageId());
-
-        if (wrouter::Wrouter::Instance()->send(tmp_message) == 0) {
+        std::error_code ec;
+        wrouter::Wrouter::Instance()->send(tmp_message, ec);
+        if (!ec) {
             ++sus;
         }
     }

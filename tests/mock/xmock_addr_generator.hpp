@@ -56,7 +56,8 @@ public:
 
         //common::xnetwork_id_t nid{m_net_id++};
         common::xnetwork_id_t nid{1};
-        auto const cluster_addr = common::build_archive_sharding_address(nid);
+        common::xgroup_id_t gid{1};
+        auto const cluster_addr = common::build_archive_sharding_address(gid, nid);
 
         common::xslot_id_t slot_id{_slot_id};
         top::common::xaccount_election_address_t account_address{ common::xnode_id_t { name }, slot_id };

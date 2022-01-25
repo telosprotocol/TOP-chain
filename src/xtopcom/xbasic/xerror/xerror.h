@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbase/xbase.h"
-#include "xbasic/xerror/xchain_error.h"
+#include "xbase/xns_macro.h"
 
 #include <limits>
 #include <system_error>
@@ -19,6 +19,35 @@ std::error_condition make_error_condition(enum_xerror_code ec) noexcept;
 
 
 NS_BEG2(top, error)
+
+class xtop_top_error : public std::runtime_error {
+    using base_t = std::runtime_error;
+
+    std::error_code m_ec{};
+
+public:
+
+    xtop_top_error(xtop_top_error const &)             = default;
+    xtop_top_error & operator=(xtop_top_error const &) = default;
+    xtop_top_error(xtop_top_error &&)                  = default;
+    xtop_top_error & operator=(xtop_top_error &&)      = default;
+    ~xtop_top_error() override                         = default;
+
+    explicit xtop_top_error(std::error_code ec);
+    xtop_top_error(std::error_code ec, std::string const & extra_what);
+    xtop_top_error(std::error_code ec, char const * extra_what);
+    xtop_top_error(int const ev, std::error_category const & ecat);
+    xtop_top_error(int const ev, std::error_category const & ecat, std::string const & extra_what);
+    xtop_top_error(int const ev, std::error_category const & ecat, char const * extra_what);
+
+    std::error_code const &
+    code() const noexcept;
+};
+using xtop_error_t = xtop_top_error;
+
+void throw_error(std::error_code const & ec);
+void throw_error(std::error_code const ec, char const * extra_what);
+void throw_error(std::error_code const ec, std::string const & extra_what);
 
 enum class xenum_basic_errc {
     successful,

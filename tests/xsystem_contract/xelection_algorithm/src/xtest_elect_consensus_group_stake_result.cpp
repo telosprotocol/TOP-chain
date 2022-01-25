@@ -33,7 +33,7 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, test_stake) {
         standby_node_info.stake_container.insert({common::xnode_type_t::consensus_auditor, (100 + index) * 10000});
         standby_node_info.stake_container.insert({common::xnode_type_t::consensus_validator, (100 + index) * 10000});
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xrole_type_t::validator : common::xrole_type_t::advance;
+        standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xminer_type_t::validator : common::xminer_type_t::advance;
 #endif
         add_standby_node(node_type, node_id, standby_node_info);
     }

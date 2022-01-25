@@ -57,15 +57,13 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         joined_election_round)} {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
-    if (!is_edge_archive && !is_frozen) {
-        // m_cons_face = cons_mgr->create(m_the_binding_driver);
+    if (!is_edge_archive && !is_frozen && !common::has<common::xnode_type_t::fullnode>(m_the_binding_driver->type())) {
         m_txpool_face = txpool_service_mgr->create(m_the_binding_driver, m_router);
 
-        // xwarn("[virtual node] vnode %p create at address %s cons_proxy:%p txproxy:%p",
-        //       this,
-        //       m_the_binding_driver->address().to_string().c_str(),
-        //       m_cons_face.get(),
-        //       m_txpool_face.get());
+        xwarn("[virtual node] vnode %p create at address %s txproxy:%p",
+              this,
+              m_the_binding_driver->address().to_string().c_str(),
+              static_cast<void *>(m_txpool_face.get()));
     } else {
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
@@ -114,13 +112,6 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_
 }
 
 void xtop_vnode::synchronize() {
-    if (m_sync_started)
-        return;
-
-    sync_add_vnet();
-
-    m_sync_started = true;
-
     m_the_binding_driver->start();
 
     xinfo("[virtual node] vnode (%p) start synchronizing at address %s", this, m_the_binding_driver->address().to_string().c_str());
@@ -133,10 +124,12 @@ void xtop_vnode::start() {
     assert(m_router != nullptr);
     assert(m_logic_timer != nullptr);
     assert(m_vhost != nullptr);
-
+    
+    top::store::install_block_recycler(m_store.get());
+    sync_add_vnet();
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
-        common::has<common::xnode_type_t::storage_full_node>(vnetwork_driver()->type()));
+                                 common::has<common::xnode_type_t::storage_exchange>(vnetwork_driver()->type()));
     // if (m_cons_face != nullptr) {
     //     m_cons_face->start(this->start_time());
     // }
@@ -176,7 +169,6 @@ void xtop_vnode::stop() {
     }
     m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
-    m_the_binding_driver->stop();
     driver_removed();
     update_contract_manager(true);
 
@@ -184,12 +176,6 @@ void xtop_vnode::stop() {
 }
 
 void xtop_vnode::new_driver_added() {
-    // need call by order, if depends on other components
-    // for example : store depends on message bus, then
-    // update_message_bus should be called before update_store
-    // update_consensus_instance();
-    // update_unit_service();
-    // update_tx_cache_service();
     update_rpc_service();
     update_contract_manager(false);
     
@@ -201,7 +187,7 @@ void xtop_vnode::driver_removed() {
     if (m_rpc_services != nullptr) {
         m_rpc_services->stop();
     }
-    // if (common::has<common::xnode_type_t::storage_full_node>(m_the_binding_driver->type()) && m_tx_prepare_mgr != nullptr) {
+    // if (common::has<common::xnode_type_t::storage_exchange>(m_the_binding_driver->type()) && m_tx_prepare_mgr != nullptr) {
     //     m_tx_prepare_mgr->stop();
     // }
     sync_remove_vnet();
@@ -210,40 +196,17 @@ void xtop_vnode::driver_removed() {
 bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type, base::xvdbstore_t* xvdb_ptr)
 {
     xinfo("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
+    
     if(base::xvchain_t::instance().is_auto_prune_enable() == false)
         return false;//not allow change anymore
     
     if (common::has<common::xnode_type_t::frozen>(node_type)) {
         return false;
     }
-    if (!common::has<common::xnode_type_t::storage>(node_type)) {
-        // if (base::xvchain_t::instance().get_round_number() < 5) {
-        //     xdbg("wait to start enable_block_recycler: %d", base::xvchain_t::instance().get_round_number());
-        //     base::xvchain_t::instance().add_round_number();
-        //     return true;
-        // }
-        // uint64_t now = base::xvchain_t::instance().get_time_now();
-        // if (base::xvchain_t::instance().get_start_time() + 5 * 60 * 1000000 < now) {
-        //     xdbg("wait for enough time to start prune data: %" PRIu64 ",%" PRIu64, base::xvchain_t::instance().get_start_time(), now);
-        //     return true;
-        // }
-        if (top::store::install_block_recycler(xvdb_ptr))
-            xinfo("install_block_recycler ok.");
-        else
-            xerror("install_block_recycler fail.");
-        
-        if (top::store::enable_block_recycler(true))
-            xinfo("enable_block_recycler ok.");
-        else
-            xerror("enable_block_recycler fail.");
+
+    if (!(common::has<common::xnode_type_t::storage>(node_type) ||common::has<common::xnode_type_t::rec>(node_type))) {
         return true;
     }
-    
-    //detect it is archive node
-    if (top::store::enable_block_recycler(false))
-        xinfo("disable_block_recycler ok.");
-    else
-        xerror("disable_block_recycler fail.");
     
     //force to turn off auto_prune for archive node
     base::xvchain_t::instance().enable_auto_prune(false);
@@ -257,8 +220,7 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
 
 void xtop_vnode::update_rpc_service() {
     xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
-    if (!common::has<common::xnode_type_t::storage_archive>(m_the_binding_driver->type()) &&
-        !common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
+    if (!common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
         auto const http_port = XGET_CONFIG(http_port);
         auto const ws_port = XGET_CONFIG(ws_port);
         // TODO(justin): remove unit_services temp
@@ -285,27 +247,13 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    assert(!m_sync_started);
-
     m_sync_obj->add_vnet(vnetwork_driver());
 
     xinfo("vnode (%p) at address %s starts synchronizing", this, address().to_string().c_str());
 }
 
 void xtop_vnode::sync_remove_vnet() {
-    // if ((type() & common::xnode_type_t::edge) == common::xnode_type_t::invalid) {
-
     m_sync_obj->remove_vnet(vnetwork_driver());
-
-    //}
 }
-
-//std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {
-//    assert(!ec);
-//
-//    if (address().xip2().xip().group_xip() == group_xip) {
-//        return neighbors_xip2(ec);
-//    }
-//}
 
 NS_END2

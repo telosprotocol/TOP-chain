@@ -18,6 +18,7 @@ enum enum_min_unconfirm_id_result {
 
 class xreceiptid_state_cache_t {
 public:
+    xreceiptid_state_cache_t();
     void update_table_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     uint64_t get_confirmid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;
     uint64_t get_recvid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;

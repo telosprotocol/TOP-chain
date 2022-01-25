@@ -2,6 +2,7 @@
 #include "xbase/xlog.h"
 #include "xdata/xrootblock.h"
 #include "xmetrics/xmetrics.h"
+#include "xloader/xconfig_genesis_loader.h"
 
 using namespace top;
 
@@ -28,8 +29,10 @@ public:
 int main(int argc, char* argv[])
 {
     new xhashtest_t();
-    top::data::xrootblock_para_t para;
-    top::data::xrootblock_t::init(para);
+    auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>(std::string{});
+    data::xrootblock_para_t rootblock_para;
+    genesis_loader->extract_genesis_para(rootblock_para);
+    top::data::xrootblock_t::init(rootblock_para);
 
     testing::InitGoogleTest(&argc, argv);
     xinit_log("./xunit_proof_test.log", true, true);

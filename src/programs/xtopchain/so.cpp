@@ -31,7 +31,8 @@ extern "C" {
     int check_miner_info(
             const char *pub_key,
             const uint16_t pub_len,
-            const char *node_id);
+            const char *node_id,
+            uint8_t *miner_type);
 }
 
 int init_component(const char *config_file, const char *config_file_extra) {
@@ -99,10 +100,13 @@ int decrypt_keystore_by_key(
 int check_miner_info(
         const char *pub_key,
         const uint16_t pub_len,
-        const char *node_id) {
-    bool status = top::check_miner_info(std::string(pub_key, pub_len), node_id);
+        const char *node_id,
+        uint8_t *miner_type) {
+    std::string type;
+    bool status = top::check_miner_info(std::string(pub_key, pub_len), node_id, type);
     if (!status) {
         return -1;
     }
+    strcpy((char*)miner_type, (char*)type.c_str());
     return 0;
 }
