@@ -211,6 +211,7 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
         CONDTION_FAIL_THROW(params["tx_random_nonce"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_random_nonce or tx_random_nonce is not valid");
         CONDTION_FAIL_THROW(params["last_tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params last_tx_hash or last_tx_hash is not valid");
         CONDTION_FAIL_THROW(params["challenge_proof"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params challenge_proof or challenge_proof is not valid");
+        CONDTION_FAIL_THROW(params["tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_hash");
 
         CONDTION_FAIL_THROW(params["sender_action"].isObject(), enum_xrpc_error_code::rpc_param_param_lack, "miss param sender_action");
         CONDTION_FAIL_THROW(params["receiver_action"].isObject(), enum_xrpc_error_code::rpc_param_param_lack, "miss param receiver_action");
