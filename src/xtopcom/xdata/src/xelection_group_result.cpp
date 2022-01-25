@@ -109,7 +109,7 @@ void xtop_election_group_result::start_time(common::xlogic_time_t const time) {
 }
 
 void xtop_election_group_result::start_time(common::xlogic_time_t const time, std::error_code & ec) noexcept {
-    if (time == common::xjudgement_day || (m_start_time != common::xjudgement_day && m_start_time >= time)) {
+    if (time == common::xjudgement_day || (m_start_time != common::xjudgement_day && m_start_time > time)) {
         ec = top::data::error::xerrc_t::election_data_start_time_invalid;
         xwarn("%s ec %d ec msg %s", ec.category().name(), ec.value(), ec.message().c_str());
         return;

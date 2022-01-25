@@ -394,8 +394,8 @@ TEST_F(test_tablemaker, make_receipt_hash_new_count) {
             all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
         }
 
-         /*std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
-          xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());*/
+        // std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(all_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
