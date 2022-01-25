@@ -18,7 +18,7 @@
 #include "xstake/xstake_algorithm.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
-
+#include "xvledger/xvdbkey.h"
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
@@ -1368,6 +1368,232 @@ void xdb_export_tools_t::compact_db() {
     std::string begin_key;
     std::string end_key;
     base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
+}
+
+void xdb_export_tools_t::parse_info_set(xdbtool_parse_info_t &info, int db_key_type, uint64_t value_size)
+{
+    switch (db_key_type) {
+        case base::enum_xdbkey_type_block_object:
+            info.block_count++;
+            info.block_size += value_size;
+        case base::enum_xdbkey_type_block_index:
+            info.index_count++;
+            info.index_size += value_size;
+        break;
+        case base::enum_xdbkey_type_block_input_resource:
+            info.input_count++;
+            info.input_size += value_size;
+        break;
+        case base::enum_xdbkey_type_block_output_resource:
+            info.output_count++;
+            info.output_size += value_size;
+        break;
+        case base::enum_xdbkey_type_unit_proof:
+            info.proof_count++;
+            info.proof_size += value_size;
+        break;
+        case base::enum_xdbkey_type_state_object:
+            info.state_count++;
+            info.state_size += value_size;
+        default:
+            break;
+    }
+}
+
+std::string xdb_export_tools_t::get_account_key_string(const std::string& key)
+{
+    std::string type_str = key.substr(0, 2);
+    if (type_str == "T2") {
+        std::string::size_type idx = key.find(sys_contract_sharding_vote_addr);
+        if (idx == std::string::npos) {
+            idx = key.find(sys_contract_sharding_reward_claiming_addr);
+            if (idx == std::string::npos) {
+                idx = key.find(sys_contract_sharding_statistic_info_addr);
+                if (idx == std::string::npos) {
+                    return key;
+                } else {
+                    return sys_contract_sharding_statistic_info_addr;
+                }
+            } else {
+                return sys_contract_sharding_reward_claiming_addr;
+            }
+        } else {
+            return sys_contract_sharding_vote_addr;
+        }
+        assert(0);
+    } else if (type_str == "Ta") {
+        std::string::size_type idx = key.find(sys_contract_zec_table_block_addr);
+        if (idx == std::string::npos) {
+            idx = key.find(sys_contract_sharding_table_block_addr);
+            if (idx == std::string::npos) {
+                return sys_contract_beacon_table_block_addr;
+            } else {
+                return sys_contract_sharding_table_block_addr;
+            }
+        } else {
+            return sys_contract_zec_table_block_addr;
+        }
+        assert(0);
+    } else if (type_str == "T0") {
+        return "T0";
+    } else if (type_str == "T8") {
+        return "T8";
+    } else {
+       return key;
+    }
+}
+
+bool xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std::string& value)
+{
+    std::string key_name_array[base::enum_xdbkey_type_unit_proof + 1] = { "unknow", "keyvalue", "block_index", "block_object",
+        "state_object", "account_meta", "account_span", "transaction", "block_input_resource",
+        "output_resource", "account_span_height", "unit_proof" };
+
+    base::enum_xdbkey_type db_key_type = base::xvdbkey_t::get_dbkey_type(key);
+
+    m_dbsize_info.add_key_type(key, db_key_type, key.size(), value.size());
+
+    switch (db_key_type) {
+        case base::enum_xdbkey_type_unknow:
+        case base::enum_xdbkey_type_keyvalue:
+        case base::enum_xdbkey_type_transaction: {
+                auto iter = m_db_parse_info.find(key_name_array[db_key_type]);
+                if (iter != m_db_parse_info.end()) {
+                    auto& info = iter->second;
+                    info.count++;
+                    info.size += value.length();
+                } else {
+                    xdbtool_parse_info_t parse_info { 0 };
+                    parse_info.count = 1;
+                    parse_info.size = value.length();
+                    m_db_parse_info.insert({ key_name_array[db_key_type], parse_info });
+                }
+            } 
+        break;
+
+        case base::enum_xdbkey_type_block_object:
+        case base::enum_xdbkey_type_block_input_resource:
+        case base::enum_xdbkey_type_block_output_resource:
+        case base::enum_xdbkey_type_unit_proof:
+        case base::enum_xdbkey_type_block_index:
+        case base::enum_xdbkey_type_state_object: {
+                const std::string key_name = base::xvdbkey_t::get_account_prefix_key(key);
+                //std::cout << "db_key_type" << db_key_type << "key is "<< key << " key_name is " << key_name.c_str() <<std::endl;
+                auto iter = m_db_parse_info.find(key_name);
+                if (iter != m_db_parse_info.end()) {
+                    auto& info = iter->second;
+                    parse_info_set(info, db_key_type, value.length());
+                } else {
+                    xdbtool_parse_info_t parse_info { 0 };
+                    m_info_account_count++;
+                    parse_info.account_number = m_info_account_count;
+                    parse_info_set(parse_info, db_key_type, value.length());
+                    m_db_parse_info.insert({ key_name, parse_info });
+                }
+
+                std::vector<std::string> sum_values;
+                base::xstring_utl::split_string(key_name, '/', sum_values);
+                std::string key_str = sum_values[2];
+                std::string key_real_str = get_account_key_string(key_str);
+
+                auto info_iter = m_db_sum_info.find(key_real_str);
+                if (info_iter != m_db_sum_info.end()) {
+                    auto& info = info_iter->second;
+                    parse_info_set(info, db_key_type, value.length());
+                } else {
+                    xdbtool_parse_info_t parse_info { 0 };
+                    parse_info_set(parse_info, db_key_type, value.length());
+                    m_db_sum_info.insert({ key_real_str, parse_info });
+                }
+            } 
+        break;
+        default:
+        break;
+    }
+    if ((m_info_key_count++) % 1000000 == 0) {
+        std::cout << "db scan key total = " << m_info_key_count << std::endl;
+    }
+    return true;
+}
+
+bool  xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std::string& value,void *cookie)
+{
+    bool ret = false;
+    if (NULL != cookie) {
+        xdb_export_tools_t *p_xdb_export_tools_t = (xdb_export_tools_t*)cookie;
+        ret = p_xdb_export_tools_t->db_scan_key_callback(key, value);
+    }
+    return ret;
+}
+
+void xdb_export_tools_t::vector_to_json(std::map<std::string, xdbtool_parse_info_t> &db_info, json &json_root)
+{
+    for (auto const & iter : db_info) {
+        json leaf;
+        if (iter.first == "unknow" || iter.first == "keyvalue" || iter.first == "transaction") {
+           leaf["count"] = iter.second.count;
+           leaf["size"] = iter.second.size;
+        } else {
+            if (iter.second.account_number > 0) {
+                leaf["number"] = iter.second.account_number;
+            }
+            if (iter.second.count > 0) {
+                leaf["count"] = iter.second.count;
+                leaf["size"] = iter.second.size;
+            }
+            if (iter.second.input_count > 0) {
+                leaf["input_count"] = iter.second.input_count;
+                leaf["input_size"] = iter.second.input_size;
+            }
+            if (iter.second.output_count > 0) {
+                leaf["output_count"] = iter.second.output_count;
+                leaf["output_size"] = iter.second.output_size;
+            }
+            if (iter.second.proof_count > 0) {
+                leaf["proof_count"] = iter.second.proof_count;
+                leaf["proof_size"] = iter.second.proof_size;
+            }
+            if (iter.second.block_count > 0) {
+                leaf["block_count"] = iter.second.block_count;
+                leaf["block_size"] = iter.second.block_size;
+            }
+            if (iter.second.state_count > 0) {
+                leaf["state_count"] = iter.second.state_count;
+                leaf["state_size"] = iter.second.state_size;
+            }
+            if (iter.second.index_count > 0) {
+                leaf["index_count"] = iter.second.state_count;
+                leaf["index_size"] = iter.second.state_size;
+            }
+        }
+        json_root[iter.first] = leaf;
+    }
+}
+
+void xdb_export_tools_t::parse_all(const std::string &fileName) {
+    m_db_parse_info.clear();
+    m_db_sum_info.clear();
+    m_info_key_count = 0;
+    m_info_account_count = 0;
+    base::xvdbstore_t* xvdbstore =  base::xvchain_t::instance().get_xdbstore();
+    top::store::xstore * pxstore = dynamic_cast< top::store::xstore*>(xvdbstore);
+
+    pxstore->read_range_callback("",  db_scan_key_callback, this);
+
+    std::cout << "start write json " << std::endl;
+    //write json 
+    json root_sum;
+    json root_detail;
+
+    //count db size
+    m_dbsize_info.to_json(root_sum);
+    vector_to_json(m_db_sum_info, root_sum); 
+    std::string fileNameSum = fileName + "_sum.json";
+    generate_json_file(fileNameSum, root_sum);
+    std::string fileNameDetail = fileName + "_detail.json";
+    vector_to_json(m_db_parse_info, root_detail);
+    generate_json_file(fileNameDetail, root_detail);
+   
 }
 
 std::set<std::string> xdb_export_tools_t::get_db_unit_accounts_v2() {
