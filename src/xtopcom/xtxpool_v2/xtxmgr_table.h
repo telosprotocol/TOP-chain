@@ -36,6 +36,7 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
     void clear_expired_txs();
+    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
 
 private:
     xtxpool_table_info_t * m_xtable_info;

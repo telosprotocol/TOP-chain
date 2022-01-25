@@ -194,5 +194,10 @@ void xtxmgr_table_t::clear_expired_txs() {
 #endif
 }
 
+void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state)
+{
+    m_new_receipt_queue.update_receiptid_state(receiptid_state);
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top
