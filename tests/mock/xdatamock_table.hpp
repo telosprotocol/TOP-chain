@@ -10,6 +10,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xstore/xstore_face.h"
 #include "xblockmaker/xtable_builder.h"
+#include "xvledger/xvblockstore.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
 #include "tests/mock/xdatamock_address.hpp"
@@ -72,6 +73,14 @@ class xdatamock_table : public base::xvaccount_t {
     xblock_ptr_t                        get_cert_block() const {return m_history_tables.back();}
     xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}
     xblock_ptr_t                        get_commit_block() const { return m_history_tables.size() < 3 ? get_lock_block() : m_history_tables[m_history_tables.size() - 3];}    
+
+    void                                store_genesis_units(base::xvblockstore_t* blockstore) {
+        for (auto & mockunit : m_mock_units) {
+            auto gene_block = mockunit.get_history_units()[0];
+            blockstore->store_block(base::xvaccount_t(mockunit.get_account()), gene_block.get());
+        }
+    }
+
     std::vector<xblock_ptr_t>           get_all_genesis_units() const {
         std::vector<xblock_ptr_t> units;
         for (auto & mockunit : m_mock_units) {
@@ -143,13 +152,18 @@ class xdatamock_table : public base::xvaccount_t {
         return block;
     }
 
-    void    genrate_table_chain(uint64_t max_block_height) {
+    void    genrate_table_chain(uint64_t max_block_height, base::xvblockstore_t* blockstore) {
         for (uint64_t i = 0; i < max_block_height; i++) {
             generate_send_tx(); // auto generate txs internal
             xblock_ptr_t block = generate_tableblock();
             xassert(block != nullptr);
             on_table_finish(block);
         }
+
+        // store genesis units
+        if (blockstore != nullptr) {
+            store_genesis_units(blockstore);
+        }        
     }
 
     xblock_consensus_para_t  init_consensus_para(uint64_t clock = 10000000) {

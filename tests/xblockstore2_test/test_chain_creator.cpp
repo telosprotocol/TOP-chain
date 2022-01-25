@@ -40,7 +40,7 @@ TEST_F(test_chain_creator, test_1) {
 
     uint64_t count = 19;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, blockstore);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == count + 1);
 
@@ -66,7 +66,7 @@ TEST_F(test_chain_creator, test_2_BENCH) {
 
         uint64_t count = 19;
         mock::xdatamock_table mocktable;
-        mocktable.genrate_table_chain(count);
+        mocktable.genrate_table_chain(count, blockstore);
         const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
         xassert(tables.size() == count + 1);
 
