@@ -28,11 +28,9 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
-#   if defined(XCHAIN_FORKED_VERSION) && ((XCHAIN_FORKED_VERSION) >= 10208)
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
-#   endif
             };
 
             // !!!change!!! fork time for galileo
@@ -40,22 +38,18 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
-#   if defined(XCHAIN_FORKED_VERSION) && ((XCHAIN_FORKED_VERSION) >= 10208)
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
-#   endif
            };
 
             xchain_fork_config_t default_chain_config {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
-#   if defined(XCHAIN_FORKED_VERSION) && ((XCHAIN_FORKED_VERSION) >= 10208)
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
-#   endif
             };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
