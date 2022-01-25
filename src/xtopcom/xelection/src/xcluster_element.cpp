@@ -574,6 +574,12 @@ xgroup_update_result_t xtop_cluster_element::add_group_element_with_lock_hold_ou
         break;
     }
 
+    case common::xnode_type_t::fullnode: {
+        assert(zone_id() == common::xfullnode_zone_id);
+        group_element = std::make_shared<xgroup_element_t>(election_round, group_id, sharding_size, associated_election_blk_height, shared_from_this());
+        break;
+    }
+
     default: {
         assert(false);
         ec = xdata_accessor_errc_t::invalid_node_type;
@@ -620,7 +626,7 @@ xgroup_update_result_t xtop_cluster_element::add_group_element_with_lock_hold_ou
           group_element->address().to_string().c_str(),
           start_time);
 
-    auto const & keepalive_strategy = (zone_element_type == common::xnode_type_t::storage || zone_element_type == common::xnode_type_t::edge) ?
+    auto const & keepalive_strategy = (zone_element_type == common::xnode_type_t::storage || zone_element_type == common::xnode_type_t::edge || zone_element_type == common::xnode_type_t::fullnode) ?
                                           common::xnonconsensus_election_result_keepalive_strategy :
                                           common::xdefault_election_result_keepalive_strategy;
 

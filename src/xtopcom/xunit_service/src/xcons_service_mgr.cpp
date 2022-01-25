@@ -100,7 +100,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
     std::vector<std::shared_ptr<xcons_service_face>> services;
     if ((node_type & common::xnode_type_t::rec) == common::xnode_type_t::rec) {
         auto dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_timer);
-        xunit_dbg("[xcons_service_mgr::create] create timer service for rec, {%" PRIu64 ", %" PRIu64 "}, dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
+        xunit_dbg("[xcons_service_mgr::create] create timer service for rec, %" PRIx64 ":%" PRIx64", dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
         if (dispatcher != nullptr) {
             std::shared_ptr<xcons_service_face> timer_service = std::make_shared<xtimer_service_t>(m_para, dispatcher);
             services.push_back(timer_service);

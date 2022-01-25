@@ -11,7 +11,8 @@ namespace top { namespace data {
 
 struct xtransaction_cache_data_t {
     xtransaction_ptr_t tran;
-    xJson::Value jv;
+    //xJson::Value jv;
+    std::map<int, xJson::Value> jv;
     data::xlightunit_action_ptr_t   recv_txinfo{nullptr};
 };
 class xtransaction_cache_t{
@@ -22,8 +23,8 @@ public:
     ~xtransaction_cache_t() {}
     bool tx_add(const std::string& tx_hash, const xtransaction_ptr_t tx);
     int tx_find(const std::string& tx_hash);
-    int tx_get_json(const std::string& tx_hash, xJson::Value & jv);
-    int tx_set_json(const std::string& tx_hash, const xJson::Value & jv);
+    int tx_get_json(const std::string& tx_hash, const int index, xJson::Value & jv);
+    int tx_set_json(const std::string& tx_hash, const int index, const xJson::Value & jv);
     int tx_set_recv_txinfo(const std::string& tx_hash, const data::xlightunit_action_ptr_t tx_info);
     bool tx_get(const std::string& tx_hash, xtransaction_cache_data_t& cache_data);
     int tx_erase(const std::string& tx_hash);

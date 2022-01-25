@@ -119,6 +119,8 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[1];
 
+    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::auditor);
+
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {
         resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
@@ -133,7 +135,7 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+        //std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
 
         xtablemaker_result_t table_result;
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
@@ -141,7 +143,7 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
         xassert(proposal_block->get_height() == 1);
 
         int64_t last_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after last_hash_count, " << last_hash_count << " count " << (last_hash_count - cur_hash_count)<< std::endl;
+        //std::cout << "after last_hash_count, " << last_hash_count << " count " << (last_hash_count - cur_hash_count)<< std::endl;
 
     }
 #endif
@@ -164,7 +166,7 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
     }
 
     int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-    std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+    //std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
 
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 4);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
@@ -180,8 +182,8 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
         xassert(proposal_block->get_height() == 1);
         
         int64_t table_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
-         << (table_make_hash_count - cur_hash_count)<< std::endl;
+        /* std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
+         << (table_make_hash_count - cur_hash_count)<< std::endl;*/
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
@@ -189,15 +191,15 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
         xassert(ret == 0);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
-        << (verify_make_hash_count - table_make_hash_count)<< std::endl;
+       /* std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
+        << (verify_make_hash_count - table_make_hash_count)<< std::endl;*/
           
        int64_t before_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
      
         int64_t last_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
+        //std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
 
 
     }
@@ -219,7 +221,7 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
     }
 
     int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-    std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+    //std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
 
     int account_count = 4;
     int transaction_count = 100;
@@ -231,7 +233,7 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
        std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, transaction_count);
        all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
     }
-    std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+    //std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -244,8 +246,8 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
         xassert(proposal_block->get_height() == 1);
         
         int64_t table_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
-         << (table_make_hash_count - cur_hash_count)<< std::endl;
+        /*std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
+         << (table_make_hash_count - cur_hash_count)<< std::endl;*/
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(all_txs);
@@ -253,15 +255,16 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
         xassert(ret == 0);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
-        << (verify_make_hash_count - table_make_hash_count)<< std::endl;
+        /*std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
+        << (verify_make_hash_count - table_make_hash_count)<< std::endl;*/
           
         int64_t before_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
      
         int64_t last_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
+         xassert( (last_unpack_count - before_unpack_count) <= 638);
+        //std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
     }
 #endif
 }
@@ -391,8 +394,8 @@ TEST_F(test_tablemaker, make_receipt_hash_new_count) {
             all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
         }
 
-         std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
-          xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        // std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(all_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
@@ -432,6 +435,8 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[1];
 
+    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::auditor);
+
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {
         resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
@@ -439,6 +444,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
+    xblock_ptr_t first_table_block = nullptr;
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
@@ -453,6 +459,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        first_table_block = proposal_block;
     }
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -479,6 +486,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        resources->get_txpool()->on_block_confirmed(first_table_block.get());
     }
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -597,6 +605,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        first_table_block = proposal_block;
     }
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -623,6 +632,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        resources->get_txpool()->on_block_confirmed(first_table_block.get());
     }
 
     {
@@ -811,7 +821,7 @@ TEST_F(test_tablemaker, version_1) {
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
         auto txs = proposal_block->get_txs();
         EXPECT_EQ(txs.size(), tx_cnt);
-        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_table_prop_prove);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_old_version());
 
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 1);
@@ -859,7 +869,7 @@ TEST_F(test_tablemaker, version_1) {
         for (auto & v : units) {
             xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(v);
             auto txs = unit->get_txs();
-            EXPECT_EQ(txs.size(), tx_cnt);
+            EXPECT_EQ(txs.size(), 0);  // unit has none txs
 
             {
                 xJson::Value jv1;
@@ -871,7 +881,8 @@ TEST_F(test_tablemaker, version_1) {
                         auto tx_consensus_phase = tx[hash]["tx_consensus_phase"].asString();
                         EXPECT_EQ(tx_consensus_phase, "send");
                         auto tx_exec_status = tx[hash]["tx_exec_status"].asString();
-                        EXPECT_EQ(tx_exec_status, "success");
+                        // EXPECT_EQ(tx_exec_status, "success");
+                        EXPECT_EQ(tx_exec_status, "");  // XTODO can't make version before enum_xvblock_fork_version_unit_opt
                     }
                 }
             }
@@ -890,8 +901,8 @@ TEST_F(test_tablemaker, version_1) {
         auto headers = proposal_block->get_sub_block_headers();
         EXPECT_EQ(headers.size(), 1);
         for (auto & header : headers) {
-            EXPECT_EQ(header->get_extra_data().empty(), true);
-            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_table_prop_prove);
+            EXPECT_EQ(header->get_extra_data().empty(), false);  // enum_xvblock_fork_version_unit_opt unit has extra
+            EXPECT_EQ(header->get_block_version(), xvblock_fork_t::get_block_fork_old_version());
         }
     }
 }
@@ -924,7 +935,7 @@ TEST_F(test_tablemaker, version_2) {
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
         auto txs = proposal_block->get_txs();
         EXPECT_EQ(txs.size(), tx_cnt);
-        EXPECT_EQ(proposal_block->get_block_version(), base::enum_xvblock_fork_version_unit_opt);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
 
         xassert(proposal_block != nullptr);
         xassert(proposal_block->get_height() == 1);
@@ -995,7 +1006,7 @@ TEST_F(test_tablemaker, version_2) {
         EXPECT_EQ(headers.size(), 1);
         for (auto & header : headers) {
             EXPECT_EQ(header->get_extra_data().empty(), false);
-            EXPECT_EQ(header->get_block_version(), base::enum_xvblock_fork_version_unit_opt);
+            EXPECT_EQ(header->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
         }
     }
 }
@@ -1003,7 +1014,7 @@ TEST_F(test_tablemaker, version_2) {
 TEST_F(test_tablemaker, fullunit) {
     uint64_t count = 25;
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(count);
+    mocktable.genrate_table_chain(count, nullptr);
 
     auto & tables = mocktable.get_history_tables();
     auto & fullunit_table = tables[23];

@@ -83,6 +83,9 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     case common::xnode_type_t::storage:
         return update_storage_zone(zone_element, election_result_store, associated_blk_height, ec);
 
+    case common::xnode_type_t::fullnode:
+        return update_fullnode_zone(zone_element, election_result_store, associated_blk_height, ec);
+
     case common::xnode_type_t::zec:
         return update_zec_zone(zone_element, election_result_store, associated_blk_height, ec);
 
@@ -591,7 +594,7 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
 
     assert(common::node_type_from(zone_element->zone_id()) == common::xnode_type_t::storage);
-    std::array<common::xnode_type_t, 2> node_types{ {common::xnode_type_t::storage_archive, common::xnode_type_t::storage_full_node} };
+    std::array<common::xnode_type_t, 2> node_types{ {common::xnode_type_t::storage_archive, common::xnode_type_t::storage_exchange} };
 
     if (election_result_store.empty()) {
         ec = xdata_accessor_errc_t::election_data_empty;
@@ -658,13 +661,22 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
                   static_cast<std::uint16_t>(zone_element->zone_id().value()));
         }
 
-        // special case for full node, since the result can be empty.
-        if (node_type == common::xnode_type_t::storage_full_node && ec == xdata_accessor_errc_t::election_data_empty) {
+        // special case for exchange, since the result can be empty.
+        if (node_type == common::xnode_type_t::storage_exchange && ec == xdata_accessor_errc_t::election_data_empty) {
             ec = xdata_accessor_errc_t::success;
         }
     }
 
     return ret;
+}
+
+std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_fullnode_zone(
+    std::shared_ptr<xzone_element_t> const & zone_element,
+    data::election::xelection_result_store_t const & election_result_store,
+    std::uint64_t const associated_blk_height,
+    std::error_code & ec) {
+    assert(!ec);
+    return update_zone(zone_element, election_result_store, associated_blk_height, ec);
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_zec_zone(std::shared_ptr<xzone_element_t> const & zone_element,

@@ -13,6 +13,7 @@
 #include "xtxpool_v2/xtxpool_info.h"
 #include "xtxpool_v2/xtxpool_resources_face.h"
 #include "xtxpool_v2/xunconfirm_id_height.h"
+#include "xtxpool_v2/xunconfirm_raw_txs.h"
 
 #include <map>
 #include <set>
@@ -90,7 +91,8 @@ public:
       , m_table_state_cache(para, table_addr)
       , m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set)
       , m_txmgr_table(&m_xtable_info, para)
-      , m_unconfirm_id_height(m_xtable_info.get_short_table_id()) {
+      , m_unconfirm_id_height(m_xtable_info.get_short_table_id())
+      , m_unconfirm_raw_txs(m_xtable_info.get_short_table_id()) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
@@ -101,7 +103,7 @@ public:
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void on_block_confirmed(xblock_t * table_block);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs);
-    void refresh_table();
+    void refresh_table(bool refresh_state_only = false);
     // void update_non_ready_accounts();
     void update_table_state(const data::xtablestate_ptr_t & table_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
@@ -116,15 +118,18 @@ public:
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
-    void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size) const;
+    void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size, uint32_t & unconfirm_raw_txs_size) const;
+    xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
+
+    void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
 
 private:
-    bool is_account_need_update(const std::string & account_addr) const;
+    // bool is_account_need_update(const std::string & account_addr) const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
-    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
+    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce);
     void update_id_state(const std::vector<update_id_state_para> & para_vec);
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);
@@ -136,9 +141,10 @@ private:
     xtable_state_cache_t m_table_state_cache;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
-    mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table
+    mutable std::mutex m_mgr_mutex;        // lock m_txmgr_table
 
     xunconfirm_id_height m_unconfirm_id_height;
+    xunconfirm_raw_txs m_unconfirm_raw_txs;
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts

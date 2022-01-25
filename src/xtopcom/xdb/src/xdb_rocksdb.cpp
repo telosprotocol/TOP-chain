@@ -18,7 +18,12 @@
 #include "xbase/xlog.h"
 #include "xdb/xdb.h"
 #include "xmetrics/xmetrics.h"
+
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#else
 #include <sys/sysinfo.h>
+#endif
 
 using std::string;
 
@@ -198,11 +203,13 @@ public:
     
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie);
+    //iterator all cf data
+    bool read_range_cf( rocksdb::ColumnFamilyHandle* target_cf, const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie);
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     bool compact_range(const std::string & begin_key,const std::string & end_key);
     bool get_estimate_num_keys(uint64_t & num) const;
-    
+    void GetDBMemStatus() const;
     static void destroy(const std::string& m_db_name);
 
  private:
@@ -368,6 +375,8 @@ xColumnFamily xdb::xdb_impl::setup_universal_style_cf(const std::string & name,u
         cf_config.cf_option.num_levels = m_options.num_levels;
     else
         cf_config.cf_option.num_levels = num_levels;
+
+    //cf_config.cf_option.write_buffer_size  = (32 << 20);   //test 
     cf_config.cf_option.OptimizeLevelStyleCompaction(memtable_memory_budget);
 
     if(NULL == block_cache) {
@@ -530,18 +539,28 @@ xdb::xdb_impl::xdb_impl(const int db_kinds,const std::string& db_root_dir,std::v
         m_cf_handles[i] = NULL; //force to reset
     }
     
+    uint64_t total_ram = 0;
+    uint64_t free_ram = 0;
+    DB_OPTIONS_TYPE cache_type = DB_OPTIONS_DEFAULT;
+#ifdef __APPLE__
+    size_t len = sizeof(total_ram);
+    int ret = sysctlbyname("hw.memsize", &total_ram, &len, NULL, 0);
+    if (ret != 0)
+    {
+        xwarn("xdb_impl macos sysctlbyname of hw.memsize failed!");
+    }
+#else
     struct sysinfo si;
     sysinfo(&si);
-    DB_OPTIONS_TYPE  cache_type;
-    //free mem < 2.5G
-    if (si.totalram <= 2.5*1024*1024*1024L) {
-        cache_type = DB_OPTIONS_DEFAULT;
-    } else {
+    total_ram = si.totalram;
+    free_ram = si.freeram;
+#endif
+    // total mem > 2.5G
+    if (total_ram > 2.5*1024*1024*1024L) {
         cache_type = DB_OPTIONS_ADVANCED;
     }
 
-    xkinfo("xdb_impl::init,db_root_dir=%s,memory Totalram %ld, Available: %ld.cache_type:%d",db_root_dir.c_str(), si.totalram, si.freeram, cache_type);
-    
+    xkinfo("xdb_impl::init,db_root_dir=%s,memory Totalram %llu, Available: %llu.cache_type:%d",db_root_dir.c_str(), total_ram, free_ram, cache_type);
     m_db_name = db_root_dir;
     xdb::xdb_impl::setup_default_db_options(m_options,m_db_kinds);//setup base options first
     if(db_paths.empty() == false)
@@ -653,7 +672,11 @@ void xdb::xdb_impl::handle_error(const rocksdb::Status& status) const {
         return;
     const string errmsg = "[xdb] rocksDB error: " + status.ToString() + " ,db name " + m_db_name;
     xerror("%s", errmsg.c_str());
-    // throw xdb_error(errmsg);
+
+    if (status.ToString().find("Bad table magic number") != std::string::npos) {
+        //throw xdb_error(errmsg);
+        exit(1);
+    }
 }
 
 bool xdb::xdb_impl::read(const std::string& key, std::string& value) const {
@@ -808,29 +831,68 @@ bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::strin
     return ret;
 }
 
+bool xdb::xdb_impl::read_range_cf( rocksdb::ColumnFamilyHandle* target_cf, const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie)
+{
+    bool ret = false;
+    if(target_cf != nullptr)//try every CF
+    {
+        rocksdb::ReadOptions target_opt = rocksdb::ReadOptions();
+        target_opt.ignore_range_deletions = true; //ignored deleted_ranges to improve read performance
+        target_opt.verify_checksums = false; //application has own checksum
+
+        auto iter = m_db->NewIterator(target_opt, target_cf);
+        for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+        {
+            const std::string std_key(iter->key().ToString());
+            const std::string std_value(iter->value().ToString());
+            if((*callback_fuc)(std_key,std_value,cookie) == false)
+            {
+                ret = false;
+                break;
+            }
+            ret = true;
+        }
+        delete iter;
+    }
+    return ret;
+}
+
 //iterator each key of prefix.note: go throuh whole db if prefix is empty
 bool xdb::xdb_impl::read_range(const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie)
 {
     bool ret = false;
-    rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(prefix);
-    
-    rocksdb::ReadOptions target_opt = rocksdb::ReadOptions();
-    target_opt.ignore_range_deletions = true; //ignored deleted_ranges to improve read performance
-    target_opt.verify_checksums = false; //application has own checksum
-    
-    auto iter = m_db->NewIterator(target_opt, target_cf);
-    for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
-    {
-        const std::string std_key(iter->key().ToString());
-        const std::string std_value(iter->value().ToString());
-        if((*callback_fuc)(std_key,std_value,cookie) == false)
+
+    if (prefix.size() > 2) {
+        rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(prefix);
+        rocksdb::ReadOptions target_opt = rocksdb::ReadOptions();
+        target_opt.ignore_range_deletions = true; //ignored deleted_ranges to improve read performance
+        target_opt.verify_checksums = false; //application has own checksum
+        
+        auto iter = m_db->NewIterator(target_opt, target_cf);
+        for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
         {
-            ret = false;
-            break;
+            const std::string std_key(iter->key().ToString());
+            const std::string std_value(iter->value().ToString());
+            if((*callback_fuc)(std_key,std_value,cookie) == false)
+            {
+                ret = false;
+                break;
+            }
+            ret = true;
         }
-        ret = true;
+        delete iter;
+    } else {
+        for (size_t i = 0; i < m_cf_handles.size(); ++i) {
+            if (m_cf_handles[i] != nullptr) {
+                xinfo("read_range_cf i start.", i);
+                ret = read_range_cf(m_cf_handles[i], prefix,callback_fuc, cookie);
+                if (ret == false) {
+                    xwarn("read_range_cf i is error.", i);
+                    break;
+                }
+            }
+        }
     }
-    delete iter;
     return ret;
 }
 
@@ -876,6 +938,23 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
 bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
 {
     return m_db->GetIntProperty("rocksdb.estimate-num-keys", &num);
+}
+
+void xdb::xdb_impl::GetDBMemStatus() const
+{
+  if (m_db != nullptr) {   
+        uint64_t  mem_block_all  = 0;   
+        uint64_t  mem_reader_memtable_all = 0; 
+        uint64_t  mem_memory_all = 0; 
+        m_db->GetAggregatedIntProperty("rocksdb.block-cache-usage", &mem_block_all);
+        m_db->GetAggregatedIntProperty("rocksdb.estimate-table-readers-mem", &mem_reader_memtable_all);
+        mem_memory_all = mem_block_all + mem_reader_memtable_all;
+        xinfo("rocksdb mem_block_all: %lld, reader_memtable_all %lld mem_memory_all %lld", mem_block_all, 
+              mem_reader_memtable_all, mem_memory_all);     
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_block_cache_size, mem_block_all);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_memtable_cache_size, mem_reader_memtable_all);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_memory_total_size, mem_memory_all);
+  }
 }
 
 xdb::xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_t> & db_paths)
@@ -987,6 +1066,11 @@ bool xdb::compact_range(const std::string & begin_key,const std::string & end_ke
 bool xdb::get_estimate_num_keys(uint64_t & num) const
 {
     return m_db_impl->get_estimate_num_keys(num);
+}
+
+void xdb::GetDBMemStatus() const
+{
+     return m_db_impl->GetDBMemStatus();
 }
 
 }  // namespace ledger

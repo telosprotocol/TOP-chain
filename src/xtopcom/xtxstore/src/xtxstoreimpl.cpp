@@ -3,7 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xtxstore/xtxstoreimpl.h"
-
+#include "xvledger/xvledger.h"
+#include "xvledger/xvtxindex.h"
 #include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, txstore)
@@ -17,10 +18,11 @@ using common::xstrategy_value_enum_t;
 xtxstoreimpl::xtxstoreimpl(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
   : base::xvtxstore_t()
   , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
-                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})}
+                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::normal},
+                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::high})}
   , m_tx_prepare_mgr{std::make_shared<txexecutor::xtransaction_prepare_mgr>(mbus, timer_driver)}
   , m_tx_cache_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
-                                                     xnode_type_strategy_t{xnode_type_t::full_node, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
+                                                     xnode_type_strategy_t{xnode_type_t::exchange, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
 }
 
 xtxstoreimpl::~xtxstoreimpl() {
@@ -79,6 +81,7 @@ base::xauto_ptr<base::xdataunit_t> xtxstoreimpl::load_tx_obj(const std::string &
 
 bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
     if (!strategy_permission(m_txstore_strategy)) {
+        xdbg("xtxstoreimpl::store_txs strategy_permission failed . don't store txs");
         return false;
     }
 
@@ -199,7 +202,7 @@ bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_
 
 bool xtxstoreimpl::tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data_ptr) {
     if (strategy_permission(m_tx_cache_strategy)) {
-        return m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get()); // todo change tx_get interface.
+        return m_tx_prepare_mgr->transaction_cache()->tx_get(tx_hash, *tx_cache_data_ptr.get());  // todo change tx_get interface.
     }
     return false;
 }
@@ -221,6 +224,65 @@ bool xtxstoreimpl::strategy_permission(common::xbool_strategy_t const & strategy
         return strategy.allow(m_combined_node_type);
     }
     return false;
+}
+
+std::vector<base::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::string & account, const uint64_t height) {
+    base::xvaccount_t _vaddress(account);
+    auto blks_v = top::base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, height, metrics::blockstore_access_from_sync_load_block_objects);
+    std::vector<base::xvblock_t*> blks_ptr = blks_v.get_vector();
+    std::vector<base::xvblock_ptr_t> blocks;
+    for (uint32_t j = 0; j < blks_ptr.size(); j++) {
+        if (false == top::base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaddress, blks_ptr[j], metrics::blockstore_access_from_sync_load_block_objects_output)
+            || false == top::base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, blks_ptr[j], metrics::blockstore_access_from_sync_load_block_objects_input) ) {
+            xerror("xtxstoreimpl::load_block_objects fail-load block input or output. block=%s", blks_ptr[j]->dump().c_str());
+            return {};
+        }
+        base::xvblock_ptr_t xvblock_ptr;
+        blks_ptr[j]->add_ref();
+        xvblock_ptr.attach(blks_ptr[j]);
+        blocks.push_back(xvblock_ptr);
+    }
+    return blocks;
+}
+std::vector<base::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {
+    auto blocks = top::base::xvchain_t::instance().get_xblockstore()->load_block_object(tx_hash, type, metrics::blockstore_access_from_sync_load_tx);
+    for (auto & block : blocks) {
+        if (false == top::base::xvchain_t::instance().get_xblockstore()->load_block_output(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_output)
+            || false == top::base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_input)) {
+            xerror("xtxstoreimpl::load_block_objects for txhash fail-load block input or output. block=%s", block->dump().c_str());
+            return {};
+        }
+    }
+    return blocks;
+}
+
+int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks) {
+    base::xauto_ptr<base::xvtxindex_t> index = load_tx_idx(hash, base::enum_transaction_subtype_send);
+    if (index->is_self_tx()) {
+        auto xvblocks = load_block_objects(hash, (base::enum_transaction_subtype)base::enum_transaction_subtype_self);
+        xdbg("self load_block_objects: %d", xvblocks.size());
+        for (uint32_t i = 0; i < xvblocks.size(); i++) {
+            std::vector<base::xvblock_ptr_t> blocks_temp = load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
+            xdbg("self load_block_objects, table: %d, parent:%s,%d", blocks_temp.size(), base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()).c_str(), xvblocks[i]->get_parent_block_height());
+            for (uint32_t j = 0; j < blocks_temp.size(); j++) {
+                blocks.push_back(blocks_temp[j]);
+            }
+        }
+        return 0;
+    }
+    
+    for(int index = base::enum_transaction_subtype_send; index <= base::enum_transaction_subtype_confirm; index++) {
+        auto xvblocks = load_block_objects(hash, (base::enum_transaction_subtype)index);
+        xdbg("load_block_objects: %d", xvblocks.size());
+        for (uint32_t i = 0; i < xvblocks.size(); i++) {
+            std::vector<base::xvblock_ptr_t> blocks_temp = load_block_objects(base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()), xvblocks[i]->get_parent_block_height());
+            xdbg("load_block_objects, table: %d, parent:%s,%d", blocks_temp.size(), base::xvaccount_t::make_table_account_address(xvblocks[i]->get_account()).c_str(), xvblocks[i]->get_parent_block_height());
+            for (uint32_t j = 0; j < blocks_temp.size(); j++) {
+                blocks.push_back(blocks_temp[j]);
+            }
+        }
+    }    
+    return 0;
 }
 
 NS_END2

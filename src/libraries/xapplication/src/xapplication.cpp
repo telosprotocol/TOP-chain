@@ -6,6 +6,7 @@
 
 #include "xapplication/xbeacon_chain_application.h"
 // #include "xapplication/xcons_mgr_builder.h"
+#include "xapplication/xerror/xerror.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xutility.h"
@@ -19,10 +20,13 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xutility.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xcheckpoint.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xrootblock.h"
 #include "xdb/xdb_factory.h"
@@ -57,6 +61,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
+
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
@@ -134,8 +139,12 @@ void xtop_application::start() {
     m_elect_main->start();
 
     // register node callback
-    if (m_elect_main->RegisterNodeCallback(std::bind(&top::application::xtop_application::handle_register_node, this, std::placeholders::_1, std::placeholders::_2))) {
+    if (!m_elect_main->RegisterNodeCallback(std::bind(&top::application::xtop_application::handle_register_node, this, std::placeholders::_1, std::placeholders::_2))) {
         throw std::logic_error{"register node callback failed!"};
+    }
+
+    if (!m_elect_main->UpdateNodeSizeCallback(std::bind(&top::application::xtop_application::update_node_size, this, std::placeholders::_1, std::placeholders::_2))) {
+        throw std::logic_error{"update node size callback failed!"};
     }
 
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
@@ -259,7 +268,7 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
 }
 
 int32_t xtop_application::handle_register_node(std::string const & node_addr, std::string const & node_sign) {
-#ifndef XENABLE_MOCK_ZEC_STAKE
+#if !defined(XENABLE_MOCK_ZEC_STAKE)
     // filter seed node
     if (xrootblock_t::is_seed_node(node_addr)) {
         xinfo("[register_node_callback] success, seed node, node_addr: %s", node_addr.c_str());
@@ -311,7 +320,39 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
     return store::xstore_success;
 }
 
-void xtop_application::create_thread_pools() {}
+void xtop_application::update_node_size(uint64_t & node_size, std::error_code & ec) {
+    assert(!ec);
+#if defined(XBUILD_CI)
+    node_size = 50;
+#elif defined(XBUILD_DEV)
+    node_size = 14;
+#elif defined(XBUILD_GALILEO)
+    node_size = 128;
+#else  // mainnet
+    node_size = 700;
+#endif
+
+    data::election::xstandby_result_store_t standby_result_store;
+    std::string serialized_value{};
+    if (m_store->string_get(sys_contract_rec_standby_pool_addr, XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
+        auto const & standby_result_store = codec::msgpack_decode<data::election::xstandby_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
+        common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
+        auto const & standby_network_storage_result = standby_result_store.result_of(network_id);
+        if (!standby_network_storage_result.empty()) {
+            node_size = standby_network_storage_result.size();
+            xinfo("[update_node_size] success, node_size: %llu", node_size);
+            return;
+        } else {
+            ec = error::xerrc_t::load_standby_data_missing_property;
+            xinfo("[update_node_size] failed, standby empty?");
+            assert(false);
+            return;
+        }
+    }
+    ec = error::xerrc_t::load_standby_data_missing_block;
+    xinfo("[update_node_size] failed, string get failed.");
+    return;
+}
 
 bool xtop_application::is_genesis_node() const noexcept {
     const std::vector<node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();

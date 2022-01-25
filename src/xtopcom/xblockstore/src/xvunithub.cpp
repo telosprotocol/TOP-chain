@@ -64,6 +64,7 @@ namespace top
                 m_mutex.unlock();
                 
                 //handle events after unlock
+                
                 for(auto & event : block_events)
                 {
                     if(event.get_index() != NULL) //still valid
@@ -71,6 +72,27 @@ namespace top
                         if(enum_blockstore_event_committed == event.get_type())
                         {
                             m_store_ptr->on_block_committed(event);
+                        }
+                    }
+                }
+
+                if (!block_events.empty()) {
+                    for (uint64_t index = block_events.size() - 1; index >= 0; index--) {
+                        auto event = block_events[index];
+                        if(event.get_index() != NULL) //still valid
+                        {
+                            if (event.get_index()->is_timer_address()) {
+                                if (enum_blockstore_event_stored == event.get_type()) {
+                                    m_store_ptr->on_block_prune(event);
+                                    break;
+                                }
+                            } else {
+                                if(enum_blockstore_event_committed == event.get_type())
+                                {
+                                    m_store_ptr->on_block_prune(event);
+                                    break;
+                                }
+                            }                            
                         }
                     }
                 }
@@ -424,6 +446,34 @@ namespace top
             return account_obj->get_sync_meta()._highest_genesis_connect_height;
         }
 
+        uint64_t xvblockstore_impl::get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_cp_connected_block_height();            
+        }
+
+        uint64_t xvblockstore_impl::update_get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            return account_obj->update_get_latest_cp_connected_block_height();            
+        }
+
+        uint64_t xvblockstore_impl::update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag)
+        {
+            uint64_t cp_connect_height = update_get_latest_cp_connected_block_height(account, atag);
+            // guarantee the returned height has already been persisted to disk
+            if (cp_connect_height > base::enum_account_save_meta_interval)
+            {
+                return cp_connect_height - base::enum_account_save_meta_interval;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
         uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & address,const int atag)
         {
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
@@ -434,6 +484,25 @@ namespace top
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
             METRICS_TAG(atag, 1);
             return account_obj->get_latest_executed_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_lowest_executed_block_height(const base::xvaccount_t & address,const int atag)
+        {
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("invalid account=%s",address.get_address().c_str());
+                return 0;
+            }
+            base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(address);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_lowest_executed_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_deleted_block_height(const base::xvaccount_t & address,const int atag)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,address);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_deleted_block_height();
         }
 
         bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag)
@@ -813,6 +882,11 @@ namespace top
             return account_obj->try_update_account_index(height, viewid, update_pre_block);
         }
 
+        base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->recover_and_load_commit_index(height);
+        }
+
         base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag)
         {
             //XTODO:tx always not cache now
@@ -996,7 +1070,13 @@ namespace top
                 }
             }
             #endif //end of __FIRE_MBUS_EVENT_ON_UNITHUB_LAYER__
-            
+            return true;
+        }
+
+        bool      xvblockstore_impl::on_block_prune(const xblockevent_t & event){
+            base::xvbindex_t* index_ptr = event.get_index();
+            if(NULL == index_ptr)
+                return false;
             base::xblockrecycler_t* recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler();
             if(recycler != NULL)
             {

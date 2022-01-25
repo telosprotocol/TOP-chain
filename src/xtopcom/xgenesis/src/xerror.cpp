@@ -19,6 +19,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::genesis_root_has_not_ready:
         return "genesis root has not ready";
 
+    case xerrc_t::genesis_block_hash_mismatch:
+        return "genesis block hash mismatch";
+
     case xerrc_t::genesis_block_store_failed:
         return "genesis block store failed";
 

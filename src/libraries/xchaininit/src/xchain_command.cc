@@ -446,7 +446,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string miner_type;
     std::string miner_name;
     registerMiner_app->add_option("top_num", registerMiner_amount, "Miner register deposit,unit is TOP.")->required();
-    registerMiner_app->add_option("miner_type", miner_type, "Miner type: edge, validator, advance, full_node.")->required();
+    registerMiner_app->add_option("miner_type", miner_type, "Miner type: edge, validator, advance, exchange.")->required();
     registerMiner_app->add_option("miner_name", miner_name, "Miner nickname. 4-16 characters, supporting letters, numbers or underscores.")->required();
     uint32_t dividend_ratio = 0;
     std::string node_sign_key;
@@ -454,7 +454,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         ->check(CLI::Range((uint16_t)0, (uint16_t)100))
         ->default_val(0);
     registerMiner_app->add_option(
-        "-m,--miner_key", node_sign_key, "Use your default account‘s owner key or worker key for mining. The default is the owner key. Please pass in the public key here.");
+        "-m,--miner_key", node_sign_key, "Use your default account's owner key or worker key for mining. The default is the owner key. Please pass in the public key here.");
     registerMiner_app->callback(std::bind(&ApiMethod::register_node,
                                           &topcl.api,
                                           std::ref(registerMiner_amount),
@@ -495,7 +495,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string updateMinerInfo_deposit("0");
     uint32_t updateMinerInfo_rate = 0;
     std::string updateMinerInfo_sign_key;
-    updateMinerInfo_app->add_option("miner_type", updateMinerInfo_type, "New miner type: edge, validator, advance, full_node.")->required();
+    updateMinerInfo_app->add_option("miner_type", updateMinerInfo_type, "New miner type: edge, validator, advance, exchange.")->required();
     updateMinerInfo_app->add_option("miner_name", updateMinerInfo_name, "New miner name. 4-16 characters, supporting letters, numbers or underscores.")->required();
     updateMinerInfo_app->add_option("increase_or_decrease", updateMinerInfo_deposit_type, "1--Increase miner deposit. 2--Decrease miner deposit.")->required();
     updateMinerInfo_app->add_option("top_num", updateMinerInfo_deposit, "Amounts of miner deposit will be increased or decreased，unit is TOP")->required();
@@ -540,7 +540,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // change miner type
     auto changeMinerType_app = mining_app->add_subcommand("changeMinerType", "Update miner type.");
     std::string changeMinerType_type;
-    changeMinerType_app->add_option("miner_type", changeMinerType_type, "New miner type: edge, validator, advance, full_node.")->required();
+    changeMinerType_app->add_option("miner_type", changeMinerType_type, "New miner type: edge, validator, advance, exchange.")->required();
     changeMinerType_app->callback(std::bind(&ApiMethod::change_miner_type, &topcl.api, std::ref(changeMinerType_type), std::ref(out_str)));
 
     // terminate

@@ -133,7 +133,7 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["group_id"] = addr.group_id().value();
 
         const std::string prop_name(XPROPERTY_PLEDGE_VOTE_KEY);
-        query_account_property(result_json, account, prop_name);
+        query_account_property(result_json, account, prop_name, xfull_node_compatible_mode_t::incompatible);
         result_json["vote_staked_index"] = result_json[XPROPERTY_PLEDGE_VOTE_KEY];
         result_json.removeMember(XPROPERTY_PLEDGE_VOTE_KEY);
         return result_json;
@@ -178,7 +178,7 @@ void get_block_handle::getCGP() {
     xJson::Value j;
     std::string addr = sys_contract_rec_tcc_addr;
     std::string prop_name = ONCHAIN_PARAMS;
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = j[prop_name];
 }
 
@@ -524,10 +524,10 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
     }
 }
 
-xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version) {
+//xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & tx_version) {
+int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version, xJson::Value& result_json) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
     base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
-    xJson::Value result_json;
     xJson::Value cons;
     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
         xtransaction_ptr_t tx_ptr;
@@ -552,16 +552,17 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         auto ori_tx_info = parse_tx(tx_ptr.get(), rpc_version);
         result_json["original_tx_info"] = ori_tx_info;
 
-        return result_json;
+        return 0;
     } else {
         if (cons_tx_ptr == nullptr) {
-            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+            //throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+            return 1;
         } else {
             auto ori_tx_info = parse_tx(cons_tx_ptr, rpc_version);
             result_json["original_tx_info"] = ori_tx_info;
             result_json["tx_consensus_state"] = cons;
             result_json["tx_state"] = "queue";
-            return result_json;
+            return 0;
         }
     }
 }
@@ -700,7 +701,10 @@ void get_block_handle::getTransaction() {
     }
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
-        m_js_rsp["value"] = parse_tx(hash, nullptr, version);
+//        m_js_rsp["value"] = parse_tx(hash, nullptr, version);
+        if (parse_tx(hash, nullptr, version, m_js_rsp["value"]) != 0)
+            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+
         base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
         if (tx_store_ptr != nullptr) {
             if (tx_store_ptr->get_raw_tx() != nullptr) {
@@ -741,7 +745,7 @@ void get_block_handle::getRecs() {
     xJson::Value j;
     std::string addr = sys_contract_rec_elect_rec_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_0";
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = j["root_beacon"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -751,7 +755,7 @@ void get_block_handle::getZecs() {
     xJson::Value j;
     std::string addr = sys_contract_rec_elect_zec_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_0";
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = j["sub_beacon"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -760,7 +764,7 @@ void get_block_handle::getEdges() {
     xJson::Value j;
     std::string addr = sys_contract_rec_elect_edge_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_1";
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = j["edge"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -769,18 +773,39 @@ void get_block_handle::getArcs() {
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
     auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
-    query_account_property(j, addr, property_name);
-    m_js_rsp["value"] = j["archive"];
+    query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::storage_archive)];
+    m_js_rsp["chain_id"] = j["chain_id"];
+}
+
+void get_block_handle::getExchangeNodes() {
+    xJson::Value j;
+    std::string const addr = sys_contract_rec_elect_archive_addr;
+    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::storage_exchange)];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
 
 void get_block_handle::getFullNodes() {
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xfull_node_group_id);
-    query_account_property(j, addr, property_name);
-    m_js_rsp["value"] = j["full_node"];
+    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::compatible);
+    m_js_rsp["value"] = j[common::to_presentation_string_compatible(common::xnode_type_t::storage_exchange)];
     m_js_rsp["chain_id"] = j["chain_id"];
+}
+
+void get_block_handle::getFullNodes2() {
+    std::string const addr = sys_contract_rec_elect_fullnode_addr;
+    auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
+    assert(property_names.size() == 1);
+    for (auto const & property : property_names) {
+        xJson::Value j;
+        query_account_property(j, addr, property, xfull_node_compatible_mode_t::incompatible);
+        m_js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::fullnode)];
+        m_js_rsp["chain_id"] = j["chain_id"];
+    }
 }
 
 void get_block_handle::getConsensus() {
@@ -788,7 +813,7 @@ void get_block_handle::getConsensus() {
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
     for (auto const & property : property_names) {
         xJson::Value j;
-        query_account_property(j, addr, property);
+        query_account_property(j, addr, property, xfull_node_compatible_mode_t::incompatible);
         std::string cluster_name = "cluster" + property.substr(property.find('_') + 1);
         m_js_rsp["value"][cluster_name] = j;
     }
@@ -808,7 +833,7 @@ void get_block_handle::getStandbys() {
     xJson::Value j;
     std::string addr = sys_contract_rec_standby_pool_addr;
     std::string prop_name = XPROPERTY_CONTRACT_STANDBYS_KEY;
-    query_account_property(j, addr, prop_name);
+    query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = j;
 }
 
@@ -816,7 +841,7 @@ void get_block_handle::queryNodeInfo() {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
-    query_account_property(jv, contract_addr, prop_name);
+    query_account_property(jv, contract_addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = jv[prop_name];
 }
 
@@ -836,7 +861,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
                 xdbg("target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
                 xJson::Value j;
 
-                query_account_property(j, shard_reward_addr.value(), prop_name);
+                query_account_property(j, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
 
                 auto tmp = j[prop_name];
                 for (auto i : tmp.getMemberNames()) {
@@ -850,7 +875,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
                 for (int sub_map_no = 1; sub_map_no <= 4; sub_map_no++) {
                     std::string prop_name = std::string(xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE) + "-" + std::to_string(sub_map_no);
                     xdbg("[get_block_handle::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-                    query_account_property(j, shard_reward_addr.value(), prop_name);
+                    query_account_property(j, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
                     auto tmp = j[prop_name];
                     for (auto i : tmp.getMemberNames()) {
                         xdbg("[get_block_handle::parse_sharding_reward] --- %s", i.c_str());
@@ -863,7 +888,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
         auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
         auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, table_id);
         xdbg("[get_block_handle::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-        query_account_property(jv, shard_reward_addr.value(), prop_name);
+        query_account_property(jv, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
         jv = jv[prop_name][target];
     }
 
@@ -982,7 +1007,7 @@ void get_block_handle::getProperty() {
 
     std::string prop_name = m_js_req["prop"].asString();
     xJson::Value jv;
-    query_account_property(jv, owner, prop_name, height);
+    query_account_property(jv, owner, prop_name, height, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = jv;
 }
 
@@ -1113,13 +1138,13 @@ bool is_prop_name_not_set_property(const std::string & prop_name) {
     return false;
 }
 
-bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate) {
+bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode) {
     if (is_prop_name_already_set_property(prop_name)) {
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, jph);
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jph);
         return true;
     } else if (is_prop_name_not_set_property(prop_name)) {
         xJson::Value jm;
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, jm);
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jm);
         jph[prop_name] = jm;
         return true;
     }
@@ -1155,7 +1180,7 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
     return false;
 }
 
-void get_block_handle::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate) {
+void get_block_handle::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode) {
     if (unitstate == nullptr) {
         xwarn("get_block_handle::query_account_property fail-query unit state.account=%s", owner.c_str());
         return;
@@ -1164,7 +1189,7 @@ void get_block_handle::query_account_property_base(xJson::Value & jph, const std
         xwarn("get_block_handle::query_account_property fail-find property.account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
         return;
     }
-    if (true == query_special_property(jph, owner, prop_name, unitstate)) {
+    if (true == query_special_property(jph, owner, prop_name, unitstate, compatible_mode)) {
         return;
     }
 
@@ -1197,14 +1222,14 @@ void get_block_handle::query_account_property_base(xJson::Value & jph, const std
     }
 }
 
-void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name) {
+void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode) {
     xdbg("get_block_handle::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
     // load newest account state
     xaccount_ptr_t unitstate = m_store->query_account(owner);
-    query_account_property_base(jph, owner, prop_name, unitstate);
+    query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode == xfull_node_compatible_mode_t::compatible);
 }
 
-void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height) {
+void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode) {
     xdbg("get_block_handle::query_account_property account=%s,prop_name=%s,height=%llu", owner.c_str(), prop_name.c_str(),height);
     // load newest account state
     base::xvaccount_t _vaddr(owner);
@@ -1225,7 +1250,7 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
         unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
     }
 
-    query_account_property_base(jph, owner, prop_name, unitstate);
+    query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode == xfull_node_compatible_mode_t::compatible);
 }
 
 void get_block_handle::set_accumulated_issuance_yearly(xJson::Value & j, const std::string & value) {
@@ -1321,16 +1346,6 @@ void get_block_handle::set_property_info(xJson::Value & jph, const std::map<std:
     }
 }
 
-static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
-    { common::xnode_type_t::consensus_auditor, "auditor" },
-    { common::xnode_type_t::consensus_validator, "validator" },
-    { common::xnode_type_t::edge, "edge" },
-    { common::xnode_type_t::storage_archive, "archive" },
-    { common::xnode_type_t::rec, "root_beacon" },
-    { common::xnode_type_t::zec, "sub_beacon" },
-    { common::xnode_type_t::storage_full_node, "full_node" }
-};
-
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
     auto _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp, metrics::statestore_access_from_rpc_set_addition);
     if (nullptr == _bstate) {
@@ -1345,7 +1360,8 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                                  sys_contract_rec_elect_archive_addr,
                                                  sys_contract_rec_elect_rec_addr,
                                                  sys_contract_rec_elect_zec_addr,
-                                                 sys_contract_zec_elect_consensus_addr};
+                                                 sys_contract_zec_elect_consensus_addr,
+                                                 sys_contract_rec_elect_fullnode_addr};
     if (sys_block_owner.find(block_owner) != std::end(sys_block_owner)) {
         using top::data::election::xelection_result_store_t;
         auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{block_owner});
@@ -1364,6 +1380,8 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                 zid = common::xedge_zone_id;
             } else if (block_owner == sys_contract_zec_elect_consensus_addr) {
                 zid = common::xdefault_zone_id;
+            } else if (block_owner == sys_contract_rec_elect_fullnode_addr) {
+                zid = common::xfullnode_zone_id;
             } else {
                 zid = common::xcommittee_zone_id;
             }
@@ -1396,7 +1414,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                 j["public_key"] = to_hex_str(election_info.consensus_public_key.to_string());
                                 j["group_id"] = xip2.group_id().value();
                                 j["stake"] = static_cast<unsigned long long>(election_info.stake);
-                                j["node_type"] = node_type_map[node_type];
+                                j["node_type"] = common::to_presentation_string(node_type);
 
                                 if (group_result.group_version().has_value()) {
                                     j["version"] = static_cast<xJson::UInt64>(group_result.group_version().value());

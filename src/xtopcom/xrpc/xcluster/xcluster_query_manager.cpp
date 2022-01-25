@@ -16,6 +16,8 @@
 #include "xstore/xtgas_singleton.h"
 #include "xutility/xhash.h"
 #include "xvm/manager/xcontract_address_map.h"
+#include "xmbus/xevent_behind.h"
+#include "xvledger/xvledger.h"
 
 using namespace top::data;
 
@@ -35,8 +37,10 @@ using store::xstore_face_t;
 xcluster_query_manager::xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                                observer_ptr<base::xvblockstore_t> block_store,
                                                observer_ptr<base::xvtxstore_t> txstore,
-                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service)
-  : m_store(store), m_block_store(block_store), m_txstore(txstore), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr) {
+                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
+                                               bool archive_flag)
+  : m_store(store), m_block_store(block_store), m_txstore(txstore), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr),
+    m_archive_flag(archive_flag) {  
     CLUSTER_REGISTER_V1_METHOD(getAccount);
     CLUSTER_REGISTER_V1_METHOD(getTransaction);
     CLUSTER_REGISTER_V1_METHOD(get_transactionlist);
@@ -78,28 +82,37 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     xdbg("xcluster_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
     uint256_t tx_hash = hex_to_uint256(tx_hash_str);
     std::string strHash((char*)tx_hash.data(), tx_hash.size());
-    xtransaction_cache_data_t cache_data;
-    if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, std::make_shared<xtransaction_cache_data_t>(cache_data))) {
-    // if (m_transaction_cache != nullptr && m_transaction_cache->tx_get(strHash, std::make_shared<>(cache_data)) == 1) {
-        const chain_info::xtx_exec_json_key jk(version);
-        if (cache_data.jv[jk.m_send].empty()) {
-            cache_data.jv.removeMember(jk.m_send);
-            xdbg("find tx:%s", tx_hash_str.c_str());
-            xJson::Value result_json;
-            result_json["tx_consensus_state"] = cache_data.jv;
-            // xdbg("json1:%s", cache_data.jv.toStyledString().c_str());
-            m_bh.update_tx_state(result_json, cache_data.jv, version);
 
-            auto ori_tx_info = m_bh.parse_tx(cache_data.tran.get(), version);
+    std::shared_ptr<xtransaction_cache_data_t> cache_data_ptr = std::make_shared<xtransaction_cache_data_t>();
+    if (m_txstore != nullptr && m_txstore->tx_cache_get(strHash, cache_data_ptr)) {        
+        const chain_info::xtx_exec_json_key jk(version);
+        std::map<int, xJson::Value> map_jv = cache_data_ptr->jv;
+        if (map_jv.find(base::enum_transaction_subtype_send) == map_jv.end()) {
+            xdbg("not find tx:%s", tx_hash_str.c_str());
+
+            xJson::Value result_json;
+            xJson::Value jv;
+
+            data::xtransaction_ptr_t tx_ptr = cache_data_ptr->tran;
+            if (map_jv.find(base::enum_transaction_subtype_recv) != map_jv.end()) {
+                jv[jk.m_recv] = map_jv[base::enum_transaction_subtype_recv];
+                if (version == RPC_VERSION_V2)
+                    jv[jk.m_recv]["account"] = tx_ptr->get_target_addr();
+            }
+            if (map_jv.find(base::enum_transaction_subtype_confirm) != map_jv.end()) {
+                jv[jk.m_confirm] = map_jv[base::enum_transaction_subtype_confirm];
+                if (version == RPC_VERSION_V2)
+                    jv[jk.m_confirm]["account"] = tx_ptr->get_source_addr();
+            }
+            result_json["tx_consensus_state"] = jv;
+            m_bh.update_tx_state(result_json, jv, version);
+
+            auto ori_tx_info = m_bh.parse_tx(tx_ptr.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
-            // xdbg("json2:%s", ori_tx_info.toStyledString().c_str());
             json_proc.m_response_json["data"] = result_json;
             return;
         }
     }
-//            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "broadcasting the transaction"};
-//        else
-//            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "waiting for transaction completion"};
 
     xtransaction_t * tx_ptr = nullptr;
     xcons_transaction_ptr_t cons_tx_ptr = nullptr;
@@ -109,9 +122,41 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
             tx_ptr = cons_tx_ptr->get_transaction();
         }
     }
-    json_proc.m_response_json["data"] = m_bh.parse_tx(tx_hash, tx_ptr, version);
+    xJson::Value result_json;
+    if (get_transaction_on_demand(account, tx_ptr, version, tx_hash, result_json) == 0)
+        json_proc.m_response_json["data"] = result_json;
+    return;
 }
 
+int xcluster_query_manager::get_transaction_on_demand(const std::string& account, xtransaction_t * tx_ptr, const string & version, const uint256_t& tx_hash, xJson::Value& result_json) {
+    std::string strHash((char*)tx_hash.data(), tx_hash.size());
+    if (!m_archive_flag) {
+        if (m_bh.parse_tx(tx_hash, tx_ptr, version, result_json) == 0) {  // find tx
+            return 0;
+        }
+        throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+    }
+
+    if (m_bh.parse_tx(tx_hash, tx_ptr, version, result_json) != 0) {  // not find tx
+        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(account, strHash, "unit_lack");
+        base::xvchain_t::instance().get_xevmbus()->push_event(ev);
+        throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+    }
+    if (result_json["tx_state"] != "pending" && result_json["tx_state"] != "queue")
+    {
+        return 0;
+    }
+
+    struct timeval val;
+    base::xtime_utl::gettimeofday(&val);
+    uint64_t tx_time = result_json["original_tx_info"]["send_timestamp"].asUInt64();
+    xdbg("tx time: %" PRIu64 ",%" PRIu64, tx_time, (uint64_t)val.tv_sec);
+    if (tx_time + 60 < (uint64_t)val.tv_sec) {  // 1 minute
+        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(account, strHash, "unit_lack");
+        top::base::xvchain_t::instance().get_xevmbus()->push_event(ev);
+    }
+    return 0;
+}
 void xcluster_query_manager::get_transactionlist(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     uint32_t start_num = json_proc.m_request_json["params"]["start_num"].asUInt();
@@ -127,7 +172,7 @@ void xcluster_query_manager::get_property(xjson_proc_t & json_proc) {
     const std::string & prop_name = json_proc.m_request_json["params"]["data"].asString();
 #if 1
     xJson::Value result_json;
-    m_bh.query_account_property(result_json, account, prop_name);
+    m_bh.query_account_property(result_json, account, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     json_proc.m_response_json["data"] = result_json;
 #else
     string value{};
@@ -199,7 +244,7 @@ void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     jv["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
 
     xJson::Value tj;
-    m_bh.query_account_property(tj, sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
+    m_bh.query_account_property(tj, sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, chain_info::xfull_node_compatible_mode_t::incompatible);
     jv["network_activate_time"] = tj[xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY]["activation_time"].asUInt64();
 
     json_proc.m_response_json["data"] = jv;
@@ -358,6 +403,11 @@ void xcluster_query_manager::getTimerInfo(xjson_proc_t & json_proc) {
     json_proc.m_response_json["data"] = jv;
 }
 
+uint64_t xcluster_query_manager::getTimerHeight() {
+    chain_info::get_block_handle bh(m_store.get(), m_block_store.get(), nullptr);
+    return bh.get_timer_clock();
+}
+
 void xcluster_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
@@ -366,7 +416,7 @@ void xcluster_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
-    m_bh.query_account_property(jv, contract_addr, prop_name);
+    m_bh.query_account_property(jv, contract_addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
 
     if (target == "") {
         json_proc.m_response_json["data"] = jv[prop_name];
@@ -386,32 +436,39 @@ void xcluster_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     std::string addr = sys_contract_zec_elect_consensus_addr;
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
     for (auto property : property_names) {
-        m_bh.query_account_property(j, addr, property);
-        if (j["auditor"].isMember(target)) {
+        m_bh.query_account_property(j, addr, property, chain_info::xfull_node_compatible_mode_t::incompatible);
+        if (j[common::to_presentation_string(common::xnode_type_t::consensus_auditor)].isMember(target)) {
             ev.push_back("auditor");
         }
-        if (j["validator"].isMember(target)) {
+        if (j[common::to_presentation_string(common::xnode_type_t::consensus_validator)].isMember(target)) {
             ev.push_back("validator");
         }
     }
 
     addr = sys_contract_rec_elect_archive_addr;
     std::string prop_name = data::election::get_property_by_group_id(common::xarchive_group_id);
-    m_bh.query_account_property(j, addr, prop_name);
-    if (j["archive"].isMember(target)) {
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
+    if (j[common::to_presentation_string(common::xnode_type_t::storage_archive)].isMember(target)) {
         ev.push_back("archiver");
     }
-    prop_name = data::election::get_property_by_group_id(common::xfull_node_group_id);
-    m_bh.query_account_property(j, addr, prop_name);
-    if (j["full_node"].isMember(target)) {
-        ev.push_back("full_node");
+    prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
+    if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
+        ev.push_back("exchange");
     }
 
     addr = sys_contract_rec_elect_edge_addr;
     prop_name = data::election::get_property_by_group_id(common::xdefault_group_id);
-    m_bh.query_account_property(j, addr, prop_name);
-    if (j["edge"].isMember(target)) {
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
+    if (j[common::to_presentation_string(common::xnode_type_t::edge)].isMember(target)) {
         ev.push_back("edger");
+    }
+
+    addr = sys_contract_rec_elect_fullnode_addr;
+    prop_name = data::election::get_property_by_group_id(common::xdefault_group_id);
+    m_bh.query_account_property(j, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
+    if (j[common::to_presentation_string(common::xnode_type_t::fullnode)].isMember(target)) {
+        ev.push_back(common::to_presentation_string(common::xnode_type_t::fullnode));
     }
 
     std::string elect_info;
@@ -443,7 +500,7 @@ void xcluster_query_manager::set_sharding_vote_prop(xjson_proc_t & json_proc, st
         auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
         auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_vote_addr}, table_id);
         xdbg("account: %s, target: %s, addr: %s, prop: %s", owner.c_str(), target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-        m_bh.query_account_property(jv, shard_reward_addr.value(), prop_name);
+        m_bh.query_account_property(jv, shard_reward_addr.value(), prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
         json_proc.m_response_json["data"] = jv[prop_name][target];
     }
 }
@@ -486,7 +543,7 @@ void xcluster_query_manager::queryProposal(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_tcc_addr;
     std::string prop_name = PROPOSAL_MAP_ID;
-    m_bh.query_account_property(jv, contract_addr, prop_name);
+    m_bh.query_account_property(jv, contract_addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
 
     if (target == "") {
         json_proc.m_response_json["data"] = jv[prop_name];
@@ -503,7 +560,7 @@ void xcluster_query_manager::getStandbys(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string addr = sys_contract_rec_standby_pool_addr;
     std::string prop_name = XPROPERTY_CONTRACT_STANDBYS_KEY;
-    m_bh.query_account_property(jv, addr, prop_name);
+    m_bh.query_account_property(jv, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     if (target == "") {
         json_proc.m_response_json["data"] = jv;
     } else {
@@ -522,7 +579,7 @@ void xcluster_query_manager::getCGP(xjson_proc_t & json_proc) {
     xJson::Value jv;
     std::string addr = sys_contract_rec_tcc_addr;
     std::string prop_name = ONCHAIN_PARAMS;
-    m_bh.query_account_property(jv, addr, prop_name);
+    m_bh.query_account_property(jv, addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
     json_proc.m_response_json["data"] = jv[prop_name];
 }
 

@@ -73,6 +73,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_read_tick);
         RETURN_METRICS_NAME(db_write_tick);
         RETURN_METRICS_NAME(db_delete_tick);
+        RETURN_METRICS_NAME(db_block_cache_size);
+        RETURN_METRICS_NAME(db_memtable_cache_size);
+        RETURN_METRICS_NAME(db_memory_total_size);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
@@ -106,6 +109,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_view_fire_succ);
+        RETURN_METRICS_NAME(cons_cp_check_succ);
         RETURN_METRICS_NAME(cons_view_fire_is_leader);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
@@ -285,6 +289,12 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_store_block_tables);
         RETURN_METRICS_NAME(xsync_unit_proof_sync_req_send);
         RETURN_METRICS_NAME(xsync_unit_proof_sync_req_recv);
+        RETURN_METRICS_NAME(xsync_recv_archive_height);
+        RETURN_METRICS_NAME(xsync_archive_height_blocks);
+        RETURN_METRICS_NAME(xsync_recv_archive_blocks);
+        RETURN_METRICS_NAME(xsync_recv_archive_blocks_size);
+        RETURN_METRICS_NAME(xsync_recv_query_archive_height);
+        RETURN_METRICS_NAME(xsync_recv_archive_height_list);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
@@ -342,6 +352,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_alarm_confirm_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);
+        RETURN_METRICS_NAME(txpool_sync_on_demand_unit);
+        RETURN_METRICS_NAME(txpool_sender_unconfirm_cache);
+        RETURN_METRICS_NAME(txpool_receiver_unconfirm_cache);
+        RETURN_METRICS_NAME(txpool_height_record_cache);
+        RETURN_METRICS_NAME(txpool_table_unconfirm_raw_txs);
 
         // txstore
         RETURN_METRICS_NAME(txstore_request_origin_tx);

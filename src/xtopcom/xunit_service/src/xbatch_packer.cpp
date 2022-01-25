@@ -4,6 +4,7 @@
 
 #include "xunit_service/xbatch_packer.h"
 
+#include "xblockmaker/xblockmaker_error.h"
 #include "xBFT/xconsevent.h"
 #include "xcommon/xip.h"
 #include "xcommon/xnode_type.h"
@@ -15,6 +16,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -182,6 +184,26 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
     return true;
 }
 
+bool xbatch_packer::connect_to_checkpoint() {
+    auto local_xip = get_xip2_addr();
+    common::xip2_t xip2(local_xip.low_addr, local_xip.high_addr);
+    common::xnode_type_t node_type = common::node_type_from(xip2.zone_id(), xip2.cluster_id(), xip2.group_id());
+    xdbg("connect_to_checkpoint node type:%s", common::to_string(node_type).c_str());
+
+    if (common::has<common::xnode_type_t::rec>(node_type)
+     || common::has<common::xnode_type_t::zec>(node_type)
+     || common::has<common::xnode_type_t::auditor>(node_type)) {
+        auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->update_get_latest_cp_connected_block_height(get_account());
+        auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
+        if (latest_cp_connect_height != latest_connect_height) {
+            xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu,account:%s", latest_cp_connect_height, latest_connect_height, get_account().c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // view updated and the judge is_leader
 // then start new consensus from leader
 bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
@@ -267,6 +289,11 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     }
 
     m_is_leader = true;
+    if (!connect_to_checkpoint()) {
+        XMETRICS_GAUGE(metrics::cons_cp_check_succ, 0);
+        return false;
+    }
+    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     m_leader_packed = start_proposal(latest_blocks, calculate_min_tx_num(true));
     return true;
 }
@@ -275,6 +302,11 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     if (!m_is_leader || m_leader_packed) {
         return true;
     }
+    if (!connect_to_checkpoint()) {
+        XMETRICS_GAUGE(metrics::cons_cp_check_succ, 0);
+        return false;
+    }
+    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
     m_leader_packed = start_proposal(latest_blocks, calculate_min_tx_num(false));
@@ -377,6 +409,9 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
 
 int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
     XMETRICS_TIME_RECORD("cons_tableblock_verify_proposal_time_consuming");
+    if (!connect_to_checkpoint()) {
+        return blockmaker::xblockmaker_error_proposal_cannot_connect_to_cp;
+    }
     return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
 }
 
@@ -497,7 +532,25 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
     }
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
+bool  xbatch_packer::on_replicate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms)  //call from lower layer to higher layer(parent)
+{
+    xcsaccount_t::on_replicate_finish(event, from_child, cur_thread_id, timenow_ms);
 
+    xconsensus::xreplicate_finish * _evt_obj = (xconsensus::xreplicate_finish*)&event;
+    auto xip = get_xip2_addr();
+    bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_block()->get_cert()->get_validator())
+                  || xcons_utl::xip_equals(xip, _evt_obj->get_target_block()->get_cert()->get_auditor());    
+    if(_evt_obj->get_error_code() == xconsensus::enum_xconsensus_code_successful)
+    {
+        base::xvblock_t *vblock = _evt_obj->get_target_block();
+        xassert(vblock->is_input_ready(true));
+        xassert(vblock->is_output_ready(true));
+        vblock->add_ref();
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
+        m_mbus->push_event(ev);
+    }
+    return true; //stop handle anymore
+}
 bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     xcsaccount_t::on_consensus_commit(event, from_child, cur_thread_id, timenow_ms);
     xconsensus::xconsensus_commit * _evt_obj = (xconsensus::xconsensus_commit *)&event;

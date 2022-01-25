@@ -40,7 +40,7 @@ TEST_F(test_block_executed, inorder) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 10;
     mock::xdatamock_table mocktable(1, 2);
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 
@@ -56,7 +56,7 @@ TEST_F(test_block_executed, disorder) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 10;
     mock::xdatamock_table mocktable(1, 2);
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 
@@ -83,7 +83,7 @@ TEST_F(test_block_executed, execute_height_update_1) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 100;
     mock::xdatamock_table mocktable(1, 4); 
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 
@@ -114,7 +114,7 @@ TEST_F(test_block_executed, execute_height_update_1) {
 TEST_F(test_block_executed, execute_height_update_2) {
     uint64_t max_count = 1000;
     mock::xdatamock_table mocktable(1, 4); 
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, nullptr);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 
@@ -124,6 +124,7 @@ TEST_F(test_block_executed, execute_height_update_2) {
     {
         mock::xvchain_creator creator;
         base::xvblockstore_t* blockstore = creator.get_blockstore();
+        mocktable.store_genesis_units(blockstore);
         for (uint32_t i = 0; i <= max_count; ++i) {
             ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[i].get()));
         }
@@ -136,6 +137,7 @@ TEST_F(test_block_executed, execute_height_update_2) {
     {
         mock::xvchain_creator creator;
         base::xvblockstore_t* blockstore = creator.get_blockstore();        
+        mocktable.store_genesis_units(blockstore);
         uint32_t hole_height = 5;
         for (uint32_t i = 0; i <= max_count; ++i) {
             if (i != hole_height) {
@@ -166,7 +168,7 @@ TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 1000;
     mock::xdatamock_table mocktable(1, 4); 
-    mocktable.genrate_table_chain(max_count);
+    mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
 

@@ -9,6 +9,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xvblockhub.h"
 #include "xvledger/xvdbkey.h"
+#include "xdata/xcheckpoint.h"
 
 #ifdef __ALLOW_FORK_LOCK__
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
@@ -60,8 +61,8 @@ namespace top
         {
             // execute height fall behind check, should be deleted eventually
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",connect=%" PRId64 ",commit=%" PRId64 ",lock=%" PRId64 " < cert=%" PRId64 ";}",
-                get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height);
+            xprintf(local_param_buf,sizeof(local_param_buf),"{account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",connect=%" PRId64 ",cp_connect=%" PRId64 ",commit=%" PRId64 ",lock=%" PRId64 " < cert=%" PRId64 ";}",
+                get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_cp_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height);
 
             return std::string(local_param_buf);
         }
@@ -122,9 +123,59 @@ namespace top
                             xwarn("xblockacct_t::recover_meta,recover full_block at height=% " PRId64 " of account(%s)",latest_commit->get_last_full_block_height(),get_address().c_str());
                     }
                 }
+
+                // XTODO recover cp connect block height for un-commit crash, not process height#0
+                if (m_meta->_highest_cp_connect_block_height > 0) {
+                    for (uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; h++)
+                    {
+                        auto bindex = recover_and_load_commit_index(h);
+                        if (bindex == nullptr) {
+                            break;
+                        }
+                        if (bindex->get_last_block_hash() != m_meta->_highest_cp_connect_block_hash) {
+                            xerror("xblockacct_t::recover_meta,unmatch cp connect hash.account=%s,height=%ld,cur_hash=%s,next_last_hash=%s",
+                                get_address().c_str(), h, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), base::xstring_utl::to_hex(bindex->get_last_block_hash()).c_str());
+                            break;
+                        }
+                        m_meta->_highest_cp_connect_block_height = bindex->get_height();
+                        m_meta->_highest_cp_connect_block_hash = bindex->get_block_hash();
+                        xwarn("xblockacct_t::recover_meta,recover cp connect height=% " PRId64 " of account(%s)",h,get_address().c_str());
+                    }
+                }
+
             }
             
             return recovered_something;
+        }
+
+        base::xauto_ptr<base::xvbindex_t> xblockacct_t::recover_and_load_commit_index(uint64_t height)
+        {
+            if (load_index(height) == 0) {
+                return nullptr;
+            }
+            base::xauto_ptr<base::xvbindex_t> current_index(query_index(height, base::enum_xvblock_flag_authenticated));
+            if (current_index == nullptr) {
+                return nullptr;
+            }
+            if (current_index->check_block_flag(base::enum_xvblock_flag_committed)) {
+                return current_index;
+            }
+            // XTODO try to load next commit-block and recover current index status
+            base::xauto_ptr<base::xvbindex_t> next_index = load_index(height + 1, base::enum_xvblock_flag_committed);
+            if (next_index == nullptr) {
+                return nullptr;
+            }
+
+            base::xauto_ptr<base::xvbindex_t> current_index_again = load_index(height, next_index->get_last_block_hash());
+            if (current_index_again != nullptr) {
+                update_bindex_to_committed(current_index_again.get());
+                xinfo("xblockacct_t::recover_and_load_commit_index recover succ.account=%s,height=%ld,viewid=%ld", get_address().c_str(), height, current_index_again->get_viewid());
+                return current_index_again;
+            }
+
+            xerror("xblockacct_t::recover_and_load_commit_index recover fail.account=%s,height=%ld,cur_hash=%s,last_hash=%s", 
+                get_address().c_str(), height, base::xstring_utl::to_hex(current_index->get_block_hash()).c_str(), base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str());
+            return nullptr;
         }
  
         bool  xblockacct_t::close(bool force_async)
@@ -201,7 +252,8 @@ namespace top
                        && (old_height_it->first != m_meta->_highest_commit_block_height)  //keep latest_committed block
                        && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
                        && (old_height_it->first != m_meta->_highest_cert_block_height)    //keep latest_cert block
-                       && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block
+                       && (old_height_it->first != m_meta->_highest_connect_block_height) //keep latest_connect_block
+                       && (old_height_it->first != m_meta->_highest_cp_connect_block_height))//keep latest_cp_connect_block
                     {
                         auto & view_map = old_height_it->second;
                         #ifdef ENABLE_METRICS
@@ -728,7 +780,7 @@ namespace top
                         else
                         {
                             xerror("xblockacct_t::load_latest_connected_index,account=%s,hash mismatch last=%s,commit=%s,connnect_height=%" PRIu64 "",
-                                get_account().c_str(), m_meta->_highest_connect_block_hash.c_str(), next_commit->get_last_block_hash().c_str(), m_meta->_highest_connect_block_height);
+                            get_account().c_str(), base::xstring_utl::to_hex(m_meta->_highest_connect_block_hash).c_str(), base::xstring_utl::to_hex(next_commit->get_last_block_hash()).c_str(), m_meta->_highest_connect_block_height);
                         }
                     }
                     else
@@ -749,6 +801,31 @@ namespace top
                 return result;
             }
             return load_genesis_index();
+        }
+
+        uint64_t xblockacct_t::update_get_latest_cp_connected_block_height() {
+            /*
+            if(load_index(m_meta->_highest_cp_connect_block_height) == 0)//load first
+            {
+                xwarn("xblockacct_t::update_get_latest_cp_connected_block_height,fail load block at height(%" PRIu64 ") of account(%s)",m_meta->_highest_cp_connect_block_height,get_address().c_str());
+                for(uint64_t i = 1; i <= 3; ++i)//try forwarded 3 blocks
+                {
+                    if(m_meta->_highest_cp_connect_block_height > i)
+                    {
+                        base::xvbindex_t* alternative = load_index(m_meta->_highest_cp_connect_block_height - i, base::enum_xvblock_flag_committed);
+                        if(alternative != NULL)//load_index has been return a added-reference ptr
+                        {
+                            m_meta->_highest_cp_connect_block_height = alternative->get_height();
+                            m_meta->_highest_cp_connect_block_hash   = alternative->get_block_hash();
+                            return m_meta->_highest_cp_connect_block_height;
+                        }
+                    }
+                }
+            }
+            */
+            xdbg("update_get_latest_cp_connected_block_height height:%llu, hash:%s, account:%s", m_meta->_highest_cp_connect_block_height, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), get_account().c_str());
+            fully_update_cp_connect();
+            return m_meta->_highest_cp_connect_block_height;
         }
 
         base::xvbindex_t*  xblockacct_t::load_latest_full_index()
@@ -849,6 +926,12 @@ namespace top
         //load every index of block at target_height into cache layer
         int   xblockacct_t::load_index(const uint64_t target_height)
         {
+            uint64_t delete_height = get_latest_deleted_block_height();
+            if (target_height != 0 && delete_height > 0 && target_height <= delete_height)
+            {
+                xwarn("xblockacct_t::load_index load account:%s height:%llu lower than delete height:%llu, meta:%s", get_account().c_str(), target_height, delete_height, dump().c_str());
+            }
+
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height
             {
@@ -1042,6 +1125,14 @@ namespace top
             return true;
         }
 
+        void    xblockacct_t::update_bindex_to_committed(base::xvbindex_t* this_block)
+        {
+            xassert(this_block != nullptr);
+            this_block->set_block_flag(base::enum_xvblock_flag_locked);
+            this_block->set_block_flag(base::enum_xvblock_flag_committed);
+            update_bindex(this_block);
+        }
+
         bool    xblockacct_t::store_committed_unit_block(base::xvblock_t* new_raw_block)
         {
             base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
@@ -1052,16 +1143,12 @@ namespace top
                     if (new_raw_block->get_height() > 1) {
                         base::xauto_ptr<base::xvbindex_t> pre_idx(load_index(new_raw_block->get_height() - 1, new_raw_block->get_last_block_hash()));
                         if (pre_idx != nullptr && !pre_idx->check_block_flag(base::enum_xvblock_flag_committed)) {
-                            pre_idx->set_block_flag(base::enum_xvblock_flag_locked);
-                            pre_idx->set_block_flag(base::enum_xvblock_flag_committed);
-                            update_bindex(pre_idx.get());
+                            update_bindex_to_committed(pre_idx.get());
                             xinfo("xblockacct_t::store_committed_unit_block update pre index,store_block,done for pre_idx(%s),dump:%s", pre_idx->dump().c_str(), dump().c_str());
                         }
                     }
 
-                    exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
-                    exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
-                    update_bindex(exist_cert.get());
+                    update_bindex_to_committed(exist_cert.get());
                     xinfo("xblockacct_t::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
                 } else {
                     xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
@@ -1092,17 +1179,12 @@ namespace top
                     xinfo("xblockacct_t::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
                     ret = false;
                 } else {
-                    exist_cert2->set_block_flag(base::enum_xvblock_flag_locked);
-                    exist_cert2->set_block_flag(base::enum_xvblock_flag_committed);
-
-                    update_bindex(exist_cert2.get());
+                    update_bindex_to_committed(exist_cert2.get());
                     xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
                 }
             }
 
-            exist_cert->set_block_flag(base::enum_xvblock_flag_locked);
-            exist_cert->set_block_flag(base::enum_xvblock_flag_committed);
-            update_bindex(exist_cert.get());
+            update_bindex_to_committed(exist_cert.get());
             xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
             return ret;
         }
@@ -1271,6 +1353,10 @@ namespace top
                 if(new_raw_block->get_height() != 0)//genesis block might be created by load_index
                     update_meta();
                 
+                if (final_cached_index->is_timer_address()) {
+                    push_event(enum_blockstore_event_stored, final_cached_index);
+                }
+
                 if(false == keep_raw_block_ptr)
                     final_cached_index->reset_this_block(NULL);
 
@@ -1285,9 +1371,6 @@ namespace top
         {
             if(nullptr == block_ptr)
                 return false;
-
-            if(block_ptr->get_height() == 0)
-                return false; //not allow delete genesis block
 
             XMETRICS_GAUGE(metrics::store_block_delete, 1);
 
@@ -1304,7 +1387,7 @@ namespace top
                     {
                         //delete data at DB first
                         get_blockdb_ptr()->delete_block(view_it->second);
-
+                        xkinfo("xblockacct_t::delete_block,delete block finish:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ")",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid());
                         //remove entry then
                         view_it->second->close();
                         view_it->second->release_ref();
@@ -1500,6 +1583,71 @@ namespace top
             return true;
         }
 
+        void xblockacct_t::fully_update_cp_connect() {
+            if( (0 == m_meta->_highest_cp_connect_block_height) && m_meta->_highest_cp_connect_block_hash.empty())
+            {
+                xwarn("fully_update_cp_connect uninitialized meta account:%s", get_account().c_str());
+                if (0 == load_index(0))
+                {
+                    return;
+                }
+                else
+                {
+                    base::xauto_ptr<base::xvbindex_t> genesis_index = load_index(0, base::enum_xvblock_flag_committed);
+                    if (genesis_index == nullptr)
+                    {
+                        return;
+                    }
+                    m_meta->_highest_cp_connect_block_hash = genesis_index->get_block_hash();
+                }
+            }
+            const uint64_t old_highest_cp_connect_block_height = m_meta->_highest_cp_connect_block_height;
+            for(uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
+            {
+                const uint64_t try_height = m_meta->_highest_cp_connect_block_height + 1;
+                if (try_height <= get_latest_deleted_block_height())
+                {
+                    xwarn("xblockacct_t::fully_update_cp_connect height:%llu lower than delete height, meta:%s", try_height, dump().c_str());
+                    return;
+                }
+                if(load_index(try_height) == 0) //missed block
+                    break;
+                
+                base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
+                if(!next_commit) //don't have commited block
+                {
+                    xwarn("xblockacct_t::fully_update_cp_connect account:%s,height:%llu not commit, highest_commit_height:%llu", get_account().c_str(), try_height, m_meta->_highest_commit_block_height);
+                    break;
+                }
+
+                if((next_commit->get_height() == (m_meta->_highest_cp_connect_block_height + 1))
+                && (next_commit->get_last_block_hash() == m_meta->_highest_cp_connect_block_hash))
+                {
+                    m_meta->_highest_cp_connect_block_height = next_commit->get_height();
+                    m_meta->_highest_cp_connect_block_hash   = next_commit->get_block_hash();
+                    update_meta();
+                }
+                else
+                {
+                    xerror("xblockacct_t::fully_update_cp_connect mismatch account:%s,height:%llu,cur_hash:%s,next_hash:%s", get_account().c_str(), m_meta->_highest_cp_connect_block_height, 
+                            base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), base::xstring_utl::to_hex(next_commit->get_last_block_hash()).c_str());
+                    break;
+                }
+            }
+            
+            const int  geneis_connect_step = (int)(m_meta->_highest_cp_connect_block_height - old_highest_cp_connect_block_height);
+            if(geneis_connect_step > 64)
+            {
+                xwarn("xblockacct_t::fully_update_cp_connect,navigate big step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
+                (int)(geneis_connect_step) ,m_meta->_highest_cp_connect_block_height,m_meta->_highest_commit_block_height,get_address().c_str());
+            }
+            else
+            {
+                xdbg("xblockacct_t::fully_update_cp_connect,navigate small step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",
+                (int)(geneis_connect_step) ,m_meta->_highest_cp_connect_block_height,m_meta->_highest_commit_block_height,get_address().c_str());
+            }
+        }
+
         //note: genesis block must has been  connected-status
         bool  xblockacct_t::full_connect_to(base::xvbindex_t* this_block)
         {
@@ -1534,12 +1682,31 @@ namespace top
                 m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
             }
 
+            if((0 == this_block_height) && (0 == m_meta->_highest_cp_connect_block_height))
+            {
+                m_meta->_highest_cp_connect_block_height = this_block_height;
+                m_meta->_highest_cp_connect_block_hash   = this_block->get_block_hash();
+                xdbg("full_connect_to cp_connect height:%llu, hash:%s, account:%s", this_block_height, base::xstring_utl::to_hex(this_block->get_block_hash()).c_str(), get_account().c_str());
+            }
+
+            bool  cp_connect_more = true;// connect all the way to checkpoint block
+            //heavy job to search from current height to m_meta->_highest_commit_block_height
+            if(cp_connect_more) //search more
+            {
+                fully_update_cp_connect();
+            }
+            
             bool  logic_connect_more  = true;//logic connection that just ask connect to all the way to any fullblock
             if(logic_connect_more) //search more
             {
                 for(uint64_t h = m_meta->_highest_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_connect_block_height + 1;
+                    if (try_height <= get_latest_deleted_block_height())
+                    {
+                        xwarn("xblockacct_t::full_connect_to height:%llu lower than delete height, meta:%s", try_height, dump().c_str());
+                        break;
+                    }
                     if(load_index(try_height) == 0) //missed block
                         break;
                     

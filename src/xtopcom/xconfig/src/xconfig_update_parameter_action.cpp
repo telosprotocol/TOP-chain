@@ -57,8 +57,11 @@ bool xconfig_delete_parameter_action_t::do_update(const std::map<std::string, st
 }
 
 std::string xtop_config_utility::incremental_add_bwlist(std::string const& bwlist, std::string const& value) {
+    std::string result_bwlist{""};
+    if (!bwlist.empty()) {
+        result_bwlist = bwlist + ",";
+    }
 
-    std::string result_bwlist{bwlist+","};
     std::vector<std::string> vec_bwlist;
     base::xstring_utl::split_string(bwlist, ',', vec_bwlist);
 

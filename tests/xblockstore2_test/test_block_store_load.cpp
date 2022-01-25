@@ -107,7 +107,7 @@ TEST_F(test_block_store_load, store_batch_tables) {
 
     uint64_t max_block_height = 19;
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_block_height + 1);
 
@@ -129,7 +129,7 @@ TEST_F(test_block_store_load, load_unexsit_block_2) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(5);
+    mocktable.genrate_table_chain(5, blockstore);
     {
         auto _block = blockstore->load_block_object(mocktable, 1, 0, false);
         ASSERT_EQ(_block, nullptr);
@@ -157,7 +157,7 @@ TEST_F(test_block_store_load, load_unexsit_block_3) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable;
-    mocktable.genrate_table_chain(20);
+    mocktable.genrate_table_chain(20, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();    
     {
@@ -191,7 +191,7 @@ TEST_F(test_block_store_load, load_units_BENCH) {
     uint32_t user_count = 20;
     uint16_t tableid = 1;
     mock::xdatamock_table mocktable(tableid, user_count);
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
 
@@ -519,7 +519,7 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_BENCH) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(10);
+    mocktable.genrate_table_chain(10, blockstore);
     auto table_blocks = mocktable.get_history_tables();
     auto test_block = table_blocks[3];
 
@@ -556,7 +556,7 @@ TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(200);
+    mocktable.genrate_table_chain(200, blockstore);
     auto table_blocks = mocktable.get_history_tables();
 
     // blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
@@ -603,7 +603,7 @@ TEST_F(test_block_store_load, commit_block_event_1) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(10);
+    mocktable.genrate_table_chain(10, blockstore);
     auto table_blocks = mocktable.get_history_tables();
 
     for (auto & block : table_blocks) {
@@ -663,7 +663,7 @@ TEST_F(test_block_store_load, commit_block_event_2) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(10);
+    mocktable.genrate_table_chain(10, blockstore);
     auto table_blocks = mocktable.get_history_tables();
 
     for (auto & block : table_blocks) {
@@ -692,7 +692,7 @@ TEST_F(test_block_store_load, commit_block_event_3) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(10);
+    mocktable.genrate_table_chain(10, blockstore);
     auto table_blocks = mocktable.get_history_tables();
 
     for (auto & block : table_blocks) {
@@ -721,7 +721,7 @@ TEST_F(test_block_store_load, commit_block_event_4) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(10);
+    mocktable.genrate_table_chain(10, blockstore);
     auto table_blocks = mocktable.get_history_tables();
 
     for (auto & block : table_blocks) {

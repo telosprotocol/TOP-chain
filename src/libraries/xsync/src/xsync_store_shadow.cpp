@@ -6,6 +6,9 @@
 #include <algorithm>
 #include "xsync/xdownloader.h"
 #include "xbase/xbase.h"
+
+#include <cinttypes>
+
 NS_BEG2(top, sync)
 
 xcommon_span_t::xcommon_span_t(){    
@@ -282,22 +285,28 @@ void xsync_chain_spans_t::initialize() {
         return;
     }
 
+    base::xvaccount_t _vaddr(m_account);
+
     xdbg("xsync_store_shadow_t::initialize before, account:%s, height=%llu",
         m_account.c_str(), m_connect_to_genesis_height);
     xsync_span_dao::read_span_height_from_db(m_store, m_account, m_connect_to_genesis_height);
     uint64_t height = m_store->get_latest_genesis_connected_block_height(m_account);
     uint64_t height_old = height;
     height = std::max(height, m_connect_to_genesis_height);
-    while (1) {
-        auto vbindex = m_store->load_block_object(m_account, height + 1);
-        if (vbindex == nullptr)
-            break;
-
-        if (!vbindex->check_block_flag(enum_xvblock_flag_committed))
-            break;
-
-        height = vbindex->get_height();
+    auto const last_deleted_height = m_store->get_latest_deleted_block_height(m_account);
+    if (height > last_deleted_height) {
+        while (true) {
+            base::xauto_ptr<base::xvbindex_t> vbindex = m_store->recover_and_load_commit_index(_vaddr, height + 1);
+            if (vbindex == nullptr) {
+                break;
+            }
+            height = vbindex->get_height();
+            xinfo("xsync_store_shadow_t::initialize recover height.account:%s,blk height %" PRIu64, m_account.c_str(), height);
+        }
+    } else {
+        xinfo("xsync_store_shadow_t::initialize height %" PRIu64 " last deleted blk height %" PRIu64, height, last_deleted_height);
     }
+
     xinfo("xsync_store_shadow_t::initialize after, account:%s, height=%llu, updated height=%llu, old = %llu",
         m_account.c_str(), m_connect_to_genesis_height, height, height_old);
 
@@ -448,6 +457,15 @@ void xsync_store_shadow_t::set_downloader(xdownloader_t *downloader) {
 }
 
 xsync_store_shadow_t::~xsync_store_shadow_t() {
+    std::unordered_map<std::string, std::shared_ptr<xsync_chain_spans_t>> chain_spans;
+    {
+        std::unique_lock<std::mutex> lck(m_lock);
+        chain_spans = m_chain_spans;
+    }
+
+    for (auto span:chain_spans) {
+        span.second->save();
+    }    
     m_sync_store->remove_listener(mbus::xevent_major_type_store, m_listener_id);
 }
 

@@ -166,7 +166,12 @@ namespace top
             virtual uint64_t get_latest_committed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_lowest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_latest_deleted_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual bool                  set_latest_executed_info(const xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
 
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
@@ -195,6 +200,7 @@ namespace top
             virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks,const int atag = 0) = 0;
 
             virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) = 0;
+            virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
 
         public://note:load_index may work with both persist db and cache layer
             virtual xvbindex_vector       load_block_index(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;

@@ -10,6 +10,7 @@ endif()
 
 target_link_libraries(xvledger PRIVATE
     xxbase
+    xdata
 )
 
 # if (XENABLE_TESTS)

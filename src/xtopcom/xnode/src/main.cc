@@ -32,6 +32,8 @@
 #include "safebox_http.h"
 #include "CLI11.hpp"
 #include "xnode/xconfig.h"
+#include "xcommon/xrole_type.h"
+#include "xconfig/xpredefined_configurations.h"
 
  // nlohmann_json
  #include <nlohmann/json.hpp>
@@ -242,7 +244,7 @@ int load_lib(config_t& config) {
             return -1;
         }
     } else if (config.so_func_name == "check_miner_info") {
-        typedef int (*init_component_function_t)(const char*, uint16_t, const char*);
+        typedef int (*init_component_function_t)(const char*, uint16_t, const char*, uint8_t*);
         init_component_function_t init_function_ptr = nullptr;
         init_function_ptr = (init_component_function_t)dlsym(component_handle, config.so_func_name.c_str());
         if (init_function_ptr == nullptr) {
@@ -251,15 +253,19 @@ int load_lib(config_t& config) {
             return -1;
         }
         // run node, will block here
+        uint8_t miner_type[128];
         init_res = (*init_function_ptr)(
                 config.pub_key.c_str(),
                 config.pub_key.size(),
-                config.node_id.c_str());
+                config.node_id.c_str(),
+                miner_type);
         if (init_res != 0) {
             //fprintf(stderr,"topio load function named:%s fail in lib:%s\n", config.so_func_name.c_str(), target_component_solib.c_str());
             dlclose(component_handle);
             return -1;
         }
+        // std::cout << "main miner type:" << miner_type <<std::endl;
+        config.token = (char*)miner_type;
     }
 
 
@@ -1206,7 +1212,26 @@ int StartNodeWithConfig(config_t& config) {
     config.so_func_name = "init_component";
     return load_lib(config);
 }
+bool IsDirEmpty(const char * dirname) {
+    int n = 0;
+    dirent * d;
+    DIR * dir = opendir(dirname);
+    if (dir == NULL)
+        return true;
+    while ((d = readdir(dir)) != NULL) {
+        if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, "..")) {
+            continue;
+        } else {
+            n++;
+        }
 
+        if (n > 0) {
+            return false;
+        }
+    }
+    closedir(dir);
+    return true;
+}
 int StartNode(config_t& config) {
     if (check_process_running(config.pid_file)) {
         std::cout << "topio already running, Aborting!" << std::endl;
@@ -1234,6 +1259,19 @@ int StartNode(config_t& config) {
                 // check miner info not ok: not registered or pub key not matched
                 std::cout << "Start node failed." << std::endl;
                 return false;
+            }
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+            if (config.token == common::XMINER_TYPE_ADVANCE || config.token == common::XMINER_TYPE_ARCHIVE) {
+#else
+            if (config.token == common::XMINER_TYPE_ADVANCE) {
+#endif
+                std::string dbdir = config.datadir + DB_PATH;
+                std::cout << "checking database directory: " << dbdir << std::endl;
+                if (IsDirEmpty(dbdir.c_str())) {
+                    std::cout << "Please download database. Node type: " << config.token << std::endl;
+                    std::cout << "Start node failed." << std::endl;
+                    return false;
+                }
             }
         }
 

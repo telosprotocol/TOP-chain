@@ -99,7 +99,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 
     std::vector<uint16_t> tables = m_vnet_driver->table_ids();
     if (tables.empty()) {
-        xerror("xtxpool_service::set_params, load table failed.xip:{%" PRIu64 ", %" PRIu64 "} node:%s", xip.high_addr, xip.low_addr, m_vnetwork_str.c_str());
+        xerror("xtxpool_service::set_params, load table failed.xip:%" PRIx64 ":%" PRIx64" node:%s", xip.high_addr, xip.low_addr, m_vnetwork_str.c_str());
         return;
     }
     m_cover_front_table_id = tables.front();
@@ -109,7 +109,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 bool xtxpool_service::start(const xvip2_t & xip) {
     m_vnet_driver->register_message_ready_notify(xmessage_category_txpool, std::bind(&xtxpool_service::on_message_receipt, this, std::placeholders::_1, std::placeholders::_2));
 
-    xinfo("xtxpool_service::start node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
+    xinfo("xtxpool_service::start node:%s,xip:%" PRIx64 ":%" PRIx64" zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -121,7 +121,7 @@ bool xtxpool_service::start(const xvip2_t & xip) {
     return true;
 }
 bool xtxpool_service::unreg(const xvip2_t & xip) {
-    xinfo("xtxpool_service::unreg node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
+    xinfo("xtxpool_service::unreg node:%s,xip:%" PRIx64 ":%" PRIx64" zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -129,14 +129,14 @@ bool xtxpool_service::unreg(const xvip2_t & xip) {
           m_cover_front_table_id,
           m_cover_back_table_id,
           m_is_send_receipt_role);
-    xassert(status() != enum_txpool_service_status_not_run);
+    xassert(status() != enum_txpool_service_status_unreged);
     m_vnet_driver->unregister_message_ready_notify(xmessage_category_txpool);
-    m_status.store(enum_txpool_service_status_not_run, std::memory_order_release);
+    m_status.store(enum_txpool_service_status_unreged, std::memory_order_release);
     return true;
 }
 
 bool xtxpool_service::fade(const xvip2_t & xip) {
-    xinfo("xtxpool_service::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    xinfo("xtxpool_service::fade xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     m_status.store(enum_txpool_service_status_faded, std::memory_order_release);
     return true;
 }
@@ -289,7 +289,7 @@ void xtxpool_service::drop_msg(vnetwork::xmessage_t const & message, std::string
 }
 
 void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    if (status() == enum_txpool_service_status_not_run) {
+    if (status() == enum_txpool_service_status_unreged) {
         return;
     }
     (void)sender;
@@ -421,6 +421,7 @@ void xtxpool_service::push_send_fail_record(int32_t err_type) {
     XMETRICS_GAUGE(metrics::txpool_request_origin_tx, 0);
 
     switch (err_type) {
+
     case xtxpool_v2::xtxpool_error_table_reached_upper_limit:
         XMETRICS_GAUGE(metrics::txpool_push_send_fail_table_limit, 1);
         break;
@@ -460,7 +461,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
          tx->get_source_addr().c_str(),
          tx->get_target_addr().c_str(),
          tx->get_digest_hex_str().c_str());
-    if (status() == enum_txpool_service_status_not_run) {
+    if (status() == enum_txpool_service_status_unreged) {
         xwarn(
             "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_digest_hex_str().c_str());
         push_send_fail_record(xtxpool_v2::xtxpool_error_service_not_running);
@@ -674,6 +675,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)m_zone_index, table_id);
     base::xvaccount_t vaccount(table_addr);
     base::xvproperty_prove_ptr_t property_prove = nullptr;
+    uint64_t height = 0;
 
     auto iter = m_table_info_cache.find(table_id);
     if (iter != m_table_info_cache.end()) {
@@ -685,6 +687,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
                   table_info.m_last_property_height,
                   cur_height);
             property_prove = table_info.m_property_prove;
+            height = table_info.m_last_property_height;
         }
     }
     if (property_prove == nullptr) {
@@ -704,6 +707,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
                     xerror("xtxpool_service::send_table_receipt_id_state, continuous nil table block number is more than 2,table:%s,height:%llu", table_addr.c_str(), height);
                 }
 
+
                 auto commit_block = m_para->get_vblockstore()->load_block_object(vaccount, height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
                 if (commit_block == nullptr) {
                     xwarn("xtxpool_service::send_table_receipt_id_state load block fail,table:%s,height:%llu", table_addr.c_str(), height - 1);
@@ -721,9 +725,11 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
         }
 
         if (height == 0 || block_class == base::enum_xvblock_class_nil) {
-            xinfo("xtxpool_service::send_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
+
+            xinfo("xtxpool_service::send_table_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
             return;
         }
+
 
         auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(non_nil_commit_block.get());
         if (bstate == nullptr) {
@@ -742,6 +748,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
             xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), non_nil_commit_block->get_height());
             return;
         }
+
         property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
         if (property_prove == nullptr) {
             xwarn("xtxpool_service::send_table_receipt_id_state create receipt state fail.table:%s, commit height:%llu", table_addr.c_str(), non_nil_commit_block->get_height());
@@ -756,12 +763,14 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
             iter->second.m_last_property_height = non_nil_commit_block->get_height();
             iter->second.m_property_prove = property_prove;
         }
+        height = tablestate->get_block_height();
     }
 
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     property_prove->serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
+    xinfo("xtxpool_service::send_table_receipt_id_state table:%d,height:%llu", table_id, height);
 
     std::error_code ec = vnetwork::xvnetwork_errc2_t::success;
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
@@ -786,6 +795,10 @@ bool xtxpool_service::is_running() const {
     return (status() == enum_txpool_service_status_running);
 }
 
+bool xtxpool_service::is_unreged() const {
+    return (status() == enum_txpool_service_status_unreged);
+}
+
 // void xtxpool_service::send_neighbor_sync_req(base::xtable_shortid_t table_sid) {
 //     xvip2_t neighbor_xip = m_xip;
 //     uint16_t rand_node_id = xverifier::xtx_utl::get_gmttime_s() % m_shard_size;
@@ -796,7 +809,7 @@ bool xtxpool_service::is_running() const {
 //     } else {
 //         set_node_id_to_xip2(neighbor_xip, m_node_id + 1);
 //     }
-//     xdbg("xtxpool_service::send_receipt_sync_req m_xip:{%" PRIu64 ", %" PRIu64 "} ,neighbor_xip:{%" PRIu64 ", %" PRIu64 "}",
+//     xdbg("xtxpool_service::send_receipt_sync_req m_xip:%" PRIx64 ":%" PRIx64" ,neighbor_xip:%" PRIx64 ":%" PRIx64,
 //          m_xip.high_addr,
 //          m_xip.low_addr,
 //          neighbor_xip.high_addr,

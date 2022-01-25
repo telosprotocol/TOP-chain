@@ -9,8 +9,8 @@
 NS_BEG2(top, error)
 
 template <typename ExceptionT>
-void throw_exception(ExceptionT const & eh) {
-    throw eh;
+void throw_exception(ExceptionT eh) {
+    throw std::move(eh);
 }
 
 NS_END2

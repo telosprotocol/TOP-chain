@@ -58,13 +58,13 @@ void xchain_params::load_user_config() {
     }
     //user_params.signkey = base::xstring_utl::base64_decode(sign_key);
     user_params.signkey = sign_key;
-#if defined XENABLE_MOCK_ZEC_STAKE
+#if defined(XENABLE_MOCK_ZEC_STAKE)
     std::string role_type;
     if(!config_register.get("node_type",role_type)){
         assert(0);
     }
-    user_params.node_role_type = common::to_role_type(role_type);
-    if (user_params.node_role_type == common::xrole_type_t::invalid) {
+    user_params.node_role_type = common::to_miner_type(role_type);
+    if (user_params.node_role_type == common::xminer_type_t::invalid) {
         xerror("[user config] node_type invalid");
         throw std::logic_error{"node_type invalid"};
     }

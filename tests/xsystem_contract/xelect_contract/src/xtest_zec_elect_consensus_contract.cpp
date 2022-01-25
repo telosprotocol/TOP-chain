@@ -387,7 +387,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::advance;
+        standby_node_info.user_request_role = common::xminer_type_t::advance;
 #endif
         add_standby_node(common::xnode_type_t::consensus_auditor, node_id, standby_node_info);
     }
@@ -398,7 +398,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::validator;
+        standby_node_info.user_request_role = common::xminer_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -409,7 +409,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::validator;
+        standby_node_info.user_request_role = common::xminer_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -507,7 +507,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_auditor] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::advance;
+        standby_node_info.user_request_role = common::xminer_type_t::advance;
 #endif
         add_standby_node(common::xnode_type_t::consensus_auditor, node_id, standby_node_info);
     }
@@ -517,7 +517,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_validator] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::validator;
+        standby_node_info.user_request_role = common::xminer_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -527,7 +527,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_validator] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::validator;
+        standby_node_info.user_request_role = common::xminer_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }

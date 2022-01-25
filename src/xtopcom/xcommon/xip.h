@@ -389,6 +389,14 @@ xzone_id_t const
 #endif
     xfrozen_zone_id{xfrozen_zone_id_value};
 
+XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_fullnode_index};
+#if defined XCXX14_OR_ABOVE
+XINLINE_CONSTEXPR xzone_id_t
+#else
+xzone_id_t const
+#endif
+    xfullnode_zone_id{xfullnode_zone_id_value};
+
 /**
  * @brief default archive zone id
  */
@@ -535,7 +543,7 @@ xgroup_id_t const
 
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_begin{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value{ 1 };
-XINLINE_CONSTEXPR xgroup_id_t::value_type xfull_node_group_id_value{ 2 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xexchange_group_id_value{ 2 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_end{ 3 };
 
 #if defined(XCXX14_OR_ABOVE)
@@ -557,7 +565,7 @@ XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
-xfull_node_group_id{ xfull_node_group_id_value };
+xexchange_group_id{ xexchange_group_id_value };
 
 #if defined(XCXX14_OR_ABOVE)
 XINLINE_CONSTEXPR xgroup_id_t

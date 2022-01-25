@@ -31,7 +31,7 @@ public:
 
 void usage() {
     std::cout << "------- usage -------" << std::endl;
-    std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
+    std::cout << "- ./xdb_export <config_json/db_path> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
     std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
     std::cout << "        - compact_db new_path" << std::endl;
@@ -42,9 +42,11 @@ void usage() {
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db <new_path>" << std::endl;
-    std::cout << "        - parse_db <new_path>" << std::endl;
+    std::cout << "        - check_archive_db [redundancy]" << std::endl;
+    std::cout << "        - parse_checkpoint <height>" << std::endl;
+    std::cout << "        - parse_db" << std::endl;
     std::cout << "        - read_meta <account>" << std::endl;
+    std::cout << "        - parse_type_size [db_path] " << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -58,17 +60,29 @@ int main(int argc, char ** argv) {
 
     std::string db_path;
     {
-        std::string config_file{argv[1]};
-        if (access(config_file.c_str(), 0) != 0) {
-            std::cout << "config file: " << config_file << " not found" << std::endl;
+        struct stat s;
+        if (stat(argv[1], &s) != 0) {
+            std::cout << "db: " << argv[1] << " not found" << std::endl;
             return -1;
         }
-        json confg_json;
-        std::ifstream config_stream(config_file);
-        config_stream >> confg_json;
-        db_path = confg_json.at("db_path");
-        if (access(db_path.c_str(), 0) != 0) {
-            std::cout << "db: " << db_path << "not found!" << std::endl;
+        if (s.st_mode & S_IFDIR) {
+            db_path = argv[1];
+        } else if (s.st_mode & S_IFREG) {
+            std::string config_file{argv[1]};
+            std::ifstream config_stream(config_file);
+            json confg_json;
+            config_stream >> confg_json;
+            if (!confg_json.count("db_path")) {
+                std::cout << "db: " << db_path << "not found!" << std::endl;
+                return -1;
+            }
+            db_path = confg_json.at("db_path");
+            if (access(db_path.c_str(), 0) != 0) {
+                std::cout << "db: " << db_path << "not found!" << std::endl;
+                return -1;
+            }
+        } else {
+            std::cout << "db: " << argv[1] << " not found" << std::endl;
             return -1;
         }
     }
@@ -103,34 +117,25 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         tools_v3.compact_db();
         return 0;
-    }
-
-    if (function_name == "check_archive_db") {
+    } else if(function_name == "parse_type_size") {
         if (argc != 4) {
             xassert(false);
             usage();
             return -1;
         }
+
+        std::cout << "parse_type_size start" << std::endl;
         std::string v3_db_path = argv[3];
         xdb_export_tools_t tools_v3{v3_db_path};
-        tools_v3.query_archive_db();
-        return 0;
-    }
-    if (function_name == "parse_db") {
-        if (argc != 4) {
-            usage();
-            return -1;
-        }
-        std::string v3_db_path = argv[3];
-        xdb_export_tools_t tools_v3{v3_db_path};
-        std::string dir{"parse_db_result/"};
-        mkdir(dir.c_str(), 0750);
+        std::string dir{"parse_type_size/"};
         tools_v3.set_outfile_folder(dir);
-        auto const & table_account_vec = tools_v3.get_table_accounts();
-        auto t1 = base::xtime_utl::time_now_ms();
-        tools_v3.query_table_unit_info(table_account_vec);
-        auto t2 = base::xtime_utl::time_now_ms();
-        std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+        std::string  result_file = "result_parse_type_size";
+        std::vector<std::string> pathNames;
+        base::xstring_utl::split_string(v3_db_path, '/', pathNames);
+        if (pathNames.size() > 1) {
+            result_file = pathNames.back();
+        }
+        tools_v3.parse_all(result_file);
         return 0;
     }
 
@@ -199,9 +204,7 @@ int main(int argc, char ** argv) {
             }
         }
 
-        std::string dir{"all_table_tx_info/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("all_table_tx_info/");
         auto const account_vec = xdb_export_tools_t::get_table_accounts();
         tools.query_tx_info(account_vec, thread_num, start_timestamp, end_timestamp);
     } else if (function_name == "check_block_exist") {
@@ -228,9 +231,7 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        std::string dir{"all_block_basic_info/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("all_block_basic_info/");
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_block_basic(unit_account_vec, "all");
@@ -244,9 +245,7 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        std::string dir{"all_state_basic_info/"};
-        mkdir(dir.c_str(), 0750);
-        tools.set_outfile_folder(dir);
+        tools.set_outfile_folder("all_state_basic_info/");
         if (argc == 3) {
             auto const unit_account_vec = tools.get_db_unit_accounts();
             tools.query_state_basic(unit_account_vec, "all");
@@ -276,6 +275,35 @@ int main(int argc, char ** argv) {
         tools.query_property(argv[3], argv[4], argv[5]);
     } else if (function_name == "check_balance") {
         tools.query_balance();
+    } else if (function_name == "check_archive_db") {
+        if (argc != 3 && argc != 4) {
+            usage();
+            return -1;
+        }
+        uint32_t redundancy = 0;
+        if (argc == 4) {
+            redundancy = std::stoi(argv[3]);
+        }
+        auto t1 = base::xtime_utl::time_now_ms();
+        tools.query_archive_db(redundancy);
+        auto t2 = base::xtime_utl::time_now_ms();
+        std::cout << "check_archive_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+    } else if (function_name == "parse_checkpoint") {
+        if (argc != 4) {
+            usage();
+            return -1;
+        }
+        auto t1 = base::xtime_utl::time_now_ms();
+        tools.query_checkpoint(std::stoi(argv[3]));
+        auto t2 = base::xtime_utl::time_now_ms();
+        std::cout << "parse_checkpoint total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+    } else if (function_name == "parse_db") {
+        tools.set_outfile_folder("parse_db_result/");
+        auto const table_account_vec = tools.get_table_accounts();
+        auto t1 = base::xtime_utl::time_now_ms();
+        tools.query_table_unit_info(table_account_vec);
+        auto t2 = base::xtime_utl::time_now_ms();
+        std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
     } else {
         usage();
     }

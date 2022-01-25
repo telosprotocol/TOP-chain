@@ -175,7 +175,7 @@ uint64_t xchain_timer_t::logic_time() const noexcept {
 bool xchain_timer_t::watch(const std::string & key, std::uint64_t interval, xchain_time_watcher cb) {
     xdbg("xchain_timer_t m_mutex watch : %s", key.c_str());
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_watch_map.insert({key, {interval, cb}});
+    m_watch_map[key] = {interval, cb};
     return true;
 }
 

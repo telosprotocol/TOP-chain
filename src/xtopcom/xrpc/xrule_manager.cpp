@@ -180,24 +180,31 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
     CONDTION_FAIL_THROW(json_proc.m_request_json["params"].isObject(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params");
     auto & params = json_proc.m_request_json["params"];
 
+    CONDTION_FAIL_THROW(
+        params["tx_structure_version"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_structure_version or tx_structure_version is not valid");
     auto version = params["tx_structure_version"].asUInt();
     CONDTION_FAIL_THROW((version == data::xtransaction_version_1) || (version == data::xtransaction_version_2), enum_xrpc_error_code::rpc_param_param_error, "tx_structure_version invalid");
     if (version == data::xtransaction_version_2) {
+        CONDTION_FAIL_THROW(params["amount"].isUInt64(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params amount or amount is not valid");
         CONDTION_FAIL_THROW(params["sender_account"].isString() && !params["sender_account"].asString().empty(),
                             enum_xrpc_error_code::rpc_param_param_lack,
                             "miss param sender_account");
+        CONDTION_FAIL_THROW(params["sender_action_name"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param sender_action_name");
+        CONDTION_FAIL_THROW(params["sender_action_param"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param sender_action_param");
         CONDTION_FAIL_THROW(params["receiver_account"].isString() && !params["receiver_account"].asString().empty(),
                             enum_xrpc_error_code::rpc_param_param_lack,
                             "miss param receiver_account");
+        CONDTION_FAIL_THROW(params["receiver_action_name"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param receiver_action_name");
+        CONDTION_FAIL_THROW(params["receiver_action_param"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param receiver_action_param");
+
         std::string src_addr = params["sender_account"].asString();
         std::string dst_addr = params["receiver_account"].asString();
         CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr), enum_xrpc_error_code::rpc_param_param_error, "sender_account invalid");
         CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr), enum_xrpc_error_code::rpc_param_param_error, "receiver_account invalid");    
     
         CONDTION_FAIL_THROW(params["edge_nodeid"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params edge_nodeid or edge_nodeid is not valid");
+        CONDTION_FAIL_THROW(params["token_name"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params token_name or token_name is not valid");
     } else {
-        CONDTION_FAIL_THROW(
-            params["tx_structure_version"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_structure_version or tx_structure_version is not valid");
         CONDTION_FAIL_THROW(params["to_ledger_id"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params to_ledger_id or to_ledger_id is not valid");
         CONDTION_FAIL_THROW(params["from_ledger_id"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params from_ledger_id or from_ledger_id is not valid");
         CONDTION_FAIL_THROW(params["tx_len"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_len or tx_len is not valid");
@@ -239,6 +246,7 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
         CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr), enum_xrpc_error_code::rpc_param_param_error, "tx_receiver_account_addr invalid");    
     }
 
+    CONDTION_FAIL_THROW(params["premium_price"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params premium_price or premium_price is not valid");
     CONDTION_FAIL_THROW(params["tx_deposit"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_deposit or tx_deposit is not valid");
     CONDTION_FAIL_THROW(params["tx_type"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_type or tx_type is not valid");
     CONDTION_FAIL_THROW(

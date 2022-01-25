@@ -29,6 +29,7 @@
 #include "xtopcl/include/api_method.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmigrate/xvmigrate.h"
+#include "xdata/xcheckpoint.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -155,6 +156,9 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     //wait log path created,and init metrics
     XMETRICS_INIT2(log_path);
 
+    // init checkpoint
+    data::xchain_checkpoint_t::load();
+
     //init data_path into xvchain instance
     //init auto_prune feature
     set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
@@ -217,7 +221,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
 
     // make block here
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
+        std::this_thread::sleep_for(std::chrono::seconds(1200));
     }
     // todo adapter to vnode type
 
@@ -232,7 +237,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
 // void
 // set_node_type(const uint32_t role_type) {
 //     auto& user_params = data::xuser_params::get_instance();
-//     user_params.node_role_type = static_cast<top::common::xrole_type_t>(role_type);
+//     user_params.node_role_type = static_cast<top::common::xminer_type_t>(role_type);
 // }
 
 bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result) {
@@ -294,7 +299,7 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
 
 }
 
-bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
+bool check_miner_info(const std::string &pub_key, const std::string &node_id, std::string& miner_type) {
     g_userinfo.account = node_id;
     if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
@@ -319,6 +324,8 @@ bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
         if (response.contains("data")) {
             auto data = response["data"];
             auto node_sign_key = data["node_sign_key"].get<std::string>();
+            miner_type = data["registered_node_type"].get<std::string>();
+            // std::cout << "miner type: " <<miner_type <<std::endl;
             if (node_sign_key != pub_key) {
                 std::cout << "The minerkey does not match miner account." << std::endl
                     << g_userinfo.account << " account's miner key is "
@@ -454,6 +461,9 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     xinfo("=== xtopchain start here with noparams ===");
     std::cout << "xnode start begin..." << std::endl;
 
+    // init checkpoint
+    data::xchain_checkpoint_t::load();
+
     //init data_path into xvchain instance
     base::xvchain_t::instance().set_data_dir_path(datadir);
     //init auto_prune feature
@@ -536,7 +546,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
   
     // make block here
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
+        std::this_thread::sleep_for(std::chrono::seconds(1200));
     }
 
     config_center.clear_loaders();

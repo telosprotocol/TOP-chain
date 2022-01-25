@@ -68,6 +68,7 @@ constexpr top::xrange_t<typename OnChainGovernanceParameterT::type> const &get_o
 }
 
 #define XGET_ONCHAIN_GOVERNANCE_PARAMETER_RANGE(NAME) get_onchain_governance_parameter_range<x##NAME##_onchain_goverance_parameter_t>()
+#define XTYPE_OF(NAME) top::config::x##NAME##_onchain_goverance_parameter_t::type
 
 using xinterval_t = std::uint32_t;
 using xgroup_size_t = std::uint16_t;
@@ -92,6 +93,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 13, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
 #else
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10206
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval,
@@ -117,6 +119,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, normal, 36, 1, std::numeric_limits<xinterval_t>::max());
 #endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
@@ -178,6 +181,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t, normal, 2, 1, 62);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_fullnode_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size, std::uint16_t, normal, 512, 64, 1022);
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_standby_pool_update_interval, xinterval_t, normal, 11, 1, std::numeric_limits<xinterval_t>::max());
