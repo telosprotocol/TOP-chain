@@ -349,12 +349,15 @@ namespace top
             virtual bool                on_process_close();//send process_close event to every objects
             uint16_t                    get_round_number() {return m_round_number;}
             void                        add_round_number() {m_round_number++;}
+            void                        update_node_type(const uint32_t combined_node_type);
+            uint8_t                     get_archive_flag() {return m_archive_flag;}
         protected:
             virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
             bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);
         private:
             std::recursive_mutex    m_lock;
             uint8_t                 m_is_auto_prune;//1 means on,0 means off
+            uint8_t                 m_archive_flag;
             uint8_t                 m_reserved_2;
             uint16_t                m_round_number;
             uint32_t                m_chain_id;//aka network_id

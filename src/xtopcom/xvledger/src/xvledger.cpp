@@ -7,6 +7,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xmetrics/xmetrics.h"
+#include "xcommon/xnode_type.h"
 
 #ifdef DEBUG
     #define DEBUG_XVLEDGER
@@ -1313,6 +1314,7 @@ namespace top
         {
             //initialize
             m_is_auto_prune = 0;//init as disabled status
+            m_archive_flag = 0;
             m_reserved_2 = 0;
             m_round_number = 0;
             m_chain_id = 0;
@@ -1586,6 +1588,12 @@ namespace top
             else
                 m_is_auto_prune = 0;
         }
-    
+
+        void  xvchain_t::update_node_type(const uint32_t combined_node_type) {
+            common::xnode_type_t node_type = static_cast<common::xnode_type_t>(combined_node_type);
+            if (m_archive_flag == 0 && common::has<common::xnode_type_t::storage>(node_type))
+                m_archive_flag = 1;
+        }
+
     };//end of namespace of base
 };//end of namespace of top

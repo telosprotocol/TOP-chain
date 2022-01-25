@@ -301,6 +301,10 @@ std::string xtop_sync_object::status() const {
     return result;
 }
 std::string xtop_sync_object::auto_prune_data(const std::string& prune) const {
+    if (base::xvchain_t::instance().get_archive_flag() == 1) {
+        xinfo("storage node, disable prune data.");
+        return "";
+    }
     std::string prune_enable = prune;
     top::base::xstring_utl::tolower_string(prune_enable);
     if (prune_enable == "on")
