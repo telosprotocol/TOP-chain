@@ -288,25 +288,25 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & 
     return m_receipt_queue_internal.find(hash);
 }
 
-// void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-//     for (auto & it : m_recv_tx_peer_table_map) {
-//         auto & peer_table_sid = it.first;
-//         auto & peer_table_tx_queue = it.second;
-//         base::xreceiptid_pair_t receiptid_pair;
-//         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-//         xdbg("xreceipt_queue_new_t::update_receiptid_state recv self:%d,peer:%d,id pair:%s", receiptid_state->get_self_tableid(), peer_table_sid, receiptid_pair.dump().c_str());
-//         peer_table_tx_queue->update_latest_receipt_id(receiptid_pair.get_recvid_max());
-//     }
+void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+    for (auto & it : m_recv_tx_peer_table_map) {
+        auto & peer_table_sid = it.first;
+        auto & peer_table_tx_queue = it.second;
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        xdbg("xreceipt_queue_new_t::update_receiptid_state recv self:%d,peer:%d,id pair:%s", receiptid_state->get_self_tableid(), peer_table_sid, receiptid_pair.dump().c_str());
+        peer_table_tx_queue->update_latest_receipt_id(receiptid_pair.get_recvid_max());
+    }
 
-//     for (auto & it : m_confirm_tx_peer_table_map) {
-//         auto & peer_table_sid = it.first;
-//         auto & peer_table_tx_queue = it.second;
-//         base::xreceiptid_pair_t receiptid_pair;
-//         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-//         xdbg("xreceipt_queue_new_t::update_receiptid_state confirm self:%d,peer:%d,id pair:%s", receiptid_state->get_self_tableid(), peer_table_sid, receiptid_pair.dump().c_str());
-//         peer_table_tx_queue->update_latest_receipt_id(receiptid_pair.get_confirmid_max());
-//     }
-// }
+    for (auto & it : m_confirm_tx_peer_table_map) {
+        auto & peer_table_sid = it.first;
+        auto & peer_table_tx_queue = it.second;
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        xdbg("xreceipt_queue_new_t::update_receiptid_state confirm self:%d,peer:%d,id pair:%s", receiptid_state->get_self_tableid(), peer_table_sid, receiptid_pair.dump().c_str());
+        peer_table_tx_queue->update_latest_receipt_id(receiptid_pair.get_confirmid_max());
+    }
+}
 
 void xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid) {
     if (txinfo.get_subtype() == enum_transaction_subtype_self) {
