@@ -5,6 +5,7 @@
 
 #include "xvdbkey.h"
 #include "xbase/xutl.h"
+#include <iostream>
 
 namespace top
 {
@@ -340,11 +341,40 @@ namespace top
             return type;
         }
 
+        const std::string xvdbkey_t::get_dbkey_type_name(enum_xdbkey_type type)
+        {
+            static std::string key_name_array[enum_xdbkey_type_max] = {"unknow", "keyvalue", "block_index", "block_object",
+                            "state_object", "account_meta", "account_span", "transaction", "input_resource",
+                            "output_resource",  "span_height", "unit_proof", "unknow", "unknow", "unknow"};
+            if (type >= enum_xdbkey_type_max) {
+                return {};
+            }
+            return key_name_array[type];
+        }
+
         const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height)
         {
             //enum_xdb_cf_type_read_most = 'r'
             const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
             return key_path;
+        }
+    
+        const std::string xvdbkey_t::get_account_prefix_key(const std::string & key)
+        {
+            std::vector<std::string> values;
+            base::xstring_utl::split_string(key, '/', values);
+            if (values.size() >= 2) {
+                const std::string addr = xvaccount_t::compact_address_from(values[2]);
+                /*if (values[2][0] != 'T'&& addr.length() != 46) {
+                    //test 
+                    std::cout << "key is " << key << std::endl;
+                    uint64_t *pDump = nullptr;
+                    *pDump = 1024;  
+                }*/
+                const std::string account_key = values[0] + "/" + values[1] +"/"+ addr;
+                return account_key;
+            }
+            return key;
         }
     
     }//end of namespace of base

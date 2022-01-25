@@ -198,6 +198,8 @@ public:
     
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie);
+     //iterator all cf data
+    bool read_range_cf( rocksdb::ColumnFamilyHandle* target_cf, const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie);
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     bool compact_range(const std::string & begin_key,const std::string & end_key);
@@ -808,29 +810,69 @@ bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::strin
     return ret;
 }
 
+bool xdb::xdb_impl::read_range_cf( rocksdb::ColumnFamilyHandle* target_cf, const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie)
+{
+    bool ret = false;
+    if(target_cf != nullptr)//try every CF
+    {
+        rocksdb::ReadOptions target_opt = rocksdb::ReadOptions();
+        target_opt.ignore_range_deletions = true; //ignored deleted_ranges to improve read performance
+        target_opt.verify_checksums = false; //application has own checksum
+
+        auto iter = m_db->NewIterator(target_opt, target_cf);
+        for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
+        {
+            const std::string std_key(iter->key().ToString());
+            const std::string std_value(iter->value().ToString());
+            if((*callback_fuc)(std_key,std_value,cookie) == false)
+            {
+                ret = false;
+                break;
+            }
+            ret = true;
+        }
+        delete iter;
+    }
+    return ret;
+}
+
+
 //iterator each key of prefix.note: go throuh whole db if prefix is empty
 bool xdb::xdb_impl::read_range(const std::string& prefix,xdb_iterator_callback callback_fuc,void * cookie)
 {
     bool ret = false;
-    rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(prefix);
-    
-    rocksdb::ReadOptions target_opt = rocksdb::ReadOptions();
-    target_opt.ignore_range_deletions = true; //ignored deleted_ranges to improve read performance
-    target_opt.verify_checksums = false; //application has own checksum
-    
-    auto iter = m_db->NewIterator(target_opt, target_cf);
-    for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
-    {
-        const std::string std_key(iter->key().ToString());
-        const std::string std_value(iter->value().ToString());
-        if((*callback_fuc)(std_key,std_value,cookie) == false)
+
+    if (prefix.size() > 2) {
+        rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(prefix);
+        rocksdb::ReadOptions target_opt = rocksdb::ReadOptions();
+        target_opt.ignore_range_deletions = true; //ignored deleted_ranges to improve read performance
+        target_opt.verify_checksums = false; //application has own checksum
+        
+        auto iter = m_db->NewIterator(target_opt, target_cf);
+        for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next())
         {
-            ret = false;
-            break;
+            const std::string std_key(iter->key().ToString());
+            const std::string std_value(iter->value().ToString());
+            if((*callback_fuc)(std_key,std_value,cookie) == false)
+            {
+                ret = false;
+                break;
+            }
+            ret = true;
         }
-        ret = true;
+        delete iter;
+    } else {
+        for (size_t i = 0; i < m_cf_handles.size(); ++i) {
+            if (m_cf_handles[i] != nullptr) {
+                xinfo("read_range_cf i start.", i);
+                ret = read_range_cf(m_cf_handles[i], prefix,callback_fuc, cookie);
+                if (ret == false) {
+                    xwarn("read_range_cf i is error.", i);
+                    break;
+                }
+            }
+        }
     }
-    delete iter;
     return ret;
 }
 

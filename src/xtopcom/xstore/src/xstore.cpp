@@ -307,6 +307,11 @@ bool  xstore::compact_range(const std::string & begin_key,const std::string & en
     return m_db->compact_range(begin_key,end_key);
 }
 
+bool   xstore::read_range_callback(const std::string& prefix,db::xdb_iterator_callback callback,void * cookie)
+{
+    return m_db->read_range(prefix, callback, cookie);
+}
+
 //key must be readonly(never update after PUT),otherwise the behavior is undefined
 bool   xstore::single_delete(const std::string & target_key)//key must be readonly(never update after PUT),otherwise the behavior is undefined
 {

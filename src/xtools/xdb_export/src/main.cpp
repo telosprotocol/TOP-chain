@@ -45,6 +45,7 @@ void usage() {
     std::cout << "        - check_archive_db <new_path>" << std::endl;
     std::cout << "        - parse_db <new_path>" << std::endl;
     std::cout << "        - read_meta <account>" << std::endl;
+    std::cout << "        - parse_type_size " << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -103,6 +104,27 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         tools_v3.compact_db();
         return 0;
+    } else if(function_name == "parse_type_size") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+
+        std::cout << "parse_type_size start" << std::endl;
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        std::string dir{"parse_type_size/"};
+        mkdir(dir.c_str(), 0750);
+        tools_v3.set_outfile_folder(dir);
+        std::string  result_file = "result_parse_type_size";
+        std::vector<std::string> pathNames;
+        base::xstring_utl::split_string(v3_db_path, '/', pathNames);
+        if (pathNames.size() > 1) {
+            result_file = pathNames.back();
+        }
+        tools_v3.parse_all(result_file);
+        return 0;
     }
 
     if (function_name == "check_archive_db") {
@@ -121,6 +143,7 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
+        
         std::string v3_db_path = argv[3];
         xdb_export_tools_t tools_v3{v3_db_path};
         std::string dir{"parse_db_result/"};
