@@ -170,15 +170,12 @@ do
         echo "BUILD WITH store unit block tool"
     ;;
     chain_forked_by_default*)
-        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON"
-        echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (all fork points are forked BY DEFAULT)"
-        if [[ "${option}" == *"="* ]]; then
-            CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_VERSION=""${option##*=}"
-            echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (set fork version)"
-        else
-            CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_VERSION=999999"
-            echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (set fork version)"
+        FORK_VERSION=`echo $option | sed 's/chain_forked_by_default[=]*//'`
+        if [[ x$FORK_VERSION = x ]]; then
+            FORK_VERSION=999999
         fi
+        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON -DXCHAIN_FORKED_VERSION=$FORK_VERSION"
+        echo "BUILD WITH -DXCHAIN_FORKED_BY_DEFAULT=ON -DXCHAIN_FORKED_VERSION=$FORK_VERSION"
     ;;
     metrics_dataobject)
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_METRICS_DATAOBJECT=ON"
