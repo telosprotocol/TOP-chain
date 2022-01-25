@@ -368,10 +368,16 @@ void xtxpool_table_t::refresh_table(bool refresh_state_only) {
         return;
     }
 
-    m_unconfirm_raw_txs.refresh(m_para->get_receiptid_state_cache().get_table_receiptid_state(m_xtable_info.get_short_table_id()));
+    auto receiptid_state = m_para->get_receiptid_state_cache().get_table_receiptid_state(m_xtable_info.get_short_table_id());
+    if (receiptid_state != nullptr) {
+        m_unconfirm_raw_txs.refresh(receiptid_state);
+    }
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        if (receiptid_state != nullptr) {
+            m_txmgr_table.update_receiptid_state(receiptid_state);
+        }
         m_txmgr_table.clear_expired_txs();
     }
 
