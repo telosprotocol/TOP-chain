@@ -124,22 +124,25 @@ namespace top
                     }
                 }
 
-                // XTODO recover cp connect block height
-                for (uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; h++)
-                {
-                    auto bindex = recover_and_load_commit_index(h);
-                    if (bindex == nullptr) {
-                        break;
+                // XTODO recover cp connect block height for un-commit crash, not process height#0
+                if (m_meta->_highest_cp_connect_block_height > 0) {
+                    for (uint64_t h = m_meta->_highest_cp_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; h++)
+                    {
+                        auto bindex = recover_and_load_commit_index(h);
+                        if (bindex == nullptr) {
+                            break;
+                        }
+                        if (bindex->get_last_block_hash() != m_meta->_highest_cp_connect_block_hash) {
+                            xerror("xblockacct_t::recover_meta,unmatch cp connect hash.account=%s,height=%ld,cur_hash=%s,next_last_hash=%s",
+                                get_address().c_str(), h, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), base::xstring_utl::to_hex(bindex->get_last_block_hash()).c_str());
+                            break;
+                        }
+                        m_meta->_highest_cp_connect_block_height = bindex->get_height();
+                        m_meta->_highest_cp_connect_block_hash = bindex->get_block_hash();
+                        xwarn("xblockacct_t::recover_meta,recover cp connect height=% " PRId64 " of account(%s)",h,get_address().c_str());
                     }
-                    if (bindex->get_last_block_hash() != m_meta->_highest_cp_connect_block_hash) {
-                        xerror("xblockacct_t::recover_meta,unmatch cp connect hash.account=%s,height=%ld,cur_hash=%s,next_last_hash=%s",
-                            get_address().c_str(), h, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(), base::xstring_utl::to_hex(bindex->get_last_block_hash()).c_str());
-                        break;
-                    }
-                    m_meta->_highest_cp_connect_block_height = bindex->get_height();
-                    m_meta->_highest_cp_connect_block_hash = bindex->get_block_hash();
-                    xwarn("xblockacct_t::recover_meta,recover cp connect height=% " PRId64 " of account(%s)",h,get_address().c_str());
                 }
+
             }
             
             return recovered_something;

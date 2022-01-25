@@ -301,6 +301,7 @@ void xsync_chain_spans_t::initialize() {
                 break;
             }
             height = vbindex->get_height();
+            xinfo("xsync_store_shadow_t::initialize recover height.account:%s,blk height %" PRIu64, m_account.c_str(), height);
         }
     } else {
         xinfo("xsync_store_shadow_t::initialize height %" PRIu64 " last deleted blk height %" PRIu64, height, last_deleted_height);
