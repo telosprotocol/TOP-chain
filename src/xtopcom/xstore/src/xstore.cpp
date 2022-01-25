@@ -318,5 +318,10 @@ void xstore::GetDBMemStatus() const
     return m_db->GetDBMemStatus();
 }
 
+bool   xstore::read_range_callback(const std::string& prefix,db::xdb_iterator_callback callback,void * cookie)
+{
+    return m_db->read_range(prefix, callback, cookie);
+}
+
 } // namespace store
 } // namespace top
