@@ -82,7 +82,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
 
 #define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record, 0)
 
-    EXPECT_FALSE(rec_standby_on_timer_update);
+    EXPECT_TRUE(rec_standby_on_timer_update);
 
     // changed pub_key in reg && rec_standby on_timer update:
     top::xpublic_key_t pub_key_2{"test_pub_key_2"};
