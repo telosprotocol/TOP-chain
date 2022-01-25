@@ -48,9 +48,8 @@ void record(data::election::xelection_group_result_t & election_group_result){
 
 #define ELECT(group_range)                                                                                                                                                         \
     random_seed = static_cast<uint64_t>(rng());                                                                                                                                    \
-    m_elect_consensus_group.test_elect(zid, cid, gid, start_time+1, start_time+2, random_seed, group_range, standby_network_result, election_network_result);                                            \
-    record(election_network_result.result_of(node_type).result_of(cid).result_of(gid));\
-    start_time += 2
+    m_elect_consensus_group.test_elect(zid, cid, gid, 0, 0, random_seed, group_range, standby_network_result, election_network_result);                                            \
+    record(election_network_result.result_of(node_type).result_of(cid).result_of(gid));
 
 
 TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
@@ -69,7 +68,6 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, shirnk) {
     xrange_t<config::xgroup_size_t> group_size_range2{7, 7};
     std::mt19937_64 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     auto random_seed = static_cast<uint64_t>(rng());
-    common::xlogic_time_t start_time{0};
 
     ELECT(group_size_range);
     ELECT(group_size_range);
