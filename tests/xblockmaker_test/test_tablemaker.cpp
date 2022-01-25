@@ -135,7 +135,7 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
         int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+        //std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
 
         xtablemaker_result_t table_result;
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
@@ -143,7 +143,7 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
         xassert(proposal_block->get_height() == 1);
 
         int64_t last_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after last_hash_count, " << last_hash_count << " count " << (last_hash_count - cur_hash_count)<< std::endl;
+        //std::cout << "after last_hash_count, " << last_hash_count << " count " << (last_hash_count - cur_hash_count)<< std::endl;
 
     }
 #endif
@@ -166,7 +166,7 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
     }
 
     int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-    std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+    //std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
 
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 4);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
@@ -182,8 +182,8 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
         xassert(proposal_block->get_height() == 1);
         
         int64_t table_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
-         << (table_make_hash_count - cur_hash_count)<< std::endl;
+        /* std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
+         << (table_make_hash_count - cur_hash_count)<< std::endl;*/
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
@@ -191,15 +191,15 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
         xassert(ret == 0);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
-        << (verify_make_hash_count - table_make_hash_count)<< std::endl;
+       /* std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
+        << (verify_make_hash_count - table_make_hash_count)<< std::endl;*/
           
        int64_t before_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
      
         int64_t last_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
+        //std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
 
 
     }
@@ -221,7 +221,7 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
     }
 
     int64_t cur_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-    std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
+    //std::cout << "before cur_hash_count " << cur_hash_count << std::endl;
 
     int account_count = 4;
     int transaction_count = 100;
@@ -233,7 +233,7 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
        std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, transaction_count);
        all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
     }
-    std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+    //std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -246,8 +246,8 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
         xassert(proposal_block->get_height() == 1);
         
         int64_t table_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
-         << (table_make_hash_count - cur_hash_count)<< std::endl;
+        /*std::cout << "after table make_proposal table_make_hash_count, " << table_make_hash_count << " count " \
+         << (table_make_hash_count - cur_hash_count)<< std::endl;*/
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(all_txs);
@@ -255,15 +255,16 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
         xassert(ret == 0);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
-        << (verify_make_hash_count - table_make_hash_count)<< std::endl;
+        /*std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
+        << (verify_make_hash_count - table_make_hash_count)<< std::endl;*/
           
         int64_t before_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
      
         int64_t last_unpack_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
-        std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
+         xassert( (last_unpack_count - before_unpack_count) <= 638);
+        //std::cout << "after last_unpack_count, " << last_unpack_count << " count " << (last_unpack_count - before_unpack_count)<< std::endl;
     }
 #endif
 }
@@ -393,8 +394,8 @@ TEST_F(test_tablemaker, make_receipt_hash_new_count) {
             all_txs.insert(all_txs.end(),send_txs.begin(),send_txs.end());
         }
 
-         std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
-          xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+         /*std::cout << "account count "<< account_count << ", and every send count " << transaction_count << std::endl;
+          xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());*/
         table_para.set_origin_txs(all_txs);
         xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
 
