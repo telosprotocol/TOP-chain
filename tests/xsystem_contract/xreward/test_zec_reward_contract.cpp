@@ -331,16 +331,16 @@ TEST_F(xtest_reward_contract_t, test_calc_archiver_worklaod_rewards) {
     top::xstake::uint128_t archiver_workload_rewards = 70;
     top::xstake::uint128_t reward_to_self;
 
-    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, reward_to_self);
+    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, false, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
     archiver_num[1] = 7;
-    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, reward_to_self);
+    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, false, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
     node.m_vote_amount = 1000;  
-    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, reward_to_self);  
+    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, false, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
     node.m_account_mortgage = 100;  
-    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, reward_to_self);  
+    calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, false, reward_to_self);
     EXPECT_EQ(reward_to_self, 10);  
 }
 
