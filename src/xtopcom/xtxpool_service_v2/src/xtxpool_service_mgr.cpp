@@ -108,12 +108,6 @@ xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwor
         std::lock_guard<std::mutex> lock(m_mutex);
         m_service_map[xip] = txpool_service;
     }
-    base::enum_xchain_zone_index zone_id;
-    uint32_t fount_table_id;
-    uint32_t back_table_id;
-    common::xnode_type_t node_type;
-    txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
-    m_para->get_txpool()->subscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
 
     return std::make_shared<xtxpool_proxy>(xip, vnet_driver, this->shared_from_this(), txpool_service);
 }
@@ -142,6 +136,13 @@ bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetw
     xinfo("xtxpool_service_mgr::start xip:%" PRIx64 ":%" PRIx64, xip.high_addr, xip.low_addr);
     std::shared_ptr<xtxpool_service_face> service = find(xip);
     if (service != nullptr) {
+        base::enum_xchain_zone_index zone_id;
+        uint32_t fount_table_id;
+        uint32_t back_table_id;
+        common::xnode_type_t node_type;
+        service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
+        m_para->get_txpool()->subscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
+
         service->set_params(xip, vnet_driver);
         service->start(xip);
         return true;
