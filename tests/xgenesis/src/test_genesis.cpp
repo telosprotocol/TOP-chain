@@ -432,7 +432,7 @@ TEST_F(test_genesis, test_load_accounts) {
     m_genesis_manager->load_accounts();
     m_genesis_manager->m_user_accounts_data = get_all_user_data();
 
-    EXPECT_EQ(m_genesis_manager->m_contract_accounts.size(), 14 + 64 * 3);
+    EXPECT_EQ(m_genesis_manager->m_contract_accounts.size(), 15 + 64 * 3);
     for (auto const & account : contract_accounts) {
         if (data::is_sys_sharding_contract_address(common::xaccount_address_t{account})) {
             for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
