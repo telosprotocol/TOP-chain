@@ -107,6 +107,7 @@ namespace top
             
             bool                    set_unit_proof(const std::string& unit_proof, uint64_t height);
             const std::string       get_unit_proof(uint64_t height);
+            base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(uint64_t height);
 
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
@@ -138,6 +139,7 @@ namespace top
             bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
 
             void                update_bindex(base::xvbindex_t* this_block);
+            void                update_bindex_to_committed(base::xvbindex_t* this_block);
             
         private:
             virtual bool        init_meta(const base::xvactmeta_t & meta) override;

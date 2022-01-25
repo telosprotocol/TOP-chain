@@ -325,6 +325,10 @@ bool xsync_store_t::is_full_node_forked() {
     return m_full_node_forked;
 }
 
+base::xauto_ptr<base::xvbindex_t> xsync_store_t::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
+    return m_blockstore->recover_and_load_commit_index(account, height);
+}
+
 void xsync_store_t::set_fork_point() {
     auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     if (vb == nullptr) {
