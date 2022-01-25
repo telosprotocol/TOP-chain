@@ -161,7 +161,7 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
         map_nodes.insert({common::xaccount_address_t{name}, node});
     }
 
-    role_nums = calc_role_nums(map_nodes);
+    role_nums = calc_role_nums(map_nodes, false);
     EXPECT_EQ(role_nums[0][0], 5+10);   // total edge
     EXPECT_EQ(role_nums[0][1], 10);     // valid edge
     EXPECT_EQ(role_nums[1][0], 6+12+18+7+14+21);    // total archive = archive + advanc
@@ -575,7 +575,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     std::map<common::xaccount_address_t, top::xstake::uint128_t> table_total_rewards;
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> table_node_reward_detail;
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> table_node_dividend_detail;
-    calc_nodes_rewards_v5(issue_time_length, onchain_param, property_param, issue_detail, node_reward_detail, node_dividend_detail, community_reward);
+    calc_nodes_rewards_v5(0, issue_time_length, onchain_param, property_param, issue_detail, node_reward_detail, node_dividend_detail, community_reward);
     // total issuance: [608001772473988, 494255]
     // edge workload rewards: [12160035449479, 769885], total edge num: 16, valid edge num: 8,
     // archive workload rewards: [24320070898959, 539770], total archive num: 80, valid archive num: 40, ----->auditor
