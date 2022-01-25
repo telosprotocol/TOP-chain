@@ -292,7 +292,7 @@ bool xreg_node_info::could_be_archive() const noexcept {
 }
 
 bool xreg_node_info::legacy_could_be_archive() const noexcept {
-    return could_be_auditor();
+    return could_be_auditor() || could_be_archive();
 }
 
 bool xreg_node_info::could_be_edge() const noexcept {
@@ -324,7 +324,7 @@ bool xreg_node_info::can_be_archive() const noexcept {
 }
 
 bool xreg_node_info::legacy_can_be_archive() const noexcept {
-    return can_be_auditor();
+    return can_be_auditor() || can_be_archive();
 }
 
 bool xreg_node_info::can_be_auditor() const noexcept {
