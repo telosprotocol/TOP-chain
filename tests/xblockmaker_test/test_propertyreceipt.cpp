@@ -118,7 +118,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_3) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
     mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(200); // for make full-table
+    mocktable.genrate_table_chain(200, resources->get_blockstore()); // for make full-table
     auto tableblocks = mocktable.get_history_tables();
     for (auto & block : tableblocks) {
         ASSERT_TRUE(resources->get_blockstore()->store_block(mocktable, block.get()));
