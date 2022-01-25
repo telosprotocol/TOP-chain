@@ -6,11 +6,15 @@ on:
   push:
     branches:
       - master
-      - 'feat/v*'
+      - feat/v**
+      - dev/v**
+      - release/v**
   pull_request:
     branches:
       - master
-      - 'feat/v*'
+      - feat/v**
+      - dev/v**
+      - release/v**
 
 jobs:
   build:
