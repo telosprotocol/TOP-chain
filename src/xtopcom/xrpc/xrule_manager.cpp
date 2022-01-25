@@ -248,7 +248,6 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
 
     CONDTION_FAIL_THROW(params["premium_price"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params premium_price or premium_price is not valid");
     CONDTION_FAIL_THROW(params["tx_deposit"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_deposit or tx_deposit is not valid");
-    CONDTION_FAIL_THROW(params["tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_hash");
     CONDTION_FAIL_THROW(params["tx_type"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_type or tx_type is not valid");
     CONDTION_FAIL_THROW(
         params["tx_expire_duration"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_expire_duration or tx_expire_duration is not valid");
