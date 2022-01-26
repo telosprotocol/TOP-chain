@@ -582,8 +582,8 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
         deserilize_vote_map_field(v.first, duration, lock_time);
         deserilize_vote_map_value(v.second, vote_num);
 
-        if(0 == duration){
-            if(num > vote_num){
+        if(0 == duration){ // expire vote_num and related infos
+            if(num > vote_num || 0 == vote_num){
                 xwarn("xaccount_context_t::redeem_pledge_vote_property, redeem_num=%llu, expire_num: %llu, duration: %u, lock_time: %llu", num, vote_num, duration, lock_time);
                 return xtransaction_pledge_redeem_vote_err;
             }
@@ -592,22 +592,36 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
             std::string val;
             string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, val);
             uint64_t expire_token = xstring_utl::touint64(val);
-            int64_t balance_change = num * expire_token / vote_num;  // TODO(jimmy) overflow fault
-            string_set(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token - balance_change));
-            vote_num -= num;
-
-            // update field
-            map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_num));
-
-            // update unvote num, balance, vote pledge balance
-            ret = uint64_sub(XPROPERTY_UNVOTE_NUM, num);
-            if (xsuccess != ret) {
-                return ret;
+            // 1 vote = [500,000 : 1,000,000] expire_token
+            uint64_t balance_change = 0;
+            if (vote_num == num) {
+                balance_change = expire_token;
+            } else {
+                balance_change = (expire_token / vote_num) * num;
             }
-            ret = other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_VOTE, base::vtoken_t(balance_change));
-            if (xsuccess != ret) {
-                return ret;
+
+            xdbg("xaccount_context_t::redeem_pledge_vote_property redeem_num:%llu, expire_num:%llu, expire_token:%llu, balance_change:%lld", num, vote_num, expire_token, balance_change);
+            if (balance_change > 0) {
+                string_set(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token - balance_change));
+                vote_num -= num;
+
+                // update field
+                map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_num));
+
+                // update unvote num, balance, vote pledge balance
+                ret = uint64_sub(XPROPERTY_UNVOTE_NUM, num);
+                if (xsuccess != ret) {
+                    return ret;
+                }
+                ret = other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_VOTE, base::vtoken_t(balance_change));
+                if (xsuccess != ret) {
+                    return ret;
+                }
+            } else {
+                xerror("xaccount_context_t::redeem_pledge_vote_property balance_change 0! redeem_num:%llu, expire_num:%llu, expire_token:%llu, balance_change:%lld", num, vote_num, expire_token, balance_change);
+                return xtransaction_pledge_redeem_vote_err;
             }
+
             return 0;
         }
     }
