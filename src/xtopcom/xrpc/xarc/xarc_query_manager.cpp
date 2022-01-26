@@ -95,7 +95,10 @@ void xarc_query_manager::getTransaction(xjson_proc_t & json_proc) {
         }
     }
     xJson::Value result_json;
-    m_bh.parse_tx(tx_hash, tx_ptr, version, result_json);
+    if (m_bh.parse_tx(tx_hash, tx_ptr, version, result_json) != 0) {
+        throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+    }
+
     json_proc.m_response_json["data"] = result_json;
 }
 
