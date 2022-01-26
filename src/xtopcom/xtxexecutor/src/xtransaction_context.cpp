@@ -349,7 +349,9 @@ int32_t xtransaction_redeem_token_vote::target_action_exec() {
     auto redeem_num = get_vote_num();
     if(redeem_num > m_account_ctx->get_blockchain()->unvote_num()){
         xdbg("pledge_redeem_vote, redeem_num: %llu, unvote_num: %llu", redeem_num, m_account_ctx->get_blockchain()->unvote_num());
-        return xtransaction_pledge_redeem_vote_err;
+        if (m_account_ctx->get_blockchain()->unvote_num() > 0) {
+            return xtransaction_pledge_redeem_vote_err;
+        }
     }
     m_account_ctx->merge_pledge_vote_property();
     return m_account_ctx->redeem_pledge_vote_property(redeem_num);

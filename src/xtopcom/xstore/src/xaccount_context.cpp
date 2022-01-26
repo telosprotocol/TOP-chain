@@ -570,6 +570,22 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
         return 0;
     }
 
+    std::string remain_val;
+    string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, remain_val);
+    uint64_t remain_expire_token = xstring_utl::touint64(remain_val);
+    xaccount_ptr_t account = std::make_shared<xunit_bstate_t>(get_bstate().get());
+    uint64_t remain_unvote_num = account->unvote_num();
+    xdbg("overflow: remain_expire_token:%llu, unvote_num:%llu", remain_expire_token, remain_unvote_num);
+    if (remain_unvote_num == 0 && remain_expire_token > 0) {
+        auto ret = other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_VOTE, base::vtoken_t(remain_expire_token));
+        if (xsuccess != ret) {
+            return ret;
+        } else {
+            string_set(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(0));
+            return 0;
+        }
+    }
+
     int32_t ret = xsuccess;
 
     std::map<std::string, std::string> pledge_votes;
@@ -582,8 +598,8 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
         deserilize_vote_map_field(v.first, duration, lock_time);
         deserilize_vote_map_value(v.second, vote_num);
 
-        if(0 == duration){
-            if(num > vote_num){
+        if(0 == duration){ // expire vote_num and related infos
+            if(num > vote_num || 0 == vote_num){
                 xwarn("xaccount_context_t::redeem_pledge_vote_property, redeem_num=%llu, expire_num: %llu, duration: %u, lock_time: %llu", num, vote_num, duration, lock_time);
                 return xtransaction_pledge_redeem_vote_err;
             }
@@ -592,9 +608,19 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
             std::string val;
             string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, val);
             uint64_t expire_token = xstring_utl::touint64(val);
-            int64_t balance_change = num * expire_token / vote_num;  // TODO(jimmy) overflow fault
+            // 1 vote = [500,000 : 1,000,000] expire_token
+            uint64_t balance_change = 0;
+            if (vote_num == num) {
+                balance_change = expire_token;
+            } else {
+                balance_change = (expire_token / vote_num) * num;
+            }
+
+            xdbg("overflow: num:%llu, expire_token:%llu, vote_num:%llu, balance_change:%lld", num, expire_token, vote_num, balance_change);
             string_set(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token - balance_change));
-            vote_num -= num;
+            if (balance_change > 0) {
+                vote_num -= num;
+            }
 
             // update field
             map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_num));
