@@ -13,6 +13,19 @@ namespace top {
 namespace gossip {
 
 GossipRRS::GossipRRS(transport::TransportPtr transport_ptr) : GossipInterface{transport_ptr} {
+#if defined(XBUILD_CI)
+    rrs_params_neighbour_num = 4;
+    rrs_params_switch_hash_hop_num = 3;
+#elif defined(XBUILD_DEV)
+    rrs_params_neighbour_num = 3;
+    rrs_params_switch_hash_hop_num = 3;
+#elif defined(XBUILD_GALILEO)
+    rrs_params_neighbour_num = 5;
+    rrs_params_switch_hash_hop_num = 3;
+#else  // mainnet
+    rrs_params_neighbour_num = 6;
+    rrs_params_switch_hash_hop_num = 4;
+#endif
 }
 GossipRRS::~GossipRRS() {
 }
@@ -30,13 +43,13 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         return;
     }
 
-    MessageKey msg_key(message.msg_hash());
+    MessageKey msg_key(message.gossip().header_hash());
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipRRSStopTimes)) {
         xkinfo("[GossipRRS]stop gossip for message.type(%d) stop_time(%d),hop_num(%d)", message.type(), kGossipRRSStopTimes, hop_num);
         return;
     }
 
-    if ((message.has_data() || message.gossip().has_block()) && hop_num < kGossipRRSSwitchLayerHopNum) {
+    if ((message.has_data() || message.gossip().has_block()) && hop_num <= rrs_params_switch_hash_hop_num) {
         auto bloomfilter = MessageWithBloomfilter::Instance()->GetMessageBloomfilter(message);
         assert(bloomfilter);
         if (!bloomfilter) {
@@ -45,7 +58,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         bloomfilter->Add(local_hash64);
 
         std::vector<kadmlia::NodeInfoPtr> tmp_neighbors;
-        tmp_neighbors = GetRandomNodes(neighbors, kGossipRRSNeighborNum);
+        tmp_neighbors = GetRandomNodes(neighbors, rrs_params_neighbour_num);
 
         std::vector<kadmlia::NodeInfoPtr> rest_random_neighbors;
 
@@ -101,7 +114,7 @@ void GossipRRS::BroadcastHash(transport::protobuf::RoutingMessage & message, std
         header_message.clear_bloomfilter();
     }
     std::vector<kadmlia::NodeInfoPtr> random_neighbors;
-    random_neighbors = GetRandomNodes(neighbors, kGossipRRSNeighborNum);
+    random_neighbors = GetRandomNodes(neighbors, rrs_params_neighbour_num);
     xkinfo("[GossipRRS][do_send] Broadcast %d neighbors only header_hash:%s", random_neighbors.size(), header_message.gossip().header_hash().c_str());
     if (header_message.has_is_root() && header_message.is_root()) {
         header_message.clear_src_node_id();
@@ -110,6 +123,11 @@ void GossipRRS::BroadcastHash(transport::protobuf::RoutingMessage & message, std
     } else {
         Send(header_message, random_neighbors);
     }
+}
+
+void GossipRRS::update_params(uint32_t t, uint32_t k) {
+    rrs_params_neighbour_num = t;
+    rrs_params_switch_hash_hop_num = k;
 }
 
 }  // namespace gossip

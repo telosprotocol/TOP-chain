@@ -23,10 +23,10 @@ public:
 class test_get_block : public testing::Test {
  protected:
     void SetUp() override {
-        mock::xvchain_creator creator;
         m_store = creator.get_xstore();
         m_block_store = creator.get_blockstore();
         block_handle_ptr = new chain_info::get_block_handle(m_store.get(), m_block_store, nullptr);
+        contract::xcontract_manager_t::instance().init(make_observer(m_store.get()), nullptr);
 
         // uint64_t count = 5;
         // mock::xdatamock_table mocktable;
@@ -55,6 +55,7 @@ class test_get_block : public testing::Test {
         // delete block_handle_ptr;
     }
  public:
+    mock::xvchain_creator creator{true};
     xobject_ptr_t<store::xstore_face_t> m_store;
     base::xvblockstore_t* m_block_store;
     xobject_ptr_t<base::xvnodesrv_t> nodesvr_ptr;

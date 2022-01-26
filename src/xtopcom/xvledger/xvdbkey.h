@@ -48,6 +48,7 @@ namespace top
            static const std::string  get_constractstore_version_key()   {return "/constractstore/version";}
            
            static enum_xdbkey_type   get_dbkey_type(const std::string & key);
+           static const std::string  get_dbkey_type_name(enum_xdbkey_type type);
         public://old definition,put here just for compatible purpose
            //tx index ->link to block index
            static const std::string  create_tx_key(const std::string & org_tx_hash); //where the raw tx are placed
@@ -101,6 +102,7 @@ namespace top
            static const std::string  create_prunable_block_output_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
+           static const std::string  get_account_prefix_key(const std::string & key);
        };
 
     }//end of namespace of base

@@ -83,7 +83,7 @@ namespace top
         {
             xkinfo("install_block_recycler start");
             
-            if(base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler() != NULL)
+            if(base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler(true) != NULL)
                 return true; //has been installed
             
             if(NULL == xvdb_ptr)
@@ -103,5 +103,31 @@ namespace top
                 return base::xvchain_t::instance().get_xrecyclemgr()->turn_off_recycler(base::enum_vdata_recycle_type_block);
         }
 
+        bool  refresh_block_recycler_rule(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj, const uint64_t permit_prune_upper_boundary) {
+            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler();
+            if(recycler == NULL) {
+                return false; //has been installed
+            }
+
+            return recycler->refresh(mod_id, account_obj, permit_prune_upper_boundary);
+        }
+
+        bool  watch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) {
+            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler(true);
+            if(recycler == NULL) {
+                return false; //has been installed
+            }
+
+            return recycler->watch(mod_id, account_obj);
+        }
+
+        bool  unwatch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj) {
+            auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler(true);
+            if(recycler == NULL) {
+                return false; //has been installed
+            }
+
+            return recycler->unwatch(mod_id, account_obj);
+        }
     };//end of namespace of vstore
 };//end of namespace of top

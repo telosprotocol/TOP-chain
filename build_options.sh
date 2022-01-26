@@ -129,6 +129,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXENABLE_P2P_BENDWIDTH=ON"
         echo "BUILD WITH ENABLE P2P BENDWIDTH"
     ;;
+    p2p_test)
+        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_P2P_TEST=ON"
+        echo "BUILD WITH ENABLE P2P TEST"
+    ;;
     no_tx_batch)
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"
@@ -165,9 +169,13 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DSTORE_UNIT_BLOCK=ON"
         echo "BUILD WITH store unit block tool"
     ;;
-    chain_forked_by_default)
-        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON"
-        echo "BUILD WITH XCHAIN_FORKED_BY_DEFAULT (all fork points are forked BY DEFAULT)"
+    chain_forked_by_default*)
+        FORK_VERSION=`echo $option | sed 's/chain_forked_by_default[=]*//'`
+        if [[ x$FORK_VERSION = x ]]; then
+            FORK_VERSION=999999
+        fi
+        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON -DXCHAIN_FORKED_VERSION=$FORK_VERSION"
+        echo "BUILD WITH -DXCHAIN_FORKED_BY_DEFAULT=ON -DXCHAIN_FORKED_VERSION=$FORK_VERSION"
     ;;
     metrics_dataobject)
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_METRICS_DATAOBJECT=ON"
@@ -177,8 +185,12 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DDISABLE_CORE_SIGNAL_CAPTURE=ON"
         echo "BUILD WITH DISABLE_CORE_SIGNAL_CAPTURE"
     ;;
+    checkpoint_test)
+        CMAKE_EXTRA_OPTIONS+=" -DCHECKPOINT_TEST=ON"
+        echo "BUILD WITH CHECKPOINT_TEST"
+    ;;
     *)
-        CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
+        echo "unknown build option: "$option
     ;;
     esac
 done

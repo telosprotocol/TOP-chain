@@ -413,6 +413,8 @@ build_edge_sharding_address(xnetwork_id_t const & network_id);
 xgroup_address_t
 build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id);
 
+xgroup_address_t build_fullnode_group_address(xnetwork_id_t const & network_id);
+
 xgroup_address_t
 build_consensus_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id = xtopchain_network_id);
 

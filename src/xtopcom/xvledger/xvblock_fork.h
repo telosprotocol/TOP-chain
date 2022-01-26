@@ -15,11 +15,12 @@ namespace top
             enum_xvblock_fork_version_init              = 0x000100,  // 0.1.0 init version
             enum_xvblock_fork_version_table_prop_prove  = 0x010000,  // 1.0.0 table block input action include prop hashs for prove receiptid state
             enum_xvblock_fork_version_unit_opt          = 0x020000,  // 2.0.0 unit block not include txaction but only txhash and state
+            enum_xvblock_fork_version_3_0_0             = 0x030000,  // 3.0.0: 1.table-block add second gmtime
         };
 
         // XTODO need change old and new version when block structure changed
-        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_table_prop_prove;
-        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_unit_opt;
+        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_unit_opt;
+        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_3_0_0;
 
         typedef std::function<bool(uint64_t clock) noexcept> xvblock_fork_check_fun_t;
 
@@ -46,6 +47,13 @@ namespace top
             void init(const xvblock_fork_check_fun_t & _fun) {
                 m_check_fun = _fun;
             }
+            uint32_t get_expect_block_version(uint64_t current_clock) const {
+                if (is_forked(current_clock)) {
+                    return get_block_fork_new_version();
+                }
+                return get_block_fork_old_version();
+            }
+        protected:
             bool     is_forked(uint64_t current_clock) const {
                 if (m_check_fun != nullptr) {
                     return m_check_fun(current_clock);

@@ -31,10 +31,6 @@ public:
 
     void running(bool const) noexcept override {}
 
-    void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {}
-
-    void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {}
-
     void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override {
     }
 
@@ -43,9 +39,9 @@ public:
 
     void send(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &, top::network::xtransmission_property_t const &) override { m_counter++; }
 
-    void forward_broadcast_message(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &) override { m_counter++; }
+    //void forward_broadcast_message(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &) override { m_counter++; }
 
-    void broadcast(xmessage_t const &, xvnode_address_t const &) override { m_counter++; }
+    //void broadcast(xmessage_t const &, xvnode_address_t const &) override { m_counter++; }
 
     common::xnetwork_id_t const & network_id() const noexcept override { return net_id; }
 
@@ -65,6 +61,10 @@ public:
     std::map<xvnode_address_t, xcrypto_key_t<pub>> crypto_keys(std::vector<xvnode_address_t> const & nodes) const { return {}; }
 
     std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const &, common::xelection_round_t const &) const override {
+        m_counter++;
+        return {{}, {}};
+    }
+    std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group(common::xgroup_address_t const &, common::xelection_round_t const &, std::error_code &) const override {
         m_counter++;
         return {{}, {}};
     }

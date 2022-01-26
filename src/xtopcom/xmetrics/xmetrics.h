@@ -65,7 +65,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_xcscoreobj_t,
     dataobject_xblock_maker_t,
     dataobject_xblockacct_t,
-    dataobject_xtxpool_table_info_t,    
+    dataobject_xtxpool_table_info_t,
     dataobject_xacctmeta_t,
     // db bock key, see xvdbkey for specific info
     // 't/', 'i/', 'b/'
@@ -87,6 +87,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_read_tick,
     db_write_tick,
     db_delete_tick,
+    db_block_cache_size,
+    db_memtable_cache_size,
+    db_memory_total_size,
 
     // consensus
     cons_drand_leader_finish_succ,// TODO(jimmy) delete future
@@ -122,6 +125,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     cons_view_fire_clock_delay,
     cons_view_fire_succ,
+    cons_cp_check_succ,
     cons_view_fire_is_leader,
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
@@ -161,6 +165,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_packtx_fail_nonce_contious,
     cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
+    cons_packtx_with_threshold,
 
     clock_aggregate_height,
     clock_leader_broadcast_height,
@@ -196,6 +201,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_tx_origin,
     store_block_meta_write,
     store_block_meta_read,
+
 
     store_dbsize_block_unit_empty,
     store_dbsize_block_unit_light,
@@ -263,7 +269,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_transport_recv,
     message_transport_send,
 
-    // sync 
+    // sync
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
@@ -310,7 +316,12 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_store_block_tables,
     xsync_unit_proof_sync_req_send,
     xsync_unit_proof_sync_req_recv,
-
+    xsync_recv_archive_height,
+    xsync_archive_height_blocks,
+    xsync_recv_archive_blocks,
+    xsync_recv_archive_blocks_size,
+    xsync_recv_query_archive_height,
+    xsync_recv_archive_height_list,
 
     // txpool
     txpool_received_self_send_receipt_num,
@@ -368,7 +379,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_alarm_confirm_tx_reached_upper_limit,
     txpool_alarm_recv_tx_reached_upper_limit,
     txpool_alarm_send_tx_reached_upper_limit,
-
+    txpool_sync_on_demand_unit,
+    txpool_sender_unconfirm_cache,
+    txpool_receiver_unconfirm_cache,
+    txpool_height_record_cache,
+    txpool_table_unconfirm_raw_txs,
     // txstore
     txstore_request_origin_tx,
     txstore_cache_origin_tx,
@@ -563,7 +578,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xevent_major_type_store,
     xevent_major_type_sync_executor,
     xevent_major_type_network,
-    xevent_major_type_dispatch,      
+    xevent_major_type_dispatch,
     xevent_major_type_deceit,
     xevent_major_type_consensus,
     xevent_major_type_transaction,
@@ -644,6 +659,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     //bft
     bft_verify_vote_msg_fail,
+    contract_table_statistic_empty_ptr,
 
     e_simple_total,
 };
@@ -893,10 +909,10 @@ public:
 #define XMETRICS_GAUGE_SET_VALUE(TAG, value) top::metrics::e_metrics::get_instance().gauge_set_value(TAG, value)
 #define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
-#ifndef ENABLE_METRICS_DATAOBJECT                                                                             
+#ifndef ENABLE_METRICS_DATAOBJECT
     #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)
 #else
-    #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)   XMETRICS_GAUGE(TAG, value) 
+    #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)   XMETRICS_GAUGE(TAG, value)
 #endif
 
 class simple_metrics_tickcounter {
@@ -923,7 +939,7 @@ private:
 
 #else
 #define XMETRICS_INIT()
-#define XMETRICS_INIT2(log_path) 
+#define XMETRICS_INIT2(log_path)
 #define XMETRICS_UNINT()
 #define XMETRICS_TIME_RECORD(metrics_name)
 #define XMETRICS_TIME_RECORD_KEY(metrics_name, key)

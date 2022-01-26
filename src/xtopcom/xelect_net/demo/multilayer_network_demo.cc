@@ -82,6 +82,83 @@ int MultilayerNetworkDemo::HandleParamsAndConfig(int argc, char ** argv, top::ba
     return 0;
 }
 
+bool MultilayerNetworkDemo::ResetEdgeConfig(top::ArgsParser & args_parser, top::base::Config & edge_config) {
+    std::string node_id;
+    if (args_parser.GetParam("n", node_id) == top::kadmlia::kKadSuccess) {
+        if (!edge_config.Set("node", "node_id", node_id)) {
+            xerror("set config failed [node][node_id][%s]", node_id.c_str());
+            return false;
+        }
+    }
+
+    std::string db_path;
+    if (args_parser.GetParam("d", db_path) == top::kadmlia::kKadSuccess) {
+        if (!edge_config.Set("db", "path", db_path)) {
+            xerror("set config failed [db][path][%s]", db_path.c_str());
+            return false;
+        }
+    }
+    std::string country;
+    args_parser.GetParam("o", country);
+    if (!country.empty()) {
+        if (!edge_config.Set("node", "country", country)) {
+            xwarn("set config failed [node][country][%s]", country.c_str());
+            return false;
+        }
+    }
+
+    int zone_id;
+    if (args_parser.GetParam("z", zone_id) == top::kadmlia::kKadSuccess) {
+        if (!edge_config.Set("node", "zone_id", zone_id)) {
+            xwarn("set config failed [node][zone_id][%u]", zone_id);
+            return false;
+        }
+    }
+
+    std::string local_ip;
+    args_parser.GetParam("a", local_ip);
+    if (!local_ip.empty()) {
+        if (!edge_config.Set("node", "local_ip", local_ip)) {
+            xwarn("set config failed [node][local_ip][%s]", local_ip.c_str());
+            return false;
+        }
+    }
+    uint16_t local_port = 0;
+    if (args_parser.GetParam("P", local_port) == top::kadmlia::kKadSuccess) {
+        if (!edge_config.Set("node", "local_port", local_port)) {
+            xwarn("set config failed [node][local_port][%d]", local_port);
+            return false;
+        }
+    }
+
+    std::string peer;
+    args_parser.GetParam("p", peer);
+    if (!peer.empty()) {
+        if (!edge_config.Set("node", "public_endpoints", peer)) {
+            xwarn("set config failed [node][public_endpoints][%s]", peer.c_str());
+            return false;
+        }
+    }
+
+    int show_cmd = 1;
+    if (args_parser.GetParam("g", show_cmd) == top::kadmlia::kKadSuccess) {
+        if (!edge_config.Set("node", "show_cmd", show_cmd == 1)) {
+            xwarn("set config failed [node][show_cmd][%d]", show_cmd);
+            return false;
+        }
+    }
+
+    std::string log_path;
+    if (args_parser.GetParam("L", log_path) == top::kadmlia::kKadSuccess) {
+        if (!edge_config.Set("log", "path", log_path)) {
+            xwarn("set config failed [log][log_path][%s]", log_path.c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config & edge_config) {
     int total_node = 100;
     if (!edge_config.Get("xelect_net_demo", "total", total_node)) {
@@ -176,13 +253,13 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         node_id_vec.push_back(prefix_account);
     }
 
-    all_info["fullnode"] = node_id_vec[0];  // the 0 index node is full node
+    all_info["exchange"] = node_id_vec[0];  // the 0 index node is exchange
 
     auto callback = [&node_id_vec](std::vector<std::string> & random_node_id_vec, uint32_t number) {
         random_node_id_vec.clear();
         std::set<size_t> index_set;
 
-        index_set.insert(0);  // 0 node if full node
+        index_set.insert(0);  // 0 node if exchange
         random_node_id_vec.push_back(node_id_vec[0]);
 
         while (random_node_id_vec.size() < number) {

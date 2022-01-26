@@ -39,9 +39,13 @@ public:
 
 public:
     virtual const std::string do_sign(const xvip2_t & signer, const base::xvqcert_t * sign_for_cert, const uint64_t random_seed) override;
+    virtual const std::string do_sign(const xvip2_t & signer, const base::xvqcert_t * sign_for_block, 
+                                      const uint64_t random_seed, const std::string sign_hash) override;
     virtual const std::string do_sign(const xvip2_t & signer, const base::xvblock_t * sign_for_block, const uint64_t random_seed) override;
 
     virtual base::enum_vcert_auth_result verify_sign(const xvip2_t & signer, const base::xvqcert_t * test_for_cert, const std::string & block_account) override;
+    virtual base::enum_vcert_auth_result verify_sign(const xvip2_t & signer, const base::xvqcert_t * test_for_cert,
+                                                     const std::string & block_account, const std::string sign_hash) override;
     virtual base::enum_vcert_auth_result verify_sign(const xvip2_t & signer, const base::xvblock_t * test_for_block) override;
 
     virtual const std::string merge_muti_sign(const std::vector<xvip2_t> & muti_nodes, const std::vector<std::string> & muti_signatures, const base::xvqcert_t * for_cert) override;

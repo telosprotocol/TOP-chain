@@ -37,7 +37,7 @@ enum enum_txpool_service_status
 {
     enum_txpool_service_status_running = 0,
     enum_txpool_service_status_faded = 1,
-    enum_txpool_service_status_not_run = 2,
+    enum_txpool_service_status_unreged = 2,
 };
 
 class xtxpool_service final
@@ -64,6 +64,7 @@ public:
     void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
     void send_receipt_id_state(uint64_t now) override;
     bool is_running() const override;
+    bool is_unreged() const override;
 
 private:
     bool is_belong_to_service(base::xtable_index_t tableid) const;
@@ -95,7 +96,7 @@ private:
     common::xnode_type_t m_node_type;
     uint16_t m_node_id;
     uint16_t m_shard_size;
-    std::atomic<enum_txpool_service_status> m_status{enum_txpool_service_status_not_run};
+    std::atomic<enum_txpool_service_status> m_status{enum_txpool_service_status_unreged};
     std::string m_vnetwork_str;
     std::unordered_map<uint16_t, table_info> m_table_info_cache;
 };

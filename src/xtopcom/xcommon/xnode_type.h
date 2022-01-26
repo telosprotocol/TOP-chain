@@ -11,7 +11,7 @@
 
 NS_BEG2(top, common)
 
-enum class xenum_old_node_type : std::uint32_t {
+enum class xenum_legacy_node_type : std::uint32_t {
     /**
      * @brief Invalid node type.
      */
@@ -91,7 +91,7 @@ enum class xenum_old_node_type : std::uint32_t {
      */
     all = 0x0000FFFF,
 };
-using xold_node_type_t = xenum_old_node_type;
+using xlegacy_node_type_t = xenum_legacy_node_type;
 
 /**
  * @brief Node type.  The type is devided into two parts, the real part and the virtual part.
@@ -115,6 +115,12 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief Group node manages advance nodes & consensus nodes
     group = 0x08000000,
 
+    /// @brief Frozen zone type or frozen node type. It is used for synchronizing data.
+    frozen = 0x00000100,
+
+    /// @brief Consensus Zone type.
+    consensus = 0x00000200,
+
     /// @brief REC zone type or REC node type.
     rec = 0x00001000,
     committee = rec,
@@ -128,11 +134,8 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief Edge zone type or edge node type.
     edge = 0x00008000,
 
-    /// @brief Frozen zone type or frozen node type. It is used for synchronizing data.
-    frozen = 0x00000100,
-
-    /// @brief Consensus Zone type.
-    consensus = 0x00000200,
+    /// @brief full node zone type
+    fullnode = 0x00010000,
 
     /// @brief Auditor node.
     auditor = 0x00000001,
@@ -141,19 +144,23 @@ enum class xenum_node_type : std::uint32_t {
     validator = 0x00000002,
 
     archive = 0x00000004,
-    full_node = 0x00000008,
+    exchange = 0x00000008,
 
     consensus_auditor = consensus | auditor,
     consensus_validator = consensus | validator,
     storage_archive = storage | archive,
-    storage_full_node = storage | full_node,
+    storage_exchange = storage | exchange,
 
     /// @brief all type
-    all = 0x0000FFFF,
+    real_part_mask = 0x00FFFFFF,
+    all_types = real_part_mask,
+    virtual_part_mask = 0xFF000000
 };
 using xnode_type_t = xenum_node_type;
 
 std::string to_string(xnode_type_t const type);
+std::string to_presentation_string(xnode_type_t const type);
+std::string to_presentation_string_compatible(xnode_type_t const type);
 
 constexpr xnode_type_t operator&(xnode_type_t const lhs, xnode_type_t const rhs) noexcept {
 #if defined XCXX14_OR_ABOVE

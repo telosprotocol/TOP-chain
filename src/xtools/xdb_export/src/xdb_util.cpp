@@ -136,14 +136,6 @@ static std::set<std::string> tx_info_key = {
     XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,
 };
 
-static std::unordered_map<common::xnode_type_t, std::string> node_type_map = {{common::xnode_type_t::consensus_auditor, "auditor"},
-                                                                              {common::xnode_type_t::consensus_validator, "validator"},
-                                                                              {common::xnode_type_t::edge, "edge"},
-                                                                              {common::xnode_type_t::storage_archive, "archive"},
-                                                                              {common::xnode_type_t::rec, "root_beacon"},
-                                                                              {common::xnode_type_t::zec, "sub_beacon"},
-                                                                              {common::xnode_type_t::storage_full_node, "full_node"}};
-
 void property_json(xobject_ptr_t<base::xvbstate_t> const & state, json & j) {
     auto const & all_properties = state->get_all_property_names();
     for (auto const & property : all_properties) {
@@ -363,7 +355,7 @@ static void parse_reg_node_map(std::map<std::string, std::string> const & map, j
         if (reg_node_info.m_genesis_node) {
             j_node["registered_node_type"] = std::string{"advance,validator,edge"};
         } else {
-            j_node["registered_node_type"] = common::to_string(reg_node_info.m_registered_role);
+            j_node["registered_node_type"] = common::to_string(reg_node_info.miner_type());
         }
         j_node["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
         {
@@ -824,7 +816,7 @@ static void parse_rec_standby_pool_string(std::string const & str, json & j) {
         auto const & standby_network_result = top::get<data::election::xstandby_network_storage_result_t>(standby_network_result_info).all_network_result();
         for (auto const & standby_result_info : standby_network_result) {
             auto const node_type = top::get<common::xnode_type_t const>(standby_result_info);
-            std::string node_type_str = node_type_map.at(node_type);
+            std::string node_type_str = common::to_presentation_string(node_type);
             auto const standby_result = top::get<data::election::xstandby_result_t>(standby_result_info);
             for (auto const & node_info : standby_result) {
                 auto const & node_id = top::get<common::xnode_id_t const>(node_info);

@@ -6,9 +6,7 @@
 
 #include "xbase/xcontext.h"
 #include "xbase/xlog.h"
-#include "xbasic/xerror/xchain_error.h"
 #include "xbasic/xerror/xerror.h"
-#include "xbasic/xerror/xthrow_error.h"
 
 #include <cassert>
 

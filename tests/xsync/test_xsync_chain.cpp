@@ -390,7 +390,7 @@ TEST(xsync_account, chain_snapshot) {
     
     uint64_t max_block_height = 200;
     xdatamock_table mocktable;
-    mocktable.genrate_table_chain(max_block_height);
+    mocktable.genrate_table_chain(max_block_height, blockstore.get());
     std::string address = mocktable.get_account();
     xchain_downloader_face_ptr_t chain_downloader = std::make_shared<xchain_downloader_t>("", &sync_store, make_observer(&mbus), make_observer(&auth), &sync_sender, &ratelimit, address);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();

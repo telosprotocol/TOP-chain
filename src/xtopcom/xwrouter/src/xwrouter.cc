@@ -53,15 +53,16 @@ void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transpo
 }
 
 #define IS_BROADCAST(message) (message.broadcast())
-#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8)
+#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == kGossipRRS)
 #define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
 #define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
-#define MESSAGE_FEATURE(message) "msg_hash", message.msg_hash(), "msg_size", message.gossip().block().size()
+#define MESSAGE_FEATURE(message)                                                                                                                                                   \
+    "msg_hash", message.gossip().header_hash().empty() ? std::to_string(message.msg_hash()) : message.gossip().header_hash(), "msg_size", message.gossip().block().size()
 #define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
 #define PACKET_SIZE(packet) "packet_size", packet.get_size()
 #define NOW_TIME "timestamp", GetCurrentTimeMsec()
 
-int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
+void Wrouter::send(transport::protobuf::RoutingMessage & message, std::error_code & ec) {
     // if (message.has_broadcast() && message.broadcast()) {
     if (!message.has_msg_hash()) {
         auto gossip = message.mutable_gossip();
@@ -90,7 +91,8 @@ int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
               GetCurrentTimeMsec());
 #endif
     }
-    return wxid_handler_->SendPacket(message);
+    wxid_handler_->SendPacket(message, ec);
+    return;
 }
 
 // called by MultilayerNetwork::RegisterCallbackForMultiThreadHandler
@@ -135,6 +137,10 @@ int32_t Wrouter::HandleOwnSyncPacket(transport::protobuf::RoutingMessage & messa
 
     WrouterMessageHandler::Instance()->HandleSyncMessage(message, packet);
     return enum_xcode_successful;
+}
+
+void Wrouter::update_rrs_params(uint32_t t, uint32_t k) {
+    return wxid_handler_->update_rrs_params(t, k);
 }
 
 }  // namespace wrouter

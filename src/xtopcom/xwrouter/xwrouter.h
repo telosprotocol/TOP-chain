@@ -30,10 +30,13 @@ class Wrouter {
 public:
     static Wrouter * Instance();
     void Init(base::xcontext_t & context, const uint32_t thread_id, transport::TransportPtr transport_ptr);
-    int32_t send(transport::protobuf::RoutingMessage & message);
+    void send(transport::protobuf::RoutingMessage & message, std::error_code & ec);
     virtual int32_t recv(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
     int32_t HandleOwnSyncPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+
+public:
+    void update_rrs_params(uint32_t t, uint32_t k);
 
 private:
     Wrouter();

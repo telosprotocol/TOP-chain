@@ -6,6 +6,7 @@
 
 #include "xapplication/xbeacon_chain_application.h"
 // #include "xapplication/xcons_mgr_builder.h"
+#include "xapplication/xerror/xerror.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xutility.h"
@@ -19,10 +20,13 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xutility.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xcheckpoint.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xrootblock.h"
 #include "xdb/xdb_factory.h"
@@ -57,6 +61,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
+
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
@@ -69,26 +74,25 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
     // genesis blocks should init imediately after db created
+    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
         exit(0);
     }
 
-    if (!check_rootblock()) {
-        throw std::logic_error{"creating rootblock failed"};
-    }
-
-    if (!create_genesis_accounts()) {
-        throw std::logic_error{"creating genesis accounts failed"};
-    }
-
+    // prepare system contract data only
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
-    contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
+    contract::xcontract_manager_t::instance().register_address();
+
+    // create all genesis block in one interface
+    std::error_code ec;
+    m_genesis_manager->init_genesis_block(ec);
+    top::error::throw_error(ec);
 }
 
 void xtop_application::start() {
-    chain_data::xchain_data_processor_t::release();
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
@@ -135,8 +139,12 @@ void xtop_application::start() {
     m_elect_main->start();
 
     // register node callback
-    if (m_elect_main->RegisterNodeCallback(std::bind(&top::application::xtop_application::handle_register_node, this, std::placeholders::_1, std::placeholders::_2))) {
+    if (!m_elect_main->RegisterNodeCallback(std::bind(&top::application::xtop_application::handle_register_node, this, std::placeholders::_1, std::placeholders::_2))) {
         throw std::logic_error{"register node callback failed!"};
+    }
+
+    if (!m_elect_main->UpdateNodeSizeCallback(std::bind(&top::application::xtop_application::update_node_size, this, std::placeholders::_1, std::placeholders::_2))) {
+        throw std::logic_error{"update node size callback failed!"};
     }
 
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
@@ -259,104 +267,8 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
     return blockstore()->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 }
 
-bool xtop_application::check_rootblock() {
-    base::xvblock_t* rootblock = xrootblock_t::get_rootblock();
-
-    if (true == blockstore()->exist_genesis_block(base::xvaccount_t(rootblock->get_account()))) {
-        return true;
-    }
-
-    if (false == blockstore()->store_block(base::xvaccount_t(rootblock->get_account()), rootblock)) {
-        xerror("xtop_application::check_rootblock rootblock set db fail");
-        return false;
-    }
-
-    xinfo("xtop_application::check_rootblock success");
-    return true;
-}
-
-bool xtop_application::preprocess_accounts_data() {
-    if (chain_data::xtop_chain_data_processor::check_state()) {
-        return true;
-    }
-    std::vector<chain_data::data_processor_t> user_data;
-    chain_data::xchain_data_processor_t::get_all_user_data(user_data);
-    for (auto const & data : user_data) {
-        if (!create_genesis_account(data.address, data)) {
-            xassert(0);
-            return false;
-        }
-    }
-    if (chain_data::xtop_chain_data_processor::set_state()) {
-        return true;
-    }
-    return false;
-}
-
-bool xtop_application::create_genesis_accounts() {
-    if (!preprocess_accounts_data()) {
-        xwarn("xtop_application::create_genesis_accounts preprocess_accounts_data failed");
-        return false;
-    }
-    std::map<std::string, uint64_t> genesis_accounts = xrootblock_t::get_all_genesis_accounts();
-    for (auto const & pair : genesis_accounts) {
-        common::xaccount_address_t account_address{pair.first};
-        if (m_blockstore->exist_genesis_block(account_address.value())) {
-            xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", account_address.c_str());
-            continue;
-        }
-        if (!create_genesis_account(pair.first, pair.second)) {
-            xassert(0);
-            return false;
-        }
-    }
-
-    xinfo("xtop_application::create_genesis_accounts success");
-    return true;
-}
-
-bool xtop_application::create_genesis_account(std::string const & address, uint64_t const init_balance) {
-    xdbg("xtop_application::create_genesis_account address=%s balance=%ld", address.c_str(), init_balance);
-    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, init_balance);
-    xassert(genesis_block != nullptr);
-    base::xvaccount_t _vaddr(address);
-    // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
-    auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
-    if (!ret) {
-        xerror("xtop_application::create_genesis_account store genesis block fail");
-        return false;
-    }
-    return true;
-}
-
-bool xtop_application::create_genesis_account(std::string const & address, chain_data::data_processor_t const & data) {
-    xdbg("xtop_application::create_genesis_account address=%s balance=%ld burn_balance=%ld tgas_balance=%ld vote_balance=%ld lock_balance=%ld lock_tgas=%ld unvote_num=%ld expire_vote=%ld create_time=%ld lock_token=%ld pledge_vote_str_cnt=%ld",
-         address.c_str(),
-         data.top_balance,
-         data.burn_balance,
-         data.tgas_balance,
-         data.vote_balance,
-         data.lock_balance,
-         data.lock_tgas,
-         data.unvote_num,
-         data.expire_vote,
-         data.create_time,
-         data.lock_token,
-         data.pledge_vote.size());
-    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, data);
-    xassert(genesis_block != nullptr);
-    base::xvaccount_t _vaddr(address);
-    // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
-    auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
-    if (!ret) {
-        xerror("xtop_application::create_genesis_account store genesis block fail");
-        return false;
-    }
-    return true;
-}
-
 int32_t xtop_application::handle_register_node(std::string const & node_addr, std::string const & node_sign) {
-#ifndef XENABLE_MOCK_ZEC_STAKE
+#if !defined(XENABLE_MOCK_ZEC_STAKE)
     // filter seed node
     if (xrootblock_t::is_seed_node(node_addr)) {
         xinfo("[register_node_callback] success, seed node, node_addr: %s", node_addr.c_str());
@@ -408,7 +320,39 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
     return store::xstore_success;
 }
 
-void xtop_application::create_thread_pools() {}
+void xtop_application::update_node_size(uint64_t & node_size, std::error_code & ec) {
+    assert(!ec);
+#if defined(XBUILD_CI)
+    node_size = 50;
+#elif defined(XBUILD_DEV)
+    node_size = 14;
+#elif defined(XBUILD_GALILEO)
+    node_size = 128;
+#else  // mainnet
+    node_size = 700;
+#endif
+
+    data::election::xstandby_result_store_t standby_result_store;
+    std::string serialized_value{};
+    if (m_store->string_get(sys_contract_rec_standby_pool_addr, XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
+        auto const & standby_result_store = codec::msgpack_decode<data::election::xstandby_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
+        common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
+        auto const & standby_network_storage_result = standby_result_store.result_of(network_id);
+        if (!standby_network_storage_result.empty()) {
+            node_size = standby_network_storage_result.size();
+            xinfo("[update_node_size] success, node_size: %llu", node_size);
+            return;
+        } else {
+            ec = error::xerrc_t::load_standby_data_missing_property;
+            xinfo("[update_node_size] failed, standby empty?");
+            assert(false);
+            return;
+        }
+    }
+    ec = error::xerrc_t::load_standby_data_missing_block;
+    xinfo("[update_node_size] failed, string get failed.");
+    return;
+}
 
 bool xtop_application::is_genesis_node() const noexcept {
     const std::vector<node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();

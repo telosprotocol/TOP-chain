@@ -22,7 +22,7 @@ class xtop_basic_vhost : public xvhost_base_t {
 
 protected:
     common::xnetwork_id_t m_network_id;
-    common::xrole_type_t m_role;  // the role specified when the program launched.
+    common::xminer_type_t m_role;  // the role specified when the program launched.
 
     mutable std::mutex m_crypto_keys_mutex{};
     std::unordered_map<common::xnode_id_t, xcrypto_key_t<pub>> m_crypto_keys{};
@@ -47,6 +47,9 @@ public:
                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const & group_addr, common::xelection_round_t const & election_round) const override final;
+    std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group(xcluster_address_t const & group_addr,
+                                                                           common::xelection_round_t const & election_round,
+                                                                           std::error_code & ec) const override final;
 
     xvnode_address_t parent_group_address(xvnode_address_t const & child_addr) const override final;
 

@@ -5,6 +5,7 @@
 #include "xcommon/xnode_type.h"
 
 #include <cassert>
+#include <type_traits>
 
 NS_BEG2(top, common)
 
@@ -41,6 +42,10 @@ to_string(xnode_type_t const type) {
         string += "consensus.";
     }
 
+    if (has<xnode_type_t::fullnode>(type)) {
+        string += "fullnode.";
+    }
+
     if (has<xnode_type_t::auditor>(type)) {
         string += "auditor.";
     }
@@ -53,8 +58,8 @@ to_string(xnode_type_t const type) {
         string += "archive.";
     }
 
-    if (has<xnode_type_t::full_node>(type)) {
-        string += "full_node.";
+    if (has<xnode_type_t::exchange>(type)) {
+        string += "exchange.";
     }
 
     if (has<xnode_type_t::group>(type)) {
@@ -77,6 +82,59 @@ to_string(xnode_type_t const type) {
     return string;
 }
 
+std::string to_presentation_string(xnode_type_t const type) {
+    std::string name;
+
+    switch (type) {
+    case xnode_type_t::rec:
+        name = "root_beacon";
+        break;
+
+    case xnode_type_t::zec:
+        name = "sub_beacon";
+        break;
+
+    case xnode_type_t::edge:
+        name = "edge";
+        break;
+
+    case xnode_type_t::fullnode:
+        name = "fullnode";
+        break;
+
+    case xnode_type_t::consensus_auditor:
+        name = "auditor";
+        break;
+
+    case xnode_type_t::consensus_validator:
+        name = "validator";
+        break;
+
+    case xnode_type_t::storage_archive:
+        name = "archive";
+        break;
+
+    case xnode_type_t::storage_exchange:
+        name = "exchange";
+        break;
+
+    default:
+        assert(false);
+        name = std::to_string(static_cast<std::underlying_type<xnode_type_t>::type>(type));
+        break;
+    }
+
+    return name;
+}
+
+std::string to_presentation_string_compatible(xnode_type_t const type) {
+    if (type == xnode_type_t::storage_exchange) {
+        return std::string{"full_node"};
+    } else {
+        return to_presentation_string(type);
+    }
+}
+
 xnode_type_t &
 operator &=(xnode_type_t & lhs, xnode_type_t const rhs) noexcept {
     lhs = lhs & rhs;
@@ -96,25 +154,25 @@ has(xnode_type_t const target, xnode_type_t const input) noexcept {
 
 xnode_type_t
 real_part_type(xnode_type_t const in) noexcept {
-    return static_cast<xnode_type_t>(0x0000FFFF & static_cast<std::underlying_type<xnode_type_t>::type>(in));
+    return xnode_type_t::real_part_mask & in;
 }
 
 xnode_type_t
 virtual_part_type(xnode_type_t const in) noexcept {
-    return static_cast<xnode_type_t>(0xFFFF0000 & static_cast<std::underlying_type<xnode_type_t>::type>(in));
+    return xnode_type_t::virtual_part_mask & in;
 }
 
 xnode_type_t
 reset_virtual_part(xnode_type_t const in, xnode_type_t const desired_virtual_part_type) noexcept {
-    auto const high_part = desired_virtual_part_type & static_cast<xnode_type_t>(0xFFFF0000);
-    auto const result = in & static_cast<xnode_type_t>(0x0000FFFF);
+    auto const high_part = desired_virtual_part_type & xnode_type_t::virtual_part_mask;
+    auto const result = in & xnode_type_t::real_part_mask;
     return result | high_part;
 }
 
 xnode_type_t
 reset_real_part(xnode_type_t const in, xnode_type_t const desired_real_part_type) noexcept {
-    auto const low_part = desired_real_part_type & static_cast<xnode_type_t>(0x0000FFFF);
-    auto const result = in & static_cast<xnode_type_t>(0xFFFF0000);
+    auto const low_part = desired_real_part_type & xnode_type_t::real_part_mask;
+    auto const result = in & xnode_type_t::virtual_part_mask;
     return result | low_part;
 }
 

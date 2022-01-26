@@ -10,7 +10,9 @@
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_timer.h"
+#include "xwrouter/multi_routing/routing_table_info_manager.h"
 #include "xwrouter/root/root_routing.h"
+#include "xwrouter/multi_routing/rrs_params_manager.h"
 
 #include <map>
 #include <memory>
@@ -46,6 +48,15 @@ public:
     void HandleCacheElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
     void HandleCacheElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
+    // RoutingTableInfoMgr
+    void add_routing_table_info(common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info);
+    void delete_routing_table_info(common::xip2_t const & group_xip, uint64_t version_or_blk_height);
+    base::ServiceType transform_service_type(base::ServiceType const & service_type);
+    std::vector<kadmlia::NodeInfoPtr> transform_node_vec(base::ServiceType const & service_type, std::vector<kadmlia::NodeInfoPtr> const & node_vec);
+
+    // Update RRS N
+    bool UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb);
+
 private:
     std::shared_ptr<wrouter::RootRouting> root_routing_table_;
     std::mutex root_routing_table_mutex_;
@@ -55,6 +66,10 @@ private:
 
     std::map<base::ServiceType, kadmlia::ElectRoutingTablePtr> elect_routing_table_map_;
     std::mutex elect_routing_table_map_mutex_;
+
+    RoutingTableInfoMgr routing_table_info_mgr;
+
+    std::shared_ptr<RRSParamsMgr> rrs_params_mgr_ptr;
 
     base::TimerManager * timer_manager_{base::TimerManager::Instance()};
     std::shared_ptr<base::TimerRepeated> check_elect_routing_;

@@ -13,6 +13,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
+#include "xdata/xblockbuild.h"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvpropertyprove.h"
 
@@ -34,14 +35,14 @@ uint256_t                               xblock_t::m_empty_uint256;
 std::string                             xblock_t::m_empty_string;
 std::vector<xobject_ptr_t<xblock_t>>    xblock_t::m_empty_blocks;
 
-xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height)
-: m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height) {
+xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime)
+: m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height), m_gmtime(_gmtime) {
     set_empty_xip2(m_validator);
     set_empty_xip2(m_auditor);
     char local_param_buf[128];
     xprintf(local_param_buf,sizeof(local_param_buf),
-        "{%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 "}",
-        _account.c_str(), _proposal_height, _viewid, _viewtoken, _clock);
+        "{%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",gmt=%" PRIu64 "}",
+        _account.c_str(), _proposal_height, _viewid, _viewtoken, _clock, _gmtime);
     m_dump_str = std::string(local_param_buf);
 }
 
@@ -91,53 +92,11 @@ void xblock_consensus_para_t::set_common_consensus_para(uint64_t clock,
 void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t drand_height,
                                                             const std::string & random_seed,
                                                             uint64_t total_lock_tgas_token,
-                                                            const std::string & extra_data) {
+                                                            uint64_t total_lock_tgas_token_property_height) {
     m_drand_height = drand_height;
     m_random_seed = random_seed;
     m_total_lock_tgas_token = total_lock_tgas_token;
-    m_extra_data = extra_data;
-}
-
-int32_t xblockheader_extra_data_t::do_write(base::xstream_t & stream) const {
-    KEEP_SIZE();
-    stream << m_paras;
-    return CALC_LEN();
-}
-
-int32_t xblockheader_extra_data_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream >> m_paras;
-    return CALC_LEN();
-}
-
-int32_t xblockheader_extra_data_t::deserialize_from_string(const std::string & extra_data) {
-    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)extra_data.data(), (uint32_t)extra_data.size());
-    return serialize_from(_stream);
-}
-
-int32_t xblockheader_extra_data_t::serialize_to_string(std::string & extra_data) {
-    if (!m_paras.empty()) {
-        base::xautostream_t<1024> _stream(base::xcontext_t::instance());
-        int32_t ret = serialize_to(_stream);
-        extra_data.clear();
-        extra_data.assign((const char *)_stream.data(), _stream.size());
-        return ret;
-    }
-    return 0;
-}
-
-uint64_t xblockheader_extra_data_t::get_tgas_total_lock_amount_property_height() const {
-    auto iter = m_paras.find(enum_extra_data_type_tgas_total_lock_amount_property_height);
-    if (iter == m_paras.end()) {
-        return 0;
-    } else {
-        return base::xstring_utl::touint64(iter->second);
-    }
-}
-
-void xblockheader_extra_data_t::set_tgas_total_lock_amount_property_height(uint64_t height) {
-    std::string height_str = base::xstring_utl::tostring(height);
-    m_paras[enum_extra_data_type_tgas_total_lock_amount_property_height] = height_str;
+    m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
 }
 
 xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
@@ -436,22 +395,39 @@ uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
 }
 
 std::vector<base::xvtxkey_t> xblock_t::get_txkeys() const {
+    // only unit-block has txkeys
+    if (get_block_level() != base::enum_xvblock_level_unit) {
+        xassert(false);
+        return {};
+    }
     auto & extra_str = get_header()->get_extra_data();
     if (extra_str.empty()) {
         return {};
     }
-    base::xvheader_extra he;
+    xunitheader_extra_t he;
     he.serialize_from_string(extra_str);
+    return he.get_txkeys();
+}
 
-    auto txs_str = he.get_val(base::HEADER_KEY_TXS);
-    if (txs_str.empty()) {
-        xdbg("empty header, account:%s", get_account().c_str());
-        return std::vector<base::xvtxkey_t>{};
+uint64_t xblock_t::get_second_level_gmtime() const {
+    // only table-block has second_level_gmtime
+    if (get_block_level() != base::enum_xvblock_level_table) {
+        xassert(false);
+        return 0;
+    }
+    uint64_t gmtime = 0;
+    auto & extra_str = get_header()->get_extra_data();
+    // second level gmtime is introduced after v3.0.0 
+    if (!extra_str.empty()) {
+        xtableheader_extra_t he;
+        he.deserialize_from_string(extra_str);
+        gmtime = he.get_second_level_gmtime();
     }
 
-    base::xvtxkey_vec_t txs;
-    txs.serialize_from_string(txs_str);
-    return txs.get_txkeys();
+    if (0 == gmtime) {
+        return get_timestamp(); // XTODO return clock level gmtime for old version
+    }
+    return gmtime;
 }
 
 NS_END2

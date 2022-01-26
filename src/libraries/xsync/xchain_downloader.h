@@ -13,6 +13,8 @@
 #include "xsync/xsync_ratelimit.h"
 #include "xsync/xrequest.h"
 #include "xsync/xsync_task.h"
+#include "xsync/xrole_chains_mgr.h"
+#include "xsync/xrole_xips_manager.h"
 
 NS_BEG2(top, sync)
 
@@ -30,6 +32,7 @@ public:
     virtual bool downloading(int64_t now) = 0;
 
     virtual void on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
+    virtual void on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
     virtual void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) = 0;
     virtual void on_chain_snapshot_response(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
     virtual void on_block_committed_event(uint64_t height) = 0;
@@ -101,7 +104,8 @@ class xchain_object_t {
 class xchain_downloader_t : public xchain_downloader_face_t {
 public:
     xchain_downloader_t(std::string vnode_id,
-        xsync_store_face_t *sync_store, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
+        xsync_store_face_t *sync_store, xrole_xips_manager_t *role_xips_mgr,
+        xrole_chains_mgr_t *role_chains_mgr, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
         const observer_ptr<base::xvcertauth_t> &certauth,
         xsync_sender_t *sync_sender, xsync_ratelimit_face_t *ratelimit,
         const std::string &address);
@@ -115,6 +119,7 @@ public:
     bool on_timer(int64_t now) override;
     bool downloading(int64_t now) override;
     void on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
+    void on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
     void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) override;
     void on_chain_snapshot_response(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
     void on_block_committed_event(uint64_t height) override;
@@ -144,6 +149,7 @@ private:
     void wait_committed_event_group(uint64_t height, uint64_t quota_height);
     bool notify_committed_event_group(uint64_t height);
     bool notified_committed_event_group();
+    enum_result_code handle_archive_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height);
 protected:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store;
@@ -161,6 +167,8 @@ private:
     uint32_t m_continuous_times{0};
     std::set<uint64_t> m_wait_committed_event_group;
     uint64_t m_refresh_time;
+    xrole_xips_manager_t *m_role_xips_mgr;
+    xrole_chains_mgr_t *m_role_chains_mgr;
 };
 
 NS_END2

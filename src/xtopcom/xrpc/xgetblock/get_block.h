@@ -45,6 +45,13 @@ public:
     std::string m_recv = "recv_unit_info";
     std::string m_confirm = "confirm_unit_info";
 };
+
+enum class xtop_enum_full_node_compatible_mode {
+    incompatible,
+    compatible,
+};
+using xfull_node_compatible_mode_t = xtop_enum_full_node_compatible_mode;
+
 class get_block_handle : public rpc::xrpc_handle_face_t {
 public:
     get_block_handle(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync)
@@ -64,7 +71,9 @@ public:
         REGISTER_QUERY_METHOD(getZecs);
         REGISTER_QUERY_METHOD(getEdges);
         REGISTER_QUERY_METHOD(getArcs);
+        REGISTER_QUERY_METHOD(getExchangeNodes);
         REGISTER_QUERY_METHOD(getFullNodes);
+        REGISTER_QUERY_METHOD(getFullNodes2);
         REGISTER_QUERY_METHOD(getConsensus);
         REGISTER_QUERY_METHOD(getStandbys);
         REGISTER_QUERY_METHOD(queryNodeInfo);
@@ -93,9 +102,9 @@ public:
         return rsp;
     }
     xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
-    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height);
+    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
     void getLatestBlock();
     void getLatestFullBlock();
     void getBlockByHeight();
@@ -108,15 +117,17 @@ public:
     uint64_t get_timer_clock() const;
     xJson::Value parse_account(const std::string & account);
     void update_tx_state(xJson::Value & result, const xJson::Value & cons, const std::string & rpc_version);
-    xJson::Value parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & version);
     xJson::Value parse_tx(xtransaction_t * tx_ptr, const std::string & version);
+    int parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & version, xJson::Value& result_json);
     xJson::Value parse_action(const xaction_t & action);
     xJson::Value get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version);
     void getRecs();
     void getZecs();
     void getEdges();
     void getArcs();
+    void getExchangeNodes();
     void getFullNodes();
+    void getFullNodes2();
     void getConsensus();
     void getStandbys();
     void queryNodeInfo();

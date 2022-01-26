@@ -221,7 +221,7 @@ bool xconspacemaker_t::on_receive_timeout(xvip2_t const & from_addr, base::xcspd
         return true;
     }
 
-    uint32_t expect_version = base::xvblock_fork_t::instance().is_forked(msg->block->get_clock()) ? base::xvblock_fork_t::get_block_fork_new_version() : base::xvblock_fork_t::get_block_fork_old_version();
+    uint32_t expect_version = base::xvblock_fork_t::instance().get_expect_block_version(msg->block->get_clock());
     if (msg->block->get_block_version() != expect_version) {
         xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} version unmatch clock %" PRIu64" block:%s,expect_version=0x%x,actual_version=0x%x",
             from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str(), expect_version, msg->block->get_block_version());
@@ -369,8 +369,9 @@ void xconspacemaker_t::on_timeout_stage2(base::xvblock_t *vote) {
     auto sign = get_vcertauth()->do_sign(xip_addr, vote, base::xtime_utl::get_fast_random64());
     vote->set_verify_signature(sign);
     XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_tc, 1);
+    #ifdef DEBUG
     xassert(get_vcertauth()->verify_sign(xip_addr, vote) == base::enum_vcert_auth_result::enum_successful);
-
+    #endif
     base::xauto_ptr<xtimeout_msg_t> msg = new xtimeout_msg_t{vote};
 
     std::string msg_stream;
@@ -450,7 +451,7 @@ bool xconspacemaker_t::on_object_close() {
 }
 
 bool xconspacemaker_t::reset_xip_addr(const xvip2_t & new_addr) {
-    xinfo("[xconspacemaker_t::reset_xip_addr] new xip {%" PRIu64 ", %" PRIu64 "}", new_addr.high_addr, new_addr.low_addr);
+    xinfo("[xconspacemaker_t::reset_xip_addr] new xip %" PRIx64 ":%" PRIx64, new_addr.high_addr, new_addr.low_addr);
     bool r = xcscoreobj_t::reset_xip_addr(new_addr);
 
     m_vote_cache.clear();

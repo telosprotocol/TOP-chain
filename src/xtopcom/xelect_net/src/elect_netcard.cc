@@ -28,6 +28,17 @@ namespace elect {
 std::mutex EcNetcard::register_msg_handler_mutex_;
 bool EcNetcard::rumor_msg_handler_registered_ = false;
 
+#define IS_BROADCAST(message) (message.broadcast())
+#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == kGossipRRS)
+#define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
+#define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
+#define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
+#define MESSAGE_FEATURE(message)                                                                                                                                                   \
+    "msg_hash", message.gossip().header_hash().empty() ? std::to_string(message.msg_hash()) : message.gossip().header_hash(), "msg_size", message.gossip().block().size()
+#define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
+#define PACKET_SIZE(packet) "packet_size", packet.get_size()
+#define NOW_TIME "timestamp", GetCurrentTimeMsec()
+
 EcNetcard::~EcNetcard() {
     UnInit();
     TOP_INFO("EcNetcard::UnInit");
@@ -107,7 +118,7 @@ std::vector<network::xnetwork_message_ready_callback_t> EcNetcard::getall_rumor_
 void EcNetcard::send_to(base::KadmliaKeyPtr const & send_kad_key,
                         base::KadmliaKeyPtr const & recv_kad_key,
                         xbyte_buffer_t const & bytes_message,
-                        std::error_code const & ec) const {
+                        std::error_code & ec) const {
     assert(send_kad_key);
     assert(recv_kad_key);
     xdbg("[ec_netcard][send_to] src: [%d][%d][%d][%d][%d]",
@@ -146,16 +157,17 @@ void EcNetcard::send_to(base::KadmliaKeyPtr const & send_kad_key,
     pbft_message.set_data(vdata);
 
     // point to point
-    if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
+    wrouter::Wrouter::Instance()->send(pbft_message, ec);
+    // if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
         // error code
-    }
+    // }
     return;
 }
 
 void EcNetcard::spread_rumor(base::KadmliaKeyPtr const & send_kad_key,
                              base::KadmliaKeyPtr const & recv_kad_key,
                              xbyte_buffer_t const & bytes_message,
-                             std::error_code const & ec) const {
+                             std::error_code & ec) const {
     assert(send_kad_key);
     assert(recv_kad_key);
     xdbg("[ec_netcard][spread_rumor] src: [%d][%d][%d][%d][%d]",
@@ -192,14 +204,14 @@ void EcNetcard::spread_rumor(base::KadmliaKeyPtr const & send_kad_key,
     pbft_message.set_data(vdata);
 
     // group broadcast
-    GossipDispatchBroadcast(pbft_message, gossip::kGossipDispatcher);
+    GossipDispatchBroadcast(pbft_message, gossip::kGossipDispatcher, ec);
     return;
 }
 
 void EcNetcard::broadcast(base::KadmliaKeyPtr const & send_kad_key,
                           base::KadmliaKeyPtr const & recv_kad_key,
                           xbyte_buffer_t const & bytes_message,
-                          std::error_code const & ec) const {
+                          std::error_code & ec) const {
     assert(send_kad_key);
     assert(recv_kad_key);
     xdbg("[ec_netcard][broadcast] src: [%d][%d][%d][%d][%d]",
@@ -236,12 +248,17 @@ void EcNetcard::broadcast(base::KadmliaKeyPtr const & send_kad_key,
     pbft_message.set_data(vdata);
 
     // root broadcast
-    GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter);
-    //GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS);
+    GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, ec);
+    // GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, ec);
+#ifdef XENABLE_P2P_TEST
+    if (!ec) {
+        XMETRICS_PACKET_INFO("p2ptest_send_broadcast_info", MESSAGE_BASIC_INFO(pbft_message), MESSAGE_FEATURE(pbft_message), IS_ROOT_BROADCAST(pbft_message), NOW_TIME);
+    }
+#endif
     return;
 }
 
-int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
+void EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, std::error_code & ec) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
     std::string header_hash = std::to_string(vhash);
@@ -269,15 +286,14 @@ int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_
     HandleRumorMessage(pbft_message, self_packet);
     TOP_DEBUG("kroot broadcast send to self");
 
-    if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
-        TOP_WARN("chain message block [is_root: %d] broadcast failed", pbft_message.is_root());
-        return kVHostSendWrouterFailed;
+    wrouter::Wrouter::Instance()->send(pbft_message, ec);
+    if (ec) {
+        xwarn("broadcast fail. %s %s", ec.category().name(), ec.message().c_str());
     }
-
-    return kVhostSendSuccess;
+    return;
 }
 
-int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
+void EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, std::error_code & ec) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
@@ -299,12 +315,11 @@ int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft
     HandleRumorMessage(pbft_message, self_packet);
     TOP_DEBUG("kroot broadcast send to self");
 
-    if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
-        TOP_WARN("chain message block [is_root: %d] broadcast failed", pbft_message.is_root());
-        return kVHostSendWrouterFailed;
+    wrouter::Wrouter::Instance()->send(pbft_message, ec);
+    if (ec) {
+        xwarn("broadcast fail. %s %s", ec.category().name(), ec.message().c_str());
     }
-
-    return kVhostSendSuccess;
+    return;
 }
 #if 0
 int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
@@ -338,7 +353,7 @@ int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbf
     return kVhostSendSuccess;
 }
 #endif
-int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type) const {
+void EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, std::error_code & ec) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
@@ -359,23 +374,12 @@ int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbf
     gossip_block->set_header_hash(header_hash);
     pbft_message.clear_data();
 
-    if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
-        TOP_WARN("chain message block [is_root: %d] broadcast failed", pbft_message.is_root());
-        return kVHostSendWrouterFailed;
+    wrouter::Wrouter::Instance()->send(pbft_message, ec);
+    if (!ec) {
+        xwarn("speard rumor fail. %s %s", ec.category().name(), ec.message().c_str());
     }
-
-    return kVhostSendSuccess;
+    return;
 }
-
-#define IS_BROADCAST(message) (message.broadcast())
-#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8)
-#define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
-#define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
-#define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
-#define MESSAGE_FEATURE(message) "msg_hash", message.msg_hash(), "msg_size", message.gossip().block().size()
-#define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
-#define PACKET_SIZE(packet) "packet_size", packet.get_size()
-#define NOW_TIME "timestamp", GetCurrentTimeMsec()
 
 void EcNetcard::HandleRumorMessage(
         transport::protobuf::RoutingMessage& message,
@@ -408,7 +412,12 @@ void EcNetcard::HandleRumorMessage(
     message.set_msg_hash(msg_hash);
 
     if (IS_BROADCAST(message)) {
-#ifdef XENABLE_P2P_BENDWIDTH
+
+#if defined(XENABLE_P2P_TEST)
+        if (message.is_root()) {
+            XMETRICS_PACKET_INFO("p2ptest_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
+        }
+#elif defined(XENABLE_P2P_BENDWIDTH)
         XMETRICS_PACKET_INFO(
             "p2pbroadcast_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
 #else

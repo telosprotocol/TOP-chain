@@ -7,6 +7,7 @@
 #include "xrpc/xws/xws_server.h"
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "xrpc/xcluster/xcluster_rpc_handler.h"
+#include "xrpc/xarc/xarc_rpc_handler.h"
 #include "xbase/xobject_ptr.h"
 #include "xtxstore/xtxstore_face.h"
 
@@ -33,6 +34,7 @@ public:
 private:
     shared_ptr<xshard_rpc_handler>   m_shard_handler{ nullptr };
     shared_ptr<xcluster_rpc_handler> m_cluster_handler{ nullptr };
+    shared_ptr<xarc_rpc_handler>     m_arc_handler{ nullptr };
     shared_ptr<xrpc_edge_vhost>      m_edge_handler{ nullptr };
     static top::base::xiothread_t*   m_thread;
 };

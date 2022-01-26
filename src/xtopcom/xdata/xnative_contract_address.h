@@ -20,6 +20,7 @@ XINLINE_CONSTEXPR char const * sys_drand_addr{"Tr00013aFJ3pTJ56d7Nrc3VtwUQPwkXRL
 
 XINLINE_CONSTEXPR char const * sys_contract_rec_registration_addr{ "T2000138NZjvNJjRNG5iEqVKydpqAqoeNjBuFmNbj@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_edge_addr{ "T2000138NpRxYCFQxMHvedTxRpgkb8B7oHt235N2W@0" };
+XINLINE_CONSTEXPR char const * sys_contract_rec_elect_fullnode_addr{ "T2000138HPAUDPz7z5HkEvCkw3Cnyc7eySmNYYDDY@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_archive_addr{ "T2000138NXb36GkofBUMqxCAZqdERi63htDVC8Yzt@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_rec_addr{ "T2000138JQPo5TcurZsVLFUMd5vHJRBLenLWjLhk6@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_zec_addr{ "T2000138Kc9WynduqxJvX3VCU7XjHCR9YyKuBL1fx@0" };

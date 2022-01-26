@@ -64,14 +64,19 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(const base::xvaccount_t & account,const int atag = 0)override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account,const int atag = 0)override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_genesis_connected_block(const base::xvaccount_t & account,bool ask_full_search,const int atag = 0) override; //block has connected to genesis
-            virtual base::xauto_ptr<base::xvbindex_t> get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search,const int atag = 0) override; //block has connected to genesis
+            virtual base::xauto_ptr<base::xvbindex_t> get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search,const int atag = 0) override; //block has connected to genesis        
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_full_block(const base::xvaccount_t & account,const int atag = 0) override;
 
             virtual uint64_t get_latest_committed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override; // first advance checkpoint meta, then return the fresh meta 
+            virtual uint64_t update_get_db_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual bool     set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override;
+            virtual uint64_t get_lowest_executed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual uint64_t get_latest_deleted_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xblock_vector               load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag = 0) override;
@@ -86,7 +91,7 @@ namespace top
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
 
             virtual bool                try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) override;
-
+            virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 
         public://batch process api
             virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account,const int atag = 0) override;
@@ -113,7 +118,10 @@ namespace top
             virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag = 0) override;
 
         public:
-            virtual bool                 exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual bool exist_genesis_block(const base::xvaccount_t & account, const int atag = 0) override;
+            virtual base::xauto_ptr<base::xvblock_t> create_genesis_block(const base::xvaccount_t & account, std::error_code & ec) override;
+            virtual void register_create_genesis_callback(std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> cb) override;
+
         public:
             // genesis connected information
             virtual bool        set_genesis_height(const base::xvaccount_t & account, const std::string &height) override;
@@ -146,6 +154,7 @@ namespace top
         protected:
             xvblockdb_t*                get_blockdb_ptr() const {return m_xvblockdb_ptr;}
         private:
+            bool                        on_block_prune(const xblockevent_t & event);
             bool                        on_block_committed(const xblockevent_t & event);
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
             bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
@@ -155,6 +164,7 @@ namespace top
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;
+            std::function<base::xauto_ptr<base::xvblock_t>(base::xvaccount_t const &, std::error_code &)> m_create_genesis_block_cb;
         };
 
     };//end of namespace of vstore

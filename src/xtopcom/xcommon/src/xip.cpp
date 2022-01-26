@@ -749,6 +749,10 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id) {
         return xnode_type_t::edge;
     }
 
+    if (zone_id == xfullnode_zone_id) {
+        return xnode_type_t::fullnode;
+    }
+
     if (zone_id == xzec_zone_id) {
         return xnode_type_t::zec;
     }
@@ -778,8 +782,8 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     } else if (node_type == xnode_type_t::storage) {
         if (xarchive_group_id == group_id) {
             node_type |= xnode_type_t::archive;
-        } else if (xfull_node_group_id == group_id) {
-            node_type |= xnode_type_t::full_node;
+        } else if (xexchange_group_id == group_id) {
+            node_type |= xnode_type_t::exchange;
         } else {
             assert(false);
             node_type = xnode_type_t::invalid;
@@ -788,22 +792,6 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
 
     return node_type;
 }
-
-//bool operator==(common::xelection_round_t const & lhs, xnetwork_version_t const & rhs) noexcept {
-//    if (!lhs.has_value() || !rhs.has_value()) {
-//        return false;
-//    }
-//
-//    assert(rhs <= common::xdefault_network_version);
-//    auto const lhs_value = static_cast<xnetwork_version_t::value_type>(lhs.value() & xdefault_network_version_value);
-//    auto const rhs_value = static_cast<xnetwork_version_t::value_type>(rhs.value() & xdefault_network_version_value);
-//
-//    return rhs_value == lhs_value;
-//}
-//
-//bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept {
-//    return rhs == lhs;
-//}
 
 template <>
 bool broadcast<xnetwork_id_t>(xnetwork_id_t const & network_id) noexcept {

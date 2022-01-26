@@ -66,7 +66,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
                     std::error_code broadcast_ec;
                     network->broadcast(to.xip2(), msg, broadcast_ec);
                     if (broadcast_ec) {
-                        xerror("validator forward to auditor failed. src %s dst %s", network->address().to_string().c_str(), to.to_string().c_str());
+                        xwarn("validator forward to auditor failed. src %s dst %s", network->address().to_string().c_str(), to.to_string().c_str());
                     }
                     forward = true;
 #ifdef DEBUG
@@ -95,7 +95,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
             std::error_code broadcast_ec;
             network->broadcast(dest_to.xip2(), msg, broadcast_ec);
             if (broadcast_ec) {
-                xerror("auditor forward to validator failed. src %s dst %s", network->address().to_string().c_str(), dest_to.to_string().c_str());
+                xwarn("auditor forward to validator failed. src %s dst %s", network->address().to_string().c_str(), dest_to.to_string().c_str());
             }
 #ifdef DEBUG
             xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
@@ -353,7 +353,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             std::error_code ec;
             net_driver->broadcast(net_driver->address().xip2().group_xip2(), msg, ec);
             if (ec) {
-                xunit_error("xnetwork_proxy::send_receipt_msg broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
+                // todo ?
+                xunit_warn("xnetwork_proxy::send_receipt_msg broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
                             receipt->dump().c_str(),
                             stream.size(),
                             net_driver->address().to_string().c_str());
@@ -365,7 +366,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             std::error_code ec;
             net_driver->broadcast(common::xnode_address_t{auditor_cluster_addr}.xip2(), msg, ec);
             if (ec) {
-                xunit_error("xnetwork_proxy::send_receipt_msg forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+                // todo ?
+                xunit_warn("xnetwork_proxy::send_receipt_msg forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                             receipt->dump().c_str(),
                             stream.size(),
                             net_driver->address().to_string().c_str(),
@@ -387,7 +389,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
                 std::error_code ec;
                 net_driver->broadcast(net_driver->address().xip2().group_xip2(), msg, ec);
                 if (ec) {
-                    xunit_error("xnetwork_proxy::send_receipt_msg broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
+                    // todo ?
+                    xunit_warn("xnetwork_proxy::send_receipt_msg broadcast failed. receipt=%s,size=%zu,from_vnode:%s",
                                 receipt->dump().c_str(),
                                 stream.size(),
                                 net_driver->address().to_string().c_str());
@@ -399,7 +402,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
                 std::error_code ec;
                 net_driver->broadcast(common::xnode_address_t{validator_cluster_addr}.xip2(), msg, ec);
                 if (ec) {
-                    xunit_error("xnetwork_proxy::send_receipt_msg forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+                    // todo ?
+                    xunit_warn("xnetwork_proxy::send_receipt_msg forward failed. receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                                 receipt->dump().c_str(),
                                 stream.size(),
                                 net_driver->address().to_string().c_str(),

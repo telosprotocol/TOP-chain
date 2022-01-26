@@ -73,6 +73,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_read_tick);
         RETURN_METRICS_NAME(db_write_tick);
         RETURN_METRICS_NAME(db_delete_tick);
+        RETURN_METRICS_NAME(db_block_cache_size);
+        RETURN_METRICS_NAME(db_memtable_cache_size);
+        RETURN_METRICS_NAME(db_memory_total_size);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
@@ -89,7 +92,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_tableblock_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_total_succ);
         RETURN_METRICS_NAME(cons_pacemaker_tc_discontinuity);
-        
+
         RETURN_METRICS_NAME(cons_table_leader_make_proposal_succ);
         RETURN_METRICS_NAME(cons_table_backup_verify_proposal_succ);
         RETURN_METRICS_NAME(cons_fail_make_proposal_table_state);
@@ -106,6 +109,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_view_fire_succ);
+        RETURN_METRICS_NAME(cons_cp_check_succ);
         RETURN_METRICS_NAME(cons_view_fire_is_leader);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
@@ -145,6 +149,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_packtx_fail_nonce_contious);
         RETURN_METRICS_NAME(cons_packtx_fail_transfer_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_load_origintx);
+        RETURN_METRICS_NAME(cons_packtx_with_threshold);
 
         RETURN_METRICS_NAME(clock_aggregate_height);
         RETURN_METRICS_NAME(clock_leader_broadcast_height);
@@ -237,7 +242,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_transport_recv);
         RETURN_METRICS_NAME(message_transport_send);
 
-        // sync 
+        // sync
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
         RETURN_METRICS_NAME(xsync_recv_invalid_block);
@@ -284,6 +289,12 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xsync_store_block_tables);
         RETURN_METRICS_NAME(xsync_unit_proof_sync_req_send);
         RETURN_METRICS_NAME(xsync_unit_proof_sync_req_recv);
+        RETURN_METRICS_NAME(xsync_recv_archive_height);
+        RETURN_METRICS_NAME(xsync_archive_height_blocks);
+        RETURN_METRICS_NAME(xsync_recv_archive_blocks);
+        RETURN_METRICS_NAME(xsync_recv_archive_blocks_size);
+        RETURN_METRICS_NAME(xsync_recv_query_archive_height);
+        RETURN_METRICS_NAME(xsync_recv_archive_height_list);
 
         // txpool
         RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
@@ -341,6 +352,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_alarm_confirm_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_recv_tx_reached_upper_limit);
         RETURN_METRICS_NAME(txpool_alarm_send_tx_reached_upper_limit);
+        RETURN_METRICS_NAME(txpool_sync_on_demand_unit);
+        RETURN_METRICS_NAME(txpool_sender_unconfirm_cache);
+        RETURN_METRICS_NAME(txpool_receiver_unconfirm_cache);
+        RETURN_METRICS_NAME(txpool_height_record_cache);
+        RETURN_METRICS_NAME(txpool_table_unconfirm_raw_txs);
 
         // txstore
         RETURN_METRICS_NAME(txstore_request_origin_tx);
@@ -514,7 +530,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_store);
         RETURN_METRICS_NAME(xevent_major_type_sync_executor);
         RETURN_METRICS_NAME(xevent_major_type_network);
-        RETURN_METRICS_NAME(xevent_major_type_dispatch);      
+        RETURN_METRICS_NAME(xevent_major_type_dispatch);
         RETURN_METRICS_NAME(xevent_major_type_deceit);
         RETURN_METRICS_NAME(xevent_major_type_consensus);
         RETURN_METRICS_NAME(xevent_major_type_transaction);
@@ -524,7 +540,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_role);
         RETURN_METRICS_NAME(xevent_major_type_blockfetcher);
         RETURN_METRICS_NAME(xevent_major_type_sync);
-    
+
         RETURN_METRICS_NAME(rpc_edge_tx_request);
         RETURN_METRICS_NAME(rpc_edge_query_request);
         RETURN_METRICS_NAME(rpc_auditor_tx_request);
@@ -592,6 +608,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         //bft
         RETURN_METRICS_NAME(bft_verify_vote_msg_fail);
+        RETURN_METRICS_NAME(contract_table_statistic_empty_ptr);
 
         default: assert(false); return nullptr;
     }
@@ -667,9 +684,9 @@ void e_metrics::run_process() {
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
         update_dump();
     }
-    
+
     top::metrics::handler::metrics_log_close();
-  
+
 }
 
 void e_metrics::process_message_queue() {

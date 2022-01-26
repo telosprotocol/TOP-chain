@@ -3,8 +3,9 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <atomic>
-#include "xbase/xns_macro.h"
 #include <mutex>
+#include "xbase/xns_macro.h"
+#include "xvnetwork/xaddress.h"
 NS_BEG2(top, sync)
 
 using xchain_account_t = std::string;
@@ -14,26 +15,31 @@ class xsync_download_tracer {
     public:
         xsync_download_tracer();
         xsync_download_tracer(const std::pair<uint64_t, uint64_t> expect_height_interval, 
-            const std::map<std::string, std::string> context);
+            const std::map<std::string, std::string> context,
+            const vnetwork::xvnode_address_t& src,
+            const vnetwork::xvnode_address_t& dst);
         void set_trace_height(const uint64_t trace_height);
         const uint64_t trace_height();
         const std::pair<uint64_t, uint64_t> height_interval();
         const std::map<std::string, std::string> context();
         void set_prior(const uint32_t prior);
         const uint32_t prior();
-
+        vnetwork::xvnode_address_t get_src_addr() {return m_src_addr;}
+        vnetwork::xvnode_address_t get_dst_addr() {return m_dst_addr;}
     private:
         std::pair<uint64_t, uint64_t> m_expect_height_interval;
         uint64_t m_trace_height{0}; // 0 is undetermined
         std::map<std::string, std::string> m_context;
         uint32_t m_prior;
+        vnetwork::xvnode_address_t m_src_addr;
+        vnetwork::xvnode_address_t m_dst_addr;
 };
 
 class xsync_download_tracer_mgr {
     public:
         xsync_download_tracer_mgr(){};
         bool apply(std::string account, std::pair<uint64_t, uint64_t> expect_height_interval, 
-            const std::map<std::string, std::string> context);
+            const std::map<std::string, std::string> context, const vnetwork::xvnode_address_t& src, const vnetwork::xvnode_address_t& dst);
         const bool exist(std::string account);
         bool refresh(std::string account, uint64_t downloaded_height);
         bool refresh(std::string account);
@@ -47,7 +53,8 @@ class xsync_download_tracer_mgr {
     private:
         void expire(uint64_t time);
         void insert(xchain_account_t account, std::pair<uint64_t, uint64_t> height_interval, 
-            const std::map<std::string, std::string> context, uint64_t now);
+            const std::map<std::string, std::string> context, uint64_t now, const vnetwork::xvnode_address_t& src,
+            const vnetwork::xvnode_address_t& dst);
         void update(xchain_account_t account, xsync_download_tracer tracer, uint64_t trace_height, uint64_t now);
         const bool is_exist(std::string account);
         std::unordered_map<xchain_account_t, xsync_download_tracer> m_tracers;

@@ -525,10 +525,10 @@ base::xreceiptid_state_ptr_t xblocktool_t::get_receiptid_from_property_prove(con
 
 bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount,
                                                    const base::xaccount_index_t & commit_account_index,
+                                                   uint64_t latest_connect_height,
                                                    base::xvblockstore_t * blockstore,
                                                    const std::string & caller) {
     // firstly, load connected block, always sync unit from latest connected block
-    uint64_t latest_connect_height = blockstore->get_latest_connected_block_height(vaccount);
     uint64_t latest_commit_height = commit_account_index.get_latest_unit_height();
 
     if (latest_connect_height != latest_commit_height) {

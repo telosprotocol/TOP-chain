@@ -47,11 +47,10 @@ class xdb : public xdb_face_t {
     //iterator each key of prefix.note: go throuh whole db if prefix is empty
     bool read_range(const std::string& prefix,xdb_iterator_callback callback,void * cookie) override;
     bool get_estimate_num_keys(uint64_t & num) const override;
-    
     //compact whole DB if both begin_key and end_key are empty
     //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
     virtual bool compact_range(const std::string & begin_key,const std::string & end_key) override;
-    
+    virtual void GetDBMemStatus() const override ;
     xdb_meta_t  get_meta() override {return xdb_meta_t();}  // XTODO no need implement
 
  private:

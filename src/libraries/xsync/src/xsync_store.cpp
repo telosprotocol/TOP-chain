@@ -8,6 +8,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_store_shadow.h"
 #include "xchain_fork/xchain_upgrade_center.h"
+#include "xdata/xcheckpoint.h"
 NS_BEG2(top, sync)
 
 xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow):
@@ -26,6 +27,11 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
+}
+
+bool xsync_store_t::store_block_committed_flag(base::xvblock_t* block) {
+    base::xvaccount_t _vaddress(block->get_account());
+    return m_blockstore->store_committed_unit_block(_vaddress, block); // XTODO also can be used for table-block
 }
 
 bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
@@ -136,6 +142,9 @@ uint64_t xsync_store_t::get_latest_start_block_height(const std::string & accoun
         return _full_block->get_height();
     } else if (sync_policy == enum_chain_sync_policy_full) {
         return get_genesis_block_height(account);
+    } else if (sync_policy == enum_chain_sync_policy_checkpoint) {
+        // need to fix: checkpoint
+        return get_latest_immutable_connected_checkpoint_height(account);
     }
 
     return 0;
@@ -148,7 +157,9 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
         connect_height = m_blockstore->get_latest_connected_block_height(account);
     } else if (sync_policy == enum_chain_sync_policy_full) {
         connect_height = m_shadow->genesis_connect_height(account);
-        //connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
+    } else if (sync_policy == enum_chain_sync_policy_checkpoint) {
+        // need to fix: checkpoint
+        connect_height = get_latest_mutable_connected_checkpoint_height(account);
     }
 
     if (connect_height == 0) {
@@ -160,6 +171,36 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
         }
     }
     return connect_height + 2;
+}
+
+uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const std::string & account) {
+    common::xaccount_address_t _vaddress(account);
+    std::error_code err;
+    auto checkpoint = xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
+    if (err) {
+        return 0;
+    }
+    return checkpoint.height;
+}
+
+uint64_t xsync_store_t::get_latest_mutable_connected_checkpoint_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->update_get_latest_cp_connected_block_height(_vaddress);
+}
+
+uint64_t xsync_store_t::get_latest_stable_connected_checkpoint_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->update_get_db_latest_cp_connected_block_height(_vaddress);
+}
+
+uint64_t xsync_store_t::get_latest_deleted_block_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->get_latest_deleted_block_height(_vaddress);
+}
+
+uint64_t xsync_store_t::get_latest_block_with_state(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->get_lowest_executed_block_height(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {
@@ -227,6 +268,9 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
 base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height) {
     return m_blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
 }
+base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag flag) {
+    return m_blockstore->load_block_object(account, height, flag, false);
+}
 bool xsync_store_t::set_genesis_height(const base::xvaccount_t &account, const std::string &height) {
     return m_blockstore->set_genesis_height(account, height);
 }
@@ -268,19 +312,44 @@ bool xsync_store_t::remove_empty_unit_forked() {
         return true;
     }
 
-    auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
-    if (vb == nullptr) {
-        return false;
+    set_fork_point();
+    return m_remove_empty_unit_forked;
+}
+
+bool xsync_store_t::is_full_node_forked() {
+    if (m_full_node_forked) {
+        return true;
     }
 
-    xdbg("xsync_store_t::remove_empty_unit_forked clock:%llu", vb->get_height());
+    set_fork_point();
+    return m_full_node_forked;
+}
+
+base::xauto_ptr<base::xvbindex_t> xsync_store_t::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
+    return m_blockstore->recover_and_load_commit_index(account, height);
+}
+
+void xsync_store_t::set_fork_point() {
+    auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    if (vb == nullptr) {
+        return;
+    }
+
+    xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     bool forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, vb->get_height());
     if (forked) {
         xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
         m_remove_empty_unit_forked = true;
     }
-    return m_remove_empty_unit_forked;
+
+    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, vb->get_clock());
+    if (forked) {
+        xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
+        m_full_node_forked = true;
+    }
+
+    return;
 }
 
 NS_END2
