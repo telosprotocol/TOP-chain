@@ -256,7 +256,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
 
         xlightunit_action_t txaction(action);
         uint64_t txnonce = 0;
-        if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send) {
+        if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_self) {
             xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
             if (_rawtx != nullptr) {
                 txnonce = _rawtx->get_tx_nonce();
