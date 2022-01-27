@@ -148,33 +148,54 @@ namespace top
             return recovered_something;
         }
 
+        // XTODO there may be two uncommit block before commit, should do recover
         base::xauto_ptr<base::xvbindex_t> xblockacct_t::recover_and_load_commit_index(uint64_t height)
         {
-            if (load_index(height) == 0) {
-                return nullptr;
-            }
-            base::xauto_ptr<base::xvbindex_t> current_index(query_index(height, base::enum_xvblock_flag_authenticated));
+            base::xauto_ptr<base::xvbindex_t> current_index = load_index(height, base::enum_xvblock_flag_authenticated);
             if (current_index == nullptr) {
                 return nullptr;
             }
             if (current_index->check_block_flag(base::enum_xvblock_flag_committed)) {
                 return current_index;
             }
+
             // XTODO try to load next commit-block and recover current index status
-            base::xauto_ptr<base::xvbindex_t> next_index = load_index(height + 1, base::enum_xvblock_flag_committed);
+            base::xauto_ptr<base::xvbindex_t> next_index = load_index(height + 1, base::enum_xvblock_flag_authenticated);
             if (next_index == nullptr) {
                 return nullptr;
             }
-
-            base::xauto_ptr<base::xvbindex_t> current_index_again = load_index(height, next_index->get_last_block_hash());
-            if (current_index_again != nullptr) {
-                update_bindex_to_committed(current_index_again.get());
-                xinfo("xblockacct_t::recover_and_load_commit_index recover succ.account=%s,height=%ld,viewid=%ld", get_address().c_str(), height, current_index_again->get_viewid());
-                return current_index_again;
+            if (next_index->check_block_flag(base::enum_xvblock_flag_committed)) {
+                base::xauto_ptr<base::xvbindex_t> current_index_again = load_index(next_index->get_height() - 1, next_index->get_last_block_hash());
+                if (current_index_again != nullptr) {
+                    update_bindex_to_committed(current_index_again.get());
+                    xinfo("xblockacct_t::recover_and_load_commit_index recover one uncommit succ.account=%s,height=%ld,viewid=%ld", get_address().c_str(), current_index_again->get_height(), current_index_again->get_viewid());
+                    return current_index_again;
+                }
+                xerror("xblockacct_t::recover_and_load_commit_index recover fail.account=%s,height=%ld,cur_hash=%s,last_hash=%s", 
+                    get_address().c_str(), height, base::xstring_utl::to_hex(current_index->get_block_hash()).c_str(), base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str());
+                return nullptr;
             }
 
-            xerror("xblockacct_t::recover_and_load_commit_index recover fail.account=%s,height=%ld,cur_hash=%s,last_hash=%s", 
-                get_address().c_str(), height, base::xstring_utl::to_hex(current_index->get_block_hash()).c_str(), base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str());
+            base::xauto_ptr<base::xvbindex_t> next_next_index = load_index(height + 2, base::enum_xvblock_flag_committed);
+            if (next_next_index == nullptr) {
+                return nullptr;
+            }
+            base::xauto_ptr<base::xvbindex_t> next_index_again = load_index(next_next_index->get_height() - 1, next_next_index->get_last_block_hash());
+            if (next_index_again != nullptr) {
+                update_bindex_to_committed(next_index_again.get());
+                xinfo("xblockacct_t::recover_and_load_commit_index recover succ.account=%s,height=%ld,viewid=%ld", get_address().c_str(), next_index_again->get_height(), next_index_again->get_viewid());
+                
+                base::xauto_ptr<base::xvbindex_t> current_index_again = load_index(next_index_again->get_height() - 1, next_index_again->get_last_block_hash());
+                if (current_index_again != nullptr) {
+                    update_bindex_to_committed(current_index_again.get());
+                    xinfo("xblockacct_t::recover_and_load_commit_index recover two uncommit.account=%s,height=%ld,viewid=%ld", get_address().c_str(), current_index_again->get_height(), current_index_again->get_viewid());                    
+                    return current_index_again;
+                }
+            }
+
+            xerror("xblockacct_t::recover_and_load_commit_index recover fail.account=%s,height=%ld,cur_hash=%s,next_prev_hash=%s,next_next_prev_hash=%s", 
+                get_address().c_str(), height, base::xstring_utl::to_hex(current_index->get_block_hash()).c_str(), 
+                base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str(), base::xstring_utl::to_hex(next_next_index->get_last_block_hash()).c_str());
             return nullptr;
         }
  
