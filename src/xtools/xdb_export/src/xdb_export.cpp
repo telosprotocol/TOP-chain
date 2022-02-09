@@ -1132,7 +1132,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 tx_ext.fire_timestamp = tx_ptr->get_fire_timestamp();
             }
             tx_ext.height = block->get_height();
-            tx_ext.timestamp = block->get_timestamp();
+            tx_ext.timestamp = block->get_second_level_gmtime();  // here should use second level gmtime for statistic
             tx_ext.hash = "0x" + txaction.get_tx_hex_hash();
             // tx_ext.unit_height = unit_height;
             tx_ext.phase = txaction.get_tx_subtype();
