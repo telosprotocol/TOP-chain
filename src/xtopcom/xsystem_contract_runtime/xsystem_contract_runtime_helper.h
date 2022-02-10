@@ -281,6 +281,10 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         return {};                                                                                                                                                                  \
     }
 
+#if defined(XCONTRACT_ENSURE)
+#    undef XCONTRACT_ENSURE
+#endif
+
 #define XCONTRACT_ENSURE(condition, msg)                                                                                                                                            \
     do {                                                                                                                                                                           \
         if (!(condition)) {                                                                                                                                                        \

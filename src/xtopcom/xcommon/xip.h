@@ -66,7 +66,7 @@ XINLINE_CONSTEXPR uint16_t xbroadcast_group_size{0x03FF};
 XINLINE_CONSTEXPR uint64_t xbroadcast_associated_blk_height{0x3FFFFFFFFFFFFF};
 
 XINLINE_CONSTEXPR xnetwork_id_t::value_type xmax_network_id_value{xbroadcast_network_id_value - 1};
-// XINLINE_CONSTEXPR xzone_id_t::value_type xmax_zone_id_value{xbroadcast_zone_id_value - 1};
+XINLINE_CONSTEXPR xzone_id_t::value_type xmax_zone_id_value{xbroadcast_zone_id_value - 1};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xmax_cluster_id_value{xbroadcast_cluster_id_value - 1};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xmax_group_id_value{xbroadcast_group_id_value - 1};
 XINLINE_CONSTEXPR xslot_id_t::value_type xmax_slot_id_value{xbroadcast_slot_id_value - 1};

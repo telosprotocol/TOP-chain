@@ -2,6 +2,7 @@
 #define private   public
 #include "../common.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xdeceit_node_manager.h"
 #undef protected

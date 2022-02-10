@@ -5,6 +5,7 @@
 #include "../../mock/xmock_network.hpp"
 #include "xdata/xdatautil.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_util.h"
 
 using namespace top;

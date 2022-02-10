@@ -17,7 +17,7 @@ enum class enum_sniff_broadcast_type : std::uint32_t {
     rec = static_cast<uint32_t>(common::xnode_type_t::rec),
     zec = static_cast<uint32_t>(common::xnode_type_t::zec),
     storage = static_cast<uint32_t>(common::xnode_type_t::storage),
-    all = static_cast<uint32_t>(common::xnode_type_t::all),
+    all = static_cast<uint32_t>(common::xnode_type_t::all_types),
 };
 using xsniff_broadcast_type_t = enum_sniff_broadcast_type;
 

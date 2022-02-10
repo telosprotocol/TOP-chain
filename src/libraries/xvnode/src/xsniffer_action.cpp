@@ -72,7 +72,7 @@ void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & v
     auto message = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, contract::xmessage_block_broadcast_id);
 
     std::error_code ec;
-    if (common::has<common::xnode_type_t::all>(types)) {
+    if (common::has<common::xnode_type_t::all_types>(types)) {
         common::xip2_t broadcast_xip{vnode->address().network_id()};
         vnode->broadcast(broadcast_xip, message, ec);
         if (ec) {

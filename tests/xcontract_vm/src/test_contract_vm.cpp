@@ -926,7 +926,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     param_stream << common::xtop_node_id{user_address};
     param_stream << common::xnetwork_id_t{static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name)))};
 
-    ENUM_SERIALIZE(param_stream, common::xrole_type_t::advance);
+    ENUM_SERIALIZE(param_stream, common::xminer_type_t::advance);
     param_stream << public_key;
     param_stream << static_cast<uint64_t>(top::config::to_chainid(XGET_CONFIG(chain_name)));
 
@@ -984,7 +984,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
                 seed_node_info.stake_container.insert({common::xnode_type_t::consensus_auditor, 0});
                 seed_node_info.stake_container.insert({common::xnode_type_t::consensus_validator, 0});
                 seed_node_info.stake_container.insert({common::xnode_type_t::edge, 0});
-                seed_node_info.user_request_role = common::xrole_type_t::edge | common::xrole_type_t::archive | common::xrole_type_t::validator | common::xrole_type_t::advance;
+                seed_node_info.user_request_role = common::xminer_type_t::edge | common::xminer_type_t::archive | common::xminer_type_t::validator | common::xminer_type_t::advance;
                 seed_node_info.program_version = "1.1.0";
                 seed_node_info.is_genesis_node = true;
                 // TODO: contract networkid get
@@ -1013,7 +1013,7 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     {
         top::base::xstream_t param_stream(base::xcontext_t::instance());
         std::string nickname{"nickname"};
-        std::string role_type_string = common::to_string(common::xrole_type_t::advance);
+        std::string role_type_string = common::to_string(common::xminer_type_t::advance);
         param_stream << role_type_string;
         param_stream << nickname;
         param_stream << public_key;

@@ -7,6 +7,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xproposal_data.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xrpc_method.h"
