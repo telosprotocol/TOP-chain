@@ -2320,7 +2320,7 @@ namespace top
                 push_event(enum_blockstore_event_committed,this_block);
 
             const uint64_t this_block_height = this_block->get_height();
-            if(this_block_height > m_meta->_highest_deleted_block_height)
+            if(this_block_height > 0)
             {
                 if(this_block_height >= 2)
                 {
@@ -2334,10 +2334,6 @@ namespace top
                 process_index(this_block);//now ready process this block
             }
             
-            update_meta_metric(this_block);
-            if(this_block_height >= m_meta->_highest_cert_block_height)//just return as no further blocks
-                return true;
-
             if(load_index(this_block_height + 1) > 0) //force this load next block
             {
                 auto  it_next_height = m_all_blocks.find(this_block_height + 1);
