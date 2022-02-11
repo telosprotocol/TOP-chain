@@ -97,6 +97,7 @@ TEST_F(test_transfer, transfer_v2_deposit_enough) {
     EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
     EXPECT_EQ(25000, m_source_context->get_used_tgas());
     EXPECT_EQ(25000, m_trans->get_current_used_tgas());
+    EXPECT_EQ(ASSET_TOP(0.1), m_trans->get_current_used_deposit());
 
     tx.source_action_exec();
     EXPECT_EQ(balance - m_transfer_out_amount - m_trans->get_transaction()->get_deposit(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));

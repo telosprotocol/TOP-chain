@@ -476,6 +476,13 @@ xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, u
             jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
             jv["used_deposit"] = tx_info->get_used_deposit();
         }
+        if (tx_info->is_send_tx()) {
+            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2)) {
+                jv["used_deposit"] = tx_info->get_used_deposit();
+            } else {
+                jv["used_deposit"] = 0;
+            }
+        }
         if (tx_info->is_confirm_tx()) {
             jv["used_deposit"] = tx_info->get_used_deposit();
             // TODO(jimmy) should read recv tx exec status from recv tx unit
