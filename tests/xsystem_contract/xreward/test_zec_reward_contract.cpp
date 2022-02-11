@@ -11,16 +11,16 @@
 #include "xdata/xtransaction_v2.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
-#include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
+// #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
 #include "xdata/xnative_contract_address.h"
 
 #include <gtest/gtest.h>
 
 #include <string>
 
-using namespace top::xstake;
+// using namespace top::xstake;
 using namespace top::data;
-using namespace top::system_contracts;
+// using namespace top::system_contracts;
 
 static std::vector<std::string> accounts_vec = {
     "T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc",
@@ -4122,6 +4122,7 @@ static std::vector<std::string> accounts_vec = {
 };
 
 NS_BEG3(top, tests, reward)
+#if 0
 class xtop_test_reward_contract : public system_contracts::xzec_reward_contract_new_t, public testing::Test {
 public:
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_test_reward_contract);
@@ -4175,7 +4176,7 @@ TEST_F(xtest_reward_contract_t, test_accumulated_reward_serialize_deserilize) {
     EXPECT_EQ(record3.last_issuance_time, 10);
     EXPECT_EQ(record3.issued_until_last_year_end, 10000);
 }
-#if 0
+
 TEST_F(xtest_reward_contract_t, test_setup) {
     auto exe_addr = std::string{sys_contract_zec_workload_addr};
     auto contract_addr = common::xnode_id_t{sys_contract_zec_reward_addr};
@@ -4748,7 +4749,7 @@ TEST_F(xtest_reward_contract_t, test_reward_is_expire_internal_8) {
     // 100 = 98 + 1
     EXPECT_EQ(reward_is_expire_internal(new_time_height, reward_issue_interval, activation_record, accumulated_reward_serialize(accumulated_reward)), true);
 }
-#endif
+
 TEST_F(xtest_reward_contract_t, test_get_task_id_1) {
     auto vbstate = make_object_ptr<base::xvbstate_t>(sys_contract_zec_reward_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
     state_accessor::xstate_accessor_t sa{top::make_observer(vbstate.get()), state_accessor::xstate_access_control_data_t{}}; 
@@ -4946,7 +4947,7 @@ TEST_F(xtest_reward_contract_t, test_calc_total_issuance) {
     expect_total = static_cast<top::xstake::uint128_t>(TOTAL_ISSUANCE) * REWARD_PRECISION * min_ratio_annual_total_reward / 100 * 10 / TIMER_BLOCK_HEIGHT_PER_YEAR;
     EXPECT_EQ(total, expect_total);
 }
-#if 0
+
 TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
     std::vector<std::vector<uint32_t>> role_nums;
     std::map<common::xaccount_address_t, xreg_node_info> map_nodes;
@@ -5627,8 +5628,7 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
         }
     }
 }
-#endif
-#if 0
+
 TEST_F(xtest_reward_contract_t, test_dispatch_all_reward_1) {
     auto exe_addr = std::string{sys_contract_zec_reward_addr};
     auto vbstate = make_object_ptr<xvbstate_t>(sys_contract_zec_reward_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
@@ -6119,8 +6119,7 @@ TEST_F(xtest_reward_contract_t, test_update_property) {
     EXPECT_EQ(issue_detail_cmp.m_vote_reward_ratio, 18);
     EXPECT_EQ(issue_detail_cmp.m_governance_reward_ratio, 19);
 }
-#endif
-#if 0
+
 TEST_F(xtest_reward_contract_t, test_calc_rewards_years) {
     common::xlogic_time_t issue_time_length{0};
     uint32_t min_ratio_annual_total_reward{2};
@@ -6144,9 +6143,6 @@ TEST_F(xtest_reward_contract_t, test_calc_rewards_years) {
     EXPECT_EQ(year1_total, issue1);
     EXPECT_EQ(year2_total, issue2);
 }
-#endif
-
-#if 0
 
 /*
 input param:

@@ -126,7 +126,7 @@ private:
                 if (!vnode->running()) {
                     vnode->start();
                     m_vnode_proxy->change(vnode->address(), vnode->start_time());
-                    m_sniff_proxy->reg(vnode->address(), vnode->sniff_config());
+                    // m_sniff_proxy->reg(vnode->address(), vnode->sniff_config());
 
                     xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64,
                           vnode.get(),

@@ -64,7 +64,7 @@ public:
         return inst;
     }
 
-    void deploy(observer_ptr<base::xvblockstore_t> const & blockstore);
+    // void deploy(observer_ptr<base::xvblockstore_t> const & blockstore);
     std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> const & deployment_data() const noexcept;
     std::unique_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address, std::error_code & ec) const noexcept;
     std::unique_ptr<contract_common::xbasic_contract_t> system_contract(common::xaccount_address_t const & address) const;

@@ -14,8 +14,8 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xpbase/base/top_utils.h"
-#include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
-#include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
+// #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
+// #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
 #include <gtest/gtest.h>
 
@@ -910,6 +910,7 @@ TEST_F(test_contract_vm, test_followup_transfer) {
 }
 
 #if defined(XENABLE_MOCK_ZEC_STAKE)
+#if 0
 TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     const uint64_t last_nonce{10};
     const uint256_t last_hash{12345678};
@@ -1114,5 +1115,6 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
 //         EXPECT_EQ(nonce++, tx_nonce);
 //     }
 // }
+#endif
 #endif
 NS_END3

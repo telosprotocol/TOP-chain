@@ -20,8 +20,8 @@
 #include "xsystem_contracts/xtransfer_contract.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstate.h"
-#include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
-#include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
+// #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
+// #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
 #include <gtest/gtest.h>
 

@@ -1,3 +1,5 @@
+#if 0
+
 #include <gtest/gtest.h>
 #include <string>
 #include <chrono>
@@ -216,3 +218,5 @@ TEST_F(test_runtime_statistic_data, process_statistic_data_for_slash) {
     EXPECT_EQ(slash_info.auditor_info.size(), auditor_account_addrs.size());
     EXPECT_EQ(slash_info.validator_info.size(), validator_account_addrs.size());
 }
+
+#endif

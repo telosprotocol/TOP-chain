@@ -1,6 +1,8 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#if 0
+
 #define private public
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
@@ -904,3 +906,5 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str_time_BENCH) {
 }
 
 NS_END2
+
+#endif

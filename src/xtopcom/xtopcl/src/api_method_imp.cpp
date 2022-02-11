@@ -710,11 +710,11 @@ bool api_method_imp::registerNode(const user_info & uinfo,
     std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
 #endif
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
-        source_action_name = "mortgage";
-    }
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "mortgage";
+    //}
 
     xaction_asset_param asset_param(this, "", mortgage);
     std::string param = asset_param.create();
@@ -738,11 +738,11 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
-        source_action_name = "mortgage";
-    }
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "mortgage";
+    //}
 
     xaction_asset_param asset_param(this, "", 0);
     std::string param_s = asset_param.create();
@@ -810,11 +810,11 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     }
 
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
-        source_action_name = "mortgage";
-    }
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "mortgage";
+    //}
 
     xaction_asset_param asset_param(this, "", transfer_amount);
     std::string param = asset_param.create();
@@ -1133,11 +1133,11 @@ bool api_method_imp::submitProposal(const user_info & uinfo,
     std::string param_t = stream_params(stream_t, target, value, type, effective_timer_height);
 
     std::string source_action_name;
-    auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
-                                                                top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
-        source_action_name = "charge";
-    }
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "charge";
+    //}
 
     xaction_asset_param asset_param(this, "", deposit);
     std::string param_s = asset_param.create();

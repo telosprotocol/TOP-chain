@@ -1,3 +1,5 @@
+#if 0
+
 #define private public
 #define protected public
 #include "gtest/gtest.h"
@@ -102,3 +104,5 @@ TEST_F(test_property_api, map_prop_api) {
 }
 
 NS_END3
+
+#endif
