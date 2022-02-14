@@ -26,13 +26,6 @@ NS_BEG2(top, db_export)
 
 xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     XMETRICS_INIT();
-    top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
-    top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
-    top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
-    top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
-    top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
-    data::xrootblock_para_t para;
-    data::xrootblock_t::init(para);
     auto io_obj = std::make_shared<xbase_io_context_wrapper_t>();
     m_timer_driver = make_unique<xbase_timer_driver_t>(io_obj);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
@@ -240,23 +233,6 @@ void xdb_export_tools_t::query_block_exist(std::string const & address, const ui
         }
     }    
 }
-
-void xdb_export_tools_t::read_meta(std::string const & address) {
-    base::xvaccount_t _vaddr{address};
-    std::string new_meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
-    std::string value = base::xvchain_t::instance().get_xdbstore()->get_value(new_meta_key);
-    base::xvactmeta_t* _meta = new base::xvactmeta_t(_vaddr);  // create empty meta default
-    if (!value.empty()) {
-        if (_meta->serialize_from_string(value) <= 0) {
-            std::cerr << "meta serialize_from_string fail !!!" << std::endl;
-        } else {
-            std::cout << "meta serialize_from_string succ,meta=" << _meta->clone_block_meta().ddump() << std::endl;
-        }
-    } else {
-        std::cerr << "meta value empty !!!" << std::endl;
-    }    
-}
-
 
 void xdb_export_tools_t::query_block_info(std::string const & account, std::string const & param) {
     xJson::Value root;
@@ -1364,11 +1340,7 @@ void xdb_export_tools_t::set_outfile_folder(std::string const & folder) {
     m_outfile_folder = folder;
 }
 
-void xdb_export_tools_t::compact_db() {
-    std::string begin_key;
-    std::string end_key;
-    base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
-}
+
 
 void xdb_export_tools_t::parse_info_set(xdbtool_parse_info_t &info, int db_key_type, uint64_t value_size)
 {
@@ -1570,7 +1542,7 @@ void xdb_export_tools_t::vector_to_json(std::map<std::string, xdbtool_parse_info
     }
 }
 
-void xdb_export_tools_t::parse_all(const std::string &fileName) {
+void xdb_export_tools_t::db_parse_type_size(const std::string &fileName) {
     m_db_parse_info.clear();
     m_db_sum_info.clear();
     m_info_key_count = 0;

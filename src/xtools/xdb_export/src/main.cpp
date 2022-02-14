@@ -1,11 +1,15 @@
 #include "../xdb_export.h"
 #include "../xdb_reset.h"
+#include "../xdb_read.h"
 #include "xbase/xhash.h"
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xconfig_register.h"
+#include "xdata/xrootblock.h"
 
 using namespace top;
 using namespace top::db_export;
+using namespace top::db_read;
 
 // #define XDB_EXPORT_LOG
 
@@ -34,7 +38,6 @@ void usage() {
     std::cout << "- ./xdb_export <config_json/db_path> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
     std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
-    std::cout << "        - compact_db new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
@@ -45,13 +48,22 @@ void usage() {
     std::cout << "        - check_archive_db [redundancy]" << std::endl;
     std::cout << "        - parse_checkpoint <height>" << std::endl;
     std::cout << "        - parse_db" << std::endl;
-    std::cout << "        - read_meta <account>" << std::endl;
-    std::cout << "        - parse_type_size [db_path] " << std::endl;
+    std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;
+    std::cout << "        - db_compact_db [db_path]" << std::endl;
+    std::cout << "        - db_parse_type_size [db_path] " << std::endl;
+    std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
 int main(int argc, char ** argv) {
     auto hash_plugin = new xtop_hash_t();
+    top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
+    top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
+    top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
+    top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
+    top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
+    data::xrootblock_para_t para;
+    data::xrootblock_t::init(para);
 
     if (argc < 3) {
         usage();
@@ -95,6 +107,36 @@ int main(int argc, char ** argv) {
 #endif
 
     std::string function_name{argv[2]};
+
+
+    if (function_name == "db_read_meta") {
+        if (argc != 4) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        std::string address = argv[3];
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.db_read_meta(address);
+        return 0;
+    } else if (function_name == "db_compact_db") {
+        if (argc != 4) {
+            usage();
+            return -1;
+        }
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.db_compact_db();
+        return 0;
+    } else if (function_name == "db_read_block") {
+        if (argc != 5) {
+            usage();
+            return -1;
+        }
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.db_read_block(argv[3], std::stoi(argv[4]));
+        return 0;
+    }
+
     if (function_name == "db_migrate_v2_to_v3") {
         if (argc != 4) {
             xassert(false);
@@ -106,36 +148,25 @@ int main(int argc, char ** argv) {
         base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
         return 0;
     }
-
-    if (function_name == "compact_db") {
-        if (argc != 4) {
-            xassert(false);
-            usage();
-            return -1;
-        }
-        std::string v3_db_path = argv[3];
-        xdb_export_tools_t tools_v3{v3_db_path};
-        tools_v3.compact_db();
-        return 0;
-    } else if(function_name == "parse_type_size") {
+    if(function_name == "db_parse_type_size") {
         if (argc != 4) {
             xassert(false);
             usage();
             return -1;
         }
 
-        std::cout << "parse_type_size start" << std::endl;
+        std::cout << "db_parse_type_size start" << std::endl;
         std::string v3_db_path = argv[3];
         xdb_export_tools_t tools_v3{v3_db_path};
-        std::string dir{"parse_type_size/"};
+        std::string dir{"db_parse_result/"};
         tools_v3.set_outfile_folder(dir);
-        std::string  result_file = "result_parse_type_size";
+        std::string  result_file = "db_parse_result";
         std::vector<std::string> pathNames;
         base::xstring_utl::split_string(v3_db_path, '/', pathNames);
         if (pathNames.size() > 1) {
             result_file = pathNames.back();
         }
-        tools_v3.parse_all(result_file);
+        tools_v3.db_parse_type_size(result_file);
         return 0;
     }
 
@@ -213,14 +244,7 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
-    }  else if (function_name == "read_meta") {
-        if (argc < 4) {
-            usage();
-            return -1;
-        }
-        std::string address = argv[3];
-        tools.read_meta(address);
-    } else if (function_name == "check_block_info") {
+    }else if (function_name == "check_block_info") {
         if (argc < 5) {
             usage();
             return -1;
