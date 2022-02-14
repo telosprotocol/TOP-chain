@@ -93,6 +93,13 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
                 jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
                 jv["used_deposit"] = tx_info->get_used_deposit();
             }
+            if (tx_info->is_send_tx()) {
+                if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2)) {
+                    jv["used_deposit"] = tx_info->get_used_deposit();
+                } else {
+                    jv["used_deposit"] = 0;
+                }
+            }
             if (tx_info->is_confirm_tx()) {
                 jv["used_deposit"] = tx_info->get_used_deposit();
                 if (recv_txinfo != nullptr) {
