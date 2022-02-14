@@ -130,6 +130,86 @@ namespace top
                 return {};
             }
         }
+
+        bool xvaccount_t::check_address(const std::string & account_addr)
+        {
+            // check address min-length and max-length
+            if(account_addr.size() <= enum_vaccount_address_prefix_size || account_addr.size() > enum_vaccount_address_max_size) {
+                xwarn("xvaccount_t::check_address fail-too short address,size=%zu", account_addr.size());
+                return false;
+            }
+
+            // check if first-char is T
+            char first_type = account_addr[0];
+            if (first_type != 'T') {
+                xwarn("xvaccount_t::check_address fail-not top addr");
+                return false;
+            }
+
+            // check parts number
+            std::vector<std::string> parts;
+            int parts_num = base::xstring_utl::split_string(account_addr,'@',parts);
+            if (parts_num > 2) {
+                xwarn("xvaccount_t::check_address fail-too many parts %d", parts_num);
+                return false;
+            }
+
+            // check addr type
+            enum_vaccount_addr_type addr_type = get_addrtype_from_account(account_addr);
+            switch (addr_type)
+            {
+                case enum_vaccount_addr_type_root_account:
+                case enum_vaccount_addr_type_black_hole:
+                case enum_vaccount_addr_type_timer:
+                case enum_vaccount_addr_type_drand:
+                case enum_vaccount_addr_type_secp256k1_user_account:
+                case enum_vaccount_addr_type_secp256k1_eth_user_account:
+                    if (parts_num != 1) {
+                        xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. type=%d,parts_num=%d", addr_type, parts_num);
+                        return false;
+                    }
+                case enum_vaccount_addr_type_native_contract:
+                case enum_vaccount_addr_type_block_contract:
+                    if (parts_num != 2) {
+                        xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. type=%d,parts_num=%d", addr_type, parts_num);
+                        return false;
+                    }
+                default:
+                    xwarn("xvaccount_t::check_address fail-invalid type. type=%d", addr_type);
+                    return false;
+            }
+
+            // check subaddr
+            if (parts_num > 1) {
+                std::string subaddr_str = parts_num[1];
+                if (false == base::xstring_utl::digital_string(subaddr_str)) {
+                    xwarn("xvaccount_t::check_address fail-subaddr not digital.");
+                    return false;
+                }
+                int32_t subaddr_int32 = base::xstring_utl::toint32(subaddr_str);
+                if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
+                    xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                    return false;
+                }
+            }
+
+            // check T8 eth address
+            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+                std::string addrtemp = addrtemp.substr(enum_vaccount_address_prefix_size);
+                // check if all lower char
+                std::string addrtemp2 = addrtemp;
+                base::xstring_utl::tolower_string(addrtemp2);
+                if (addrtemp != addrtemp2) {
+                    xwarn("xvaccount_t::check_address fail-has upper char");
+                    return false;
+                }
+
+                // check if all hex char
+
+            }
+
+            return true;
+        }
     
         bool  xvaccount_t::is_unit_address() const
         {
