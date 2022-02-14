@@ -29,5 +29,7 @@ namespace top
         bool                   refresh_block_recycler_rule(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj, const uint64_t permit_prune_upper_boundary);
         bool                   watch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj);
         bool                   unwatch_block_recycler(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj);
+
+        std::vector<base::xvbindex_t*> read_block_index_db_by_path(base::xvdbstore_t* xvdb_ptr, const std::string & index_db_key_path, const uint64_t target_height);
     };//end of namespace of xledger
 };//end of namespace of top

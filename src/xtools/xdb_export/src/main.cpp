@@ -1,11 +1,13 @@
 #include "../xdb_export.h"
 #include "../xdb_reset.h"
+#include "../xdb_read.h"
 #include "xbase/xhash.h"
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
 
 using namespace top;
 using namespace top::db_export;
+using namespace top::db_read;
 
 // #define XDB_EXPORT_LOG
 
@@ -47,6 +49,7 @@ void usage() {
     std::cout << "        - parse_db" << std::endl;
     std::cout << "        - read_meta <account>" << std::endl;
     std::cout << "        - parse_type_size [db_path] " << std::endl;
+    std::cout << "        - read_block  <account> <height> " << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -95,6 +98,18 @@ int main(int argc, char ** argv) {
 #endif
 
     std::string function_name{argv[2]};
+
+    if (function_name == "read_block") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        std::cout << "read_block account info: " << std::endl;
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.query_block_info(argv[3], std::stoi(argv[4]));
+        return 0;
+    } 
+
     if (function_name == "db_migrate_v2_to_v3") {
         if (argc != 4) {
             xassert(false);

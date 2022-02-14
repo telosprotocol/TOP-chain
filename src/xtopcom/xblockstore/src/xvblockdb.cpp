@@ -834,5 +834,23 @@ namespace top
             return base::xvdbkey_t::create_prunable_block_output_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
         }
 
+
+
+          std::vector<base::xvbindex_t*>  xvblockdb_t::load_index_from_db(const std::string & index_db_key_path, const uint64_t target_height)
+          {
+              std::vector<base::xvbindex_t*> vector_xvbindex_ptr = read_index_from_db(index_db_key_path, target_height);
+              return vector_xvbindex_ptr;
+          }
+
+         std::vector<base::xvbindex_t*> read_block_index_db_by_path(base::xvdbstore_t* xvdb_ptr, const std::string & index_db_key_path, const uint64_t target_height)
+        {
+            xvblockdb_t* xvblockdb_ptr = new xvblockdb_t(xvdb_ptr);
+             std::vector<base::xvbindex_t*> vector_xvbindex_ptr = xvblockdb_ptr->load_index_from_db(index_db_key_path, target_height);
+            for(auto it = vector_xvbindex_ptr.begin(); it != vector_xvbindex_ptr.end(); ++it) {
+                     base::xvbindex_t* index =  (base::xvbindex_t*)*it;
+                     xvblockdb_ptr->load_block_object(index);
+            }            
+            return vector_xvbindex_ptr;
+        }
     };//end of namespace of vstore
 };//end of namespace of top
