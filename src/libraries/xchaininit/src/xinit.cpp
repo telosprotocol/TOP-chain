@@ -31,6 +31,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xmigrate/xvmigrate.h"
 #include "xdata/xcheckpoint.h"
+#include "xsync/xsync_object.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -111,7 +112,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
             
             //trigger save data before coredump
             top::base::xvchain_t::instance().on_process_close();
-            
+            top::sync::xtop_sync_out_object::instance().save_span();
             //forward to default handler
             signal(signum, SIG_DFL);//restore to default handler
             kill(getpid(), signum); //send signal again to genereate core dump by default hander
@@ -128,7 +129,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
             
             //trigger save data before terminate
             top::base::xvchain_t::instance().on_process_close();
-            
+            top::sync::xtop_sync_out_object::instance().save_span();
             //forward to default handler
             signal(signum, SIG_DFL);//restore to default handler
             kill(getpid(), signum); //send signal again to default handler
@@ -143,6 +144,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
             
             //trigger save data
             top::base::xvchain_t::instance().save_all();
+            top::sync::xtop_sync_out_object::instance().save_span();
         }
         break;
         

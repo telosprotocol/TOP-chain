@@ -14,7 +14,6 @@
 #include "xbasic/xserialize_face.h"
 
 NS_BEG2(top, sync)
-
 class xcommon_span_t : public top::basic::xserialize_face_t{
 #define BITMAP_MASK (m_quota_of_bitmap - 1)
 #define OFFSET_IN_SEGMENT(offset) ((offset) & 0x3f)
@@ -106,6 +105,7 @@ public:
     void set_store(xsync_store_face_t *sync_store);
     void set_downloader(xdownloader_t *downloader);
     uint64_t genesis_height_refresh_time_ms(const std::string& account);
+    void save();
 private:
     xdownloader_t *m_downloader;
     xsync_store_face_t *m_sync_store;
