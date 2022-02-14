@@ -48,6 +48,7 @@ namespace top
             bool                load_block_object(base::xvbindex_t* index_ptr, const int atag = 0);
 
             bool                delete_block(base::xvbindex_t* index_ptr);
+            std::vector<base::xvbindex_t*>  load_index_from_db(const std::string & index_db_key_path, const uint64_t target_height);
             
         public://mulitple threads safe
             //when successful return the comibned stored-flags, return 0 if nothing changed, but return < 0 when failed
