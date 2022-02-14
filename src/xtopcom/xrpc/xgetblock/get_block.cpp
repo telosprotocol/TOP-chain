@@ -38,6 +38,7 @@ using namespace std;
 using namespace base;
 using namespace store;
 using namespace xrpc;
+const std::string INVALID_ACCOUNT = "Invalid Account!";
 
 bool get_block_handle::handle(std::string request) {
     m_js_req.clear();
@@ -65,8 +66,8 @@ bool get_block_handle::handle(std::string request) {
 
 void get_block_handle::getAccount() {
     std::string account = m_js_req["account_addr"].asString();
-    if (account.empty()) {
-        xwarn("getAccount:account is empty ");
+    if (xverifier::xtx_utl::address_is_valid(account) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
         return;
     }
     try {
@@ -945,6 +946,10 @@ void get_block_handle::getLatestFullBlock() {
 
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     uint64_t height = m_js_req["height"].asUInt64();
     if (owner == sys_contract_zec_slash_info_addr) {
         std::error_code ec;
@@ -966,6 +971,10 @@ void get_block_handle::getBlockByHeight() {
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     std::string version = m_js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
@@ -1002,6 +1011,10 @@ void get_block_handle::getBlock() {
 void get_block_handle::getProperty() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     base::xvaccount_t _owner_vaddress(owner);
 
     xJson::Value value;
