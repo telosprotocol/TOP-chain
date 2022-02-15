@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xrpc/xcluster/xcluster_query_manager.h"
+#include "xrpc/xrpc_query_manager.h"
 #include "xrpc/xrpc_init.h"
 
 #include "tests/xvnetwork/xdummy_vnetwork_driver.h"
@@ -37,7 +37,7 @@ public:
 };
 
 TEST_F(test_cluster, basic) {
-    auto m_cluster_handler = std::make_shared<xcluster_rpc_handler>(m_vhost, m_router_ptr, nullptr, nullptr, nullptr, nullptr, m_thread);
+    auto m_cluster_handler = std::make_shared<xrpc_handler>(m_vhost, m_router_ptr, nullptr, nullptr, nullptr, nullptr, m_thread);
     xvnode_address_t edge_sender;
     xmessage_t message;
     m_cluster_handler->on_message(edge_sender, message);
@@ -63,7 +63,7 @@ TEST_F(test_cluster, methods) {
     // illegal account query
     xjson_proc_t json_proc;
     json_proc.m_request_json["params"]["account_addr"] = "account_addr";
-    auto cluster_method_manager = std::make_shared<xcluster_query_manager>(m_store, m_block_store, m_txstore, m_unit_service);
+    auto cluster_method_manager = std::make_shared<xrpc_query_manager>(m_store, m_block_store, m_txstore, m_unit_service);
     try {
         cluster_method_manager->getAccount(json_proc);
     } catch (xrpc_error & e) {

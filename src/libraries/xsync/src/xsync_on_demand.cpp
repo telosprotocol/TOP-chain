@@ -545,7 +545,9 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
 
     std::vector<data::xblock_ptr_t> blocks_temp;
     for (uint32_t i = 0; i < blocks.size(); i++) {
-        blocks_temp.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks[i].get()));
+        if (blocks[i]->get_height() != 0) {
+            blocks_temp.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks[i].get()));
+        }
     }
 
     m_sync_sender->send_on_demand_blocks(blocks_temp, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);

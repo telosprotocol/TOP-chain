@@ -258,7 +258,7 @@ std::vector<base::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::str
 
 int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks) {
     base::xauto_ptr<base::xvtxindex_t> index = load_tx_idx(hash, base::enum_transaction_subtype_send);
-    if (index->is_self_tx()) {
+    if ((nullptr != index) && index->is_self_tx()) {
         auto xvblocks = load_block_objects(hash, (base::enum_transaction_subtype)base::enum_transaction_subtype_self);
         xdbg("self load_block_objects: %d", xvblocks.size());
         for (uint32_t i = 0; i < xvblocks.size(); i++) {

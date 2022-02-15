@@ -12,6 +12,12 @@ static string xcodec_errc_map(int const errc) noexcept {
     switch (ec) {
         case enum_xvm_error_code::ok:
             return "ok";
+        case enum_xvm_error_code::query_contract_data_fail_to_get_block:
+            return "query_contract_data_fail_to_get_block";
+        case enum_xvm_error_code::query_contract_data_property_missing:
+            return "query_contract_data_property_missing";
+        case enum_xvm_error_code::query_contract_data_property_empty:
+            return "query_contract_data_property_empty";
         default:
             return string("Unknown code " + std::to_string(errc));
     }
