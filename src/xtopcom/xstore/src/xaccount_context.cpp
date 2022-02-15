@@ -22,7 +22,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xdata/xtx_factory.h"
 #include "xutility/xstream_util.hpp"

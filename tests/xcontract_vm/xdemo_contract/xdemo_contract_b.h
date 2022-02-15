@@ -7,7 +7,7 @@
 #include "xcontract_common/xproperties/xproperty_map.h"
 #include "xcontract_common/xproperties/xproperty_string.h"
 #include "xsystem_contract_runtime/xsystem_contract_runtime_helper.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 
 NS_BEG3(top, tests, system_contracts)

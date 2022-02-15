@@ -11,7 +11,7 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 
 #define XPROPERTY_CONTRACT_ELECTION_RESULT_0_KEY  "@42_0"

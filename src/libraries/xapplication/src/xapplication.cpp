@@ -29,7 +29,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
 #include "xloader/xconfig_genesis_loader.h"

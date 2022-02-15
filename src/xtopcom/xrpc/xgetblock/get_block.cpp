@@ -12,7 +12,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xrouter/xrouter.h"

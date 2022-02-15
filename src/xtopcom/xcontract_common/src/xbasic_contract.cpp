@@ -11,7 +11,7 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtransaction_v2.h"
 
 #include <cassert>

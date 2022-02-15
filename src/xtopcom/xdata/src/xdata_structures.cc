@@ -1,7 +1,7 @@
 // Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 
 #include "xbasic/xutility.h"
 #include "xdata/xnative_contract_address.h"

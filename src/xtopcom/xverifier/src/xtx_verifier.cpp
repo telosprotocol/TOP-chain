@@ -8,7 +8,7 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"

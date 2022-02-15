@@ -8,7 +8,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xgenesis/xgenesis_manager.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"

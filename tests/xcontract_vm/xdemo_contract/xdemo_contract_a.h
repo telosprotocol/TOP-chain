@@ -6,7 +6,7 @@
 
 #include "xcontract_common/xproperties/xproperty_map.h"
 #include "xcontract_common/xproperties/xproperty_string.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xsystem_contract_runtime/xsystem_contract_runtime_helper.h"
 #include "xsystem_contracts/xbasic_system_contract.h"
 

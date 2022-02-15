@@ -8,7 +8,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 #include "xdepends/include/asio/post.hpp"
 #include "xdepends/include/asio/thread_pool.hpp"

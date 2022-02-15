@@ -15,7 +15,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_face.h"
 
 #include "xchain_upgrade/xchain_data_galileo.h"

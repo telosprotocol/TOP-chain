@@ -14,7 +14,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xconfig/xconfig_update_parameter_action.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 

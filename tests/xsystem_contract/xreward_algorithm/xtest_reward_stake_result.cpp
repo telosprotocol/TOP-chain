@@ -8,7 +8,7 @@
 #include "xdata/xelection/xelection_info_bundle.h"
 #include "xdata/xelection/xstandby_network_result.h"
 #include "xdata/xelection/xstandby_node_info.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xunit_service/xcons_face.h"
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract.h"

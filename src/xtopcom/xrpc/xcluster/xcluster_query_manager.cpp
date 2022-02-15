@@ -9,7 +9,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproposal_data.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtransaction_cache.h"
 #include "xmbus/xevent_behind.h"
 #include "xrpc/xerror/xrpc_error.h"

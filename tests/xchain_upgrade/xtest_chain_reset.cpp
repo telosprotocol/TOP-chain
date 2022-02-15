@@ -5,7 +5,7 @@
 #include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
 
 #include <gtest/gtest.h>

@@ -13,7 +13,7 @@
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblock_statistics_data.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
 
 

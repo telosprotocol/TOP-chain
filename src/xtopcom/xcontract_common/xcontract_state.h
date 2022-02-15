@@ -10,7 +10,7 @@
 #include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtransaction.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xstate_accessor.h"

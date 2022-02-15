@@ -8,7 +8,7 @@
 #include "xcommon/xip.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
-#include "xdata/xsystem_contract/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 
 NS_BEG3(top, tests, rec_standby)
 
