@@ -450,7 +450,7 @@ static void parse_zec_tasks_map(std::map<std::string, std::string> const & map, 
         if (task.action == data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
             base::xstream_t stream_params{base::xcontext_t::instance(), (uint8_t *)task.params.data(), static_cast<uint32_t>(task.params.size())};
             uint64_t onchain_timer_round;
-            std::map<std::string, top::xuint128_t> rewards;
+            std::map<std::string, ::uint128_t> rewards;
             stream_params >> onchain_timer_round;
             stream_params >> rewards;
             for (auto v : rewards) {

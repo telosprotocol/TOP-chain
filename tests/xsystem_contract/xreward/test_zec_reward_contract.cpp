@@ -4836,21 +4836,21 @@ TEST_F(xtest_reward_contract_t, test_execute_task) {
     m_reward_task.set(ss.str(), std::string((char *)stream.data(), stream.size()));
 
     uint64_t actual_issuance{0};
-    top::xuint128_t community_reward{1500000};
-    std::map<common::xaccount_address_t, top::xuint128_t> table_total_rewards;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_reward_detail;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_dividend_detail;
+    ::uint128_t community_reward{1500000};
+    std::map<common::xaccount_address_t, ::uint128_t> table_total_rewards;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_reward_detail;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_dividend_detail;
     for (auto i = 0; i < 64; i++) {
         std::string table_addr = std::string{sys_contract_sharding_reward_claiming_addr} + "@" + base::xstring_utl::tostring(i);
         table_total_rewards.insert(std::make_pair(common::xaccount_address_t{table_addr}, (i+1)*10000000));
-        std::map<common::xaccount_address_t, top::xuint128_t> node_reward;
+        std::map<common::xaccount_address_t, ::uint128_t> node_reward;
         for (auto j = 0; j < 10; j++) {
             std::string node_addr = accounts_vec[i+j];
             node_reward.insert(std::make_pair(common::xaccount_address_t{node_addr}, (j+1) * 100000));
         }
         table_node_reward_detail.insert(std::make_pair(common::xaccount_address_t{table_addr}, node_reward));
         if (i < 32) {
-            std::map<common::xaccount_address_t, top::xuint128_t> node_dividend;
+            std::map<common::xaccount_address_t, ::uint128_t> node_dividend;
             for (auto j = 0; j < 3; j++) {
                 std::string node_addr = accounts_vec[i+j];
                 node_dividend.insert(std::make_pair(common::xaccount_address_t{node_addr}, (j+1) * 50000));
@@ -4907,24 +4907,24 @@ TEST_F(xtest_reward_contract_t, test_calc_total_issuance) {
     uint32_t min_ratio_annual_total_reward{2};
     uint32_t additional_issue_year_ratio{8};
     xaccumulated_reward_record record;
-    top::xuint128_t total{0};
+    ::uint128_t total{0};
 
-    top::xuint128_t year1_total = static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION * additional_issue_year_ratio / 100;
-    top::xuint128_t year2_total = (static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - year1_total) * additional_issue_year_ratio / 100;
+    ::uint128_t year1_total = static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION * additional_issue_year_ratio / 100;
+    ::uint128_t year2_total = (static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - year1_total) * additional_issue_year_ratio / 100;
     // case 0: time 0
     total = calc_total_issuance(0, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
     EXPECT_EQ(total, 0);
     // case 1: not cross-year
     issue_time_length = 10;
     total = calc_total_issuance(issue_time_length, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
-    top::xuint128_t expect_total = static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION * additional_issue_year_ratio / 100 * issue_time_length / TIMER_BLOCK_HEIGHT_PER_YEAR;
+    ::uint128_t expect_total = static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION * additional_issue_year_ratio / 100 * issue_time_length / TIMER_BLOCK_HEIGHT_PER_YEAR;
     EXPECT_EQ(total, expect_total);
     EXPECT_EQ(0, record.issued_until_last_year_end);
     EXPECT_EQ(issue_time_length, record.last_issuance_time);
     // case 2: cross-year 1-3 not success(do not pass)
     // issue_time_length = 2 * TIMER_BLOCK_HEIGHT_PER_YEAR + 10;
-    // top::xuint128_t last_total = total;
-    // top::xuint128_t year3_amount = (static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - year1_total - year2_total) * additional_issue_year_ratio / 100 * 10 / TIMER_BLOCK_HEIGHT_PER_YEAR;
+    // ::uint128_t last_total = total;
+    // ::uint128_t year3_amount = (static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - year1_total - year2_total) * additional_issue_year_ratio / 100 * 10 / TIMER_BLOCK_HEIGHT_PER_YEAR;
     // total = calc_total_issuance(issue_time_length, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
     // expect_total = year1_total + year2_total + year3_amount - last_total;
     // EXPECT_EQ(total, expect_total);
@@ -4940,11 +4940,11 @@ TEST_F(xtest_reward_contract_t, test_calc_total_issuance) {
     EXPECT_EQ(record.issued_until_last_year_end, expect_total);
     EXPECT_EQ(record.last_issuance_time, issue_time_length);
     // case 4: issue %2
-    record.issued_until_last_year_end = static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - static_cast<top::xuint128_t>(TOTAL_ISSUANCE) * min_ratio_annual_total_reward / 100 *2;
+    record.issued_until_last_year_end = static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - static_cast<::uint128_t>(TOTAL_ISSUANCE) * min_ratio_annual_total_reward / 100 *2;
     record.last_issuance_time = 0;
     issue_time_length = 10;
     total = calc_total_issuance(issue_time_length, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
-    expect_total = static_cast<top::xuint128_t>(TOTAL_ISSUANCE) * REWARD_PRECISION * min_ratio_annual_total_reward / 100 * 10 / TIMER_BLOCK_HEIGHT_PER_YEAR;
+    expect_total = static_cast<::uint128_t>(TOTAL_ISSUANCE) * REWARD_PRECISION * min_ratio_annual_total_reward / 100 * 10 / TIMER_BLOCK_HEIGHT_PER_YEAR;
     EXPECT_EQ(total, expect_total);
 }
 
@@ -5033,7 +5033,7 @@ TEST_F(xtest_reward_contract_t, test_calc_zero_workload_reward) {
     zero_work.cluster_total_workload = 1;
 
     uint32_t zero_workload = 1;
-    const top::xuint128_t group_reward = 1000;
+    const ::uint128_t group_reward = 1000;
     std::vector<std::string> zero_workload_account;
     
     common::xgroup_address_t g_normal1(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{1});
@@ -5136,7 +5136,7 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
             workloads_detail.insert(group);
         }
 
-        top::xuint128_t group_reward = 1000;
+        ::uint128_t group_reward = 1000;
         if(role == 0){
             EXPECT_EQ(group_reward, calc_invalid_workload_group_reward(true, map_nodes, group_reward, workloads_detail));
         }else{
@@ -5161,8 +5161,8 @@ TEST_F(xtest_reward_contract_t, test_calc_edger_worklaod_rewards) {
     node.miner_type(common::xminer_type_t::edge);
     node.m_account_mortgage = 0;
     std::vector<uint32_t> edger_num{10, 0, 3};
-    top::xuint128_t edge_workload_rewards = 70;
-    top::xuint128_t reward_to_self;
+    ::uint128_t edge_workload_rewards = 70;
+    ::uint128_t reward_to_self;
 
     calc_edge_workload_rewards(node, edger_num, edge_workload_rewards, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
@@ -5180,8 +5180,8 @@ TEST_F(xtest_reward_contract_t, test_calc_archiver_worklaod_rewards) {
     node.m_account_mortgage = 0;
     node.m_vote_amount = 0;
     std::vector<uint32_t> archiver_num{10, 0, 3};
-    top::xuint128_t archiver_workload_rewards = 70;
-    top::xuint128_t reward_to_self;
+    ::uint128_t archiver_workload_rewards = 70;
+    ::uint128_t reward_to_self;
 
     calc_archive_workload_rewards(node, archiver_num, archiver_workload_rewards, false, reward_to_self);
     EXPECT_EQ(reward_to_self, 0);
@@ -5198,8 +5198,8 @@ TEST_F(xtest_reward_contract_t, test_calc_archiver_worklaod_rewards) {
 
 TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
     std::vector<uint32_t> validator_num{10, 0, 3};
-    top::xuint128_t validator_group_workload_rewards = 50;
-    top::xuint128_t reward_to_self = 0;
+    ::uint128_t validator_group_workload_rewards = 50;
+    ::uint128_t reward_to_self = 0;
 
     // workload
     std::map<common::xgroup_address_t, cluster_workload_t> validator_workloads_detail;     
@@ -5241,8 +5241,8 @@ TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
 
 TEST_F(xtest_reward_contract_t, test_calc_auditor_worklaod_rewards) {
     std::vector<uint32_t> auditor_num{10, 0, 3};
-    top::xuint128_t auditor_group_workload_rewards = 50;
-    top::xuint128_t reward_to_self = 0;
+    ::uint128_t auditor_group_workload_rewards = 50;
+    ::uint128_t reward_to_self = 0;
 
     // workload
     std::map<common::xgroup_address_t, cluster_workload_t> auditor_workloads_detail;     
@@ -5424,12 +5424,12 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     property_param.zec_vote_contract_height = 10;
 
     xissue_detail issue_detail;
-    top::xuint128_t community_reward;
-    std::map<common::xaccount_address_t, top::xuint128_t> node_reward_detail;
-    std::map<common::xaccount_address_t, top::xuint128_t> node_dividend_detail;
-    std::map<common::xaccount_address_t, top::xuint128_t> table_total_rewards;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_reward_detail;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_dividend_detail;
+    ::uint128_t community_reward;
+    std::map<common::xaccount_address_t, ::uint128_t> node_reward_detail;
+    std::map<common::xaccount_address_t, ::uint128_t> node_dividend_detail;
+    std::map<common::xaccount_address_t, ::uint128_t> table_total_rewards;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_reward_detail;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_dividend_detail;
     calc_nodes_rewards_v5(0, issue_time_length, onchain_param, property_param, issue_detail, node_reward_detail, node_dividend_detail, community_reward);
     // total issuance: [608001772473988, 494255]
     // edge workload rewards: [12160035449479, 769885], total edge num: 16, valid edge num: 8,
@@ -5467,9 +5467,9 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     // validitor: 217-256
     // validator_workload reward: [4560013293554, 913706] total/20
     // node reward: [4560013293554, 913706]
-    EXPECT_EQ(community_reward, top::xuint128_t("221920646953005800402"));
+    EXPECT_EQ(community_reward, ::uint128_t("221920646953005800402"));
     EXPECT_EQ(property_param.accumulated_reward_record.last_issuance_time, issue_time_length);
-    EXPECT_EQ(property_param.accumulated_reward_record.issued_until_last_year_end, top::xuint128_t("608000000000000000000"));
+    EXPECT_EQ(property_param.accumulated_reward_record.issued_until_last_year_end, ::uint128_t("608000000000000000000"));
     for(auto node : property_param.map_nodes){
         EXPECT_NE(node.second.m_vote_amount, 1000);
         EXPECT_TRUE(node.second.m_vote_amount == 0 || node.second.m_vote_amount == 2);
@@ -5502,21 +5502,21 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
             if(table != "3"){
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], top::xuint128_t("304000886236994246"));
+                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], ::uint128_t("304000886236994246"));
                     }else{
                         if(table == "2"){
-                            EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], top::xuint128_t("729602126968786192"));
+                            EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], ::uint128_t("729602126968786192"));
                         }else{
-                            EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], top::xuint128_t("1033603013205780440"));
+                            EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table)+1)*64+i+1)}], ::uint128_t("1033603013205780440"));
                         }
                     }
                 }
             }else{
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string(i+1)}], top::xuint128_t("304000886236994246"));
+                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string(i+1)}], ::uint128_t("304000886236994246"));
                     }else{
-                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string(i+1)}], top::xuint128_t("1033603013205780440"));
+                        EXPECT_EQ(table_node_dividend_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string(i+1)}], ::uint128_t("1033603013205780440"));
                     }
                 }
             }
@@ -5530,29 +5530,29 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
                 EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 32);
                 for(int i = 0; i < 64; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("1216003544947976988"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("1216003544947976988"));
                     }else if(i < 24){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("4134412052823121760"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("4134412052823121760"));
                     }else{
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("4560013293554913706"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("4560013293554913706"));
                     }
                 }
             }else if(table == "2" ){
                 EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 12);
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("1216003544947976988"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("1216003544947976988"));
                     }else if(i < 24){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("4134412052823121760"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("4134412052823121760"));
                     }
                 }                
             }else if(table == "3" ){
                 EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 12);
                 for(int i = 0; i < 24; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("1216003544947976988"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("1216003544947976988"));
                     }else if(i < 24){
-                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], top::xuint128_t("2918408507875144772"));
+                        EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}][common::xaccount_address_t{"node"+std::to_string((std::stoi(table))*64+i+1)}], ::uint128_t("2918408507875144772"));
                     }
                 }
             } 
@@ -5560,10 +5560,10 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     }
     {
         EXPECT_EQ(table_total_rewards.size(), 4);
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"0"}], top::xuint128_t("145920425393757238588"));
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"1"}], top::xuint128_t("145920425393757238588"));
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"2"}], top::xuint128_t("51680150660289021988"));
-        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"3"}], top::xuint128_t("42560124073179194588"));
+        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"0"}], ::uint128_t("145920425393757238588"));
+        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"1"}], ::uint128_t("145920425393757238588"));
+        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"2"}], ::uint128_t("51680150660289021988"));
+        EXPECT_EQ(table_total_rewards[common::xaccount_address_t{"3"}], ::uint128_t("42560124073179194588"));
     }
     {
         EXPECT_EQ(issue_detail.m_zec_vote_contract_height, 10);
@@ -5584,44 +5584,44 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
                 EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 32);
                 for(int i = 0; i < 64; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xuint128_t("1520004431184971235"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xuint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, ::uint128_t("1520004431184971235"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, ::uint128_t("0"));
                     }else if(i < 24){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xuint128_t("608001772473988494"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xuint128_t("1520004431184971235"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xuint128_t("3040008862369942471"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, ::uint128_t("608001772473988494"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, ::uint128_t("1520004431184971235"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, ::uint128_t("3040008862369942471"));
                     }else{
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xuint128_t("4560013293554913706"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xuint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, ::uint128_t("4560013293554913706"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, ::uint128_t("0"));
                     }
                 }
             }else if(table == "2" || table == "3" ){
                 EXPECT_EQ(table_node_reward_detail[common::xaccount_address_t{table}].size(), 12);
                 for(int i = 0; i < 64; i=i+2){
                     if(i < 4){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xuint128_t("1520004431184971235"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xuint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, ::uint128_t("1520004431184971235"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, ::uint128_t("0"));
                     }else if(i < 24){
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, top::xuint128_t("0"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, top::xuint128_t("608001772473988494"));
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, top::xuint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_edge_reward, ::uint128_t("0"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_archive_reward, ::uint128_t("608001772473988494"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_validator_reward, ::uint128_t("0"));
                         if(table == "2"){
-                            EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xuint128_t("1520004431184971235"));
+                            EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, ::uint128_t("1520004431184971235"));
                         }else if(table == "3"){
-                            EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, top::xuint128_t("0"));
+                            EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_auditor_reward, ::uint128_t("0"));
                         }
-                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, top::xuint128_t("3040008862369942471"));
+                        EXPECT_EQ(issue_detail.m_node_rewards["node"+std::to_string((std::stoi(table))*64+i+1)].m_vote_reward, ::uint128_t("3040008862369942471"));
                     }
                 }              
             }
@@ -5644,21 +5644,21 @@ TEST_F(xtest_reward_contract_t, test_dispatch_all_reward_1) {
     MAP_SET(XPORPERTY_CONTRACT_TASK_KEY, ss.str(), str);
 
     uint64_t actual_issuance{0};
-    top::xuint128_t community_reward{1500000};
-    std::map<common::xaccount_address_t, top::xuint128_t> table_total_rewards;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_reward_detail;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_dividend_detail;
+    ::uint128_t community_reward{1500000};
+    std::map<common::xaccount_address_t, ::uint128_t> table_total_rewards;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_reward_detail;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_dividend_detail;
     for (auto i = 0; i < 64; i++) {
         std::string table_addr = std::string{sys_contract_sharding_reward_claiming_addr} + "@" + base::xstring_utl::tostring(i);
         table_total_rewards.insert(std::make_pair(common::xaccount_address_t{table_addr}, (i+1)*10000000));
-        std::map<common::xaccount_address_t, top::xuint128_t> node_reward;
+        std::map<common::xaccount_address_t, ::uint128_t> node_reward;
         for (auto j = 0; j < 10; j++) {
             std::string node_addr = "node" + base::xstring_utl::tostring(j);
             node_reward.insert(std::make_pair(common::xaccount_address_t{node_addr}, (j+1) * 100000));
         }
         table_node_reward_detail.insert(std::make_pair(common::xaccount_address_t{table_addr}, node_reward));
         if (i < 32) {
-            std::map<common::xaccount_address_t, top::xuint128_t> node_dividend;
+            std::map<common::xaccount_address_t, ::uint128_t> node_dividend;
             for (auto j = 0; j < 3; j++) {
                 std::string node_addr = "node" + base::xstring_utl::tostring(j);
                 node_dividend.insert(std::make_pair(common::xaccount_address_t{node_addr}, (j+1) * 50000));
@@ -5715,7 +5715,7 @@ TEST_F(xtest_reward_contract_t, test_dispatch_all_reward_1) {
         EXPECT_EQ(task.action, XREWARD_CLAIMING_ADD_NODE_REWARD);
         EXPECT_EQ(task.onchain_timer_round, 100);
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size()};
-        std::map<std::string, top::xuint128_t> issuances;
+        std::map<std::string, ::uint128_t> issuances;
         uint64_t time = 0;
         stream >> time;
         stream >> issuances;
@@ -5734,7 +5734,7 @@ TEST_F(xtest_reward_contract_t, test_dispatch_all_reward_1) {
         EXPECT_EQ(task.action, XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD);
         EXPECT_EQ(task.onchain_timer_round, 100);
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size()};
-        std::map<std::string, top::xuint128_t> issuances;
+        std::map<std::string, ::uint128_t> issuances;
         uint64_t time = 0;
         stream >> time;
         stream >> issuances;
@@ -5757,21 +5757,21 @@ TEST_F(xtest_reward_contract_t, test_dispatch_all_reward_2) {
     MAP_CREATE(XPORPERTY_CONTRACT_TASK_KEY);
 
     uint64_t actual_issuance{0};
-    top::xuint128_t community_reward{1500000};
-    std::map<common::xaccount_address_t, top::xuint128_t> table_total_rewards;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_reward_detail;
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_node_dividend_detail;
+    ::uint128_t community_reward{1500000};
+    std::map<common::xaccount_address_t, ::uint128_t> table_total_rewards;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_reward_detail;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_node_dividend_detail;
     for (auto i = 0; i < 8; i++) {
         std::string table_addr = std::string{sys_contract_sharding_reward_claiming_addr} + "@" + base::xstring_utl::tostring(i);
         table_total_rewards.insert(std::make_pair(common::xaccount_address_t{table_addr}, (i+1)*500000));
-        std::map<common::xaccount_address_t, top::xuint128_t> node_reward;
+        std::map<common::xaccount_address_t, ::uint128_t> node_reward;
         for (auto j = 0; j < 1500; j++) {
             std::string node_addr = "node" + base::xstring_utl::tostring(j);
             node_reward.insert(std::make_pair(common::xaccount_address_t{node_addr}, (j+1) * 100000));
         }
         table_node_reward_detail.insert(std::make_pair(common::xaccount_address_t{table_addr}, node_reward));
         if (i < 4) {
-            std::map<common::xaccount_address_t, top::xuint128_t> node_dividend;
+            std::map<common::xaccount_address_t, ::uint128_t> node_dividend;
             for (auto j = 0; j < 1500; j++) {
                 std::string node_addr = "node" + base::xstring_utl::tostring(j);
                 node_dividend.insert(std::make_pair(common::xaccount_address_t{node_addr}, (j+1) * 50000));
@@ -6126,15 +6126,15 @@ TEST_F(xtest_reward_contract_t, test_calc_rewards_years) {
     uint32_t additional_issue_year_ratio{8};
     xaccumulated_reward_record record;
 
-    // top::xuint128_t total = static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION;
-    top::xuint128_t year1_total = static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION * additional_issue_year_ratio / 100;
-    top::xuint128_t year2_total = (static_cast<top::xuint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - year1_total) * additional_issue_year_ratio / 100;
+    // ::uint128_t total = static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION;
+    ::uint128_t year1_total = static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION * additional_issue_year_ratio / 100;
+    ::uint128_t year2_total = (static_cast<::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION - year1_total) * additional_issue_year_ratio / 100;
     // case 0: time 0
-    top::xuint128_t issue1 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
-    top::xuint128_t issue2 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 2, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
-    top::xuint128_t issue3 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 3, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
-    top::xuint128_t issue4 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 4, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
-    top::xuint128_t issue5 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 5, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
+    ::uint128_t issue1 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
+    ::uint128_t issue2 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 2, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
+    ::uint128_t issue3 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 3, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
+    ::uint128_t issue4 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 4, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
+    ::uint128_t issue5 = calc_total_issuance(TIMER_BLOCK_HEIGHT_PER_YEAR * 5, min_ratio_annual_total_reward, additional_issue_year_ratio, record);
     std::cout << issue1 << std::endl;
     std::cout << issue2 << std::endl;
     std::cout << issue3 << std::endl;
@@ -6273,10 +6273,10 @@ TEST_F(xtest_reward_contract_t, test_calc_rewards_bench) {
     for (;;) {
         property_param.accumulated_reward_record.issued_until_last_year_end = 0;
         property_param.accumulated_reward_record.last_issuance_time = 0;
-        std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_nodes_rewards;   // <table, <node, reward>>
-        std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xuint128_t>> table_vote_rewards;    // <table, <node be voted, reward>>
-        std::map<common::xaccount_address_t, top::xuint128_t> contract_rewards; // <table, total reward>
-        top::xuint128_t community_reward;    // community reward
+        std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_nodes_rewards;   // <table, <node, reward>>
+        std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_vote_rewards;    // <table, <node be voted, reward>>
+        std::map<common::xaccount_address_t, ::uint128_t> contract_rewards; // <table, total reward>
+        ::uint128_t community_reward;    // community reward
         xissue_detail issue_detail;     // issue details this round
         auto t1 = xtime_utl::time_now_ms();
         calc_rewards(TIMER_BLOCK_HEIGHT_PER_YEAR + 10 + 1, 1, onchain_param, property_param, issue_detail, contract_rewards, table_nodes_rewards, table_vote_rewards, community_reward);

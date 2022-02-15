@@ -642,7 +642,7 @@ uint64_t xaccount_context_t::get_top_by_vote(uint64_t vote_num, uint16_t duratio
         }
         factor = af;
     }
-    auto original_num = (top::xuint128_t)vote_num * TOP_UNIT * AMPLIFY_FACTOR / factor;
+    auto original_num = (::uint128_t)vote_num * TOP_UNIT * AMPLIFY_FACTOR / factor;
     uint64_t top_num = 0;
     if (original_num > UINT64_MAX) {
         top_num = UINT64_MAX;

@@ -367,7 +367,7 @@ void xtop_basic_contract::exec_delay_followup() {
             // debug output
             base::xstream_t stream_params(base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
             uint64_t onchain_timer_round;
-            std::map<std::string, top::xuint128_t> rewards;
+            std::map<std::string, ::uint128_t> rewards;
             stream_params >> onchain_timer_round;
             stream_params >> rewards;
             for (auto const & r : rewards) {
