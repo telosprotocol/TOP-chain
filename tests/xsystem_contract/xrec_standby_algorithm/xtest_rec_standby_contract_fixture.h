@@ -23,7 +23,7 @@ public:
     xtop_rec_standby_pool_contract rec_standby_contract;
 
     xstandby_result_store_t standby_result_store;
-    xstake::xactivation_record record;
+    data::system_contract::xactivation_record record;
 };
 
 using xtest_rec_standby_contract_fixture_t = xtop_test_rec_standby_contract_fixture;

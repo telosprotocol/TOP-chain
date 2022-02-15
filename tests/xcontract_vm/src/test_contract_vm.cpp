@@ -27,7 +27,6 @@ using namespace top::contract_runtime;
 using namespace top::contract_vm;
 using namespace top::data;
 using namespace top::mock;
-using namespace top::xstake;
 
 static const std::string user_address{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
 static const std::string public_key{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
@@ -157,7 +156,7 @@ TEST_F(test_contract_vm, test_send_tx) {
             auto value = top::from_string<uint64_t>(string);
             EXPECT_EQ(value, unconfirm_num + 1);
         }
-        { EXPECT_EQ(false, state_out->find_property(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)); }
+        { EXPECT_EQ(false, state_out->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)); }
 #ifndef XENABLE_MOCK_ZEC_STAKE
         {
             auto value = state_out->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
@@ -357,12 +356,12 @@ TEST_F(test_contract_vm, test_recv_tx) {
 
     auto vblock = xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_REG_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_REFUND_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate->find_property(XPROPERTY_ACCOUNT_CREATE_TIME) == false) {
@@ -424,8 +423,8 @@ TEST_F(test_contract_vm, test_recv_tx) {
             EXPECT_EQ(value, unconfirm_num);
         }
         {
-            EXPECT_EQ(true, state_out->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY));
-            auto string = state_out->load_string_var(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)->query();
+            EXPECT_EQ(true, state_out->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY));
+            auto string = state_out->load_string_var(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)->query();
             EXPECT_EQ(string, property_string);
         }
     }
@@ -441,7 +440,7 @@ TEST_F(test_contract_vm, test_recv_tx) {
             auto value = top::to_bytes<uint64_t>(recv_num + 1);
             map_property_cmp->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
-        auto string_property_cmp = bstate_cmp.load_string_var(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
+        auto string_property_cmp = bstate_cmp.load_string_var(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
         { string_property_cmp->reset(property_string, canvas.get()); }
         std::string bincode;
         bstate_cmp.take_snapshot(bincode);
@@ -703,12 +702,12 @@ TEST_F(test_contract_vm, test_async_call) {
 
     auto vblock = xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
     auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REG_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_TICKETS_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_REFUND_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
-    EXPECT_EQ(bstate->find_property(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_REG_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_REFUND_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPROPERTY_CONTRACT_SLASH_INFO_KEY), true);
+    EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY), true);
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
@@ -799,8 +798,8 @@ TEST_F(test_contract_vm, test_async_call) {
             EXPECT_EQ(value, unconfirm_num + 1);
         }
         {
-            EXPECT_EQ(true, state_out->find_property(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY));
-            auto string = state_out->load_string_var(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)->query();
+            EXPECT_EQ(true, state_out->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY));
+            auto string = state_out->load_string_var(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)->query();
             EXPECT_EQ(string, "call_a_to_b");
         }
     }
@@ -816,7 +815,7 @@ TEST_F(test_contract_vm, test_async_call) {
             auto value = top::to_bytes<std::string>(top::to_string(recv_num + 1));
             map_property_cmp->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
         }
-        auto string_property_cmp = bstate_cmp.load_string_var(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
+        auto string_property_cmp = bstate_cmp.load_string_var(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
         { string_property_cmp->reset("call_a_to_b", canvas.get()); }
         {
             auto value = top::to_bytes<std::string>(top::to_string(last_nonce + 1));

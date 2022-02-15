@@ -42,23 +42,16 @@ to do a general rewrite of this class.
 #include <utility>
 #include <vector>
 
-#include "xbasic/endianness.h"
-#include "xbase/xmem.h"
+#include "endianness.h"
 
-//#define uint128_t top::xstake::uint128_t
-namespace top { namespace xstake {
 class UINT128_T_EXTERN uint128_t;
-}
-}
 
 // Give uint128_t type traits
 namespace std {  // This is probably not a good idea
-    template <> struct is_arithmetic <top::xstake::uint128_t> : std::true_type {};
-    template <> struct is_integral   <top::xstake::uint128_t> : std::true_type {};
-    template <> struct is_unsigned   <top::xstake::uint128_t> : std::true_type {};
+    template <> struct is_arithmetic <uint128_t> : std::true_type {};
+    template <> struct is_integral   <uint128_t> : std::true_type {};
+    template <> struct is_unsigned   <uint128_t> : std::true_type {};
 }
-
-namespace top { namespace xstake {
 
 class uint128_t{
     private:
@@ -74,8 +67,13 @@ class uint128_t{
         uint128_t() = default;
         uint128_t(const uint128_t & rhs) = default;
         uint128_t(uint128_t && rhs) = default;
-        uint128_t(std::string & s);
-        uint128_t(const char *s);
+
+        // do not use prefixes (0x, 0b, etc.)
+        // if the input string is too long, only right most characters are read
+        uint128_t(const std::string & s, uint8_t base);
+        uint128_t(const char *s, std::size_t len, uint8_t base);
+
+        uint128_t(const bool & b);
 
         template <typename T, typename = typename std::enable_if<std::is_integral<T>::value, T>::type >
         uint128_t(const T & rhs)
@@ -122,6 +120,8 @@ class uint128_t{
             LOWER = rhs;
             return *this;
         }
+
+        uint128_t & operator=(const bool & rhs);
 
         // Typecast Operators
         operator bool() const;
@@ -315,11 +315,14 @@ class uint128_t{
 
     private:
         std::pair <uint128_t, uint128_t> divmod(const uint128_t & lhs, const uint128_t & rhs) const;
-        void init(const char * s);
         void ConvertToVector(std::vector<uint8_t> & current, const uint64_t & val) const;
-        void _init_hex(const char *s);
-        void _init_dec(const char *s);
-        void _init_oct(const char *s);
+        // do not use prefixes (0x, 0b, etc.)
+        // if the input string is too long, only right most characters are read
+        void init(const char * s, std::size_t len, uint8_t base);
+        void _init_hex(const char *s, std::size_t len);
+        void _init_dec(const char *s, std::size_t len);
+        void _init_oct(const char *s, std::size_t len);
+        void _init_bin(const char *s, std::size_t len);
 
     public:
         uint128_t operator/(const uint128_t & rhs) const;
@@ -537,11 +540,4 @@ T & operator%=(T & lhs, const uint128_t & rhs){
 
 // IO Operator
 UINT128_T_EXTERN std::ostream & operator<<(std::ostream & stream, const uint128_t & rhs);
-
-int32_t operator << (top::base::xbuffer_t& stream, const uint128_t & value);
-int32_t operator >> (top::base::xbuffer_t& stream, uint128_t & value); //read out data
-
-}
-}
-
 #endif

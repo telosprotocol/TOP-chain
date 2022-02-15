@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/uint128_t.h"
 #include "xbasic/xbyte.h"
 #include "xbasic/xhash.hpp"
 
@@ -368,14 +369,19 @@ private:
 template <std::size_t Bits>
 using xuint_t = xtop_uint<Bits>;
 
-using xuint8_t = xuint_t<8>;
+using xuint8_t = xtop_uint<8>;
 
-using xuint16_t = xuint_t<16>;
-using xuint32_t = xuint_t<32>;
-using xuint64_t = xuint_t<64>;
+using xuint16_t = xtop_uint<16>;
+using xuint32_t = xtop_uint<32>;
+using xuint64_t = xtop_uint<64>;
 
-// using xuint128_t = xuint_t<128>;
-using xuint256_t = xuint_t<256>;
-using xuint512_t = xuint_t<512>;
+// using xuint128_t = xtop_uint<128>;
+using xuint256_t = xtop_uint<256>;
+using xuint512_t = xtop_uint<512>;
 
 NS_END1
+
+#include "xbase/xmem.h"
+
+int32_t operator<<(top::base::xbuffer_t & stream, const uint128_t & value);
+int32_t operator>>(top::base::xbuffer_t & stream, uint128_t & value);

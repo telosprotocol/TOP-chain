@@ -1,5 +1,5 @@
 /*
-Simple test program for top::xstake::uint128_t
+Simple test program for uint128_t
 
 The MIT License (MIT)
 

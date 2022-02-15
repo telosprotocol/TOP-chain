@@ -32,12 +32,12 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     std::string program_version_1{"verison_1"};
     top::xpublic_key_t pub_key_1{"test_pub_key_1"};
 
-    xstake::xreg_node_info node_info;
+    data::system_contract::xreg_node_info node_info;
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
     node_info.miner_type(common::xminer_type_t::advance);
     node_info.m_account = xnode_id;
-    node_info.m_genesis_node = false;
+    node_info.genesis(false);
     node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
     add_reg_info(node_info);
 
@@ -63,13 +63,13 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     std::string program_version_1{"verison_1"};
     top::xpublic_key_t pub_key_1{"test_pub_key_1"};
 
-    xstake::xreg_node_info node_info;
+    data::system_contract::xreg_node_info node_info;
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_vote_amount = 1000000000;
     node_info.miner_type(common::xminer_type_t::advance);
     node_info.m_account = xnode_id;
-    node_info.m_genesis_node = false;
+    node_info.genesis(false);
     node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
     add_reg_info(node_info);
 
@@ -165,13 +165,13 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     std::string program_version_1{"verison_1"};
     top::xpublic_key_t pub_key_1{"test_pub_key_1"};
 
-    xstake::xreg_node_info node_info;
+    data::system_contract::xreg_node_info node_info;
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_vote_amount = 1;
     node_info.miner_type(common::xminer_type_t::advance);
     node_info.m_account = xnode_id;
-    node_info.m_genesis_node = false;
+    node_info.genesis(false);
     node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
     EXPECT_TRUE(add_reg_info(node_info));
 

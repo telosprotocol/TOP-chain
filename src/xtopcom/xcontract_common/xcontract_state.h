@@ -10,8 +10,8 @@
 #include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 #include "xdata/xtransaction.h"
-#include "xstake/xstake_algorithm.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xstate_accessor.h"
 #include "xstate_accessor/xtoken.h"
@@ -498,12 +498,12 @@ public:
     void last_tx_hour(uint64_t hour, std::error_code & ec);
     void last_tx_hour(uint64_t hour);
     // map
-    std::map<std::string, xstake::xreward_dispatch_task> delay_followup(std::error_code & ec) const;
-    std::map<std::string, xstake::xreward_dispatch_task> delay_followup() const;
-    void delay_followup(xstake::xreward_dispatch_task const & task, std::error_code & ec);
-    void delay_followup(xstake::xreward_dispatch_task const & task);
-    void delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks, std::error_code & ec);
-    void delay_followup(std::vector<xstake::xreward_dispatch_task> const & tasks);
+    std::map<std::string, data::system_contract::xreward_dispatch_task> delay_followup(std::error_code & ec) const;
+    std::map<std::string, data::system_contract::xreward_dispatch_task> delay_followup() const;
+    void delay_followup(data::system_contract::xreward_dispatch_task const & task, std::error_code & ec);
+    void delay_followup(data::system_contract::xreward_dispatch_task const & task);
+    void delay_followup(std::vector<data::system_contract::xreward_dispatch_task> const & tasks, std::error_code & ec);
+    void delay_followup(std::vector<data::system_contract::xreward_dispatch_task> const & tasks);
 };
 using xcontract_state_t = xtop_contract_state;
 

@@ -1,12 +1,12 @@
 // Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 
 #include "xbasic/xutility.h"
 #include "xdata/xnative_contract_address.h"
 
-NS_BEG2(top, xstake)
+NS_BEG3(top, data, system_contract)
 
 bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled) {
     uint32_t auditor_num = 0;
@@ -387,6 +387,7 @@ uint64_t xreg_node_info::zec_stake() const noexcept {
     }
     return stake;
 }
+
 uint64_t xreg_node_info::auditor_stake() const noexcept {
     return get_auditor_stake();
 }
@@ -436,7 +437,7 @@ int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     // stream << m_stake;
     // m_stake_info.serialize_to(stream);
     stream << m_last_update_time;
-    stream << m_genesis_node;
+    stream << m_genesis;
     stream << m_network_ids;
     stream << nickname;
     stream << consensus_public_key;
@@ -461,12 +462,22 @@ int32_t xreg_node_info::do_read(base::xstream_t & stream) {
     // stream >> m_stake;
     // m_stake_info.serialize_from(stream);
     stream >> m_last_update_time;
-    stream >> m_genesis_node;
+    stream >> m_genesis;
     stream >> m_network_ids;
     stream >> nickname;
     stream >> consensus_public_key;
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
+}
+
+bool xreg_node_info::genesis() const noexcept {
+    return m_genesis;
+}
+
+void xreg_node_info::genesis(bool v) noexcept {
+    if (m_genesis != v) {
+        m_genesis = v;
+    }
 }
 
 std::int32_t cluster_workload_t::do_write(base::xstream_t & stream) const {
@@ -580,14 +591,14 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
 
 xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr) {
     std::string value_str;
-    int ret = store->map_get(top::sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+    int ret = store->map_get(top::sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
 
     if (ret != store::xstore_success || value_str.empty()) {
         xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
         return xreg_node_info{};
     }
 
-    xstake::xreg_node_info node_info;
+    xreg_node_info node_info;
     base::xstream_t        stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
 
     node_info.serialize_from(stream);
@@ -652,4 +663,4 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
-NS_END2
+NS_END3

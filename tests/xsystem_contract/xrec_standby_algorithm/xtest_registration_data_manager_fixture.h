@@ -8,7 +8,7 @@
 #include "xcommon/xip.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 
 NS_BEG3(top, tests, rec_standby)
 
@@ -21,11 +21,11 @@ public:
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_test_registration_data_manager_fixture);
     XDECLARE_DEFAULTED_DESTRUCTOR(xtop_test_registration_data_manager_fixture);
 
-    std::map<common::xnode_id_t, xstake::xreg_node_info> m_registration_data;
+    std::map<common::xnode_id_t, data::system_contract::xreg_node_info> m_registration_data;
 
-    bool add_reg_info(xstake::xreg_node_info const & node_info);
+    bool add_reg_info(data::system_contract::xreg_node_info const & node_info);
 
-    bool update_reg_info(xstake::xreg_node_info const & node_info);
+    bool update_reg_info(data::system_contract::xreg_node_info const & node_info);
 
     void change_role_type(common::xnode_id_t const & node_id, common::xminer_type_t const & new_role_type);
 

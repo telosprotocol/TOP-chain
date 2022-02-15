@@ -5,7 +5,7 @@
 #pragma once
 
 // TODO(jimmy) #include "xbase/xvledger.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 
 NS_BEG2(top, store)
 

@@ -15,7 +15,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 #include "xstore/xstore_face.h"
 
 #include "xchain_upgrade/xchain_data_galileo.h"
@@ -291,9 +291,9 @@ TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
     xdatamock_unit  table_account{shard_table_slash_addr};
 
     m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(table_account.get_account_state(), m_store.get());
-    m_table_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-    m_table_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
-    m_table_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
+    m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+    m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+    m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
     set_contract_helper(std::make_shared<xcontract_helper>(m_table_slash_account_ctx_ptr.get(), top::common::xnode_id_t{table_account.get_account()}, table_account.get_account()));
 
 

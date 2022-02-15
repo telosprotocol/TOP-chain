@@ -13,7 +13,7 @@ target_link_libraries(xtxexecutor PRIVATE
     xverifier
     xvm
     xchain_upgrade
-    xstake
+    xdata
     xxbase
 )
 

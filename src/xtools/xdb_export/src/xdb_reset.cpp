@@ -3,7 +3,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xslash.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 #include "xvledger/xvledger.h"
 
 #include <fstream>
@@ -11,7 +11,7 @@
 
 using namespace top::base;
 using namespace top::data;
-using namespace top::xstake;
+using namespace top::data::system_contract;
 
 NS_BEG2(top, db_reset)
 
@@ -399,7 +399,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
                 json j;
                 j["account_addr"] = reg_node_info.m_account.value();
                 j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
-                if (reg_node_info.m_genesis_node) {
+                if (reg_node_info.genesis()) {
                     j["registered_node_type"] = std::string{"advance,validator,edge"};
                 } else {
                     j["registered_node_type"] = common::to_string(reg_node_info.miner_type());
@@ -500,7 +500,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
                 if (task.action == XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
                     base::xstream_t stream_params{xcontext_t::instance(), (uint8_t *)task.params.data(), static_cast<uint32_t>(task.params.size())};
                     uint64_t onchain_timer_round;
-                    std::map<std::string, top::xstake::uint128_t> rewards;
+                    std::map<std::string, top::xuint128_t> rewards;
                     stream_params >> onchain_timer_round;
                     stream_params >> rewards;
 

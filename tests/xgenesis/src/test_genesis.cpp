@@ -8,7 +8,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xgenesis/xgenesis_manager.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xstake_algorithm.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"
@@ -579,7 +579,7 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
         auto bstate = m_statestore->get_block_state(vblock.get());
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.empty(), false);
-        EXPECT_EQ(property_set.count(xstake::XPORPERTY_CONTRACT_REG_KEY), true);
+        EXPECT_EQ(property_set.count(data::system_contract::XPORPERTY_CONTRACT_REG_KEY), true);
     }
     // datauser account
     {
