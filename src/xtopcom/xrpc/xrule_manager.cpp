@@ -199,8 +199,8 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
 
         std::string src_addr = params["sender_account"].asString();
         std::string dst_addr = params["receiver_account"].asString();
-        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr), enum_xrpc_error_code::rpc_param_param_error, "sender_account invalid");
-        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr), enum_xrpc_error_code::rpc_param_param_error, "receiver_account invalid");    
+        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr, true), enum_xrpc_error_code::rpc_param_param_error, "sender_account invalid");
+        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr, true), enum_xrpc_error_code::rpc_param_param_error, "receiver_account invalid");
     
         CONDTION_FAIL_THROW(params["edge_nodeid"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params edge_nodeid or edge_nodeid is not valid");
         CONDTION_FAIL_THROW(params["token_name"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params token_name or token_name is not valid");

@@ -18,6 +18,11 @@ NS_BEG2(top, xrpc)
 
 using query_method_handler = std::function<void(xjson_proc_t &)>;
 
+#define ADDRESS_CHECK_VALID(x) if (xverifier::xtx_utl::address_is_valid(x) != xverifier::xverifier_error::xverifier_success) { \
+xwarn("xtx_verifier address_verify address invalid, account:%s", x.c_str()); \
+throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "account address is invalid"}; \
+}
+
 class xarc_query_manager {
 public:
     explicit xarc_query_manager(observer_ptr<store::xstore_face_t> store,
@@ -27,9 +32,9 @@ public:
     void call_method(xjson_proc_t & json_proc);
     void getAccount(xjson_proc_t & json_proc);
     void getTransaction(xjson_proc_t & json_proc);
-    void get_transactionlist(xjson_proc_t & json_proc);
     void get_property(xjson_proc_t & json_proc);
     void getBlock(xjson_proc_t & json_proc);
+    void getBlocksByHeight(xjson_proc_t & json_proc);
     void getChainInfo(xjson_proc_t & json_proc);
     void getIssuanceDetail(xjson_proc_t & json_proc);
     void getTimerInfo(xjson_proc_t & json_proc);

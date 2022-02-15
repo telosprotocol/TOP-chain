@@ -123,6 +123,12 @@ public:
                   std::ostringstream & out_str,
                   std::function<void(GetBlockResult *)> func = nullptr);
 
+    bool getBlocksByHeight(const user_info & uinfo,
+                           const std::string & owner,
+                           const std::string & height,
+                           std::ostringstream & out_str,
+                           std::function<void(GetBlockResult *)> func = nullptr);
+
     bool registerNode(const user_info & uinfo,
                       const uint64_t mortgage,
                       const std::string & role,

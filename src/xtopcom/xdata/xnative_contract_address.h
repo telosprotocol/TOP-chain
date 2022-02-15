@@ -4,14 +4,16 @@
 
 #pragma once
 
+<<<<<<< HEAD
 #include "xcommon/xaccount_address.h"
 
+=======
+#include "xbase/xcxx_config.h"
+#include "xvledger/xvaccount.h"
+>>>>>>> 70328f7c (add top address check)
 #include <cstdint>
 
 NS_BEG1(top)
-
-XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
-XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
 
 XINLINE_CONSTEXPR char const * black_hole_addr{"T!000131R4UAjgF6ZBWnwZESMWx4nCnqL1GhM3nT3"};
 XINLINE_CONSTEXPR char const * genesis_root_addr_main_chain{"T$000132i21FyYZvjTKiEwvBjshUbfQx6xoNT68v5"};

@@ -40,9 +40,9 @@ xarc_query_manager::xarc_query_manager(observer_ptr<store::xstore_face_t> store,
   : m_store(store), m_block_store(block_store), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr), m_transaction_cache(transaction_cache) {
     ARC_REGISTER_V1_METHOD(getAccount);
     ARC_REGISTER_V1_METHOD(getTransaction);
-    ARC_REGISTER_V1_METHOD(get_transactionlist);
     ARC_REGISTER_V1_METHOD(get_property);
     ARC_REGISTER_V1_METHOD(getBlock);
+    ARC_REGISTER_V1_METHOD(getBlocksByHeight);
     ARC_REGISTER_V1_METHOD(getChainInfo);
     ARC_REGISTER_V1_METHOD(getIssuanceDetail);
     ARC_REGISTER_V1_METHOD(getTimerInfo);
@@ -69,6 +69,10 @@ void xarc_query_manager::getAccount(xjson_proc_t & json_proc) {
     assert(nullptr != m_store);
     const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     xdbg("xarc_query_manager::getAccount account: %s", account.c_str());
+
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+
     json_proc.m_response_json["data"] = m_bh.parse_account(account);
 }
 
@@ -85,6 +89,10 @@ void xarc_query_manager::getTransaction(xjson_proc_t & json_proc) {
     const string & tx_hash_str = json_proc.m_request_json["params"]["tx_hash"].asString();
     const string & version = json_proc.m_request_json["version"].asString();
     xdbg("xarc_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
+
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+
     uint256_t tx_hash = hex_to_uint256(tx_hash_str);
 
     xtransaction_t * tx_ptr = nullptr;
@@ -103,19 +111,14 @@ void xarc_query_manager::getTransaction(xjson_proc_t & json_proc) {
     json_proc.m_response_json["data"] = result_json;
 }
 
-void xarc_query_manager::get_transactionlist(xjson_proc_t & json_proc) {
-    std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
-    uint32_t start_num = json_proc.m_request_json["params"]["start_num"].asUInt();
-    uint32_t total_num = json_proc.m_request_json["params"]["total_num"].asUInt();
-    xdbg("start_num: %d, total_num: %d, account: %s", start_num, total_num, owner.c_str());
-
-    json_proc.m_response_json["data"] = "waiting for new consensus";
-}
-
 void xarc_query_manager::get_property(xjson_proc_t & json_proc) {
     const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     const string & type = json_proc.m_request_json["params"]["type"].asString();
     const std::string & prop_name = json_proc.m_request_json["params"]["data"].asString();
+
+    //add top address check
+    ADDRESS_CHECK_VALID(account)
+
 #if 1
     xJson::Value result_json;
     m_bh.query_account_property(result_json, account, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
@@ -148,6 +151,10 @@ void xarc_query_manager::get_property(xjson_proc_t & json_proc) {
 
 void xarc_query_manager::getBlock(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+
     base::xvaccount_t _owner_vaddress(owner);
     std::string type = "height";
     auto height = json_proc.m_request_json["params"]["height"].asString();
@@ -168,6 +175,48 @@ void xarc_query_manager::getBlock(xjson_proc_t & json_proc) {
         auto vb = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_committed_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
+    }
+
+    json_proc.m_response_json["data"] = result_json;
+}
+
+void xarc_query_manager::getBlocksByHeight(xjson_proc_t & json_proc) {
+    std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+
+    base::xvaccount_t _owner_vaddress(owner);
+    std::string type = "height";
+    auto height = json_proc.m_request_json["params"]["height"].asString();
+    xdbg("xarc_query_manager::getBlock account: %s, height: %s", owner.c_str(), height.c_str());
+
+    if (height == "latest") {
+        type = "last";
+    }
+    data::xblock_ptr_t bp{nullptr};
+    xJson::Value result_json;
+    if (type == "height") {
+        uint64_t hi = std::stoull(height);
+        xdbg("height: %llu", hi);
+        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, hi, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblocks = vblock_vector.get_vector();
+        xJson::Value value;
+        for (base::xvblock_t * vblock : vblocks) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+            value.append(m_bh.get_blocks_json(bp));
+        }
+        result_json["value"] = value;
+    } else if (type == "last") {
+        uint64_t lastHeight = m_block_store->get_latest_cert_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, lastHeight, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblocks = vblock_vector.get_vector();
+        xJson::Value value;
+        for (base::xvblock_t * vblock : vblocks) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+            value.append(m_bh.get_blocks_json(bp));
+        }
+        result_json["value"] = value;
     }
 
     json_proc.m_response_json["data"] = result_json;
@@ -353,6 +402,12 @@ void xarc_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
     xdbg("account: %s, target: %s", owner.c_str(), target.c_str());
 
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
+
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
@@ -369,6 +424,12 @@ void xarc_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
     xdbg("account: %s, target: %s", owner.c_str(), target.c_str());
+
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
 
     std::vector<std::string> ev;
     xJson::Value j;
@@ -432,6 +493,12 @@ void xarc_query_manager::set_sharding_vote_prop(xjson_proc_t & json_proc, std::s
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
 
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
+
     xJson::Value jv;
 
     auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
@@ -450,6 +517,12 @@ void xarc_query_manager::set_sharding_reward_claiming_prop(xjson_proc_t & json_p
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
 
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
+
     xJson::Value jv = m_bh.parse_sharding_reward(target, prop_name);
     json_proc.m_response_json["data"] = jv;
 }
@@ -461,6 +534,10 @@ void xarc_query_manager::queryNodeReward(xjson_proc_t & json_proc) {
 
 void xarc_query_manager::listVoteUsed(xjson_proc_t & json_proc) {
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(target)
+
     uint32_t sub_map_no = (utl::xxh32_t::digest(target) % 4) + 1;
     std::string prop_name;
     prop_name = prop_name + xstake::XPORPERTY_CONTRACT_VOTES_KEY_BASE + "-" + std::to_string(sub_map_no);
@@ -469,6 +546,10 @@ void xarc_query_manager::listVoteUsed(xjson_proc_t & json_proc) {
 
 void xarc_query_manager::queryVoterDividend(xjson_proc_t & json_proc) {
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(target)
+
     uint32_t sub_map_no = (utl::xxh32_t::digest(target) % 4) + 1;
     std::string prop_name;
     prop_name = prop_name + xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE + "-" + std::to_string(sub_map_no);

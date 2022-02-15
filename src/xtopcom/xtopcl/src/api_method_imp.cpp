@@ -691,6 +691,32 @@ bool api_method_imp::getBlock(const user_info & uinfo,
     return true;
 }
 
+bool api_method_imp::getBlocksByHeight(const user_info & uinfo,
+                              const std::string & owner,
+                              const std::string & height,
+                              std::ostringstream & out_str,
+                              std::function<void(GetBlockResult *)> func) {
+    if (uinfo.account.empty()) {
+        LOG("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
+        return false;
+    }
+
+    auto info = new task_info_callback<GetBlockResult>();
+    set_user_info(info, uinfo, CMD_GET_BLOCKS_BY_HEIGHT, func, false);
+
+    // body->params
+    // info->params[ParamBlockOwner] = owner;
+    // info->params[ParamGetBlockType] = type;
+    info->params[ParamAccount] = owner;
+    info->params[ParamBlockHeight] = height;
+    info->callback_ = func;
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+
 bool api_method_imp::registerNode(const user_info & uinfo,
                                   const uint64_t mortgage,
                                   const std::string & role,
@@ -1221,7 +1247,7 @@ static void set_user_info(task_info_callback<T> * info,
     info->host = g_server_host_port;
     info->callback_ = func;
     // only getTransaction & getBlock has 2.0 version rpc
-    if (method == CMD_ACCOUNT_TRANSACTION || method == CMD_GET_BLOCK) {
+    if (method == CMD_ACCOUNT_TRANSACTION || method == CMD_GET_BLOCK || method == CMD_GET_BLOCKS_BY_HEIGHT) {
         info->params["version"] = top::data::RPC_VERSION_V2;
     } else {
         info->params["version"] = top::data::RPC_VERSION_V1;

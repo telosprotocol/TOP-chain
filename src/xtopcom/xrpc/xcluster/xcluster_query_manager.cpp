@@ -44,7 +44,6 @@ xcluster_query_manager::xcluster_query_manager(observer_ptr<store::xstore_face_t
     m_archive_flag(archive_flag) {  
     CLUSTER_REGISTER_V1_METHOD(getAccount);
     CLUSTER_REGISTER_V1_METHOD(getTransaction);
-    CLUSTER_REGISTER_V1_METHOD(get_transactionlist);
     CLUSTER_REGISTER_V1_METHOD(get_property);
     CLUSTER_REGISTER_V1_METHOD(getBlock);
     CLUSTER_REGISTER_V1_METHOD(getChainInfo);

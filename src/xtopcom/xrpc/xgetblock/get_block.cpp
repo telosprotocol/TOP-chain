@@ -849,6 +849,7 @@ void get_block_handle::queryNodeInfo() {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
+
     query_account_property(jv, contract_addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = jv[prop_name];
 }
@@ -857,6 +858,13 @@ void get_block_handle::queryNodeReward() {
     xJson::Value jv;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
     std::string target = m_js_req["node_account_addr"].asString();
+
+    //add top address check
+    if (xverifier::xtx_utl::address_is_valid(target) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
+
     m_js_rsp["value"] = parse_sharding_reward(target, prop_name);
 }
 
@@ -905,6 +913,11 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
 
 void get_block_handle::getLatestBlock() {
     std::string owner = m_js_req["account_addr"].asString();
+    // add top address check
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     auto vblock = m_block_store->get_latest_committed_block(owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (owner == sys_contract_zec_slash_info_addr) {
@@ -925,6 +938,11 @@ void get_block_handle::getLatestBlock() {
 
 void get_block_handle::getLatestFullBlock() {
     std::string owner = m_js_req["account_addr"].asString();
+    // add top address check
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     auto vblock = m_block_store->get_latest_committed_full_block(owner, metrics::blockstore_access_from_rpc_get_block_full_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (bp) {
@@ -946,10 +964,10 @@ void get_block_handle::getLatestFullBlock() {
 
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
-    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
-    //     set_result(INVALID_ACCOUNT);
-    //     return;
-    // }
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     uint64_t height = m_js_req["height"].asUInt64();
     if (owner == sys_contract_zec_slash_info_addr) {
         std::error_code ec;
@@ -968,13 +986,46 @@ void get_block_handle::getBlockByHeight() {
     }
 }
 
+void get_block_handle::getBlocksByHeight() {
+    std::string type = m_js_req["type"].asString();
+    std::string owner = m_js_req["account_addr"].asString();
+    uint64_t height = m_js_req["height"].asUInt64();
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
+    std::string version = m_js_req["version"].asString();
+    if (version.empty()) {
+        version = RPC_VERSION_V1;
+    }
+    xJson::Value value;
+    base::xvaccount_t _owner_vaddress(owner);
+    if (type == "last") {
+        uint64_t lastHeight = m_block_store->get_latest_cert_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, lastHeight, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblocks = vblock_vector.get_vector();
+        for (base::xvblock_t * vblock : vblocks) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+            value.append(get_blocks_json(bp, version));
+        }
+    } else {
+        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, height, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblocks = vblock_vector.get_vector();
+        for (base::xvblock_t * vblock : vblocks) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+            value.append(get_blocks_json(bp, version));
+        }
+    }
+    m_js_rsp["value"] = value;
+}
+
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
-    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
-    //     set_result(INVALID_ACCOUNT);
-    //     return;
-    // }
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     std::string version = m_js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
@@ -1511,6 +1562,45 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp, const std::string &
 
     root["body"] = body;
 
+    return root;
+}
+
+xJson::Value get_block_handle::get_blocks_json(xblock_t * bp, const std::string & rpc_version) {
+    xJson::Value root;
+    if (bp == nullptr) {
+        return root;
+    }
+
+    if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+        // genesis empty non-stored block, should not return
+        return root;
+    }
+
+    // load input for raw tx get
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {
+        xassert(false);  // db block should always load input success
+        return root;
+    }
+
+    set_shared_info(root, bp);
+
+    xJson::Value header;
+    set_header_info(header, bp);
+    root["header"] = header;
+
+    xJson::Value body;
+    set_body_info(body, bp, rpc_version);
+
+    root["body"] = body;
+    if (bp->check_block_flag(base::enum_xvblock_flag_committed)) {
+        root["status"] = "committed";
+    } else if (bp->check_block_flag(base::enum_xvblock_flag_locked)) {
+        root["status"] = "locked";
+    } else if (bp->check_block_flag(base::enum_xvblock_flag_authenticated)) {
+        root["status"] = "cert";
+    } else {
+        root["status"] = "unknow";
+    }
     return root;
 }
 

@@ -106,6 +106,7 @@ public:
      */
     void query_account(std::string & target, std::ostringstream & out_str);
     void query_block(std::string & target, std::string & height, std::ostringstream & out_str);
+    void getBlocksByHeight(std::string & target, std::string & height, std::ostringstream & out_str);
     void chain_info(std::ostringstream & out_str);
     void deploy_contract(const uint64_t & gas_limit, const std::string & amount, const std::string & path, const std::string & deposit, std::ostringstream & out_str);
     void call_contract(const std::string & amount, const string & addr, const std::string & func, const string & params, const std::string & tx_deposit, std::ostringstream & out_str);

@@ -13,6 +13,8 @@
 
 namespace top
 {
+    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
+    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
     namespace base
     {
         // account space is divided into netid#->zone#(aka bucket#)->book#->table#->account#
@@ -124,7 +126,7 @@ namespace top
             {
                 enum_vaccount_address_prefix_size = 6,  //Txyyyy, eg.T80000
                 enum_vaccount_address_min_size  = 18, //(>20,<256)
-                enum_vaccount_address_max_size  = 256,//(>20,<256)
+                enum_vaccount_address_max_size  = 49,//(>20,<256)
             };
 
             enum enum_vaccount_compact_type
@@ -240,7 +242,7 @@ namespace top
             static enum_vaccount_addr_type get_addrtype_from_account(const std::string & account_addr)
             {
                 char _addr_type = 0; //0 is invalid
-                if(account_addr.size() > enum_vaccount_address_prefix_size) //at least 24 cahrs
+                if(account_addr.size() >= enum_vaccount_address_prefix_size) //at least 24 cahrs
                     _addr_type = account_addr.at(1);
 
                 xassert(_addr_type != 0);
@@ -251,7 +253,7 @@ namespace top
             {
                 uint16_t  ledger_id = 0;//0 is valid and default value
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size > enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
+                if( (account_address_size >= enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
                 {
                     const std::string string_ledger_id = account_addr.substr(2,4);//always 4 hex chars
                     ledger_id = (uint16_t)xstring_utl::hex2uint64(string_ledger_id);
@@ -267,7 +269,7 @@ namespace top
                 ledger_id   = 0; //0 is valid and default value
                 
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size > enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
+                if( (account_address_size >= enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
                 {
                     addr_type = get_addrtype_from_account(account_addr);
                     ledger_id = get_ledgerid_from_account(account_addr);
@@ -322,7 +324,7 @@ namespace top
             }
             static std::string compact_address_to(const std::string & account_addr);
             static std::string compact_address_from(const std::string & data);
-            static bool check_address(const std::string & account_addr);
+            static bool check_address(const std::string & account_addr, bool isTransaction = false);
 
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)

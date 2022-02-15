@@ -1136,6 +1136,27 @@ void ApiMethod::query_block(std::string & target, std::string & height, std::ost
     tackle_null_query(out_str);
 }
 
+void ApiMethod::getBlocksByHeight(std::string & target, std::string & height, std::ostringstream & out_str) {
+    if (target.size() == 0) {
+        if (!set_default_prikey(out_str)) {
+            return;
+        }
+    } else {
+        g_userinfo.account = target;
+    }
+    if (height != "latest") {
+        try {
+            auto hi = std::stoull(height);
+        } catch (...) {
+            cout << "Could not convert: height=" << height << endl;
+            cout << "Parameter 'height' should be an integer or 'latest'." << endl;
+            return;
+        }
+    }
+    api_method_imp_.getBlocksByHeight(g_userinfo, g_userinfo.account, height, out_str);
+    tackle_null_query(out_str);
+}
+
 void ApiMethod::chain_info(std::ostringstream & out_str) {
     api_method_imp_.make_private_key(g_userinfo.private_key, g_userinfo.account);
     api_method_imp_.getChainInfo(g_userinfo, out_str);

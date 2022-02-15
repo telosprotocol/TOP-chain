@@ -21,7 +21,7 @@ namespace top
             enum{enum_max_cached_blocks = 32};
         public:
             uint64_t            get_latest_cert_block_height() const {return m_meta->_highest_cert_block_height;}
-
+            uint64_t            get_latest_locked_block_height() const { return m_meta->_highest_lock_block_height;}
             uint64_t            get_latest_committed_block_height() const { return m_meta->_highest_commit_block_height; }
             uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
             uint64_t            get_latest_cp_connected_block_height() const { return m_meta->_highest_cp_connect_block_height; }
