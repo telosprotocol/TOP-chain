@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <fstream>
+#include <signal.h>
 
 #include "xdb/xdb_factory.h"
 #include "xstore/xstore.h"
@@ -95,6 +96,91 @@ bool db_migrate(const std::string & src_db_path)
     return base::db_delta_migrate_v2_to_v3(src_db_path, _blockstore);
 }
 
+void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
+{
+    switch(signum)
+    {
+        //signals to generate core dump
+    case SIGSEGV:
+    case SIGILL:
+    case SIGFPE:
+    case SIGABRT:
+        {
+            printf("on_sys_signal_callback:capture core_signal(%d)\n",signum);
+            xwarn("on_sys_signal_callback:capture core_signal(%d)",signum);
+            
+            //trigger save data before coredump
+            top::base::xvchain_t::instance().on_process_close();
+            
+            //forward to default handler
+            signal(signum, SIG_DFL);//restore to default handler
+            kill(getpid(), signum); //send signal again to genereate core dump by default hander
+        }
+        break;
+        
+        //signal to terminate process
+    case SIGHUP:
+    case SIGINT:
+    case SIGTERM:
+        {
+            printf("on_sys_signal_callback:capture terminate_signal(%d) \n",signum);
+            xwarn("on_sys_signal_callback:capture terminate_signal(%d)",signum);
+            
+            //trigger save data before terminate
+            top::base::xvchain_t::instance().on_process_close();
+            
+            //forward to default handler
+            signal(signum, SIG_DFL);//restore to default handler
+            kill(getpid(), signum); //send signal again to default handler
+        }
+        break;
+        
+    case SIGUSR1:
+    case SIGUSR2:
+        {
+            printf("on_sys_signal_callback:capture user_signal(%d)\n",signum);
+            xwarn("on_sys_signal_callback:capture user_signal(%d)",signum);
+            
+            //trigger save data
+            top::base::xvchain_t::instance().save_all();
+        }
+        break;
+        
+    default:
+        {
+            printf("on_sys_signal_callback:capture other_signal(%d) \n",signum);
+            xwarn("on_sys_signal_callback:capture other_signal(%d)",signum);
+        }
+    }
+}
+
+void catch_system_signals()
+{
+    static struct sigaction _sys_sigact;
+    memset(&_sys_sigact, 0, sizeof(_sys_sigact));
+    
+    _sys_sigact.sa_sigaction = on_sys_signal_callback;
+    _sys_sigact.sa_flags = SA_SIGINFO;
+    
+    //config signal of termine
+    sigaction(SIGTERM, &_sys_sigact, NULL);
+    signal(SIGINT, SIG_IGN); //disable INT signal
+    signal(SIGHUP, SIG_IGN); //disable HUP signal
+    
+#ifndef DISABLE_CORE_SIGNAL_CAPTURE
+    //config signal of cores
+    sigaction(SIGSEGV, &_sys_sigact, NULL);
+    sigaction(SIGILL, &_sys_sigact, NULL);
+    sigaction(SIGFPE, &_sys_sigact, NULL);
+    sigaction(SIGABRT, &_sys_sigact, NULL);
+#endif        
+
+    //config user 'signal
+    sigaction(SIGUSR1, &_sys_sigact, NULL);
+    sigaction(SIGUSR2, &_sys_sigact, NULL);
+    std::cout << "catch_system_signals" << std::endl;
+}
+
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
     using namespace base;
@@ -102,6 +188,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     using namespace vnetwork;
     using namespace store;
     using namespace rpc;
+
+    catch_system_signals();//setup and hook system signals
 
     // init up
     setup_options();
@@ -364,6 +452,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     using namespace store;
     using namespace rpc;
     //using top::elect::xbeacon_xelect_imp;
+
+    catch_system_signals();//setup and hook system signals
 
     auto hash_plugin = new xtop_hash_t();
     std::string chain_db_path = datadir + DB_PATH;
