@@ -546,7 +546,10 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
     std::vector<data::xblock_ptr_t> blocks_temp;
     for (uint32_t i = 0; i < blocks.size(); i++) {
         if (blocks[i]->get_height() != 0) {
+            xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request height not 0 owner %s hash:%s", blocks[i]->get_account().c_str(), data::to_hex_str(hash).c_str());
             blocks_temp.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks[i].get()));
+        } else {
+            xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request height is 0 owner %s hash:%s", blocks[i]->get_account().c_str(), data::to_hex_str(hash).c_str());
         }
     }
 

@@ -249,6 +249,15 @@ public:
     std::vector<std::string> _cur_param_names = {"account_addr"};
 };
 
+class GeneralInfoCmd : public protocol {
+public:
+    GeneralInfoCmd();
+    // virtual int encode_body_params(const std::map<std::string, std::string>& params, xJson::Value& root) override;
+    virtual ~GeneralInfoCmd();
+    virtual void decode(const std::string & params, task_info * info) override;
+    std::vector<std::string> _cur_param_names = {"account_addr"};
+};
+
 class NodeInfoCmd : public protocol {
 public:
     NodeInfoCmd();
