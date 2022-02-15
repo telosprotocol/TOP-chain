@@ -12,7 +12,7 @@
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvhost_face.h"
-#include "xcluster_query_manager.h"
+#include "xvledger/xvtxstore.h"
 
 NS_BEG2(top, xrpc)
 using router::xrouter_face_t;
@@ -31,7 +31,6 @@ public:
                          observer_ptr<top::base::xiothread_t>            thread);
     void on_message(const xvnode_address_t & edge_sender, xmessage_t const & message);
     void cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message);
-    void cluster_process_query_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message);
     void cluster_process_response(const xmessage_t & msg, const xvnode_address_t & shard_sender);
     void start();
     void stop();
@@ -41,7 +40,6 @@ private:
     observer_ptr<xrouter_face_t>                         m_router_ptr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr           m_txpool_service;
     unique_ptr<xfilter_manager>                          m_rule_mgr_ptr;
-    std::shared_ptr<xcluster_query_manager>              m_cluster_query_mgr;
     observer_ptr<top::base::xiothread_t>                 m_thread;
 };
 

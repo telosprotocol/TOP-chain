@@ -7,7 +7,7 @@
 #include "xrpc/xws/xws_server.h"
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "xrpc/xcluster/xcluster_rpc_handler.h"
-#include "xrpc/xarc/xarc_rpc_handler.h"
+#include "xrpc/xrpc_handler.h"
 #include "xbase/xobject_ptr.h"
 #include "xtxstore/xtxstore_face.h"
 
@@ -25,7 +25,7 @@ public:
               observer_ptr<base::xvblockstore_t> const & block_store,
               observer_ptr<base::xvtxstore_t> const & txstore,
               observer_ptr<elect::ElectMain> elect_main,
-              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+              observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     void stop();
 
@@ -33,8 +33,8 @@ public:
 
 private:
     shared_ptr<xshard_rpc_handler>   m_shard_handler{ nullptr };
-    shared_ptr<xcluster_rpc_handler> m_cluster_handler{ nullptr };
-    shared_ptr<xarc_rpc_handler>     m_arc_handler{ nullptr };
+    shared_ptr<xrpc_handler>         m_rpc_handler{ nullptr };
+    shared_ptr<xcluster_rpc_handler> m_cluster_handler{nullptr};
     shared_ptr<xrpc_edge_vhost>      m_edge_handler{ nullptr };
     static top::base::xiothread_t*   m_thread;
 };

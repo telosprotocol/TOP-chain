@@ -33,7 +33,7 @@ class xedge_handler_base {
 public:
     typedef T conn_type;
     xedge_handler_base(shared_ptr<xrpc_edge_vhost> edge_vhost, std::shared_ptr<asio::io_service> ioc,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+                       observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
     virtual ~xedge_handler_base() {}
     void init();
     virtual void on_message(const xvnode_address_t&, const xrpc_msg_response_t& msg);
@@ -52,12 +52,12 @@ protected:
     shared_ptr<xrpc_edge_vhost>                             m_edge_vhost_ptr;
     atomic_ullong                                           m_msg_seq_id{ 0 };
     std::shared_ptr<asio::io_service>                       m_ioc;
-    observer_ptr<election::cache::xdata_accessor_face_t>    m_election_cache_data_accessor;
+    observer_ptr<top::election::cache::xdata_accessor_face_t>    m_election_cache_data_accessor;
 };
 
 template <class T>
 xedge_handler_base<T>::xedge_handler_base(shared_ptr<xrpc_edge_vhost> edge_vhost, std::shared_ptr<asio::io_service> ioc,
-                                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                          observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
     :m_edge_vhost_ptr(edge_vhost), m_ioc(ioc), m_election_cache_data_accessor(election_cache_data_accessor)
 {
     assert(m_edge_vhost_ptr);

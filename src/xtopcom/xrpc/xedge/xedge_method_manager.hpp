@@ -15,13 +15,14 @@
 #include "xedge_local_method.hpp"
 #include "xedge_rpc_handler.h"
 #include "xmetrics/xmetrics.h"
-#include "xrpc/xcluster/xcluster_query_manager.h"
+#include "xrpc/xrpc_query_manager.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
 #include "xstore/xstore_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xtxstore/xtransaction_prepare.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xverifier/xwhitelist_verifier.h"
@@ -51,7 +52,7 @@ public:
                       observer_ptr<base::xvblockstore_t> block_store = nullptr,
                       observer_ptr<base::xvtxstore_t> txstore = nullptr,
                       observer_ptr<elect::ElectMain> elect_main = nullptr,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+                      observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
     virtual ~xedge_method_base() {
     }
     void do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip);
@@ -74,7 +75,7 @@ protected:
     unique_ptr<T> m_edge_handler_ptr;
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
-    std::shared_ptr<xcluster_query_manager> m_cluster_query_mgr;
+    std::shared_ptr<xrpc_query_manager> m_rpc_query_mgr;
     observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
@@ -91,7 +92,7 @@ public:
                       observer_ptr<base::xvblockstore_t> block_store,
                       observer_ptr<base::xvtxstore_t> txstore,
                       observer_ptr<elect::ElectMain> elect_main,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                      observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
       : xedge_method_base<xedge_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
@@ -112,7 +113,7 @@ public:
                     observer_ptr<base::xvblockstore_t> block_store,
                     observer_ptr<base::xvtxstore_t> txstore,
                     observer_ptr<elect::ElectMain> elect_main,
-                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                    observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
       : xedge_method_base<xedge_ws_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
@@ -136,9 +137,9 @@ xedge_method_base<T>::xedge_method_base(shared_ptr<xrpc_edge_vhost> edge_vhost,
                                         observer_ptr<base::xvblockstore_t> block_store,
                                         observer_ptr<base::xvtxstore_t> txstore,
                                         observer_ptr<elect::ElectMain> elect_main,
-                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                        observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, txstore, nullptr))
+  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
   , m_store(store)
   , m_txstore{txstore}
   , m_archive_flag(archive_flag)
@@ -165,9 +166,12 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
     } else {
         if (m_archive_flag) {
             xdbg("local arc query method: %s", method.c_str());
-            m_cluster_query_mgr->call_method(json_proc);
-            json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
-            json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
+            json_proc.m_request_json["params"]["version"] = version;
+            string strErrorMsg = RPC_OK_MSG;
+            uint32_t nErrorCode = 0;
+            m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
+            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
+            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
             write_response(response, json_proc.get_response());
             return;
         } else {

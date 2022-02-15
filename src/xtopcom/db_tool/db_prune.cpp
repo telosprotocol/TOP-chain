@@ -16,7 +16,7 @@
 #include "xelection/xvnode_house.h"
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
-#include "xrpc/xgetblock/get_block.h"
+#include "xrpc/xrpc_query_manager.h"
 #include "xstore/xstore_error.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvdbkey.h"

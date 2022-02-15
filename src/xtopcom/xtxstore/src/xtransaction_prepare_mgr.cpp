@@ -5,7 +5,6 @@
 #include "xpbase/base/top_utils.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
-#include "xrpc/xgetblock/get_block.h"
 #include "xtxexecutor/xtransaction_fee.h"
 NS_BEG2(top, txexecutor)
 
