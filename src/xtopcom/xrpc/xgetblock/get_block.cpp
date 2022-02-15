@@ -849,6 +849,7 @@ void get_block_handle::queryNodeInfo() {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
+
     query_account_property(jv, contract_addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = jv[prop_name];
 }
@@ -857,6 +858,13 @@ void get_block_handle::queryNodeReward() {
     xJson::Value jv;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
     std::string target = m_js_req["node_account_addr"].asString();
+
+    //add top address check
+    if (xverifier::xtx_utl::address_is_valid(target) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
+
     m_js_rsp["value"] = parse_sharding_reward(target, prop_name);
 }
 
@@ -905,6 +913,11 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
 
 void get_block_handle::getLatestBlock() {
     std::string owner = m_js_req["account_addr"].asString();
+    // add top address check
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     auto vblock = m_block_store->get_latest_committed_block(owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (owner == sys_contract_zec_slash_info_addr) {
@@ -925,6 +938,11 @@ void get_block_handle::getLatestBlock() {
 
 void get_block_handle::getLatestFullBlock() {
     std::string owner = m_js_req["account_addr"].asString();
+    // add top address check
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     auto vblock = m_block_store->get_latest_committed_full_block(owner, metrics::blockstore_access_from_rpc_get_block_full_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (bp) {

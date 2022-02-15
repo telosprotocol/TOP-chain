@@ -5,13 +5,10 @@
 #pragma once
 
 #include "xbase/xcxx_config.h"
-
+#include "xvledger/xvaccount.h"
 #include <cstdint>
 
 namespace top {
-
-XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
-XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
 
 XINLINE_CONSTEXPR char const * black_hole_addr{"T!000131R4UAjgF6ZBWnwZESMWx4nCnqL1GhM3nT3"};
 XINLINE_CONSTEXPR char const * genesis_root_addr_main_chain{"T$000132i21FyYZvjTKiEwvBjshUbfQx6xoNT68v5"};

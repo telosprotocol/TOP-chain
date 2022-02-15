@@ -14,16 +14,20 @@ int32_t xtx_utl::address_is_valid(const std::string & addr) {
     std::vector<std::string> parts;
     
     try {
-        if (base::xstring_utl::split_string(addr,'@',parts) >= 2) {
-            int32_t subaddr = base::xstring_utl::toint32(parts[1]);
-            if (subaddr >= enum_vledger_const::enum_vbucket_has_tables_count || subaddr < 0) {
-                res = false;
-            }
-            top::utl::xkeyaddress_t  keyaddr{ parts[0] };
-            if (!keyaddr.is_valid()) res = false;
+        if (false == top::base::xvaccount_t::check_address(addr)) {
+            res = false;
         } else {
-            top::utl::xkeyaddress_t  keyaddr{ addr };
-            if (!keyaddr.is_valid()) res = false;
+            if (base::xstring_utl::split_string(addr, '@', parts) >= 2) {
+                top::utl::xkeyaddress_t keyaddr{parts[0]};
+                if (!keyaddr.is_valid()) {
+                    res = false;
+                }
+            } else {
+                top::utl::xkeyaddress_t keyaddr{addr};
+                if (!keyaddr.is_valid()) {
+                    res = false;
+                }
+            }
         }
     } catch (...) {
         res = false;
@@ -32,24 +36,6 @@ int32_t xtx_utl::address_is_valid(const std::string & addr) {
     if (!res) {
         xwarn("[global_trace][xverifier][address_is_valid][fail] address: %s", addr.c_str());
         return xverifier_error::xverifier_error_addr_invalid;
-    }
-
-    if (addr[0] != 'T') {
-            xwarn("[global_trace][verifier][address_is_valid]addr invalid: %s", addr.c_str());
-            return  xverifier_error::xverifier_error_addr_invalid;
-    }
-
-    base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(addr);
-    std::string addrtemp(addr);
-    if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account
-        && addrtemp.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size) {
-        addrtemp = addrtemp.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
-        std::string addrtemp2(addrtemp);
-        std::transform(addrtemp.begin(), addrtemp.end(), addrtemp.begin(), ::tolower);
-        if (addrtemp != addrtemp2 || is_valid_hex_format(addrtemp) == false) {
-            xwarn("[global_trace][verifier][address_is_valid]addr invalid: %s", addr.c_str());
-            return  xverifier_error::xverifier_error_addr_invalid;
-        }
     }
 
     xdbg("[global_trace][xverifier][address_is_valid][success] address: %s", addr.c_str());
