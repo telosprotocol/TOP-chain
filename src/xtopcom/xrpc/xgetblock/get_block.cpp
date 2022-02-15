@@ -946,10 +946,10 @@ void get_block_handle::getLatestFullBlock() {
 
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
-    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
-        set_result(INVALID_ACCOUNT);
-        return;
-    }
+    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+    //     set_result(INVALID_ACCOUNT);
+    //     return;
+    // }
     uint64_t height = m_js_req["height"].asUInt64();
     if (owner == sys_contract_zec_slash_info_addr) {
         std::error_code ec;
@@ -971,10 +971,10 @@ void get_block_handle::getBlockByHeight() {
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
-    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
-        set_result(INVALID_ACCOUNT);
-        return;
-    }
+    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+    //     set_result(INVALID_ACCOUNT);
+    //     return;
+    // }
     std::string version = m_js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
