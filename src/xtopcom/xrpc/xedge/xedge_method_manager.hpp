@@ -26,6 +26,8 @@
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
 
+#include <cinttypes>
+
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
 
@@ -301,8 +303,15 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
         const xvnode_address_t & source_address = vd->address();
 
         for (const auto & account : json_proc.m_account_set) {
+            std::error_code ec;
+            auto account_address = common::xaccount_address_t::build_from(account, ec);
+            if (ec) {
+                xwarn("forward_method error. invalid account %s; errc %" PRIi32 " msg %s", account.c_str(), ec.value(), ec.message().c_str());
+                continue;
+            }
+
             auto cluster_addr = m_edge_handler_ptr->get_rpc_edge_vhost()->get_router()->sharding_address_from_account(
-                common::xaccount_address_t{account}, vd->network_id(), common::xnode_type_t::consensus_validator);
+                account_address, vd->network_id(), common::xnode_type_t::consensus_validator);
             assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()) || common::has<common::xnode_type_t::committee>(cluster_addr.type()) ||
                    common::has<common::xnode_type_t::zec>(cluster_addr.type()));
             vnetwork::xvnode_address_t shard_addr{std::move(cluster_addr)};
