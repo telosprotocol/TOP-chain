@@ -1,20 +1,22 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
+#include "xdata/xdata_common.h"
 #include "xcommon/xip.h"
-#include "xdata/xelection/xelection_group_result.h"
-#include "xdata/xelection/xlegacy/xelection_cluster_result.h"
+#include "xdata/xelection/xlegacy/xstandby_network_storage_result.h"
 
-NS_BEG3(top, data, election)
+#include <map>
+#include <string>
 
-class xtop_election_cluster_result final
-{
+NS_BEG4(top, data, election, legacy)
+
+class xtop_standby_result_store final {
 private:
-    using container_t = std::map<common::xgroup_id_t, xelection_group_result_t>;
-    container_t m_group_results{};
+    using container_t = std::map<common::xnetwork_id_t, xstandby_network_storage_result_t>;
+    container_t m_results{};
 
 public:
     using key_type        = container_t::key_type;
@@ -36,20 +38,29 @@ public:
     std::pair<iterator, bool>
     insert(value_type && value);
 
+    iterator insert(const_iterator hint, value_type const & value);
+    iterator insert(const_iterator hint, value_type && value);
+
+    bool
+    empty(common::xnetwork_id_t const network_id) const noexcept;
+
     bool
     empty() const noexcept;
 
-    std::map<common::xgroup_id_t, xelection_group_result_t> const &
+    std::map<common::xnetwork_id_t, xstandby_network_storage_result_t> const &
     results() const noexcept;
 
     void
-    results(std::map<common::xgroup_id_t, xelection_group_result_t> && r) noexcept;
+    results(std::map<common::xnetwork_id_t, xstandby_network_storage_result_t> && r) noexcept;
 
-    xelection_group_result_t const &
-    result_of(common::xgroup_id_t const & gid) const;
+    xstandby_network_storage_result_t const &
+    result_of(common::xnetwork_id_t const network_id) const;
 
-    xelection_group_result_t &
-    result_of(common::xgroup_id_t const & gid);
+    xstandby_network_storage_result_t &
+    result_of(common::xnetwork_id_t const network_id);
+
+    std::size_t
+    size(common::xnetwork_id_t const network_id) const noexcept;
 
     std::size_t
     size() const noexcept;
@@ -77,9 +88,7 @@ public:
 
     size_type
     erase(key_type const & key);
-
-    legacy::xelection_cluster_result_t legacy() const;
 };
-using xelection_cluster_result_t = xtop_election_cluster_result;
+using xstandby_result_store_t = xtop_standby_result_store;
 
-NS_END3
+NS_END4

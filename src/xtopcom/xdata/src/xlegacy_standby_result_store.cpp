@@ -2,15 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelection/xstandby_result_store.h"
-
-#include "xdata/xelection/xlegacy/xstandby_network_storage_result.h"
 #include "xbasic/xutility.h"
+#include "xdata/xelection/xlegacy/xstandby_result_store.h"
 
-#include <functional>
-#include <iterator>
-
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 std::pair<xtop_standby_result_store::iterator, bool>
 xtop_standby_result_store::insert(value_type const & value) {
@@ -20,6 +15,14 @@ xtop_standby_result_store::insert(value_type const & value) {
 std::pair<xtop_standby_result_store::iterator, bool>
 xtop_standby_result_store::insert(value_type && value) {
     return m_results.insert(std::move(value));
+}
+
+xtop_standby_result_store::iterator xtop_standby_result_store::insert(const_iterator hint, value_type const & value) {
+    return m_results.insert(hint, value);
+}
+
+xtop_standby_result_store::iterator xtop_standby_result_store::insert(const_iterator hint, value_type && value) {
+    return m_results.insert(hint, std::move(value));
 }
 
 bool
@@ -112,13 +115,4 @@ xtop_standby_result_store::erase(key_type const & key) {
     return m_results.erase(key);
 }
 
-legacy::xstandby_result_store_t xtop_standby_result_store::legacy() const {
-    legacy::xstandby_result_store_t r;
-
-    std::transform(std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xstandby_result_store_t::value_type {
-        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
-    });
-    return r;
-}
-
-NS_END3
+NS_END4

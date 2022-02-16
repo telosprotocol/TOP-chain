@@ -2,14 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelection/xelection_result.h"
+#include "xdata/xelection/xlegacy/xelection_result.h"
 
-#include "xbasic/xutility.h"
-
-#include <functional>
-#include <iterator>
-
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 std::pair<xtop_election_result::iterator, bool>
 xtop_election_result::insert(value_type const & value) {
@@ -19,6 +14,14 @@ xtop_election_result::insert(value_type const & value) {
 std::pair<xtop_election_result::iterator, bool>
 xtop_election_result::insert(value_type && value) {
     return m_cluster_results.insert(std::move(value));
+}
+
+xtop_election_result::iterator xtop_election_result::insert(const_iterator hint, value_type const & v) {
+    return m_cluster_results.insert(hint, v);
+}
+
+xtop_election_result::iterator xtop_election_result::insert(const_iterator hint, value_type && v) {
+    return m_cluster_results.insert(hint, std::move(v));
 }
 
 bool
@@ -91,15 +94,4 @@ xtop_election_result::erase(key_type const & key) {
     return m_cluster_results.erase(key);
 }
 
-legacy::xelection_result_t xtop_election_result::legacy() const {
-    legacy::xelection_result_t r;
-
-    std::transform(
-        std::begin(m_cluster_results), std::end(m_cluster_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_result_t::value_type {
-            return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
-        });
-
-    return r;
-}
-
-NS_END3
+NS_END4

@@ -3,14 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xutility.h"
-#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xlegacy/xelection_result_store.h"
 
 #include <exception>
-#include <functional>
-#include <iterator>
 #include <utility>
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 std::map<common::xnetwork_id_t, xelection_network_result_t> const &
 xtop_election_result_store::results() const noexcept {
@@ -91,6 +89,14 @@ xtop_election_result_store::insert(value_type && value) {
     return m_results.insert(std::move(value));
 }
 
+xtop_election_result_store::iterator xtop_election_result_store::insert(const_iterator hint, value_type const & v) {
+    return m_results.insert(hint, v);
+}
+
+xtop_election_result_store::iterator xtop_election_result_store::insert(const_iterator hint, value_type && v) {
+    return m_results.insert(hint, std::move(v));
+}
+
 std::size_t
 xtop_election_result_store::size() const noexcept {
     return m_results.size();
@@ -101,14 +107,4 @@ xtop_election_result_store::empty() const noexcept {
     return m_results.empty();
 }
 
-legacy::xelection_result_store_t xtop_election_result_store::legacy() const {
-    legacy::xelection_result_store_t r;
-
-    std::transform(std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_result_store_t::value_type {
-        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
-    });
-
-    return r;
-}
-
-NS_END3
+NS_END4

@@ -2,9 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xlegacy/xelection_info_bundle.h"
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 bool 
 xtop_election_info_bundle::operator==(xtop_election_info_bundle const & other) const noexcept{
@@ -82,13 +82,4 @@ xtop_election_info_bundle::clear() noexcept {
     m_node_id.clear();
 }
 
-legacy::xelection_info_bundle_t xtop_election_info_bundle::legacy() const {
-    legacy::xelection_info_bundle_t r;
-
-    r.node_id(m_node_id);
-    r.election_info(m_election_info.legacy());
-
-    return r;
-}
-
-NS_END3
+NS_END4

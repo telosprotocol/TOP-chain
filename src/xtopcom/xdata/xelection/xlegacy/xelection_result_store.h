@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include "xcommon/xip.h"
-#include "xdata/xelection/xelection_group_result.h"
-#include "xdata/xelection/xlegacy/xelection_cluster_result.h"
+#include "xdata/xdata_common.h"
+#include "xdata/xelection/xlegacy/xelection_network_result.h"
 
-NS_BEG3(top, data, election)
+#include <cstdint>
 
-class xtop_election_cluster_result final
-{
+NS_BEG4(top, data, election, legacy)
+
+class xtop_election_result_store final {
 private:
-    using container_t = std::map<common::xgroup_id_t, xelection_group_result_t>;
-    container_t m_group_results{};
+    using container_t = std::map<common::xnetwork_id_t, xelection_network_result_t>;
+    container_t m_results{};
 
 public:
     using key_type        = container_t::key_type;
@@ -30,29 +30,35 @@ public:
     using iterator        = container_t::iterator;
     using const_iterator  = container_t::const_iterator;
 
+    std::map<common::xnetwork_id_t, xelection_network_result_t> const &
+    results() const noexcept;
+
+    void
+    results(std::map<common::xnetwork_id_t, xelection_network_result_t> && r) noexcept;
+
     std::pair<iterator, bool>
     insert(value_type const & value);
 
     std::pair<iterator, bool>
     insert(value_type && value);
 
-    bool
-    empty() const noexcept;
+    iterator insert(const_iterator hint, value_type const & v);
+    iterator insert(const_iterator hint, value_type && v);
 
-    std::map<common::xgroup_id_t, xelection_group_result_t> const &
-    results() const noexcept;
+    xelection_network_result_t const &
+    result_of(common::xnetwork_id_t const network_id) const;
 
-    void
-    results(std::map<common::xgroup_id_t, xelection_group_result_t> && r) noexcept;
+    xelection_network_result_t &
+    result_of(common::xnetwork_id_t const network_id);
 
-    xelection_group_result_t const &
-    result_of(common::xgroup_id_t const & gid) const;
-
-    xelection_group_result_t &
-    result_of(common::xgroup_id_t const & gid);
+    std::size_t
+    size(common::xnetwork_id_t const network_id) const noexcept;
 
     std::size_t
     size() const noexcept;
+
+    bool
+    empty() const noexcept;
 
     iterator
     begin() noexcept;
@@ -77,9 +83,7 @@ public:
 
     size_type
     erase(key_type const & key);
-
-    legacy::xelection_cluster_result_t legacy() const;
 };
-using xelection_cluster_result_t = xtop_election_cluster_result;
+using xelection_result_store_t = xtop_election_result_store;
 
-NS_END3
+NS_END4

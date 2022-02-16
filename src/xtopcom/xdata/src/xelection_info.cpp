@@ -31,4 +31,14 @@ xtop_election_info::swap(xtop_election_info & other) noexcept {
     std::swap(genesis, other.genesis);
 }
 
+legacy::xelection_info_t xtop_election_info::legacy() const {
+    legacy::xelection_info_t r;
+    r.joined_version = joined_version;
+    r.stake = stake;
+    r.comprehensive_stake = comprehensive_stake;
+    r.consensus_public_key = consensus_public_key;
+
+    return r;
+}
+
 NS_END3

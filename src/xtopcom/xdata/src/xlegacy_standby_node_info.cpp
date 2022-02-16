@@ -2,13 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xlegacy/xstandby_node_info.h"
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 bool xtop_standby_node_info::operator==(xtop_standby_node_info const & other) const noexcept {
-    return consensus_public_key == other.consensus_public_key && stake_container == other.stake_container && program_version == other.program_version &&
-           miner_type == other.miner_type && genesis == other.genesis;
+    return consensus_public_key == other.consensus_public_key && stake_container == other.stake_container && program_version == other.program_version && genesis == other.genesis;
 }
 
 bool xtop_standby_node_info::operator!=(xtop_standby_node_info const & other) const noexcept {
@@ -20,7 +19,6 @@ void xtop_standby_node_info::swap(xtop_standby_node_info & other) noexcept {
     std::swap(stake_container, other.stake_container);
     std::swap(program_version, other.program_version);
     std::swap(genesis, other.genesis);
-    std::swap(miner_type, other.miner_type);
 }
 
 uint64_t xtop_standby_node_info::stake(common::xnode_type_t const & node_type) const noexcept {
@@ -36,14 +34,4 @@ void xtop_standby_node_info::stake(common::xnode_type_t const & node_type, uint6
     stake_container[node_type] = new_stake;
 }
 
-legacy::xstandby_node_info_t xtop_standby_node_info::legacy() const {
-    legacy::xstandby_node_info_t r;
-    r.stake_container = stake_container;
-    r.consensus_public_key = consensus_public_key;
-    r.program_version = program_version;
-    r.genesis = genesis;
-
-    return r;
-}
-
-NS_END3
+NS_END4

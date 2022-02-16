@@ -9,16 +9,15 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_id.h"
 #include "xcommon/xversion.h"
-#include "xdata/xelection/xelection_info.h"
-#include "xdata/xelection/xelection_info_bundle.h"
-#include "xdata/xelection/xlegacy/xelection_group_result.h"
+#include "xdata/xelection/xlegacy/xelection_info.h"
+#include "xdata/xelection/xlegacy/xelection_info_bundle.h"
 
 #include <cstdint>
 #include <limits>
 #include <map>
 #include <string>
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 class xtop_election_group_result final {
 private:
@@ -113,6 +112,9 @@ public:
     std::pair<iterator, bool>
     insert(xelection_info_bundle_t && value);
 
+    iterator insert(const_iterator hint, value_type const & v);
+    iterator insert(const_iterator hint, value_type && v);
+
     bool
     empty() const noexcept;
 
@@ -164,12 +166,10 @@ public:
     void
     normalize() noexcept;
 
-    legacy::xelection_group_result_t legacy() const;
-
 private:
     void
     do_clear(common::xslot_id_t const & slot_id);
 };
 using xelection_group_result_t = xtop_election_group_result;
 
-NS_END3
+NS_END4

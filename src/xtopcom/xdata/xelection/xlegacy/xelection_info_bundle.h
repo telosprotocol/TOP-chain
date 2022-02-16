@@ -5,10 +5,9 @@
 #pragma once
 
 #include "xcommon/xnode_id.h"
-#include "xdata/xelection/xelection_info.h"
-#include "xdata/xelection/xlegacy/xelection_info_bundle.h"
+#include "xdata/xelection/xlegacy/xelection_info.h"
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 class xtop_election_info_bundle final {
 private:
@@ -56,9 +55,7 @@ public:
 
     bool
     empty() const noexcept;
-
-    legacy::xelection_info_bundle_t legacy() const;
 };
 using xelection_info_bundle_t = xtop_election_info_bundle;
 
-NS_END3
+NS_END4

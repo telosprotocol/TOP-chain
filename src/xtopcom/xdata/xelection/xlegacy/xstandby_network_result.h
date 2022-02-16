@@ -1,20 +1,21 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
-#include "xcommon/xip.h"
-#include "xdata/xelection/xelection_group_result.h"
-#include "xdata/xelection/xlegacy/xelection_cluster_result.h"
+#include "xdata/xdata_common.h"
+#include "xdata/xelection/xlegacy/xstandby_result.h"
 
-NS_BEG3(top, data, election)
+#include <map>
+#include <string>
 
-class xtop_election_cluster_result final
-{
+NS_BEG4(top, data, election, legacy)
+
+class xtop_standby_network_result final {
 private:
-    using container_t = std::map<common::xgroup_id_t, xelection_group_result_t>;
-    container_t m_group_results{};
+    using container_t = std::map<common::xnode_type_t, xstandby_result_t>;
+    container_t m_results{};
 
 public:
     using key_type        = container_t::key_type;
@@ -37,19 +38,24 @@ public:
     insert(value_type && value);
 
     bool
+    empty(common::xnode_type_t const role) const noexcept;
+
+    bool
     empty() const noexcept;
 
-    std::map<common::xgroup_id_t, xelection_group_result_t> const &
+    std::map<common::xnode_type_t, xstandby_result_t> const &
     results() const noexcept;
 
-    void
-    results(std::map<common::xgroup_id_t, xelection_group_result_t> && r) noexcept;
+    void results(std::map<common::xnode_type_t, xstandby_result_t> && r) noexcept;
 
-    xelection_group_result_t const &
-    result_of(common::xgroup_id_t const & gid) const;
+    xstandby_result_t const &
+    result_of(common::xnode_type_t const role) const;
 
-    xelection_group_result_t &
-    result_of(common::xgroup_id_t const & gid);
+    xstandby_result_t &
+    result_of(common::xnode_type_t const role);
+
+    std::size_t
+    size(common::xnode_type_t const role) const noexcept;
 
     std::size_t
     size() const noexcept;
@@ -77,9 +83,7 @@ public:
 
     size_type
     erase(key_type const & key);
-
-    legacy::xelection_cluster_result_t legacy() const;
 };
-using xelection_cluster_result_t = xtop_election_cluster_result;
+using xstandby_network_result_t = xtop_standby_network_result;
 
-NS_END3
+NS_END4

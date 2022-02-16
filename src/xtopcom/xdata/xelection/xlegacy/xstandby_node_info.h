@@ -8,20 +8,21 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_type.h"
 #include "xcommon/xrole_type.h"
-#include "xdata/xelection/xlegacy/xstandby_node_info.h"
 
 #include <cstdint>
 #include <map>
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 class xtop_standby_node_info final {
 public:
     std::map<common::xnode_type_t, uint64_t> stake_container;
     xpublic_key_t consensus_public_key{};  // public key for consensus business
     std::string program_version{};
-    common::xminer_type_t miner_type{common::xminer_type_t::invalid};
     bool genesis{false};
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    common::xminer_type_t miner_type{common::xminer_type_t::invalid};
+#endif
 
     bool operator==(xtop_standby_node_info const & other) const noexcept;
 
@@ -32,9 +33,7 @@ public:
     uint64_t stake(common::xnode_type_t const & node_type) const noexcept;
 
     void stake(common::xnode_type_t const & node_type, uint64_t stake) noexcept;
-
-    legacy::xstandby_node_info_t legacy() const;
 };
 using xstandby_node_info_t = xtop_standby_node_info;
 
-NS_END3
+NS_END4

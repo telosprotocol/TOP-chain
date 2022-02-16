@@ -4,17 +4,18 @@
 
 #pragma once
 
-#include "xcommon/xip.h"
-#include "xdata/xelection/xelection_group_result.h"
-#include "xdata/xelection/xlegacy/xelection_cluster_result.h"
+#include "xcommon/xnode_type.h"
+#include "xdata/xdata_common.h"
+#include "xdata/xelection/xlegacy/xelection_result.h"
 
-NS_BEG3(top, data, election)
+#include <cstdint>
 
-class xtop_election_cluster_result final
-{
+NS_BEG4(top, data, election, legacy)
+
+class xtop_election_network_result final {
 private:
-    using container_t = std::map<common::xgroup_id_t, xelection_group_result_t>;
-    container_t m_group_results{};
+    using container_t = std::map<common::xnode_type_t, xelection_result_t>;
+    container_t m_results{};
 
 public:
     using key_type        = container_t::key_type;
@@ -30,26 +31,29 @@ public:
     using iterator        = container_t::iterator;
     using const_iterator  = container_t::const_iterator;
 
+    std::map<common::xnode_type_t, xelection_result_t> const &
+    results() const noexcept;
+
+    void
+    results(std::map<common::xnode_type_t, xelection_result_t> && r) noexcept;
+
     std::pair<iterator, bool>
     insert(value_type const & value);
 
     std::pair<iterator, bool>
     insert(value_type && value);
 
-    bool
-    empty() const noexcept;
+    iterator insert(const_iterator hint, value_type const & v);
+    iterator insert(const_iterator hint, value_type && v);
 
-    std::map<common::xgroup_id_t, xelection_group_result_t> const &
-    results() const noexcept;
+    xelection_result_t const &
+    result_of(common::xnode_type_t const type) const;
 
-    void
-    results(std::map<common::xgroup_id_t, xelection_group_result_t> && r) noexcept;
+    xelection_result_t &
+    result_of(common::xnode_type_t const type);
 
-    xelection_group_result_t const &
-    result_of(common::xgroup_id_t const & gid) const;
-
-    xelection_group_result_t &
-    result_of(common::xgroup_id_t const & gid);
+    std::size_t
+    size(common::xnode_type_t const type) const noexcept;
 
     std::size_t
     size() const noexcept;
@@ -77,9 +81,7 @@ public:
 
     size_type
     erase(key_type const & key);
-
-    legacy::xelection_cluster_result_t legacy() const;
 };
-using xelection_cluster_result_t = xtop_election_cluster_result;
+using xelection_network_result_t = xtop_election_network_result;
 
-NS_END3
+NS_END4

@@ -2,17 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xlegacy/xelection_group_result.h"
 
 #include "xbase/xlog.h"
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xutility.h"
 #include "xdata/xerror/xerror.h"
 
-#include <functional>
-#include <iterator>
-
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 bool xtop_election_group_result::operator==(xtop_election_group_result const & other) const noexcept {
     return m_nodes == other.m_nodes;
@@ -152,6 +149,14 @@ std::pair<xtop_election_group_result::iterator, bool> xtop_election_group_result
 
     m_nodes[top::get<common::xslot_id_t>(find_result)] = std::move(value);
     return {m_nodes.find(top::get<common::xslot_id_t>(find_result)), true};
+}
+
+xtop_election_group_result::iterator xtop_election_group_result::insert(const_iterator hint, value_type const & v) {
+    return m_nodes.insert(hint, v);
+}
+
+xtop_election_group_result::iterator xtop_election_group_result::insert(const_iterator hint, value_type && v) {
+    return m_nodes.insert(hint, std::move(v));
 }
 
 bool xtop_election_group_result::empty() const noexcept {
@@ -298,21 +303,4 @@ void xtop_election_group_result::do_clear(common::xslot_id_t const & slot_id) {
     m_nodes[slot_id].clear();
 }
 
-legacy::xelection_group_result_t xtop_election_group_result::legacy() const {
-    legacy::xelection_group_result_t r;
-    r.timestamp(m_timestamp);
-    r.start_time(m_start_time);
-    r.group_version(m_group_version);
-    r.associated_group_version(m_associated_group_version);
-    r.cluster_version(m_cluster_version);
-    r.election_committee_version(m_election_committee_version);
-    r.associated_group_id(m_associated_group_id);
-
-    std::transform(std::begin(m_nodes), std::end(m_nodes), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_group_result_t::value_type {
-        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
-    });
-
-    return r;
-}
-
-NS_END3
+NS_END4

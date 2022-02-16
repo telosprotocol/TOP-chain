@@ -7,6 +7,7 @@
 #include "xcommon/xnode_type.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xelection/xelection_result.h"
+#include "xdata/xelection/xlegacy/xelection_network_result.h"
 
 #include <cstdint>
 
@@ -78,6 +79,8 @@ public:
 
     size_type
     erase(key_type const & key);
+
+    legacy::xelection_network_result_t legacy() const;
 };
 using xelection_network_result_t = xtop_election_network_result;
 

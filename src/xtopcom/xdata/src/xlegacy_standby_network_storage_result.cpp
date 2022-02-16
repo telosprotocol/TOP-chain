@@ -2,14 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelection/xstandby_network_storage_result.h"
+#include "xdata/xelection/xlegacy/xstandby_network_storage_result.h"
 
 #include "xbasic/xutility.h"
 
-#include <functional>
-#include <iterator>
-
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 bool xtop_standby_network_storage_result::activated_state() const {
     return m_mainnet_activated;
@@ -23,7 +20,7 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result(co
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
         auto const & node_id = get<common::xnode_id_t const>(p);
-        auto const & standby_node_info = get<election::xstandby_node_info_t>(p);
+        auto const & standby_node_info = get<election::legacy::xstandby_node_info_t>(p);
         for (auto & _stake : standby_node_info.stake_container) {
             if (node_type == get<common::xnode_type_t const>(_stake))
                 standby_network_result.result_of(node_type).insert(std::make_pair(p.first, standby_node_info));
@@ -35,7 +32,7 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result() 
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
         auto const & node_id = get<common::xnode_id_t const>(p);
-        auto const & standby_node_info = get<election::xstandby_node_info_t>(p);
+        auto const & standby_node_info = get<election::legacy::xstandby_node_info_t>(p);
         if (m_mainnet_activated || standby_node_info.genesis) {
             for (auto const & stake : standby_node_info.stake_container) {
                 auto const & node_type = get<common::xnode_type_t const>(stake);
@@ -49,7 +46,7 @@ xstandby_network_result_t xtop_standby_network_storage_result::all_network_resul
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
         auto const & node_id = get<common::xnode_id_t const>(p);
-        auto const & standby_node_info = get<election::xstandby_node_info_t>(p);
+        auto const & standby_node_info = get<election::legacy::xstandby_node_info_t>(p);
         for (auto & _stake : standby_node_info.stake_container) {
             auto const & node_type = get<common::xnode_type_t const>(_stake);
             standby_network_result.result_of(node_type).insert(std::make_pair(p.first, standby_node_info));
@@ -72,6 +69,14 @@ std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_netw
     }
     m_results.at(value.first) = value.second;
     return std::make_pair(m_results.find(value.first), true);
+}
+
+xtop_standby_network_storage_result::iterator xtop_standby_network_storage_result::insert(const_iterator hint, value_type const & value) {
+    return m_results.insert(hint, value);
+}
+
+xtop_standby_network_storage_result::iterator xtop_standby_network_storage_result::insert(const_iterator hint, value_type && value) {
+    return m_results.insert(hint, std::move(value));
 }
 
 bool xtop_standby_network_storage_result::empty() const noexcept {
@@ -141,15 +146,4 @@ xtop_standby_network_storage_result::size_type xtop_standby_network_storage_resu
     return m_results.erase(key);
 }
 
-legacy::xstandby_network_storage_result_t xtop_standby_network_storage_result::legacy() const {
-    legacy::xstandby_network_storage_result_t r;
-    r.set_activate_state(activated_state());
-
-    std::transform(
-        std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xstandby_network_storage_result_t::value_type {
-            return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
-    });
-    return r;
-}
-
-NS_END3
+NS_END4

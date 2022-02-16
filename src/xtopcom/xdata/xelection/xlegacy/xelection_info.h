@@ -7,13 +7,11 @@
 #include "xbasic/xcrypto_key.h"
 #include "xcommon/xversion.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xelection/xlegacy/xelection_info.h"
 #include "xdata/xelection/xlegacy/xstandby_node_info.h"
-#include "xdata/xelection/xstandby_node_info.h"
 
 #include <cstdint>
 
-NS_BEG3(top, data, election)
+NS_BEG4(top, data, election, legacy)
 
 class xtop_election_info final {
 public:
@@ -22,8 +20,6 @@ public:
     std::uint64_t stake{ 0 };
     std::uint64_t comprehensive_stake{ 0 };
     xpublic_key_t consensus_public_key{};    // public key for consensus business
-    common::xminer_type_t miner_type{common::xminer_type_t::invalid};
-    bool genesis{false};
 
     bool
     operator==(xtop_election_info const & other) const noexcept;
@@ -33,9 +29,7 @@ public:
 
     void
     swap(xtop_election_info & other) noexcept;
-
-    legacy::xelection_info_t legacy() const;
 };
 using xelection_info_t = xtop_election_info;
 
-NS_END3
+NS_END4
