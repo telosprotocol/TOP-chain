@@ -961,7 +961,7 @@ void get_block_handle::getBlockByHeight() {
 
         m_js_rsp["value"] = value;
     } else {
-        auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, 0, true, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_by_height);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         auto value = get_block_json(bp);
         m_js_rsp["value"] = value;
@@ -984,7 +984,7 @@ void get_block_handle::getBlock() {
     xJson::Value value;
     if (type == "height") {
         uint64_t height = m_js_req["height"].asUInt64();
-        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true, metrics::blockstore_access_from_rpc_get_block_load_object);
+        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_load_object);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp, version);
 

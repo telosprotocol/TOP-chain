@@ -160,7 +160,7 @@ void xarc_query_manager::getBlock(xjson_proc_t & json_proc) {
     if (type == "height") {
         uint64_t hi = std::stoull(height);
         xdbg("height: %llu", hi);
-        auto vb = m_block_store->load_block_object(_owner_vaddress, hi, 0, true, metrics::blockstore_access_from_rpc_get_block);
+        auto vb = m_block_store->load_block_object(_owner_vaddress, hi, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     } else if (type == "last") {
