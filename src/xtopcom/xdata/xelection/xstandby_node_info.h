@@ -6,10 +6,8 @@
 
 #include "xbasic/xcrypto_key.h"
 #include "xcommon/xlogic_time.h"
-#if defined XENABLE_MOCK_ZEC_STAKE
-#    include "xcommon/xrole_type.h"
-#endif
 #include "xcommon/xnode_type.h"
+#include "xcommon/xrole_type.h"
 
 #include <cstdint>
 #include <map>
@@ -20,12 +18,9 @@ class xtop_standby_node_info final {
 public:
     std::map<common::xnode_type_t, uint64_t> stake_container;
     xpublic_key_t consensus_public_key{};  // public key for consensus business
-
-#if defined XENABLE_MOCK_ZEC_STAKE
-    common::xminer_type_t user_request_role{common::xminer_type_t::invalid};
-#endif
     std::string program_version{};
-    bool is_genesis_node{false};
+    common::xminer_type_t miner_type{common::xminer_type_t::invalid};
+    bool genesis{false};
 
     bool operator==(xtop_standby_node_info const & other) const noexcept;
 

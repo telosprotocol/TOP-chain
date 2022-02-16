@@ -285,14 +285,14 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
 
     // check whether include in register contract
     std::string value_str;
-    int ret = m_store->map_get(sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
+    int ret = m_store->map_get(sys_contract_rec_registration_addr, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
 
     if (ret != store::xstore_success || value_str.empty()) {
         xwarn("[register_node_callback] get node register info fail, node_addr: %s", node_addr.c_str());
         return ret;
     }
 
-    xstake::xreg_node_info node_info;
+    data::system_contract::xreg_node_info node_info;
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
 
     node_info.serialize_from(stream);

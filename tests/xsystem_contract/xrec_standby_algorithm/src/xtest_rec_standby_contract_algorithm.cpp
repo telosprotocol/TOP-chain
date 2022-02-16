@@ -44,7 +44,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version.empty());
     EXPECT_TRUE(standby_node_info.consensus_public_key.empty());
-    EXPECT_TRUE(standby_node_info.is_genesis_node == false);
+    EXPECT_TRUE(standby_node_info.genesis == false);
 
     std::string program_version_2{"version_2"};
     EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));
@@ -78,7 +78,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_1);
-    EXPECT_TRUE(standby_node_info.is_genesis_node == false);
+    EXPECT_TRUE(standby_node_info.genesis == false);
 
 #define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record, 0)
 
@@ -180,7 +180,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_1);
-    EXPECT_TRUE(standby_node_info.is_genesis_node == false);
+    EXPECT_TRUE(standby_node_info.genesis == false);
 
 #define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record)
 #define EXPECT_HAS(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) != standby_node_info.stake_container.end())

@@ -59,10 +59,9 @@ void xtop_committee_fixure::SetUp() {
 #if defined XENABLE_TESTS
         standby_node_info.stake(zone_type, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{u8"fake public key"};
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+
+        standby_node_info.consensus_public_key = top::xpublic_key_t{"fake public key"};
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
@@ -109,10 +108,8 @@ void xtop_zec_fixture::SetUp() {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::zec, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{u8"fake public key"};
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{"fake public key"};
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
@@ -158,10 +155,8 @@ void xtop_edge_fixture::SetUp() {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::edge, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{u8"fake public key"};
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{"fake public key"};
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
@@ -207,9 +202,7 @@ void xtop_archive_fixture::SetUp() {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::storage_archive, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
         standby_node_info.consensus_public_key = top::xpublic_key_t{"fake public key"};
 
         xelection_info_t new_election_info{};
@@ -263,10 +256,8 @@ void xtop_consensus_fixture::SetUp() {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::consensus_auditor, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{u8"fake public key"};
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{"fake public key"};
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
@@ -284,9 +275,7 @@ void xtop_consensus_fixture::SetUp() {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::consensus_validator, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::validator;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::validator;
         standby_node_info.consensus_public_key = top::xpublic_key_t{"fake public key"};
 
         xelection_info_t new_election_info{};

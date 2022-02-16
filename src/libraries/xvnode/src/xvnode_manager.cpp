@@ -167,11 +167,13 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
             assert(vnode->address() == address);
 
             vnode->rotation_status(common::xrotation_status_t::started, added_group->start_time());
-            xwarn("[vnode mgr] vnode (%p) at address %s will start at logic time %" PRIu64 " associated election blk height %" PRIu64,
+            xwarn("[vnode mgr] vnode (%p) at address %s will start at logic time %" PRIu64 " associated election blk height %" PRIu64 " miner_type %s genesis %s",
                   vnode.get(),
                   vnode->address().to_string().c_str(),
                   vnode->start_time(),
-                  vnode->address().associated_blk_height());
+                  vnode->address().associated_blk_height(),
+                  common::to_string(vnode->miner_type()).c_str(),
+                  vnode->genesis() ? "true" : "false");
 
             vnode->synchronize();
             xwarn("[vnode mgr] vnode (%p) at address %s starts synchronizing", vnode.get(), vnode->address().to_string().c_str());

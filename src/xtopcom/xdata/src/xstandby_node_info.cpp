@@ -7,13 +7,8 @@
 NS_BEG3(top, data, election)
 
 bool xtop_standby_node_info::operator==(xtop_standby_node_info const & other) const noexcept {
-#if defined XENABLE_MOCK_ZEC_STAKE
     return consensus_public_key == other.consensus_public_key && stake_container == other.stake_container && program_version == other.program_version &&
-           user_request_role == other.user_request_role && is_genesis_node == other.is_genesis_node;
-#else
-    return consensus_public_key == other.consensus_public_key && stake_container == other.stake_container && program_version == other.program_version &&
-           is_genesis_node == other.is_genesis_node;
-#endif
+           miner_type == other.miner_type && genesis == other.genesis;
 }
 
 bool xtop_standby_node_info::operator!=(xtop_standby_node_info const & other) const noexcept {
@@ -23,11 +18,9 @@ bool xtop_standby_node_info::operator!=(xtop_standby_node_info const & other) co
 void xtop_standby_node_info::swap(xtop_standby_node_info & other) noexcept {
     consensus_public_key.swap(other.consensus_public_key);
     std::swap(stake_container, other.stake_container);
-#if defined XENABLE_MOCK_ZEC_STAKE
-    std::swap(user_request_role, other.user_request_role);
-#endif
     std::swap(program_version, other.program_version);
-    std::swap(is_genesis_node, other.is_genesis_node);
+    std::swap(genesis, other.genesis);
+    std::swap(miner_type, other.miner_type);
 }
 
 uint64_t xtop_standby_node_info::stake(common::xnode_type_t const & node_type) const noexcept {

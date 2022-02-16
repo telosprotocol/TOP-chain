@@ -20,6 +20,8 @@ public:
     std::uint64_t stake{ 0 };
     std::uint64_t comprehensive_stake{ 0 };
     xpublic_key_t consensus_public_key{};    // public key for consensus business
+    common::xminer_type_t miner_type{common::xminer_type_t::invalid};
+    bool genesis{false};
 
     bool
     operator==(xtop_election_info const & other) const noexcept;

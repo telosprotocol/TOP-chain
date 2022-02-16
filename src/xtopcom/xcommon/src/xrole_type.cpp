@@ -22,29 +22,40 @@ std::int32_t operator>>(top::base::xstream_t & stream, xminer_type_t & role_type
     return r;
 }
 
-std::string to_string(xminer_type_t const role) {
-    switch (role) {
-    case xminer_type_t::advance:
-        return XMINER_TYPE_ADVANCE;
+std::string to_string(xminer_type_t const miner_type) {
+    std::string miner_string;
+    std::string const diliminator[2] = {",", ""};
 
-    case xminer_type_t::exchange:
-        return XMINER_TYPE_EXCHANGE;
+    if (common::has<xminer_type_t::advance>(miner_type)) {
+        miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_ADVANCE;
+    }
 
-    case xminer_type_t::validator:
-        return XMINER_TYPE_VALIDATOR;
+    if (common::has<xminer_type_t::exchange>(miner_type)) {
+        miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_EXCHANGE;
+    }
+
+    if (common::has<xminer_type_t::validator>(miner_type)) {
+        miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_VALIDATOR;
+    }
 
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-    case xminer_type_t::archive:
-        return XMINER_TYPE_ARCHIVE;
+    if (common::has<xminer_type_t::archive>(miner_type)) {
+        miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_ARCHIVE;
+    }
 #endif
 
-    case xminer_type_t::edge:
-        return XMINER_TYPE_EDGE;
-
-    default:
-        assert(false);
-        return "invalid(" + std::to_string(static_cast<std::underlying_type<xminer_type_t>::type>(role)) + ")";
+    if (common::has<xminer_type_t::edge>(miner_type)) {
+        miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_EDGE;
     }
+
+    if (miner_string.empty()) {
+#if !defined(XENABLE_TESTS)
+        assert(false);
+#endif
+        miner_string = std::string(XMINER_TYPE_INVALID) + "(" + std::to_string(static_cast<std::underlying_type<xminer_type_t>::type>(miner_type)) + ")";
+    }
+
+    return miner_string;
 }
 
 xminer_type_t & operator&=(xminer_type_t & lhs, xminer_type_t const rhs) noexcept {

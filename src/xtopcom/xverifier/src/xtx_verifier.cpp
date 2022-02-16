@@ -130,7 +130,7 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
             check_success = true;
 #else
             assert(store != nullptr);
-            xpublic_key_t pub_key = top::xstake::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
+            xpublic_key_t pub_key = top::data::system_contract::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
             xdbg("[global_trace][xtx_verifier][verify_tx_signature][pub_key_sign_check], tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
             check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);

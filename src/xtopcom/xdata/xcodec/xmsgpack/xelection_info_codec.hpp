@@ -7,6 +7,7 @@
 #include "xbasic/xcodec/xmsgpack/xcrypto_key_codec.hpp"
 #include "xbasic/xcodec/xmsgpack/xversion_codec.hpp"
 #include "xcommon/xcodec/xmsgpack/xnode_type_codec.hpp"
+#include "xcommon/xcodec/xmsgpack/xrole_type_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
 #include "xdata/xelection/xelection_info.h"
 
@@ -18,12 +19,13 @@ NS_BEG1(msgpack)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     NS_BEG1(adaptor)
 
-    XINLINE_CONSTEXPR std::size_t xelection_info_field_count{4};
-    // XINLINE_CONSTEXPR std::size_t xelection_info_standby_node_info_index{0};
+    XINLINE_CONSTEXPR std::size_t xelection_info_field_count{6};
     XINLINE_CONSTEXPR std::size_t xelection_info_joined_version_index{0};
     XINLINE_CONSTEXPR std::size_t xelection_info_stake_index{1};
     XINLINE_CONSTEXPR std::size_t xelection_info_comprehensive_stake_index{2};
     XINLINE_CONSTEXPR std::size_t xelection_info_consensus_public_key_index{3};
+    XINLINE_CONSTEXPR std::size_t xelection_info_miner_type_index{4};
+    XINLINE_CONSTEXPR std::size_t xelection_info_genesis_index{5};
 
     template <>
     struct convert<top::data::election::xelection_info_t> final {
@@ -38,6 +40,16 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 
             switch (o.via.array.size - 1) {
             default: {
+                XATTRIBUTE_FALLTHROUGH;
+            }
+
+            case xelection_info_genesis_index: {
+                election_info.genesis = o.via.array.ptr[xelection_info_genesis_index].as<bool>();
+                XATTRIBUTE_FALLTHROUGH;
+            }
+
+            case xelection_info_miner_type_index: {
+                election_info.miner_type = o.via.array.ptr[xelection_info_miner_type_index].as<top::common::xminer_type_t>();
                 XATTRIBUTE_FALLTHROUGH;
             }
 
@@ -74,6 +86,8 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             o.pack(election_info.stake);
             o.pack(election_info.comprehensive_stake);
             o.pack(election_info.consensus_public_key);
+            o.pack(election_info.miner_type);
+            o.pack(election_info.genesis);
 
             return o;
         }
@@ -89,6 +103,8 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
             o.via.array.ptr[xelection_info_stake_index] = msgpack::object{election_info.stake, o.zone};
             o.via.array.ptr[xelection_info_comprehensive_stake_index] = msgpack::object{election_info.comprehensive_stake, o.zone};
             o.via.array.ptr[xelection_info_consensus_public_key_index] = msgpack::object{election_info.consensus_public_key, o.zone};
+            o.via.array.ptr[xelection_info_miner_type_index] = msgpack::object{election_info.miner_type, o.zone};
+            o.via.array.ptr[xelection_info_genesis_index] = msgpack::object{election_info.genesis, o.zone};
         }
     };
 

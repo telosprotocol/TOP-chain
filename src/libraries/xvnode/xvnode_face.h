@@ -29,6 +29,8 @@ public:
     virtual common::xnode_type_t type() const noexcept = 0;
     virtual common::xnode_address_t const & address() const noexcept = 0;
 
+    virtual common::xminer_type_t miner_type() const noexcept = 0;
+    virtual bool genesis() const noexcept = 0;
     virtual common::xelection_round_t const & joined_election_round() const noexcept = 0;
 
     virtual void broadcast(common::xip2_t const & broadcast_dst, vnetwork::xmessage_t const & msg, std::error_code & ec) = 0;
@@ -36,12 +38,10 @@ public:
 
     virtual common::xrotation_status_t status() const noexcept = 0;
 
-    virtual std::vector<common::xip2_t> neighbors_xip2(std::error_code & ec) const noexcept = 0;
-    virtual std::vector<common::xip2_t> associated_parent_nodes_xip2(std::error_code & ec) const noexcept = 0;
-    virtual std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const noexcept = 0;
+    virtual std::vector<common::xip2_t> neighbors_xip2(std::error_code & ec) const = 0;
+    virtual std::vector<common::xip2_t> associated_parent_nodes_xip2(std::error_code & ec) const = 0;
+    virtual std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const = 0;
 
-    //virtual std::vector<common::xip2_t> associated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const = 0;
-    //virtual std::vector<common::xip2_t> nonassociated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const = 0;
     virtual components::sniffing::xsniffer_config_t sniff_config() const = 0;
     virtual xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const =0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const = 0;

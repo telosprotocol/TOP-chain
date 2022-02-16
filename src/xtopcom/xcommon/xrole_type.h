@@ -39,6 +39,7 @@ enum class xenum_miner_type : uint32_t {
 };
 using xminer_type_t = xenum_miner_type;
 
+XINLINE_CONSTEXPR char const * XMINER_TYPE_INVALID   = "invalid";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_EDGE      = "edge";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_ADVANCE   = "advance";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_VALIDATOR = "validator";
