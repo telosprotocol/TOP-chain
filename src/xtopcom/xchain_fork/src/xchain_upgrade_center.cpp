@@ -62,7 +62,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
             xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7129260, "tx v2 fee fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
         };
 
         // !!!change!!! fork time for galileo
@@ -73,7 +73,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
             xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7129260, "tx v2 fee fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -84,7 +84,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
             xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7129260, "tx v2 fee fork point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},//2022-2-21 10:00:00
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
