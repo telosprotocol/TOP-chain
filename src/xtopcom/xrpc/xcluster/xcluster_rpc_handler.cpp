@@ -93,7 +93,10 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         xtransaction_ptr_t tx_ptr;
         auto ret = xtransaction_t::set_tx_by_serialized_data(tx_ptr, edge_msg.m_message_body);
-        assert(ret == true);
+        if (ret == false) {
+            xwarn("xcluster_rpc_handler::cluster_process_request: fail to extract transaction object from rpc message");
+            return;
+        }
 
         tx_hash = tx_ptr->get_digest_hex_str();
         account = tx_ptr->get_source_addr();
