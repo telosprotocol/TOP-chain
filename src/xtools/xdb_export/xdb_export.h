@@ -47,12 +47,10 @@ public:
     void query_checkpoint(const uint64_t clock);
     // set folder
     void set_outfile_folder(std::string const & folder);
-    void compact_db();
-    void read_meta(std::string const & address);
 
     static bool  db_scan_key_callback(const std::string& key, const std::string& value,void*cookie);
-    bool  db_scan_key_callback(const std::string& key, const std::string& value);
-    void parse_all(const std::string &fileName);
+    bool   db_scan_key_callback(const std::string& key, const std::string& value);
+    void   db_parse_type_size(const std::string &fileName);
     std::string get_account_key_string(const std::string & key);
 private:
     struct tx_ext_t {

@@ -44,6 +44,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     std::string                     get_tx_hash() const;
     uint256_t                       get_tx_hash_256() const;
     uint16_t                        get_tx_type() const {return m_tx->get_tx_type();}
+    uint16_t                        get_tx_version() const {return m_tx->get_tx_version();}
+    uint64_t                        get_fire_timestamp() const {return m_tx->get_fire_timestamp();}
     bool                            verify_cons_transaction();
 
     base::xtable_index_t            get_self_table_index() const;

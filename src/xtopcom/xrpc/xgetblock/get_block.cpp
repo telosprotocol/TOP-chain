@@ -38,6 +38,7 @@ using namespace std;
 using namespace base;
 using namespace store;
 using namespace xrpc;
+const std::string INVALID_ACCOUNT = "Invalid Account!";
 
 bool get_block_handle::handle(std::string request) {
     m_js_req.clear();
@@ -65,8 +66,8 @@ bool get_block_handle::handle(std::string request) {
 
 void get_block_handle::getAccount() {
     std::string account = m_js_req["account_addr"].asString();
-    if (account.empty()) {
-        xwarn("getAccount:account is empty ");
+    if (xverifier::xtx_utl::address_is_valid(account) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
         return;
     }
     try {
@@ -475,6 +476,13 @@ xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, u
         if (tx_info->is_self_tx()) {
             jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
             jv["used_deposit"] = tx_info->get_used_deposit();
+        }
+        if (tx_info->is_send_tx()) {
+            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2)) {
+                jv["used_deposit"] = tx_info->get_used_deposit();
+            } else {
+                jv["used_deposit"] = 0;
+            }
         }
         if (tx_info->is_confirm_tx()) {
             jv["used_deposit"] = tx_info->get_used_deposit();
@@ -938,6 +946,10 @@ void get_block_handle::getLatestFullBlock() {
 
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
+    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+    //     set_result(INVALID_ACCOUNT);
+    //     return;
+    // }
     uint64_t height = m_js_req["height"].asUInt64();
     if (owner == sys_contract_zec_slash_info_addr) {
         std::error_code ec;
@@ -949,7 +961,7 @@ void get_block_handle::getBlockByHeight() {
 
         m_js_rsp["value"] = value;
     } else {
-        auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, 0, true, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_by_height);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         auto value = get_block_json(bp);
         m_js_rsp["value"] = value;
@@ -959,6 +971,10 @@ void get_block_handle::getBlockByHeight() {
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
+    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+    //     set_result(INVALID_ACCOUNT);
+    //     return;
+    // }
     std::string version = m_js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
@@ -968,7 +984,7 @@ void get_block_handle::getBlock() {
     xJson::Value value;
     if (type == "height") {
         uint64_t height = m_js_req["height"].asUInt64();
-        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true, metrics::blockstore_access_from_rpc_get_block_load_object);
+        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_load_object);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp, version);
 
@@ -995,6 +1011,10 @@ void get_block_handle::getBlock() {
 void get_block_handle::getProperty() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     base::xvaccount_t _owner_vaddress(owner);
 
     xJson::Value value;
