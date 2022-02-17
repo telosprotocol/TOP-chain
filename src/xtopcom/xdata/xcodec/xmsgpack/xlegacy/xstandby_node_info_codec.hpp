@@ -17,11 +17,24 @@ NS_BEG1(msgpack)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 NS_BEG1(adaptor)
 
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_field_count{5};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_public_key_index{0};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_stake_index{1};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_program_version_index{2};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_genesis_index{3};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_miner_type_index{4};
+
+#else
+
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_field_count{4};
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_public_key_index{0};
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_stake_index{1};
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_program_version_index{2};
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_genesis_index{3};
+
+#endif
 
 template <>
 struct convert<top::data::election::legacy::xstandby_node_info_t> final {
@@ -38,6 +51,13 @@ struct convert<top::data::election::legacy::xstandby_node_info_t> final {
         default: {
             XATTRIBUTE_FALLTHROUGH;
         }
+
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+        case xlegacy_standby_node_info_miner_type_index: {
+            node_info.miner_type = o.via.array.ptr[xlegacy_standby_node_info_miner_type_index].as<top::common::xminer_type_t>();
+            XATTRIBUTE_FALLTHROUGH;
+        }
+#endif
 
         case xlegacy_standby_node_info_genesis_index: {
             node_info.genesis = o.via.array.ptr[xlegacy_standby_node_info_genesis_index].as<bool>();
@@ -73,7 +93,9 @@ struct pack<::top::data::election::legacy::xstandby_node_info_t> {
         o.pack(node_info.stake_container);
         o.pack(node_info.program_version);
         o.pack(node_info.genesis);
-
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+        o.pack(node_info.miner_type);
+#endif
         return o;
     }
 };
@@ -88,6 +110,9 @@ struct object_with_zone<::top::data::election::legacy::xstandby_node_info_t> {
         o.via.array.ptr[xlegacy_standby_node_info_stake_index] = msgpack::object{node_info.stake_container, o.zone};
         o.via.array.ptr[xlegacy_standby_node_info_program_version_index] = msgpack::object{node_info.program_version, o.zone};
         o.via.array.ptr[xlegacy_standby_node_info_genesis_index] = msgpack::object{node_info.genesis, o.zone};
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+        o.via.array.ptr[xlegacy_standby_node_info_miner_type_index] = msgpack::object{node_info.miner_type, o.zone};
+#endif
     }
 };
 
