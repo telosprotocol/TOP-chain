@@ -4,6 +4,9 @@
 
 #include "xbasic/xerror/xerror.h"
 
+#include "xbase/xlog.h"
+
+#include <cinttypes>
 #include <string>
 #include <type_traits>
 
@@ -65,6 +68,10 @@ std::error_code const & xtop_top_error::code() const noexcept {
     return m_ec;
 }
 
+std::error_category const & xtop_top_error::category() const noexcept {
+    return m_ec.category();
+}
+
 template <typename ExceptionT>
 void throw_exception(ExceptionT const & eh) {
     throw eh;
@@ -72,16 +79,19 @@ void throw_exception(ExceptionT const & eh) {
 
 static void do_throw_error(std::error_code const & ec) {
     xtop_error_t eh{ec};
+    xwarn("throw_error. category %s, errc %" PRIi32 " msg %s", eh.category().name(), eh.code().value(), eh.what());
     throw_exception(eh);
 }
 
 static void do_throw_error(std::error_code const & ec, char const * extra_what) {
     xtop_error_t eh{ec, extra_what};
+    xwarn("throw_error. category %s, errc %" PRIi32 " msg %s", eh.category().name(), eh.code().value(), eh.what());
     throw_exception(eh);
 }
 
 static void do_throw_error(std::error_code const & ec, std::string const & extra_what) {
     xtop_error_t eh{ec, extra_what};
+    xwarn("throw_error. category %s, errc %" PRIi32 " msg %s", eh.category().name(), eh.code().value(), eh.what());
     throw_exception(eh);
 }
 
