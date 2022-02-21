@@ -49,7 +49,8 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
         XMETRICS_COUNTER_INCREMENT("sync_bytes_gossip_send", msg.payload().size());
         XMETRICS_COUNTER_INCREMENT("sync_pkgs_out", 1);
         XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
-        m_vhost->send(msg, self_xip, addr);
+        std::error_code ec;
+        m_vhost->send_to_through_frozen(self_xip, addr, msg, ec);
     }
 }
 
@@ -300,8 +301,9 @@ bool xsync_sender_t::send_message(
     XMETRICS_COUNTER_INCREMENT(bytes_metric_name, msg.payload().size());
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_out", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
-
-    m_vhost->send(msg, self_addr, target_addr);
+    
+    std::error_code ec;
+    m_vhost->send_to_through_frozen(self_addr, target_addr, msg, ec);
     return true;
 }
 
