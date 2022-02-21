@@ -523,6 +523,77 @@ base::xreceiptid_state_ptr_t xblocktool_t::get_receiptid_from_property_prove(con
     return receiptid;
 }
 
+bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blockstore,
+                                                 const base::xvaccount_t & account,
+                                                 base::xvblock_t * latest_commit_block,
+                                                 base::xvproperty_prove_ptr_t & property_prove_ptr,
+                                                 xtablestate_ptr_t & tablestate_ptr) {
+    base::enum_xvblock_class block_class = latest_commit_block->get_block_class();
+    uint32_t nil_block_num = 0;
+    xvblock_ptr_t non_nil_commit_block = nullptr;
+    uint64_t height = latest_commit_block->get_height();
+    if (block_class != base::enum_xvblock_class_nil) {
+        base::xvblock_t * _block = latest_commit_block;
+        _block->add_ref();
+        non_nil_commit_block.attach(_block);
+    } else {
+        while (block_class == base::enum_xvblock_class_nil && height > 0) {
+            nil_block_num++;
+            if (nil_block_num > 2) {
+                xerror("xblocktool_t::get_receiptid_state_and_prove, continuous nil table block number is more than 2,table:%s,height:%llu", account.get_address().c_str(), height);
+            }
+
+            auto commit_block =
+                blockstore->load_block_object(account, height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
+            if (commit_block == nullptr) {
+                xwarn("xblocktool_t::get_receiptid_state_and_prove load block fail,table:%s,height:%llu", account.get_address().c_str(), height - 1);
+                return false;
+            }
+            height = commit_block->get_height();
+
+            if (commit_block->get_block_class() != base::enum_xvblock_class_nil) {
+                base::xvblock_t * _block = commit_block.get();
+                _block->add_ref();
+                non_nil_commit_block.attach(_block);
+                break;
+            }
+        }
+    }
+
+    if (height == 0 || block_class == base::enum_xvblock_class_nil) {
+        xinfo("xblocktool_t::get_receiptid_state_and_prove latest commit height is 0, no need send receipt id state.table:%s", account.get_address().c_str());
+        return false;
+    }
+
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(non_nil_commit_block.get());
+    if (bstate == nullptr) {
+        xwarn("xblocktool_t::get_receiptid_state_and_prove table:%s,height:%llu,get bstate fail", account.get_address().c_str(), non_nil_commit_block->get_height());
+        return false;
+    }
+
+    auto cert_block = blockstore->load_block_object(account, non_nil_commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_id_state);
+    if (cert_block == nullptr) {
+        xinfo("xblocktool_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height() + 2);
+        return false;
+    }
+
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+    if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
+        xinfo("xblocktool_t::get_receiptid_state_and_prove table have no receipt id pairs.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
+        return false;
+    }
+
+    auto property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
+    if (property_prove == nullptr) {
+        xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
+        return false;
+    }
+    xassert(property_prove->is_valid());
+    property_prove_ptr = property_prove;
+    tablestate_ptr = tablestate;
+    return true;
+}
+
 bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount,
                                                    const base::xaccount_index_t & commit_account_index,
                                                    uint64_t latest_connect_height,

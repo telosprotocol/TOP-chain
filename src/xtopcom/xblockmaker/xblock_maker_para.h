@@ -10,6 +10,7 @@
 #include "xbasic/xserializable_based_on.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xdata/xcons_transaction.h"
+#include "xvledger/xvpropertyprove.h"
 
 NS_BEG2(top, blockmaker)
 using data::xcons_transaction_ptr_t;
@@ -96,12 +97,15 @@ class xtable_proposal_input_t : public xbase_dataunit_t<xtable_proposal_input_t,
  public:
     bool    delete_fail_tx(const xcons_transaction_ptr_t & input_tx);
     void    set_input_tx(const xcons_transaction_ptr_t & tx);
+    void    set_receiptid_state_prove(const base::xvproperty_prove_ptr_t & receiptid_state_prove);
     void    set_other_account(const std::string & account);
     const std::vector<xcons_transaction_ptr_t> &    get_input_txs() const {return m_input_txs;}
+    const std::vector<base::xvproperty_prove_ptr_t> &    get_receiptid_state_proves() const {return m_receiptid_state_proves;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_input_txs;
+    std::vector<base::xvproperty_prove_ptr_t> m_receiptid_state_proves;
  private: // local cache
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
 };

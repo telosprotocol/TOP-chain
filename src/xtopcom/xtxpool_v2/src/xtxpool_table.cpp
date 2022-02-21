@@ -173,7 +173,7 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
     }
     if (!is_self_send) {
         int32_t ret = verify_receipt_tx(tx->get_tx());
-        if (ret != xsuccess) {
+        if (ret != xsuccess && ret != xtxpool_error_not_sure_if_need_confirm) {
             return ret;
         }
     }
@@ -218,6 +218,55 @@ std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_ready_txs(const xtxs_p
     return m_txmgr_table.get_ready_txs(pack_para);
 }
 
+xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
+    std::vector<xcons_transaction_ptr_t> txs;
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        txs = m_txmgr_table.get_ready_txs(pack_para, m_unconfirm_id_height);
+    }
+
+    if (txs.empty()) {
+        return {};
+    }
+
+    auto self_sid = m_xtable_info.get_short_table_id();
+
+    // if a peer table already have confirm tx tobe packed, do not use receipt id state to modify coressponding confirm id.
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id = pack_para.get_peer_sids_for_confirm_id();
+    for (auto & tx : txs) {
+        if (tx->is_confirm_tx()) {
+            xdbg("xpack_resource xtxpool_table_t::get_pack_resource confirm tx:%s", tx->dump().c_str());
+            auto it = peer_sids_for_confirm_id.find(tx->get_peer_tableid());
+            if (it != peer_sids_for_confirm_id.end()) {
+                xdbg("xpack_resource xtxpool_table_t::get_pack_resource not check peer sid confirm id self:%d,peer:%d", self_sid, tx->get_peer_tableid());
+                peer_sids_for_confirm_id.erase(it);
+            }
+        }
+    }
+
+    std::map<base::xtable_shortid_t, xreceiptid_state_and_prove> receiptid_state_prove_map;
+    auto & self_receiptid_state = pack_para.get_table_state_highqc()->get_receiptid_state();
+    for (auto & peer_sid : peer_sids_for_confirm_id) {
+        base::xreceiptid_pair_t self_pair;
+        self_receiptid_state->find_pair(peer_sid, self_pair);
+        auto confirmid_max = self_pair.get_confirmid_max();
+        uint64_t max_not_need_confirm_receiptid;
+
+        auto ret = m_unconfirm_id_height.get_sender_max_not_need_confirm_id(peer_sid, confirmid_max + 1, max_not_need_confirm_receiptid);
+        if (ret) {
+            auto receiptid_state_prove =
+                m_para->get_receiptid_state_cache().get_receiptid_state_and_prove(self_sid, peer_sid, confirmid_max + 1, max_not_need_confirm_receiptid);
+            if (receiptid_state_prove.m_property_prove_ptr != nullptr && receiptid_state_prove.m_receiptid_state != nullptr) {
+                receiptid_state_prove_map[peer_sid] = receiptid_state_prove;
+            }
+        } else {
+            xdbg("xpack_resource xtxpool_table_t::get_pack_resource get_sender_max_not_need_confirm_id fail self:%d,peer:%d", self_sid, peer_sid);
+        }
+    }
+
+    return xpack_resource(txs, receiptid_state_prove_map);
+}
+
 const std::shared_ptr<xtx_entry> xtxpool_table_t::query_tx(const std::string & account, const uint256_t & hash) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
@@ -255,12 +304,15 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
         }
 
         xlightunit_action_t txaction(action);
+        bool need_confirm = !txaction.get_not_need_confirm();
         uint64_t txnonce = 0;
         if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_self) {
             xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
             if (_rawtx != nullptr) {
                 txnonce = _rawtx->get_tx_nonce();
-                raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
+                if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send && need_confirm) {
+                    raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
+                }
             } else {
                 xtxpool_info("xtxpool_table_t::deal_commit_table_block get raw tx fail table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
                              m_xtable_info.get_account().c_str(),
@@ -279,15 +331,18 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
         }
 
         if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_recv) {
-            tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id()));
+            tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), need_confirm));
 
-            xtxpool_info("xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
-                         m_xtable_info.get_account().c_str(),
-                         txaction.get_receipt_id_peer_tableid(),
-                         txaction.get_tx_subtype(),
-                         txaction.get_receipt_id(),
-                         txaction.get_sender_confirmed_receipt_id(),
-                         table_block->get_height());
+            xtxpool_info(
+                "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm "
+                "id:%llu,table_height:%llu,need_confirm:%d",
+                m_xtable_info.get_account().c_str(),
+                txaction.get_receipt_id_peer_tableid(),
+                txaction.get_tx_subtype(),
+                txaction.get_receipt_id(),
+                txaction.get_sender_confirmed_receipt_id(),
+                table_block->get_height(),
+                need_confirm);
         }
     }
 
@@ -533,6 +588,21 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx) cons
 
 int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) const {
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_verify_receipt_tx");
+    if (tx->is_confirm_tx()) {
+        if (!tx->get_last_not_need_confirm()) {
+            bool need_confirm = true;
+            auto ret = m_unconfirm_id_height.sender_check_need_confirm(tx->get_peer_tableid(), tx->get_last_action_receipt_id(), need_confirm);
+            if (ret == false) {
+                xtxpool_info("xtxpool_table_t::verify_receipt_tx not sure if need confirm.tx=%s", tx->dump(true).c_str());
+                return xtxpool_error_not_sure_if_need_confirm;
+            }
+            if (!need_confirm) {
+                xtxpool_info("xtxpool_table_t::verify_receipt_tx not need confirm.tx=%s", tx->dump(true).c_str());
+                return xtxpool_error_not_need_confirm;
+            }
+        }
+    }
+
     if (!tx->verify_cons_transaction()) {
         return xtxpool_error_receipt_invalid;
     }
@@ -594,8 +664,9 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_table_t::get_lacking_confirm_tx_ids(uint32_t & total_num) const {
+    auto need_confirm_ids_vec = m_unconfirm_id_height.get_sender_all_need_confirm_ids(m_para->get_receiptid_state_cache(), true);
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    return m_txmgr_table.get_lacking_confirm_tx_ids(total_num);
+    return m_txmgr_table.get_lacking_discrete_confirm_tx_ids(need_confirm_ids_vec, total_num);
 }
 
 xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype) {
@@ -640,7 +711,8 @@ void xtxpool_table_t::build_recv_tx(base::xtable_shortid_t peer_table_sid, std::
             continue;
         }
         uint64_t commit_height;
-        bool ret = m_unconfirm_id_height.get_sender_table_height_by_id(peer_table_sid, receiptid, commit_height);
+        bool need_confirm = false;
+        bool ret = m_unconfirm_id_height.get_sender_table_height_by_id(peer_table_sid, receiptid, commit_height, need_confirm);
         if (!ret) {
             xtxpool_info("xtxpool_table_t::build_recv_tx fail-receipt id not found self:%d,peer:%d,receipt id:%lu", self_table_sid, peer_table_sid, receiptid);
             continue;
@@ -661,9 +733,15 @@ void xtxpool_table_t::build_confirm_tx(base::xtable_shortid_t peer_table_sid, st
             continue;
         }
         uint64_t commit_height;
-        bool ret = m_unconfirm_id_height.get_receiver_table_height_by_id(peer_table_sid, receiptid, commit_height);
+        bool need_confirm = false;
+        bool ret = m_unconfirm_id_height.get_receiver_table_height_by_id(peer_table_sid, receiptid, commit_height, need_confirm);
         if (!ret) {
             xtxpool_info("xtxpool_table_t::build_confirm_tx fail-receipt id not found self:%d,peer:%d,receipt id:%lu", self_table_sid, peer_table_sid, receiptid);
+            continue;
+        }
+
+        if (!need_confirm) {
+            xtxpool_warn("xtxpool_table_t::build_confirm_tx receipt id not need confirm self:%d,peer:%d,receipt id:%lu", self_table_sid, peer_table_sid, receiptid);
             continue;
         }
 
@@ -700,6 +778,13 @@ void xtxpool_table_t::get_min_keep_height(std::string & table_addr, uint64_t & h
         height = 0;
         xtxpool_info("xtxpool_table_t::get_min_keep_height fail table:%s", m_xtable_info.get_address().c_str());
     }
+}
+
+bool xtxpool_table_t::get_sender_need_confirm_ids(base::xtable_shortid_t peer_table_sid,
+                                                  uint64_t lower_receipt_id,
+                                                  uint64_t upper_receipt_id,
+                                                  std::vector<uint64_t> & receipt_ids) const {
+    return m_unconfirm_id_height.get_sender_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);
 }
 
 xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {

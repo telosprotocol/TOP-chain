@@ -457,13 +457,35 @@ void get_block_handle::set_unlock_token_info(xJson::Value & j, const xaction_t &
 void get_block_handle::set_create_sub_account_info(xJson::Value & j, const xaction_t & action) {
 }
 
-xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version) {
+xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & send_txinfo, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version, bool is_confirm, uint64_t send_height) {
     xJson::Value jv;
     if (account.empty()) {
         return jv;
     }
 
     base::xvaccount_t _account_vaddress(account);
+
+    if (is_confirm) {
+        if (send_txinfo != nullptr && send_txinfo->get_not_need_confirm()) {
+            xdbg("get_block_handle::get_tx_exec_result tx not need confirm,tx:%s", tx_ptr->dump().c_str());
+            jv["height"] = static_cast<xJson::UInt64>(send_height);
+            if (rpc_version == RPC_VERSION_V2) {
+                jv["account"] = account;
+            }
+            jv["used_gas"] = 0;
+            jv["used_deposit"] = 0;
+            if (recv_txinfo != nullptr) {
+                jv["recv_tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+                jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+            }
+            return jv;
+        }
+
+        if (block_height == 0) {
+            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address does not exist or block height does not exist"};
+        }
+    }
+
     auto vb = m_block_store->load_block_object(_account_vaddress, block_height, 0, true, metrics::blockstore_access_from_rpc_get_unit);
     auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
     if (block_ptr == nullptr) {
@@ -482,11 +504,12 @@ xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, u
             jv["used_deposit"] = tx_info->get_used_deposit();
         }
         if (tx_info->is_send_tx()) {
-            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2)) {
+            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2 || tx_info->get_not_need_confirm())) {
                 jv["used_deposit"] = tx_info->get_used_deposit();
             } else {
                 jv["used_deposit"] = 0;
             }
+            send_txinfo = tx_info;
         }
         if (tx_info->is_confirm_tx()) {
             jv["used_deposit"] = tx_info->get_used_deposit();
@@ -548,15 +571,17 @@ int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_
         tx_ptr.attach(tx);
 
         const xtx_exec_json_key jk(rpc_version);
+        xlightunit_tx_info_ptr_t send_txinfo = nullptr;
         xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
+        auto send_height = tx_store_ptr->get_send_block_height();
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
-            cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, recv_txinfo, rpc_version);
+            cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
             auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
             cons[jk.m_send]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
-            cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, recv_txinfo, rpc_version);
+            cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
         }
-        cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, recv_txinfo, rpc_version);
+        cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, true, send_height);
         result_json["tx_consensus_state"] = cons;
 
         update_tx_state(result_json, cons, rpc_version);

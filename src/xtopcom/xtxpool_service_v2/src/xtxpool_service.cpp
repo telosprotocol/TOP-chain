@@ -682,7 +682,7 @@ void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_addr
     xassert(property_prove_ptr->is_valid());
 
     auto receiptid_state = xblocktool_t::get_receiptid_from_property_prove(property_prove_ptr);
-    m_para->get_txpool()->update_peer_receipt_id_state(receiptid_state);
+    m_para->get_txpool()->update_peer_receipt_id_state(property_prove_ptr, receiptid_state);
 }
 
 void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
@@ -707,78 +707,23 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     }
     if (property_prove == nullptr) {
         auto latest_commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_id_state);
-        base::enum_xvblock_class block_class = latest_commit_block->get_block_class();
-        uint32_t nil_block_num = 0;
-        xvblock_ptr_t non_nil_commit_block = nullptr;
-        uint64_t height = latest_commit_block->get_height();
-        if (block_class != base::enum_xvblock_class_nil) {
-            xvblock_t * _block = latest_commit_block.get();
-            _block->add_ref();
-            non_nil_commit_block.attach(_block);
-        } else {
-            while (block_class == base::enum_xvblock_class_nil && height > 0) {
-                nil_block_num++;
-                if (nil_block_num > 2) {
-                    xerror("xtxpool_service::send_table_receipt_id_state, continuous nil table block number is more than 2,table:%s,height:%llu", table_addr.c_str(), height);
-                }
 
-
-                auto commit_block = m_para->get_vblockstore()->load_block_object(vaccount, height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
-                if (commit_block == nullptr) {
-                    xwarn("xtxpool_service::send_table_receipt_id_state load block fail,table:%s,height:%llu", table_addr.c_str(), height - 1);
-                    return;
-                }
-                height = commit_block->get_height();
-
-                if (commit_block->get_block_class() != base::enum_xvblock_class_nil) {
-                    xvblock_t * _block = commit_block.get();
-                    _block->add_ref();
-                    non_nil_commit_block.attach(_block);
-                    break;
-                }
-            }
-        }
-
-        if (height == 0 || block_class == base::enum_xvblock_class_nil) {
-
-            xinfo("xtxpool_service::send_table_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
+        xtablestate_ptr_t tablestate_ptr = nullptr;
+        auto ret = xblocktool_t::get_receiptid_state_and_prove(m_para->get_vblockstore(), vaccount, latest_commit_block.get() , property_prove, tablestate_ptr);
+        if (!ret) {
+            xwarn("xtxpool_service::send_table_receipt_id_state create receipt state fail.table:%s, commit height:%llu", table_addr.c_str(), latest_commit_block->get_height());
             return;
         }
 
-
-        auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(non_nil_commit_block.get());
-        if (bstate == nullptr) {
-            xwarn("xtxpool_service::send_receipt_id_state table:%s,height:%llu,get bstate fail", table_addr.c_str(), non_nil_commit_block->get_height());
-            return;
-        }
-
-        auto cert_block = m_para->get_vblockstore()->load_block_object(vaccount, non_nil_commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_id_state);
-        if (cert_block == nullptr) {
-            xinfo("xtxpool_service::send_receipt_id_state cert block load fail.table:%s, cert height:%llu", table_addr.c_str(), non_nil_commit_block->get_height() + 2);
-            return;
-        }
-
-        xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-        if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
-            xinfo("xtxpool_service::send_receipt_id_state table have no receipt id pairs.table:%s, commit height:%llu", table_addr.c_str(), non_nil_commit_block->get_height());
-            return;
-        }
-
-        property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
-        if (property_prove == nullptr) {
-            xwarn("xtxpool_service::send_table_receipt_id_state create receipt state fail.table:%s, commit height:%llu", table_addr.c_str(), non_nil_commit_block->get_height());
-            return;
-        }
-        xassert(property_prove->is_valid());
-
-        m_para->get_txpool()->update_peer_receipt_id_state(tablestate->get_receiptid_state());
+        auto receiptid_state = tablestate_ptr->get_receiptid_state();
+        m_para->get_txpool()->update_peer_receipt_id_state(property_prove, receiptid_state);
         if (iter == m_table_info_cache.end()) {
-            m_table_info_cache.insert(std::make_pair(table_id, table_info(non_nil_commit_block->get_height(), property_prove)));
+            m_table_info_cache.insert(std::make_pair(table_id, table_info(receiptid_state->get_block_height(), property_prove)));
         } else {
-            iter->second.m_last_property_height = non_nil_commit_block->get_height();
+            iter->second.m_last_property_height = receiptid_state->get_block_height();
             iter->second.m_property_prove = property_prove;
         }
-        height = tablestate->get_block_height();
+        height = receiptid_state->get_block_height();
     }
 
     base::xstream_t stream(base::xcontext_t::instance());

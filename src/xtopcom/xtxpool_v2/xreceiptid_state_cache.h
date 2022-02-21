@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "xtxpool_v2/xtxpool_face.h"
 #include "xvledger/xreceiptid.h"
+#include "xvledger/xvpropertyprove.h"
 
 #include <string>
 
@@ -18,21 +20,28 @@ enum enum_min_unconfirm_id_result {
 
 class xreceiptid_state_cache_t {
 public:
-    xreceiptid_state_cache_t();
-    void update_table_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    // xreceiptid_state_cache_t();
+    void update_table_receiptid_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state);
     uint64_t get_confirmid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;
     uint64_t get_recvid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;
     uint64_t get_sendid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;
     uint64_t get_height(base::xtable_shortid_t table_id) const;
     base::xreceiptid_state_ptr_t get_table_receiptid_state(base::xtable_shortid_t table_id) const;
     // bool is_all_table_state_cached(const std::set<base::xtable_shortid_t> & all_table_sids) const;
-    void get_unconfirm_id_section_as_sender(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const;
+    void get_unconfirm_id_section_as_sender(base::xtable_shortid_t table_id,
+                                            base::xtable_shortid_t peer_table_id,
+                                            uint64_t & confirm_id,
+                                            uint64_t & unconfirm_id_max,
+                                            bool for_pull_lacking) const;
     void get_unconfirm_id_section_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & confirm_id, uint64_t & unconfirm_id_max) const;
-    bool get_min_unconfirm_id_as_receiver(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id, uint64_t & min_unconfirm_id) const;
+    const xreceiptid_state_and_prove get_receiptid_state_and_prove(base::xtable_shortid_t self_table_id,
+                                                                   base::xtable_shortid_t peer_table_id,
+                                                                   uint64_t min_not_need_confirm_receiptid,
+                                                                   uint64_t max_not_need_confirm_receiptid) const;
 
 private:
     mutable std::mutex m_mutex;
-    std::map<base::xtable_shortid_t, base::xreceiptid_state_ptr_t> m_receiptid_state_map;
+    std::map<base::xtable_shortid_t, xreceiptid_state_and_prove> m_receiptid_state_map;
     mutable bool m_all_cached{false};
 };
 

@@ -285,7 +285,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
     auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
-        if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
+        if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1 && !m_trans->get_not_need_confirm()) {
             ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
         } else {
             if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
@@ -303,7 +303,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
 }
 
 int32_t xtransaction_transfer::source_confirm_fee_exec() {
-    if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
+    if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1 && !m_trans->get_not_need_confirm()) {
         return xtransaction_face_t::source_confirm_fee_exec();
     } else {
         return 0;

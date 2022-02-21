@@ -11,6 +11,7 @@
 #include "xtxpool_v2/xtxpool_info.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvaccount.h"
+#include "xtxpool_v2/xunconfirm_id_height.h"
 
 #include <map>
 #include <set>
@@ -76,7 +77,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_receipt_id(uint64_t latest_receipt_id);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t upper_receipt_id, uint32_t max_num) const;
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t lower_receipt_id, uint64_t upper_receipt_id, uint32_t max_num) const;
     void erase(uint64_t receipt_id);
     bool empty() const {
         return m_txs.empty();
@@ -88,6 +89,7 @@ public:
     uint32_t size() const {
         return m_txs.size();
     }
+    const std::shared_ptr<xtx_entry> get_tx_by_receipt_id(uint64_t receipt_id) const;
 
 private:
     std::map<uint64_t, std::shared_ptr<xtx_entry>> m_txs;
@@ -102,15 +104,22 @@ public:
     xreceipt_queue_new_t(xtxpool_table_info_t * xtable_info, xtxpool_resources_face * para) : m_receipt_queue_internal(xtable_info), m_para(para) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t recv_txs_max_num,
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t confirm_and_recv_txs_max_num,
                                                        uint32_t confirm_txs_max_num,
                                                        const base::xreceiptid_state_ptr_t & receiptid_state,
                                                        uint32_t & confirm_txs_num) const;
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t confirm_and_recv_txs_max_num,
+                                                       uint32_t confirm_txs_max_num,
+                                                       const base::xreceiptid_state_ptr_t & receiptid_state,
+                                                       const xunconfirm_id_height & unconfirm_id_height,
+                                                       uint32_t & confirm_txs_num) const;                                              
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_discrete_confirm_tx_ids(const std::map<base::xtable_shortid_t, xneed_confirm_ids> & need_confirm_ids_map,
+                                                                                               uint32_t & total_num) const;
     void update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid);
     // uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     // uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;

@@ -285,8 +285,8 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     uint64_t now = cs_para.get_gettimeofday_s();
     for (auto & tx : result.m_pack_txs) {
         uint64_t delay = now - tx->get_push_pool_timestamp();
-        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
-            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp());
+        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu,need_confirm:%d",
+            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp(), !tx->get_not_need_confirm());
         if (unit_para.m_is_leader) {
             if (tx->is_recv_tx()) {
                 XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_pack_recv, delay);

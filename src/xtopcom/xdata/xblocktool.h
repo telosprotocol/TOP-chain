@@ -14,6 +14,7 @@
 #include "xdata/xfullunit.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
@@ -74,6 +75,12 @@ class xblocktool_t {
                                                 uint64_t latest_connect_height,
                                                 base::xvblockstore_t * blockstore,
                                                 const std::string & caller);
+
+    static bool get_receiptid_state_and_prove(base::xvblockstore_t * blockstore,
+                                              const base::xvaccount_t & account,
+                                              base::xvblock_t * latest_commit_block,
+                                              base::xvproperty_prove_ptr_t & property_prove_ptr,
+                                              xtablestate_ptr_t & tablestate_ptr);
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl
