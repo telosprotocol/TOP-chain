@@ -477,7 +477,14 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return ret;
     }
 
-    auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
+    std::error_code ec;
+    auto account_address = common::xaccount_address_t::build_from(tx->get_source_addr(), ec);
+    if (ec) {
+        xwarn("xtxpool_service::request_transaction_consensus in, invalid source account %s", tx->get_source_addr().c_str());
+        return xtxpool_v2::xtxpool_error_service_invalid_account_address;
+    }
+
+    auto tableid = data::account_map_to_table_id(account_address);
     if (!is_belong_to_service(tableid)) {
         xerror("[global_trace][xtxpool_service]%s %s zone%d table%d not match this network driver",
                tx->get_digest_hex_str().c_str(),
@@ -488,7 +495,13 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return xtxpool_v2::xtxpool_error_transaction_not_belong_to_this_service;
     }
 
-    if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_target_addr()})) {
+    account_address = common::xaccount_address_t::build_from(tx->get_target_addr(), ec);
+    if (ec) {
+        xwarn("xtxpool_service::request_transaction_consensus in, invalid target account %s", tx->get_target_addr().c_str());
+        return xtxpool_v2::xtxpool_error_service_invalid_account_address;
+    }
+
+    if (is_sys_sharding_contract_address(account_address)) {
         tx->adjust_target_address(tableid.get_subaddr());
     }
 

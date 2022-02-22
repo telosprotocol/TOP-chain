@@ -113,8 +113,8 @@ bool xtop_node_id::operator<=(xtop_node_id const & other) const noexcept {
 }
 
 void xtop_node_id::random() {
-    auto ranbytes = random_base58_bytes(33);
-    m_account_string = "T-" + std::string{std::begin(ranbytes), std::end(ranbytes)};
+    auto ranbytes = random_base58_bytes(40);
+    m_account_string = "T80000" + std::string{std::begin(ranbytes), std::end(ranbytes)};
     parse();
 }
 
