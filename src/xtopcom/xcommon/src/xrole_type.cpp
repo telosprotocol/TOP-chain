@@ -49,9 +49,6 @@ std::string to_string(xminer_type_t const miner_type) {
     }
 
     if (miner_string.empty()) {
-#if !defined(XENABLE_TESTS)
-        assert(false);
-#endif
         miner_string = std::string(XMINER_TYPE_INVALID) + "(" + std::to_string(static_cast<std::underlying_type<xminer_type_t>::type>(miner_type)) + ")";
     }
 
