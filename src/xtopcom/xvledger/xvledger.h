@@ -56,6 +56,7 @@ namespace top
             enum_plugin_idle_timeout_ms     = 60000,  //idle duration for plugin
             
             enum_account_save_meta_interval = 64, //force save meta every 64 modification
+            enum_account_save_meta_offset   = 8,  //force save meta when height offset skip
         };
     
         class xvaccountobj_t : public xiobject_t,public xvaccount_t
