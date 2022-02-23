@@ -89,7 +89,7 @@ namespace top
         class xcstc_fire : public base::xvevent_t
         {
         public:
-            xcstc_fire(base::xvblock_t * block);
+            xcstc_fire(base::xvblock_t * block, uint32_t broadcast_round);
         protected:
             virtual ~xcstc_fire();
         private:
@@ -98,8 +98,10 @@ namespace top
             xcstc_fire& operator = (const xcstc_fire & obj);
         public:
             base::xvblock_t*  get_tc_block() const {return _tc_block;}
+            uint32_t          get_broadcast_round() const {return m_broadcast_round;}
         private:
             base::xvblock_t*  _tc_block;
+            uint32_t          m_broadcast_round{0};  // 0-first round elect leader by FTS;1-second round elect leader by RANDOM from prev tc block signature nodes
         };
         
         class xcsclock_fire : public base::xvevent_t
