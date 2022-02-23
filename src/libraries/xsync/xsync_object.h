@@ -103,4 +103,13 @@ public:
 };
 using xsync_object_t = xtop_sync_object;
 
+class xtop_sync_out_object {
+public:
+    static xtop_sync_out_object & instance();
+    void set_xsync_shadow(top::sync::xsync_store_shadow_t * shadow);
+    void save_span();
+private:
+    static xtop_sync_out_object * __global_sync_out_instance;
+    xsync_store_shadow_t* m_store_shadow{NULL};
+};
 NS_END2

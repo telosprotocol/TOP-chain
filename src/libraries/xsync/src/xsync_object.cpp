@@ -65,6 +65,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
             bus,
             m_sync_handler.get())),
     m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())){
+        xtop_sync_out_object::instance().set_xsync_shadow(m_store_shadow.get());
 }
 
 void
@@ -327,4 +328,17 @@ void xtop_sync_object::remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_dri
     m_bus->push_event(ev);
 }
 
+xtop_sync_out_object& xtop_sync_out_object::instance() {
+    static xtop_sync_out_object __global_sync_out_instance;
+    return __global_sync_out_instance;
+}
+
+void xtop_sync_out_object::set_xsync_shadow(top::sync::xsync_store_shadow_t * shadow) {
+    m_store_shadow = shadow;
+}
+
+void xtop_sync_out_object::save_span() {
+    if (m_store_shadow != NULL)
+        m_store_shadow->save();
+}
 NS_END2
