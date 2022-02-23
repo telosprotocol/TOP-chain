@@ -14,6 +14,6 @@ target_link_libraries(xrpc_test PRIVATE xrpc xvnetwork xelect_net xtxstore xload
                       gtest)
 
 
-add_subdirectory(ws)
+#add_subdirectory(ws)
 
 # add_subdirectory(xratelimit)

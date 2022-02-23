@@ -420,7 +420,7 @@ xColumnFamily xdb::xdb_impl::setup_fifo_style_cf(const std::string & name,uint64
     cf_config.cf_option.OptimizeForSmallDb();
     cf_config.cf_option.compaction_style = rocksdb::kCompactionStyleFIFO;
     //cf_config.cf_option.compaction_options_fifo.max_table_files_size; //Default: 1GB
-    cf_config.cf_option.compaction_options_fifo.ttl = ttl; //unit: seconds
+   // cf_config.cf_option.compaction_options_fifo.ttl = ttl; //unit: seconds
     cf_config.cf_option.level_compaction_dynamic_level_bytes = false;
     
     xdb::xdb_impl::disable_default_compress_options(cf_config.cf_option);
