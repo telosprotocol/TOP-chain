@@ -121,12 +121,13 @@ private:
             case common::xrotation_status_t::started: {
                 if (!vnode->running()) {
                     vnode->start();
+                    m_vnode_proxy->change(vnode->address(), vnode->start_time());
+
                     xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64,
                           vnode.get(),
                           vnode->address().to_string().c_str(),
                           vnode->start_time(),
                           time);
-                    m_vnode_proxy->change(vnode->address(), vnode->start_time());
                 }
                 break;
             }

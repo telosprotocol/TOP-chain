@@ -17,6 +17,6 @@ struct xtop_election_result_keepalive_strategy {
 using xelection_result_keepalive_strategy_t = xtop_election_result_keepalive_strategy;
 
 XINLINE_CONSTEXPR xelection_result_keepalive_strategy_t xdefault_election_result_keepalive_strategy{ 2, 1 };
-XINLINE_CONSTEXPR xelection_result_keepalive_strategy_t xnonconsensus_election_result_keepalive_strategy{ 1, 1 };
+// XINLINE_CONSTEXPR xelection_result_keepalive_strategy_t xnonconsensus_election_result_keepalive_strategy{ 1, 1 };
 
 NS_END2
