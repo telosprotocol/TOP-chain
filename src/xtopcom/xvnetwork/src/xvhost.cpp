@@ -49,8 +49,8 @@ static common::xip2_t convert_to_p2p_xip2(common::xnode_address_t const & addres
             sharding_xip.group_id(),
             address.slot_id(),
             address.group_size(),
-            address.election_round().value()
-            // address.associated_blk_height() // version 2.
+            // address.election_round().value() // version 0 && 1
+            address.associated_blk_height() // version 2.
             }; // p2p layer use election_round as block height.
 }
 

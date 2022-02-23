@@ -104,9 +104,14 @@ void SmallNetNodes::AddNode(std::vector<wrouter::WrouterTableNodes> node) {
         }
     } else {
         std::vector<base::ServiceType> erase_service_vector;
-        for (auto const & _p : net_nodes_cache_map_) {
-            base::ServiceType service_type = _p.first;
-            if (comming_service_type.IsNewer(service_type, 2)) {
+        bool save_two_round{true};
+        for(auto riter = net_nodes_cache_map_.rbegin();riter!=net_nodes_cache_map_.rend();riter++){
+            base::ServiceType service_type = riter->first;
+            if(comming_service_type.IsNewer(service_type)){
+                if(save_two_round){
+                    save_two_round = false;
+                    continue;
+                }
                 xdbg("ElectNetNodes::AddNode get new election result %s erase old %s", comming_service_type.info().c_str(), service_type.info().c_str());
                 service_nodes_->RemoveExpired(service_type);
                 erase_service_vector.push_back(service_type);
