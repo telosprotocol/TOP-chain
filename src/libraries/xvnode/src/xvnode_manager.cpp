@@ -339,7 +339,7 @@ void xtop_vnode_manager::stop_vnodes_with_lock_hold_outside(common::xlogic_time_
             if (vnode->faded() && vnode->running()) {
                 vnode->stop();
                 m_vnode_proxy->unreg(vnode->address());
-            } else if (common::has<common::xnode_type_t::storage>(vnode->type()) || common::has<common::xnode_type_t::edge>(vnode->type())) {
+            } else if (common::has<common::xnode_type_t::storage>(vnode->type()) || common::has<common::xnode_type_t::edge>(vnode->type()) || common::has<common::xnode_type_t::fullnode>(vnode->type())) {
                 vnode->fade();
                 vnode->stop();
                 m_vnode_proxy->unreg(vnode->address());
