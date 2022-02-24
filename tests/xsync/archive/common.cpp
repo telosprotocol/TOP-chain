@@ -37,7 +37,7 @@ std::vector<top::common::xnode_address_t>\
 get_##type##_addresses(std::uint32_t nid, std::uint64_t version, int offset, int count) {\
     std::vector<top::common::xnode_address_t> list;\
     for(int i=0;i<count;i++) {\
-        list.push_back(get_##type##_address(nid, version, "test"+std::to_string(offset+i), offset+i));\
+        list.push_back(get_##type##_address(nid, version, "T80000fffffffffffffffffffffffffffffffffffffff"+std::to_string(offset+i), offset+i));\
     }\
     return list;\
 }
@@ -51,7 +51,7 @@ std::vector<top::common::xnode_address_t>\
 get_##type##_addresses(uint32_t nid, uint64_t version, int count) {\
     std::vector<top::common::xnode_address_t> list;\
     for(int i=0;i<count;i++) {\
-        list.push_back(get_##type##_address(nid, version, "test"+std::to_string(i)));\
+        list.push_back(get_##type##_address(nid, version, "T80000fffffffffffffffffffffffffffffffffffffff"+std::to_string(i)));\
     }\
     return list;\
 }

@@ -101,7 +101,7 @@ TEST(xrole_xips_manager_t, remove_xips_by_id) {
     auto validators = get_validator_addresses(0, 0, 0, 5);
     auto auditors = get_auditor_addresses(0, 0, 0, 5);
     auto archives = get_archive_addresses(0, 0, 5);
-    auto validator = get_validator_address(0, 0, "test10", 10);
+    auto validator = get_validator_address(0, 0, "T80000fffffffffffffffffffffffffffffffffffffff0", 10);
     role_mgr.add_role(validator, validators, auditors, network_driver, table_ids);
     auto role_xips = role_mgr.m_map[validator];
     ASSERT_TRUE(role_xips.self_xip == validator);
@@ -109,7 +109,7 @@ TEST(xrole_xips_manager_t, remove_xips_by_id) {
     ASSERT_TRUE(role_xips.parent_xips->size() == 5);
     //ASSERT_TRUE(role_mgr.m_archive_xips->size() == 5);
 
-    role_mgr.remove_xips_by_id(top::common::xnode_id_t{"test3"});
+    role_mgr.remove_xips_by_id(top::common::xnode_id_t{"T80000fffffffffffffffffffffffffffffffffffffff0"});
 
     auto role_xips1 = role_mgr.m_map[validator];
     ASSERT_TRUE(role_xips1.neighbour_xips->size() == 4);
