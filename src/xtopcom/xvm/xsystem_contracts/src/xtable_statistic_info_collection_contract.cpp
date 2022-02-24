@@ -10,13 +10,13 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xslash.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xmetrics/xmetrics.h"
-#include "xstake/xstake_algorithm.h"
 #include "xvm/manager/xcontract_manager.h"
 
 using namespace top::base;
 using namespace top::data;
-using namespace top::xstake;
+using namespace top::data::system_contract;
 
 NS_BEG3(top, xvm, xcontract)
 
@@ -59,8 +59,8 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     std::string value_str;
     try {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_fulltable_height");
-        if (MAP_FIELD_EXIST(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT))
-            value_str = MAP_GET(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT);
+        if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT))
+            value_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT);
     } catch (std::runtime_error const & e) {
         xwarn("[xtable_statistic_info_collection_contract][on_collect_statistic_info] read summarized slash info error:%s", e.what());
         throw;
@@ -90,8 +90,8 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     std::string summarize_info_str;
     try {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_unqualified_node_key");
-        if (MAP_FIELD_EXIST(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE"))
-            summarize_info_str = MAP_GET(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
+        if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE"))
+            summarize_info_str = MAP_GET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
     } catch (std::runtime_error const & e) {
         xwarn("[xtable_statistic_info_collection_contract][on_collect_statistic_info] read summarized slash info error:%s", e.what());
         throw;
@@ -100,8 +100,8 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     std::string summarize_fulltableblock_num_str;
     try {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_tableblock_num_key");
-        if (MAP_FIELD_EXIST(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM)) {
-            summarize_fulltableblock_num_str = MAP_GET(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM);
+        if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM)) {
+            summarize_fulltableblock_num_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM);
         }
     } catch (std::runtime_error & e) {
         xwarn("[xtable_statistic_info_collection_contract][on_collect_statistic_info] read summarized tableblock num error:%s", e.what());
@@ -147,15 +147,15 @@ void  xtable_statistic_info_collection_contract::update_slash_statistic_info( xu
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_set_property_contract_unqualified_node_key");
         base::xstream_t stream(base::xcontext_t::instance());
         summarize_info.serialize_to(stream);
-        MAP_SET(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE", std::string((char *)stream.data(), stream.size()));
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE", std::string((char *)stream.data(), stream.size()));
     }
 
 
     {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_set_property_contract_extended_function_key");
-        MAP_SET(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT, base::xstring_utl::tostring(block_height));
+        MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT, base::xstring_utl::tostring(block_height));
         summarize_fulltableblock_num++;
-        MAP_SET(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM, base::xstring_utl::tostring(summarize_fulltableblock_num));
+        MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM, base::xstring_utl::tostring(summarize_fulltableblock_num));
     }
 
 
@@ -239,8 +239,8 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
     std::string value_str;
     try {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_tableblock_num_key");
-        if (MAP_FIELD_EXIST(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM)) {
-            value_str = MAP_GET(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM);
+        if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM)) {
+            value_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM);
         }
     } catch (std::runtime_error & e) {
         xwarn("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] read summarized tableblock num error:%s", e.what());
@@ -271,8 +271,8 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
         value_str.clear();
         try {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_unqualified_node_key");
-            if (MAP_FIELD_EXIST(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE"))
-                value_str = MAP_GET(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
+            if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE"))
+                value_str = MAP_GET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
         } catch (std::runtime_error const & e) {
             xwarn("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] read summarized slash info error:%s", e.what());
             throw;
@@ -288,8 +288,8 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
         uint64_t cur_statistic_height = 0;
         try {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_fulltable_height_key");
-            if (MAP_FIELD_EXIST(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT))
-                value_str = MAP_GET(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT);
+            if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT))
+                value_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT);
         } catch (std::runtime_error const & e) {
             xwarn("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] read fulltable num error:%s", e.what());
             throw;
@@ -316,11 +316,11 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
 
         {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_remove_property_contract_unqualified_node_key");
-            MAP_REMOVE(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
+            MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
         }
         {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_remove_property_contract_tableblock_num_key");
-            MAP_REMOVE(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM);
+            MAP_REMOVE(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM);
         }
 
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::contract_table_statistic_report_fullblock, 1);

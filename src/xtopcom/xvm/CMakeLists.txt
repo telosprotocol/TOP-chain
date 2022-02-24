@@ -11,9 +11,9 @@ aux_source_directory(./xsystem_contracts/src system_contracts_src)
 
 add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src})
 
-#add_dependencies(xvm xconfig xstore xstake xverifier xdata xcommon xcodec xbasic xxbase xcertauth xchain_upgrade)
+add_dependencies(xvm xconfig xstore xverifier xdata xcommon xcodec xbasic xxbase xcertauth xchain_upgrade)
 
-target_link_libraries(xvm PRIVATE xconfig xstake xrouter xverifier xdata xcommon xcodec xbasic xstore xxbase protobuf lua xcertauth xchain_upgrade)
+target_link_libraries(xvm PRIVATE xconfig xrouter xverifier xdata xcommon xcodec xbasic xstore xxbase protobuf lua xcertauth xchain_upgrade)
 
 if (BUILD_METRICS)
     #add_dependencies(xvm xmetrics)

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xvm/xcontract_helper.h"
@@ -99,7 +99,7 @@ private:
      * @param reg_node_info node registration info
      * @return int32_t
      */
-    int32_t get_node_info(const common::xaccount_address_t & account, xreg_node_info & reg_node_info);
+    int32_t get_node_info(const common::xaccount_address_t & account, data::system_contract::xreg_node_info & reg_node_info);
 
     /**
      * @brief write the vote info

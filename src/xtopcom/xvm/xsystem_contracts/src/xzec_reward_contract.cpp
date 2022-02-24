@@ -5,12 +5,13 @@
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract.h"
 
 #include "xbase/xutl.h"
+#include "xbasic/xuint.hpp"
 #include "xbasic/xutility.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_error.h"
 
 #include <iomanip>
@@ -19,7 +20,7 @@ using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
 using namespace top::data;
-using xgroup_workload_t = top::xstake::cluster_workload_t;
+using xgroup_workload_t = top::data::system_contract::cluster_workload_t;
 
 #if !defined(XZEC_MODULE)
 #    define XZEC_MODULE "sysContract_"
@@ -42,49 +43,52 @@ NS_BEG2(top, xstake)
 xzec_reward_contract::xzec_reward_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 void xzec_reward_contract::setup() {
-    MAP_CREATE(XPORPERTY_CONTRACT_TASK_KEY);     // save dispatch tasks
+    MAP_CREATE(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY);  // save dispatch tasks
     std::vector<std::pair<std::string, std::string>> db_kv_111;
-    chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, XPORPERTY_CONTRACT_TASK_KEY, db_kv_111);
+    chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, db_kv_111);
     for (auto const & _p : db_kv_111) {
-        MAP_SET(XPORPERTY_CONTRACT_TASK_KEY, _p.first, _p.second);
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, _p.first, _p.second);
     }
 
-    MAP_CREATE(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE); // save issuance
+    MAP_CREATE(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE);  // save issuance
     std::vector<std::pair<std::string, std::string>> db_kv_141;
-    chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, db_kv_141);
+    chain_data::xchain_data_processor_t::get_stake_map_property(
+        common::xlegacy_account_address_t{SELF_ADDRESS()}, data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, db_kv_141);
     for (auto const & _p : db_kv_141) {
-        MAP_SET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, _p.first, _p.second);
+        MAP_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, _p.first, _p.second);
     }
 
-    STRING_CREATE(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY);
+    STRING_CREATE(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY);
     std::string db_kv_142;
-    chain_data::xchain_data_processor_t::get_stake_string_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY, db_kv_142);
+    chain_data::xchain_data_processor_t::get_stake_string_property(
+        common::xlegacy_account_address_t{SELF_ADDRESS()}, data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY, db_kv_142);
     if (!db_kv_142.empty()) {
-        STRING_SET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY, db_kv_142);
+        STRING_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY, db_kv_142);
     } else {
-        xaccumulated_reward_record record;
+        data::system_contract::xaccumulated_reward_record record;
         update_accumulated_record(record);
     }
 
-    STRING_CREATE(XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT);
+    STRING_CREATE(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT);
     std::string last_read_rec_reg_contract_height{"0"};
-    STRING_SET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT, last_read_rec_reg_contract_height);
-    STRING_CREATE(XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME);
+    STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT, last_read_rec_reg_contract_height);
+    STRING_CREATE(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME);
     std::string last_read_rec_reg_contract_logic_time{"0"};
-    STRING_SET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, last_read_rec_reg_contract_logic_time);
+    STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, last_read_rec_reg_contract_logic_time);
 
-    STRING_CREATE(XPROPERTY_REWARD_DETAIL);
-    MAP_CREATE(XPORPERTY_CONTRACT_WORKLOAD_KEY);
+    STRING_CREATE(data::system_contract::XPROPERTY_REWARD_DETAIL);
+    MAP_CREATE(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY);
     std::vector<std::pair<std::string, std::string>> db_kv_103;
-    chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, XPORPERTY_CONTRACT_WORKLOAD_KEY, db_kv_103);
+    chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, db_kv_103);
     for (auto const & _p : db_kv_103) {
-        MAP_SET(XPORPERTY_CONTRACT_WORKLOAD_KEY, _p.first, _p.second);
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, _p.first, _p.second);
     }
-    MAP_CREATE(XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY);
+    MAP_CREATE(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY);
     std::vector<std::pair<std::string, std::string>> db_kv_125;
-    chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{SELF_ADDRESS()}, XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, db_kv_125);
+    chain_data::xchain_data_processor_t::get_stake_map_property(
+        common::xlegacy_account_address_t{SELF_ADDRESS()}, data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, db_kv_125);
     for (auto const & _p : db_kv_125) {
-        MAP_SET(XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, _p.first, _p.second);
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, _p.first, _p.second);
     }
 }
 
@@ -99,7 +103,7 @@ void xzec_reward_contract::on_timer(const common::xlogic_time_t onchain_timer_ro
         return;
     }
 
-    if (MAP_SIZE(XPORPERTY_CONTRACT_TASK_KEY) > 0) {
+    if (MAP_SIZE(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY) > 0) {
         execute_task();
     } else {
         if (reward_is_expire_v2(onchain_timer_round)) {
@@ -135,8 +139,8 @@ bool xzec_reward_contract::check_reg_contract_read_time(const uint64_t cur_time,
 void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_time) {
     bool update_rec_reg_contract_read_status{false};
 
-    auto const last_read_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT)));
-    auto const last_read_time = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME)));
+    auto const last_read_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT)));
+    auto const last_read_time = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME)));
 
     auto const height_step_limitation = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_height_step_limitation);
     auto const timeout_limitation = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeout_limitation);
@@ -150,7 +154,7 @@ void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_ti
     XCONTRACT_ENSURE(latest_height >= last_read_height, u8"xzec_reward_contract::update_reg_contract_read_status latest_height < last_read_height");
     if (latest_height == last_read_height) {
         XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", last_read_height, "current_time", cur_time)
-        STRING_SET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
+        STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
         return;
     }
     // calc current_read_height:
@@ -164,8 +168,8 @@ void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_ti
         base::xauto_ptr<xblock_t> block_ptr = get_block_by_height(sys_contract_rec_registration_addr, next_read_height);
         XCONTRACT_ENSURE(block_ptr != nullptr, "fail to get the rec_reg data");
         XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", next_read_height, "current_time", cur_time)
-        STRING_SET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT, std::to_string(next_read_height));
-        STRING_SET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
+        STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT, std::to_string(next_read_height));
+        STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
     }
     return;
 }
@@ -188,17 +192,17 @@ void xzec_reward_contract::reward(const common::xlogic_time_t current_time, std:
     common::xlogic_time_t activation_time;  // system activation time
     xreward_onchain_param_t onchain_param;  // onchain params
     xreward_property_param_t property_param;    // property from self and other contracts
-    xissue_detail issue_detail;     // issue details this round
+    data::system_contract::xissue_detail issue_detail;  // issue details this round
     get_reward_param(current_time, activation_time, onchain_param, property_param, issue_detail);
     XCONTRACT_ENSURE(current_time > activation_time, "current_time <= activation_time");
     // step2 calculate node and table rewards
-    std::map<common::xaccount_address_t, top::xstake::uint128_t> node_reward_detail;   // <node, self reward>
-    std::map<common::xaccount_address_t, top::xstake::uint128_t> node_dividend_detail; // <node, dividend reward>
-    top::xstake::uint128_t community_reward;    // community reward
+    std::map<common::xaccount_address_t, ::uint128_t> node_reward_detail;   // <node, self reward>
+    std::map<common::xaccount_address_t, ::uint128_t> node_dividend_detail; // <node, dividend reward>
+    ::uint128_t community_reward;    // community reward
     calc_nodes_rewards_v5(current_time, current_time - activation_time, onchain_param, property_param, issue_detail, node_reward_detail, node_dividend_detail, community_reward);
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> table_nodes_rewards;   // <table, <node, reward>>
-    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> table_vote_rewards;    // <table, <node be voted, reward>>
-    std::map<common::xaccount_address_t, top::xstake::uint128_t> contract_rewards; // <table, total reward>
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_nodes_rewards;   // <table, <node, reward>>
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> table_vote_rewards;    // <table, <node be voted, reward>>
+    std::map<common::xaccount_address_t, ::uint128_t> contract_rewards; // <table, total reward>
     calc_table_rewards(property_param, node_reward_detail, node_dividend_detail, table_nodes_rewards, table_vote_rewards, contract_rewards);
     // step3 dispatch rewards
     uint64_t actual_issuance;
@@ -210,10 +214,10 @@ void xzec_reward_contract::reward(const common::xlogic_time_t current_time, std:
 bool xzec_reward_contract::reward_is_expire_v2(const uint64_t onchain_timer_round) {
     uint64_t new_time_height = onchain_timer_round;
 
-    auto get_activation_record = [&](xactivation_record & record) {
+    auto get_activation_record = [&](data::system_contract::xactivation_record & record) {
         std::string value_str;
 
-        value_str = STRING_GET2(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
+        value_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
         if (!value_str.empty()) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
             record.serialize_from(stream);
@@ -222,13 +226,13 @@ bool xzec_reward_contract::reward_is_expire_v2(const uint64_t onchain_timer_roun
         return record.activated;
     };
 
-    xactivation_record record;
+    data::system_contract::xactivation_record record;
     if (!get_activation_record(record)) {
         xinfo("[xzec_reward_contract::reward_is_expire] mainnet not activated, onchain_timer_round: %llu", onchain_timer_round);
         return false;
     }
 
-    xaccumulated_reward_record rew_record;
+    data::system_contract::xaccumulated_reward_record rew_record;
     get_accumulated_record(rew_record);// no need to check return value, rew_record has default value
     uint64_t old_time_height = record.activation_time + rew_record.last_issuance_time;
     auto reward_distribute_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(reward_distribute_interval);
@@ -248,7 +252,7 @@ uint32_t xzec_reward_contract::get_task_id() {
 
     {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_GetExecutionTime");
-        MAP_COPY_GET(XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
+        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
     }
 
     uint32_t task_id = 0;
@@ -266,7 +270,7 @@ void xzec_reward_contract::add_task(const uint32_t task_id,
                                     const std::string & contract,
                                     const std::string & action,
                                     const std::string & params) {
-    xreward_dispatch_task task;
+    data::system_contract::xreward_dispatch_task task;
 
     task.onchain_timer_round = onchain_timer_round;
     task.contract = contract;
@@ -280,7 +284,7 @@ void xzec_reward_contract::add_task(const uint32_t task_id,
     auto key = ss.str();
     {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_SetExecutionTime");
-        MAP_SET(XPORPERTY_CONTRACT_TASK_KEY, key, std::string((char *)stream.data(), stream.size()));
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, key, std::string((char *)stream.data(), stream.size()));
     }
 }
 
@@ -288,11 +292,11 @@ void xzec_reward_contract::execute_task() {
     XMETRICS_TIME_RECORD(XREWARD_CONTRACT "execute_task_ExecutionTime");
     XMETRICS_CPU_TIME_RECORD(XREWARD_CONTRACT "execute_task_cpu_time");
     std::map<std::string, std::string> dispatch_tasks;
-    xreward_dispatch_task task;
+    data::system_contract::xreward_dispatch_task task;
 
     {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_CopyGetExecutionTime");
-        MAP_COPY_GET(XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
+        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
     }
 
     xdbg("[xzec_reward_contract::execute_task] map size: %d\n", dispatch_tasks.size());
@@ -320,27 +324,27 @@ void xzec_reward_contract::execute_task() {
                              task_num_per_round);
 
         // debug output
-        if (task.action == XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
+        if (task.action == data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
             xstream_t stream_params(xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
             uint64_t onchain_timer_round;
-            std::map<std::string, top::xstake::uint128_t> rewards;
+            std::map<std::string, ::uint128_t> rewards;
             stream_params >> onchain_timer_round;
             stream_params >> rewards;
             for (auto const & r : rewards) {
-                xinfo("[xzec_reward_contract::execute_task] contract: %s, action: %s, account: %s, reward: [%llu, %u], onchain_timer_round: %llu\n",
-                    task.contract.c_str(),
-                    task.action.c_str(),
-                    r.first.c_str(),
-                    static_cast<uint64_t>(r.second / REWARD_PRECISION),
-                    static_cast<uint32_t>(r.second % REWARD_PRECISION),
-                    task.onchain_timer_round);
+                xinfo("[xzec_reward_contract::execute_task] contract: %s, action: %s, account: %s, reward: [%llu, %u], onchain_timer_round: %llu",
+                      task.contract.c_str(),
+                      task.action.c_str(),
+                      r.first.c_str(),
+                      static_cast<uint64_t>(r.second / data::system_contract::REWARD_PRECISION),
+                      static_cast<uint32_t>(r.second % data::system_contract::REWARD_PRECISION),
+                      task.onchain_timer_round);
             }
-        } else if (task.action == XTRANSFER_ACTION) {
+        } else if (task.action == data::system_contract::XTRANSFER_ACTION) {
             std::map<std::string, uint64_t> issuances;
             base::xstream_t seo_stream(base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
             seo_stream >> issuances;
             for (auto const & issue : issuances) {
-                xinfo("[xzec_reward_contract::execute_task] action: %s, contract account: %s, issuance: %llu, onchain_timer_round: %llu\n",
+                xinfo("[xzec_reward_contract::execute_task] action: %s, contract account: %s, issuance: %llu, onchain_timer_round: %llu",
                     task.action.c_str(),
                     issue.first.c_str(),
                     issue.second,
@@ -349,13 +353,13 @@ void xzec_reward_contract::execute_task() {
             }
         }
 
-        if (task.action != XTRANSFER_ACTION) {
+        if (task.action != data::system_contract::XTRANSFER_ACTION) {
             CALL(common::xaccount_address_t{task.contract}, task.action, task.params);
         }
 
         {
             XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_RemoveExecutionTime");
-            MAP_REMOVE(XPORPERTY_CONTRACT_TASK_KEY, it->first);
+            MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, it->first);
         }
 
         dispatch_tasks.erase(it);
@@ -365,32 +369,32 @@ void xzec_reward_contract::execute_task() {
 void xzec_reward_contract::print_tasks() {
 #if defined(DEBUG)
     std::map<std::string, std::string> dispatch_tasks;
-    MAP_COPY_GET(XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
 
-    xreward_dispatch_task task;
+    data::system_contract::xreward_dispatch_task task;
     for (auto const & p : dispatch_tasks) {
         xstream_t stream(xcontext_t::instance(), (uint8_t *)p.second.c_str(), (uint32_t)p.second.size());
         task.serialize_from(stream);
 
-        xdbg("[xzec_reward_contract::print_tasks] task id: %s, onchain_timer_round: %llu, contract: %s, action: %s\n",
+        xdbg("[xzec_reward_contract::print_tasks] task id: %s, onchain_timer_round: %llu, contract: %s, action: %s",
              p.first.c_str(),
              task.onchain_timer_round,
              task.contract.c_str(),
              task.action.c_str());
 
-        if (task.action == XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
+        if (task.action == data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
             xstream_t stream_params(xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
             uint64_t onchain_timer_round;
-            std::map<std::string, top::xstake::uint128_t> rewards;
+            std::map<std::string, ::uint128_t> rewards;
             stream_params >> onchain_timer_round;
             stream_params >> rewards;
             for (auto const & r : rewards) {
                 xdbg("[xzec_reward_contract::print_tasks] account: %s, reward: [%llu, %u]\n",
-                    r.first.c_str(),
-                    static_cast<uint64_t>(r.second / REWARD_PRECISION),
-                    static_cast<uint32_t>(r.second % REWARD_PRECISION));
+                     r.first.c_str(),
+                     static_cast<uint64_t>(r.second / data::system_contract::REWARD_PRECISION),
+                     static_cast<uint32_t>(r.second % data::system_contract::REWARD_PRECISION));
             }
-        } else if (task.action == XTRANSFER_ACTION) {
+        } else if (task.action == data::system_contract::XTRANSFER_ACTION) {
             std::map<std::string, uint64_t> issuances;
             base::xstream_t seo_stream(base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
             seo_stream >> issuances;
@@ -406,17 +410,17 @@ void xzec_reward_contract::print_tasks() {
 
 void xzec_reward_contract::update_accumulated_issuance(uint64_t const issuance, uint64_t const timer_round) {
     XMETRICS_COUNTER_INCREMENT(XREWARD_CONTRACT "update_accumulated_issuance_Called", 1);
-    auto current_year = (timer_round - get_activated_time()) / TIMER_BLOCK_HEIGHT_PER_YEAR + 1  ;
+    auto current_year = (timer_round - get_activated_time()) / data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR + 1;
 
     uint64_t cur_year_issuances{0}, total_issuances{0};
     std::string cur_year_issuances_str = "", total_issuances_str = "";
     try {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_GetExecutionTime");
-        if (MAP_FIELD_EXIST(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year))) {
-            cur_year_issuances_str = MAP_GET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year));
+        if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year))) {
+            cur_year_issuances_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year));
         }
-        if (MAP_FIELD_EXIST(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total")) {
-            total_issuances_str = MAP_GET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total");
+        if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total")) {
+            total_issuances_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total");
         }
     } catch (std::runtime_error & e) {
         xwarn("[xzec_reward_contract][update_accumulated_issuance] read accumulated issuances error:%s", e.what());
@@ -436,8 +440,8 @@ void xzec_reward_contract::update_accumulated_issuance(uint64_t const issuance, 
     {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_SetExecutionTime");
 
-        MAP_SET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year), base::xstring_utl::tostring(cur_year_issuances));
-        MAP_SET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total", base::xstring_utl::tostring(total_issuances));
+        MAP_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year), base::xstring_utl::tostring(cur_year_issuances));
+        MAP_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total", base::xstring_utl::tostring(total_issuances));
 
         XMETRICS_PACKET_INFO(XREWARD_CONTRACT "issuance", "year", current_year,
             "issued", cur_year_issuances,
@@ -452,8 +456,8 @@ void xzec_reward_contract::update_accumulated_issuance(uint64_t const issuance, 
 }
 
 uint64_t xzec_reward_contract::get_activated_time() const {
-    xactivation_record record;
-    std::string value_str = STRING_GET2(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
+    data::system_contract::xactivation_record record;
+    std::string value_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
     if (!value_str.empty()) {
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
         record.serialize_from(stream);
@@ -463,11 +467,11 @@ uint64_t xzec_reward_contract::get_activated_time() const {
 
 }
 
-top::xstake::uint128_t xzec_reward_contract::get_reserve_reward(top::xstake::uint128_t issued_until_last_year_end,
-                                                                top::xstake::uint128_t minimum_issuance,
+::uint128_t xzec_reward_contract::get_reserve_reward(::uint128_t issued_until_last_year_end,
+                                                                ::uint128_t minimum_issuance,
                                                                 uint32_t issuance_rate) {
-    top::xstake::uint128_t reserve_reward = 0;
-    top::xstake::uint128_t total_reserve = static_cast<top::xstake::uint128_t>(TOTAL_RESERVE) * REWARD_PRECISION;
+    ::uint128_t reserve_reward = 0;
+    ::uint128_t total_reserve = static_cast<::uint128_t>(data::system_contract::TOTAL_RESERVE) * data::system_contract::REWARD_PRECISION;
     if (total_reserve > issued_until_last_year_end) {
         reserve_reward = std::max((total_reserve - issued_until_last_year_end) * issuance_rate / 100, minimum_issuance);
     } else {
@@ -476,39 +480,39 @@ top::xstake::uint128_t xzec_reward_contract::get_reserve_reward(top::xstake::uin
     return reserve_reward;
 }
 
-top::xstake::uint128_t xzec_reward_contract::calc_issuance_internal(uint64_t total_height,
-                                                                    uint64_t & last_issuance_time,
-                                                                    top::xstake::uint128_t const & minimum_issuance,
-                                                                    const uint32_t issuance_rate,
-                                                                    top::xstake::uint128_t & issued_until_last_year_end) {
+::uint128_t xzec_reward_contract::calc_issuance_internal(uint64_t total_height,
+                                                             uint64_t & last_issuance_time,
+                                                             ::uint128_t const & minimum_issuance,
+                                                             const uint32_t issuance_rate,
+                                                             ::uint128_t & issued_until_last_year_end) {
     if (0 == total_height) {
         return 0;
     }
 
-    top::xstake::uint128_t additional_issuance = 0;
+    ::uint128_t additional_issuance = 0;
     uint64_t issued_clocks = 0;  // from last issuance to last year end
 
     uint64_t call_duration_height = total_height - last_issuance_time;
-    uint32_t current_year = total_height / TIMER_BLOCK_HEIGHT_PER_YEAR + 1;
-    uint32_t last_issuance_year = last_issuance_time / TIMER_BLOCK_HEIGHT_PER_YEAR + 1;
+    uint32_t current_year = total_height / data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR + 1;
+    uint32_t last_issuance_year = last_issuance_time / data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR + 1;
     xdbg("[xzec_reward_contract::calc_issuance] last_issuance_time: %llu, current_year: %u, last_issuance_year:%u", last_issuance_time, current_year, last_issuance_year);
     while (last_issuance_year < current_year) {
-        uint64_t remaining_clocks = TIMER_BLOCK_HEIGHT_PER_YEAR - last_issuance_time % TIMER_BLOCK_HEIGHT_PER_YEAR;
+        uint64_t remaining_clocks = data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR - last_issuance_time % data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR;
         if (remaining_clocks > 0) {
             auto reserve_reward = get_reserve_reward(issued_until_last_year_end, minimum_issuance, issuance_rate);
-            additional_issuance += reserve_reward * remaining_clocks / TIMER_BLOCK_HEIGHT_PER_YEAR;
+            additional_issuance += reserve_reward * remaining_clocks / data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR;
             xinfo(
                 "[xzec_reward_contract::calc_issuance] cross year, last_issuance_year: %u, reserve_reward: [%llu, %u], remaining_clocks: %llu, issued_clocks: %u, "
                 "additional_issuance: [%llu, %u], issued_until_last_year_end: [%llu, %u]",
                 last_issuance_year,
-                static_cast<uint64_t>(reserve_reward / REWARD_PRECISION),
-                static_cast<uint32_t>(reserve_reward % REWARD_PRECISION),
+                static_cast<uint64_t>(reserve_reward / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(reserve_reward % data::system_contract::REWARD_PRECISION),
                 remaining_clocks,
                 issued_clocks,
-                static_cast<uint64_t>(additional_issuance / REWARD_PRECISION),
-                static_cast<uint32_t>(additional_issuance % REWARD_PRECISION),
-                static_cast<uint64_t>(issued_until_last_year_end / REWARD_PRECISION),
-                static_cast<uint32_t>(issued_until_last_year_end % REWARD_PRECISION));
+                static_cast<uint64_t>(additional_issuance / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(additional_issuance % data::system_contract::REWARD_PRECISION),
+                static_cast<uint64_t>(issued_until_last_year_end / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(issued_until_last_year_end % data::system_contract::REWARD_PRECISION));
             issued_clocks += remaining_clocks;
             last_issuance_time += remaining_clocks;
             issued_until_last_year_end += reserve_reward;
@@ -516,53 +520,55 @@ top::xstake::uint128_t xzec_reward_contract::calc_issuance_internal(uint64_t tot
         last_issuance_year++;
     }
 
-    top::xstake::uint128_t reserve_reward = 0;
+    ::uint128_t reserve_reward = 0;
     if (call_duration_height > issued_clocks) {
         reserve_reward = get_reserve_reward(issued_until_last_year_end, minimum_issuance, issuance_rate);
-        additional_issuance += reserve_reward * (call_duration_height - issued_clocks) / TIMER_BLOCK_HEIGHT_PER_YEAR;
+        additional_issuance += reserve_reward * (call_duration_height - issued_clocks) / data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR;
     }
 
     xinfo("[xzec_reward_contract::calc_issuance] additional_issuance: [%" PRIu64 ", %u], call_duration_height: %" PRId64 ", issued_clocks: %" PRId64 ", total_height: %" PRId64
           ", current_year: %" PRIu32 ", last_issuance_year: %" PRIu32
           ", pid: %d"
           ", reserve_reward: [%llu, %u], last_issuance_time: %llu, issued_until_last_year_end: [%llu, %u], TIMER_BLOCK_HEIGHT_PER_YEAR: %llu",
-          static_cast<uint64_t>(additional_issuance / REWARD_PRECISION),
-          static_cast<uint32_t>(additional_issuance % REWARD_PRECISION),
+          static_cast<uint64_t>(additional_issuance / data::system_contract::REWARD_PRECISION),
+          static_cast<uint32_t>(additional_issuance % data::system_contract::REWARD_PRECISION),
           call_duration_height,
           issued_clocks,
           total_height,
           current_year,
           last_issuance_year,
           getpid(),
-          static_cast<uint64_t>(reserve_reward / REWARD_PRECISION),
-          static_cast<uint32_t>(reserve_reward % REWARD_PRECISION),
+          static_cast<uint64_t>(reserve_reward / data::system_contract::REWARD_PRECISION),
+          static_cast<uint32_t>(reserve_reward % data::system_contract::REWARD_PRECISION),
           last_issuance_time,
-          static_cast<uint64_t>(issued_until_last_year_end / REWARD_PRECISION),
-          static_cast<uint32_t>(issued_until_last_year_end % REWARD_PRECISION),
-          TIMER_BLOCK_HEIGHT_PER_YEAR);
+          static_cast<uint64_t>(issued_until_last_year_end / data::system_contract::REWARD_PRECISION),
+          static_cast<uint32_t>(issued_until_last_year_end % data::system_contract::REWARD_PRECISION),
+          data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR);
 
     last_issuance_time = total_height;
     return additional_issuance;
 }
 
-int xzec_reward_contract::get_accumulated_record(xaccumulated_reward_record & record) {
-    std::string value_str = STRING_GET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY);
+int xzec_reward_contract::get_accumulated_record(data::system_contract::xaccumulated_reward_record & record) {
+    std::string value_str = STRING_GET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY);
     xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
     record.serialize_from(stream);
 
     return 0;
 }
 
-void xzec_reward_contract::update_accumulated_record(const xaccumulated_reward_record & record) {
+void xzec_reward_contract::update_accumulated_record(const data::system_contract::xaccumulated_reward_record & record) {
     base::xstream_t stream(base::xcontext_t::instance());
     record.serialize_to(stream);
     auto value_str = std::string((char *)stream.data(), stream.size());
-    STRING_SET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY, value_str);
+    STRING_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY, value_str);
 
     return;
 }
 
-int xzec_reward_contract::get_node_info(const std::map<std::string, xreg_node_info> & map_nodes, const std::string & account, xreg_node_info & node) {
+int xzec_reward_contract::get_node_info(const std::map<std::string, data::system_contract::xreg_node_info> & map_nodes,
+                                        const std::string & account,
+                                        data::system_contract::xreg_node_info & node) {
     auto it = map_nodes.find(account);
     if (it == map_nodes.end()) {
         return -1;
@@ -604,9 +610,9 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
 void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const& cluster_id, std::map<std::string, uint32_t> const& leader_count) {
     const char* property;
     if (auditor) {
-        property = XPORPERTY_CONTRACT_WORKLOAD_KEY;
+        property = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
     } else {
-        property = XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
+        property = data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
     }
     // if (!MAP_PROPERTY_EXIST(property)) {
     //     MAP_CREATE(property);
@@ -620,7 +626,7 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const&
             auditor, cluster_id2.to_string().c_str(), leader_count.size());
     }
 
-    cluster_workload_t workload;
+    data::system_contract::cluster_workload_t workload;
     std::string value_str;
     int32_t ret;
     if (auditor) {
@@ -632,7 +638,7 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const&
     }
 
     if (ret) {
-        xdbg("[xzec_reward_contract::add_cluster_workload] cluster_id not exist, auditor: %d\n", auditor);
+        xdbg("[xzec_reward_contract::add_cluster_workload] cluster_id not exist, auditor: %d", auditor);
         workload.cluster_id = cluster_id;
     } else {
         xstream_t stream(xcontext_t::instance(), (uint8_t*)value_str.data(), value_str.size());
@@ -670,15 +676,15 @@ void xzec_reward_contract::clear_workload() {
 
     {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_SetExecutionTime");
-        CLEAR(enum_type_t::map, XPORPERTY_CONTRACT_WORKLOAD_KEY);
+        CLEAR(enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY);
     }
     {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY_SetExecutionTime");
-        CLEAR(enum_type_t::map, XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY);
+        CLEAR(enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY);
     }
 }
 
-void xzec_reward_contract::update_issuance_detail(xissue_detail const & issue_detail) {
+void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_detail const & issue_detail) {
     xdbg("[xzec_reward_contract::update_issuance_detail] onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
         "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
         "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u "
@@ -695,7 +701,7 @@ void xzec_reward_contract::update_issuance_detail(xissue_detail const & issue_de
             issue_detail.m_governance_reward_ratio);
     auto issue_detail_str = issue_detail.to_string();
     try {
-        STRING_SET(XPROPERTY_REWARD_DETAIL, issue_detail_str);
+        STRING_SET(data::system_contract::XPROPERTY_REWARD_DETAIL, issue_detail_str);
     } catch (std::runtime_error & e) {
         xdbg("[xzec_reward_contract::update_issuance_detail] STRING_SET XPROPERTY_REWARD_DETAIL error:%s", e.what());
     }
@@ -705,13 +711,13 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
                                             common::xlogic_time_t & activation_time,
                                             xreward_onchain_param_t & onchain_param,
                                             xreward_property_param_t & property_param,
-                                            xissue_detail & issue_detail) {
+                                            data::system_contract::xissue_detail & issue_detail) {
     // get time
     std::string activation_str;
-    activation_str = STRING_GET2(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
+    activation_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
     XCONTRACT_ENSURE(activation_str.size() != 0, "STRING GET XPORPERTY_CONTRACT_GENESIS_STAGE_KEY empty");
 
-    xactivation_record record;
+    data::system_contract::xactivation_record record;
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)activation_str.c_str(), (uint32_t)activation_str.size());
     record.serialize_from(stream);
     activation_time = record.activation_time;
@@ -755,14 +761,14 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     xdbg("[xzec_reward_contract::get_reward_param] m_zec_reward_contract_height: %u", issue_detail.m_zec_reward_contract_height);
     // get map nodes
     std::map<std::string, std::string> map_nodes;
-    auto const last_read_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT)));
-    GET_MAP_PROPERTY(XPORPERTY_CONTRACT_REG_KEY, map_nodes, last_read_height, sys_contract_rec_registration_addr);
+    auto const last_read_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT)));
+    GET_MAP_PROPERTY(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, map_nodes, last_read_height, sys_contract_rec_registration_addr);
     XCONTRACT_ENSURE(map_nodes.size() != 0, "MAP GET PROPERTY XPORPERTY_CONTRACT_REG_KEY empty");
     xdbg("[xzec_reward_contract::get_reward_param] last_read_height: %llu, map_nodes size: %d", last_read_height, map_nodes.size());
     for (auto const & entity : map_nodes) {
         auto const & account = entity.first;
         auto const & value_str = entity.second;
-        xreg_node_info node;
+        data::system_contract::xreg_node_info node;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         node.serialize_from(stream);
         common::xaccount_address_t address{account};
@@ -771,8 +777,8 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     // get workload
     std::map<std::string, std::string> auditor_clusters_workloads;
     std::map<std::string, std::string> validator_clusters_workloads;
-    MAP_COPY_GET(XPORPERTY_CONTRACT_WORKLOAD_KEY, auditor_clusters_workloads);
-    MAP_COPY_GET(XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, validator_clusters_workloads);
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, auditor_clusters_workloads);
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, validator_clusters_workloads);
     clear_workload();
     for (auto it = auditor_clusters_workloads.begin(); it != auditor_clusters_workloads.end(); it++) {
         auto const & key_str = it->first;
@@ -780,7 +786,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
         key_stream >> cluster_address;
         auto const & value_str = it->second;
-        cluster_workload_t workload;
+        data::system_contract::cluster_workload_t workload;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         workload.serialize_from(stream);
         property_param.auditor_workloads_detail[cluster_address] = workload;
@@ -791,7 +797,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
         key_stream >> cluster_address;
         auto const & value_str = it->second;
-        cluster_workload_t workload;
+        data::system_contract::cluster_workload_t workload;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         workload.serialize_from(stream);
         property_param.validator_workloads_detail[cluster_address] = workload;
@@ -802,7 +808,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     xdbg("[xzec_reward_contract::get_reward_param] validator_group_count: %d", issue_detail.m_validator_group_count);
     // get vote
     std::map<std::string, std::string> contract_auditor_votes;
-    MAP_COPY_GET(XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes, sys_contract_zec_vote_addr);
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes, sys_contract_zec_vote_addr);
     for (auto & contract_auditor_vote : contract_auditor_votes) {
         auto const & contract = contract_auditor_vote.first;
         auto const & auditor_votes_str = contract_auditor_vote.second;
@@ -818,15 +824,15 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     }
     xdbg("[xzec_reward_contract::get_reward_param] votes_detail_count: %d", property_param.votes_detail.size());
     // get accumulated reward
-    std::string value_str = STRING_GET(XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY);
+    std::string value_str = STRING_GET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY);
     if (value_str.size() != 0) {
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
         property_param.accumulated_reward_record.serialize_from(stream);
     }
     xdbg("[xzec_reward_contract::get_reward_param] accumulated_reward_record: %lu, [%lu, %u]",
          property_param.accumulated_reward_record.last_issuance_time,
-         static_cast<uint64_t>(property_param.accumulated_reward_record.issued_until_last_year_end / xstake::REWARD_PRECISION),
-         static_cast<uint32_t>(property_param.accumulated_reward_record.issued_until_last_year_end % xstake::REWARD_PRECISION));
+         static_cast<uint64_t>(property_param.accumulated_reward_record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(property_param.accumulated_reward_record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION));
 }
 
 /**
@@ -838,18 +844,19 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
  * @param record accumulated reward record
  * @return total reward issuance
  */
-top::xstake::uint128_t xzec_reward_contract::calc_total_issuance(const common::xlogic_time_t issue_time_length,
-                                                                 const uint32_t min_ratio_annual_total_reward,
-                                                                 const uint32_t additional_issue_year_ratio,
-                                                                 xaccumulated_reward_record & record) {
-    auto minimum_issuance = static_cast<top::xstake::uint128_t>(TOTAL_ISSUANCE) * min_ratio_annual_total_reward / 100 * REWARD_PRECISION;
+::uint128_t xzec_reward_contract::calc_total_issuance(const common::xlogic_time_t issue_time_length,
+                                                          const uint32_t min_ratio_annual_total_reward,
+                                                          const uint32_t additional_issue_year_ratio,
+                                                          data::system_contract::xaccumulated_reward_record & record) {
+    auto minimum_issuance = static_cast<::uint128_t>(TOTAL_ISSUANCE) * min_ratio_annual_total_reward / 100 * data::system_contract::REWARD_PRECISION;
 
     uint64_t time = issue_time_length;
     // TODO: merge
     return calc_issuance_internal(time, record.last_issuance_time, minimum_issuance, additional_issue_year_ratio, record.issued_until_last_year_end);
 }
 
-std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map<common::xaccount_address_t, xreg_node_info> const & map_nodes, bool fullnode_enabled) {
+std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+                                                                        bool fullnode_enabled) {
     std::vector<std::vector<uint32_t>> role_nums;
     // vector init
     role_nums.resize(role_type_idx_num);
@@ -951,7 +958,7 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
 }
 
 uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> const & votes_detail,
-                                          std::map<common::xaccount_address_t, xreg_node_info> & map_nodes,
+                                          std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> & map_nodes,
                                           std::map<common::xaccount_address_t, uint64_t> & account_votes) {
     for (auto & entity : map_nodes) {
         auto const & account = entity.first;
@@ -970,7 +977,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
         xdbg("[xzec_reward_contract::calc_votes] map_nodes: account: %s, deposit: %llu, node_type: %s, votes: %llu",
              node.m_account.c_str(),
              node.deposit(),
-             node.m_genesis_node ? "advance,validator,edge" : common::to_string(node.miner_type()).c_str(),
+             node.genesis() ? "advance,validator,edge" : common::to_string(node.miner_type()).c_str(),
              node.m_vote_amount);
     }
     // valid auditor only
@@ -979,7 +986,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
         auto const & vote = entity.second;
 
         for (auto const & entity2 : vote) {
-            xreg_node_info node;
+            data::system_contract::xreg_node_info node;
             auto it = map_nodes.find(common::xaccount_address_t{entity2.first});
             if (it == map_nodes.end()) {
                 xwarn("[xzec_reward_contract::calc_votes] account %s not in map_nodes", entity2.first.c_str());
@@ -999,7 +1006,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
 
 std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> const & votes_detail,
-    std::map<common::xaccount_address_t, xreg_node_info> const & map_nodes) {
+    std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes) {
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     for (auto & entity : map_nodes) {
         auto const & account = entity.first;
@@ -1017,12 +1024,12 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
     return account_votes;
 }
 
-top::xstake::uint128_t xzec_reward_contract::calc_zero_workload_reward(bool is_auditor,
-                                                                       std::map<common::xcluster_address_t, cluster_workload_t> & workloads_detail,
-                                                                       const uint32_t zero_workload,
-                                                                       const top::xstake::uint128_t group_reward,
-                                                                       std::vector<string> & zero_workload_account) {
-    top::xstake::uint128_t zero_workload_rewards = 0;
+::uint128_t xzec_reward_contract::calc_zero_workload_reward(bool is_auditor,
+                                                                std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail,
+                                                                const uint32_t zero_workload,
+                                                                const ::uint128_t group_reward,
+                                                                std::vector<string> & zero_workload_account) {
+    ::uint128_t zero_workload_rewards = 0;
 
     for (auto it = workloads_detail.begin(); it != workloads_detail.end();) {
         if (it->second.cluster_total_workload <= zero_workload) {
@@ -1047,15 +1054,15 @@ top::xstake::uint128_t xzec_reward_contract::calc_zero_workload_reward(bool is_a
     return zero_workload_rewards;
 }
 
-top::xstake::uint128_t xzec_reward_contract::calc_invalid_workload_group_reward(bool is_auditor,
-                                                                                std::map<common::xaccount_address_t, xreg_node_info> const & map_nodes,
-                                                                                const top::xstake::uint128_t group_reward,
-                                                                                std::map<common::xcluster_address_t, cluster_workload_t> & workloads_detail) {
-    top::xstake::uint128_t invalid_group_reward = 0;
+::uint128_t xzec_reward_contract::calc_invalid_workload_group_reward(bool is_auditor,
+                                                                         std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+                                                                         const ::uint128_t group_reward,
+                                                                         std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail) {
+    ::uint128_t invalid_group_reward = 0;
 
     for (auto it = workloads_detail.begin(); it != workloads_detail.end();) {
         for (auto it2 = it->second.m_leader_count.begin(); it2 != it->second.m_leader_count.end();) {
-            xreg_node_info node;
+            data::system_contract::xreg_node_info node;
             auto it3 = map_nodes.find(common::xaccount_address_t{it2->first});
             if (it3 == map_nodes.end()) {
                 xinfo("[xzec_reward_contract::calc_invalid_workload_group_reward] account: %s not in map nodes", it2->first.c_str());
@@ -1098,10 +1105,10 @@ top::xstake::uint128_t xzec_reward_contract::calc_invalid_workload_group_reward(
     return invalid_group_reward;
 }
 
-void xzec_reward_contract::calc_edge_workload_rewards(xreg_node_info const & node,
+void xzec_reward_contract::calc_edge_workload_rewards(data::system_contract::xreg_node_info const & node,
                                                       std::vector<uint32_t> const & edge_num,
-                                                      const top::xstake::uint128_t edge_workload_rewards,
-                                                      top::xstake::uint128_t & reward_to_self) {
+                                                      const ::uint128_t edge_workload_rewards,
+                                                      ::uint128_t & reward_to_self) {
     XCONTRACT_ENSURE(edge_num.size() == num_type_idx_num, "edge_num not 3");
     auto divide_num = edge_num[valid_idx];
     reward_to_self = 0;
@@ -1114,17 +1121,17 @@ void xzec_reward_contract::calc_edge_workload_rewards(xreg_node_info const & nod
     reward_to_self = edge_workload_rewards / divide_num;
     xdbg("[xzec_reward_contract::calc_edge_worklaod_rewards] account: %s, edge reward: [%llu, %u]",
          node.m_account.c_str(),
-         static_cast<uint64_t>(reward_to_self / xstake::REWARD_PRECISION),
-         static_cast<uint32_t>(reward_to_self % xstake::REWARD_PRECISION));
+         static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
 
     return;
 }
 
-void xzec_reward_contract::calc_archive_workload_rewards(xreg_node_info const & node,
+void xzec_reward_contract::calc_archive_workload_rewards(data::system_contract::xreg_node_info const & node,
                                                          std::vector<uint32_t> const & archive_num,
-                                                         const top::xstake::uint128_t archive_workload_rewards,
+                                                         const ::uint128_t archive_workload_rewards,
                                                          bool const fullnode_enabled,
-                                                         top::xstake::uint128_t & reward_to_self) {
+                                                         ::uint128_t & reward_to_self) {
     XCONTRACT_ENSURE(archive_num.size() == num_type_idx_num, "archive_num not 3");
     auto divide_num = archive_num[valid_idx];
     reward_to_self = 0;
@@ -1148,22 +1155,22 @@ void xzec_reward_contract::calc_archive_workload_rewards(xreg_node_info const & 
     reward_to_self = archive_workload_rewards / divide_num;
     xdbg("[xzec_reward_contract::calc_archive_worklaod_rewards] account: %s, archive reward: [%llu, %u]",
          node.m_account.c_str(),
-         static_cast<uint64_t>(reward_to_self / xstake::REWARD_PRECISION),
-         static_cast<uint32_t>(reward_to_self % xstake::REWARD_PRECISION));
+         static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
 
     return;
 }
 
-void xzec_reward_contract::calc_auditor_workload_rewards(xreg_node_info const & node,
+void xzec_reward_contract::calc_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
                                                          std::vector<uint32_t> const & auditor_num,
-                                                         std::map<common::xcluster_address_t, cluster_workload_t> const & auditor_workloads_detail,
-                                                         const top::xstake::uint128_t auditor_group_workload_rewards,
-                                                         top::xstake::uint128_t & reward_to_self) {
+                                                         std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & auditor_workloads_detail,
+                                                         const ::uint128_t auditor_group_workload_rewards,
+                                                         ::uint128_t & reward_to_self) {
     xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, %d clusters report workloads, cluster_total_rewards: [%llu, %u]\n",
          node.m_account.c_str(),
          auditor_workloads_detail.size(),
-         static_cast<uint64_t>(auditor_group_workload_rewards / REWARD_PRECISION),
-         static_cast<uint32_t>(auditor_group_workload_rewards % REWARD_PRECISION));
+         static_cast<uint64_t>(auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION));
     XCONTRACT_ENSURE(auditor_num.size() == num_type_idx_num, "auditor_num array not 3");
     auto divide_num = auditor_num[valid_idx];
     reward_to_self = 0;
@@ -1190,26 +1197,26 @@ void xzec_reward_contract::calc_auditor_workload_rewards(xreg_node_info const & 
                 workload.first.to_string().c_str(),
                 work,
                 workload.second.cluster_total_workload,
-                static_cast<uint64_t>(auditor_group_workload_rewards / xstake::REWARD_PRECISION),
-                static_cast<uint32_t>(auditor_group_workload_rewards % xstake::REWARD_PRECISION),
-                static_cast<uint64_t>(reward_to_self / xstake::REWARD_PRECISION),
-                static_cast<uint32_t>(reward_to_self % xstake::REWARD_PRECISION));
+                static_cast<uint64_t>(auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+                static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
         }
     }
 
     return;
 }
 
-void xzec_reward_contract::calc_validator_workload_rewards(xreg_node_info const & node,
+void xzec_reward_contract::calc_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
                                                            std::vector<uint32_t> const & validator_num,
-                                                           std::map<common::xcluster_address_t, cluster_workload_t> const & validator_workloads_detail,
-                                                           const top::xstake::uint128_t validator_group_workload_rewards,
-                                                           top::xstake::uint128_t & reward_to_self) {
+                                                           std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & validator_workloads_detail,
+                                                           const ::uint128_t validator_group_workload_rewards,
+                                                           ::uint128_t & reward_to_self) {
     xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, %d clusters report workloads, cluster_total_rewards: [%llu, %u]\n",
          node.m_account.c_str(),
          validator_workloads_detail.size(),
-         static_cast<uint64_t>(validator_group_workload_rewards / REWARD_PRECISION),
-         static_cast<uint32_t>(validator_group_workload_rewards % REWARD_PRECISION));
+         static_cast<uint64_t>(validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION));
     XCONTRACT_ENSURE(validator_num.size() == num_type_idx_num, "validator_num array not 3");
     auto divide_num = validator_num[valid_idx];
     reward_to_self = 0;
@@ -1236,28 +1243,28 @@ void xzec_reward_contract::calc_validator_workload_rewards(xreg_node_info const 
                 workload.first.to_string().c_str(),
                 work,
                 workload.second.cluster_total_workload,
-                static_cast<uint64_t>(validator_group_workload_rewards / xstake::REWARD_PRECISION),
-                static_cast<uint32_t>(validator_group_workload_rewards % xstake::REWARD_PRECISION),
-                static_cast<uint64_t>(reward_to_self / xstake::REWARD_PRECISION),
-                static_cast<uint32_t>(reward_to_self % xstake::REWARD_PRECISION));
+                static_cast<uint64_t>(validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+                static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
         }
     }
 
     return;
 }
 
-void xzec_reward_contract::calc_vote_reward(xreg_node_info const & node,
+void xzec_reward_contract::calc_vote_reward(data::system_contract::xreg_node_info const & node,
                                             const uint64_t auditor_total_votes,
-                                            const top::xstake::uint128_t vote_rewards,
-                                            top::xstake::uint128_t & reward_to_self) {
+                                            const ::uint128_t vote_rewards,
+                                            ::uint128_t & reward_to_self) {
     reward_to_self = 0;
     if (node.can_be_auditor() && node.deposit() > 0) {
         XCONTRACT_ENSURE(auditor_total_votes > 0, "total_votes = 0 while valid auditor num > 0");
         reward_to_self = vote_rewards * node.m_vote_amount / auditor_total_votes;
         xdbg("[xzec_reward_contract::calc_nodes_rewards_v4] account: %s, node_vote_reward: [%llu, %u], node deposit: %llu, auditor_total_votes: %llu, node_votes: %llu",
              node.m_account.c_str(),
-             static_cast<uint64_t>(reward_to_self / REWARD_PRECISION),
-             static_cast<uint32_t>(reward_to_self % REWARD_PRECISION),
+             static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+             static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION),
              node.deposit(),
              auditor_total_votes,
              node.m_vote_amount);
@@ -1267,11 +1274,11 @@ void xzec_reward_contract::calc_vote_reward(xreg_node_info const & node,
 
 void xzec_reward_contract::calc_table_node_dividend_detail(common::xaccount_address_t const & table_address,
                                                            common::xaccount_address_t const & account,
-                                                           top::xstake::uint128_t const & reward,
+                                                           ::uint128_t const & reward,
                                                            uint64_t node_total_votes,
                                                            std::map<common::xaccount_address_t, uint64_t> const & vote_detail,
-                                                           std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards,
-                                                           std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_dividend_detail) {
+                                                           std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards,
+                                                           std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail) {
     auto iter = vote_detail.find(account);
     if (iter != vote_detail.end()) {
         auto reward_to_voter = reward * iter->second / node_total_votes;
@@ -1282,10 +1289,10 @@ void xzec_reward_contract::calc_table_node_dividend_detail(common::xaccount_addr
             iter->first.c_str(),
             iter->second,
             node_total_votes,
-            static_cast<uint64_t>(reward / REWARD_PRECISION),
-            static_cast<uint32_t>(reward % REWARD_PRECISION),
-            static_cast<uint64_t>(reward_to_voter / REWARD_PRECISION),
-            static_cast<uint32_t>(reward_to_voter % REWARD_PRECISION));
+            static_cast<uint64_t>(reward / data::system_contract::REWARD_PRECISION),
+            static_cast<uint32_t>(reward % data::system_contract::REWARD_PRECISION),
+            static_cast<uint64_t>(reward_to_voter / data::system_contract::REWARD_PRECISION),
+            static_cast<uint32_t>(reward_to_voter % data::system_contract::REWARD_PRECISION));
         if (reward_to_voter > 0) {
             table_total_rewards[table_address] += reward_to_voter;
             table_node_dividend_detail[table_address][account] += reward_to_voter;
@@ -1295,17 +1302,17 @@ void xzec_reward_contract::calc_table_node_dividend_detail(common::xaccount_addr
 
 void xzec_reward_contract::calc_table_node_reward_detail(common::xaccount_address_t const & table_address,
                                                          common::xaccount_address_t const & account,
-                                                         top::xstake::uint128_t node_reward,
-                                                         std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards,
-                                                         std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_reward_detail) {
+                                                         ::uint128_t node_reward,
+                                                         std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards,
+                                                         std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_reward_detail) {
     table_total_rewards[table_address] += node_reward;
     table_node_reward_detail[table_address][account] = node_reward;
     xdbg("[xzec_reward_contract::calc_table_node_reward_detail] node reward, pid:%d, reward_contract: %s, account: %s, reward: [%llu, %u]\n",
          getpid(),
          table_address.c_str(),
          account.c_str(),
-         static_cast<uint64_t>(node_reward / REWARD_PRECISION),
-         static_cast<uint32_t>(node_reward % REWARD_PRECISION));
+         static_cast<uint64_t>(node_reward / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(node_reward % data::system_contract::REWARD_PRECISION));
 }
 
 common::xaccount_address_t xzec_reward_contract::calc_table_contract_address(common::xaccount_address_t const & account){
@@ -1324,12 +1331,12 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                                                  common::xlogic_time_t const issue_time_length,
                                                  xreward_onchain_param_t const & onchain_param,
                                                  xreward_property_param_t & property_param,
-                                                 xissue_detail & issue_detail,
-                                                 std::map<common::xaccount_address_t, top::xstake::uint128_t> & node_reward_detail,
-                                                 std::map<common::xaccount_address_t, top::xstake::uint128_t> & node_dividend_detail,
-                                                 top::xstake::uint128_t & community_reward) {
+                                                 data::system_contract::xissue_detail & issue_detail,
+                                                 std::map<common::xaccount_address_t, ::uint128_t> & node_reward_detail,
+                                                 std::map<common::xaccount_address_t, ::uint128_t> & node_dividend_detail,
+                                                 ::uint128_t & community_reward) {
     // step 1: calculate issuance
-    top::xstake::uint128_t total_issuance =
+    ::uint128_t total_issuance =
         calc_total_issuance(issue_time_length, onchain_param.min_ratio_annual_total_reward, onchain_param.additional_issue_year_ratio, property_param.accumulated_reward_record);
     XCONTRACT_ENSURE(total_issuance > 0, "total issuance = 0");
     auto edge_workload_rewards = total_issuance * onchain_param.edge_reward_ratio / 100;
@@ -1341,8 +1348,8 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     community_reward = governance_rewards;
     auto auditor_group_count = property_param.auditor_workloads_detail.size();
     auto validator_group_count = property_param.validator_workloads_detail.size();
-    top::xstake::uint128_t auditor_group_workload_rewards = 0;
-    top::xstake::uint128_t validator_group_workload_rewards = 0;
+    ::uint128_t auditor_group_workload_rewards = 0;
+    ::uint128_t validator_group_workload_rewards = 0;
     if (auditor_group_count != 0) {
         auditor_group_workload_rewards = auditor_total_workload_rewards / auditor_group_count;
     }
@@ -1372,34 +1379,34 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         "vote rewards: [%llu, %u], "
         "governance rewards: [%llu, %u], ",
         issue_time_length,
-        static_cast<uint64_t>(total_issuance / REWARD_PRECISION),
-        static_cast<uint32_t>(total_issuance % REWARD_PRECISION),
-        static_cast<uint64_t>(edge_workload_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(edge_workload_rewards % REWARD_PRECISION),
+        static_cast<uint64_t>(total_issuance / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(total_issuance % data::system_contract::REWARD_PRECISION),
+        static_cast<uint64_t>(edge_workload_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(edge_workload_rewards % data::system_contract::REWARD_PRECISION),
         role_nums[edger_idx][total_idx],
         role_nums[edger_idx][valid_idx],
-        static_cast<uint64_t>(archive_workload_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(archive_workload_rewards % REWARD_PRECISION),
+        static_cast<uint64_t>(archive_workload_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(archive_workload_rewards % data::system_contract::REWARD_PRECISION),
         role_nums[archiver_idx][total_idx],
         role_nums[archiver_idx][valid_idx],
-        static_cast<uint64_t>(auditor_total_workload_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(auditor_total_workload_rewards % REWARD_PRECISION),
+        static_cast<uint64_t>(auditor_total_workload_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(auditor_total_workload_rewards % data::system_contract::REWARD_PRECISION),
         auditor_group_count,
-        static_cast<uint64_t>(auditor_group_workload_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(auditor_group_workload_rewards % REWARD_PRECISION),
+        static_cast<uint64_t>(auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION),
         role_nums[auditor_idx][total_idx],
         role_nums[auditor_idx][valid_idx],
-        static_cast<uint64_t>(validator_total_workload_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(validator_total_workload_rewards % REWARD_PRECISION),
+        static_cast<uint64_t>(validator_total_workload_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(validator_total_workload_rewards % data::system_contract::REWARD_PRECISION),
         validator_group_count,
-        static_cast<uint64_t>(validator_group_workload_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(validator_group_workload_rewards % REWARD_PRECISION),
+        static_cast<uint64_t>(validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
         role_nums[validator_idx][total_idx],
         role_nums[validator_idx][valid_idx],
-        static_cast<uint64_t>(vote_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(vote_rewards % REWARD_PRECISION),
-        static_cast<uint64_t>(governance_rewards / REWARD_PRECISION),
-        static_cast<uint32_t>(governance_rewards % REWARD_PRECISION));
+        static_cast<uint64_t>(vote_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(vote_rewards % data::system_contract::REWARD_PRECISION),
+        static_cast<uint64_t>(governance_rewards / data::system_contract::REWARD_PRECISION),
+        static_cast<uint32_t>(governance_rewards % data::system_contract::REWARD_PRECISION));
     // step 3: calculate reward
     if (0 == role_nums[edger_idx][valid_idx]) {
         community_reward += edge_workload_rewards;
@@ -1429,12 +1436,12 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         auto const & account = entity.first;
         auto const & node = entity.second;
 
-        top::xstake::uint128_t self_reward = 0;
-        top::xstake::uint128_t dividend_reward = 0;
+        ::uint128_t self_reward = 0;
+        ::uint128_t dividend_reward = 0;
 
         // 3.2 workload reward
         if (node.could_be_edge()) {
-            top::xstake::uint128_t reward_to_self = 0;
+            ::uint128_t reward_to_self = 0;
             calc_edge_workload_rewards(node, role_nums[edger_idx], edge_workload_rewards, reward_to_self);
             if (reward_to_self != 0) {
                 issue_detail.m_node_rewards[account.to_string()].m_edge_reward = reward_to_self;
@@ -1443,7 +1450,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         }
         if (fullnode_enabled) {
             if (node.could_be_archive()) {
-                top::xstake::uint128_t reward_to_self = 0;
+                ::uint128_t reward_to_self = 0;
                 calc_archive_workload_rewards(node, role_nums[archiver_idx], archive_workload_rewards, fullnode_enabled, reward_to_self);
                 if (reward_to_self != 0) {
                     issue_detail.m_node_rewards[account.to_string()].m_archive_reward = reward_to_self;
@@ -1452,7 +1459,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
             }
         } else {
             if (node.legacy_could_be_archive()) {
-                top::xstake::uint128_t reward_to_self = 0;
+                ::uint128_t reward_to_self = 0;
                 calc_archive_workload_rewards(node, role_nums[archiver_idx], archive_workload_rewards, fullnode_enabled, reward_to_self);
                 if (reward_to_self != 0) {
                     issue_detail.m_node_rewards[account.to_string()].m_archive_reward = reward_to_self;
@@ -1461,7 +1468,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
             }
         }
         if (node.could_be_auditor()) {
-            top::xstake::uint128_t reward_to_self = 0;
+            ::uint128_t reward_to_self = 0;
             calc_auditor_workload_rewards(
                 node, role_nums[auditor_idx], property_param.auditor_workloads_detail, auditor_group_workload_rewards, reward_to_self);
             if (reward_to_self != 0) {
@@ -1470,7 +1477,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
             }
         }
         if (node.could_be_validator()) {
-            top::xstake::uint128_t reward_to_self = 0;
+            ::uint128_t reward_to_self = 0;
             calc_validator_workload_rewards(
                 node, role_nums[validator_idx], property_param.validator_workloads_detail, validator_group_workload_rewards, reward_to_self);
             if (reward_to_self != 0) {
@@ -1480,7 +1487,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         }
         // 3.3 vote reward
         if (node.can_be_auditor() && node.deposit() > 0 && auditor_total_votes > 0) {
-            top::xstake::uint128_t reward_to_self = 0;
+            ::uint128_t reward_to_self = 0;
             calc_vote_reward(node, auditor_total_votes, vote_rewards, reward_to_self);
             if (reward_to_self != 0) {
                 issue_detail.m_node_rewards[account.to_string()].m_vote_reward = reward_to_self;
@@ -1506,11 +1513,11 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
 }
 
 void xzec_reward_contract::calc_table_rewards(xreward_property_param_t & property_param,
-                                              std::map<common::xaccount_address_t, top::xstake::uint128_t> const & node_reward_detail,
-                                              std::map<common::xaccount_address_t, top::xstake::uint128_t> const & node_dividend_detail,
-                                              std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_reward_detail,
-                                              std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_dividend_detail,
-                                              std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards) {
+                                              std::map<common::xaccount_address_t, ::uint128_t> const & node_reward_detail,
+                                              std::map<common::xaccount_address_t, ::uint128_t> const & node_dividend_detail,
+                                              std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_reward_detail,
+                                              std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail,
+                                              std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards) {
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     calc_votes(property_param.votes_detail, property_param.map_nodes, account_votes);
     for(auto reward : node_reward_detail){
@@ -1535,14 +1542,14 @@ void xzec_reward_contract::calc_table_rewards(xreward_property_param_t & propert
 }
 
 void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t current_time,
-                                                  std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards,
-                                                  std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_reward_detail,
-                                                  std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_dividend_detail,
-                                                  top::xstake::uint128_t & community_reward,
+                                                  std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards,
+                                                  std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_reward_detail,
+                                                  std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail,
+                                                  ::uint128_t & community_reward,
                                                   uint64_t & actual_issuance) {
     XMETRICS_COUNTER_INCREMENT(XREWARD_CONTRACT "dispatch_all_reward_Called", 1);
     XMETRICS_TIME_RECORD(XREWARD_CONTRACT "dispatch_all_reward");
-    xdbg("[xzec_reward_contract::dispatch_all_reward] pid:%d\n", getpid());
+    xdbg("[xzec_reward_contract::dispatch_all_reward] pid:%d", getpid());
     // dispatch table reward
     uint64_t issuance = 0;
     uint32_t task_id = get_task_id();
@@ -1550,8 +1557,8 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
         auto const & contract = entity.first;
         auto const & total_award = entity.second;
 
-        uint64_t reward = static_cast<uint64_t>(total_award / xstake::REWARD_PRECISION);
-        if (total_award % xstake::REWARD_PRECISION != 0) {
+        uint64_t reward = static_cast<uint64_t>(total_award / data::system_contract::REWARD_PRECISION);
+        if (total_award % data::system_contract::REWARD_PRECISION != 0) {
             reward += 1;
         }
         issuance += reward;
@@ -1560,12 +1567,12 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
         base::xstream_t seo_stream(base::xcontext_t::instance());
         seo_stream << issuances;
 
-        add_task(task_id, current_time, "", XTRANSFER_ACTION, std::string((char *)seo_stream.data(), seo_stream.size()));
+        add_task(task_id, current_time, "", data::system_contract::XTRANSFER_ACTION, std::string((char *)seo_stream.data(), seo_stream.size()));
         task_id++;
     }
     xinfo("[xzec_reward_contract::dispatch_all_reward] actual issuance: %lu", issuance);
     // dispatch community reward
-    uint64_t common_funds = static_cast<uint64_t>(community_reward / REWARD_PRECISION);
+    uint64_t common_funds = static_cast<uint64_t>(community_reward / data::system_contract::REWARD_PRECISION);
     if (common_funds > 0) {
         task_id = get_task_id();
         issuance += common_funds;
@@ -1574,7 +1581,7 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
         base::xstream_t seo_stream(base::xcontext_t::instance());
         seo_stream << issuances;
 
-        add_task(task_id, current_time, "", XTRANSFER_ACTION, std::string((char *)seo_stream.data(), seo_stream.size()));
+        add_task(task_id, current_time, "", data::system_contract::XTRANSFER_ACTION, std::string((char *)seo_stream.data(), seo_stream.size()));
         task_id++;
         xinfo("[xzec_reward_contract::dispatch_all_reward] common_funds: %lu", common_funds);
     }
@@ -1586,14 +1593,18 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
         auto const & account_awards = entity.second;
 
         int count = 0;
-        std::map<std::string, top::xstake::uint128_t> account_awards2;
+        std::map<std::string, ::uint128_t> account_awards2;
         for (auto it = account_awards.begin(); it != account_awards.end(); it++) {
             account_awards2[it->first.to_string()] = it->second;
             if (++count % task_limit == 0) {
                 base::xstream_t reward_stream(base::xcontext_t::instance());
                 reward_stream << current_time;
                 reward_stream << account_awards2;
-                add_task(task_id, current_time, contract.to_string(), XREWARD_CLAIMING_ADD_NODE_REWARD, std::string((char *)reward_stream.data(), reward_stream.size()));
+                add_task(task_id,
+                         current_time,
+                         contract.to_string(),
+                         data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD,
+                         std::string((char *)reward_stream.data(), reward_stream.size()));
                 task_id++;
 
                 account_awards2.clear();
@@ -1603,7 +1614,11 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
             base::xstream_t reward_stream(base::xcontext_t::instance());
             reward_stream << current_time;
             reward_stream << account_awards2;
-            add_task(task_id, current_time, contract.to_string(), XREWARD_CLAIMING_ADD_NODE_REWARD, std::string((char *)reward_stream.data(), reward_stream.size()));
+            add_task(task_id,
+                     current_time,
+                     contract.to_string(),
+                     data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD,
+                     std::string((char *)reward_stream.data(), reward_stream.size()));
             task_id++;
         }
     }
@@ -1613,14 +1628,18 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
         auto const & auditor_vote_rewards = entity.second;
 
         int count = 0;
-        std::map<std::string, top::xstake::uint128_t> auditor_vote_rewards2;
+        std::map<std::string, ::uint128_t> auditor_vote_rewards2;
         for (auto it = auditor_vote_rewards.begin(); it != auditor_vote_rewards.end(); it++) {
             auditor_vote_rewards2[it->first.to_string()] = it->second;
             if (++count % task_limit == 0) {
                 base::xstream_t reward_stream(base::xcontext_t::instance());
                 reward_stream << current_time;
                 reward_stream << auditor_vote_rewards2;
-                add_task(task_id, current_time, contract.to_string(), XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD, std::string((char *)reward_stream.data(), reward_stream.size()));
+                add_task(task_id,
+                         current_time,
+                         contract.to_string(),
+                         data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD,
+                         std::string((char *)reward_stream.data(), reward_stream.size()));
                 task_id++;
 
                 auditor_vote_rewards2.clear();
@@ -1630,7 +1649,11 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
             base::xstream_t reward_stream(base::xcontext_t::instance());
             reward_stream << current_time;
             reward_stream << auditor_vote_rewards2;
-            add_task(task_id, current_time, contract.to_string(), XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD, std::string((char *)reward_stream.data(), reward_stream.size()));
+            add_task(task_id,
+                     current_time,
+                     contract.to_string(),
+                     data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD,
+                     std::string((char *)reward_stream.data(), reward_stream.size()));
             task_id++;
         }
     }
@@ -1644,13 +1667,13 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
 
 void xzec_reward_contract::update_property(const uint64_t current_time,
                                            const uint64_t actual_issuance,
-                                           xaccumulated_reward_record const & record,
-                                           xissue_detail const & issue_detail) {
+                                           data::system_contract::xaccumulated_reward_record const & record,
+                                           data::system_contract::xissue_detail const & issue_detail) {
     xdbg("[xzec_reward_contract::update_property] actual_issuance: %lu, current_time: %lu", actual_issuance, current_time);
     xdbg("[xzec_reward_contract::update_property] accumulated_reward_record: %lu, current_time: %lu, [%lu, %u]",
          record.last_issuance_time,
-         static_cast<uint64_t>(record.issued_until_last_year_end / REWARD_PRECISION),
-         static_cast<uint32_t>(record.issued_until_last_year_end % REWARD_PRECISION));
+         static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION));
     update_accumulated_issuance(actual_issuance, current_time);
     update_accumulated_record(record);
     update_issuance_detail(issue_detail);

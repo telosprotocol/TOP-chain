@@ -24,8 +24,8 @@ void xtop_table_reward_claiming_contract::setup() {
     
     uint64_t acc_token = 0; 
     uint32_t acc_token_decimals = 0;
-    for (auto i = 1; i <= xstake::XPROPERTY_SPLITED_NUM; i++) {
-        std::string property{xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE};
+    for (auto i = 1; i <= data::system_contract::XPROPERTY_SPLITED_NUM; i++) {
+        std::string property{data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE};
         property += "-" + std::to_string(i);
         MAP_CREATE(property);
         {
@@ -39,43 +39,44 @@ void xtop_table_reward_claiming_contract::setup() {
                     if (static_cast<uint16_t>(account_table_id) != static_cast<uint16_t>(table_id)) {
                         continue;
                     }
-                    xstake::xreward_record record;
+                    data::system_contract::xreward_record record;
                     auto detail = _p.second;
                     base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
                     record.serialize_from(stream);
                     MAP_SET(property, _p.first, _p.second);
-                    acc_token += static_cast<uint64_t>(record.unclaimed / xstake::REWARD_PRECISION);
-                    acc_token_decimals += static_cast<uint32_t>(record.unclaimed % xstake::REWARD_PRECISION);
+                    acc_token += static_cast<uint64_t>(record.unclaimed / data::system_contract::REWARD_PRECISION);
+                    acc_token_decimals += static_cast<uint32_t>(record.unclaimed % data::system_contract::REWARD_PRECISION);
                 }
             }
         }
     }
     
-    MAP_CREATE(xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY);
+    MAP_CREATE(data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY);
     {
         for (auto i = 0; i < old_tables_count; i++) {
             auto table_addr = std::string{sys_contract_sharding_reward_claiming_addr} + "@" + base::xstring_utl::tostring(i);
             std::vector<std::pair<std::string, std::string>> db_kv_124;
-            chain_data::xchain_data_processor_t::get_stake_map_property(common::xlegacy_account_address_t{table_addr}, XPORPERTY_CONTRACT_NODE_REWARD_KEY, db_kv_124);
+            chain_data::xchain_data_processor_t::get_stake_map_property(
+                common::xlegacy_account_address_t{table_addr}, data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY, db_kv_124);
             for (auto const & _p : db_kv_124) {
                 base::xvaccount_t vaccount{_p.first};
                 auto account_table_id = vaccount.get_ledger_subaddr();
                 if (static_cast<uint16_t>(account_table_id) != static_cast<uint16_t>(table_id)) {
                     continue;
                 }
-                MAP_SET(XPORPERTY_CONTRACT_NODE_REWARD_KEY, _p.first, _p.second);
-                xstake::xreward_node_record record;
+                MAP_SET(data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY, _p.first, _p.second);
+                data::system_contract::xreward_node_record record;
                 auto detail = _p.second;
                 base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
                 record.serialize_from(stream);
-                acc_token += static_cast<uint64_t>(record.m_unclaimed / xstake::REWARD_PRECISION);
-                acc_token_decimals += static_cast<uint32_t>(record.m_unclaimed % xstake::REWARD_PRECISION);
+                acc_token += static_cast<uint64_t>(record.m_unclaimed / data::system_contract::REWARD_PRECISION);
+                acc_token_decimals += static_cast<uint32_t>(record.m_unclaimed % data::system_contract::REWARD_PRECISION);
             }
         }
     }
 
-    acc_token += (acc_token_decimals / xstake::REWARD_PRECISION);
-    if (acc_token_decimals % xstake::REWARD_PRECISION != 0) {
+    acc_token += (acc_token_decimals / data::system_contract::REWARD_PRECISION);
+    if (acc_token_decimals % data::system_contract::REWARD_PRECISION != 0) {
         acc_token += 1;
     }
     TOP_TOKEN_INCREASE(acc_token);
@@ -85,9 +86,9 @@ xcontract::xcontract_base * xtop_table_reward_claiming_contract::clone() {
     return new xtop_table_reward_claiming_contract{network_id()};
 }
 
-void xtop_table_reward_claiming_contract::update_vote_reward_record(common::xaccount_address_t const & account, xstake::xreward_record const & record) {
-    uint32_t sub_map_no = (utl::xxh32_t::digest(account.to_string()) % xstake::XPROPERTY_SPLITED_NUM) + 1;
-    std::string property{xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE};
+void xtop_table_reward_claiming_contract::update_vote_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_record const & record) {
+    uint32_t sub_map_no = (utl::xxh32_t::digest(account.to_string()) % data::system_contract::XPROPERTY_SPLITED_NUM) + 1;
+    std::string property{data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE};
     property += "-" + std::to_string(sub_map_no);
 
     base::xstream_t stream(base::xcontext_t::instance());
@@ -99,7 +100,7 @@ void xtop_table_reward_claiming_contract::update_vote_reward_record(common::xacc
     }
 }
 
-void xtop_table_reward_claiming_contract::recv_voter_dividend_reward(uint64_t issuance_clock_height, std::map<std::string, top::xstake::uint128_t> const & rewards) {
+void xtop_table_reward_claiming_contract::recv_voter_dividend_reward(uint64_t issuance_clock_height, std::map<std::string, ::uint128_t> const & rewards) {
     XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_recv_voter_dividend_reward");
 
 
@@ -123,13 +124,13 @@ void xtop_table_reward_claiming_contract::recv_voter_dividend_reward(uint64_t is
 
     try {
         XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_get_property_contract_pollable_key");
-        MAP_COPY_GET(xstake::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_votes, data::xdatautil::serialize_owner_str(sys_contract_sharding_vote_addr, table_id));
+        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_votes, data::xdatautil::serialize_owner_str(sys_contract_sharding_vote_addr, table_id));
     } catch (std::runtime_error & e) {
         xdbg("[xtop_table_reward_claiming_contract::recv_voter_dividend_reward] MAP_COPY_GET XPORPERTY_CONTRACT_POLLABLE_KEY error:%s", e.what());
     }
 
-    for (auto i = 1; i <= xstake::XPROPERTY_SPLITED_NUM; ++i) {
-        std::string property_name{xstake::XPORPERTY_CONTRACT_VOTES_KEY_BASE};
+    for (auto i = 1; i <= data::system_contract::XPROPERTY_SPLITED_NUM; ++i) {
+        std::string property_name{data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY_BASE};
         property_name += "-" + std::to_string(i);
 
         std::map<std::string, std::string> voters;
@@ -147,7 +148,7 @@ void xtop_table_reward_claiming_contract::recv_voter_dividend_reward(uint64_t is
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)vote_table_str.c_str(), (uint32_t)vote_table_str.size());
             std::map<std::string, uint64_t> votes_table;
             stream >> votes_table;
-            xstake::xreward_record record;
+            data::system_contract::xreward_record record;
             xdbg("[xtop_table_reward_claiming_contract::recv_voter_dividend_reward] voter: %s", account.c_str()); 
             get_vote_reward_record(common::xaccount_address_t{account}, record); // not care return value hear
             add_voter_reward(issuance_clock_height, votes_table, rewards, adv_votes, record);
@@ -158,11 +159,11 @@ void xtop_table_reward_claiming_contract::recv_voter_dividend_reward(uint64_t is
 
 void xtop_table_reward_claiming_contract::add_voter_reward(uint64_t issuance_clock_height,
                                                            std::map<std::string, uint64_t> & votes_table,
-                                                           std::map<std::string, top::xstake::uint128_t> const & rewards,
+                                                           std::map<std::string, ::uint128_t> const & rewards,
                                                            std::map<std::string, std::string> const & adv_votes,
-                                                           xstake::xreward_record & record) {
-    top::xstake::uint128_t node_vote_reward = 0;
-    top::xstake::uint128_t voter_node_reward = 0;
+                                                           data::system_contract::xreward_record & record) {
+    ::uint128_t node_vote_reward = 0;
+    ::uint128_t voter_node_reward = 0;
     uint64_t node_total_votes = 0;
     uint64_t voter_node_votes = 0;
     record.issue_time = issuance_clock_height;
@@ -201,7 +202,7 @@ void xtop_table_reward_claiming_contract::add_voter_reward(uint64_t issuance_clo
             }
         }
         if (!found) {
-            xstake::node_record_t voter_node_record;
+            data::system_contract::node_record_t voter_node_record;
             voter_node_record.account = adv;
             voter_node_record.accumulated = voter_node_reward;
             voter_node_record.unclaimed = voter_node_reward;
@@ -215,12 +216,12 @@ void xtop_table_reward_claiming_contract::add_voter_reward(uint64_t issuance_clo
             "%llu, voter_node_reward: "
             "[%llu, %u], pid: %d",
             adv.c_str(),
-            static_cast<uint64_t>(node_vote_reward / REWARD_PRECISION),
-            static_cast<uint32_t>(node_vote_reward % REWARD_PRECISION),
+            static_cast<uint64_t>(node_vote_reward / data::system_contract::REWARD_PRECISION),
+            static_cast<uint32_t>(node_vote_reward % data::system_contract::REWARD_PRECISION),
             node_total_votes,
             voter_node_votes,
-            static_cast<uint64_t>(voter_node_reward / REWARD_PRECISION),
-            static_cast<uint32_t>(voter_node_reward % REWARD_PRECISION),
+            static_cast<uint64_t>(voter_node_reward / data::system_contract::REWARD_PRECISION),
+            static_cast<uint32_t>(voter_node_reward % data::system_contract::REWARD_PRECISION),
             getpid());
     }
 }
@@ -229,7 +230,7 @@ void xtop_table_reward_claiming_contract::claimVoterDividend() {
     XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_claim_voter_dividend");
 
     common::xaccount_address_t account{SOURCE_ADDRESS()};
-    xstake::xreward_record reward_record;
+    data::system_contract::xreward_record reward_record;
     XCONTRACT_ENSURE(get_vote_reward_record(account, reward_record) == 0, "claimVoterDividend account no reward");
     uint64_t cur_time = TIME();
     xdbg("[xtop_table_reward_claiming_contract::claimVoterDividend] balance:%llu, account: %s, pid: %d, cur_time: %llu, last_claim_time: %llu\n",
@@ -243,15 +244,21 @@ void xtop_table_reward_claiming_contract::claimVoterDividend() {
 
     // transfer to account
     xinfo("[xtop_table_reward_claiming_contract::claimVoterDividend] timer round: %" PRIu64 ", account: %s, reward:: [%llu, %u], pid:%d\n",
-         TIME(),
-         account.c_str(),
-         static_cast<uint64_t>(reward_record.unclaimed / REWARD_PRECISION),
-         static_cast<uint32_t>(reward_record.unclaimed % REWARD_PRECISION),
+          TIME(),
+          account.c_str(),
+          static_cast<uint64_t>(reward_record.unclaimed / data::system_contract::REWARD_PRECISION),
+          static_cast<uint32_t>(reward_record.unclaimed % data::system_contract::REWARD_PRECISION),
          getpid());
-    XMETRICS_PACKET_INFO("sysContract_tableRewardClaiming_claim_voter_dividend", "timer round", std::to_string(TIME()), "source address", account.c_str(), "reward", std::to_string(static_cast<uint64_t>(reward_record.unclaimed / REWARD_PRECISION)));
+    XMETRICS_PACKET_INFO("sysContract_tableRewardClaiming_claim_voter_dividend",
+                         "timer round",
+                         std::to_string(TIME()),
+                         "source address",
+                         account.c_str(),
+                         "reward",
+                         std::to_string(static_cast<uint64_t>(reward_record.unclaimed / data::system_contract::REWARD_PRECISION)));
 
-    TRANSFER(account.to_string(), static_cast<uint64_t>(reward_record.unclaimed / REWARD_PRECISION));
-    reward_record.unclaimed = reward_record.unclaimed % REWARD_PRECISION;
+    TRANSFER(account.to_string(), static_cast<uint64_t>(reward_record.unclaimed / data::system_contract::REWARD_PRECISION));
+    reward_record.unclaimed = reward_record.unclaimed % data::system_contract::REWARD_PRECISION;
     reward_record.last_claim_time = cur_time;
     for (auto & node_reward : reward_record.node_rewards) {
         node_reward.unclaimed = 0;
@@ -260,30 +267,30 @@ void xtop_table_reward_claiming_contract::claimVoterDividend() {
     update_vote_reward_record(account, reward_record);
 }
 
-void xtop_table_reward_claiming_contract::update_working_reward_record(common::xaccount_address_t const & account, xstake::xreward_node_record const & record) {
+void xtop_table_reward_claiming_contract::update_working_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_node_record const & record) {
     base::xstream_t stream(base::xcontext_t::instance());
     record.serialize_to(stream);
     auto value_str = std::string((char *)stream.data(), stream.size());
     {
         XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_set_property_contract_node_reward_key");
-        MAP_SET(xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY, account.to_string(), value_str);
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY, account.to_string(), value_str);
     }
 }
 
-void xtop_table_reward_claiming_contract::update(common::xaccount_address_t const & node_account, uint64_t issuance_clock_height, top::xstake::uint128_t reward) {
+void xtop_table_reward_claiming_contract::update(common::xaccount_address_t const & node_account, uint64_t issuance_clock_height, ::uint128_t reward) {
     auto const & self_address = SELF_ADDRESS();
     xdbg("[xtop_table_reward_claiming_contract::update] self_address: %s, account: %s, reward: [%llu, %u], pid: %d",
-        self_address.c_str(), node_account.c_str(),
-        static_cast<uint64_t>(reward / REWARD_PRECISION),
-        static_cast<uint32_t>(reward % REWARD_PRECISION),
+         self_address.c_str(), node_account.c_str(),
+         static_cast<uint64_t>(reward / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(reward % data::system_contract::REWARD_PRECISION),
         getpid());
 
     // update node rewards table
     std::string value_str;
-    xstake::xreward_node_record record;
+    data::system_contract::xreward_node_record record;
     {
         XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_get_property_contract_node_reward_key");
-        int32_t ret = MAP_GET2(xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY, node_account.to_string(), value_str);
+        int32_t ret = MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY, node_account.to_string(), value_str);
         // here if not success, means account has no reward record yet, so value_str is empty, using above record directly
         if (ret) xwarn("[xtop_table_reward_claiming_contract::update] get property empty, node account %s", node_account.c_str());
         if (!value_str.empty()) {
@@ -303,11 +310,11 @@ void xtop_table_reward_claiming_contract::update(common::xaccount_address_t cons
     value_str = std::string((char *)stream.data(), stream.size());
     {
         XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_set_property_contract_node_reward_key");
-        MAP_SET(xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY, node_account.to_string(), value_str);
+        MAP_SET(data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY, node_account.to_string(), value_str);
     }
 }
 
-void xtop_table_reward_claiming_contract::recv_node_reward(uint64_t issuance_clock_height, std::map<std::string, top::xstake::uint128_t> const & rewards) {
+void xtop_table_reward_claiming_contract::recv_node_reward(uint64_t issuance_clock_height, std::map<std::string, ::uint128_t> const & rewards) {
     XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_recv_node_reward");
 
     auto const & source_address = SOURCE_ADDRESS();
@@ -328,9 +335,9 @@ void xtop_table_reward_claiming_contract::recv_node_reward(uint64_t issuance_clo
         auto const & reward = account_reward.second;
 
         xdbg("[xtop_table_reward_claiming_contract::recv_node_reward] pid:%d, account: %s, reward: [%llu, %u]\n",
-            getpid(), account.c_str(),
-            static_cast<uint64_t>(reward / REWARD_PRECISION),
-            static_cast<uint32_t>(reward % REWARD_PRECISION));
+             getpid(), account.c_str(),
+             static_cast<uint64_t>(reward / data::system_contract::REWARD_PRECISION),
+             static_cast<uint32_t>(reward % data::system_contract::REWARD_PRECISION));
 
         // update node rewards
         update(common::xaccount_address_t{account}, issuance_clock_height, reward);
@@ -341,7 +348,7 @@ void xtop_table_reward_claiming_contract::claimNodeReward() {
     XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_claim_node_reward");
 
     common::xaccount_address_t account{SOURCE_ADDRESS()};
-    xstake::xreward_node_record reward_record;
+    data::system_contract::xreward_node_record reward_record;
     XCONTRACT_ENSURE(get_working_reward_record(account, reward_record) == 0, "claimNodeReward node account no reward");
     uint64_t cur_time = TIME();
     xinfo("[xtop_table_reward_claiming_contract::claimNodeReward] balance: %" PRIu64 ", account: %s, cur_time: %" PRIu64, GET_BALANCE(), account.c_str(), cur_time);
@@ -349,30 +356,36 @@ void xtop_table_reward_claiming_contract::claimNodeReward() {
     // transfer to account
     xinfo("[xtop_table_reward_claiming_contract::claimNodeReward] reward: [%" PRIu64 ", %" PRIu32 "], reward_str: %s, reward_upper: %" PRIu64 ", reward_lower: %" PRIu64
           ", last_claim_time: %" PRIu64 ", min_node_reward: %" PRIu64,
-          static_cast<uint64_t>(reward_record.m_unclaimed / REWARD_PRECISION),
-          static_cast<uint32_t>(reward_record.m_unclaimed % REWARD_PRECISION),
+          static_cast<uint64_t>(reward_record.m_unclaimed / data::system_contract::REWARD_PRECISION),
+          static_cast<uint32_t>(reward_record.m_unclaimed % data::system_contract::REWARD_PRECISION),
           reward_record.m_unclaimed.str().c_str(),
           reward_record.m_unclaimed.upper(),
           reward_record.m_unclaimed.lower(),
           reward_record.m_last_claim_time,
           min_node_reward);
-    XCONTRACT_ENSURE(static_cast<uint64_t>(reward_record.m_unclaimed / REWARD_PRECISION) > min_node_reward, "claimNodeReward: node no enough reward");
+    XCONTRACT_ENSURE(static_cast<uint64_t>(reward_record.m_unclaimed / data::system_contract::REWARD_PRECISION) > min_node_reward, "claimNodeReward: node no enough reward");
 
-    XMETRICS_PACKET_INFO("sysContract_tableRewardClaiming_claim_node_reward", "timer round", std::to_string(TIME()), "source address", account.c_str(), "reward", std::to_string(static_cast<uint64_t>(reward_record.m_unclaimed / REWARD_PRECISION)));
+    XMETRICS_PACKET_INFO("sysContract_tableRewardClaiming_claim_node_reward",
+                         "timer round",
+                         std::to_string(TIME()),
+                         "source address",
+                         account.c_str(),
+                         "reward",
+                         std::to_string(static_cast<uint64_t>(reward_record.m_unclaimed / data::system_contract::REWARD_PRECISION)));
 
-    TRANSFER(account.to_string(), static_cast<uint64_t>(reward_record.m_unclaimed / REWARD_PRECISION));
+    TRANSFER(account.to_string(), static_cast<uint64_t>(reward_record.m_unclaimed / data::system_contract::REWARD_PRECISION));
 
-    reward_record.m_unclaimed -= reward_record.m_unclaimed / REWARD_PRECISION * REWARD_PRECISION;
+    reward_record.m_unclaimed -= reward_record.m_unclaimed / data::system_contract::REWARD_PRECISION * data::system_contract::REWARD_PRECISION;
     reward_record.m_last_claim_time = cur_time;
     update_working_reward_record(account, reward_record);
 }
 
-int32_t xtop_table_reward_claiming_contract::get_working_reward_record(common::xaccount_address_t const & account, xstake::xreward_node_record & record) {
+int32_t xtop_table_reward_claiming_contract::get_working_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_node_record & record) {
     std::string value_str;
 
     {
         XMETRICS_TIME_RECORD("sysContract_tableRewardClaiming_get_property_contract_node_reward_key");
-        int32_t ret = MAP_GET2(xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY, account.to_string(), value_str);
+        int32_t ret = MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY, account.to_string(), value_str);
         if (ret) {
             xdbg("[xtop_table_reward_claiming_contract::get_working_reward_record] account: %s not exist", account.c_str());
             return -1;
@@ -387,10 +400,10 @@ int32_t xtop_table_reward_claiming_contract::get_working_reward_record(common::x
     return -1;
 }
 
-int32_t xtop_table_reward_claiming_contract::get_vote_reward_record(common::xaccount_address_t const & account, xstake::xreward_record & record) {
-    uint32_t sub_map_no = (utl::xxh32_t::digest(account.to_string()) % xstake::XPROPERTY_SPLITED_NUM) + 1;
+int32_t xtop_table_reward_claiming_contract::get_vote_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_record & record) {
+    uint32_t sub_map_no = (utl::xxh32_t::digest(account.to_string()) % data::system_contract::XPROPERTY_SPLITED_NUM) + 1;
     std::string property;
-    property = property + xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE + "-" + std::to_string(sub_map_no);
+    property = property + data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE + "-" + std::to_string(sub_map_no);
 
     std::string value_str;
 

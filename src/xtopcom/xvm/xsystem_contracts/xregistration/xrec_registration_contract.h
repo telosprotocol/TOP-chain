@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xcommon/xrole_type.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 
@@ -163,7 +163,7 @@ private:
      *
      * @param node_info
      */
-    void        update_node_info(xreg_node_info const & node_info);
+    void update_node_info(data::system_contract::xreg_node_info const & node_info);
 
     /**
      * @brief delete node info
@@ -179,7 +179,7 @@ private:
      * @param node_info
      * @return int32_t
      */
-    int32_t     get_node_info(const std::string& account, xreg_node_info& node_info);
+    int32_t get_node_info(const std::string & account, data::system_contract::xreg_node_info & node_info);
 
     /**
      * @brief insert the refund info
@@ -205,7 +205,7 @@ private:
      * @param refund
      * @return int32_t
      */
-    int32_t     get_refund(const std::string& account, xrefund_info & refund);
+    int32_t get_refund(const std::string & account, data::system_contract::xrefund_info & refund);
 
     /**
      * @brief check and set mainnet activation
@@ -220,7 +220,7 @@ private:
      * @param node_slash_info
      * @return int32_t
      */
-    int32_t     get_slash_info(std::string const& account, xslash_info& node_slash_info);
+    int32_t get_slash_info(std::string const & account, data::system_contract::xslash_info & node_slash_info);
     /**
      * @brief get slash staking time
      *
@@ -264,7 +264,7 @@ private:
      *
      * @param node_info
      */
-    void    init_node_credit(xreg_node_info& node_info, bool isforked);
+    void init_node_credit(data::system_contract::xreg_node_info & node_info, bool isforked);
 };
 
 

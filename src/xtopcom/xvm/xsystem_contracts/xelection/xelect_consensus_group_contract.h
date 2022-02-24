@@ -6,7 +6,7 @@
 
 #include "xcommon/xfts.h"
 #include "xdata/xelection/xelection_group_result.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xsystem_contracts/xelection/xelect_group_contract.h"
 
 #include <ratio>
@@ -22,6 +22,8 @@ private:
     uint64_t m_stake{};
     uint64_t m_comprehensive_stake{};
     xpublic_key_t m_public_key{};
+    common::xminer_type_t m_miner_type{common::xminer_type_t::invalid};
+    bool m_genesis{false};
 
 public:
     xtop_election_awared_data(xtop_election_awared_data const &) = default;
@@ -33,11 +35,11 @@ public:
     xtop_election_awared_data(common::xnode_id_t const & account,
                               uint64_t const stake,
                               uint64_t const comprehensive_stake,
-                              xpublic_key_t const & public_key);
+                              xpublic_key_t const & public_key,
+                              common::xminer_type_t miner_type,
+                              bool genesis);
 
-    xtop_election_awared_data(common::xnode_id_t const & account,
-                              uint64_t const stake,
-                              xpublic_key_t const & public_key);
+    xtop_election_awared_data(common::xnode_id_t const & account, uint64_t const stake, xpublic_key_t const & public_key, common::xminer_type_t miner_type, bool genesis);
 
     bool operator<(xtop_election_awared_data const & other) const noexcept;
     bool operator==(xtop_election_awared_data const & other) const noexcept;
@@ -77,6 +79,9 @@ public:
      * @param s Value
      */
     void comprehensive_stake(uint64_t const s) noexcept;
+
+    bool genesis() const noexcept;
+    common::xminer_type_t miner_type() const noexcept;
 };
 using xelection_awared_data_t = xtop_election_awared_data;
 using xeffective_standby_data_t = xelection_awared_data_t;

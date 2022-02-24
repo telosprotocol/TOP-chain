@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "xvm/xcontract_helper.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xtableblock.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
-#include "xdata/xtableblock.h"
-#include "xstake/xstake_algorithm.h"
+#include "xvm/xcontract_helper.h"
 
 NS_BEG2(top, xstake)
 

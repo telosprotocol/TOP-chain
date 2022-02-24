@@ -7,11 +7,11 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xfts.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcodec/xmsgpack/xelection_network_result_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xgenesis_data.h"
-#include "xconfig/xpredefined_configurations.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xerror/xvm_error.h"
 
 #include <cassert>
@@ -55,14 +55,18 @@ static std::size_t calculate_rotation_count(xelection_group_result_t const & gro
 xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & account,
                                                      uint64_t const stake,
                                                      uint64_t const comprehensive_stake,
-                                                     xpublic_key_t const & public_key)
-  : m_account{ account }, m_stake{stake}, m_comprehensive_stake{comprehensive_stake}, m_public_key{public_key} {
+                                                     xpublic_key_t const & public_key,
+                                                     common::xminer_type_t miner_type,
+                                                     bool genesis)
+  : m_account{account}, m_stake{stake}, m_comprehensive_stake{comprehensive_stake}, m_public_key{public_key}, m_miner_type{miner_type}, m_genesis{genesis} {
 }
 
 xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & account,
                                                      uint64_t const stake,
-                                                     xpublic_key_t const & public_key)
-  : xtop_election_awared_data{account, stake, 0, public_key} {
+                                                     xpublic_key_t const & public_key,
+                                                     common::xminer_type_t miner_type,
+                                                     bool genesis)
+  : xtop_election_awared_data{account, stake, 0, public_key, miner_type, genesis} {
 }
 
 bool xtop_election_awared_data::operator<(xtop_election_awared_data const & other) const noexcept {
@@ -81,7 +85,9 @@ bool xtop_election_awared_data::operator==(xtop_election_awared_data const & oth
     return m_account == other.m_account                         &&
            m_stake == other.m_stake                             &&
            m_comprehensive_stake == other.m_comprehensive_stake &&
-           m_public_key == other.m_public_key;
+           m_public_key == other.m_public_key                   &&
+           m_miner_type == other.m_miner_type                   &&
+           m_genesis == other.m_genesis;
 }
 
 bool xtop_election_awared_data::operator>(xtop_election_awared_data const & other) const noexcept {
@@ -106,6 +112,14 @@ xpublic_key_t const & xtop_election_awared_data::public_key() const noexcept {
 
 void xtop_election_awared_data::comprehensive_stake(uint64_t const s) noexcept {
     m_comprehensive_stake = s;
+}
+
+bool xtop_election_awared_data::genesis() const noexcept {
+    return m_genesis;
+}
+
+common::xminer_type_t xtop_election_awared_data::miner_type() const noexcept {
+    return m_miner_type;
 }
 
 xtop_elect_consensus_group_contract::xtop_elect_consensus_group_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
@@ -325,6 +339,8 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         new_election_info.stake = elect_in_pos->stake();
         new_election_info.comprehensive_stake = elect_in_pos->comprehensive_stake();
         new_election_info.consensus_public_key = elect_in_pos->public_key();
+        new_election_info.miner_type = elect_in_pos->miner_type();
+        new_election_info.genesis = elect_in_pos->genesis();
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(node_id);
@@ -365,7 +381,9 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
         effective_standby_result.emplace_back(top::get<common::xnode_id_t const>(standby_info),
                                               top::get<xstandby_node_info_t>(standby_info).stake(node_type),
                                               minimum_comprehensive_stake,
-                                              top::get<xstandby_node_info_t>(standby_info).consensus_public_key);
+                                              top::get<xstandby_node_info_t>(standby_info).consensus_public_key,
+                                              top::get<xstandby_node_info_t>(standby_info).miner_type,
+                                              top::get<xstandby_node_info_t>(standby_info).genesis);
     }
 
     normalize_stake(role_type, effective_standby_result);
