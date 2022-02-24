@@ -749,18 +749,18 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     queryBlock_app->add_option(
         "account_addr", queryBlock_account, "Account address to query its block block information. if you do not add this parameters, your default account will be queried.");
     queryBlock_app->callback(std::bind(&ApiMethod::query_block, &topcl.api, std::ref(queryBlock_account), std::ref(queryBlock_height), std::ref(out_str)));
-
+#ifdef DEBUG
     // query blocks by height
-    auto getBlocksByHeight_app = chain_app->add_subcommand("getBlocksByHeight", "Query information of blocks By Height.");
-    std::string getBlocksByHeight_account;
-    std::string getBlocksByHeight_height;
-    getBlocksByHeight_app->add_option("height", getBlocksByHeight_height, "Integer of a block number, or the String \"latest\".")->required();
-    getBlocksByHeight_app->add_option("account_addr",
-                                      getBlocksByHeight_account,
+    auto queryBlocksByHeight_app = chain_app->add_subcommand("queryBlocksByHeight", "Query information of blocks By Height.");
+    std::string queryBlocksByHeight_account;
+    std::string queryBlocksByHeight_height;
+    queryBlocksByHeight_app->add_option("height", queryBlocksByHeight_height, "Integer of a block number, or the String \"latest\".")->required();
+    queryBlocksByHeight_app->add_option("account_addr",
+                                      queryBlocksByHeight_account,
                                       "Account address to query its block block information. if you do not add this parameters, your default account will be queried.");
-    getBlocksByHeight_app->callback(
-        std::bind(&ApiMethod::getBlocksByHeight, &topcl.api, std::ref(getBlocksByHeight_account), std::ref(getBlocksByHeight_height), std::ref(out_str)));
-
+    queryBlocksByHeight_app->callback(
+        std::bind(&ApiMethod::getBlocksByHeight, &topcl.api, std::ref(queryBlocksByHeight_account), std::ref(queryBlocksByHeight_height), std::ref(out_str)));
+ #endif
     // query chain info
     auto chainInfo_app = chain_app->add_subcommand("chainInfo", "Get chain informaion.");
     chainInfo_app->callback(std::bind(&ApiMethod::chain_info, &topcl.api, std::ref(out_str)));

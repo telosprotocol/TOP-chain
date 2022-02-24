@@ -1599,7 +1599,7 @@ xJson::Value get_block_handle::get_blocks_json(xblock_t * bp, const std::string 
     } else if (bp->check_block_flag(base::enum_xvblock_flag_authenticated)) {
         root["status"] = "cert";
     } else {
-        root["status"] = "unknow";
+        root["status"] = "unknown";
     }
     return root;
 }

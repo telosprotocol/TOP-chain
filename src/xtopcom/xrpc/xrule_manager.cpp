@@ -242,8 +242,8 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
 
         std::string src_addr = source_action["tx_sender_account_addr"].asString();
         std::string dst_addr = target_action["tx_receiver_account_addr"].asString();
-        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr), enum_xrpc_error_code::rpc_param_param_error, "tx_sender_account_addr invalid");
-        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr), enum_xrpc_error_code::rpc_param_param_error, "tx_receiver_account_addr invalid");    
+        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr, true), enum_xrpc_error_code::rpc_param_param_error, "tx_sender_account_addr invalid");
+        CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr, true), enum_xrpc_error_code::rpc_param_param_error, "tx_receiver_account_addr invalid");    
     }
 
     CONDTION_FAIL_THROW(params["premium_price"].isUInt(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params premium_price or premium_price is not valid");
