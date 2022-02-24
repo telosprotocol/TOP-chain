@@ -158,9 +158,9 @@ void EcNetcard::send_to(base::KadmliaKeyPtr const & send_kad_key,
 
     // point to point
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
-    // if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
-        // error code
-    // }
+    if (ec) {
+        xwarn("send fail. %s %s", ec.category().name(), ec.message().c_str());
+    }
     return;
 }
 
