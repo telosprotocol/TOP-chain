@@ -48,7 +48,7 @@ macro(get_git_info)
     )
 
     execute_process(
-        COMMAND sh -c "${GIT_EXECUTABLE} submodule foreach git log -1 --format='%h' | sed 'N;s/\\n/:/g' | grep -aoE 'xtopcom.*' | sed \"s/\'//g\" |sed 'N;N;s/\\n/|/g'"
+        COMMAND sh -c "${GIT_EXECUTABLE} submodule foreach git log -1 --format='%h' | sed 'N;s/\\n/:/g' | grep -aoE 'xtopcom.*' | sed \"s/\'//g\" |sed 'N;s/\\n/|/g'"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE TOP_GIT_SUBMODULE
         OUTPUT_STRIP_TRAILING_WHITESPACE
