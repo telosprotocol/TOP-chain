@@ -47,18 +47,18 @@ xtop_dht_host::running(bool const value) noexcept {
 void
 // std::vector<xbootstrap_result_future_t>
 xtop_dht_host::bootstrap(std::vector<xdht_node_t> const & seeds) const {
-    assert(m_routing_table);
-    // std::vector<xbootstrap_result_future_t> result;
-    for (auto const & seed : seeds) {
-        if (local_endpoint() == seed.endpoint()) {
-            continue;
-        }
-        // result.push_back(m_routing_table->ping(seed));
-        m_routing_table->ping(seed);
-        xdbg("[dht] routing table ping %s", seed.id().to_string().c_str());
-    }
+    //assert(m_routing_table);
+    //// std::vector<xbootstrap_result_future_t> result;
+    //for (auto const & seed : seeds) {
+    //    if (local_endpoint() == seed.endpoint()) {
+    //        continue;
+    //    }
+    //    // result.push_back(m_routing_table->ping(seed));
+    //    m_routing_table->ping(seed);
+    //    xdbg("[dht] routing table ping %s", seed.id().to_string().c_str());
+    //}
 
-    // return result;
+    //// return result;
 }
 
 common::xnode_id_t const &

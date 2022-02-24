@@ -4,6 +4,7 @@
 
 #include "xelection/xcache/xgroup_element.h"
 
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xelection/xcache/xcluster_element.h"

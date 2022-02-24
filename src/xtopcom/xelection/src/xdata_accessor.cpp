@@ -32,9 +32,9 @@ common::xnetwork_id_t xtop_data_accessor::network_id() const noexcept {
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_zone(common::xzone_id_t const & zone_id,
-                                                                                                        data::election::xelection_result_store_t const & election_result_store,
-                                                                                                        std::uint64_t const associated_blk_height,
-                                                                                                        std::error_code & ec) {
+                                                                                                     data::election::xelection_result_store_t const & election_result_store,
+                                                                                                     std::uint64_t const associated_blk_height,
+                                                                                                     std::error_code & ec) {
     assert(!ec);
     assert(m_network_element);
 
@@ -415,9 +415,9 @@ common::xelection_round_t xtop_data_accessor::election_epoch_from(common::xip2_t
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_zone(std::shared_ptr<xzone_element_t> const & zone_element,
-                                                                                                        data::election::xelection_result_store_t const & election_result_store,
-                                                                                                        std::uint64_t const associated_blk_height,
-                                                                                                        std::error_code & ec) {
+                                                                                                     data::election::xelection_result_store_t const & election_result_store,
+                                                                                                     std::uint64_t const associated_blk_height,
+                                                                                                     std::error_code & ec) {
     assert(!ec);
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
 
@@ -500,9 +500,9 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_consensus_zone(std::shared_ptr<xzone_element_t> const & zone_element,
-                                                                                                                  data::election::xelection_result_store_t const & election_result_store,
-                                                                                                                  std::uint64_t const associated_blk_height,
-                                                                                                                  std::error_code & ec) {
+                                                                                                               data::election::xelection_result_store_t const & election_result_store,
+                                                                                                               std::uint64_t const associated_blk_height,
+                                                                                                               std::error_code & ec) {
     assert(!ec);
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
 
@@ -579,17 +579,17 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_edge_zone(std::shared_ptr<xzone_element_t> const & zone_element,
-                                                                                                             data::election::xelection_result_store_t const & election_result_store,
-                                                                                                             std::uint64_t const associated_blk_height,
-                                                                                                             std::error_code & ec) {
+                                                                                                          data::election::xelection_result_store_t const & election_result_store,
+                                                                                                          std::uint64_t const associated_blk_height,
+                                                                                                          std::error_code & ec) {
     assert(!ec);
     return update_zone(zone_element, election_result_store, associated_blk_height, ec);
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_storage_zone(std::shared_ptr<xzone_element_t> const & zone_element,
-                                                                                                                data::election::xelection_result_store_t const & election_result_store,
-                                                                                                                std::uint64_t const associated_blk_height,
-                                                                                                                std::error_code & ec) {
+                                                                                                             data::election::xelection_result_store_t const & election_result_store,
+                                                                                                             std::uint64_t const associated_blk_height,
+                                                                                                             std::error_code & ec) {
     assert(!ec);
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
 

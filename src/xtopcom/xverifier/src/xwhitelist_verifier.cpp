@@ -2,8 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xverifier/xwhitelist_verifier.h"
+
 #include "xverifier/xverifier_utl.h"
-#include "xdata/xdata_common.h"
+#include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 
 namespace top {
     namespace xverifier {

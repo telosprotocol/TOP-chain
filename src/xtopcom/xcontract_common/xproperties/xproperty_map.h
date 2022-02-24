@@ -4,75 +4,136 @@
 
 #pragma once
 
-#include "xcontract_common/xproperties/xbasic_property.h"
-#include "xcontract_common/xbasic_contract.h"
+#include "xbasic/xstring.h"
+#include "xcontract_common/xcontract_face.h"
 #include "xcontract_common/xcontract_state.h"
+#include "xcontract_common/xproperties/xbasic_property.h"
 
 #include <map>
 
 NS_BEG3(top, contract_common, properties)
 
-// template<typename KEYT, typename VALUET, typename = typename std::enable_if<(std::is_same<KEYT, std::string>::value ||
-//                                                                              std::is_base_of<xenable_to_string_t<KEYT>, KEYT>::value
-//                                                                              ) && (
-//                                                                               std::is_base_of<xenable_to_string_t<VALUET>, VALUET>::value ||
-//                                                                               std::is_base_of<xtop_basic_property, VALUET>::value ||
-//                                                                               std::is_same<VALUET, std::string>::value  ||
-//                                                                               std::is_same<VALUET, std::int8_t>::value  ||
-//                                                                               std::is_same<VALUET, std::int16_t>::value ||
-//                                                                               std::is_same<VALUET, std::int32_t>::value ||
-//                                                                               std::is_same<VALUET, std::int64_t>::value ||
-//                                                                               std::is_same<VALUET, std::uint64_t>::value
-//                                                                             )>::type>
-// class xtop_map_property;
-
-template<typename KEYT, typename VALUET, typename = typename std::enable_if<std::is_convertible<KEYT, std::string>::value &&
-                                                                            std::is_convertible<VALUET, std::string>::value>::type>
-class xtop_map_property: public xtop_basic_property {
+template <typename KeyT, typename ValueT>
+class xtop_map_property : public xbasic_property_t {
 public:
+    xtop_map_property() = default;
     xtop_map_property(xtop_map_property const&) = delete;
     xtop_map_property& operator=(xtop_map_property const&) = delete;
     xtop_map_property(xtop_map_property&&) = default;
     xtop_map_property& operator=(xtop_map_property&&) = default;
-    ~xtop_map_property() = default;
+    ~xtop_map_property() override = default;
 
-    explicit xtop_map_property(std::string const& prop_name, contract_common::xbasic_contract_t*  contract)
-                                :xbasic_property_t{prop_name, xproperty_type_t::map , make_observer(contract)} {
-        m_contract_state->access_control()->map_prop_create<std::string, std::string>(accessor(), m_id);
-
+    explicit xtop_map_property(std::string const& name, xcontract_face_t * contract)
+        : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::map , make_observer(contract)} {
     }
 
-
-    void add(KEYT const& prop_key, VALUET const& prop_value) {
-        m_contract_state->access_control()->map_prop_add<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);
+    explicit xtop_map_property(std::string const & name, std::unique_ptr<xcontract_state_t> state_owned) : xbasic_property_t {name, state_accessor::properties::xproperty_type_t::map, std::move(state_owned)} {
     }
 
-    void erase(KEYT const& prop_key) {
-        m_contract_state->access_control()->map_prop_erase<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
+    void add(KeyT const & key, ValueT const & value, std::error_code & ec) {
+        assert(m_associated_contract != nullptr);
+        assert(associated_state() != nullptr);
+
+        associated_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), top::to_bytes(value), ec);
     }
 
-    void update(KEYT const& prop_key,  VALUET const& prop_value) {
-        m_contract_state->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, (std::string)prop_key, (std::string)prop_value);
+    void add(KeyT const & key, ValueT const & value) {
+        associated_state()->xcontract_state_t::set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), top::to_bytes(value));
     }
 
-    void update(std::map<std::string, std::string> const& prop_value) {
-        m_contract_state->access_control()->map_prop_update<std::string, std::string>(accessor(), m_id, prop_value);
+    void remove(KeyT const & key, std::error_code & ec) {
+        associated_state()->remove_property_cell<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), ec);
     }
 
+    void remove(KeyT const & key) {
+        associated_state()->xcontract_state_t::remove_property_cell<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key));
+    }
+
+    void set(KeyT const & key, ValueT const & value, std::error_code & ec) {
+        associated_state()->set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), top::to_bytes(value), ec);
+    }
+
+    void set(KeyT const & key, ValueT const & value) {
+        associated_state()->xcontract_state_t::set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), top::to_bytes(value));
+    }
+
+    void set(std::map<KeyT, ValueT> const& value, std::error_code& ec) {
+        associated_state()->set_property<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_bytes(value), ec);
+    }
+
+    void set(std::map<KeyT, ValueT> const& value) {
+        associated_state()->set_property<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_bytes(value));
+    }
+
+    void clear(std::error_code& ec) {
+         associated_state()->clear_property(id(), ec);
+    }
     void clear() {
-        m_contract_state->access_control()->map_prop_clear<std::string, std::string>(accessor(), m_id);
+         associated_state()->clear_property(id());
     }
 
-    std::string query(KEYT const& prop_key) {
-        return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id, (std::string)prop_key);
-    }
-    std::map<std::string, std::string> clone() {
-        return m_contract_state->access_control()->map_prop_query<std::string, std::string>(accessor(), m_id);
+    bool exist(KeyT const & key, std::error_code & ec) const {
+        assert(m_associated_contract != nullptr);
+        assert(!ec);
+
+        assert(associated_state() != nullptr);
+        return associated_state()->exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), ec);
     }
 
+    bool exist(KeyT const & key) const {
+        assert(associated_state() != nullptr);
+        return associated_state()->xcontract_state_t::exist_property_cell_key<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key));
+    }
+
+    ValueT get(KeyT const & key, std::error_code & ec) const {
+        assert(associated_state());
+        auto const & bytes = associated_state()->get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key), ec);
+        if (ec) {
+            return {};
+        }
+
+        return from_bytes<ValueT>(bytes, ec);
+    }
+
+    ValueT get(KeyT const & key) const {
+        assert(associated_state());
+
+        auto const & bytes = associated_state()->xcontract_state_t::get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(typeless_id(), top::to_string(key));
+
+        return from_bytes<ValueT>(bytes);
+    }
+
+    std::map<KeyT, ValueT> value(std::error_code& ec) const {
+        assert(associated_state() != nullptr);
+
+        std::map<KeyT, ValueT> res;
+        auto const & tmp = associated_state()->get_property<state_accessor::properties::xproperty_type_t::map>(typeless_id(), ec);
+
+        for (auto const& pair: tmp) {
+            res.insert({pair.first, top::from_bytes<ValueT>(pair.second)});
+        }
+        return res;
+    }
+
+    std::map<KeyT, ValueT> value() const {
+        assert(associated_state() != nullptr);
+
+        std::map<KeyT, ValueT> res;
+        auto const & tmp = associated_state()->xcontract_state_t::get_property<state_accessor::properties::xproperty_type_t::map>(typeless_id());
+
+        for (auto const& pair: tmp) {
+            res.insert({pair.first, top::from_bytes<ValueT>(pair.second)});
+        }
+        return res;
+    }
+
+    size_t size() const {
+        assert(associated_state() != nullptr);
+        return associated_state()->property_size(id());
+    }
 };
 
-template <typename KEYT, typename VALUET>
-using xmap_property_t = xtop_map_property<KEYT, VALUET>;
+template <typename KeyT, typename ValueT>
+using xmap_property_t = xtop_map_property<KeyT, ValueT>;
 
 NS_END3

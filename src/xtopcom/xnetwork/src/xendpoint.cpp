@@ -4,6 +4,8 @@
 
 #include "xnetwork/xendpoint.h"
 
+#include <cassert>
+
 NS_BEG2(top, network)
 
 xtop_endpoint::xtop_endpoint(std::string address, std::uint16_t const p)
@@ -46,7 +48,7 @@ xtop_endpoint::hash() const {
 
 std::string
 xtop_endpoint::to_string() const {
-    return m_address + u8":" + std::to_string(m_port);
+    return m_address + ":" + std::to_string(m_port);
 }
 
 NS_END2

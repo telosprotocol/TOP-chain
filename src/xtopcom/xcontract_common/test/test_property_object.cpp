@@ -14,7 +14,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xcontract_common/xbasic_contract.h"
 #include "xcontract_common/xcontract_state_fwd.h"
-#include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xproperties/xproperty_map.h"
 
 #if defined(__clang__)

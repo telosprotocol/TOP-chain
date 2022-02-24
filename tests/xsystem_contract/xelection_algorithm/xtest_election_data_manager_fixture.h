@@ -21,6 +21,8 @@ using top::data::election::xelection_result_t;
 using top::data::election::xstandby_network_result_t;
 using top::data::election::xstandby_node_info_t;
 
+common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t const index);
+
 class xtop_test_election_data_manager_fixture {
 public:
     XDECLARE_DEFAULTED_DEFAULT_CONSTRUCTOR(xtop_test_election_data_manager_fixture);

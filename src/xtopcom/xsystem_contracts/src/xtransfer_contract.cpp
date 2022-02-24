@@ -1,22 +1,16 @@
 #include "xsystem_contracts/xtransfer_contract.h"
 
+#include "xdata/xgenesis_data.h"
+
 NS_BEG2(top, system_contracts)
 
-xtop_transfer_contract::xtop_transfer_contract() {
+void xtop_transfer_contract::setup() {
+    state_accessor::xtoken_t token{100};
+    m_balance.deposit(std::move(token));
 }
 
 void xtop_transfer_contract::transfer(uint64_t const amount) {
-    if (at_source_action_stage()) {
-        m_balance.withdraw(amount);
-    }
-
-    if (at_confirm_action_stage()) {
-
-    }
-
-    if (at_target_action_stage()) {
-        m_balance.deposit(amount);
-    }
+    m_balance.withdraw(amount);
 }
 
 NS_END2

@@ -25,34 +25,29 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xhashable.hpp"
-#include "xbasic/xrandomizable.h"
-#include "xbasic/xserializable_based_on.h"
-#include "xcommon/xstring_id.hpp"
+#include "xcommon/xaccount_address_fwd.h"
+#include "xcommon/xaccount_base_address.h"
+#include "xcommon/xaccount_id.h"
+#include "xcommon/xledger_id.h"
+#include "xcommon/xtable_id.h"
 
-#include <ostream>
+#include <cstdint>
+#include <string>
 
 NS_BEG2(top, common)
-class xtop_node_id;
 
-std::int32_t
-operator <<(top::base::xstream_t & stream, top::common::xtop_node_id const & node_id);
+std::int32_t operator <<(top::base::xstream_t & stream, xtop_node_id const & node_id);
+std::int32_t operator >>(top::base::xstream_t & stream, xtop_node_id & node_id);
+std::int32_t operator<<(top::base::xbuffer_t & stream, xtop_node_id const & node_id);
+std::int32_t operator>>(top::base::xbuffer_t & stream, xtop_node_id & node_id);
 
-std::int32_t
-operator >>(top::base::xstream_t & stream, top::common::xtop_node_id & node_id);
-
-std::int32_t operator<<(top::base::xbuffer_t & stream, top::common::xtop_node_id const & node_id);
-
-std::int32_t operator>>(top::base::xbuffer_t & stream, top::common::xtop_node_id & node_id);
-
-class xtop_node_id final : public xstring_id_t<xtop_node_id>
-                         , public xrandomizable_t<xtop_node_id>
-                         , public xserializable_based_on<void>
-{
+class xtop_node_id final {
 private:
-    using id_base_t = xstring_id_t<xtop_node_id>;
+    std::string m_account_string;
+    xaccount_base_address_t m_account_base_address;
+    xtable_id_t m_assigned_table_id;
 
-    mutable base::enum_vaccount_addr_type m_type{base::enum_vaccount_addr_type_invalid};
+    xaccount_id_t m_account_id{};
 
 public:
     xtop_node_id()                                 = default;
@@ -60,35 +55,38 @@ public:
     xtop_node_id & operator=(xtop_node_id const &) = default;
     xtop_node_id(xtop_node_id &&)                  = default;
     xtop_node_id & operator=(xtop_node_id &&)      = default;
-    ~xtop_node_id() override                       = default;
+    ~xtop_node_id()                                = default;
 
-    explicit
-    xtop_node_id(std::string value);
+    explicit xtop_node_id(std::string const & value);
+    explicit xtop_node_id(xaccount_base_address_t base_address);
+    explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value);
+    explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
-    explicit
-    xtop_node_id(char const * value);
+    static xtop_node_id build_from(std::string const & input, std::error_code & ec);
+    static xtop_node_id build_from(std::string const & input);
 
-    using id_base_t::empty;
-    using id_base_t::has_value;
-    using id_base_t::value;
-    using id_base_t::hash;
+    bool empty() const noexcept;
+    bool has_value() const noexcept;
+    std::string const & value() const noexcept;
+    xaccount_base_address_t const & base_address() const noexcept;
+    uint64_t hash() const;
+    std::string const & to_string() const noexcept;
+    void clear();
 
-    using id_base_t::operator bool;
+    explicit operator bool() const noexcept;
 
     void
     swap(xtop_node_id & other) noexcept;
 
-    bool
-    operator<(xtop_node_id const & other) const noexcept;
-
-    bool
-    operator==(xtop_node_id const & other) const noexcept;
-
-    bool
-    operator!=(xtop_node_id const & other) const noexcept;
+    bool operator==(xtop_node_id const & other) const noexcept;
+    bool operator<(xtop_node_id const & other) const noexcept;
+    bool operator>(xtop_node_id const & other) const noexcept;
+    bool operator!=(xtop_node_id const & other) const noexcept;
+    bool operator>=(xtop_node_id const & other) const noexcept;
+    bool operator<=(xtop_node_id const & other) const noexcept;
 
     void
-    random() override;
+    random();
 
     std::size_t
     length() const noexcept;
@@ -99,23 +97,32 @@ public:
     char const *
     c_str() const noexcept;
 
-    base::enum_vaccount_addr_type type() const noexcept;
+    base::enum_vaccount_addr_type type(std::error_code & ec) const;
+    base::enum_vaccount_addr_type type() const;
 
-    friend std::int32_t operator <<(base::xstream_t & stream, xtop_node_id const & node_id);
-    friend std::int32_t operator >>(base::xstream_t & stream, xtop_node_id & node_id);
+    xaccount_id_t const & account_id() const noexcept;
+
+    xledger_id_t const & ledger_id() const noexcept;
+    xtable_id_t const & table_id() const noexcept;
+
+    friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
+    friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
     friend std::int32_t operator<<(base::xbuffer_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xbuffer_t & stream, xtop_node_id & node_id);
 
-    std::int32_t serialize_to(base::xstream_t & stream) const override;
-    std::int32_t serialize_from(base::xstream_t & stream) override;
-    std::int32_t serialize_to(base::xbuffer_t & buffer) const override;
-    std::int32_t serialize_from(base::xbuffer_t & buffer) override;
+    std::int32_t serialize_to(base::xstream_t & stream) const;
+    std::int32_t serialize_from(base::xstream_t & stream);
+    std::int32_t serialize_to(base::xbuffer_t & buffer) const;
+    std::int32_t serialize_from(base::xbuffer_t & buffer);
+
 private:
-    std::int32_t
-    do_read(base::xstream_t & stream) override;
+    void parse();
 
     std::int32_t
-    do_write(base::xstream_t & stream) const override;
+    do_read(base::xstream_t & stream);
+
+    std::int32_t
+    do_write(base::xstream_t & stream) const;
 };
 
 using xnode_id_t = xtop_node_id;
@@ -125,8 +132,7 @@ NS_END2
 NS_BEG1(std)
 
 template <>
-struct hash<top::common::xnode_id_t> final
-{
+struct hash<top::common::xnode_id_t> final {
     std::size_t
     operator()(top::common::xnode_id_t const & id) const noexcept;
 };

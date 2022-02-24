@@ -4,8 +4,6 @@
 
 #include "xgrpcservice/xgrpc_service.h"
 
-#include "xbase/xbase.h"
-#include "xbasic/xutility.h"
 #include "xdata/xtransaction.h"
 
 #include <grpcpp/grpcpp.h>

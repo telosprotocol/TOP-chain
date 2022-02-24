@@ -13,12 +13,12 @@ NS_BEG3(top, vnode, error)
 enum class xenum_errc {
     ok,
     vnode_is_not_running,
-    invalid_address,
+    invalid_address
 };
-using xerrc = xenum_errc;
+using xerrc_t = xenum_errc;
 
-std::error_code make_error_code(xerrc const errc) noexcept;
-std::error_condition make_error_condition(xerrc const errc) noexcept;
+std::error_code make_error_code(xerrc_t const errc) noexcept;
+std::error_condition make_error_condition(xerrc_t const errc) noexcept;
 
 std::error_category const & vnode_category() noexcept;
 
@@ -29,16 +29,16 @@ NS_BEG1(std)
 #if !defined(XCXX14_OR_ABOVE)
 
 template <>
-struct hash<top::vnode::error::xerrc> final {
-    size_t operator()(top::vnode::error::xerrc const errc) const noexcept;
+struct hash<top::vnode::error::xerrc_t> final {
+    size_t operator()(top::vnode::error::xerrc_t const errc) const noexcept;
 };
 
 #endif
 
 template <>
-struct is_error_code_enum<top::vnode::error::xerrc> : true_type {};
+struct is_error_code_enum<top::vnode::error::xerrc_t> : true_type {};
 
 template <>
-struct is_error_condition_enum<top::vnode::error::xerrc> : true_type {};
+struct is_error_condition_enum<top::vnode::error::xerrc_t> : true_type {};
 
 NS_END1

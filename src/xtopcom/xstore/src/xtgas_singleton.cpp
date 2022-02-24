@@ -5,6 +5,7 @@
 #include "xvledger/xvledger.h"
 #include "xstake/xstake_algorithm.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xstore/xtgas_singleton.h"
 #include "xmetrics/xmetrics.h"
 

@@ -147,7 +147,7 @@ private:
         uint16_t sharding_size = config_group.m_map_node.size();
         for (auto it: config_group.m_map_node) {
             config_node_t &n = it.second;
-            std::string name = path + "_" + n.m_name;
+            std::string name = n.m_name;
 
             top::common::xnode_address_t addr = m_addr_generator.create_archive_addr(slot_id++, sharding_size, name);
             create_node(network_group, config_group.m_name, n.m_name, addr);
@@ -188,7 +188,7 @@ private:
         uint16_t sharding_size = config_group.m_map_node.size();
         for (auto it: config_group.m_map_node) {
             config_node_t &n = it.second;
-            std::string name = path + "_" + n.m_name;
+            std::string name = n.m_name;
 
             top::common::xnode_address_t addr = m_addr_generator.create_validator_addr(slot_id++, sharding_size, name);
             create_node(network_group, config_group.m_name, n.m_name, addr);

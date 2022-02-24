@@ -1,0 +1,34 @@
+#include "xdata/xnative_contract_address.h"
+
+NS_BEG1(top)
+
+common::xaccount_address_t const black_hole_system_address{black_hole_addr};
+common::xaccount_address_t const genesis_root_system_address{genesis_root_addr_main_chain};
+common::xaccount_address_t const timer_system_address{sys_contract_beacon_timer_addr};
+common::xaccount_address_t const drand_system_address{sys_drand_addr};
+
+common::xaccount_address_t const rec_registration_contract_address{sys_contract_rec_registration_addr};
+common::xaccount_address_t const rec_elect_edge_contract_address{sys_contract_rec_elect_edge_addr};
+common::xaccount_address_t const rec_elect_archive_contract_address{sys_contract_rec_elect_archive_addr};
+common::xaccount_address_t const rec_elect_rec_contract_address{sys_contract_rec_elect_rec_addr};
+common::xaccount_address_t const rec_elect_zec_contract_address{sys_contract_rec_elect_zec_addr};
+common::xaccount_address_t const rec_tcc_contract_address{sys_contract_rec_tcc_addr};
+common::xaccount_address_t const rec_standby_pool_contract_address{sys_contract_rec_standby_pool_addr};
+
+common::xaccount_address_t const zec_workload_contract_address{sys_contract_zec_workload_addr};
+common::xaccount_address_t const zec_vote_contract_address{sys_contract_zec_vote_addr};
+common::xaccount_address_t const zec_reward_contract_address{sys_contract_zec_reward_addr};
+common::xaccount_address_t const zec_slash_info_contract_address{sys_contract_zec_slash_info_addr};
+common::xaccount_address_t const zec_elect_consensus_contract_address{sys_contract_zec_elect_consensus_addr};
+common::xaccount_address_t const zec_standby_pool_contract_address{sys_contract_zec_standby_pool_addr};
+common::xaccount_address_t const zec_group_assoc_contract_address{sys_contract_zec_group_assoc_addr};
+
+common::xaccount_address_t const sharding_vote_contract_address{sys_contract_sharding_vote_addr};
+common::xaccount_address_t const sharding_reward_claiming_contract_address{sys_contract_sharding_reward_claiming_addr};
+common::xaccount_address_t const sharding_statistic_info_contract_address{sys_contract_sharding_statistic_info_addr};
+
+common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
+common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};
+common::xaccount_address_t const sharding_table_address{sys_contract_sharding_table_block_addr};
+
+NS_END1

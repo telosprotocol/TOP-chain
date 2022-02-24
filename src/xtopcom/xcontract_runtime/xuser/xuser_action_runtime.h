@@ -10,7 +10,7 @@
 NS_BEG2(top, contract_runtime)
 
 template <>
-class xtop_action_runtime<data::xconsensus_action_t<data::xtop_action_type_t::user>> {
+class xtop_action_runtime<data::xuser_consensus_action_t> {
 public:
     xtop_action_runtime() = default;
     xtop_action_runtime(xtop_action_runtime const &) = delete;
@@ -19,7 +19,7 @@ public:
     xtop_action_runtime & operator=(xtop_action_runtime &&) = default;
     ~xtop_action_runtime() = default;
 
-    std::unique_ptr<xaction_session_t<data::xconsensus_action_t<data::xtop_action_type_t::user>>> new_session(observer_ptr<contract_common::xcontract_state_t> contract_state);
+    std::unique_ptr<xaction_session_t<data::xuser_consensus_action_t>> new_session(observer_ptr<contract_common::xcontract_state_t> contract_state);
 
     xtransaction_execution_result_t execute(observer_ptr<contract_common::xcontract_execution_context_t> tx_ctx);
 };
@@ -27,5 +27,5 @@ public:
 NS_END2
 
 NS_BEG3(top, contract_runtime, user)
-using xaction_runtime_t = xtop_action_runtime<data::xconsensus_action_t<data::xtop_action_type_t::user>>;
+using xuser_action_runtime_t = xtop_action_runtime<data::xuser_consensus_action_t>;
 NS_END3

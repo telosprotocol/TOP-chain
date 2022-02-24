@@ -27,7 +27,7 @@ protected:
 };
 
 TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
-    std::string node_id{"test_node_id_1"};
+    std::string node_id{"T00000LLyxLtWoTxRt1U5fS3K3asnywoHwENzNTi"};
     common::xnode_id_t xnode_id{node_id};
     std::string program_version_1{"verison_1"};
     top::xpublic_key_t pub_key_1{"test_pub_key_1"};
@@ -58,7 +58,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
 }
 
 TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_role) {
-    std::string node_id{"test_node_id_1"};
+    std::string node_id{"T00000LLyxLtWoTxRt1U5fS3K3asnywoHwENzNTi"};
     common::xnode_id_t xnode_id{node_id};
     std::string program_version_1{"verison_1"};
     top::xpublic_key_t pub_key_1{"test_pub_key_1"};
@@ -160,7 +160,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
 }
 
 TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
-    std::string node_id{"test_node_id_1"};
+    std::string node_id{"T00000LLyxLtWoTxRt1U5fS3K3asnywoHwENzNTi"};
     common::xnode_id_t xnode_id{node_id};
     std::string program_version_1{"verison_1"};
     top::xpublic_key_t pub_key_1{"test_pub_key_1"};

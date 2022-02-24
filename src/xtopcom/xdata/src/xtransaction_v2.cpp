@@ -159,8 +159,18 @@ int xtransaction_v2_t::do_read(base::xstream_t & in) {
         m_source_action_para = action.get_action_param();
         m_target_action_para = action.get_action_param();
     }
-    if (is_sys_sharding_contract_address(common::xaccount_address_t{get_target_addr()})) {
-        auto tableid = data::account_map_to_table_id(common::xaccount_address_t{get_source_addr()});
+    std::error_code ec;
+    auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
+    if (ec) {
+        throw enum_xerror_code_bad_transaction;
+    }
+    auto const source_account_address = common::xaccount_address_t::build_from(get_source_addr(), ec);
+    if (ec) {
+        throw enum_xerror_code_bad_transaction;
+    }
+
+    if (is_sys_sharding_contract_address(target_account_address)) {
+        auto tableid = data::account_map_to_table_id(source_account_address);
         adjust_target_address(tableid.get_subaddr());
     }
     const int32_t end_pos = in.size();

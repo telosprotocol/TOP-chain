@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -22,6 +22,8 @@ enum class xenum_errc {
     transaction_execution_abort,
     contract_not_found,
     contract_api_not_found,
+    invalid_timer_interval,
+    account_state_not_changed,
 
     enum_vm_api_exception,
     enum_vm_code_is_exist,
@@ -29,6 +31,7 @@ enum class xenum_errc {
     enum_vm_no_func_find,
     enum_vm_exception,
     enum_vm_action_error,
+    enum_vm_not_correct_action_stage_error,
 
     enum_lua_abi_input_error,
     enum_lua_abi_input_name_or_type_error,
@@ -58,6 +61,7 @@ enum class xenum_errc {
 
     // wasm user contract
     enum_wasm_code_invalid,
+    enum_bin_code_not_changed,
 
     unknown_error,
 };

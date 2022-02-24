@@ -15,7 +15,7 @@
 namespace top {
     namespace chain_fork {
 
-        xchain_fork_config_t      xtop_chain_fork_config_center::m_fork_config;
+        xchain_fork_config_t xtop_chain_fork_config_center::m_fork_config;
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT)
 #   if defined(XBUILD_CI)

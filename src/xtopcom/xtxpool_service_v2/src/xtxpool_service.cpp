@@ -65,18 +65,20 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     m_vnet_driver = vnet_driver;
     m_vnetwork_str = vnet_driver->address().to_string();
 
+    assert(vnet_driver->address().xip2() == xip);
+
     xinfo("xtxpool_service::set_params node:%s,joined election round:%llu,cur election round:%llu",
           m_vnetwork_str.c_str(),
           m_vnet_driver->joined_election_round().value(),
           m_vnet_driver->address().election_round().value());
 
-    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
+    // common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
 
     m_node_id = static_cast<std::uint16_t>(get_node_id_from_xip2(m_xip));
     m_shard_size = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(m_xip));
     xassert(m_node_id < m_shard_size);
 
-    auto type = node_addr.type();
+    auto type = vnet_driver->type();
     if (common::has<common::xnode_type_t::committee>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_beacon_index;
@@ -475,7 +477,14 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return ret;
     }
 
-    auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
+    std::error_code ec;
+    auto account_address = common::xaccount_address_t::build_from(tx->get_source_addr(), ec);
+    if (ec) {
+        xwarn("xtxpool_service::request_transaction_consensus in, invalid source account %s", tx->get_source_addr().c_str());
+        return xtxpool_v2::xtxpool_error_service_invalid_account_address;
+    }
+
+    auto tableid = data::account_map_to_table_id(account_address);
     if (!is_belong_to_service(tableid)) {
         xerror("[global_trace][xtxpool_service]%s %s zone%d table%d not match this network driver",
                tx->get_digest_hex_str().c_str(),
@@ -486,7 +495,13 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return xtxpool_v2::xtxpool_error_transaction_not_belong_to_this_service;
     }
 
-    if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_target_addr()})) {
+    account_address = common::xaccount_address_t::build_from(tx->get_target_addr(), ec);
+    if (ec) {
+        xwarn("xtxpool_service::request_transaction_consensus in, invalid target account %s", tx->get_target_addr().c_str());
+        return xtxpool_v2::xtxpool_error_service_invalid_account_address;
+    }
+
+    if (is_sys_sharding_contract_address(account_address)) {
         tx->adjust_target_address(tableid.get_subaddr());
     }
 

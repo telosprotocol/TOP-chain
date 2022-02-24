@@ -10,16 +10,14 @@
 #include <system_error>
 #include <type_traits>
 
-namespace top {
-namespace state_accessor {
-namespace error {
+NS_BEG3(top, state_accessor, error)
 
 enum class xenum_errc : uint16_t {
     ok,
     invalid_state_backend,
-
     token_insufficient,
-
+    token_symbol_not_matched,
+    token_not_used,
     invalid_property_type,
     property_access_denied,
     load_property_failed,
@@ -32,6 +30,8 @@ enum class xenum_errc : uint16_t {
     create_property_failed,
     update_property_failed,
     property_not_changed,
+    empty_property_name,
+    get_binlog_failed,
 
     property_id_conversion_invalid,
 
@@ -45,11 +45,9 @@ std::error_condition make_error_condition(xerrc_t const ec) noexcept;
 
 std::error_category const & state_category();
 
-}
-}
-}
+NS_END3
 
-namespace std {
+NS_BEG1(std)
 
 #if !defined(XCXX14_OR_ABOVE)
 
@@ -68,4 +66,4 @@ template <>
 struct is_error_condition_enum<top::state_accessor::error::xerrc_t> : std::true_type {
 };
 
-}
+NS_END1

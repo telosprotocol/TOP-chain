@@ -20,6 +20,8 @@ NS_BEG2(top, vnode)
 
 class xtop_basic_vnode : public xvnode_face_t {
 protected:
+    // std::shared_ptr<election::cache::xgroup_element_t> m_associated_group_element;
+
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,7 +25,15 @@ enum class xenum_errc {
     property_map_key_not_exist,
     account_not_matched,
     token_not_enough,
+    token_symbol_not_matched,
     deploy_code_failed,
+    get_binlog_failed,
+    nonce_mismatch,
+    user_contract_forbid_create_transfer,
+
+    transaction_not_enough_balance,
+    transaction_not_enough_deposit,
+    transaction_not_enough_pledge_token_tgas,
     unknown_error,
 };
 using xerrc_t = xenum_errc;

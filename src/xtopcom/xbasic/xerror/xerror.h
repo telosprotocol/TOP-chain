@@ -42,6 +42,8 @@ public:
 
     std::error_code const &
     code() const noexcept;
+
+    std::error_category const & category() const noexcept;
 };
 using xtop_error_t = xtop_top_error;
 

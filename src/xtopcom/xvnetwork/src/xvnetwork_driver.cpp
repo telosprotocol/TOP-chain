@@ -5,11 +5,13 @@
 #include "xvnetwork/xvnetwork_driver.h"
 
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xerror.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xbook_id_mapping.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmetrics/xmetrics.h"
 #include "xvnetwork/xvnetwork_error.h"

@@ -20,6 +20,4 @@ using xcontract_metadata_t = xtop_contract_metadata;
 class xtop_basic_contract;
 using xbasic_contract_t = xtop_basic_contract;
 
-
-
 NS_END2

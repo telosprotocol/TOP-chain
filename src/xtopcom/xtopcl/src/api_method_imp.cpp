@@ -7,16 +7,19 @@
 #include "task/task_dispatcher.h"
 #include "topchain_type.h"
 #include "xaction_param.h"
+#include "xconfig/xutility.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction.h"
 #include "xrpc/xuint_format.h"
 #include "xvm/xvm_define.h"
-
-#include <stdio.h>
+#include "xchain_fork/xchain_upgrade_center.h"
+#include "xbase/xutl.h"
+#include "xvledger/xvblock.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <memory>
 
 using namespace top::utl;
@@ -706,10 +709,16 @@ bool api_method_imp::registerNode(const user_info & uinfo,
 #else
     std::string param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
 #endif
+    std::string source_action_name;
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "mortgage";
+    //}
+
     xaction_asset_param asset_param(this, "", mortgage);
     std::string param = asset_param.create();
-
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
@@ -728,6 +737,13 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     auto info = new task_info_callback<NodeRegResult>();
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
+    std::string source_action_name;
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "mortgage";
+    //}
+
     xaction_asset_param asset_param(this, "", 0);
     std::string param_s = asset_param.create();
 
@@ -735,7 +751,7 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     std::string target_action_name = "updateNodeType";
     std::string param_t = stream_params(stream_t, role);
 
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param_s, top::sys_contract_rec_registration_addr, target_action_name, param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
@@ -792,6 +808,14 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     if (type == 2) {
         transfer_amount = 0;
     }
+
+    std::string source_action_name;
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "mortgage";
+    //}
+
     xaction_asset_param asset_param(this, "", transfer_amount);
     std::string param = asset_param.create();
 
@@ -801,7 +825,7 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     target_action_name = "updateNodeInfo";
     param_t = stream_params(stream_t, name, type, mortgage, rate, role, node_sign_key);
 
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param, top::sys_contract_rec_registration_addr, target_action_name, param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
@@ -1108,10 +1132,17 @@ bool api_method_imp::submitProposal(const user_info & uinfo,
     top::base::xstream_t stream_t(top::base::xcontext_t::instance());
     std::string param_t = stream_params(stream_t, target, value, type, effective_timer_height);
 
+    std::string source_action_name;
+    //auto const & chain_fork_config = top::chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    //if (top::chain_fork::xchain_fork_config_center_t::is_forked(chain_fork_config.new_system_contract_runtime_fork_point,
+    //                                                            top::config::gmttime_to_logic_time(top::base::xtime_utl::gmttime()))) {
+    //    source_action_name = "charge";
+    //}
+
     xaction_asset_param asset_param(this, "", deposit);
     std::string param_s = asset_param.create();
 
-    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_tcc_addr, "submitProposal", param_t);
+    auto tx_info = top::data::xtx_action_info(uinfo.account, source_action_name, param_s, top::sys_contract_rec_tcc_addr, "submitProposal", param_t);
     info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
 
     if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {

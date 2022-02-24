@@ -12,9 +12,9 @@
 #include "xbasic/xutility.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xchain_upgrade/xchain_data_processor.h"
-#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -28,6 +28,7 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
@@ -63,8 +64,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_blockstore.attach(store::get_vblockstore());
 
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
-        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
-                                top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
+        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
 
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
@@ -101,7 +101,8 @@ void xtop_application::start() {
     chain_fork::xtop_chain_fork_config_center::init();
     base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
 
-    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
+    m_txpool =
+        xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
     contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
@@ -125,8 +126,14 @@ void xtop_application::start() {
         sync_handler_thread_pool.push_back(make_observer(thread));
     }
 
-    m_chain_applications.push_back(
-        top::make_unique<xbeacon_chain_application_t>(make_observer(this), m_blockstore, m_nodesvr_ptr, m_cert_ptr, make_observer(m_grpc_thread), make_observer(m_sync_thread), sync_account_thread_pool, sync_handler_thread_pool));
+    m_chain_applications.push_back(top::make_unique<xbeacon_chain_application_t>(make_observer(this),
+                                                                                 m_blockstore,
+                                                                                 m_nodesvr_ptr,
+                                                                                 m_cert_ptr,
+                                                                                 make_observer(m_grpc_thread),
+                                                                                 make_observer(m_sync_thread),
+                                                                                 sync_account_thread_pool,
+                                                                                 sync_handler_thread_pool));
 
     for (auto & io_context_pool_info : m_io_context_pools) {
         auto & io_context_pool = top::get<xio_context_pool_t>(io_context_pool_info);
@@ -156,7 +163,8 @@ void xtop_application::start() {
         }
 
         auto const current_local_logic_time = config::gmttime_to_logic_time(base::xtime_utl::gmttime());
-        bool const offline_too_long = current_local_logic_time < last_logic_time || (last_logic_time != 0 && (current_local_logic_time - last_logic_time >= 30)); // 5min = 300s = 30 logic time
+        bool const offline_too_long =
+            current_local_logic_time < last_logic_time || (last_logic_time != 0 && (current_local_logic_time - last_logic_time >= 30));  // 5min = 300s = 30 logic time
         if (offline_too_long || !is_beacon_account()) {
             m_elect_client->bootstrap_node_join();
         }
@@ -241,7 +249,8 @@ observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
 }
 
 xtop_application::xthread_pool_t const & xtop_application::thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept {
-    assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service || thread_pool_type == xthread_pool_type_t::txpool_service);
+    assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service ||
+           thread_pool_type == xthread_pool_type_t::txpool_service);
 
     return m_thread_pools.at(thread_pool_type);
 }
@@ -301,7 +310,7 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
 
     // check node_sign to verify node
     utl::xkeyaddress_t xaddr{node_addr};
-    uint256_t          hash_value = utl::xsha2_256_t::digest(node_addr);
+    uint256_t hash_value = utl::xsha2_256_t::digest(node_addr);
     XMETRICS_GAUGE(metrics::cpu_hash_256_handle_register_node_calc, 1);
 
     utl::xecdsasig_t sig{(const uint8_t *)node_sign.data()};
@@ -373,26 +382,27 @@ bool xtop_application::is_genesis_node() const noexcept {
 bool xtop_application::is_beacon_account() const noexcept {
     try {
         auto const & user_params = data::xuser_params::get_instance();
-        top::common::xnode_id_t node_id = top::common::xnode_id_t{ user_params.account };
+        top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
         std::string result;
         auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore.get(), xvaccount_t{sys_contract_rec_elect_rec_addr});
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
+        base::xauto_ptr<base::xvbstate_t> bstate =
+            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
         if (bstate == nullptr) {
             xerror("xtop_application::is_beacon_account fail-get state.");
             return false;
         }
         xunit_bstate_t unitstate(bstate.get());
 
-        auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{ sys_contract_rec_elect_rec_addr });
-        common::xnetwork_id_t network_id{ top::config::to_chainid(XGET_CONFIG(chain_name)) };
+        auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
+        common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         for (auto const & property : property_names) {
             if (false == unitstate.string_get(property, result) || result.empty()) {
                 xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
                 continue;
             }
             using top::data::election::xelection_result_store_t;
-            auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
+            auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
             auto & current_group_nodes = election_result_store.result_of(network_id)
                                                               .result_of(common::xnode_type_t::committee)
                                                               .result_of(common::xcommittee_cluster_id)

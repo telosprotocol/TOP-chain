@@ -10,6 +10,7 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
 #include "xvm/manager/xcontract_manager.h"

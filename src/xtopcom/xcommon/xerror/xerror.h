@@ -13,11 +13,17 @@ NS_BEG3(top, common, error)
 enum class xenum_errc {
     ok,
     invalid_rotation_status,
+    invalid_account_address,
+    invalid_account_base_address,
+    invalid_account_index,
+    invalid_table_id,
+    invalid_ledger_id,
+    invalid_account_type,
 };
-using xerrc = xenum_errc;
+using xerrc_t = xenum_errc;
 
-std::error_code make_error_code(xerrc const errc) noexcept;
-std::error_condition make_error_condition(xerrc const errc) noexcept;
+std::error_code make_error_code(xerrc_t const errc) noexcept;
+std::error_condition make_error_condition(xerrc_t const errc) noexcept;
 
 std::error_category const & common_category() noexcept;
 
@@ -28,16 +34,16 @@ NS_BEG1(std)
 #if !defined(XCXX14_OR_ABOVE)
 
 template <>
-struct hash<top::common::error::xerrc> final {
-    size_t operator()(top::common::error::xerrc const errc) const noexcept;
+struct hash<top::common::error::xerrc_t> final {
+    size_t operator()(top::common::error::xerrc_t const errc) const noexcept;
 };
 
 #endif
 
 template <>
-struct is_error_code_enum<top::common::error::xerrc> : true_type {};
+struct is_error_code_enum<top::common::error::xerrc_t> : true_type {};
 
 template <>
-struct is_error_condition_enum<top::common::error::xerrc> : true_type {};
+struct is_error_condition_enum<top::common::error::xerrc_t> : true_type {};
 
 NS_END1

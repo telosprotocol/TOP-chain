@@ -5,29 +5,46 @@
 
 #include "xstate_accessor/xtoken.h"
 
-#include "xbasic/xerror/xthrow_error.h"
-#include "xstate_accessor/xerror/xerror.h"
+#include "xbasic/xerror/xerror.h"
+#include "xcontract_common/xerror/xerror.h"
 #include "xutility/xhash.h"
 
 #include <cassert>
 #include <memory>
 
-namespace top {
-namespace state_accessor {
+NS_BEG2(top, state_accessor)
 
-xtop_token::xtop_token(xtop_token && other) noexcept : value_{ other.value_ }, symbol_{ std::move(other.symbol_) } {
-    other.value_ = 0;
+xtop_token::xtop_token(xtop_token && other) noexcept : amount_{ other.amount_ }, symbol_{ std::move(other.symbol_) } {
+    other.amount_ = 0;
 }
 
-xtop_token::xtop_token(std::string symbol) noexcept : symbol_{ std::move(symbol) } {
+xtop_token & xtop_token::operator=(xtop_token && other) {
+    if (amount_ != 0) {
+        top::error::throw_error(error::xerrc_t::token_not_used);
+    }
+
+    assert(amount_ == 0);
+
+    amount_ = other.amount_;
+    symbol_ = std::move(other.symbol_);
+
+    other.amount_ = 0;
+
+    return *this;
 }
 
-xtop_token::xtop_token(std::uint64_t const amount, std::string symbol) noexcept : value_{ amount }, symbol_ { std::move(symbol) } {
+
+xtop_token::xtop_token(common::xsymbol_t symbol) : symbol_{ std::move(symbol) } {
+}
+
+xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) : amount_{ amount }, symbol_ { std::move(symbol) } {
+}
+
+xtop_token::xtop_token(std::uint64_t const amount) : amount_{amount} {
 }
 
 xtop_token::~xtop_token() noexcept {
-    assert(value_ == 0);
-    assert(symbol_.empty());
+    assert(amount_ == 0);
 }
 
 bool xtop_token::operator==(xtop_token const & other) const noexcept {
@@ -40,7 +57,7 @@ bool xtop_token::operator==(xtop_token const & other) const noexcept {
         return true;
     }
 
-    return value_ == other.value_;
+    return amount_ == other.amount_;
 }
 
 bool xtop_token::operator!=(xtop_token const & other) const noexcept {
@@ -57,11 +74,10 @@ bool xtop_token::operator<(xtop_token const & other) const {
     }
 
     if (symbol() != other.symbol()) {
-        std::error_code ec{ error::xerrc_t::invalid_property_type };
-        top::error::throw_error(ec, "xtoken_t::operator<=>(xtoken_t const & other)");
+        top::error::throw_error(error::xerrc_t::token_symbol_not_matched, "xtoken_t::operator<=>(xtoken_t const & other)");
     }
 
-    return value_ < other.value_;
+    return amount_ < other.amount_;
 }
 
 bool xtop_token::operator>(xtop_token const & other) const {
@@ -90,8 +106,8 @@ xtop_token & xtop_token::operator+=(xtop_token & other) noexcept {
         return *this;
     }
 
-    value_ += other.value_;
-    other.value_ = 0;
+    amount_ += other.amount_;
+    other.amount_ = 0;
 
     return *this;
 }
@@ -100,32 +116,76 @@ bool xtop_token::invalid() const noexcept {
     return symbol_.empty();
 }
 
-uint64_t xtop_token::value() const noexcept {
-    return value_;
+uint64_t xtop_token::amount() const noexcept {
+    return amount_;
 }
 
-std::string const & xtop_token::symbol() const noexcept {
+common::xsymbol_t const & xtop_token::symbol() const noexcept {
     return symbol_;
 }
 
 void xtop_token::clear() noexcept {
-    value_ = 0;
+    amount_ = 0;
     symbol_.clear();
 }
 
+void xtop_token::move_to(base::xstream_t& stream) noexcept {
+    serialize_to(stream);
+    clear();  // move serialize, clear token
 }
+void xtop_token::move_from(base::xstream_t& stream) noexcept {
+    serialize_from(stream);
+    stream.reset();
 }
 
-namespace std {
+std::int32_t xtop_token::serialize_to(base::xstream_t & stream) const {
+    return do_write(stream);
+}
+
+std::int32_t xtop_token::serialize_from(base::xstream_t & stream) {
+    return do_read(stream);
+}
+
+std::int32_t xtop_token::serialize_to(base::xbuffer_t & buffer) const {
+    auto const size = buffer.size();
+    buffer << amount_;
+    buffer << symbol_;
+    return buffer.size() - size;
+}
+
+std::int32_t xtop_token::serialize_from(base::xbuffer_t & buffer) {
+    auto const size = buffer.size();
+    buffer >> amount_;
+    buffer >> symbol_;
+    return size - buffer.size();
+}
+
+int32_t xtop_token::do_read(base::xstream_t& stream) {
+    auto const size = stream.size();
+    stream >> amount_;
+    stream >> symbol_;
+    return size - stream.size();
+}
+
+int32_t  xtop_token::do_write(base::xstream_t& stream) const {
+    auto const size = stream.size();
+    stream << amount_;
+    stream << symbol_;
+    return stream.size() - size;
+}
+
+NS_END2
+
+NS_BEG1(std)
 
 size_t hash<top::state_accessor::xtoken_t>::operator()(top::state_accessor::xtoken_t const & amount) const noexcept {
     top::utl::xxh64_t xxhash;
-    auto const value = amount.value();
+    auto const value = amount.amount();
 
     xxhash.update(std::addressof(value), sizeof(value));
-    xxhash.update(amount.symbol());
+    xxhash.update(amount.symbol().to_string());
 
     return static_cast<size_t>(xxhash.get_hash());
 }
 
-}
+NS_END1

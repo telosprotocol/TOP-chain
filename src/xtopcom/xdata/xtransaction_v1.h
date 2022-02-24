@@ -95,6 +95,9 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void                construct_from_json(xJson::Value& tx_json) override;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) override;
 
+    virtual void set_amount(uint64_t) override { assert(false); }
+    virtual uint64_t get_amount() const noexcept override { assert(false); return 0; }
+
     // header
  public:
     virtual int32_t    serialize_write(base::xstream_t & stream, bool is_write_without_len) const override;

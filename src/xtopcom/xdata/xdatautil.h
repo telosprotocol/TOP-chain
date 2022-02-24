@@ -20,6 +20,7 @@ class xdatautil {
     static bool deserialize_owner_str(const std::string & address, std::string & prefix, uint32_t & table_id);
     static bool extract_table_id_from_address(const std::string & address, uint32_t & table_id);
     static bool extract_parts(const std::string& address, std::string& base_addr, uint32_t& table_id);
+    static std::string base_addr(std::string const& address);
     static std::string xip_to_hex(const xvip2_t & xip);
 };
 

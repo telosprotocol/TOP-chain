@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
+#include "xdata/xtop_action_type.h"
 
 NS_BEG2(top, data)
 
@@ -14,5 +13,8 @@ class xtop_consensus_action;
 
 template <xtop_action_type_t ActionTypeV>
 using xconsensus_action_t = xtop_consensus_action<ActionTypeV>;
+
+using xsystem_consensus_action_t = xconsensus_action_t<xtop_action_type_t::system>;
+using xuser_consensus_action_t = xconsensus_action_t<xtop_action_type_t::user>;
 
 NS_END2

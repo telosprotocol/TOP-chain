@@ -19,7 +19,7 @@
 
 NS_BEG3(top, tests, election)
 
-XINLINE_CONSTEXPR char const * TEST_NODE_ID_PREFIX = u8"test_node_id_";
+XINLINE_CONSTEXPR char const * TEST_NODE_ID_PREFIX = "T00000LLyxLtW";
 
 using top::data::election::xelection_cluster_result_t;
 using top::data::election::xelection_group_result_t;

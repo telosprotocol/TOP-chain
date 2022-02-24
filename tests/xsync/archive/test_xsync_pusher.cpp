@@ -5,6 +5,7 @@
 #include "../../mock/xmock_network.hpp"
 #include "xdata/xdatautil.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_util.h"
 
 using namespace top;
@@ -43,11 +44,11 @@ static xJson::Value build_validators() {
     v["group"]["adv0"]["type"] = "advance";
     v["group"]["adv0"]["parent"] = "zone0";
 
-    v["group"]["shard0"]["type"] = "validator";
-    v["group"]["shard0"]["parent"] = "adv0";
+    v["group"]["T80000ffffffffffffffffffffffffffffffffffffffff"]["type"] = "validator";
+    v["group"]["T80000ffffffffffffffffffffffffffffffffffffffff"]["parent"] = "adv0";
 
-    v["node"]["node0"]["parent"] = "shard0";
-    v["node"]["node1"]["parent"] = "shard0";
+    v["node"]["T80000fffffffffffffffffffffffffffffffffffffffd"]["parent"] = "T80000ffffffffffffffffffffffffffffffffffffffff";
+    v["node"]["T80000fffffffffffffffffffffffffffffffffffffffe"]["parent"] = "T80000ffffffffffffffffffffffffffffffffffffffff";
 
     return v;
 }
@@ -60,8 +61,8 @@ static xJson::Value build_archives() {
     v["group"]["arc0"]["type"] = "archive";
     v["group"]["arc0"]["parent"] = "zone0";
 
-    v["node"]["node2"]["parent"] = "arc0";
-    v["node"]["node3"]["parent"] = "arc0";
+    v["node"]["T80000fffffffffffffffffffffffffffffffffffffffd"]["parent"] = "T80000ffffffffffffffffffffffffffffffffffffffff";
+    v["node"]["T80000fffffffffffffffffffffffffffffffffffffffe"]["parent"] = "T80000ffffffffffffffffffffffffffffffffffffffff";
 
     return v;
 }
