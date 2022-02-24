@@ -626,10 +626,7 @@ xgroup_update_result_t xtop_cluster_element::add_group_element_with_lock_hold_ou
           group_element->address().to_string().c_str(),
           start_time);
 
-    auto const & keepalive_strategy =
-        (zone_element_type == common::xnode_type_t::storage || zone_element_type == common::xnode_type_t::edge || zone_element_type == common::xnode_type_t::fullnode) ?
-            common::xnonconsensus_election_result_keepalive_strategy :
-            common::xdefault_election_result_keepalive_strategy;
+    auto const & keepalive_strategy = common::xdefault_election_result_keepalive_strategy;
 
     if (group_info_container.size() > keepalive_strategy.faded_threshold_count) {
         auto faded_it = std::next(std::begin(group_info_container), keepalive_strategy.faded_threshold_count);

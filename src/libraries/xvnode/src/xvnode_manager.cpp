@@ -339,16 +339,13 @@ void xtop_vnode_manager::stop_vnodes_with_lock_hold_outside(common::xlogic_time_
             if (vnode->faded() && vnode->running()) {
                 vnode->stop();
                 m_vnode_proxy->unreg(vnode->address());
-            } else if (common::has<common::xnode_type_t::storage>(vnode->type()) || common::has<common::xnode_type_t::edge>(vnode->type()) || common::has<common::xnode_type_t::fullnode>(vnode->type())) {
-                vnode->fade();
-                vnode->stop();
-                m_vnode_proxy->unreg(vnode->address());
+
+                xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
+                      vnode.get(),
+                      vnode->address().to_string().c_str(),
+                      vnode->outdate_time(),
+                      time);
             }
-            xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
-                  vnode.get(),
-                  vnode->address().to_string().c_str(),
-                  vnode->outdate_time(),
-                  time);
 
             it = m_all_nodes.erase(it);
             break;
