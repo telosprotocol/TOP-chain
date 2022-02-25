@@ -72,6 +72,10 @@ void xcluster_query_manager::getAccount(xjson_proc_t & json_proc) {
     assert(nullptr != m_store);
     const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     xdbg("xcluster_query_manager::getAccount account: %s", account.c_str());
+
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+
     json_proc.m_response_json["data"] = m_bh.parse_account(account);
 }
 
@@ -80,6 +84,10 @@ void xcluster_query_manager::getTransaction(xjson_proc_t & json_proc) {
     const string & tx_hash_str = json_proc.m_request_json["params"]["tx_hash"].asString();
     const string & version = json_proc.m_request_json["version"].asString();
     xdbg("xcluster_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
+
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+
     uint256_t tx_hash = hex_to_uint256(tx_hash_str);
     std::string strHash((char*)tx_hash.data(), tx_hash.size());
 
@@ -170,6 +178,10 @@ void xcluster_query_manager::get_property(xjson_proc_t & json_proc) {
     const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     const string & type = json_proc.m_request_json["params"]["type"].asString();
     const std::string & prop_name = json_proc.m_request_json["params"]["data"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+
 #if 1
     xJson::Value result_json;
     m_bh.query_account_property(result_json, account, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
@@ -202,6 +214,10 @@ void xcluster_query_manager::get_property(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+
     std::string version = json_proc.m_request_json["version"].asString();
     base::xvaccount_t _owner_vaddress(owner);
     std::string type = "height";
@@ -413,6 +429,12 @@ void xcluster_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
     xdbg("account: %s, target: %s", owner.c_str(), target.c_str());
 
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
+
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
     std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
@@ -429,6 +451,12 @@ void xcluster_query_manager::getElectInfo(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
     xdbg("account: %s, target: %s", owner.c_str(), target.c_str());
+
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
 
     std::vector<std::string> ev;
     xJson::Value j;
@@ -492,6 +520,12 @@ void xcluster_query_manager::set_sharding_vote_prop(xjson_proc_t & json_proc, st
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
 
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
+
     // XTODO not support target empty now
     xJson::Value jv;
     if (target == "") {
@@ -509,6 +543,12 @@ void xcluster_query_manager::set_sharding_reward_claiming_prop(xjson_proc_t & js
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
 
+    // add top address check
+    ADDRESS_CHECK_VALID(owner)
+    if (!target.empty()) {
+        ADDRESS_CHECK_VALID(target)
+    }
+
     xJson::Value jv = m_bh.parse_sharding_reward(target, prop_name);
     json_proc.m_response_json["data"] = jv;
 }
@@ -520,6 +560,10 @@ void xcluster_query_manager::queryNodeReward(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::listVoteUsed(xjson_proc_t & json_proc) {
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(target)
+
     uint32_t sub_map_no = (utl::xxh32_t::digest(target) % 4) + 1;
     std::string prop_name;
     prop_name = prop_name + xstake::XPORPERTY_CONTRACT_VOTES_KEY_BASE + "-" + std::to_string(sub_map_no);
@@ -528,6 +572,10 @@ void xcluster_query_manager::listVoteUsed(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::queryVoterDividend(xjson_proc_t & json_proc) {
     std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(target)
+
     uint32_t sub_map_no = (utl::xxh32_t::digest(target) % 4) + 1;
     std::string prop_name;
     prop_name = prop_name + xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE + "-" + std::to_string(sub_map_no);
@@ -536,7 +584,7 @@ void xcluster_query_manager::queryVoterDividend(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::queryProposal(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
-    std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
+    std::string target = json_proc.m_request_json["params"]["proposal_id"].asString();
     std::string proposal_version = json_proc.m_request_json["params"]["proposal_version"].asString();
     xdbg("account: %s, target: %s, proposal_version: %s", owner.c_str(), target.c_str(), proposal_version.c_str());
 

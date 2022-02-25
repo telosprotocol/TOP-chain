@@ -176,7 +176,7 @@ int32_t xtop_node_id::serialize_from(base::xbuffer_t & buffer) {
 
 void xtop_node_id::parse() {
     if (m_account_string.length() < static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
-        m_account_string.length() >= static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
+        m_account_string.length() > static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
 #if !defined(XENABLE_TESTS)
         assert(false);
 #endif

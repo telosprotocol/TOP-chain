@@ -126,7 +126,7 @@ namespace top
             {
                 enum_vaccount_address_prefix_size = 6,  //Txyyyy, eg.T80000
                 enum_vaccount_address_min_size  = 18, //(>20,<256)
-                enum_vaccount_address_max_size  = 49,//(>20,<256)
+                enum_vaccount_address_max_size  = 50,//(>20,<256)
             };
 
             enum enum_vaccount_compact_type
@@ -253,7 +253,7 @@ namespace top
             {
                 uint16_t  ledger_id = 0;//0 is valid and default value
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size >= enum_vaccount_address_prefix_size) && (account_address_size < enum_vaccount_address_max_size) )
+                if( (account_address_size >= enum_vaccount_address_prefix_size) && (account_address_size <= enum_vaccount_address_max_size) )
                 {
                     const std::string string_ledger_id = account_addr.substr(2,4);//always 4 hex chars
                     ledger_id = (uint16_t)xstring_utl::hex2uint64(string_ledger_id);
@@ -333,7 +333,7 @@ namespace top
                 ledger_sub_addr = 0;//0 is valid and default value
                 account_index   = get_index_from_account(account_addr);  //hash whole account address
                 const int account_address_size = (int)account_addr.size();
-                if( (account_address_size < enum_vaccount_address_max_size) && (account_address_size > enum_vaccount_address_prefix_size) )
+                if( (account_address_size <= enum_vaccount_address_max_size) && (account_address_size > enum_vaccount_address_prefix_size) )
                 {
                     ledger_id = get_ledgerid_from_account(account_addr);
                     

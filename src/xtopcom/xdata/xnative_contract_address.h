@@ -3,14 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-
-<<<<<<< HEAD
 #include "xcommon/xaccount_address.h"
-
-=======
 #include "xbase/xcxx_config.h"
 #include "xvledger/xvaccount.h"
->>>>>>> 70328f7c (add top address check)
+
 #include <cstdint>
 
 NS_BEG1(top)

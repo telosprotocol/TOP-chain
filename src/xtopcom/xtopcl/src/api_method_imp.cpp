@@ -588,7 +588,7 @@ bool api_method_imp::queryProposal(const user_info & uinfo, const std::string & 
     auto info = new task_info_callback<GetProposalResult>();
     set_user_info(info, uinfo, CMD_GET_PROPOSAL, func, false);
     info->params["account_addr"] = uinfo.account;
-    info->params["node_account_addr"] = target;
+    info->params["proposal_id"] = target;
     info->params["proposal_version"] = "v1";
 
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);

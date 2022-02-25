@@ -558,7 +558,7 @@ void xarc_query_manager::queryVoterDividend(xjson_proc_t & json_proc) {
 
 void xarc_query_manager::queryProposal(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
-    std::string target = json_proc.m_request_json["params"]["node_account_addr"].asString();
+    std::string target = json_proc.m_request_json["params"]["proposal_id"].asString();
     std::string proposal_version = json_proc.m_request_json["params"]["proposal_version"].asString();
     xdbg("account: %s, target: %s, proposal_version: %s", owner.c_str(), target.c_str(), proposal_version.c_str());
 
