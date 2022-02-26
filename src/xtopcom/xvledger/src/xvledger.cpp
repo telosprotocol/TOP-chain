@@ -196,6 +196,8 @@ namespace top
             if(NULL == plugin)
                 return false;
             
+            uint64_t new_highest_cert_height = 0;
+            
             std::string vmeta_bin;
             bool update_success = false;
             if(NULL != plugin->get_block_meta())
@@ -203,9 +205,12 @@ namespace top
                 xauto_lock<xspinlock_t> locker(get_spin_lock());
                 xvactmeta_t * meta_ptr = get_meta();
                 update_success = meta_ptr->set_block_meta(*plugin->get_block_meta());
+                new_highest_cert_height = meta_ptr->_highest_cert_block_height;
                 if(update_success)
                 {
                     if(  (meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                       ||(is_table_address() && new_highest_cert_height >= (meta_ptr->get_highest_saved_block_height() + enum_account_save_meta_interval) )
+                       ||(!is_table_address() && new_highest_cert_height >= (meta_ptr->get_highest_saved_block_height() + enum_account_save_meta_offset) )
                        ||(meta_ptr->_highest_commit_block_height <= 2) )//froce save to db for the first 3 blocks
                     {
                         m_meta_ptr->update_meta_process_id(base::xvchain_t::instance().get_current_process_id());
@@ -214,7 +219,13 @@ namespace top
                     }
                 }
             }
-            save_meta(vmeta_bin);
+            
+            bool result = save_meta(vmeta_bin);
+            if(result)
+            {
+                //update_highest_saved_block_height safe to call without lock
+                get_meta()->update_highest_saved_block_height(new_highest_cert_height);
+            }
             return update_success;
         }
            
@@ -419,7 +430,7 @@ namespace top
                     return false;
                 }
             }
-            return true;
+            return false;
         }
         
         bool  xvaccountobj_t::save_meta(bool carry_process_id)
@@ -441,11 +452,13 @@ namespace top
                 }
             }
             
-            if(vmeta_bin.empty() == false)
+            bool result = save_meta(vmeta_bin);
+            if(result)
             {
-                return save_meta(vmeta_bin);
+                //update_highest_saved_block_height safe to call without lock
+                get_meta()->update_highest_saved_block_height(get_meta()->_highest_cert_block_height);
             }
-            return true;
+            return result;
         }
     
         xauto_ptr<xvactplugin_t> xvaccountobj_t::get_plugin(enum_xvaccount_plugin_type plugin_type)

@@ -563,7 +563,7 @@ namespace top
             
             const uint16_t  get_meta_process_id() const {return _meta_process_id;}
             const uint8_t   get_meta_spec_version()const{return _meta_process_id;}
-            
+            const uint64_t  get_highest_saved_block_height() const {return _highest_saved_block_height;}
         protected: //APIs only open for  xvaccountobj_t object
             bool    set_block_meta(const xblockmeta_t & new_meta);
             bool    set_state_meta(const xstatemeta_t & new_meta);
@@ -577,6 +577,7 @@ namespace top
             xindxmeta_t  &  get_index_meta();
             xsyncmeta_t  &  get_sync_meta();
             
+            void    update_highest_saved_block_height(const uint64_t new_height);
             void    update_meta_process_id(const uint16_t _process_id);
             void    init_version_control();
 
@@ -621,7 +622,7 @@ namespace top
             //#ifdef DEBUG
             std::string m_account_address;
             //#endif //debug purpose
-            
+            uint64_t  _highest_saved_block_height; //just tracking purpose
             uint16_t  _meta_process_id;   //which process produce and save this meta
             uint8_t   _meta_spec_version; //add version control for compatible case
         };

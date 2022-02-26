@@ -433,7 +433,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            _highest_saved_block_height = 0;
             #ifdef DEBUG
             m_account_address = _account.get_address();
             #else
@@ -453,7 +453,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            _highest_saved_block_height = 0;
             *this = obj;
         }
     
@@ -462,7 +462,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            _highest_saved_block_height = 0;
             *this = obj;
         }
     
@@ -480,6 +480,7 @@ namespace top
             _meta_process_id = obj._meta_process_id;      //reserved for future
             _meta_spec_version = obj._meta_spec_version; //add version control for compatible case
             m_account_address = obj.m_account_address;
+            _highest_saved_block_height = obj._highest_saved_block_height;
             
             xblockmeta_t::operator=(obj);
             xstatemeta_t::operator=(obj);
@@ -489,6 +490,12 @@ namespace top
             return *this;
         }
     
+        void   xvactmeta_t::update_highest_saved_block_height(const uint64_t new_height)
+        {
+            if(new_height > _highest_saved_block_height)
+                _highest_saved_block_height = new_height;
+        }
+        
         void   xvactmeta_t::update_meta_process_id(const uint16_t _process_id)
         {
             if(_meta_process_id != _process_id)
@@ -857,6 +864,10 @@ namespace top
                     update_cp_connect(cp_connect_height, cp_connect_hash);
                 }
             }
+            
+            //init by saved meta
+            if(_highest_saved_block_height < _highest_cert_block_height)
+                _highest_saved_block_height = _highest_cert_block_height;
 
             init_version_control();  // reinit version control
 

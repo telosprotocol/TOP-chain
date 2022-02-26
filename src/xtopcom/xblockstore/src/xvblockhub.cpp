@@ -103,9 +103,10 @@ namespace top
                         recovered_something = true;
                         xwarn("xblockacct_t::recover_meta,recover block at height=% " PRId64 " of account(%s)",i,get_address().c_str());
                     }
-                    else//stop recover if not load any block
+                    else if(get_account_obj()->is_table_address() == false) //stop recover if not load any block
                     {
-                        break;
+                        if((i - min_recover_height) >= base::enum_account_save_meta_offset)
+                            break;//try window size of save_meta
                     }
                 }
             }
@@ -2234,6 +2235,10 @@ namespace top
                     return nullptr;
                 }
             }
+            else //try best to reconnect and push status if possible
+            {
+                process_index(new_idx());
+            }
 
             return cached_index_ptr;
         }
@@ -2334,6 +2339,10 @@ namespace top
                 process_index(this_block);//now ready process this block
             }
             
+            update_meta_metric(this_block);
+            if(this_block_height >= m_meta->_highest_cert_block_height)//just return as no further blocks
+                return true;
+
             if(load_index(this_block_height + 1) > 0) //force this load next block
             {
                 auto  it_next_height = m_all_blocks.find(this_block_height + 1);
