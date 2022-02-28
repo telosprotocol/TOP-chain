@@ -31,7 +31,7 @@ public:
      * @return int32_t  see xverifier_errors definition
      */
 
-    static int32_t  address_is_valid(const std::string & addr);
+    static int32_t  address_is_valid(const std::string & addr, bool isTransaction = false);
     /**
      * @brief judge address valid
      *

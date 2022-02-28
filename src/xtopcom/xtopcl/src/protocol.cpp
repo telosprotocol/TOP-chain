@@ -223,6 +223,8 @@ void protocol::regist_protocols() {
 
     regist_create_function(CMD_GET_BLOCK, []() { return new GetBlockCmd(); });
 
+    regist_create_function(CMD_GET_BLOCKS_BY_HEIGHT, []() { return new GetBlockCmd(); });
+
     regist_create_function(CMD_NODE_REGISTER, []() { return new NodeRegisterCmd(); });
 
     regist_create_function(CMD_NODE_DEREGISTER, []() { return new NodeDeRegisterCmd(); });

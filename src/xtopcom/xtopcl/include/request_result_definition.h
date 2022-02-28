@@ -42,6 +42,7 @@ const char CMD_CREATE_CHILD_ACCOUNT[]{"create_child_account"};
 const char CMD_LOCK_TOKEN[]{"lock_token"};
 const char CMD_UNLOCK_TOKEN[]{"unlock_token"};
 const char CMD_GET_BLOCK[]{"getBlock"};
+const char CMD_GET_BLOCKS_BY_HEIGHT[]{"getBlocksByHeight"};
 const char CMD_NODE_REGISTER[]{"registerNode"};
 const char CMD_NODE_DEREGISTER[]{"unregisterNode"};
 const char CMD_REDEEM[]{"redeemNodeDeposit"};

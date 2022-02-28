@@ -5,6 +5,9 @@
 #include "xconfig/xconfig_register.h"
 #include "xverifier/xverifier_utl.h"
 
+using namespace top;
+using namespace top::xverifier;
+
 class test_utl : public testing::Test {
 protected:
     void SetUp() override {}
@@ -42,3 +45,27 @@ TEST_F(test_utl, address_valid) {
 
 }
 
+TEST_F(test_utl, address_valid_2) {
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T2000"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20000ewdfewfewgregregrefewfewgreghregewfqewfgewgregregegferfwgwfwqfefedsgfrewg4eggregergggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggwrfewrewrewrewrewrewgfregrhrtjtyjtyjyhrtgregrewgegergregegegrgwgfewgregregrwgwrgrewwfqew23423rewfqeswf"), false);
+
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@0"), true);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@63"), true);
+
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@130"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@e8"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVcy1wMp4CoEHWxUeB4a@0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("A20005MVfDLsBKVcy1wMp4CoEHWxUeB4a@0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVc@y1wMp4CoEHWxUeB4a@0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T60000d00e5539d4306fa4e0e274bc4a795e863d44e2b0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T80000d00e5539d4306fa4e0e274bc4A795e863d44e2b0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T80000d00e5539d4306fa4e0e274bc4a795e86g3d44e2b0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T80004d00e5539d4306fa4e0e274bc4a795e863d44e2b0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T8000gd00e5539d4306fa4e0e274bc4a795e863d44e2b0"), false);
+
+    EXPECT_EQ(top::base::xvaccount_t::check_address("Ta0000@5"), true);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("Ta0001@0"), true);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("Ta0002@1"), true);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T80000d00e5539d4306fa4e0e274bc4a795e863d44e2b0"), true);
+}

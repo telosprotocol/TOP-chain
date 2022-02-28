@@ -29,8 +29,8 @@ int32_t xtx_verifier::verify_address(data::xtransaction_t const * trx) {
         return xverifier_error::xverifier_error_addr_invalid;
     }
 
-    if (xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(src_addr) ||
-        xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(dst_addr)) {
+    if (xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(src_addr, true) ||
+        xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(dst_addr, true)) {
         xwarn("[global_trace][xtx_verifier][address_verify][address invalid], tx:%s,%s,%s", trx->dump().c_str(), src_addr.c_str(), dst_addr.c_str());
         return  xverifier_error::xverifier_error_addr_invalid;
     }

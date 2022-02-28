@@ -422,6 +422,18 @@ namespace top
             return account_obj->get_latest_committed_block_height();
         }
 
+        uint64_t xvblockstore_impl::get_latest_locked_block_height(const base::xvaccount_t & account, const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_locked_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_cert_block_height(const base::xvaccount_t & account, const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_cert_block_height();
+        }
+
         uint64_t xvblockstore_impl::get_latest_connected_block_height(const base::xvaccount_t & account,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
