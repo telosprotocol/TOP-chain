@@ -18,7 +18,6 @@ public:
     ~xdb_read_tools_t();
     void db_read_block(std::string const & address, const uint64_t height);
     void db_read_meta(std::string const & address);
-    void db_compact_db();
 private:
     xobject_ptr_t<store::xstore_face_t> m_store { nullptr };
     base::xvdbstore_t*  m_xvdb_ptr { nullptr };

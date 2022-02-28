@@ -55,13 +55,4 @@ void xdb_read_tools_t::db_read_meta(std::string const & address) {
     }
 }
 
-void xdb_read_tools_t::db_compact_db() {
-    std::cout << "db_compact_db start: " << std::endl;
-    if (m_xvdb_ptr != nullptr) {
-        std::string begin_key;
-        std::string end_key;
-        m_xvdb_ptr->compact_range(begin_key, end_key);
-    }
-}
-
 NS_END2
