@@ -905,16 +905,16 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
     rocksdb::Slice  begin_slice(begin_key);
     rocksdb::Slice  end_slice(end_key);
     
+    rocksdb::CompactRangeOptions cro = rocksdb::CompactRangeOptions();
+    cro.bottommost_level_compaction = rocksdb::BottommostLevelCompaction::kForce;
     if( (begin_key.empty() == false) && (end_key.empty() == false) ) //specified range of begin and end
     {
         rocksdb::ColumnFamilyHandle* begin_cf = get_cf_handle(begin_key);
         rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
-        if(end_cf == begin_cf) //most case
-        {
-            printf("xdb_impl::compact_range,one cf \n");
-            rocksdb::Status res = m_db->CompactRange(rocksdb::CompactRangeOptions(),begin_cf,&begin_slice,&end_slice);
-            if (!res.ok())
-            {
+        if (end_cf == begin_cf) {
+            xinfo("xdb_impl::compact_range,one cf \n");
+            rocksdb::Status res = m_db->CompactRange(cro, begin_cf,&begin_slice,&end_slice);
+            if (!res.ok()) {
                 if (res.IsNotFound()) //possible case
                     return true;
                 
@@ -925,13 +925,11 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
         }
     }
     
-    printf("xdb_impl::compact_range,all cfs \n");
-    for(size_t i = 0; i < m_cf_handles.size(); ++i)
-    {
+    xinfo("xdb_impl::compact_range,all cfs cro \n");
+    for(size_t i = 0; i < m_cf_handles.size(); ++i) {
         rocksdb::ColumnFamilyHandle* cf_handle = m_cf_handles[i];
-        if(cf_handle != nullptr)//try every CF
-        {
-            m_db->CompactRange(rocksdb::CompactRangeOptions(),cf_handle,&begin_slice,&end_slice);
+        if(cf_handle != nullptr) { //try every CF
+            m_db->CompactRange(cro,cf_handle,&begin_slice,&end_slice);
         }
     }
     return true;
