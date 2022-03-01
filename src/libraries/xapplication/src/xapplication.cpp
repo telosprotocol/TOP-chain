@@ -39,7 +39,8 @@
 #include "xstore/xstore_error.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
-
+#include "xdb/xdb_face.h"
+#include <fstream>
 #include <stdexcept>
 
 NS_BEG2(top, application)
@@ -57,7 +58,38 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
-    std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
+      
+    int db_kind = top::db::xdb_kind_kvdb;
+    std::string extra_config = base::xvchain_t::instance().get_data_dir_path();
+    if (extra_config.empty()) {
+        extra_config = ".extra_conf.json"; 
+    } else {
+        extra_config += "/.extra_conf.json"; 
+    }
+
+    std::ifstream keyfile(extra_config, std::ios::in);
+    xinfo("xtop_application::read db start extra_config %s", extra_config.c_str());
+    if (keyfile) {
+        xJson::Value key_info_js;
+        std::stringstream buffer;
+        buffer << keyfile.rdbuf();
+        keyfile.close();
+        std::string key_info = buffer.str();
+        xJson::Reader reader;
+        reader.parse(key_info, key_info_js);
+        std::string db_compress = key_info_js["db_compress"].asString();
+        if (db_compress == "high_compress") {
+            db_kind |= top::db::xdb_kind_high_compress;
+        } else if (db_compress == "no_compress" ) {
+            db_kind |= top::db::xdb_kind_no_compress;
+        } else if (db_compress == "bottom_compress" ) {
+            db_kind |= top::db::xdb_kind_bottom_compress;
+        }
+
+        xinfo("xtop_application::db_compress type %s", db_compress.c_str());
+    }
+  
+    std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create(db_kind, XGET_CONFIG(db_path));
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
