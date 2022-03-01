@@ -500,7 +500,7 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
         deserilize_vote_map_field(v.first, duration, lock_time);
         deserilize_vote_map_value(v.second, vote_num);
 
-#ifdef DEBUG
+#ifdef PERIOD_MOCK
         if(m_timer_height - lock_time >= duration / 60){
 #else
         if(m_timer_height - lock_time >= duration * 24 * 60 * 6){
@@ -542,7 +542,7 @@ int32_t xaccount_context_t::insert_pledge_vote_property(xaction_pledge_token_vot
         uint64_t lock_time{0};
         deserilize_vote_map_field(v.first, duration, lock_time);
         deserilize_vote_map_value(v.second, vote_num);
-#ifdef DEBUG
+#ifdef PERIOD_MOCK
         if(action.m_lock_duration == duration && (m_timer_height - lock_time) < 10){
 #else
         // merge vote with same duration in 24 hours

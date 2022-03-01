@@ -13,12 +13,6 @@
 #include "xbase/xmem.h"
 namespace top { namespace data {
 
-#ifdef DEBUG
-#if !defined(ENABLE_CREATE_USER)
-#define ENABLE_CREATE_USER
-#endif
-#endif
-
 enum enum_xtransaction_type {
     xtransaction_type_create_user_account        = 0,    // create user account
     xtransaction_type_deploy_wasm_contract       = 1,    // user deploy wasm contract
