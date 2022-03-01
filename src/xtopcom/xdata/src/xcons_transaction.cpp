@@ -186,6 +186,7 @@ std::string xcons_transaction_t::dump(bool detail) const {
     ss << "}";
     if (is_self_tx() || is_send_tx()) {
         ss << ",nonce:" << get_transaction()->get_tx_nonce();
+        ss << ",type:" << get_transaction()->get_tx_type();
     }
     if (is_send_tx() || is_self_tx()) {
         if (get_transaction() != nullptr) {

@@ -81,7 +81,7 @@ const int XPROPERTY_SPLITED_NUM = 4;
 const int DENOMINATOR = 10000;
 const uint64_t REWARD_PRECISION = 1000000;
 
-#ifdef DEBUG
+#ifdef PERIOD_MOCK
 constexpr common::xlogic_time_t REDEEM_INTERVAL = 2;  // 72 hours
 #else
 constexpr common::xlogic_time_t REDEEM_INTERVAL = 25920;  // 72 hours
