@@ -376,7 +376,7 @@ void EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pb
 
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
     if (ec) {
-        xwarn("speard rumor fail. %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("spread rumor fail. %s %s", ec.category().name(), ec.message().c_str());
     }
     return;
 }
