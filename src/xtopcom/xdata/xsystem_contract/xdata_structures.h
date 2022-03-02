@@ -386,6 +386,12 @@ public:
     /// @return 
     bool can_be_fullnode() const noexcept;
 
+    template <common::xminer_type_t MinerTypeV>
+    bool has() const noexcept {
+        xdbg("queried miner type: %s, registered miner type %s", common::to_string(MinerTypeV).c_str(), common::to_string(m_registered_miner_type).c_str());
+        return common::has<MinerTypeV>(m_registered_miner_type);
+    }
+
     /**
      * @brief check if self is an invlid node
      *

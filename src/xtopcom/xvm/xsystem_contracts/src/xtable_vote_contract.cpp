@@ -201,7 +201,7 @@ void xtable_vote_contract::handle_votes(common::xaccount_address_t const & accou
             data::system_contract::xreg_node_info node_info;
             auto ret = get_node_info(address, node_info);
             XCONTRACT_ENSURE(ret == 0, "xtable_vote_contract::handle_votes: node not exist");
-            XCONTRACT_ENSURE(node_info.could_be_auditor() == true, "xtable_vote_contract::handle_votes: only auditor can be voted");
+            XCONTRACT_ENSURE(node_info.has<common::xminer_type_t::advance>(), "xtable_vote_contract::handle_votes: only auditor can be voted");
         }
         uint64_t node_total_votes = get_advance_tickets(address);
         calc_advance_tickets(address, votes, votes_table, b_vote, node_total_votes);
