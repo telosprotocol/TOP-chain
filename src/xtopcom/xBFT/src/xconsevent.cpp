@@ -75,11 +75,12 @@ namespace top
         {
         }
 
-        xcstc_fire::xcstc_fire(base::xvblock_t * block)
+        xcstc_fire::xcstc_fire(base::xvblock_t * block, uint32_t broadcast_round)
             :base::xvevent_t(base::enum_xevent_core_type_tc)
         {
             block->add_ref();
             _tc_block = block;
+            m_broadcast_round = broadcast_round;
         }
 
         xcstc_fire::~xcstc_fire()

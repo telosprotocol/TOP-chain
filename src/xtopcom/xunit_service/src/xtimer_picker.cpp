@@ -14,6 +14,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xdata/xblockbuild.h"
 #include "xelection/xdata_accessor_error.h"
+#include "xcertauth/src/xsigndata.h"
 
 #include <inttypes.h>
 
@@ -132,6 +133,78 @@ bool xtimer_picker_t::on_create_block_event(const base::xvevent_t & event,xcsobj
     return true;  // stop here
 }
 
+bool xtimer_picker_t::check_first_round_tc_broadcast_leader(base::xvblock_t* tc_block) {
+    auto local_xip = get_xip2_addr();
+    std::error_code ec{election::xdata_accessor_errc_t::success};
+    auto accessor = m_params->get_resources()->get_data_accessor();
+    auto election_epoch = accessor->election_epoch_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
+    if (ec) {
+        xunit_warn("xtimer_picker_t::check_first_round_tc_broadcast_leader xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        return false;
+    }
+
+    xvip2_t leader_xip = m_leader_selector->get_leader_xip(tc_block->get_viewid(), get_account(), nullptr, local_xip, local_xip, election_epoch, enum_rotate_mode_no_rotate);
+    if (xcons_utl::xip_equals(leader_xip, local_xip)) {
+        xdbg("xtimer_picker_t::check_first_round_tc_broadcast_leader selected.height=%ld,leader_xip=%s",tc_block->get_height(),xcons_utl::xip_to_hex(local_xip).c_str());
+        return true;
+    } else {
+        xdbg("xtimer_picker_t::check_first_round_tc_broadcast_leader not me.height=%ld,leader_xip=%s,local_xip=%s",tc_block->get_height(),xcons_utl::xip_to_hex(leader_xip).c_str(),xcons_utl::xip_to_hex(local_xip).c_str());
+    }
+    return false;
+}
+
+bool xtimer_picker_t::check_second_round_tc_broadcast_leader(base::xvblock_t* tc_block) {
+    base::xvaccount_t tc_account(sys_contract_beacon_timer_addr);
+    base::xauto_ptr<base::xvblock_t> last_tc = get_vblockstore()->get_latest_cert_block(tc_account);
+    if (nullptr == last_tc || last_tc->get_height() == 0) {
+        return false;
+    }
+
+    if (last_tc->get_height() >= tc_block->get_height()) {
+        xdbg("xtimer_picker_t::second_round_tc_broadcast already in db,dbtc_height=%ld,newtc_height=%ld",last_tc->get_height(),tc_block->get_height());
+        return false;
+    }
+
+    auto local_xip = get_xip2_addr();
+    if (!tc_block->get_cert()->is_validator(local_xip)) {
+        xwarn("xtimer_picker_t::second_round_tc_broadcast xip not in same group.height=%ld,tc_leader=%s,local_xip=%s", tc_block->get_height(), xcons_utl::xip_to_hex(last_tc->get_cert()->get_validator()).c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
+        return false;
+    }
+
+    const std::string& verify_sig = last_tc->get_cert()->get_verify_signature();
+    top::auth::xmutisigdata_t aggregated_sig_obj;
+    if (aggregated_sig_obj.serialize_from_string(verify_sig) < 0) {
+        xerror("xtimer_picker_t::second_round_tc_broadcast serialize signature fail.size=%zu", verify_sig.size());
+        return false;
+    }
+
+    int local_xip_slot = get_node_id_from_xip2(local_xip);
+    int slot_offset = tc_block->get_height();
+    top::auth::xnodebitset& nodebits = aggregated_sig_obj.get_nodebitset();
+    if (local_xip_slot >= nodebits.get_alloc_bits()) {
+        xerror("xtimer_picker_t::second_round_tc_broadcast fail-local xip slot too large.local_xip_slot=%d,bits=%d",local_xip_slot,nodebits.get_alloc_bits());
+        return false;
+    }
+
+    for(int i = 0; i < nodebits.get_alloc_bits(); ++i) {
+        int slot = (i + slot_offset) % nodebits.get_alloc_bits();
+        xassert(slot < nodebits.get_alloc_bits());
+        if (nodebits.is_set(slot)) {  // find first online slot as leader node to broadcast
+            if (local_xip_slot == slot) {
+                xdbg("xtimer_picker_t::second_round_tc_broadcast selected.height=%ld,leader_slot=%d,local_slot=%d,bits=%d",tc_block->get_height(),slot,local_xip_slot,nodebits.get_alloc_bits());
+                return true;
+            } else {
+                xdbg("xtimer_picker_t::second_round_tc_broadcast not me.height=%ld,leader_slot=%d,local_slot=%d",tc_block->get_height(),slot,local_xip_slot);
+                return false;
+            }
+        } else {
+            xdbg("xtimer_picker_t::second_round_tc_broadcast bit not set.height=%ld,slot=%d",tc_block->get_height(),slot);
+        }
+    }
+    xerror("xtimer_picker_t::second_round_tc_broadcast not find slot.height=%ld",tc_block->get_height());
+    return false;
+}
+
 // leader broadcast tc block to all nodes
 bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
 {
@@ -140,25 +213,26 @@ bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobjec
     auto tc_block = e.get_tc_block();
     m_latest_cert_clock = tc_block->get_clock();
 
-    std::error_code ec{election::xdata_accessor_errc_t::success};
-    auto accessor = m_params->get_resources()->get_data_accessor();
-    auto election_epoch = accessor->election_epoch_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
-    if (ec) {
-        xunit_warn("xtimer_picker_t::on_time_cert_event xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
-        return false;
+    bool is_broadcast_leader = false;
+    if (e.get_broadcast_round() == 0) {  // first broadcast round elect leader
+        is_broadcast_leader = check_first_round_tc_broadcast_leader(tc_block);
     }
-    xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
-    xunit_dbg("[xtimer_picker_t::on_time_cert_event] broadcast timer cert block %s, height %" PRIu64, tc_block->get_account().c_str(), tc_block->get_height());
-    xvip2_t leader_xip = m_leader_selector->get_leader_xip(tc_block->get_viewid(), get_account(), nullptr, local_xip, local_xip, election_epoch, enum_rotate_mode_no_rotate);
-    if (xcons_utl::xip_equals(leader_xip, local_xip)) {
+    if (e.get_broadcast_round() == 1) {  //second broadcast round elect leader
+        is_broadcast_leader = check_second_round_tc_broadcast_leader(tc_block);
+    }
+
+    xdbg("xtimer_picker_t::on_time_cert_event height=%ld,round=%d,is_leader=%d", m_latest_cert_clock, e.get_broadcast_round(),is_broadcast_leader);
+
+    if (is_broadcast_leader) {
         auto    network_proxy = m_params->get_resources()->get_network();
         if (network_proxy != nullptr) {
-            xunit_info("[timer_picker::on_time_cert_event] sendout on_time_cert_event src %" PRIx64 ".%" PRIx64 " dst %" PRIx64 ".%" PRIx64, get_xip2_addr().low_addr, get_xip2_addr().high_addr, to_addr.low_addr, to_addr.high_addr);
+            xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
+            xunit_info("[xtimer_picker_t::on_time_cert_event] broadcast to all nodes,round=%d,height=%ld,xip=%s",
+                e.get_broadcast_round(),tc_block->get_height(),xcons_utl::xip_to_hex(local_xip).c_str());
             network_proxy->send_out(contract::xmessage_block_broadcast_id, local_xip, to_addr, tc_block);
             XMETRICS_GAUGE_SET_VALUE(metrics::clock_leader_broadcast_height, tc_block->get_height());
         }
     }
-
     return true;  // stop here
 }
 

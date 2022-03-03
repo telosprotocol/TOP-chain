@@ -34,6 +34,9 @@ protected:
 
     virtual int  verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child) override;
 
+private:
+    bool check_first_round_tc_broadcast_leader(base::xvblock_t* tc_block);
+    bool check_second_round_tc_broadcast_leader(base::xvblock_t* tc_block);
 protected:
     uint64_t                                 m_cur_view{};
     uint64_t                                 m_latest_cert_clock{};
