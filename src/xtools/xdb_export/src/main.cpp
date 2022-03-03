@@ -119,15 +119,17 @@ int main(int argc, char ** argv) {
         xdb_read_tools_t read_tools{db_path};
         read_tools.db_read_meta(address);
         return 0;
-    } else if (function_name == "db_compact_db") {
+    }  else if (function_name == "db_compact_db") {
         if (argc != 4) {
             usage();
             return -1;
         }
-        xdb_read_tools_t read_tools{db_path};
-        read_tools.db_compact_db();
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        tools_v3.compact_db();
         return 0;
-    } else if (function_name == "db_read_block") {
+    }
+    else if (function_name == "db_read_block") {
         if (argc != 5) {
             usage();
             return -1;
