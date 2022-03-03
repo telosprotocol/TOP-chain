@@ -69,7 +69,7 @@ void xtop_rec_standby_pool_contract::setup() {
     auto const static_consensus_nodes_info = xstatic_election_center::instance().get_standby_config();
     for (auto const & node_info : static_consensus_nodes_info) {
         common::xnode_id_t node_id{node_info.node_id};
-        xstandby_node_info_t seed_node_info;
+        election::legacy::xstandby_node_info_t seed_node_info;
         seed_node_info.consensus_public_key = node_info.pub_key;
         for (auto const & _pair : node_info.type_stake_pair) {
             common::xnode_type_t const & node_type = top::get<common::xnode_type_t>(_pair);
@@ -77,12 +77,12 @@ void xtop_rec_standby_pool_contract::setup() {
             seed_node_info.stake_container.insert({node_type, stake});
         }
         seed_node_info.program_version = "1.1.0"; 
-        seed_node_info.is_genesis_node = false;
+        seed_node_info.genesis = false;
 
         standby_result_store.result_of(network_id()).insert({node_id, seed_node_info});
     }
     for (auto & standby_network_result_info : standby_result_store) {
-        auto & standby_network_storage_result = top::get<election::xstandby_network_storage_result_t>(standby_network_result_info);
+        auto & standby_network_storage_result = top::get<election::legacy::xstandby_network_storage_result_t>(standby_network_result_info);
         standby_network_storage_result.set_activate_state(true);
     }
 #endif
