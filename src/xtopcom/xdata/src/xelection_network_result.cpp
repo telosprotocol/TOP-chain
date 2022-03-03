@@ -2,10 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xutility.h"
 #include "xdata/xelection/xelection_network_result.h"
 
+#include "xbasic/xutility.h"
+
 #include <exception>
+#include <functional>
+#include <iterator>
 #include <utility>
 
 NS_BEG3(top, data, election)
@@ -92,6 +95,16 @@ xtop_election_network_result::insert(value_type && value) {
 std::size_t
 xtop_election_network_result::size() const noexcept {
     return m_results.size();
+}
+
+legacy::xelection_network_result_t xtop_election_network_result::legacy() const {
+    legacy::xelection_network_result_t r;
+
+    std::transform(std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_network_result_t::value_type {
+        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
+    });
+
+    return r;
 }
 
 NS_END3

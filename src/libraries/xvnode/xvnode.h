@@ -86,6 +86,8 @@ public:
                common::xsharding_address_t const & sharding_address,
                common::xslot_id_t const & slot_id,
                common::xelection_round_t joined_election_round,
+               common::xminer_type_t miner_type,
+               bool genesis,
                common::xelection_round_t election_round,
                std::uint16_t const group_size,
                std::uint64_t const associated_blk_height,

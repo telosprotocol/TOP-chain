@@ -4,17 +4,17 @@
 
 TEST(Arithmetic, modulo){
     // has remainder
-    const top::xstake::uint128_t val    (0xffffffffffffffffULL, 0xffffffffffffffffULL);
-    const top::xstake::uint128_t val_mod(0xfedcba9876543210ULL);
+    const uint128_t val    (0xffffffffffffffffULL, 0xffffffffffffffffULL);
+    const uint128_t val_mod(0xfedcba9876543210ULL);
 
-    EXPECT_EQ(val % val_mod, top::xstake::uint128_t(0x7f598f328cc265bfULL));
+    EXPECT_EQ(val % val_mod, uint128_t(0x7f598f328cc265bfULL));
 
     // no remainder
-    const top::xstake::uint128_t val_0  (0xfedcba9876543210, 0);
+    const uint128_t val_0  (0xfedcba9876543210, 0);
     EXPECT_EQ(val_0 % val_mod, 0);
 
     // mod 0
-    EXPECT_THROW(top::xstake::uint128_t(1) % top::xstake::uint128_t(0), std::domain_error);
+    EXPECT_THROW(uint128_t(1) % uint128_t(0), std::domain_error);
 }
 
 TEST(External, modulo){
@@ -25,14 +25,14 @@ TEST(External, modulo){
     uint32_t u32 = 0xaaaaaaaaULL;
     uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-    const top::xstake::uint128_t val(0xd03ULL); // prime
+    const uint128_t val(0xd03ULL); // prime
 
     EXPECT_EQ(t   %  val, true);
     EXPECT_EQ(f   %  val, false);
-    EXPECT_EQ(u8  %  val, top::xstake::uint128_t(0xaaULL));
-    EXPECT_EQ(u16 %  val, top::xstake::uint128_t(0x183ULL));
-    EXPECT_EQ(u32 %  val, top::xstake::uint128_t(0x249ULL));
-    EXPECT_EQ(u64 %  val, top::xstake::uint128_t(0xc7fULL));
+    EXPECT_EQ(u8  %  val, uint128_t(0xaaULL));
+    EXPECT_EQ(u16 %  val, uint128_t(0x183ULL));
+    EXPECT_EQ(u32 %  val, uint128_t(0x249ULL));
+    EXPECT_EQ(u64 %  val, uint128_t(0xc7fULL));
 
     EXPECT_EQ(t   %= val, true);
     EXPECT_EQ(f   %= val, false);

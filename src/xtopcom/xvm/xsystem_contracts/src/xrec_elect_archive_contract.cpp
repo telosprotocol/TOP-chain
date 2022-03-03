@@ -5,17 +5,21 @@
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"
 
 #include "xbasic/xutility.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xnode_id.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xlegacy/xstandby_node_info_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xlegacy/xstandby_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
-#include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xgenesis_data.h"
-#include "xconfig/xpredefined_configurations.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
 
 #include <inttypes.h>
@@ -110,11 +114,11 @@ void xtop_rec_elect_archive_contract::elect_config_nodes(common::xlogic_time_t c
 #endif
 
 void xtop_rec_elect_archive_contract::setup() {
-    xelection_result_store_t election_result_store;
+    election::legacy::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 }
 
@@ -174,7 +178,14 @@ void xtop_rec_elect_archive_contract::on_timer(const uint64_t current_time) {
                         range,
                         standby_network_result,
                         election_network_result)) {
-            xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(archive_gid), election_result_store);
+            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
+                xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
+                    *this, data::election::get_property_by_group_id(archive_gid), election_result_store);
+            } else {
+                xvm::serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+                    *this, data::election::get_property_by_group_id(archive_gid), election_result_store.legacy());
+            }
         }
     }
 }

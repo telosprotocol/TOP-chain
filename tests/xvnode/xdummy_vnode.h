@@ -59,7 +59,7 @@ class xdummy_vnode;
             return common::xrotation_status_t::invalid;                                                                                                                            \
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
-        std::vector<common::xip2_t> neighbors_xip2(std::error_code &) const noexcept {                                                                                             \
+        std::vector<common::xip2_t> neighbors_xip2(std::error_code &) const override {                                                                                             \
             return {};                                                                                                                                                             \
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
@@ -71,15 +71,15 @@ class xdummy_vnode;
             return {};                                                                                                                                                             \
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
-        std::vector<common::xip2_t> associated_parent_nodes_xip2(std::error_code &) const noexcept override {                                                                      \
+        std::vector<common::xip2_t> associated_parent_nodes_xip2(std::error_code &) const override {                                                                               \
             return {};                                                                                                                                                             \
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
-        std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const &, std::error_code &) const noexcept override {                                               \
+        std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const &, std::error_code &) const override {                                                        \
             return {};                                                                                                                                                             \
         }                                                                                                                                                                          \
-        top::vnode::components::sniffing::xvnode_sniff_config_t sniff_config() noexcept override {                                                                                                       \
-            return top::vnode::components::sniffing::xvnode_sniff_config_t{};                                                                                                                            \
+        top::vnode::components::sniffing::xvnode_sniff_config_t sniff_config() noexcept override {                                                                                 \
+            return top::vnode::components::sniffing::xvnode_sniff_config_t{};                                                                                                      \
         }                                                                                                                                                                          \
     }
 

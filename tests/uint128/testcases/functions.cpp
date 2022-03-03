@@ -20,7 +20,7 @@ static const std::map <uint32_t, std::string> tests = {
     std::make_pair(14, "170445352"),
     std::make_pair(15, "ce82d6d4"),
     std::make_pair(16, "8415856c"),
-    // std::make_pair(256, "top::xstake::uint128_t"),
+    // std::make_pair(256, "uint128_t"),
 };
 
 TEST(Function, str){
@@ -28,7 +28,7 @@ TEST(Function, str){
     const std::string::size_type leading = 5;
 
     // make sure all of the test strings create the ASCII version of the string
-    const top::xstake::uint128_t original(2216002924);
+    const uint128_t original(2216002924);
     for(std::pair <uint32_t const, std::string>  t : tests){
         EXPECT_EQ(original.str(t.first), t.second);
     }
@@ -41,7 +41,7 @@ TEST(Function, str){
 
 TEST(Function, export_bits){
     const uint64_t u64 = 0x0123456789abcdefULL;
-    const top::xstake::uint128_t value = u64;
+    const uint128_t value = u64;
 
     EXPECT_EQ(value, u64);
 
@@ -57,21 +57,21 @@ TEST(Function, export_bits){
 }
 
 TEST(External, ostream){
-    const top::xstake::uint128_t value(0xfedcba9876543210ULL);
+    const uint128_t value(0xfedcba9876543210ULL);
 
-    // write out octal top::xstake::uint128_t
+    // write out octal uint128_t
     std::stringstream oct; oct << std::oct << value;
     EXPECT_EQ(oct.str(), "1773345651416625031020");
 
-    // write out decimal top::xstake::uint128_t
+    // write out decimal uint128_t
     std::stringstream dec; dec << std::dec << value;
     EXPECT_EQ(dec.str(), "18364758544493064720");
 
-    // write out hexadecimal top::xstake::uint128_t
+    // write out hexadecimal uint128_t
     std::stringstream hex; hex << std::hex << value;
     EXPECT_EQ(hex.str(), "fedcba9876543210");
 
     // zero
-    std::stringstream zero; zero << top::xstake::uint128_t();
+    std::stringstream zero; zero << uint128_t();
     EXPECT_EQ(zero.str(), "0");
 }

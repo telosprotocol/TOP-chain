@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "xvm/xcontract_helper.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xtableblock.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
-#include "xdata/xtableblock.h"
-#include "xstake/xstake_algorithm.h"
+#include "xvm/xcontract_helper.h"
 
 NS_BEG2(top, xstake)
 
@@ -29,11 +29,11 @@ struct xreward_onchain_param_t {
 };
 
 struct xreward_property_param_t {
-    std::map<common::xcluster_address_t, cluster_workload_t> auditor_workloads_detail;
-    std::map<common::xcluster_address_t, cluster_workload_t> validator_workloads_detail;
+    std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> auditor_workloads_detail;
+    std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> validator_workloads_detail;
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> votes_detail;
-    xaccumulated_reward_record accumulated_reward_record;
-    std::map<common::xaccount_address_t, xreg_node_info> map_nodes;
+    data::system_contract::xaccumulated_reward_record accumulated_reward_record;
+    std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> map_nodes;
 };
 class xzec_reward_contract : public xcontract_base {
     using xbase_t = xcontract_base;
@@ -125,9 +125,9 @@ private:
      * @param issued_until_last_year_end
      * @param minimum_issuance
      * @param issuance_rate
-     * @return top::xstake::uint128_t
+     * @return ::uint128_t
      */
-    top::xstake::uint128_t get_reserve_reward(top::xstake::uint128_t issued_until_last_year_end, top::xstake::uint128_t minimum_issuance, uint32_t issuance_rate);
+    ::uint128_t get_reserve_reward(::uint128_t issued_until_last_year_end,::uint128_t minimum_issuance, uint32_t issuance_rate);
 
     /**
      * @brief
@@ -137,13 +137,13 @@ private:
      * @param minimum_issuance
      * @param issuance_rate
      * @param issued_until_last_year_end
-     * @return top::xstake::uint128_t
+     * @return ::uint128_t
      */
-    top::xstake::uint128_t calc_issuance_internal(uint64_t total_height,
-                                                  uint64_t & last_issuance_time,
-                                                  top::xstake::uint128_t const & minimum_issuance,
-                                                  const uint32_t issuance_rate,
-                                                  top::xstake::uint128_t & issued_until_last_year_end);
+    ::uint128_t calc_issuance_internal(uint64_t total_height,
+                                           uint64_t & last_issuance_time,
+                                           ::uint128_t const & minimum_issuance,
+                                           const uint32_t issuance_rate,
+                                           ::uint128_t & issued_until_last_year_end);
 
     /**
      * @brief Get the accumulated record
@@ -151,14 +151,14 @@ private:
      * @param record accumulated issuance record
      * @return int
      */
-    int         get_accumulated_record(xaccumulated_reward_record & record);
+    int get_accumulated_record(data::system_contract::xaccumulated_reward_record & record);
     /**
      * @brief update accumulated issuance record
      *
      * @param record accumulated issuance record
      * @return void
      */
-    void        update_accumulated_record(const xaccumulated_reward_record & record);
+    void update_accumulated_record(const data::system_contract::xaccumulated_reward_record & record);
 
     /**
      * @brief Get the activated time
@@ -209,7 +209,7 @@ private:
      * @param node
      * @return int
      */
-    int         get_node_info(const std::map<std::string, xreg_node_info> & map_nodes, const std::string & account, xreg_node_info & node);
+    int get_node_info(const std::map<std::string, data::system_contract::xreg_node_info> & map_nodes, const std::string & account, data::system_contract::xreg_node_info & node);
 
     /**
      * @brief receive workload
@@ -239,7 +239,7 @@ private:
      *
      * @param issue_detail
      */
-    void update_issuance_detail(xissue_detail const & issue_detail);
+    void update_issuance_detail(data::system_contract::xissue_detail const & issue_detail);
 
     // add by lon
     /**
@@ -255,7 +255,7 @@ private:
                           common::xlogic_time_t & activation_time,
                           xreward_onchain_param_t & onchain_param,
                           xreward_property_param_t & property_param,
-                          xissue_detail & issue_detail);
+                          data::system_contract::xissue_detail & issue_detail);
 
     /**
      * @brief calculate nodes rewards
@@ -272,10 +272,10 @@ private:
                                common::xlogic_time_t const issue_time_length,
                                xreward_onchain_param_t const & onchain_param,
                                xreward_property_param_t & property_param,
-                               xissue_detail & issue_detail,
-                               std::map<common::xaccount_address_t, top::xstake::uint128_t> & node_reward_detail,
-                               std::map<common::xaccount_address_t, top::xstake::uint128_t> & node_dividend_detail,
-                               top::xstake::uint128_t & community_reward);
+                               data::system_contract::xissue_detail & issue_detail,
+                               std::map<common::xaccount_address_t, ::uint128_t> & node_reward_detail,
+                               std::map<common::xaccount_address_t, ::uint128_t> & node_dividend_detail,
+                               ::uint128_t & community_reward);
 
     /**
      * @brief calculate every table rewards
@@ -288,11 +288,11 @@ private:
      * @param table_total_rewards record total rewards of every table
      */
     void calc_table_rewards(xreward_property_param_t & property_param,
-                            std::map<common::xaccount_address_t, top::xstake::uint128_t> const & node_reward_detail,
-                            std::map<common::xaccount_address_t, top::xstake::uint128_t> const & node_dividend_detail,
-                            std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_reward_detail,
-                            std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_dividend_detail,
-                            std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards);
+                            std::map<common::xaccount_address_t, ::uint128_t> const & node_reward_detail,
+                            std::map<common::xaccount_address_t, ::uint128_t> const & node_dividend_detail,
+                            std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_reward_detail,
+                            std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail,
+                            std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards);
 
     /**
      * @brief dispatch all reward calculated in calc_nodes_rewards
@@ -305,10 +305,10 @@ private:
      * @param actual_issuance actual issuance this time
      */
     void dispatch_all_reward_v3(const common::xlogic_time_t current_time,
-                                std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards,
-                                std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_reward_detail,
-                                std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_dividend_detail,
-                                top::xstake::uint128_t & community_reward,
+                                std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards,
+                                std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_reward_detail,
+                                std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail,
+                                ::uint128_t & community_reward,
                                 uint64_t & actual_issuance);
 
     /**
@@ -319,7 +319,10 @@ private:
      * @param record xaccumulated_reward_record
      * @param issue_detail issuance detial this time
      */
-    void update_property(const uint64_t current_time, const uint64_t actual_issuance, xaccumulated_reward_record const & record, xissue_detail const & issue_detail);
+    void update_property(const uint64_t current_time,
+                         const uint64_t actual_issuance,
+                         data::system_contract::xaccumulated_reward_record const & record,
+                         data::system_contract::xissue_detail const & issue_detail);
 
     /**
      * @brief calculate issuance
@@ -330,10 +333,10 @@ private:
      * @param record accumulated reward record
      * @return total reward issuance
      */
-    top::xstake::uint128_t calc_total_issuance(const common::xlogic_time_t issue_time_length,
+    ::uint128_t calc_total_issuance(const common::xlogic_time_t issue_time_length,
                                                const uint32_t min_ratio_annual_total_reward,
                                                const uint32_t additional_issue_year_ratio,
-                                               xaccumulated_reward_record & record);
+                                               data::system_contract::xaccumulated_reward_record & record);
 
     /**
      * @brief calculate node nums of different property(xreward_num_type_e) and different role type(xreward_role_type_e)
@@ -341,7 +344,7 @@ private:
      * @param map_nodes nodes to count
      * @return count resualt
      */
-    std::vector<std::vector<uint32_t>> calc_role_nums(std::map<common::xaccount_address_t, xreg_node_info> const & map_nodes, bool fullnode_enabled);
+    std::vector<std::vector<uint32_t>> calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes, bool fullnode_enabled);
 
     /**
      * @brief set votes_detail into map_nodes and calculate total valid auditor votes
@@ -352,7 +355,7 @@ private:
      * @return total valid auditor votes
      */
     uint64_t calc_votes(std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> const & votes_detail,
-                        std::map<common::xaccount_address_t, xreg_node_info> & map_nodes,
+                        std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> & map_nodes,
                         std::map<common::xaccount_address_t, uint64_t> & account_votes);
 
     /**
@@ -363,7 +366,7 @@ private:
      * @return account_votes vote of every node in this round
      */
     std::map<common::xaccount_address_t, uint64_t> calc_votes(std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> const & votes_detail,
-                                                              std::map<common::xaccount_address_t, xreg_node_info> const & map_nodes);
+                                                              std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes);
 
     /**
      * @brief calculate zero workload reward
@@ -375,10 +378,10 @@ private:
      * @param zero_workload_account record zero workload account
      * @return total zero workload reward
      */
-    top::xstake::uint128_t calc_zero_workload_reward(bool is_auditor,
-                                                     std::map<common::xcluster_address_t, cluster_workload_t> & workloads_detail,
+    ::uint128_t calc_zero_workload_reward(bool is_auditor,
+                                                     std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail,
                                                      const uint32_t zero_workload,
-                                                     const top::xstake::uint128_t group_reward,
+                                                     const ::uint128_t group_reward,
                                                      std::vector<string> & zero_workload_account);
 
     /**
@@ -390,10 +393,10 @@ private:
      * @param workloads_detail workloads detail of all groups
      * @return total invalid workload group reward
      */
-    top::xstake::uint128_t calc_invalid_workload_group_reward(bool is_auditor,
-                                                              std::map<common::xaccount_address_t, xreg_node_info> const & map_nodes,
-                                                              const top::xstake::uint128_t group_reward,
-                                                              std::map<common::xcluster_address_t, cluster_workload_t> & workloads_detail);
+    ::uint128_t calc_invalid_workload_group_reward(bool is_auditor,
+                                                              std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+                                                              const ::uint128_t group_reward,
+                                                              std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail);
 
     /**
      * @brief calculate calc edger worklaod rewards
@@ -403,10 +406,10 @@ private:
      * @param edge_workload_rewards edge total workloads
      * @param reward_to_self node self reward
      */
-    void calc_edge_workload_rewards(xreg_node_info const & node,
+    void calc_edge_workload_rewards(data::system_contract::xreg_node_info const & node,
                                     std::vector<uint32_t> const & edge_num,
-                                    const top::xstake::uint128_t edge_workload_rewards,
-                                    top::xstake::uint128_t & reward_to_self);
+                                    const ::uint128_t edge_workload_rewards,
+                                    ::uint128_t & reward_to_self);
 
     /**
      * @brief calculate calc archiver worklaod rewards
@@ -416,11 +419,11 @@ private:
      * @param archive_workload_rewards archive total workloads
      * @param reward_to_self node self reward
      */
-    void calc_archive_workload_rewards(xreg_node_info const & node,
+    void calc_archive_workload_rewards(data::system_contract::xreg_node_info const & node,
                                        std::vector<uint32_t> const & archive_num,
-                                       const top::xstake::uint128_t archive_workload_rewards,
+                                       const ::uint128_t archive_workload_rewards,
                                        bool const fullnode_enabled,
-                                       top::xstake::uint128_t & reward_to_self);
+                                       ::uint128_t & reward_to_self);
 
     /**
      * @brief calculate calc validator worklaod rewards
@@ -431,11 +434,11 @@ private:
      * @param validator_group_workload_rewards single roup reward of validator groups
      * @param reward_to_self node self reward
      */
-    void calc_validator_workload_rewards(xreg_node_info const & node,
+    void calc_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
                                          std::vector<uint32_t> const & validator_num,
-                                         std::map<common::xcluster_address_t, cluster_workload_t> const & validator_workloads_detail,
-                                         const top::xstake::uint128_t validator_group_workload_rewards,
-                                         top::xstake::uint128_t & reward_to_self);
+                                         std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & validator_workloads_detail,
+                                         const ::uint128_t validator_group_workload_rewards,
+                                         ::uint128_t & reward_to_self);
 
     /**
      * @brief calculate calc auditor worklaod rewards
@@ -446,11 +449,11 @@ private:
      * @param auditor_group_workload_rewards single roup reward of auditor groups
      * @param reward_to_self node self reward
      */
-    void calc_auditor_workload_rewards(xreg_node_info const & node,
+    void calc_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
                                        std::vector<uint32_t> const & auditor_num,
-                                       std::map<common::xcluster_address_t, cluster_workload_t> const & auditor_workloads_detail,
-                                       const top::xstake::uint128_t auditor_group_workload_rewards,
-                                       top::xstake::uint128_t & reward_to_self);
+                                       std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & auditor_workloads_detail,
+                                       const ::uint128_t auditor_group_workload_rewards,
+                                       ::uint128_t & reward_to_self);
 
     /**
      * @brief calculate vote reward
@@ -460,7 +463,10 @@ private:
      * @param vote_rewards total vote reward
      * @param reward_to_self node self reward
      */
-    void calc_vote_reward(xreg_node_info const & node, const uint64_t auditor_total_votes, const top::xstake::uint128_t vote_rewards, top::xstake::uint128_t & reward_to_self);
+    void calc_vote_reward(data::system_contract::xreg_node_info const & node,
+                          const uint64_t auditor_total_votes,
+                          const ::uint128_t vote_rewards,
+                          ::uint128_t & reward_to_self);
 
     /**
      * @brief record self reward
@@ -473,9 +479,9 @@ private:
      */
     void calc_table_node_reward_detail(common::xaccount_address_t const & table_address,
                                        common::xaccount_address_t const & account,
-                                       top::xstake::uint128_t node_reward,
-                                       std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards,
-                                       std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_reward_detail);
+                                       ::uint128_t node_reward,
+                                       std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards,
+                                       std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_reward_detail);
 
     /**
      * @brief record dividend reward
@@ -490,11 +496,11 @@ private:
      */
     void calc_table_node_dividend_detail(common::xaccount_address_t const & table_address,
                                          common::xaccount_address_t const & account,
-                                         top::xstake::uint128_t const & reward,
+                                         ::uint128_t const & reward,
                                          uint64_t node_total_votes,
                                          std::map<common::xaccount_address_t, uint64_t> const & votes_detail,
-                                         std::map<common::xaccount_address_t, top::xstake::uint128_t> & table_total_rewards,
-                                         std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, top::xstake::uint128_t>> & table_node_dividend_detail);
+                                         std::map<common::xaccount_address_t, ::uint128_t> & table_total_rewards,
+                                         std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail);
 
     /**
      * @brief calculate table contract address

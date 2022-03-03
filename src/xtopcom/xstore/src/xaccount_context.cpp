@@ -10,25 +10,25 @@
 
 #include "xbase/xlog.h"
 #include "xbase/xobject_ptr.h"
-#include "xvledger/xvledger.h"
-#include "xvledger/xvpropertyrules.h"
-#include "xcrypto/xckey.h"
-#include "xdata/xaction_parse.h"
-#include "xdata/xproperty.h"
-#include "xdata/xdata_defines.h"
-#include "xdata/xchain_param.h"
-#include "xdata/xtransaction_maker.hpp"
 #include "xbasic/xutility.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer_face.h"
-#include "xdata/xgenesis_data.h"
-#include "xdata/xnative_contract_address.h"
-#include "xdata/xtx_factory.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xcrypto/xckey.h"
+#include "xdata/xaction_parse.h"
+#include "xdata/xchain_param.h"
+#include "xdata/xdata_defines.h"
+#include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xproperty.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xtransaction_maker.hpp"
+#include "xdata/xtx_factory.h"
 #include "xutility/xstream_util.hpp"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvpropertyrules.h"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xstake/xstake_algorithm.h"
-#include "xchain_fork/xchain_upgrade_center.h"
 
 using namespace top::base;
 
@@ -642,7 +642,7 @@ uint64_t xaccount_context_t::get_top_by_vote(uint64_t vote_num, uint16_t duratio
         }
         factor = af;
     }
-    auto original_num = (top::xstake::uint128_t)vote_num * TOP_UNIT * AMPLIFY_FACTOR / factor;
+    auto original_num = (::uint128_t)vote_num * TOP_UNIT * AMPLIFY_FACTOR / factor;
     uint64_t top_num = 0;
     if (original_num > UINT64_MAX) {
         top_num = UINT64_MAX;

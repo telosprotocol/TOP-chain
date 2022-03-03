@@ -4,10 +4,12 @@
 
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h"
 
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xstandby_node_info.h"
@@ -253,11 +255,11 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
 #endif
 
 void xtop_zec_elect_consensus_group_contract::setup() {
-    xelection_result_store_t election_result_store;
+    election::legacy::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 
     STRING_CREATE(data::XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY);
@@ -448,8 +450,15 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
                   static_cast<std::uint16_t>(auditor_group_id.value()),
                   read_height);
 
-            serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
-#if defined DEBUG
+            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, election_timestamp)) {
+                serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
+                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
+            } else {
+                serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store.legacy());
+            }
+#if defined(DEBUG)
             auto serialized_election_result_store_data = codec::msgpack_encode(election_result_store);
             auto base64str =
                 base::xstring_utl::base64_encode(serialized_election_result_store_data.data(), static_cast<std::uint32_t>(serialized_election_result_store_data.size()));

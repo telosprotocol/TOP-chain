@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xdata/xblock_statistics_data.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtableblock.h"
-#include "xstake/xstake_algorithm.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xvm/xcontract_helper.h"
@@ -87,7 +87,7 @@ private:
     /**
      * @brief add_workload_with_fullblock
      */
-    void accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, xstake::xgroup_workload_t> & group_workload);
+    void accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload);
 
     /**
      * @brief add_workload_with_fullblock
@@ -95,24 +95,24 @@ private:
     void accumulate_workload_with_fullblock(common::xlogic_time_t const timestamp,
                                             const uint32_t start_table,
                                             const uint32_t end_table,
-                                            std::map<common::xgroup_address_t, xstake::xgroup_workload_t> & group_workload);
+                                            std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload);
 
     /**
      * @brief get_workload
      */
-    xstake::xgroup_workload_t get_workload(common::xgroup_address_t const & group_address);
+    data::system_contract::xgroup_workload_t get_workload(common::xgroup_address_t const & group_address);
 
     /**
      * @brief set_workload
      */
-    void set_workload(common::xgroup_address_t const & group_address, xstake::xgroup_workload_t const & group_workload);
+    void set_workload(common::xgroup_address_t const & group_address, data::system_contract::xgroup_workload_t const & group_workload);
 
     /**
      * @brief stash_workload
      */
-    void update_workload(std::map<common::xgroup_address_t, xstake::xgroup_workload_t> const & group_workload);
+    void update_workload(std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & group_workload);
 
-    void update_workload(std::map<common::xgroup_address_t, xstake::xgroup_workload_t> const & group_workload,
+    void update_workload(std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & group_workload,
                          const std::map<std::string, std::string> & workload_str,
                          std::map<std::string, std::string> & workload_new);
 

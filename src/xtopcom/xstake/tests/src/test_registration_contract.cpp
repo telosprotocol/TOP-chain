@@ -11,7 +11,7 @@
 
 #define private public
 #include "xvm/xrec/xrec_registration_contract.h"
-#include "xstake/xstake_algorithm.h"
+#include "xstake/xdata_structures.h"
 
 using namespace top;
 using namespace base;

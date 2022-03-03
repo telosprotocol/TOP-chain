@@ -13,7 +13,6 @@ project(XTOPCHAIN CXX C)
 option(XENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(XENABLE_TESTS "Enable building tests" OFF)
 option(XENABLE_VERBOSE_DBG "Enable verbose dbg" OFF)
-option(XENABLE_EXCEPTION_AS_ERROR "Treat exception as xerror in debug mode" OFF)
 option(BUILD_METRICS "build metrics" OFF)
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(BUILD_METRICS ON)
@@ -46,16 +45,6 @@ endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} XBUILD_TYPE)
 
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
-    if (NOT CMAKE_TOOLCHAIN_FILE)
-        message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE property not defined. Set it in CMakeSettings.json file.")
-    endif()
-
-    if (NOT EXISTS ${CMAKE_TOOLCHAIN_FILE})
-        message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE not found.")
-    endif()
-endif()
-
 #=============================================================================
 # for git version
 #==============================================================================
@@ -87,8 +76,8 @@ add_definitions(
 set(EXECUTABLE_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/)
 set(LIBRARY_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/lib/${CMAKE_SYSTEM_NAME}/)
 
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-    # set common options for Clang or GNUCXX
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+    # set common options for GNUCXX
 
     add_compile_options(
         $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fexceptions>  # https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/Code-Gen-Options.html#index-fexceptions
@@ -165,67 +154,6 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
     # options for RelWithDebInfo
     add_compile_options($<$<CONFIG:RelWithDebInfo>:-g1>)
     add_compile_options($<$<CONFIG:RelWithDebInfo>:-ggdb>)
-
-elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
-
-    # common compile options
-    add_compile_options(
-        /Zc:auto,forScope,inline,wchar_t
-        /Zc:externConstexpr   # https://docs.microsoft.com/en-us/cpp/build/reference/zc-externconstexpr
-        /Zc:implicitNoexcept  # https://docs.microsoft.com/en-us/cpp/build/reference/zc-implicitnoexcept-implicit-exception-specifiers
-        /Zc:noexceptTypes     # https://docs.microsoft.com/en-us/cpp/build/reference/zc-noexcepttypes
-        /Zc:referenceBinding  # https://docs.microsoft.com/en-us/cpp/build/reference/zc-referencebinding-enforce-reference-binding-rules
-        /Zc:rvalueCast        # https://docs.microsoft.com/en-us/cpp/build/reference/zc-rvaluecast-enforce-type-conversion-rules
-        /Zc:sizedDealloc      # https://docs.microsoft.com/en-us/cpp/build/reference/zc-sizeddealloc-enable-global-sized-dealloc-functions
-        /Zc:strictStrings     # https://docs.microsoft.com/en-us/cpp/build/reference/zc-strictstrings-disable-string-literal-type-conversion
-        /Zc:threadSafeInit    # https://docs.microsoft.com/en-us/cpp/build/reference/zc-threadsafeinit-thread-safe-local-static-initialization
-        /Zc:throwingNew       # https://docs.microsoft.com/en-us/cpp/build/reference/zc-throwingnew-assume-operator-new-throws
-        /Zc:trigraphs-        # https://docs.microsoft.com/en-us/cpp/build/reference/zc-trigraphs-trigraphs-substitution
-        /Zc:__cplusplus       # https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus
-        /permissive-          # https://blogs.msdn.microsoft.com/vcblog/2016/11/16/permissive-switch/
-                              # https://blogs.msdn.microsoft.com/vcblog/2017/09/11/two-phase-name-lookup-support-comes-to-msvc/
-                              # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
-        /volatile:iso         # https://docs.microsoft.com/en-us/cpp/build/reference/volatile-volatile-keyword-interpretation
-        /GS
-        /Zi
-        /Gm-                  # Disable Minimal Rebuild
-        # /sdl                 # Adds recommended Security Development Lifecycle (SDL) checks
-        /EHsc
-        /fp:precise
-        /errorReport:prompt
-        /GF                   # Eliminate Duplicate Strings
-        /Gd                   # Specifies the __cdecl calling convention for all functions except C++ member functions and functions that are marked __stdcall, __fastcall, or __vectorcall.
-        /diagnostics:caret    # https://docs.microsoft.com/en-us/cpp/build/reference/diagnostics-compiler-diagnostic-options
-        /doc
-        /wd4634               # XML document comment target: cannot be applied: reason
-        /utf-8                # https://docs.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
-        /WL                   # https://docs.microsoft.com/en-us/cpp/build/reference/wl-enable-one-line-diagnostics
-    )
-
-    if (CMAKE_CXX_FLAGS MATCHES "/W[0-3]")
-        string(REGEX REPLACE "/W[0-3]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-        add_compile_options(/W4)
-    endif()
-
-    add_definitions(
-        -D_SCL_SECURE_NO_WARNINGS
-        -D_CRT_SECURE_NO_WARNINGS
-        -DNOMINMAX
-        -D_WIN32_WINNT=0x0600   # Vista and above
-        -D_WINDOWS
-        -D_UNICODE
-        -DUNICODE)
-
-    # options for Debug
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:_DEBUG DEBUG>)
-
-    # options for Release & RelWithDebInfo
-    # /O2 equivalent to /Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy
-    # https://docs.microsoft.com/en-us/cpp/build/reference/o1-o2-minimize-size-maximize-speed
-    # set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:/O2>)
-    add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:/O2>)
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:release>>:NDEBUG>)
 else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
@@ -262,10 +190,6 @@ endif()
 
 if (XDISABLE_RATELIMIT)
     add_definitions(-DXDISABLE_RATELIMIT)
-endif()
-
-if (XENABLE_EXCEPTION_AS_ERROR)
-    add_definitions(-DXTHROW_ERROR)
 endif()
 
 if (XENABLE_MOCK_ZEC_STAKE)

@@ -6,6 +6,7 @@
 
 #include "xcommon/xip.h"
 #include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xlegacy/xelection_cluster_result.h"
 
 NS_BEG3(top, data, election)
 
@@ -76,6 +77,8 @@ public:
 
     size_type
     erase(key_type const & key);
+
+    legacy::xelection_cluster_result_t legacy() const;
 };
 using xelection_cluster_result_t = xtop_election_cluster_result;
 

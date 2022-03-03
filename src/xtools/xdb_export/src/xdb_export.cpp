@@ -8,6 +8,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 #include "xdepends/include/asio/post.hpp"
 #include "xdepends/include/asio/thread_pool.hpp"
@@ -15,10 +16,10 @@
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xrpc/xgetblock/get_block.h"
-#include "xstake/xstake_algorithm.h"
+#include "xvledger/xvdbkey.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
-#include "xvledger/xvdbkey.h"
+
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
@@ -605,8 +606,8 @@ void xdb_export_tools_t::query_balance() {
     std::cout << "===> top reward issurance" << std::endl;
     auto reward_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{sys_contract_zec_reward_addr});
     auto reward_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(reward_vblock.get());
-    if (reward_bstate != nullptr && true == reward_bstate->find_property(xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
-        auto map = reward_bstate->load_string_map_var(xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
+    if (reward_bstate != nullptr && true == reward_bstate->find_property(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
+        auto map = reward_bstate->load_string_map_var(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
         std::cout << map["total"] << std::endl;
     } else {
         std::cerr << "load error!" << std::endl;

@@ -5,13 +5,11 @@
 #pragma once
 
 #include "xcommon/xaddress.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 
 NS_BEG4(top, xvm, system_contracts, reward)
-
-using namespace xstake;
 
 class xtop_table_reward_claiming_contract : public xcontract::xcontract_base {
     using xbase_t = xcontract_base;
@@ -57,14 +55,14 @@ private:
      * @param issuance_clock_height
      * @param rewards
      */
-    void recv_node_reward(uint64_t issuance_clock_height, std::map<std::string, top::xstake::uint128_t> const & rewards);
+    void recv_node_reward(uint64_t issuance_clock_height, std::map<std::string, ::uint128_t> const & rewards);
     /**
      * @brief receive voter dividend reward
      *
      * @param issuance_clock_height
      * @param rewards
      */
-    void recv_voter_dividend_reward(uint64_t issuance_clock_height, std::map<std::string, top::xstake::uint128_t> const & rewards);
+    void recv_voter_dividend_reward(uint64_t issuance_clock_height, std::map<std::string, ::uint128_t> const & rewards);
 
     /**
      * @brief update node reward record
@@ -73,7 +71,7 @@ private:
      * @param record
      * @return void
      */
-    void update_working_reward_record(common::xaccount_address_t const & account, xstake::xreward_node_record const & record);
+    void update_working_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_node_record const & record);
     /**
      * @brief update voter reward record
      *
@@ -81,7 +79,7 @@ private:
      * @param record
      * @return void
      */
-    void update_vote_reward_record(common::xaccount_address_t const & account, xstake::xreward_record const & record);
+    void update_vote_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_record const & record);
 
     /**
      * @brief Get the node reward record
@@ -90,7 +88,7 @@ private:
      * @param record
      * @return int32_t
      */
-    int32_t get_working_reward_record(common::xaccount_address_t const & account, xstake::xreward_node_record & record);
+    int32_t get_working_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_node_record & record);
     /**
      * @brief Get the voter reward record
      *
@@ -98,7 +96,7 @@ private:
      * @param record
      * @return int32_t
      */
-    int32_t get_vote_reward_record(common::xaccount_address_t const & account, xstake::xreward_record & record);
+    int32_t get_vote_reward_record(common::xaccount_address_t const & account, data::system_contract::xreward_record & record);
 
     /**
      * @brief update node reward
@@ -107,7 +105,7 @@ private:
      * @param issuance_clock_height
      * @param reward
      */
-    void update(common::xaccount_address_t const & node_account, uint64_t issuance_clock_height, top::xstake::uint128_t reward);
+    void update(common::xaccount_address_t const & node_account, uint64_t issuance_clock_height, ::uint128_t reward);
 
     /**
      * @brief add node reward
@@ -120,9 +118,9 @@ private:
      */
     void add_voter_reward(uint64_t issuance_clock_height,
                           std::map<std::string, uint64_t> & votes_table,
-                          std::map<std::string, top::xstake::uint128_t> const & rewards,
+                          std::map<std::string, ::uint128_t> const & rewards,
                           std::map<std::string, std::string> const & adv_votes,
-                          xstake::xreward_record & record);
+                          data::system_contract::xreward_record & record);
     
     /**
      * @brief sub voter reward
@@ -131,7 +129,7 @@ private:
      * @param reward_record
      * @param reward
      */
-    void sub_voter_record(uint64_t cur_time, xstake::xreward_record & reward_record);
+    void sub_voter_record(uint64_t cur_time, data::system_contract::xreward_record & reward_record);
 };
 using xtable_reward_claiming_contract_t = xtop_table_reward_claiming_contract;
 

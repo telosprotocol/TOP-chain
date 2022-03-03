@@ -8,14 +8,14 @@
 #include "xdata/xblock_statistics_data.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/manager/xcontract_manager.h"
 
 using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
 using top::base::xtime_utl;
-using namespace top::xstake;
+using namespace top::data::system_contract;
 using namespace top::config;
 
 #if !defined(XZEC_MODULE)
@@ -42,7 +42,7 @@ void xzec_workload_contract_v2::setup() {
 bool xzec_workload_contract_v2::is_mainnet_activated() const {
     xactivation_record record;
 
-    std::string value_str = STRING_GET2(xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
+    std::string value_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
     if (!value_str.empty()) {
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
         record.serialize_from(stream);

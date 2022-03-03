@@ -10,12 +10,16 @@
 NS_BEG2(top, vnode)
 
 xtop_basic_vnode::xtop_basic_vnode(common::xnode_address_t address,
+                                   common::xminer_type_t miner_type,
+                                   bool genesis,
                                    common::xelection_round_t joined_election_round,
                                    observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept
   : m_vhost{vhost}
   , m_election_cache_data_accessor{election_cache_data_accessor}
   , m_address{std::move(address)}
+  , m_miner_type{miner_type}
+  , m_genesis{genesis}
   , m_joined_election_round{std::move(joined_election_round)} {
 }
 
@@ -25,6 +29,14 @@ common::xnode_type_t xtop_basic_vnode::type() const noexcept {
 
 common::xnode_address_t const & xtop_basic_vnode::address() const noexcept {
     return m_address;
+}
+
+common::xminer_type_t xtop_basic_vnode::miner_type() const noexcept {
+    return m_miner_type;
+}
+
+bool xtop_basic_vnode::genesis() const noexcept {
+    return m_genesis;
 }
 
 common::xelection_round_t const & xtop_basic_vnode::joined_election_round() const noexcept {
@@ -94,7 +106,7 @@ common::xrotation_status_t xtop_basic_vnode::status() const noexcept {
     return rotation_status(m_vhost->last_logic_time());
 }
 
-std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & ec) const noexcept {
+std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & ec) const {
     assert(m_election_cache_data_accessor != nullptr);
     assert(!ec);
 
@@ -135,7 +147,7 @@ std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & e
     }
 }
 
-std::vector<common::xip2_t> xtop_basic_vnode::associated_parent_nodes_xip2(std::error_code & ec) const noexcept {
+std::vector<common::xip2_t> xtop_basic_vnode::associated_parent_nodes_xip2(std::error_code & ec) const {
     assert(!ec);
     assert(m_election_cache_data_accessor != nullptr);
 
@@ -176,7 +188,7 @@ std::vector<common::xip2_t> xtop_basic_vnode::associated_parent_nodes_xip2(std::
     }
 }
 
-std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const noexcept {
+std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const {
     assert(m_election_cache_data_accessor != nullptr);
     assert(!ec);
 

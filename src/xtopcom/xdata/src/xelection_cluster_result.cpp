@@ -4,6 +4,11 @@
 
 #include "xdata/xelection/xelection_cluster_result.h"
 
+#include "xbasic/xutility.h"
+
+#include <functional>
+#include <iterator>
+
 NS_BEG3(top, data, election)
 
 xtop_election_cluster_result::iterator
@@ -84,6 +89,17 @@ xtop_election_cluster_result::erase(key_type const & key) {
 xtop_election_cluster_result::iterator
 xtop_election_cluster_result::erase(const_iterator pos) {
     return m_group_results.erase(pos);
+}
+
+legacy::xelection_cluster_result_t xtop_election_cluster_result::legacy() const {
+    legacy::xelection_cluster_result_t r;
+
+    std::transform(
+        std::begin(m_group_results), std::end(m_group_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_cluster_result_t::value_type {
+            return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
+        });
+
+    return r;
 }
 
 NS_END3

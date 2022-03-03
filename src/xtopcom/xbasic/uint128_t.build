@@ -1,8 +1,8 @@
 // IMPLEMENTATION BUILD HEADER
 #ifndef _UINT128_T_BUILD
   #define _UINT128_T_BUILD
-  #include "xbasic/uint128_t_config.include"
+  #include "uint128_t_config.include"
   #define UINT128_T_EXTERN _UINT128_T_EXPORT
 #endif
-#include "xbasic/uint128_t.include"
+#include "uint128_t.include"
 

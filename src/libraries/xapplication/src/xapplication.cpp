@@ -5,7 +5,6 @@
 #include "xapplication/xapplication.h"
 
 #include "xapplication/xbeacon_chain_application.h"
-// #include "xapplication/xcons_mgr_builder.h"
 #include "xapplication/xerror/xerror.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
@@ -30,12 +29,12 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xrouter/xrouter.h"
-#include "xstake/xstake_algorithm.h"
 #include "xstore/xstore_error.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
@@ -286,14 +285,14 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
 
     // check whether include in register contract
     std::string value_str;
-    int ret = m_store->map_get(sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
+    int ret = m_store->map_get(sys_contract_rec_registration_addr, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
 
     if (ret != store::xstore_success || value_str.empty()) {
         xwarn("[register_node_callback] get node register info fail, node_addr: %s", node_addr.c_str());
         return ret;
     }
 
-    xstake::xreg_node_info node_info;
+    data::system_contract::xreg_node_info node_info;
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
 
     node_info.serialize_from(stream);

@@ -35,9 +35,7 @@ bool xtop_test_election_data_manager_fixture::add_nodes_to_standby(std::size_t n
 #if defined XENABLE_TESTS
         standby_node_info.stake(node_type, index);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xminer_type_t::validator : common::xminer_type_t::advance;
-#endif
+        standby_node_info.miner_type = (node_type == common::xnode_type_t::validator) ? common::xminer_type_t::validator : common::xminer_type_t::advance;
         if (!add_standby_node(node_type, node_id, standby_node_info))
             return false;
     }

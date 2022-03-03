@@ -4,10 +4,12 @@
 
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_zec_contract.h"
 
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
@@ -94,11 +96,11 @@ void xtop_rec_elect_zec_contract::elect_config_nodes(common::xlogic_time_t const
 #endif
 
 void xtop_rec_elect_zec_contract::setup() {
-    xelection_result_store_t election_result_store;
+    election::legacy::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 }
 
@@ -164,7 +166,12 @@ void xtop_rec_elect_zec_contract::on_timer(common::xlogic_time_t const current_t
                                             standby_network_result,
                                             election_network_result);
         if (successful) {
-            serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
+                serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+            } else {
+                serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.legacy());
+            }
             xwarn("[zec committee election] successful. timestamp %" PRIu64 " start time %" PRIu64 " random seed %" PRIu64, current_time, start_time, random_seed);
         }
     }

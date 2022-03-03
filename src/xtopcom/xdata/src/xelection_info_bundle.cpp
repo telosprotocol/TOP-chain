@@ -82,4 +82,13 @@ xtop_election_info_bundle::clear() noexcept {
     m_node_id.clear();
 }
 
+legacy::xelection_info_bundle_t xtop_election_info_bundle::legacy() const {
+    legacy::xelection_info_bundle_t r;
+
+    r.node_id(m_node_id);
+    r.election_info(m_election_info.legacy());
+
+    return r;
+}
+
 NS_END3

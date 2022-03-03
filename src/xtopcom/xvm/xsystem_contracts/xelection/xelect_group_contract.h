@@ -11,7 +11,7 @@
 #include "xdata/xelection/xelection_network_result.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_network_result.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xcontract/xcontract_base.h"
 
 NS_BEG3(top, xvm, system_contracts)

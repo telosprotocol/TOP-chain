@@ -8,7 +8,7 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xfulltableblock_account_data.h"
 #include "xdata/xslash.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvledger/xvcnode.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
@@ -116,17 +116,18 @@ private:
      * @param  xstatistics_data_t  statistic data
      *
      */
-    std::map<common::xgroup_address_t, xstake::xgroup_workload_t> get_workload_from_data(top::data::xstatistics_data_t const & statistic_data, top::data::xfulltableblock_statistic_accounts const& statistic_accounts);
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> get_workload_from_data(top::data::xstatistics_data_t const & statistic_data,
+                                                                                                        top::data::xfulltableblock_statistic_accounts const & statistic_accounts);
 
     /**
      * @brief get_workload
      */
-    xstake::xgroup_workload_t get_workload(common::xgroup_address_t const & group_address);
+    data::system_contract::xgroup_workload_t get_workload(common::xgroup_address_t const & group_address);
 
     /**
      * @brief set_workload
      */
-    void set_workload(common::xgroup_address_t const & group_address, xstake::xgroup_workload_t const & group_workload);
+    void set_workload(common::xgroup_address_t const & group_address, data::system_contract::xgroup_workload_t const & group_workload);
 
     /**
      * @brief update_workload
@@ -134,7 +135,7 @@ private:
      * @param  group_workload  group workload
      *
      */
-    void update_workload(std::map<common::xgroup_address_t, xstake::xgroup_workload_t> const & group_workload);
+    void update_workload(std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & group_workload);
 
     /**
      * @brief update_tgas

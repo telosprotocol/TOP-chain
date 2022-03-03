@@ -11,15 +11,15 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
-#include "xstake/xstake_algorithm.h"
 
 #define XPROPERTY_CONTRACT_ELECTION_RESULT_0_KEY  "@42_0"
 #define XPROPERTY_CONTRACT_ELECTION_RESULT_1_KEY  "@42_1"
 #define XPROPERTY_CONTRACT_ELECTION_RESULT_2_KEY  "@42_2"
 
 using namespace top::data;
-using namespace top::xstake;
+using namespace top::data::system_contract;
 
 NS_BEG2(top, db_export)
 
@@ -346,13 +346,13 @@ static void parse_lock_token_map(std::map<std::string, std::string> const & map,
 
 static void parse_reg_node_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
-        xstake::xreg_node_info reg_node_info;
+        data::system_contract::xreg_node_info reg_node_info;
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
         reg_node_info.serialize_from(stream);
         json j_node;
         j_node["account_addr"] = reg_node_info.m_account.value();
         j_node["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
-        if (reg_node_info.m_genesis_node) {
+        if (reg_node_info.genesis()) {
             j_node["registered_node_type"] = std::string{"advance,validator,edge"};
         } else {
             j_node["registered_node_type"] = common::to_string(reg_node_info.miner_type());
@@ -392,7 +392,7 @@ static void parse_zec_workload_map(std::map<std::string, std::string> const & ma
         auto const & group_id = m.first;
         auto const & detail = m.second;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        xstake::cluster_workload_t workload;
+        data::system_contract::cluster_workload_t workload;
         workload.serialize_from(stream);
         json jn;
         jn["cluster_total_workload"] = workload.cluster_total_workload;
@@ -438,7 +438,7 @@ static void parse_zec_tasks_map(std::map<std::string, std::string> const & map, 
         if (detail.empty()) {
             continue;
         }
-        xstake::xreward_dispatch_task task;
+        data::system_contract::xreward_dispatch_task task;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         task.serialize_from(stream);
         json jv;
@@ -447,18 +447,18 @@ static void parse_zec_tasks_map(std::map<std::string, std::string> const & map, 
         jv["onchain_timer_round"] = task.onchain_timer_round;
         jv["contract"] = task.contract;
         jv["action"] = task.action;
-        if (task.action == xstake::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == xstake::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
+        if (task.action == data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
             base::xstream_t stream_params{base::xcontext_t::instance(), (uint8_t *)task.params.data(), static_cast<uint32_t>(task.params.size())};
             uint64_t onchain_timer_round;
-            std::map<std::string, top::xstake::uint128_t> rewards;
+            std::map<std::string, ::uint128_t> rewards;
             stream_params >> onchain_timer_round;
             stream_params >> rewards;
             for (auto v : rewards) {
-                jvn[v.first] = base::xstring_utl::tostring(static_cast<uint64_t>(v.second / xstake::REWARD_PRECISION)) + std::string(".") +
-                               base::xstring_utl::tostring(static_cast<uint32_t>(v.second % xstake::REWARD_PRECISION));
+                jvn[v.first] = base::xstring_utl::tostring(static_cast<uint64_t>(v.second / data::system_contract::REWARD_PRECISION)) + std::string(".") +
+                               base::xstring_utl::tostring(static_cast<uint32_t>(v.second % data::system_contract::REWARD_PRECISION));
             }
             jv["rewards"] = jvn;
-        } else if (task.action == xstake::XTRANSFER_ACTION) {
+        } else if (task.action == data::system_contract::XTRANSFER_ACTION) {
             std::map<std::string, uint64_t> issuances;
             base::xstream_t seo_stream(base::xcontext_t::instance(), (uint8_t *)task.params.c_str(), (uint32_t)task.params.size());
             seo_stream >> issuances;
@@ -491,16 +491,16 @@ static void parse_table_votes_map(std::map<std::string, std::string> const & map
 
 static void parse_voter_dividend_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
-        xstake::xreward_record record;
+        data::system_contract::xreward_record record;
         auto detail = m.second;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         record.serialize_from(stream);
 
         json jv;
-        jv["accumulated"] = static_cast<uint64_t>(record.accumulated / xstake::REWARD_PRECISION);
-        jv["accumulated_decimals"] = static_cast<uint32_t>(record.accumulated % xstake::REWARD_PRECISION);
-        jv["unclaimed"] = static_cast<uint64_t>(record.unclaimed / xstake::REWARD_PRECISION);
-        jv["unclaimed_decimals"] = static_cast<uint32_t>(record.unclaimed % xstake::REWARD_PRECISION);
+        jv["accumulated"] = static_cast<uint64_t>(record.accumulated / data::system_contract::REWARD_PRECISION);
+        jv["accumulated_decimals"] = static_cast<uint32_t>(record.accumulated % data::system_contract::REWARD_PRECISION);
+        jv["unclaimed"] = static_cast<uint64_t>(record.unclaimed / data::system_contract::REWARD_PRECISION);
+        jv["unclaimed_decimals"] = static_cast<uint32_t>(record.unclaimed % data::system_contract::REWARD_PRECISION);
         jv["last_claim_time"] = record.last_claim_time;
         jv["issue_time"] = record.issue_time;
         json jvm;
@@ -508,10 +508,10 @@ static void parse_voter_dividend_map(std::map<std::string, std::string> const & 
         for (auto n : record.node_rewards) {
             json jvn;
             jvn["account_addr"] = n.account;
-            jvn["accumulated"] = static_cast<uint64_t>(n.accumulated / xstake::REWARD_PRECISION);
-            jvn["accumulated_decimals"] = static_cast<uint32_t>(n.accumulated % xstake::REWARD_PRECISION);
-            jvn["unclaimed"] = static_cast<uint64_t>(n.unclaimed / xstake::REWARD_PRECISION);
-            jvn["unclaimed_decimals"] = static_cast<uint32_t>(n.unclaimed % xstake::REWARD_PRECISION);
+            jvn["accumulated"] = static_cast<uint64_t>(n.accumulated / data::system_contract::REWARD_PRECISION);
+            jvn["accumulated_decimals"] = static_cast<uint32_t>(n.accumulated % data::system_contract::REWARD_PRECISION);
+            jvn["unclaimed"] = static_cast<uint64_t>(n.unclaimed / data::system_contract::REWARD_PRECISION);
+            jvn["unclaimed_decimals"] = static_cast<uint32_t>(n.unclaimed % data::system_contract::REWARD_PRECISION);
             jvn["last_claim_time"] = n.last_claim_time;
             jvn["issue_time"] = n.issue_time;
             jvm[no++] = jvn;
@@ -525,13 +525,13 @@ static void parse_node_reward_map(std::map<std::string, std::string> const & map
     for (auto const & m : map) {
         auto detail = m.second;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        xstake::xreward_node_record record;
+        data::system_contract::xreward_node_record record;
         record.serialize_from(stream);
         json jv;
-        jv["accumulated"] = static_cast<uint64_t>(record.m_accumulated / xstake::REWARD_PRECISION);
-        jv["accumulated_decimals"] = static_cast<uint32_t>(record.m_accumulated % xstake::REWARD_PRECISION);
-        jv["unclaimed"] = static_cast<uint64_t>(record.m_unclaimed / xstake::REWARD_PRECISION);
-        jv["unclaimed_decimals"] = static_cast<uint32_t>(record.m_unclaimed % xstake::REWARD_PRECISION);
+        jv["accumulated"] = static_cast<uint64_t>(record.m_accumulated / data::system_contract::REWARD_PRECISION);
+        jv["accumulated_decimals"] = static_cast<uint32_t>(record.m_accumulated % data::system_contract::REWARD_PRECISION);
+        jv["unclaimed"] = static_cast<uint64_t>(record.m_unclaimed / data::system_contract::REWARD_PRECISION);
+        jv["unclaimed_decimals"] = static_cast<uint32_t>(record.m_unclaimed % data::system_contract::REWARD_PRECISION);
         jv["last_claim_time"] = record.m_last_claim_time;
         jv["issue_time"] = record.m_issue_time;
         j[m.first] = jv;
@@ -548,7 +548,7 @@ static void parse_refunds_map(std::map<std::string, std::string> const & map, js
     for (auto const & m : map) {
         auto detail = m.second;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        xstake::xrefund_info refund;
+        data::system_contract::xrefund_info refund;
         refund.serialize_from(stream);
         json jv;
         jv["refund_amount"] = refund.refund_amount;
@@ -558,7 +558,7 @@ static void parse_refunds_map(std::map<std::string, std::string> const & map, js
 }
 
 static void parse_genesis_string(std::string const & str, json & j) {
-    xstake::xactivation_record record;
+    data::system_contract::xactivation_record record;
     if (!str.empty()) {
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)str.data(), static_cast<uint32_t>(str.size())};
         record.serialize_from(stream);
@@ -600,7 +600,7 @@ static void parse_unqualified_node_map(std::map<std::string, std::string> const 
 static void parse_slash_info_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
         auto detail = m.second;
-        xstake::xslash_info s_info;
+        data::system_contract::xslash_info s_info;
         if (!detail.empty()) {
             base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), (uint32_t)detail.size()};
             s_info.serialize_from(stream);
@@ -669,14 +669,14 @@ static void parse_accumulated_issuance_map(std::map<std::string, std::string> co
 }
 
 static void parse_accumulated_issuance_yearly_string(std::string const & str, json & j) {
-    xstake::xaccumulated_reward_record record;
+    data::system_contract::xaccumulated_reward_record record;
     if (!str.empty()) {
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)str.data(), static_cast<uint32_t>(str.size())};
         record.serialize_from(stream);
     }
     j["last_issuance_time"] = record.last_issuance_time;
-    j["issued_until_last_year_end"] = static_cast<uint64_t>(record.issued_until_last_year_end / xstake::REWARD_PRECISION);
-    j["issued_until_last_year_end_decimals"] = static_cast<uint32_t>(record.issued_until_last_year_end % xstake::REWARD_PRECISION);
+    j["issued_until_last_year_end"] = static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION);
+    j["issued_until_last_year_end_decimals"] = static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION);
 }
 
 static void parse_vote_report_time_map(std::map<std::string, std::string> const & map, json & j) {
@@ -689,7 +689,7 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     if (str.empty()) {
         return;
     }
-    xstake::xissue_detail issue_detail;
+    data::system_contract::xissue_detail issue_detail;
     issue_detail.from_string(str);
     json jv;
     jv["onchain_timer_round"] = issue_detail.onchain_timer_round;
@@ -707,18 +707,18 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     json jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
-        ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_edge_reward % xstake::REWARD_PRECISION)
-           << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_archive_reward % xstake::REWARD_PRECISION)
-           << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_validator_reward % xstake::REWARD_PRECISION)
-           << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_auditor_reward % xstake::REWARD_PRECISION)
-           << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION)
-           << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_self_reward % xstake::REWARD_PRECISION);
+        ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_edge_reward % data::system_contract::REWARD_PRECISION)
+           << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_archive_reward % data::system_contract::REWARD_PRECISION)
+           << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % data::system_contract::REWARD_PRECISION)
+           << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION)
+           << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_vote_reward % data::system_contract::REWARD_PRECISION)
+           << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_self_reward % data::system_contract::REWARD_PRECISION);
         jr[node_reward.first] = ss.str();
     }
     jv["node_rewards"] = jr;
@@ -825,7 +825,7 @@ static void parse_rec_standby_pool_string(std::string const & str, json & j) {
                 jn["consensus_public_key"] = standby_node_info.consensus_public_key.to_string();
                 jn["node_id"] = node_id.value();
                 jn["stake"] = standby_node_info.stake(node_type);
-                jn["is_genesis_node"] = std::string{standby_node_info.is_genesis_node ? "true" : "false"};
+                jn["is_genesis_node"] = std::string{standby_node_info.genesis ? "true" : "false"};
                 jn["program_version"] = standby_node_info.program_version;
                 j[node_type_str] += jn;
             }

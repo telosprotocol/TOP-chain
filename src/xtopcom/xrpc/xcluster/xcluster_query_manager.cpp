@@ -9,16 +9,16 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproposal_data.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtransaction_cache.h"
+#include "xmbus/xevent_behind.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
-#include "xstake/xstake_algorithm.h"
 #include "xstore/xtgas_singleton.h"
 #include "xutility/xhash.h"
-#include "xvm/manager/xcontract_address_map.h"
-#include "xmbus/xevent_behind.h"
 #include "xvledger/xvledger.h"
+#include "xvm/manager/xcontract_address_map.h"
 
 using namespace top::data;
 
@@ -260,8 +260,9 @@ void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     jv["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
 
     xJson::Value tj;
-    m_bh.query_account_property(tj, sys_contract_rec_registration_addr, xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, chain_info::xfull_node_compatible_mode_t::incompatible);
-    jv["network_activate_time"] = tj[xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY]["activation_time"].asUInt64();
+    m_bh.query_account_property(
+        tj, sys_contract_rec_registration_addr, data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, chain_info::xfull_node_compatible_mode_t::incompatible);
+    jv["network_activate_time"] = tj[data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY]["activation_time"].asUInt64();
 
     json_proc.m_response_json["data"] = jv;
 }
@@ -291,7 +292,7 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
         for (auto m : workloads) {
             auto detail = m.second;
             base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-            xstake::cluster_workload_t workload;
+            data::system_contract::cluster_workload_t workload;
             workload.serialize_from(stream);
             xJson::Value jn;
             jn["cluster_total_workload"] = workload.cluster_total_workload;
@@ -316,17 +317,17 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
     xJson::Value j;
 
     std::string xissue_detail_str;
-    if (m_store->get_string_property(sys_contract_zec_reward_addr, height, xstake::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
+    if (m_store->get_string_property(sys_contract_zec_reward_addr, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
         xwarn("[xcluster_query_manager::getIssuanceDetail] contract_address: %s, height: %llu, property_name: %s",
             sys_contract_zec_reward_addr,
             height,
-            xstake::XPROPERTY_REWARD_DETAIL);
+              data::system_contract::XPROPERTY_REWARD_DETAIL);
         return;
     }
     if (xissue_detail_str.empty()) {
         return;
     }
-    xstake::xissue_detail issue_detail;
+    data::system_contract::xissue_detail issue_detail;
     issue_detail.from_string(xissue_detail_str);
     xdbg("[xcluster_query_manager::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
     "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
@@ -357,11 +358,12 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
     jv["validator_group_count"]         = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"]           = (xJson::UInt)issue_detail.m_auditor_group_count;
     std::map<std::string, std::string> contract_auditor_votes;
-    if (m_store->get_map_property(sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, xstake::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
+    if (m_store->get_map_property(
+            sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
         xwarn("[xcluster_query_manager::getIssuanceDetail] contract_address: %s, height: %llu, property_name: %s",
             sys_contract_zec_vote_addr,
             issue_detail.m_zec_vote_contract_height,
-            xstake::XPORPERTY_CONTRACT_TICKETS_KEY);
+              data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY);
     }
     xJson::Value jvt;
     for (auto const & table_vote : contract_auditor_votes) {
@@ -379,28 +381,28 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
     jv["table_votes"] = jvt;
     xJson::Value jw1;
     common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_WORKLOAD_KEY;
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
     get_zec_workload_map(m_store, contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw1);
     jv["auditor_workloads"] = jw1[prop_name];
     xJson::Value jw2;
-    prop_name = xstake::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
+    prop_name = data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
     get_zec_workload_map(m_store, contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw2);
     jv["validator_workloads"] = jw2[prop_name];
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
-        ss  << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_edge_reward % xstake::REWARD_PRECISION)
-            << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_archive_reward % xstake::REWARD_PRECISION)
-            << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % xstake::REWARD_PRECISION)
-            << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % xstake::REWARD_PRECISION)
-            << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION)
-            << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_self_reward % xstake::REWARD_PRECISION);
+        ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_edge_reward % data::system_contract::REWARD_PRECISION)
+           << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_archive_reward % data::system_contract::REWARD_PRECISION)
+           << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % data::system_contract::REWARD_PRECISION)
+           << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION)
+           << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_vote_reward % data::system_contract::REWARD_PRECISION)
+           << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_self_reward % data::system_contract::REWARD_PRECISION);
         jr[node_reward.first] = ss.str();
     }
     jv["node_rewards"] = jr;
@@ -437,7 +439,7 @@ void xcluster_query_manager::queryNodeInfo(xjson_proc_t & json_proc) {
 
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_REG_KEY;
     m_bh.query_account_property(jv, contract_addr, prop_name, chain_info::xfull_node_compatible_mode_t::incompatible);
 
     if (target == "") {
@@ -554,7 +556,7 @@ void xcluster_query_manager::set_sharding_reward_claiming_prop(xjson_proc_t & js
 }
 
 void xcluster_query_manager::queryNodeReward(xjson_proc_t & json_proc) {
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
     set_sharding_reward_claiming_prop(json_proc, prop_name);
 }
 
@@ -566,7 +568,7 @@ void xcluster_query_manager::listVoteUsed(xjson_proc_t & json_proc) {
 
     uint32_t sub_map_no = (utl::xxh32_t::digest(target) % 4) + 1;
     std::string prop_name;
-    prop_name = prop_name + xstake::XPORPERTY_CONTRACT_VOTES_KEY_BASE + "-" + std::to_string(sub_map_no);
+    prop_name = prop_name + data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY_BASE + "-" + std::to_string(sub_map_no);
     set_sharding_vote_prop(json_proc, prop_name);
 }
 
@@ -578,7 +580,7 @@ void xcluster_query_manager::queryVoterDividend(xjson_proc_t & json_proc) {
 
     uint32_t sub_map_no = (utl::xxh32_t::digest(target) % 4) + 1;
     std::string prop_name;
-    prop_name = prop_name + xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE + "-" + std::to_string(sub_map_no);
+    prop_name = prop_name + data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE + "-" + std::to_string(sub_map_no);
     set_sharding_reward_claiming_prop(json_proc, prop_name);
 }
 

@@ -2,8 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xutility.h"
 #include "xdata/xelection/xstandby_result_store.h"
+
+#include "xdata/xelection/xlegacy/xstandby_network_storage_result.h"
+#include "xbasic/xutility.h"
+
+#include <functional>
+#include <iterator>
 
 NS_BEG3(top, data, election)
 
@@ -105,6 +110,15 @@ xtop_standby_result_store::erase(const_iterator pos) {
 xtop_standby_result_store::size_type
 xtop_standby_result_store::erase(key_type const & key) {
     return m_results.erase(key);
+}
+
+legacy::xstandby_result_store_t xtop_standby_result_store::legacy() const {
+    legacy::xstandby_result_store_t r;
+
+    std::transform(std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xstandby_result_store_t::value_type {
+        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
+    });
+    return r;
 }
 
 NS_END3

@@ -6,10 +6,10 @@
 
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
-#include "xbasic/uint128_t.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xserialize_face.h"
+#include "xbasic/xuint.hpp"
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xrole_type.h"
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-NS_BEG2(top, xstake)
+NS_BEG3(top, data, system_contract)
 
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_REG_KEY = "@101";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_TIME_KEY = "@102";
@@ -104,18 +104,10 @@ constexpr uint64_t TIMER_BLOCK_HEIGHT_PER_YEAR = 3155815;
  */
 bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled);
 
-/*#if defined(__LINUX_PLATFORM__) || defined(__MAC_PLATFORM__)
-typedef __uint128_t top::xstake::uint128_t;
-#else
-typedef uint64_t    top::xstake::uint128_t;
-#endif
-*/
-// typedef uint128_t top::xstake::uint128_t;
-
 struct xreward_node_record final : xserializable_based_on<void> {
     // common::xminer_type_t m_registered_miner_type {common::xminer_type_t::invalid};
-    top::xstake::uint128_t m_accumulated{0};
-    top::xstake::uint128_t m_unclaimed{0};
+    ::uint128_t m_accumulated{0};
+    ::uint128_t m_unclaimed{0};
     uint64_t m_last_claim_time{0};
     uint64_t m_issue_time{0};
 
@@ -138,8 +130,8 @@ private:
 
 struct node_record_t final : public xserializable_based_on<void> {
     std::string account;
-    top::xstake::uint128_t accumulated{0};
-    top::xstake::uint128_t unclaimed{0};
+    ::uint128_t accumulated{0};
+    ::uint128_t unclaimed{0};
     common::xlogic_time_t last_claim_time{0};
     uint64_t issue_time{0};
 
@@ -161,8 +153,8 @@ private:
 };
 
 struct xreward_record final : public xserializable_based_on<void> {
-    top::xstake::uint128_t accumulated{0};
-    top::xstake::uint128_t unclaimed{0};
+    ::uint128_t accumulated{0};
+    ::uint128_t unclaimed{0};
     std::vector<node_record_t> node_rewards;
     common::xlogic_time_t last_claim_time{0};
     uint64_t issue_time{0};
@@ -186,7 +178,7 @@ private:
 
 struct xaccumulated_reward_record final : public xserializable_based_on<void> {
     common::xlogic_time_t last_issuance_time{0};
-    top::xstake::uint128_t issued_until_last_year_end{0};
+    ::uint128_t issued_until_last_year_end{0};
 
 private:
     /**
@@ -329,6 +321,7 @@ bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type
 struct xreg_node_info final : public xserializable_based_on<void> {
 private:
     common::xminer_type_t m_registered_miner_type{common::xminer_type_t::invalid};
+    bool m_genesis{false};
 
 public:
     xreg_node_info() = default;
@@ -393,6 +386,12 @@ public:
     /// @return 
     bool can_be_fullnode() const noexcept;
 
+    template <common::xminer_type_t MinerTypeV>
+    bool has() const noexcept {
+        xdbg("queried miner type: %s, registered miner type %s", common::to_string(MinerTypeV).c_str(), common::to_string(m_registered_miner_type).c_str());
+        return common::has<MinerTypeV>(m_registered_miner_type);
+    }
+
     /**
      * @brief check if self is an invlid node
      *
@@ -410,8 +409,12 @@ public:
      * @return false
      */
     bool is_genesis_node() const noexcept {
-        return m_genesis_node;
+        return m_genesis;
     }
+
+    bool genesis() const noexcept;
+
+    void genesis(bool v) noexcept;
 
     uint64_t deposit() const noexcept;
 
@@ -527,7 +530,6 @@ public:
     // uint64_t    m_stake {0};
     // stake_info  m_stake_info {};
     common::xlogic_time_t m_last_update_time{0};
-    bool m_genesis_node{false};
     // uint32_t    m_network_id {0};
     std::set<common::xnetwork_id_t> m_network_ids;
     std::string nickname;
@@ -549,63 +551,6 @@ private:
      */
     int32_t do_read(base::xstream_t & stream) override;
 };
-
-class xtop_account_registration_info final : public xserializable_based_on<void> {
-private:
-    common::xaccount_address_t m_account{};
-    uint64_t m_account_mortgage{0};
-    common::xminer_type_t m_registered_miner_type{common::xminer_type_t::invalid};
-    uint64_t m_vote_amount{0};
-    uint64_t m_auditor_credit_numerator{0};
-    uint64_t m_auditor_credit_denominator{1000000};
-    uint64_t m_validator_credit_numerator{0};
-    uint64_t m_validator_credit_denominator{1000000};
-
-    uint m_support_ratio_numerator{0};  // dividends to voters
-    uint m_support_ratio_denominator{100};
-    common::xlogic_time_t m_last_update_time{0};
-    bool m_genesis_node{false};
-    std::set<common::xnetwork_id_t> m_network_ids;
-    std::string nickname;
-    xpublic_key_t consensus_public_key;
-
-public:
-    bool rec() const noexcept;
-    bool zec() const noexcept;
-    bool auditor() const noexcept;
-    bool validator() const noexcept;
-    bool edge() const noexcept;
-    bool archive() const noexcept;
-
-    uint64_t rec_stake() const noexcept;
-    uint64_t zec_stake() const noexcept;
-    uint64_t auditor_stake() const noexcept;
-    uint64_t validator_stake() const noexcept;
-    uint64_t edge_stake() const noexcept;
-    uint64_t archive_stake() const noexcept;
-
-    common::xminer_type_t role() const noexcept;
-
-    /**
-     * @brief write to stream
-     *
-     * @param stream
-     * @return int32_t
-     */
-    int32_t do_write(base::xstream_t & stream) const override {
-        return 0;
-    }
-    /**
-     * @brief read from stream
-     *
-     * @param stream
-     * @return int32_t
-     */
-    int32_t do_read(base::xstream_t & stream) override {
-        return 0;
-    }
-};
-using xaccount_registration_info_t = xtop_account_registration_info;
 
 /**
  * @brief Get the reg info object from node_addr
@@ -723,12 +668,12 @@ private:
 };
 
 struct reward_detail final : public xserializable_based_on<void> {
-    top::xstake::uint128_t m_edge_reward{0};
-    top::xstake::uint128_t m_archive_reward{0};
-    top::xstake::uint128_t m_validator_reward{0};
-    top::xstake::uint128_t m_auditor_reward{0};
-    top::xstake::uint128_t m_vote_reward{0};
-    top::xstake::uint128_t m_self_reward{0};
+    ::uint128_t m_edge_reward{0};
+    ::uint128_t m_archive_reward{0};
+    ::uint128_t m_validator_reward{0};
+    ::uint128_t m_auditor_reward{0};
+    ::uint128_t m_vote_reward{0};
+    ::uint128_t m_self_reward{0};
 
 private:
     int32_t do_write(base::xstream_t & stream) const override {
@@ -796,4 +741,4 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
-NS_END2
+NS_END3

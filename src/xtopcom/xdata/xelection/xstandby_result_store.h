@@ -6,6 +6,7 @@
 
 #include "xdata/xdata_common.h"
 #include "xcommon/xip.h"
+#include "xdata/xelection/xlegacy/xstandby_result_store.h"
 #include "xdata/xelection/xstandby_network_storage_result.h"
 
 #include <map>
@@ -85,6 +86,8 @@ public:
 
     size_type
     erase(key_type const & key);
+
+    legacy::xstandby_result_store_t legacy() const;
 };
 using xstandby_result_store_t = xtop_standby_result_store;
 

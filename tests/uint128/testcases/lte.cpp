@@ -3,8 +3,8 @@
 #include "uint128_t.h"
 
 TEST(Comparison, less_than_or_equals){
-    const top::xstake::uint128_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL);
-    const top::xstake::uint128_t small(0x0000000000000000ULL, 0x0000000000000000ULL);
+    const uint128_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL);
+    const uint128_t small(0x0000000000000000ULL, 0x0000000000000000ULL);
 
     EXPECT_EQ(small <= small,  true);
     EXPECT_EQ(small <= big,    true);
@@ -21,8 +21,8 @@ do                                                                      \
     const Z small = std::numeric_limits <Z>::min();                     \
     const Z big   = std::numeric_limits <Z>::max();                     \
                                                                         \
-    const top::xstake::uint128_t int_small(small);                                   \
-    const top::xstake::uint128_t int_big(big);                                       \
+    const uint128_t int_small(small);                                   \
+    const uint128_t int_big(big);                                       \
                                                                         \
     EXPECT_EQ(small <= int_small, true);                                \
     EXPECT_EQ(small <= int_big,   true);                                \
@@ -40,8 +40,8 @@ do                                                                      \
     const Z small =  1;                                                 \
     const Z big = std::numeric_limits <Z>::max();                       \
                                                                         \
-    const top::xstake::uint128_t int_small(small);                                   \
-    const top::xstake::uint128_t int_big(big);                                       \
+    const uint128_t int_small(small);                                   \
+    const uint128_t int_big(big);                                       \
                                                                         \
     EXPECT_EQ(small <= int_small, true);                                \
     EXPECT_EQ(small <= int_big,   true);                                \

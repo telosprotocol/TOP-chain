@@ -141,6 +141,9 @@ public:
      * @return common::xlogic_time_t 
      */
     virtual common::xlogic_time_t last_logic_time() const noexcept = 0;
+
+    // virtual common::xminer_type_t miner_type() const noexcept = 0;
+    // virtual bool genesis() const noexcept = 0;
 };
 
 NS_END2
