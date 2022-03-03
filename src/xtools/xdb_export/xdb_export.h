@@ -173,7 +173,7 @@ private:
         }
     };
 
-    void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s = -1, int init_e = -1);
+    void query_sync_result(std::string const & account,  const uint64_t h_end, std::string & result);
     void query_sync_result(std::string const & account, json & result_json);
     void query_table_latest_fullblock(std::string const & account, json & j);
     void query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp);
