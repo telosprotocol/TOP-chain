@@ -7,7 +7,11 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xmetrics/xmetrics.h"
-
+#include "json/value.h"
+#include "json/reader.h"
+#include "json/writer.h"
+#include <fstream>
+#include <sstream>
 #ifdef DEBUG
     #define DEBUG_XVLEDGER
 #endif
@@ -1599,6 +1603,46 @@ namespace top
             else
                 m_is_auto_prune = 0;
         }
-    
+
+        std::vector<db::xdb_path_t> xvchain_t::get_db_mult_path()
+        {
+            std::vector<db::xdb_path_t> db_data_paths;
+            std::string extra_config = get_data_dir_path();
+            if(extra_config.empty()) {
+                extra_config = ".extra_conf.json"; 
+            } else {
+                extra_config += "/.extra_conf.json"; 
+            }
+
+            std::ifstream keyfile(extra_config, std::ios::in);
+            xinfo("xvchain_t:get_db_path  extra_config %s", extra_config.c_str());
+            if (keyfile) {
+                xJson::Value key_info_js;
+                std::stringstream buffer;
+                buffer << keyfile.rdbuf();
+                keyfile.close();
+                std::string key_info = buffer.str();
+                xJson::Reader reader;
+                reader.parse(key_info, key_info_js);
+                if (key_info_js["db_path_num"] > 1) {   
+                    int db_path_num  = key_info_js["db_path_num"].asInt();
+                    for (int i = 0; i < db_path_num; i++) {
+                        std::string key_db_path = "db_path_" + std::to_string(i+1);
+                        std::string key_db_size = "db_path_size_" + std::to_string(i+1);
+                        std::string db_path_result =  key_info_js[key_db_path].asString();
+                        uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
+                        if (db_path_result.empty() || db_size_result < 1) {
+                            db_path_num = 1;
+                            xwarn("xvchain_t::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
+                            break;
+                        }
+                        xinfo("xvchain_t::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
+                        db_data_paths.emplace_back(db_path_result, db_size_result);
+                    }
+                }
+            }
+            return db_data_paths;
+        }
+
     };//end of namespace of base
 };//end of namespace of top

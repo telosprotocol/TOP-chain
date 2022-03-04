@@ -1,6 +1,3 @@
-[submodule "src/xtopcom/xdepends"]
-	path = src/xtopcom/xdepends
-	url = git@github.com:telosprotocol/xdepends.git
 [submodule "src/xtopcom/xbase"]
 	path = src/xtopcom/xbase
 	url = git@github.com:telosprotocol/xbase.git

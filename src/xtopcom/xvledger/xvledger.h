@@ -15,6 +15,7 @@
 #include "xveventbus.h"
 #include "xvdrecycle.h"
 #include "xbase/xlock.h"
+#include "xdb/xdb_factory.h"
 
 namespace top
 {
@@ -350,6 +351,7 @@ namespace top
             virtual bool                on_process_close();//send process_close event to every objects
             uint16_t                    get_round_number() {return m_round_number;}
             void                        add_round_number() {m_round_number++;}
+            std::vector<db::xdb_path_t> get_db_mult_path();
         protected:
             virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
             bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);

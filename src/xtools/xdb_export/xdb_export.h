@@ -47,7 +47,7 @@ public:
     void query_checkpoint(const uint64_t clock);
     // set folder
     void set_outfile_folder(std::string const & folder);
-
+    void compact_db();
     static bool  db_scan_key_callback(const std::string& key, const std::string& value,void*cookie);
     bool   db_scan_key_callback(const std::string& key, const std::string& value);
     void   db_parse_type_size(const std::string &fileName);
