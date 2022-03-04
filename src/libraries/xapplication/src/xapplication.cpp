@@ -38,7 +38,6 @@
 #include "xstore/xstore_error.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
-#include <fstream>
 #include <stdexcept>
 
 NS_BEG2(top, application)
@@ -56,52 +55,8 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
-
-    int db_path_num = 0;
-    std::vector<db::xdb_path_t> db_data_paths;
-    std::string extra_config = base::xvchain_t::instance().get_data_dir_path();
-    if(extra_config.empty()) {
-        extra_config = ".extra_conf.json"; 
-    } else {
-        extra_config += "/.extra_conf.json"; 
-    }
-
-    std::ifstream keyfile(extra_config, std::ios::in);
-    xinfo("xtop_application::read db start extra_config %s", extra_config.c_str());
-    if (keyfile) {
-        xJson::Value key_info_js;
-        std::stringstream buffer;
-        buffer << keyfile.rdbuf();
-        keyfile.close();
-        std::string key_info = buffer.str();
-        xJson::Reader reader;
-        // ignore any error when parse
-        reader.parse(key_info, key_info_js);
-        if (key_info_js["db_path_num"] > 1) {   
-            db_path_num = key_info_js["db_path_num"].asInt();
-            for (int i = 0; i < db_path_num; i++) {
-                std::string key_db_path = "db_path_" + std::to_string(i+1);
-                std::string key_db_size = "db_path_size_" + std::to_string(i+1);
-                std::string db_path_result =  key_info_js[key_db_path].asString();
-                uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
-                if (db_path_result.empty() || db_size_result < 1) {
-                    db_path_num = 1;
-                    xwarn("xtop_application::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
-                    break;
-                }
-                xinfo("xtop_application::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
-                db_data_paths.emplace_back(db_path_result, db_size_result);
-            }
-        }
-    }
-    
-    std::shared_ptr<db::xdb_face_t> db;
-    if (db_path_num > 1)    {
-        db = db::xdb_factory_t::instance(XGET_CONFIG(db_path), db_data_paths);
-    } else {
-        db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
-    }
-
+    std::vector<db::xdb_path_t> db_data_paths =   xvchain_t::instance().get_db_mult_path();  
+    std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path), db_data_paths);
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
@@ -470,6 +425,7 @@ bool xtop_application::is_beacon_account() const noexcept {
         return false;
     }
 }
+
 
 NS_END2
 
