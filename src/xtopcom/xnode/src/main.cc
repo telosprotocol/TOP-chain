@@ -1233,11 +1233,12 @@ bool IsDirEmpty(const char * dirname) {
     return true;
 }
 int StartNode(config_t& config) {
-    if (check_process_running(config.pid_file)) {
-        std::cout << "topio already running, Aborting!" << std::endl;
-        return -1;
+    if (config.config_file.empty()) {
+        if (check_process_running(config.pid_file)) {
+            std::cout << "topio already running, Aborting!" << std::endl;
+            return -1;
+        }
     }
-
 
     if (init_log() != 0) {
         std::cout << "init_log failed" << std::endl;
