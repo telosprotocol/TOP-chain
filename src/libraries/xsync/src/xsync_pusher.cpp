@@ -147,15 +147,16 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     for (auto object:objects) {
         if (!object->empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
             std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, random);
-            xsync_dbg("push_newblock_to_archive src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, object->size(),
+            xsync_info("push_newblock_to_archive, src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, object->size(),
                 push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
             for (auto &dst_idx: push_arcs) {
                 vnetwork::xvnode_address_t &target_addr = (*object)[dst_idx];
                 auto found = validator_auditor_neighbours.find(target_addr.account_address());
                 if (found == validator_auditor_neighbours.end()) {
-                    xsync_info("push_newblock_to_archive src=%s dst=%s, block_height = %llu",
+                    xsync_info("push_newblock_to_archive src=%s dst=%s, %s, block_height = %llu",
                         self_addr.to_string().c_str(),
                         target_addr.to_string().c_str(),
+                        address.c_str(),
                         block->get_height());
                     m_sync_sender->push_newblock(block, self_addr, target_addr);
                 }

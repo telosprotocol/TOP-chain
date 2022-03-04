@@ -1280,6 +1280,10 @@ void xsync_handler_t::recv_archive_height_list(uint32_t msg_size,
             for (uint32_t j = 0; j < blocks.size(); j++) {
                 vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
             }
+            if (height % 50 == 0) {
+                xsync_prune_sigleton_t::instance().update(address, enum_height_type::confirm_height, height);
+                xsync_info("refresh_block_recycler_rule succ2: %s,%d", address.c_str(), height);
+            }
         }
         xsync_info("recv_archive_height_list, send blocks: %d", vector_blocks.size());
         XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
