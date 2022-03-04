@@ -4,7 +4,6 @@ source /etc/profile
 NUM=$1
 echo "run number: "${NUM}
 
-xtop=cbuild/bin/Linux/xtopchain
 topio=cbuild/bin/Linux/topio
 solib=cbuild/lib/Linux/libxtopchain.so.*
 
@@ -12,10 +11,6 @@ cpwd=$(pwd)
 clear=${cpwd}/.github/scripts/test_clear.sh
 workdir=${cpwd}/scripts/deploy_allinone
 
-if [ ! -f ${xtop} ];then
-    echo ${xtop}" no exist!"
-    exit -1
-fi
 if [ ! -f ${topio} ];then
     echo ${topio}" no exist!"
     exit -1
@@ -30,7 +25,6 @@ if [ ! -d ${workdir} ];then
 fi
 
 rm -f ${workdir}/xtopchain ${workdir}/topio ${workdir}/libxtopchain.so
-cp ${xtop} ${workdir}/
 cp ${topio} ${workdir}/
 cp ${solib} ${workdir}/libxtopchain.so
 
