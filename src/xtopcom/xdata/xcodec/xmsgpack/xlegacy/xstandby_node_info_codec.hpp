@@ -22,9 +22,10 @@ NS_BEG1(adaptor)
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_field_count{5};
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_public_key_index{0};
 XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_stake_index{1};
-XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_program_version_index{2};
-XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_genesis_index{3};
-XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_miner_type_index{4};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_miner_type_index{2};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_program_version_index{3};
+XINLINE_CONSTEXPR std::size_t xlegacy_standby_node_info_genesis_index{4};
+
 
 #else
 
@@ -52,13 +53,6 @@ struct convert<top::data::election::legacy::xstandby_node_info_t> final {
             XATTRIBUTE_FALLTHROUGH;
         }
 
-#if defined(XENABLE_MOCK_ZEC_STAKE)
-        case xlegacy_standby_node_info_miner_type_index: {
-            node_info.miner_type = o.via.array.ptr[xlegacy_standby_node_info_miner_type_index].as<top::common::xminer_type_t>();
-            XATTRIBUTE_FALLTHROUGH;
-        }
-#endif
-
         case xlegacy_standby_node_info_genesis_index: {
             node_info.genesis = o.via.array.ptr[xlegacy_standby_node_info_genesis_index].as<bool>();
             XATTRIBUTE_FALLTHROUGH;
@@ -68,6 +62,13 @@ struct convert<top::data::election::legacy::xstandby_node_info_t> final {
             node_info.program_version = o.via.array.ptr[xlegacy_standby_node_info_program_version_index].as<std::string>();
             XATTRIBUTE_FALLTHROUGH;
         }
+
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+        case xlegacy_standby_node_info_miner_type_index: {
+            node_info.miner_type = o.via.array.ptr[xlegacy_standby_node_info_miner_type_index].as<top::common::xminer_type_t>();
+            XATTRIBUTE_FALLTHROUGH;
+        }
+#endif
 
         case xlegacy_standby_node_info_stake_index: {
             node_info.stake_container = o.via.array.ptr[xlegacy_standby_node_info_stake_index].as<std::map<top::common::xnode_type_t, uint64_t>>();
@@ -91,11 +92,11 @@ struct pack<::top::data::election::legacy::xstandby_node_info_t> {
         o.pack_array(xlegacy_standby_node_info_field_count);
         o.pack(node_info.consensus_public_key);
         o.pack(node_info.stake_container);
-        o.pack(node_info.program_version);
-        o.pack(node_info.genesis);
 #if defined(XENABLE_MOCK_ZEC_STAKE)
         o.pack(node_info.miner_type);
 #endif
+        o.pack(node_info.program_version);
+        o.pack(node_info.genesis);
         return o;
     }
 };
@@ -108,11 +109,11 @@ struct object_with_zone<::top::data::election::legacy::xstandby_node_info_t> {
         o.via.array.ptr = static_cast<msgpack::object *>(o.zone.allocate_align(sizeof(::msgpack::object) * o.via.array.size));
         o.via.array.ptr[xlegacy_standby_node_info_public_key_index] = msgpack::object{node_info.consensus_public_key, o.zone};
         o.via.array.ptr[xlegacy_standby_node_info_stake_index] = msgpack::object{node_info.stake_container, o.zone};
-        o.via.array.ptr[xlegacy_standby_node_info_program_version_index] = msgpack::object{node_info.program_version, o.zone};
-        o.via.array.ptr[xlegacy_standby_node_info_genesis_index] = msgpack::object{node_info.genesis, o.zone};
 #if defined(XENABLE_MOCK_ZEC_STAKE)
         o.via.array.ptr[xlegacy_standby_node_info_miner_type_index] = msgpack::object{node_info.miner_type, o.zone};
 #endif
+        o.via.array.ptr[xlegacy_standby_node_info_program_version_index] = msgpack::object{node_info.program_version, o.zone};
+        o.via.array.ptr[xlegacy_standby_node_info_genesis_index] = msgpack::object{node_info.genesis, o.zone};
     }
 };
 
