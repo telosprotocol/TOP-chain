@@ -38,12 +38,6 @@ if(NOT MSVC)
     set(LINK_ARGS ${LINK_ARGS} hiredis pthread)
 endif()
 
-add_executable(xtopchain_bin main.cpp)
-set_target_properties(xtopchain_bin
-    PROPERTIES OUTPUT_NAME "xtopchain"
-)
-target_link_libraries(xtopchain_bin PRIVATE xchaininit)
-
 add_library(xtopchain SHARED so.cpp)
 set_target_properties(xtopchain PROPERTIES
     VERSION   "${PROGRAM_VERSION}"
@@ -54,6 +48,4 @@ target_link_libraries(xtopchain PRIVATE xchaininit ${LINK_ARGS} xtopcl xxbase xd
 if (BUILD_METRICS)
     #add_dependencies(xtopchain xmetrics)
     target_link_libraries(xtopchain PRIVATE xmetrics)
-    #add_dependencies(xtopchain_bin xmetrics)
-    target_link_libraries(xtopchain_bin PRIVATE xmetrics)
 endif()

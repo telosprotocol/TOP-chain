@@ -1,6 +1,6 @@
 echo "clean env"
 
-ps -ef |grep "[.]/xtopchain"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
+ps -ef |grep "[.]/topio"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
 
 set -e
 
@@ -30,17 +30,17 @@ mkdir -p /tmp/rec6/db
 ulimit -c unlimited
 
 echo "start node"
-./xtopchain ./config/config.rec1.json > /dev/null 2>&1 &
+./topio node startNode -c ./config/config.rec1.json > /dev/null 2>&1 &
 sleep 1
-./xtopchain ./config/config.rec2.json > /dev/null 2>&1 &
+./topio node startNode -c ./config/config.rec2.json > /dev/null 2>&1 &
 sleep 1
-./xtopchain ./config/config.rec3.json > /dev/null 2>&1 &
+./topio node startNode -c ./config/config.rec3.json > /dev/null 2>&1 &
 sleep 1
-./xtopchain ./config/config.rec4.json > /dev/null 2>&1 &
+./topio node startNode -c ./config/config.rec4.json > /dev/null 2>&1 &
 sleep 1
-./xtopchain ./config/config.rec5.json > /dev/null 2>&1 &
+./topio node startNode -c ./config/config.rec5.json > /dev/null 2>&1 &
 sleep 1
-./xtopchain ./config/config.rec6.json > /dev/null 2>&1 &
+./topio node startNode -c ./config/config.rec6.json > /dev/null 2>&1 &
 sleep 1
 
 echo "finish"
