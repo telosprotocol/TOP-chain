@@ -263,8 +263,6 @@ void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_addr
 }
 
 void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
-    assert(src.zone_id() != common::xfrozen_zone_id);
-    assert(dst.zone_id() != common::xfrozen_zone_id);
     if (!running()) {
         ec = xvnetwork_errc2_t::vhost_not_run;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
@@ -277,6 +275,19 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
         xwarn("%s %s. dst address is not a broadcast address %s", ec.category().name(), ec.message().c_str(), dst.to_string().c_str());
         return;
     }
+
+    if (src.zone_id() == common::xfrozen_zone_id && dst.zone_id() == common::xfrozen_zone_id) {
+        xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
+        assert(common::get_message_category(vmsg.message_id()) == xmessage_category_sync);
+        auto bytes = codec::msgpack_encode(vmsg);
+        auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes.data(), bytes.size()));
+        xinfo("[vnetwork]xtop_vhost::broadcast frozen [vnet hash: %" PRIx64 "] [msg hash: %u] [xxh32 to_hash:%" PRIu32 "]", vmsg.hash(), message.hash(), new_hash_val);
+        assert(m_network_driver);
+        m_network_driver->broadcast(convert_to_p2p_xip2(src), bytes, ec);
+        return;
+    }
+    assert(src.zone_id() != common::xfrozen_zone_id);
+    assert(dst.zone_id() != common::xfrozen_zone_id);
 
     if (src.network_id() == dst.network_id() && src.zone_id() == dst.zone_id() && src.cluster_id() == dst.cluster_id() && src.group_id() == dst.group_id()) {
         // broadcast message in the same group
