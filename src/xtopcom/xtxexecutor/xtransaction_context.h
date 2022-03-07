@@ -159,7 +159,7 @@ class xtransaction_transfer : public xtransaction_face_t{
 
         uint64_t amount = get_amount();
         // min transfer amount
-        if (amount < 0) { // just allow zero
+        if (amount <= 0) { // just allow zero
              return xverifier::xverifier_error::xverifier_error_transfer_tx_min_amount_invalid;
         }
 
