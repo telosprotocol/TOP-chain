@@ -7,6 +7,7 @@
 #include "xdb/xdb.h"
 #include "xdb/xdb_factory.h"
 #include "xdb/xdb_face.h"
+#include "xvledger/xvdbkey.h"
 
 using namespace top::db;
 using namespace std;
@@ -646,3 +647,33 @@ TEST_F(test_performance, db_read_mult_path) {
     xinfo("db_dir %s db_read_mult_path count: %ld time(ms): %ld qps: %lf ." ,db_dir.c_str(), count, end-begin ,  1.0*count/(end-begin)*1000);
 }
 
+
+TEST_F(test_performance, db_test_db_compactions) {
+    string db_dir[4] = {"./db_single_default/", "./db_single_high_compress/", "./db_single_bottom_compress/", "./db_single_no_compress/"};
+    for (size_t i = 0; i < 4; i++) {
+        remove(db_dir[i].c_str());
+    }
+
+    for (int j = 0; j < 4; j++) {   
+         int db_kinds = xdb_kind_kvdb;
+        if(j > 0){
+            db_kinds |= (xdb_kind_high_compress << (j-1));
+        }
+        std::shared_ptr<xdb_face_t> db = xdb_factory_t::create(db_kinds, db_dir[j]);
+        ASSERT_NE(db, nullptr);
+       
+        uint32_t count = 2000;
+        std::string value(2048, 'A');
+        int64_t begin = top::base::xtime_utl::gmttime_ms();
+        for (uint32_t i=0; i < count; i++) {
+            std::string keyStr = top::base::xvdbkey_t::create_prunable_tx_key(std::to_string(i+1000000000));
+            if (!db->write(keyStr, value)) {
+			    std::cout << "read fail"<<std::endl;
+                 break;
+            }
+        }
+        int64_t end = top::base::xtime_utl::gmttime_ms();
+        std::cout << db_dir[j] << " db_read_single_path count:" << count << " time(ms):" << end-begin << " qps:" << 1.0*count/(end-begin)*1000 << std::endl;
+        xinfo("db_dir %s db_read_single_path count: %ld time(ms): %ld qps: %lf ." ,db_dir[j].c_str() , count, end-begin ,   1.0*count/(end-begin)*1000);
+    }
+}

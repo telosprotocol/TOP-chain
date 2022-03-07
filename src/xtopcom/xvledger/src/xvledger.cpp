@@ -1604,8 +1604,9 @@ namespace top
                 m_is_auto_prune = 0;
         }
 
-        std::vector<db::xdb_path_t> xvchain_t::get_db_mult_path()
+        void    xvchain_t::get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind)
         {
+            int db_kind = top::db::xdb_kind_kvdb;
             std::vector<db::xdb_path_t> db_data_paths;
             std::string extra_config = get_data_dir_path();
             if(extra_config.empty()) {
@@ -1624,6 +1625,17 @@ namespace top
                 std::string key_info = buffer.str();
                 xJson::Reader reader;
                 reader.parse(key_info, key_info_js);
+
+                //get db kind
+                std::string db_compress = key_info_js["db_compress"].asString();
+                if (db_compress == "high_compress") {
+                    db_kind |= top::db::xdb_kind_high_compress;
+                } else if (db_compress == "no_compress" ) {
+                    db_kind |= top::db::xdb_kind_no_compress;
+                } else if (db_compress == "bottom_compress" ) {
+                    db_kind |= top::db::xdb_kind_bottom_compress;
+                }
+                //get db path
                 if (key_info_js["db_path_num"] > 1) {   
                     int db_path_num  = key_info_js["db_path_num"].asInt();
                     for (int i = 0; i < db_path_num; i++) {
@@ -1641,7 +1653,8 @@ namespace top
                     }
                 }
             }
-            return db_data_paths;
+            extra_db_path = db_data_paths;
+            extra_db_kind = db_kind;
         }
 
     };//end of namespace of base
