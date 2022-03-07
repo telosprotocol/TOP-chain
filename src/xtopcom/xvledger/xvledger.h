@@ -351,7 +351,7 @@ namespace top
             virtual bool                on_process_close();//send process_close event to every objects
             uint16_t                    get_round_number() {return m_round_number;}
             void                        add_round_number() {m_round_number++;}
-            std::vector<db::xdb_path_t> get_db_mult_path();
+            void                        get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind);
         protected:
             virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
             bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);
