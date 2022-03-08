@@ -150,6 +150,14 @@ void xtop_contract_manager::install_monitors(observer_ptr<xmessage_bus_face_t> c
                 {
                     base::xvblock_t * block = dynamic_cast<base::xvblock_t*>(call.get_param1().get_object());
                     //xcontract_manager_t * contract_manager = reinterpret_cast<contract::xcontract_manager_t*>(call.get_param2().get_object());
+                    if (block->get_account() == sys_contract_beacon_timer_addr) {
+                        base::xvaccount_t _vaccount(sys_contract_beacon_timer_addr);
+                        base::xblock_vector blocks = this->m_syncstore->get_vblockstore()->load_block_object(_vaccount, block->get_height());
+                        if (!blocks.get_vector().empty()) {
+                            xdbg("xtop_contract_manager::install_monitors received repeat tc block=%s", block->dump().c_str());
+                            return true;
+                        }
+                    }
                     bool succ = this->m_syncstore->store_block(block);
                     xinfo("contract manager sees: received broadcast block=%s save %s",
                           block->dump().c_str(),
