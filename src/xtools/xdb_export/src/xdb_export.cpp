@@ -404,6 +404,11 @@ void xdb_export_tools_t::query_meta(std::vector<std::string> const & account_vec
     for (auto const & account : account_vec) {
         query_meta(account, root[account]);
     }
+
+    auto const unit_account_vec = get_db_unit_accounts();
+    for (auto const & account : unit_account_vec) {
+        query_meta(account, root[account]);
+    }
     generate_json_file(std::string{"all_meta_data.json"}, root);
 }
 
@@ -945,58 +950,30 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, st
     std::cout << table << " cp checkout finish!" << std::endl;
 }
 
-void xdb_export_tools_t::query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s, int init_e) {
-    int start = h_s;
-    int end = -1;
-    if (init_s != -1) {
-        start = init_s;
-    }
-    if (init_e != -1) {
-        end = init_e;
-    }
-    for (uint64_t h = h_s; h <= h_e; h++) {
-        auto vblock = m_blockstore->load_block_object(account, h, 0, false);
+void xdb_export_tools_t::query_sync_result(std::string const & account,  const uint64_t h_end, std::string & result) {
+    uint64_t  num = 0;
+    for(uint64_t index = 0; index <= h_end; index++) {
+        auto vblock = m_blockstore->load_block_object(account, index, base::enum_xvblock_flag_committed, false);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr) {
-            if (end != -1) {
-                if (start == end) {
-                    result += std::to_string(start) + ',';
-                } else {
-                    result += std::to_string(start) + '-' + std::to_string(end) + ',';
-                }
+            if(num != 0) {
+                result += std::to_string(index-num) + '-' + std::to_string(index-1) + ',';
+                num = 0;
             }
-            start = h + 1;
-            end = -1;
         } else {
-            end = h;
+            num++;
         }
-        if (h == h_e) {
-            if (end != -1) {
-                if (start == end) {
-                    result += std::to_string(start) + ',';
-                } else {
-                    result += std::to_string(start) + '-' + std::to_string(end) + ',';
-                }
-            }
-        }
+    }
+    if (num != 0) {
+        result +=  std::to_string(h_end-(num-1)) + '-' + std::to_string(h_end) ;
     }
 }
 
 void xdb_export_tools_t::query_sync_result(std::string const & account, json & result_json) {
     auto const block_height = m_blockstore->get_latest_committed_block_height(account);
-    auto const connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
-    if (connect_height > block_height) {
-        std::cout << account << " connect_height: " << connect_height << " > block_height: " << block_height << ", error" << std::endl;
-        result_json = "error";
-        return;
-    }
-    if (block_height == connect_height) {
-        result_json = "0-" + base::xstring_utl::tostring(block_height) + ",";
-    } else {
-        std::string result;
-        query_sync_result(account, connect_height + 1, block_height, result, 0, connect_height);
-        result_json = result;
-    }
+    std::string result;
+    query_sync_result(account, block_height, result);
+    result_json = result;
 }
 
 void xdb_export_tools_t::query_table_latest_fullblock(std::string const & account, json & j) {
@@ -1027,7 +1004,7 @@ void xdb_export_tools_t::query_table_latest_fullblock(std::string const & accoun
         }
     }
     std::string s;
-    query_sync_result(account, height_full, height_commit, s);
+    query_sync_result(account, height_full, s);
     j["exist_block"] = s;
 }
 

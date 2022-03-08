@@ -286,7 +286,7 @@ int main(int argc, char ** argv) {
             return -1;
         }
         if (argc == 3) {
-            auto const unit_account_vec = tools.get_db_unit_accounts();
+            auto const unit_account_vec = tools.get_table_accounts();
             tools.query_meta(unit_account_vec);
         } else if (argc == 4) {
             tools.query_meta(argv[3]);
