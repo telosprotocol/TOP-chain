@@ -195,11 +195,6 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
 
     // init up
     setup_options();
-
-    //using top::elect::xbeacon_xelect_imp;
-    auto hash_plugin = new xtop_hash_t();
-
-
     g_topchain_init_finish_flag = false;
 
     auto& config_center = top::config::xconfig_register_t::get_instance();
@@ -212,10 +207,19 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     config_center.remove_loader(offchain_loader);
     config_center.init_static_config();
 
-    // XTODO from v3, v3_db_path = config_path+DB_PATH
-    std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
     std::string v3_db_path = XGET_CONFIG(db_path) + DB_PATH;
     config_center.set(config::xdb_path_configuration_t::name, v3_db_path);
+
+    return topchain_start(config_file);
+}
+
+int topchain_start(const std::string& config_file) {
+    auto hash_plugin = new xtop_hash_t();
+    if (false == create_rootblock(config_file)) {
+        return 1;
+    }
+
+    auto& config_center = top::config::xconfig_register_t::get_instance();
 
     xchain_params chain_params;
     // attention: put chain_params.initconfig_using_configcenter behind config_center
@@ -237,10 +241,10 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     xinit_log(log_path.c_str(), true, true);
     xset_log_level((enum_xlog_level)log_level);
     auto xbase_info = base::xcontext_t::get_xbase_info();
-    xwarn("=== xtopchain start here ===");
+    xwarn("=== xnode start here ===");
     xwarn("=== xbase info: %s ===", xbase_info.c_str());
     config_center.log_dump();
-    std::cout << "=== xtopchain start here ===" << std::endl;
+    std::cout << "=== xnode start here ===" << std::endl;
     std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
 
     //wait log path created,and init metrics
@@ -255,9 +259,6 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     xkinfo("topchain_init init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
 
     MEMCHECK_INIT();
-    if (false == create_rootblock(config_file)) {
-        return 1;
-    }
 
     // start admin http service
     {
@@ -284,10 +285,12 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
         auto admin_http = std::make_shared<admin::AdminHttpServer>(admin_http_local_ip, admin_http_port, webroot);
         admin_http->Start();
     }
-    // end admin http service
 
-    //xmutisig::xmutisig::init_openssl();
     application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
+    std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
+    if (false == db_migrate(v2_db_path)) {
+        return 1;
+    }
     try {
         app.start();
     } catch (top::error::xtop_error_t const & eh) {
@@ -298,19 +301,15 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
         xerror("application exit with std::exception msg %s", eh.what());
     }
 
-    if (false == db_migrate(v2_db_path)) {
-        return 1;
-    }
-
     xinfo("==== app start done ===");
 
     std::cout << std::endl
         << "#####################################################################" << std::endl
-        << "xtopchain start ok" << std::endl
+        << "xnode start ok" << std::endl
         << "#####################################################################" << std::endl;
 
     xinfo("#####################################################################");
-    xinfo("xtopchain start ok");
+    xinfo("xnode start ok");
     xinfo("#####################################################################");
 
     // make block here
@@ -461,7 +460,6 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 
     catch_system_signals();//setup and hook system signals
 
-    auto hash_plugin = new xtop_hash_t();
     std::string chain_db_path = datadir + DB_PATH;
     std::string log_path;
     std::string bwlist_path;
@@ -525,46 +523,8 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
         config_center.set(config::xplatform_public_endpoints_configuration_t::name, bootnodes);
     }
 
-#ifdef DEBUG
-    config_center.dump();
-#endif
-
-    xchain_params chain_params;
-    // attention: put chain_params.initconfig_using_configcenter behind config_center
-    chain_params.initconfig_using_configcenter();
-    auto& user_params = data::xuser_params::get_instance();
-    global_node_id = user_params.account.value();
-
-    global_node_signkey = DecodePrivateString(user_params.signkey);
-
-#ifdef CONFIG_CHECK
-    // config check
-    if (!user_params.is_valid()) {
-        return 1;
-    }
-#endif
-    auto const log_level = XGET_CONFIG(log_level);
-    /*
-    std::string log_path(data::xlog_path_configuration_t::value);
-    if (!config_center.get(std::string(data::xlog_path_configuration_t::name), log_path)) {
-        assert(0);
-    }
-    */
-    std::cout << "account: " << global_node_id << std::endl;
-    xinfo("account:%s", global_node_id.c_str());
-    xinit_log(log_path.c_str(), true, true);
-    xset_log_level((enum_xlog_level)log_level);
-    xinfo("=== xtopchain start here with noparams ===");
-    std::cout << "xnode start begin..." << std::endl;
-
-    // init checkpoint
-    data::xchain_checkpoint_t::load();
-
     //init data_path into xvchain instance
     base::xvchain_t::instance().set_data_dir_path(datadir);
-    //init auto_prune feature
-    set_auto_prune_switch(XGET_CONFIG(auto_prune_data));
-    xkinfo("topchain_noparams_init auto_prune_switch= %d", base::xvchain_t::instance().is_auto_prune_enable());
 
     // load bwlist
     std::map<std::string, std::string> bwlist;
@@ -578,78 +538,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
         xdbg("load_bwlist_content failed!");
     }
 
-    MEMCHECK_INIT();
-    if (false == create_rootblock("")) {
-        return 1;
-    }
-    // start admin http service
-    {
-        xinfo("==== start admin http server ===");
-        uint16_t admin_http_port = 0;
-        std::string admin_http_local_ip = "127.0.0.1";
-        config_center.get("admin_http_addr", admin_http_local_ip);
-        config_center.get<uint16_t>("admin_http_port", admin_http_port);
-
-        if (admin_http_port == 0) {
-            std::cout << "http port:" << admin_http_port << " invalid" << std::endl;
-            return 1;
-        }
-
-        std::string webroot;
-
-#ifdef _WIN32
-        webroot = "C:\\";
-#elif __APPLE__
-        webroot = "/var";
-#elif __linux__
-        webroot = "/var";
-#elif __unix__
-        webroot = "/var";
-#else
-#error  "Unknown compiler"
-#endif
-
-
-        std::cout << "start admin http, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << " webroot:" << webroot << std::endl;
-        xinfo("start admin http, local_ip:%s port:%d webroot:%s", admin_http_local_ip.c_str(), admin_http_port, webroot.c_str());
-        auto admin_http = std::make_shared<admin::AdminHttpServer>(admin_http_local_ip, admin_http_port, webroot);
-        admin_http->Start();
-    }
-    // end admin http service
-
-    //xmutisig::xmutisig::init_openssl();
-    application::xapplication_t app{
-        user_params.account,
-        xpublic_key_t{ user_params.publickey },
-        user_params.signkey
-    };
-
-    std::string v2_db_path = datadir + OLD_DB_PATH;
-    if (false == db_migrate(v2_db_path)) {
-        return 1;
-    }
-
-    app.start();
-
-    std::cout << std::endl
-        << "================================================" << std::endl
-        << "topio start ok" << std::endl
-        << "================================================" << std::endl;
-
-    xinfo("================================================");
-    xinfo("topio start ok");
-    xinfo("================================================");
-  
-    // make block here
-    while (true) {
-        base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
-        std::this_thread::sleep_for(std::chrono::seconds(1200));
-    }
-
-    config_center.clear_loaders();
-    app.stop();
-    delete hash_plugin;
-    return 0;
+    return topchain_start("");
 }
 
 }
