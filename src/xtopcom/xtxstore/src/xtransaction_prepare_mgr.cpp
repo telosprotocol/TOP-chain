@@ -94,7 +94,7 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
                 jv["used_deposit"] = tx_info->get_used_deposit();
             }
             if (tx_info->is_send_tx()) {
-                if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2)) {
+                if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2 || tx_info->get_not_need_confirm())) {
                     jv["used_deposit"] = tx_info->get_used_deposit();
                 } else {
                     jv["used_deposit"] = 0;
@@ -123,7 +123,7 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
         } else
             continue;
 
-        if (_subtype == base::enum_transaction_subtype_confirm)
+        if (_subtype == base::enum_transaction_subtype_confirm || (_subtype == base::enum_transaction_subtype_recv && tx_info->get_not_need_confirm()))
             m_transaction_cache->tx_erase(txaction->get_tx_hash());
     }
     return 0;

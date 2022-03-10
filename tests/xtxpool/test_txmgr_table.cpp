@@ -133,7 +133,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(3, ready_txs.size());
@@ -238,7 +239,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(3, ready_txs.size());
     ASSERT_EQ(tx1b->get_digest_hex_str(), ready_txs[0]->get_digest_hex_str());
@@ -272,7 +274,8 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(10, ready_txs.size());
@@ -336,7 +339,8 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(0, ready_txs.size());
@@ -421,7 +425,8 @@ TEST_F(test_txmgr_table, expired_tx) {
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30);
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
 
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
     ASSERT_EQ(1, ready_txs.size());

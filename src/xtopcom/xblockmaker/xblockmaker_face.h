@@ -122,10 +122,10 @@ class xtablemaker_para_t {
       : m_tablestate(tablestate), m_commit_tablestate(commit_tablestate) {
         m_proposal = make_object_ptr<xtable_proposal_input_t>();
     }
-    xtablemaker_para_t(const std::vector<xcons_transaction_ptr_t> & origin_txs)
-    : m_origin_txs(origin_txs) {
-        m_proposal = make_object_ptr<xtable_proposal_input_t>();
-    }
+    // xtablemaker_para_t(const std::vector<xcons_transaction_ptr_t> & origin_txs)
+    // : m_origin_txs(origin_txs) {
+    //     m_proposal = make_object_ptr<xtable_proposal_input_t>();
+    // }
 
  public:
     void    set_origin_txs(const std::vector<xcons_transaction_ptr_t> & origin_txs) {
@@ -140,6 +140,9 @@ class xtablemaker_para_t {
     void    push_tx_to_proposal(const xcons_transaction_ptr_t & input_tx) const {
         m_proposal->set_input_tx(input_tx);
     }
+    void    push_receiptid_state_prove(const base::xvproperty_prove_ptr_t receiptid_state_prove) {
+        m_proposal->set_receiptid_state_prove(receiptid_state_prove);
+    }
     bool    delete_fail_tx_from_proposal(const std::vector<xcons_transaction_ptr_t> & fail_txs) const {
         for (auto & tx : fail_txs) {
             if (false == m_proposal->delete_fail_tx(tx)) {
@@ -148,8 +151,13 @@ class xtablemaker_para_t {
         }
         return true;
     }
+    void    set_pack_resource(const xtxpool_v2::xpack_resource & pack_resource) {
+        m_origin_txs = pack_resource.m_txs;
+        m_receiptid_info_map = pack_resource.m_receiptid_info_map;
+    }
 
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
+    const std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> & get_receiptid_info_map() const {return m_receiptid_info_map;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
     const data::xtablestate_ptr_t &                 get_tablestate() const {return m_tablestate;}
     const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
@@ -157,6 +165,7 @@ class xtablemaker_para_t {
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_origin_txs;
+    std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> m_receiptid_info_map;
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
 
     mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
@@ -223,12 +232,15 @@ class xblock_builder_para_face_t {
     int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
     void set_tgas_balance_change(const int64_t amount) { m_tgas_balance_change = amount; }
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs_info;}
+    void set_changed_confirm_ids(const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids) {m_changed_confirm_ids = changed_confirm_ids;}
+    const std::map<base::xtable_shortid_t, uint64_t> & get_changed_confirm_ids() const {return m_changed_confirm_ids;}
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
     int32_t                     m_error_code{0};
     int64_t                     m_tgas_balance_change{0};
     std::vector<xlightunit_tx_info_ptr_t> m_txs_info;
+    std::map<base::xtable_shortid_t, uint64_t> m_changed_confirm_ids;
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 

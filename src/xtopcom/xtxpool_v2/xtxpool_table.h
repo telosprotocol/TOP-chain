@@ -99,6 +99,7 @@ public:
     std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para);
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para);
+    xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para);
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash);
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void on_block_confirmed(xblock_t * table_block);
@@ -122,6 +123,7 @@ public:
     xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
 
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
+    bool get_sender_need_confirm_ids(base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const;
 
 private:
     // bool is_account_need_update(const std::string & account_addr) const;

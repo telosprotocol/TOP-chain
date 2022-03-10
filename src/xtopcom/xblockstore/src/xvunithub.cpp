@@ -945,7 +945,7 @@ namespace top
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_recv)
             {
                 base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_recv);
-                if(!txindex)
+                if(txindex == nullptr)
                 {
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
@@ -955,7 +955,7 @@ namespace top
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
             {
                 base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_confirm);
-                if(!txindex)
+                if(txindex == nullptr)
                 {
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;

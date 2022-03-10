@@ -101,6 +101,15 @@ int32_t xtable_proposal_input_t::do_write(base::xstream_t & stream) {
     for (uint32_t i = 0; i < count; i++) {
         m_input_txs[i]->serialize_to(stream);
     }
+
+    uint32_t prove_count = m_receiptid_state_proves.size();
+    if (prove_count > 0) {
+        stream.write_compact_var(prove_count);
+        for (uint32_t i = 0; i < prove_count; i++) {
+            m_receiptid_state_proves[i]->serialize_to(stream);
+        }
+    }
+
     return (stream.size() - begin_size);
 }
 
@@ -113,11 +122,29 @@ int32_t xtable_proposal_input_t::do_read(base::xstream_t & stream) {
         tx->serialize_from(stream);
         m_input_txs.push_back(tx);
     }
+
+    if (stream.size() > 0) {
+        uint32_t prove_count = 0;
+        int32_t ret = stream.read_compact_var(prove_count);
+        // for compatibility
+        if (ret > 0) {
+            for (uint32_t i = 0; i < prove_count; i++) {
+                base::xvproperty_prove_ptr_t receiptid_state_prove = make_object_ptr<base::xvproperty_prove_t>();
+                receiptid_state_prove->serialize_from(stream);
+                m_receiptid_state_proves.push_back(receiptid_state_prove);
+            }
+        }
+    }
+
     return (begin_size - stream.size());
 }
 
 void xtable_proposal_input_t::set_input_tx(const xcons_transaction_ptr_t & tx) {
     m_input_txs.push_back(tx);
+}
+
+void xtable_proposal_input_t::set_receiptid_state_prove(const base::xvproperty_prove_ptr_t & receiptid_state_prove) {
+    m_receiptid_state_proves.push_back(receiptid_state_prove);
 }
 
 void xtable_proposal_input_t::set_other_account(const std::string & account) {

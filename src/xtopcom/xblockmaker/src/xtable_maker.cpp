@@ -16,8 +16,8 @@
 NS_BEG2(top, blockmaker)
 
 // unconfirm rate limit parameters
-#define table_pair_unconfirm_tx_num_max (64)
-#define table_total_unconfirm_tx_num_max  (256)
+#define table_pair_unconfirm_tx_num_max (512)
+#define table_total_unconfirm_tx_num_max  (2048)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
@@ -151,6 +151,10 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     uint64_t last_receipt_id = 0;
     std::map<std::string, bool> account_check_state_ret;
 
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.partly_remove_confirm, cs_para.get_clock());
+    xinfo("xtable_maker_t::create_lightunit_makers remove confirm forked:%d,clock:%llu", is_forked, cs_para.get_clock());
+
     for (auto & tx : input_table_txs) {
         std::string unit_account = tx->get_account_addr();
         bool need_check_state = true;
@@ -261,6 +265,10 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             last_tx_subtype = cur_tx_subtype;
             last_tableid = cur_tableid;
             last_receipt_id = cur_receipt_id;
+        }
+
+        if (is_forked) {
+            tx->set_not_need_confirm();
         }
 
         table_para.push_tx_to_proposal(tx);  // save tx to proposal
@@ -490,8 +498,25 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     }
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     cs_para.set_parent_height(0);
+
+    auto self_table_sid = get_short_table_id();
+    auto & receiptid_info_map = table_para.get_receiptid_info_map();
+    std::map<base::xtable_shortid_t, uint64_t> changed_confirm_ids;
+    for (auto & receiptid_info : receiptid_info_map) {
+        auto & peer_table_sid = receiptid_info.first;
+
+        base::xreceiptid_pair_t peer_pair;
+        receiptid_info.second.m_receiptid_state->find_pair(self_table_sid, peer_pair);
+        auto recvid_max = peer_pair.get_recvid_max();
+        changed_confirm_ids[peer_table_sid] = recvid_max;
+    }
+
+
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources(), txs_info);
     build_para->set_tgas_balance_change(tgas_balance_change);
+    if (!changed_confirm_ids.empty()) {
+        build_para->set_changed_confirm_ids(changed_confirm_ids);
+    }
     xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     return proposal_block;
 }

@@ -105,6 +105,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_make_proposal_table_check_latest_state);
         RETURN_METRICS_NAME(cons_fail_verify_proposal_table_check_latest_state);
         RETURN_METRICS_NAME(cons_fail_verify_proposal_table_with_local);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_rise_confirm_id);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_confirm_id_error);
         RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);

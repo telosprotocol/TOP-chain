@@ -86,10 +86,24 @@ private:
         uint32_t tx_v2_num{0};
         uint64_t tx_v2_total_size{0};
 
-        uint64_t total_confirm_time_from_send{0};
-        uint64_t total_confirm_time_from_fire{0};
+        // uint64_t total_confirm_time_from_send{0};
+        // uint64_t total_confirm_time_from_fire{0};
+        // uint64_t max_confirm_time_from_send{0};
+        // uint64_t max_confirm_time_from_fire{0};
+    };
+
+    struct xdbtool_all_table_info_t {
+        std::map<std::string, tx_ext_t> sendonly;  // sendtx without confirmed
+        std::map<std::string, tx_ext_t> recvonly;  // sendtx that not need confirm without recv
+        std::map<std::string, tx_ext_t> confirmonly;  // confirmtx without send
+        // int confirmedtx_num{0};
+        // uint64_t total_confirm_time_from_send{0};
+        // uint64_t total_confirm_time_from_fire{0};
         uint64_t max_confirm_time_from_send{0};
         uint64_t max_confirm_time_from_fire{0};
+        std::mutex m_lock;
+        bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext);
+        void set_table_txdelay_time(const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
     };
 
     struct xdbtool_dbsize_key_type_info_t {
@@ -190,7 +204,10 @@ private:
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_txinfo_to_json(tx_ext_t const & send_txinfo, tx_ext_t const & confirm_txinfo);
-    void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
+    // void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
+
+    bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext);
+    void print_all_table_txinfo_to_file();
 
     std::set<std::string> get_special_genesis_accounts();
     std::set<std::string> get_db_unit_accounts_v2();
@@ -235,6 +252,8 @@ private:
     uint64_t  m_info_account_count;
     xdbtool_dbsize_t m_dbsize_info;
     void vector_to_json(std::map<std::string, xdbtool_parse_info_t> &db_info, json &json_root);
+
+    xdbtool_all_table_info_t m_all_table_info[32];
 };
 
 NS_END2

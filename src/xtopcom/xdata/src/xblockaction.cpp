@@ -90,6 +90,15 @@ uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
     return 0;
 }
 
+bool xlightunit_action_t::get_not_need_confirm() const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_FLAGS);
+    if (!value.empty()) {
+        auto flags = (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        return flags & XTX_NOT_NEED_CONFIRM_FLAG_MASK;
+    }
+    return false;
+}
+
 std::string xlightunit_action_t::get_action_result_property(const std::string & key) const {
     const std::map<std::string,std::string>* map_ptr = get_method_result()->get_map<std::string>();
     if (map_ptr != nullptr) {

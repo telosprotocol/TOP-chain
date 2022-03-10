@@ -122,6 +122,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_verify_proposal_unit_count,
     cons_fail_verify_proposal_table_check_latest_state,
     cons_fail_verify_proposal_table_with_local,
+    cons_fail_verify_proposal_rise_confirm_id,
+    cons_fail_verify_proposal_confirm_id_error,
 
     cons_view_fire_clock_delay,
     cons_view_fire_succ,
