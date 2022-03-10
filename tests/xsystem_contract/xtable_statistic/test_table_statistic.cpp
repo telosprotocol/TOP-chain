@@ -34,7 +34,6 @@
 using namespace top;
 using namespace top::xvm;
 using namespace top::xvm::xcontract;
-using namespace top::xstake;
 using namespace top::contract;
 using namespace top::tests::election;
 
