@@ -275,6 +275,10 @@ namespace top
                 std::map<chainbase::enum_xmodule_type, uint64_t> prune_boundary;
                 prune_boundary[mod_id] = 0;
                 m_prune_boundary[account_obj.get_account()] = prune_boundary;
+            } else {
+                if (mod_prune_boundary->second.find(mod_id) == mod_prune_boundary->second.end()) {
+                    mod_prune_boundary->second[mod_id] = 0;
+                }
             }
             return true;
         }
