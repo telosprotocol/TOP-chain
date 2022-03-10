@@ -12,10 +12,6 @@ echo "build args: "${fix_args}
 
 ./build.sh ${fix_args}
 
-if [ ! -f "cbuild/bin/Linux/xtopchain" ];then
-    echo "build xtopchain failed!!!"
-    exit -1
-fi
 if [ ! -f "cbuild/bin/Linux/topio" ];then
     echo "build topio failed!!!"
     exit -1
@@ -25,5 +21,5 @@ if [ ! -f "cbuild/lib/Linux/libxtopchain.so" ];then
     exit -1
 fi
 
-xtop_md5=$(md5sum cbuild/bin/Linux/xtopchain)
-echo "build success, xtopchain md5: "${xtop_md5}
+xtop_md5=$(md5sum cbuild/lib/Linux/libxtopchain.so)
+echo "build success, libxtopchain md5: "${xtop_md5}
