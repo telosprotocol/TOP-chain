@@ -70,7 +70,7 @@ public:
     }
 
     common::xlogic_time_t last_logic_time() const noexcept override { return 0; }
-
+    void send_to_through_frozen(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {}
     common::xnetwork_id_t const net_id{1};
     common::xnode_id_t const    node_id{"T80000ffffffffffffffffffffffffffffffffffffffff"};
 
