@@ -165,8 +165,12 @@ void WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & messag
         xdbg("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
 
         std::string des_xid = message.des_node_id();
-        routing_table->GetClosestNodes(des_xid, 8);
-        std::vector<kadmlia::NodeInfoPtr> nodes = routing_table->GetClosestNodes(des_xid, 8);
+        std::vector<kadmlia::NodeInfoPtr> nodes;
+        if (routing_table->GetNode(des_xid) != nullptr) {
+            nodes.push_back(routing_table->GetNode(des_xid));
+        } else {
+            nodes = routing_table->GetClosestNodes(des_xid, 3);
+        }
         if (nodes.empty()) {
             ec = xwrouter::xwrouter_error_t::routing_table_find_closest_nodes_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
             return;
@@ -342,10 +346,10 @@ void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, 
         for (uint32_t i = 0; i < bloomfilter_vec.size(); ++i) {
             message.add_bloomfilter(bloomfilter_vec[i]);
         }
-    }
-    xdbg("finally get destnode size:%u", rest_neighbors.size());
-    for (const auto & item : rest_neighbors) {
-        xdbg("finally get %s %s:%u", (item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
+        xdbg("finally get destnode size:%u", rest_neighbors.size());
+        for (const auto & item : rest_neighbors) {
+            xdbg("finally get %s %s:%u", (item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
+        }
     }
 
     std::string data;
