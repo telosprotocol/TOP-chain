@@ -100,7 +100,7 @@ void GossipFilter::PrintRepeatMap() {
 bool GossipFilter::FilterMessage(transport::protobuf::RoutingMessage& message) {
     assert(inited_);
     if (!message.has_msg_hash()) {
-        TOP_WARN("filter failed, gossip msg(%d) should set msg_hash", message.type());
+        TOP_DEBUG("filter failed, gossip msg(%d) should set msg_hash", message.type());
         return true;;
     }
 #ifndef NDEBUG

@@ -72,7 +72,7 @@ bool  ThreadHandler::fired_packet(base::xpacket_t & packet,int32_t cur_thread_id
             transport::FormatMsgid(pro_message).c_str());
             */
 
-    if (pro_message.hop_num() > 10) {
+    if (pro_message.hop_num() > 15) {
         TOP_WARN2("%s transport_hop_num_error(%d), msg.type(%d), is_broadcast(%d), msg.id(%d), is_root(%d)",
                 transport::FormatMsgid(pro_message).c_str(),
                 pro_message.hop_num(),
