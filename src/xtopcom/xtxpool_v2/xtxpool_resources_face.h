@@ -23,6 +23,8 @@ public:
     virtual base::xvcertauth_t * get_certauth() const =0;
     virtual mbus::xmessage_bus_face_t * get_bus() const = 0;
     virtual xreceiptid_state_cache_t & get_receiptid_state_cache() = 0;
+    virtual bool is_use_rspid_forked() = 0;
+    virtual void set_use_rspid_forked() = 0;
 };
 
 NS_END2

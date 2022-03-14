@@ -83,14 +83,8 @@ int32_t xtransaction_fee_t::update_tgas_sender() {
     auto ret = m_account_ctx->update_tgas_sender(tgas_usage, m_trans->get_transaction()->get_deposit(), used_deposit);
     uint64_t used_tgas = tgas_usage - used_deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     m_trans->set_current_used_tgas(used_tgas);
-    if ((m_trans->get_tx_type() == xtransaction_type_transfer) && (m_trans->get_tx_version() == xtransaction_version_2 || m_trans->get_not_need_confirm())) {
-        uint64_t clock = m_account_ctx->get_timer_height();
-        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-        auto forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.tx_v2_fee_fork_point, clock);
-        xdbg("tx v2 fee clock:%llu, fork:%d", clock, forked);
-        if (forked) {
-            m_trans->set_current_used_deposit(used_deposit);
-        }
+    if (m_trans->get_tx_type() == xtransaction_type_transfer) {
+        m_trans->set_current_used_deposit(used_deposit);
     }
     if (ret != 0) {
         m_account_ctx->incr_used_tgas(used_tgas);
@@ -202,8 +196,7 @@ void xtransaction_fee_t::update_fee_recv() {
 int32_t xtransaction_fee_t::update_fee_recv_self() {
     int32_t ret = xsuccess;
     // only v2 token burn tx meets the following requirments
-    if ((m_trans->get_tx_type() == xtransaction_type_transfer)
-     && (m_trans->get_transaction()->get_tx_version() == xtransaction_version_2 || m_trans->get_not_need_confirm())) {
+    if (m_trans->get_tx_type() == xtransaction_type_transfer) {
         xassert(m_trans->get_target_addr() == black_hole_addr);
         return ret;
     }

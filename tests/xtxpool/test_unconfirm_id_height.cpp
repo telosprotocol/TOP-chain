@@ -121,7 +121,7 @@ TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
 
     xreceiptid_state_cache_t receiptid_state_cache;
     xreceiptid_state_ptr_t receiptid_state = std::make_shared<xreceiptid_state_t>(1, 1000);
-    xreceiptid_pair_t pair1(101, 99, 99);
+    xreceiptid_pair_t pair1(101, 99, 99, 0, 0, 0);
     receiptid_state->add_pair(1, pair1);
     base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
     receiptid_state_cache.update_table_receiptid_state(property_prove_ptr, receiptid_state);
@@ -138,7 +138,7 @@ TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
     is_lacking = false;
     table_unconfirm.update_confirm_id(1, 100);
     receiptid_state->set_tableid_and_height(1, 1001);
-    xreceiptid_pair_t pair2(101, 100, 100);
+    xreceiptid_pair_t pair2(101, 100, 100, 0, 0, 0);
     receiptid_state->add_pair(1, pair2);
     ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1001, min_height, true, is_lacking);
     ASSERT_EQ(ret, true);
@@ -165,7 +165,7 @@ TEST_F(test_unconfirm_id_height, table_unconfirm_id_height) {
     ret = table_unconfirm.get_height_by_id(1, 101, height, need_confirm);
     ASSERT_EQ(ret, false);
     receiptid_state->set_tableid_and_height(1, 1002);
-    xreceiptid_pair_t pair3(103, 100, 101);
+    xreceiptid_pair_t pair3(103, 100, 101, 0, 0, 0);
     receiptid_state->add_pair(1, pair3);
     ret = table_unconfirm.get_min_height(receiptid_state_cache, all_table_sids, 1002, min_height, true, is_lacking);
     ASSERT_EQ(ret, true);

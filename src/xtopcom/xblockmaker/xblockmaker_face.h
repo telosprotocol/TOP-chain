@@ -251,7 +251,8 @@ class xblock_builder_face_t {
                                                   const data::xblock_consensus_para_t & cs_para,
                                                   xblock_builder_para_ptr_t & build_para) = 0;
     void                                alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs,
-                                                           const base::xreceiptid_state_ptr_t & receiptid_state);
+                                                           const base::xreceiptid_state_ptr_t & receiptid_state,
+                                                           bool add_rsp_id);
 };
 
 using xblock_builder_face_ptr_t = std::shared_ptr<xblock_builder_face_t>;

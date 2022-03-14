@@ -22,11 +22,23 @@ void xtable_state_cache_t::update(const data::xtablestate_ptr_t & table_state) {
          table_state->get_receiptid_state()->get_self_tableid(),
          table_state->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
 }
-uint64_t xtable_state_cache_t::get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const {
-    auto peer_table_sid = tx->get_tx()->get_peer_tableid();
 
-    return tx->get_tx()->is_recv_tx() ? get_recvid_max(peer_table_sid) : get_confirmid_max(peer_table_sid);
+bool xtable_state_cache_t::is_tx_duplicate(const std::shared_ptr<xtx_entry> & tx) const {
+    auto peer_table_sid = tx->get_tx()->get_peer_tableid();
+    auto receiptid = tx->get_tx()->get_last_action_receipt_id();
+    if (tx->get_tx()->is_recv_tx()) {
+        return receiptid <= get_recvid_max(peer_table_sid);
+    } else {
+        auto rspid = tx->get_tx()->get_last_action_rsp_id();
+        if (rspid == 0) {
+            //TODO(nathan): tobe deleted.
+            return receiptid <= get_confirmid_max(peer_table_sid);
+        } else {
+            return rspid <= get_confirm_rsp_id_max(peer_table_sid);
+        }
+    }
 }
+
 uint64_t xtable_state_cache_t::get_confirmid_max(base::xtable_shortid_t peer_table_sid) const {
     base::xreceiptid_pair_t receiptid_pair;
     std::lock_guard<std::mutex> lck(m_mutex);
@@ -39,6 +51,20 @@ uint64_t xtable_state_cache_t::get_confirmid_max(base::xtable_shortid_t peer_tab
     xdbg("xtable_state_cache_t::get_confirmid_max this:%p,table:%d,peer:%d,id:%llu", this, m_table_state->get_receiptid_state()->get_self_tableid(), peer_table_sid, receiptid_pair.get_confirmid_max());
     return receiptid_pair.get_confirmid_max();
 }
+
+uint64_t xtable_state_cache_t::get_confirm_rsp_id_max(base::xtable_shortid_t peer_table_sid) const {
+    base::xreceiptid_pair_t receiptid_pair;
+    std::lock_guard<std::mutex> lck(m_mutex);
+    if (m_table_state == nullptr) {
+        if (!init_table_state()) {
+            return 0;
+        }
+    }
+    m_table_state->get_receiptid_state()->find_pair(peer_table_sid, receiptid_pair);
+    xdbg("xtable_state_cache_t::get_confirm_rsp_id_max this:%p,table:%d,peer:%d,id:%llu", this, m_table_state->get_receiptid_state()->get_self_tableid(), peer_table_sid, receiptid_pair.get_confirm_rsp_id_max());
+    return receiptid_pair.get_confirm_rsp_id_max();
+}
+
 uint64_t xtable_state_cache_t::get_recvid_max(base::xtable_shortid_t peer_table_sid) const {
     base::xreceiptid_pair_t receiptid_pair;
     std::lock_guard<std::mutex> lck(m_mutex);

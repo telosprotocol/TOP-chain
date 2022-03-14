@@ -110,18 +110,24 @@ xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblo
 
 void  xblock_t::txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & txs_info, base::xreceiptid_check_t & receiptid_check) {
     for (auto & tx : txs_info) {
+        base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
+        uint64_t receiptid = tx->get_receipt_id();
+        uint64_t rspid = tx->get_rsp_id();
         if (tx->is_send_tx()) {
-            uint64_t sendid = tx->get_receipt_id();
-            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
-            receiptid_check.set_sendid(tableid, sendid);
+            receiptid_check.set_sendid(tableid, receiptid);
+            if (rspid != 0) {
+                receiptid_check.set_send_rsp_id(tableid, rspid);
+            }
         } else if (tx->is_recv_tx()) {
-            uint64_t recvid = tx->get_receipt_id();
-            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
-            receiptid_check.set_recvid(tableid, recvid);
+            receiptid_check.set_recvid(tableid, receiptid);
+            if (rspid != 0) {
+                receiptid_check.set_recv_rsp_id(tableid, rspid);
+            }
         } else if (tx->is_confirm_tx()) {
-            uint64_t confirmid = tx->get_receipt_id();
-            base::xtable_shortid_t tableid = tx->get_receipt_id_peer_tableid();
-            receiptid_check.set_confirmid(tableid, confirmid);
+            receiptid_check.set_confirmid(tableid, receiptid);
+            if (rspid != 0) {
+                receiptid_check.set_confirm_rsp_id(tableid, rspid);
+            }
         }
     }
 }

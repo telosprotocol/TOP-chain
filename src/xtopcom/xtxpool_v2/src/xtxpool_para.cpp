@@ -38,4 +38,12 @@ xreceiptid_state_cache_t & xtxpool_resources::get_receiptid_state_cache() {
     return m_receiptid_state_cache;
 }
 
+bool xtxpool_resources::is_use_rspid_forked() {
+    return m_use_rspid_forked;
+}
+
+void xtxpool_resources::set_use_rspid_forked() {
+    m_use_rspid_forked = true;
+}
+
 NS_END2

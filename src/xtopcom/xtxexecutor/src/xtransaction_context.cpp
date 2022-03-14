@@ -285,29 +285,21 @@ int32_t xtransaction_transfer::source_fee_exec() {
     auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
-        if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1 && !m_trans->get_not_need_confirm()) {
-            ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
-        } else {
-            if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
-                return xconsensus_service_error_balance_not_enough;
-            }
-
-            if (m_trans->get_transaction()->get_deposit() > (m_account_ctx->get_blockchain()->balance() - transfer_amount)) {
-                return xtransaction_too_much_deposit;
-            }
-
-            ret = m_fee.update_tgas_sender();
+        if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
+            return xconsensus_service_error_balance_not_enough;
         }
+
+        if (m_trans->get_transaction()->get_deposit() > (m_account_ctx->get_blockchain()->balance() - transfer_amount)) {
+            return xtransaction_too_much_deposit;
+        }
+
+        ret = m_fee.update_tgas_sender();
     }
     return ret;
 }
 
 int32_t xtransaction_transfer::source_confirm_fee_exec() {
-    if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1 && !m_trans->get_not_need_confirm()) {
-        return xtransaction_face_t::source_confirm_fee_exec();
-    } else {
-        return 0;
-    }
+    return 0;
 }
 
 int32_t xtransaction_pledge_token_vote::source_fee_exec(){

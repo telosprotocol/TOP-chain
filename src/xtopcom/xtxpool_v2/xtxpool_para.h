@@ -32,6 +32,8 @@ public:
     virtual base::xvcertauth_t * get_certauth() const override;
     virtual mbus::xmessage_bus_face_t * get_bus() const override;
     virtual xreceiptid_state_cache_t & get_receiptid_state_cache() override;
+    virtual bool is_use_rspid_forked() override;
+    virtual void set_use_rspid_forked() override;
 
 private:
     observer_ptr<store::xstore_face_t> m_store;
@@ -39,6 +41,7 @@ private:
     observer_ptr<base::xvcertauth_t> m_certauth;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     xreceiptid_state_cache_t m_receiptid_state_cache;
+    bool m_use_rspid_forked{false};
 };
 
 NS_END2

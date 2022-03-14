@@ -71,7 +71,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     auto receipts1 = receipt_queue.get_txs(10, 10, receiptid_state, confirm_txs_num);
     ASSERT_EQ(receipts1.size(), tx_num);
 
-    xreceiptid_pair_t receiptid_pair(1, 0, 1);
+    xreceiptid_pair_t receiptid_pair(1, 0, 1, 0, 0, 0);
     receiptid_state->add_pair(1, receiptid_pair);
     tx_info_t txinfo(sender, send_txs[0]->get_tx_hash_256(), enum_transaction_subtype_recv);
     receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, 1, 1);

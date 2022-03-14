@@ -7,7 +7,6 @@
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xtxpool_v2/xtxpool_tool.h"
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
 
@@ -109,11 +108,6 @@ void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shor
     m_new_receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, table_sid, receiptid);
 }
 
-ready_accounts_t xtxmgr_table_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
-    auto ready_txs = get_ready_txs(pack_para);
-    return xordered_ready_txs_t::ready_txs_to_ready_accounts(ready_txs);
-}
-
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
     // do not care about receipt id continuity of receipts in receipts queue, unit service should assure the continuity,
     // so that receipts in txpool could always be get from txpool to unit service without continuous constraint.
@@ -153,6 +147,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
                                                                                  pack_para.get_confirm_txs_max_num(),
                                                                                  pack_para.get_table_state_highqc()->get_receiptid_state(),
                                                                                  unconfirm_id_height,
+                                                                                 pack_para.is_use_rspid(),
                                                                                  confirm_tx_num);
     recv_tx_num = ready_txs.size() - confirm_tx_num;
 

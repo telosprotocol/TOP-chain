@@ -67,6 +67,14 @@ uint64_t xlightunit_action_t::get_receipt_id() const {
     return 0;
 }
 
+uint64_t xlightunit_action_t::get_rsp_id() const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RSP_ID);
+    if (!value.empty()) {
+        return base::xstring_utl::touint64(value);
+    }
+    return 0;
+}
+
 base::xtable_shortid_t xlightunit_action_t::get_receipt_id_self_tableid()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);
     if (!value.empty()) {

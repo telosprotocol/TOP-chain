@@ -23,6 +23,7 @@
 #include "xdb/xdb_factory.h"
 #include "xvledger/xvaccount.h"
 #include "xbase/xhash.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
@@ -1219,6 +1220,9 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 table_info.light_unit_block_num++;
             }
         }
+
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, block->get_clock());
         // step all actions
         auto input_actions = block->get_tx_actions();
         for (auto & action : input_actions) {
@@ -1240,7 +1244,12 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 }
             }
 
-            auto not_need_confirm = txaction.get_not_need_confirm();
+            bool not_need_confirm = false;
+            if (is_forked) {
+                not_need_confirm = (txaction.get_rsp_id() == 0);
+            } else {
+                not_need_confirm = txaction.get_not_need_confirm();
+            }
 
             bool is_cross_table_tx = false;
             // construct tx_ext info

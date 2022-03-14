@@ -19,9 +19,6 @@ public:
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override {
         return nullptr;
     }
-    ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) override {
-        return {};
-    }
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) override {
         return {};
     }
@@ -40,7 +37,7 @@ public:
     }
     void on_block_confirmed(xblock_t * block) override {
     }
-    int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) override {
+    int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, bool use_rspid) override {
         return 0;
     }
     void refresh_table(uint8_t zone, uint16_t subaddr) override {
@@ -83,6 +80,10 @@ public:
     bool get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const override {
         return true;
     }
+
+     bool is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
+         return false;
+     }
 
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;

@@ -38,6 +38,7 @@ public:
                                                                    base::xtable_shortid_t peer_table_id,
                                                                    uint64_t min_not_need_confirm_receiptid,
                                                                    uint64_t max_not_need_confirm_receiptid) const;
+    bool is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const;
 
 private:
     mutable std::mutex m_mutex;

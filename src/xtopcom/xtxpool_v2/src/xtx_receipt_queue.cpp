@@ -290,6 +290,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
                                                                          uint32_t confirm_txs_max_num,
                                                                          const base::xreceiptid_state_ptr_t & receiptid_state,
                                                                          const xunconfirm_id_height & unconfirm_id_height,
+                                                                         bool use_rspid,
                                                                          uint32_t & confirm_txs_num) const {
     std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> recv_peer_table_map;
     std::map<base::xtable_shortid_t, uint64_t> confirm_peer_table_max_id_map;
@@ -351,6 +352,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
         auto min_receipt_id = receiptid_pair.get_confirmid_max();
+        auto last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
 
         if (max_receipt_id <= min_receipt_id) {
             continue;
@@ -362,27 +364,39 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
             continue;
         } else {
             auto confirm_txs = it_confirm_tx_peer_table->second->get_txs(min_receipt_id + 1, max_receipt_id, max_receipt_id - min_receipt_id);
-            std::vector<uint64_t> receipt_ids;
-            for (auto & confirm_tx : confirm_txs) {
-                receipt_ids.push_back(confirm_tx->get_last_action_receipt_id());
-            }
-            if (receipt_ids.empty()) {
-                xtxpool_error("xreceipt_queue_new_t::get_txs receipt_ids is empty.");
-                continue;
-            }
-
-            auto filted_ids = unconfirm_id_height.filter_sender_continuous_need_confirm_ids(peer_table_sid, min_receipt_id + 1, receipt_ids);
-
-            if (filted_ids.empty()) {
-                continue;
-            }
-            uint64_t max_filted_id = filted_ids[filted_ids.size() - 1];
-
-            for (auto & confirm_tx : confirm_txs) {
-                if (confirm_tx->get_last_action_receipt_id() > max_filted_id) {
-                    break;
+            if (use_rspid) {
+                for (auto & confirm_tx : confirm_txs) {
+                    if (confirm_tx->get_last_action_rsp_id() == last_rsp_id + 1) {
+                        ret_txs.push_back(confirm_tx);
+                        last_rsp_id++;
+                    } else {
+                        xdbg("xreceipt_queue_new_t::get_txs rsp id not continuous.confirm_tx:%s,last id:%llu", confirm_tx->dump().c_str(), last_rsp_id + 1);
+                        break;
+                    }
                 }
-                ret_txs.push_back(confirm_tx);
+            } else {
+                std::vector<uint64_t> receipt_ids;
+                for (auto & confirm_tx : confirm_txs) {
+                    receipt_ids.push_back(confirm_tx->get_last_action_receipt_id());
+                }
+                if (receipt_ids.empty()) {
+                    xtxpool_error("xreceipt_queue_new_t::get_txs receipt_ids is empty.");
+                    continue;
+                }
+
+                auto filted_ids = unconfirm_id_height.filter_sender_continuous_need_confirm_ids(peer_table_sid, min_receipt_id + 1, receipt_ids);
+
+                if (filted_ids.empty()) {
+                    continue;
+                }
+                uint64_t max_filted_id = filted_ids[filted_ids.size() - 1];
+
+                for (auto & confirm_tx : confirm_txs) {
+                    if (confirm_tx->get_last_action_receipt_id() > max_filted_id) {
+                        break;
+                    }
+                    ret_txs.push_back(confirm_tx);
+                }
             }
         }
 
@@ -577,6 +591,7 @@ uint32_t xreceipt_queue_new_t::size() const {
     return m_receipt_queue_internal.size();
 }
 
+// TODO(nathan):use rsp id to get confirm tx continuously
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get_lacking_discrete_confirm_tx_ids(
     const std::map<base::xtable_shortid_t, xneed_confirm_ids> & need_confirm_ids_map,
     uint32_t & total_num) const {

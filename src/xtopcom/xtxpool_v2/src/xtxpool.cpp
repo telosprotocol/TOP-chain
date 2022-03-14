@@ -134,14 +134,6 @@ const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
     return tx_ent->get_tx();
 }
 
-ready_accounts_t xtxpool_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
-    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
-    if (table == nullptr) {
-        return {};
-    }
-    return table->get_ready_accounts(pack_para);
-}
-
 std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
     auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
     if (table == nullptr) {
@@ -269,13 +261,13 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     table->on_block_confirmed(block);
 }
 
-int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
+int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, bool use_rspid) {
     auto table = get_txpool_table_by_addr(account);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
 
-    return table->verify_txs(account, txs);
+    return table->verify_txs(account, txs, use_rspid);
 }
 
 void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
@@ -437,6 +429,10 @@ bool xtxpool_t::get_sender_need_confirm_ids(const std::string & account, base::x
 
     return table->get_sender_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);
 }
+
+ bool xtxpool_t::is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
+     return m_para->get_receiptid_state_cache().is_reach_limit(self_table_id, peer_table_id, max_unconfirm_num);
+ }
 
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,
                               base::xtable_shortid_t to_table_sid,

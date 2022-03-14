@@ -59,7 +59,10 @@ int xlightunit_builder_t::construct_block_builder_para(const data::xblock_ptr_t 
 }
 
 xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state) {
-    alloc_tx_receiptid(lightunit_para.get_succ_txs(), receiptid_state);
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, cs_para.get_clock());
+
+    alloc_tx_receiptid(lightunit_para.get_succ_txs(), receiptid_state, add_rsp_id);
     
     if (lightunit_para.get_input_txs().empty() && !lightunit_para.get_unchange_txs().empty()) {
         return nullptr;
@@ -221,7 +224,9 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         para.set_fullstate_bin(exec_result.m_full_state);
         // para.set_binlog(exec_result.m_property_binlog);
 
-        alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state());
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, cs_para.get_clock());
+        alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state(), add_rsp_id);
         if (para.get_input_txs().empty() && !para.get_unchange_txs().empty()) {
             return nullptr;
         }

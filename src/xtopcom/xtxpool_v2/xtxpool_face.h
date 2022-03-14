@@ -156,14 +156,16 @@ public:
                      uint16_t all_txs_max_num,
                      uint16_t confirm_and_recv_txs_max_num,
                      uint16_t confirm_txs_max_num,
-                     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id)
+                     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id,
+                     bool use_rspid)
       : m_table_addr(table_addr)
       , m_table_state_highqc(table_state_highqc)
       //   , m_locked_nonce_map(locked_nonce_map)
       , m_all_txs_max_num(all_txs_max_num)
       , m_confirm_and_recv_txs_max_num(confirm_and_recv_txs_max_num)
       , m_confirm_txs_max_num(confirm_txs_max_num)
-      , m_peer_sids_for_confirm_id(peer_sids_for_confirm_id) {
+      , m_peer_sids_for_confirm_id(peer_sids_for_confirm_id)
+      , m_use_rspid(use_rspid) {
     }
     const std::string & get_table_addr() const {
         return m_table_addr;
@@ -187,6 +189,10 @@ public:
     const std::set<base::xtable_shortid_t> & get_peer_sids_for_confirm_id() const {
         return m_peer_sids_for_confirm_id;
     }
+    
+    uint16_t is_use_rspid() const {
+        return m_use_rspid;
+    }
 
 private:
     std::string m_table_addr;
@@ -196,6 +202,7 @@ private:
     uint16_t m_confirm_and_recv_txs_max_num;
     uint16_t m_confirm_txs_max_num;
     std::set<base::xtable_shortid_t> m_peer_sids_for_confirm_id;
+    bool m_use_rspid;
 };
 
 class xtxpool_table_lacking_receipt_ids_t {
@@ -261,7 +268,6 @@ public:
     virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
     virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) = 0;
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
-    virtual ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) = 0;
     virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) = 0;
     virtual xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para) = 0;
     virtual const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const = 0;
@@ -269,7 +275,7 @@ public:
     virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
     virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
     virtual void on_block_confirmed(xblock_t * block) = 0;
-    virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
+    virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, bool use_rspid) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) = 0;
@@ -290,6 +296,7 @@ public:
     virtual xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const = 0;
     virtual const std::set<base::xtable_shortid_t> & get_all_table_sids() const = 0;
     virtual bool get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const = 0;
+    virtual bool is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const = 0;
 };
 
 class xtxpool_instance {

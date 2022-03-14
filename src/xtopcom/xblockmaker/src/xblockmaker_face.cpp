@@ -8,6 +8,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xmetrics/xmetrics.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -214,9 +215,9 @@ bool xblock_maker_t::check_latest_blocks(const xblock_ptr_t & latest_block) cons
     return true;
 }
 
-void xblock_builder_face_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xblock_builder_face_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state, bool add_rsp_id) {
     for (auto & tx : input_txs) {
-        data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
+        data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state, add_rsp_id);
     }
 }
 

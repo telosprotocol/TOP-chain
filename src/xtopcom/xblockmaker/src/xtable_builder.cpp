@@ -99,51 +99,15 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
     xblock_t::txs_to_receiptids(txs_info, receiptid_check);
     for (auto & confirmid_pair : changed_confirm_ids) {
         xdbg("xlighttable_builder_t::make_light_table_binlog set confirmid,self:%d,peer:%d,receiptid:%llu,proposal height:%llu",
-             proposal_tbstate.get_receiptid_state()->get_self_tableid(),
+             proposal_tbstate.get_bstate()->get_short_table_id(),
              confirmid_pair.first,
              confirmid_pair.second,
              proposal_tbstate.get_block_height());
         receiptid_check.set_confirmid(confirmid_pair.first, confirmid_pair.second);
     }
 
-    base::xreceiptid_pairs_ptr_t modified_pairs = std::make_shared<base::xreceiptid_pairs_t>();
+    auto modified_pairs = receiptid_check.get_modified_pairs(proposal_tbstate.get_receiptid_state());
 
-    const std::map<base::xtable_shortid_t, std::set<uint64_t>> & sendids = receiptid_check.get_sendids();
-    for (auto & v : sendids) {
-        base::xtable_shortid_t tableid = v.first;
-        const std::set<uint64_t> & ids = v.second;
-        uint64_t maxid = *ids.rbegin();
-        base::xreceiptid_pair_t pair;
-        if (false == modified_pairs->find_pair(tableid, pair)) {  // find modified pairs firstly
-            proposal_tbstate.find_receiptid_pair(tableid, pair);
-        }
-        pair.set_sendid_max(maxid);
-        modified_pairs->add_pair(tableid, pair);  // save to modified pairs
-    }
-    const std::map<base::xtable_shortid_t, std::set<uint64_t>> & recvids = receiptid_check.get_recvids();
-    for (auto & v : recvids) {
-        base::xtable_shortid_t tableid = v.first;
-        const std::set<uint64_t> & ids = v.second;
-        uint64_t maxid = *ids.rbegin();
-        base::xreceiptid_pair_t pair;
-        if (false == modified_pairs->find_pair(tableid, pair)) {  // find modified pairs firstly
-            proposal_tbstate.find_receiptid_pair(tableid, pair);
-        }
-        pair.set_recvid_max(maxid);
-        modified_pairs->add_pair(tableid, pair);  // save to modified pairs
-    }
-    const std::map<base::xtable_shortid_t, std::set<uint64_t>> & confirmids = receiptid_check.get_confirmids();
-    for (auto & v : confirmids) {
-        base::xtable_shortid_t tableid = v.first;
-        const std::set<uint64_t> & ids = v.second;
-        uint64_t maxid = *ids.rbegin();
-        base::xreceiptid_pair_t pair;
-        if (false == modified_pairs->find_pair(tableid, pair)) {  // find modified pairs firstly
-            proposal_tbstate.find_receiptid_pair(tableid, pair);
-        }
-        pair.set_confirmid_max(maxid);
-        modified_pairs->add_pair(tableid, pair);  // save to modified pairs
-    }
     // make modified pairs to binlog
     const std::map<base::xtable_shortid_t, base::xreceiptid_pair_t> & all_pairs = modified_pairs->get_all_pairs();
     for (auto & v : all_pairs) {
@@ -156,7 +120,12 @@ void xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xv
     make_table_prove_property_hashs(proposal_bstate.get(), property_hashs);
 
     xdbg("jimmy xlighttable_builder_t::make_light_table_binlog units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu",
-        units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
+         units.size(),
+         receiptid_check.get_sendids().size(),
+         receiptid_check.get_recvids().size(),
+         receiptid_check.get_confirmids().size(),
+         all_pairs.size(),
+         property_binlog.size());
 }
 
 xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev_block,

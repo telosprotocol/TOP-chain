@@ -577,6 +577,9 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         return;
     }
 
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool use_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, commit_block->get_clock());
+
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
     if (all_receipts.empty()) {
@@ -586,7 +589,7 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
 
     for (auto & receipt : all_receipts) {
         data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-        if (constx->is_confirm_tx() && constx->get_last_not_need_confirm()) {
+        if (constx->is_confirm_tx() && ((!use_rsp_id && constx->get_last_not_need_confirm()) || (use_rsp_id && constx->get_last_action_rsp_id()))) {
             continue;
         }
 

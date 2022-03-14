@@ -26,7 +26,6 @@ public:
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) override;
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) override;
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override;
-    ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) override;
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) override;
     xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para) override;
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const override;
@@ -34,7 +33,7 @@ public:
     void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override;
     void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override;
     void on_block_confirmed(xblock_t * block) override;
-    int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) override;
+    int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, bool use_rspid) override;
     void refresh_table(uint8_t zone, uint16_t subaddr) override;
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;
     void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) override;
@@ -55,6 +54,7 @@ public:
     xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const override;
     const std::set<base::xtable_shortid_t> & get_all_table_sids() const override;
     bool get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const override;
+    bool is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;

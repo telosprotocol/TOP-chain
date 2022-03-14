@@ -7,6 +7,7 @@
 #include "xvledger/xvledger.h"
 #include "xrpc/xgetblock/get_block.h"
 #include "xtxexecutor/xtransaction_fee.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 NS_BEG2(top, txexecutor)
 
 xtransaction_prepare_mgr::xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
@@ -65,6 +66,10 @@ void xtransaction_prepare_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) {
     xJson::Value jv;
     const std::vector<base::xvaction_t> input_actions = bp->get_tx_actions();
+
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool use_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, bp->get_clock());
+
     for(auto action : input_actions) {
         if (action.get_org_tx_hash().empty()) {  // not txaction
             xdbg("empty hash");
@@ -94,7 +99,7 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
                 jv["used_deposit"] = tx_info->get_used_deposit();
             }
             if (tx_info->is_send_tx()) {
-                if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2 || tx_info->get_not_need_confirm())) {
+                if (tx_ptr->get_tx_type() == xtransaction_type_transfer) {
                     jv["used_deposit"] = tx_info->get_used_deposit();
                 } else {
                     jv["used_deposit"] = 0;
@@ -123,7 +128,7 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
         } else
             continue;
 
-        if (_subtype == base::enum_transaction_subtype_confirm || (_subtype == base::enum_transaction_subtype_recv && tx_info->get_not_need_confirm()))
+        if (_subtype == base::enum_transaction_subtype_confirm || (_subtype == base::enum_transaction_subtype_recv && ((!use_rsp_id && tx_info->get_not_need_confirm()) || (use_rsp_id &&tx_info->get_rsp_id() != 0))))
             m_transaction_cache->tx_erase(txaction->get_tx_hash());
     }
     return 0;

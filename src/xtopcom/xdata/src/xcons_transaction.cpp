@@ -186,6 +186,14 @@ uint64_t xcons_transaction_t::get_dump_receipt_id() const {
     }
 }
 
+uint64_t xcons_transaction_t::get_dump_rsp_id() const {
+    if (is_self_tx() || is_send_tx()) {
+        return get_current_rsp_id();
+    } else {
+        return get_last_action_rsp_id();
+    }
+}
+
 std::string xcons_transaction_t::dump(bool detail) const {
     xassert(m_receipt != nullptr || m_tx != nullptr);// should not both null
 
@@ -202,6 +210,7 @@ std::string xcons_transaction_t::dump(bool detail) const {
     ss << ",id={" << (uint32_t)origin_src_tableid;
     ss << "->" << (uint32_t)origin_dst_tableid;
     ss << ":" << get_dump_receipt_id();
+    ss << "," << get_dump_rsp_id();
     ss << "}";
     if (is_recv_tx() && get_last_not_need_confirm()) {
         ss << ",no_need_confirm";
@@ -306,6 +315,17 @@ uint64_t xcons_transaction_t::get_last_action_sender_confirmed_receipt_id() cons
     }
     return 0;
 }
+
+uint64_t xcons_transaction_t::get_last_action_rsp_id() const {
+    if (m_receipt != nullptr) {
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RSP_ID);
+        if (!value.empty()) {
+            return base::xstring_utl::touint64(value);
+        }
+    }
+    return 0;
+}
+
 base::xtable_shortid_t xcons_transaction_t::get_last_action_self_tableid() const {
     if (m_receipt != nullptr) {
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);

@@ -17,7 +17,7 @@ NS_BEG2(top, base)
 class xreceiptid_pair_t {
  public:
     xreceiptid_pair_t();
-    xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid);
+    xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id, uint64_t recv_rsp_id);
     ~xreceiptid_pair_t();
     xreceiptid_pair_t(const xreceiptid_pair_t& copy) = delete;
  public:
@@ -32,15 +32,26 @@ class xreceiptid_pair_t {
     uint64_t        get_recvid_max() const {return m_recv_id_max;}
     uint32_t        get_unconfirm_num() const {return m_unconfirm_num;}
 
+    uint64_t        get_send_rsp_id_max() const {return m_send_rsp_id_max;}
+    uint64_t        get_confirm_rsp_id_max() const {return m_send_rsp_id_max - m_unconfirm_rsp_num;}
+    uint64_t        get_recv_rsp_id_max() const {return m_recv_rsp_id_max;}
+    uint32_t        get_unconfirm_rsp_num() const {return m_unconfirm_rsp_num;}
+
  public:
     void            set_sendid_max(uint64_t value);
     void            set_confirmid_max(uint64_t value);
     void            set_recvid_max(uint64_t value);
+    void            set_send_rsp_id_max(uint64_t value);
+    void            set_confirm_rsp_id_max(uint64_t value);
+    void            set_recv_rsp_id_max(uint64_t value);
 
  private:
     uint64_t    m_send_id_max{0};
     uint32_t    m_unconfirm_num{0};
     uint64_t    m_recv_id_max{0};
+    uint64_t    m_send_rsp_id_max{0};
+    uint32_t    m_unconfirm_rsp_num{0};
+    uint64_t    m_recv_rsp_id_max{0};
 };
 
 // the receiptid of the current table with all other tables
@@ -54,6 +65,9 @@ class xreceiptid_pairs_t {
     void            set_sendid_max(xtable_shortid_t sid, uint64_t value);
     void            set_confirmid_max(xtable_shortid_t sid, uint64_t value);
     void            set_recvid_max(xtable_shortid_t sid, uint64_t value);
+    void            set_send_rsp_id_max(xtable_shortid_t sid, uint64_t value);
+    void            set_confirm_rsp_id_max(xtable_shortid_t sid, uint64_t value);
+    void            set_recv_rsp_id_max(xtable_shortid_t sid, uint64_t value);
     std::string     dump() const;
 
  public:
@@ -80,6 +94,7 @@ class xreceiptid_state_t {
     void        set_tableid_and_height(xtable_shortid_t tableid, uint64_t height);
 
     uint32_t            get_unconfirm_tx_num() const;  // just for debug    
+    uint32_t            get_unconfirm_rsp_tx_num() const;
     xtable_shortid_t    get_self_tableid() const {return m_self_tableid;}
     uint64_t            get_block_height() const {return m_height;}
 
@@ -92,6 +107,7 @@ class xreceiptid_state_t {
  private:
     xreceiptid_pairs_ptr_t  m_binlog{nullptr};
     uint32_t                m_unconfirm_tx_num{0};
+    uint32_t                m_unconfirm_rsp_tx_num{0};
     xtable_shortid_t        m_self_tableid{0};
     uint64_t                m_height{0};
  private:
@@ -99,32 +115,86 @@ class xreceiptid_state_t {
 };
 using xreceiptid_state_ptr_t = std::shared_ptr<xreceiptid_state_t>;
 
+class xids_check_t {
+public:
+    void set_id(xtable_shortid_t sid, uint64_t value);
+    const std::map<xtable_shortid_t, std::set<uint64_t>> & get_ids() const;
+    bool check_continuous(const xreceiptid_state_ptr_t & receiptid_state) const;
+    void get_modified_pairs(const base::xreceiptid_state_ptr_t & receiptid_state, xreceiptid_pairs_ptr_t & modified_pairs) const;
+    void dump(std::stringstream & ss) const;
+private:
+    static bool check_receiptids_contious(const std::set<uint64_t> & ids, uint64_t begin_id);
+    virtual uint64_t get_begin_id(xreceiptid_pair_t & pair) const = 0;
+    virtual void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const = 0;
+private:
+    std::map<xtable_shortid_t, std::set<uint64_t>>  m_ids;
+};
+
+class xsendids_check_t : public xids_check_t {
+private:
+   uint64_t get_begin_id(xreceiptid_pair_t & pair) const override;
+   void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const override;
+};
+
+class xrecvids_check_t : public xids_check_t {
+private:
+   uint64_t get_begin_id(xreceiptid_pair_t & pair) const override;
+   void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const override;
+};
+
+class xconfirmids_check_t : public xids_check_t {
+private:
+   uint64_t get_begin_id(xreceiptid_pair_t & pair) const override;
+   void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const override;
+};
+
+class xsend_rsp_ids_check_t : public xids_check_t {
+private:
+   uint64_t get_begin_id(xreceiptid_pair_t & pair) const override;
+   void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const override;
+};
+
+class xrecv_rsp_ids_check_t : public xids_check_t {
+private:
+   uint64_t get_begin_id(xreceiptid_pair_t & pair) const override;
+   void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const override;
+};
+
+class xconfirm_rsp_ids_check_t : public xids_check_t {
+private:
+   uint64_t get_begin_id(xreceiptid_pair_t & pair) const override;
+   void set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const override;
+};
 
 class xreceiptid_check_t {
- public:
+public:
     void        set_sendid(xtable_shortid_t sid, uint64_t value);
     void        set_recvid(xtable_shortid_t sid, uint64_t value);
     void        set_confirmid(xtable_shortid_t sid, uint64_t value);
-    uint64_t    get_sendid_max(xtable_shortid_t sid);
-    uint64_t    get_recvid_max(xtable_shortid_t sid);
-    uint64_t    get_confirmid_max(xtable_shortid_t sid);
+    void        set_send_rsp_id(xtable_shortid_t sid, uint64_t value);
+    void        set_recv_rsp_id(xtable_shortid_t sid, uint64_t value);
+    void        set_confirm_rsp_id(xtable_shortid_t sid, uint64_t value);
 
-    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_sendids() const {return m_sendids;}
-    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_recvids() const {return m_recvids;}
-    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_confirmids() const {return m_confirmids;}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_sendids() const {return m_sendids.get_ids();}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_recvids() const {return m_recvids.get_ids();}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_confirmids() const {return m_confirmids.get_ids();}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_send_rsp_ids() const {return m_send_rsp_ids.get_ids();}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_recv_rsp_ids() const {return m_recv_rsp_ids.get_ids();}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_confirm_rsp_ids() const {return m_confirm_rsp_ids.get_ids();}
 
-    bool        check_contious(const xreceiptid_state_ptr_t & receiptid_state) const;
-    void        update_state(const xreceiptid_state_ptr_t & receiptid_state) const;
+    bool        check_continuous(const xreceiptid_state_ptr_t & receiptid_state) const;
+
+    xreceiptid_pairs_ptr_t get_modified_pairs(const base::xreceiptid_state_ptr_t & receiptid_state) const;
 
     std::string     dump() const;
 
  private:
-    bool    check_receiptids_contious(const std::set<uint64_t> & ids, uint64_t begin_id) const;
-
- private:
-    std::map<xtable_shortid_t, std::set<uint64_t>>  m_sendids;
-    std::map<xtable_shortid_t, std::set<uint64_t>>  m_recvids;
-    std::map<xtable_shortid_t, std::set<uint64_t>>  m_confirmids;
+    xsendids_check_t  m_sendids;
+    xrecvids_check_t  m_recvids;
+    xconfirmids_check_t  m_confirmids;
+    xsend_rsp_ids_check_t  m_send_rsp_ids;
+    xrecv_rsp_ids_check_t  m_recv_rsp_ids;
+    xconfirm_rsp_ids_check_t  m_confirm_rsp_ids;
 };
 
 NS_END2
