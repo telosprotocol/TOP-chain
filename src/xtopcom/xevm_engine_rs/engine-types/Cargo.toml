@@ -1,0 +1,25 @@
+[package]
+name = "engine-types"
+version = "0.1.0"
+authors = []
+edition = "2021"
+description = ""
+documentation = ""
+readme = false
+homepage = ""
+repository = ""
+license = ""
+publish = false
+autobenches = false
+
+[dependencies]
+borsh = { version = "0.8.2", default-features = false }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+primitive-types = { version = "0.10.0", default-features = false, features = ["rlp"] }
+
+[dev-dependencies]
+rand = "0.7.3"
+
+[features]
+default = ["std"]
+std = ["primitive-types/std"]

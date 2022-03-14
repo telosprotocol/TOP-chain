@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "engine",
+    "engine-precompiles",
+    "engine-sdk",
+    "engine-transactions",
+    "engine-types",
+]
