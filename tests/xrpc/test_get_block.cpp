@@ -145,7 +145,7 @@ TEST_F(test_get_block, get_property) {
     auto jres = parse_res(res);
     EXPECT_EQ("", jres["value"]["aaa"].asString());
 
-    jr["prop"] = XPROPERTY_PLEDGE_VOTE_KEY;
+    jr["prop"] = data::XPROPERTY_PLEDGE_VOTE_KEY;
     request = jr.toStyledString();
     ret = block_handle_ptr->handle(request);
     EXPECT_EQ(true, ret);

@@ -58,7 +58,7 @@ public:
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) override;
-    xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
+    data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     };
     void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;

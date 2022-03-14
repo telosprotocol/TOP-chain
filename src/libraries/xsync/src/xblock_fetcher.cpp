@@ -230,7 +230,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_newblock_event(const std::string
     if (chain != nullptr) {
 
         auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_block_t>(e);
-        xblock_ptr_t &block = bme->block;
+        data::xblock_ptr_t & block = bme->block;
         const vnetwork::xvnode_address_t &network_self = bme->network_self;
         const vnetwork::xvnode_address_t &from_address = bme->from_address;
 
@@ -258,7 +258,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_response_block_event(const std::
     if (chain != nullptr) {
 
         auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
-        xblock_ptr_t &block = bme->blocks[0];
+        data::xblock_ptr_t & block = bme->blocks[0];
         const vnetwork::xvnode_address_t &network_self = bme->self_address;
         const vnetwork::xvnode_address_t &from_address = bme->from_address;
 

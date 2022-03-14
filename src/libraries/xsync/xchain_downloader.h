@@ -128,7 +128,7 @@ public:
     xsync_command_execute_result execute_next_download(uint64_t height);
     xsync_command_execute_result execute_download(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason);
 protected:
-    enum_result_code handle_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height);
+    enum_result_code handle_block(data::xblock_ptr_t & block, bool is_elect_chain, uint64_t quota_height);
     enum_result_code pre_handle_block(std::vector<data::xblock_ptr_t> &blocks, bool is_elect_chain, uint64_t quota_height, std::vector<base::xvblock_t*> &processed_blocks);
 
     xsync_command_execute_result handle_next(uint64_t current_height);
@@ -149,7 +149,8 @@ private:
     void wait_committed_event_group(uint64_t height, uint64_t quota_height);
     bool notify_committed_event_group(uint64_t height);
     bool notified_committed_event_group();
-    enum_result_code handle_archive_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height);
+    enum_result_code handle_archive_block(data::xblock_ptr_t & block, bool is_elect_chain, uint64_t quota_height);
+
 protected:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store;

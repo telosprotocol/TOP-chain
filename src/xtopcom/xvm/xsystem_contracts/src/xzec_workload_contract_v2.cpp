@@ -143,7 +143,7 @@ std::vector<xobject_ptr_t<data::xblock_t>> xzec_workload_contract_v2::get_fullbl
     uint64_t last_read_height = get_table_height(table_id);
     uint64_t cur_read_height = last_read_height;
     // calc table address
-    auto const & table_owner = common::xaccount_address_t{xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, table_id)};
+    auto const & table_owner = common::xaccount_address_t{data::xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, table_id)};
     // get block
     std::vector<xobject_ptr_t<data::xblock_t>> res;
     uint64_t time_interval = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes{10}).count() / XGLOBAL_TIMER_INTERVAL_IN_SECONDS;
@@ -216,7 +216,7 @@ void xzec_workload_contract_v2::update_tgas(int64_t table_pledge_balance_change_
     }
 }
 
-void xzec_workload_contract_v2::accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
+void xzec_workload_contract_v2::accumulate_workload(data::xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
     auto node_service = contract::xcontract_manager_t::instance().get_node_service();
     auto workload_per_tableblock = XGET_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock);
     auto workload_per_tx = XGET_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx);
@@ -224,7 +224,7 @@ void xzec_workload_contract_v2::accumulate_workload(xstatistics_data_t const & s
         auto elect_statistic = static_item.second;
         for (auto const & group_item : elect_statistic.group_statistics_data) {
             common::xgroup_address_t const & group_addr = group_item.first;
-            xgroup_related_statistics_data_t const & group_account_data = group_item.second;
+            data::xgroup_related_statistics_data_t const & group_account_data = group_item.second;
             xvip2_t const & group_xvip2 = top::common::xip2_t{group_addr.network_id(),
                                                               group_addr.zone_id(),
                                                               group_addr.cluster_id(),
@@ -290,7 +290,7 @@ void xzec_workload_contract_v2::accumulate_workload_with_fullblock(common::xlogi
         // accumulate workload
         for (std::size_t block_index = 0; block_index < full_blocks.size(); block_index++) {
             xdbg("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] block_index: %u", block_index);
-            xfull_tableblock_t * full_tableblock = dynamic_cast<xfull_tableblock_t *>(full_blocks[block_index].get());
+            data::xfull_tableblock_t * full_tableblock = dynamic_cast<data::xfull_tableblock_t *>(full_blocks[block_index].get());
             assert(full_tableblock != nullptr);
             auto const & stat_data = full_tableblock->get_table_statistics();
             accumulate_workload(stat_data, group_workload);

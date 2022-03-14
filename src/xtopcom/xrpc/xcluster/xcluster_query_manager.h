@@ -54,7 +54,8 @@ public:
 private:
     void set_sharding_vote_prop(xjson_proc_t & json_proc, std::string & prop_name);
     void set_sharding_reward_claiming_prop(xjson_proc_t & json_proc, std::string & prop_name);
-    int  get_transaction_on_demand(const std::string& account, xtransaction_t * tx_ptr, const string & version, const uint256_t& tx_hash, xJson::Value& result_json);
+    int get_transaction_on_demand(const std::string & account, data::xtransaction_t * tx_ptr, const string & version, const uint256_t & tx_hash, xJson::Value & result_json);
+
 private:
     std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t> m_shard_host;
     observer_ptr<store::xstore_face_t> m_store;

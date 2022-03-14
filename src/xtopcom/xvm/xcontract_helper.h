@@ -77,10 +77,10 @@ public:
     std::uint64_t
     contract_height() const;
 
-    base::xauto_ptr<xblock_t>
+    base::xauto_ptr<data::xblock_t>
     get_block_by_height(const std::string & owner, uint64_t height) const;
 
-    base::xauto_ptr<xblock_t>
+    base::xauto_ptr<data::xblock_t>
     get_next_fullblock(std::string const & owner, uint64_t const cur_full_height) const;
 
     std::uint64_t

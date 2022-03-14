@@ -30,7 +30,7 @@ int32_t xtxpool_proxy::request_transaction_consensus(const data::xtransaction_pt
     return m_txpool_service->request_transaction_consensus(trans, local);
 }
 
-xcons_transaction_ptr_t xtxpool_proxy::query_tx(const std::string & account, const uint256_t & hash) const {
+data::xcons_transaction_ptr_t xtxpool_proxy::query_tx(const std::string & account, const uint256_t & hash) const {
      return m_txpool_mgr->query_tx(account, hash);
 }
 

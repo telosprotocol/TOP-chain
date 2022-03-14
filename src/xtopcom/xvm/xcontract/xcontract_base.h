@@ -482,7 +482,7 @@ public:
      * @param height  the block height
      * @return base::xauto_ptr<xblock_t>
      */
-    base::xauto_ptr<xblock_t>
+    base::xauto_ptr<data::xblock_t>
     get_block_by_height(const std::string & owner, uint64_t height) const;
 
     /**
@@ -501,7 +501,7 @@ public:
      * @param cur_full_height current fullblock height
      * @return the full block
      */
-    base::xauto_ptr<xblock_t>
+    base::xauto_ptr<data::xblock_t>
     get_next_fullblock(std::string const & owner, uint64_t const cur_full_height) const;
 
 

@@ -130,7 +130,7 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
             check_success = true;
 #else
             assert(store != nullptr);
-            xpublic_key_t pub_key = top::data::system_contract::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
+            xpublic_key_t pub_key = top::store::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
             xdbg("[global_trace][xtx_verifier][verify_tx_signature][pub_key_sign_check], tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
             check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);
@@ -338,8 +338,8 @@ int32_t xtx_verifier::verify_shard_contract_addr(data::xtransaction_t const * tr
     const auto & source_addr = trx_ptr->get_source_addr();
     const auto & origin_target_addr = trx_ptr->get_origin_target_addr();
     // user call sys sharding contract, always auto set target addresss
-    if (is_sys_sharding_contract_address(common::xaccount_address_t{origin_target_addr})) {
-        if (is_account_address(common::xaccount_address_t{source_addr})) {
+    if (data::is_sys_sharding_contract_address(common::xaccount_address_t{origin_target_addr})) {
+        if (data::is_account_address(common::xaccount_address_t{source_addr})) {
             if (std::string::npos != origin_target_addr.find("@")) {
                 xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-already set tableid, tx:%s,origin_target_addr=%s", trx_ptr->dump().c_str(), origin_target_addr.c_str());
                 return xverifier_error_tx_basic_validation_invalid;

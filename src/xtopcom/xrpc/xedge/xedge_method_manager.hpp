@@ -3,10 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xdatautil.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_cache.h"
 #include "xdata/xtx_factory.h"
@@ -21,8 +23,8 @@
 #include "xrpc/xuint_format.h"
 #include "xstore/xstore_face.h"
 #include "xtxstore/xtransaction_prepare.h"
-#include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
+#include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
 
@@ -66,7 +68,7 @@ public:
         m_edge_local_method_ptr->reset_edge_local_method(xip2);
     }
 
-    void set_tx_by_version(xtransaction_ptr_t & tx_ptr, uint32_t version);
+    void set_tx_by_version(data::xtransaction_ptr_t & tx_ptr, uint32_t version);
 
 protected:
     unique_ptr<T> m_edge_handler_ptr;
@@ -180,7 +182,7 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
 template <class T>
 void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip) {
     auto & request = json_proc.m_request_json["params"];
-    json_proc.m_tx_ptr = xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
+    json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
     auto & tx = json_proc.m_tx_ptr;
     tx->construct_from_json(request);
 
@@ -218,7 +220,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
 
     if (m_archive_flag) {
-        xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+        data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
         txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
         int32_t ret = tx_prepare.check();
         if (ret != xsuccess) {
@@ -227,7 +229,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, tx_prepare.get_err_msg(ret)};
         }
         std::string old_target_addr = tx->get_origin_target_addr();
-        if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_origin_target_addr()})) {
+        if (data::is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_origin_target_addr()})) {
             auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
             tx->adjust_target_address(tableid.get_subaddr());
         }
@@ -258,7 +260,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         }
     }
 
-    std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
+    std::string tx_hash = data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
     xinfo_rpc("send tx hash:%s", tx_hash.c_str());
     XMETRICS_PACKET_INFO("rpc_tx_ip",
                          "tx_hash", tx_hash,

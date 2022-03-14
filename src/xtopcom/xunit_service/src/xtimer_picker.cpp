@@ -119,7 +119,7 @@ bool xtimer_picker_t::on_create_block_event(const base::xvevent_t & event,xcsobj
     auto context_id = e.get_context_id();
 
     // TODO(jimmy) move to tc pacemaker directly
-    xemptyblock_build_t bbuild(sys_contract_beacon_timer_addr, clock);
+    data::xemptyblock_build_t bbuild(sys_contract_beacon_timer_addr, clock);
     base::xauto_ptr<base::xvblock_t> _block = bbuild.build_new_block();
 
     // base::xauto_ptr<base::xvblock_t> _block = data::xemptyblock_t::create_emptyblock(sys_contract_beacon_timer_addr, clock, base::enum_xvblock_level_root, clock, clock, base::enum_xvblock_type_clock);

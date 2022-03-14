@@ -241,11 +241,11 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
 
     auto contract_obj = system_contract(contract_address);
     auto contract_ctx= top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), make_observer(contract_state.get())); // action will be moved into xcontract_execution_context_t.
-    contract_ctx->consensus_action_stage(xconsensus_action_stage_t::recv); // default stage set to target to match previous behavior
+    contract_ctx->consensus_action_stage(data::xconsensus_action_stage_t::recv); // default stage set to target to match previous behavior
     assert(action == nullptr);
     xtransaction_execution_result_t result = contract_obj->execute(top::make_observer(contract_ctx));
     assert(!result.status.ec);
-    xtransaction_result_t consensus_result;
+    data::xtransaction_result_t consensus_result;
     consensus_result.m_property_binlog = result.output.binlog;
     consensus_result.m_full_state = result.output.contract_state_snapshot;
     assert(!result.output.binlog.empty());

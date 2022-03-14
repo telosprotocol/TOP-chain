@@ -72,7 +72,7 @@ class xtransaction_face_t{
     xaccount_context_t*     m_account_ctx;
     xcons_transaction_ptr_t m_trans;
     xtransaction_fee_t      m_fee;
-    xtx_parse_data_t        m_exec_data;
+    data::xtx_parse_data_t m_exec_data;
 };
 
 #ifdef ENABLE_CREATE_USER  // debug use
@@ -110,7 +110,7 @@ class xtransaction_run_contract : public xtransaction_face_t{
     : xtransaction_face_t(account_ctx, trans) {
     }
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_asset_out, xaction_type_run_contract, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_asset_out, data::xaction_type_run_contract, m_exec_data);
     }
     int32_t check() override {
         return 0;
@@ -142,7 +142,7 @@ class xtransaction_transfer : public xtransaction_face_t{
     : xtransaction_face_t(account_ctx, trans) {
     }
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_asset_out, xaction_type_asset_in, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_asset_out, data::xaction_type_asset_in, m_exec_data);
     }
     int32_t check() override {
 
@@ -186,7 +186,7 @@ class xtransaction_transfer : public xtransaction_face_t{
             if (m_trans->get_target_addr() != black_hole_addr) {
                 ret = m_account_ctx->token_transfer_out(get_asset(), 0);
             } else {
-                ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(transfer_amount));
+                ret = m_account_ctx->available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(transfer_amount));
             }
         }
         return ret;
@@ -205,7 +205,7 @@ class xtransaction_pledge_token : public xtransaction_face_t{
     : xtransaction_face_t(account_ctx, trans) {
     }
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_source_null, xaction_type_pledge_token, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_source_null, data::xaction_type_pledge_token, m_exec_data);
     }
     int32_t check() override {
         return 0;
@@ -214,7 +214,7 @@ class xtransaction_pledge_token : public xtransaction_face_t{
     virtual int32_t set_pledge_token_resource(uint64_t amount) = 0;
 
     int32_t source_fee_exec() override {
-        if (!is_sys_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() })) {
+        if (!data::is_sys_contract_address(common::xaccount_address_t{m_trans->get_source_addr()})) {
             return m_fee.update_tgas_disk_sender(get_amount(), false);
         }
         return 0;
@@ -238,7 +238,7 @@ class xtransaction_redeem_token : public xtransaction_face_t{
     : xtransaction_face_t(account_ctx, trans) {
     }
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_source_null, xaction_type_redeem_token, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_source_null, data::xaction_type_redeem_token, m_exec_data);
     }
     int32_t check() override {
         return 0;
@@ -249,7 +249,7 @@ class xtransaction_redeem_token : public xtransaction_face_t{
 
     int32_t source_fee_exec() override {
         int32_t ret{0};
-        if (!is_sys_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() })) {
+        if (!data::is_sys_contract_address(common::xaccount_address_t{m_trans->get_source_addr()})) {
             ret = m_fee.update_tgas_disk_sender(0, false);
         }
         return ret;
@@ -279,7 +279,7 @@ class xtransaction_pledge_token_tgas : public xtransaction_pledge_token{
     : xtransaction_pledge_token(account_ctx, trans) {
     }
     int32_t set_pledge_token_resource(uint64_t amount) override {
-        auto ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
+        auto ret = m_account_ctx->available_balance_to_other_balance(data::XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
         if (ret == xsuccess) {
             m_account_ctx->add_tgas_balance_change(amount);
         }
@@ -293,7 +293,7 @@ class xtransaction_redeem_token_tgas : public xtransaction_redeem_token{
     : xtransaction_redeem_token(account_ctx, trans) {
     }
     int32_t redeem_pledge_token_resource(uint64_t amount) override {
-        auto ret = m_account_ctx->other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
+        auto ret = m_account_ctx->other_balance_to_available_balance(data::XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
         if (ret == xsuccess) {
             m_account_ctx->sub_tgas_balance_change(amount);
         }
@@ -308,7 +308,7 @@ class xtransaction_pledge_token_vote : public xtransaction_face_t{
     : xtransaction_face_t(account_ctx, trans) {
     }
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_source_null, xaction_type_pledge_token_vote, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_source_null, data::xaction_type_pledge_token_vote, m_exec_data);
     }
     int32_t check() override {
         uint16_t min_pledge_vote_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num);
@@ -336,7 +336,7 @@ class xtransaction_redeem_token_vote : public xtransaction_face_t{
     : xtransaction_face_t(account_ctx, trans) {
     }
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_source_null, xaction_type_redeem_token_vote, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_source_null, data::xaction_type_redeem_token_vote, m_exec_data);
     }
     int32_t check() override {
         return 0;
@@ -374,7 +374,7 @@ public:
         : xtransaction_face_t(account_ctx, trans) {}
 
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_source_null, xaction_type_run_contract, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_source_null, data::xaction_type_run_contract, m_exec_data);
     }
 
     int32_t check() override {
@@ -386,8 +386,8 @@ public:
     int32_t source_action_exec() override ;
 
     int32_t target_action_exec() override {
-        xtransaction_ptr_t tx;
-        xtransaction_t* raw_tx = m_trans->get_transaction();
+        data::xtransaction_ptr_t tx;
+        data::xtransaction_t * raw_tx = m_trans->get_transaction();
         raw_tx->add_ref();
         tx.attach(raw_tx);
         xvm::xtransaction_trace_ptr trace = m_node.deal_transaction(tx, m_account_ctx);
@@ -404,7 +404,7 @@ public:
         : xtransaction_face_t(account_ctx, trans) {}
 
     int32_t parse() override {
-        return m_trans->get_transaction()->parse(xaction_type_source_null, xaction_type_run_contract, m_exec_data);
+        return m_trans->get_transaction()->parse(data::xaction_type_source_null, data::xaction_type_run_contract, m_exec_data);
     }
 
     int32_t check() override {
@@ -416,8 +416,8 @@ public:
     int32_t source_action_exec() override ;
 
     int32_t target_action_exec() override {
-        xtransaction_ptr_t tx;
-        xtransaction_t* raw_tx = m_trans->get_transaction();
+        data::xtransaction_ptr_t tx;
+        data::xtransaction_t * raw_tx = m_trans->get_transaction();
         raw_tx->add_ref();
         tx.attach(raw_tx);
         xvm::xtransaction_trace_ptr trace = m_node.deal_transaction(tx, m_account_ctx);

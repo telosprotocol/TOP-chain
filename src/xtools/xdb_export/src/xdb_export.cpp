@@ -122,7 +122,7 @@ std::vector<std::string> xdb_export_tools_t::get_system_contract_accounts() {
     }
     for (auto const & t : table) {
         for (auto i = 0; i < enum_vledger_const::enum_vbucket_has_tables_count; i++) {
-            v.emplace_back(make_address_by_prefix_and_subaddr(t, uint16_t(i)).value());
+            v.emplace_back(data::make_address_by_prefix_and_subaddr(t, uint16_t(i)).value());
         }
     }
     return v;
@@ -137,7 +137,7 @@ std::vector<std::string> xdb_export_tools_t::get_table_accounts() {
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
-            v.emplace_back(make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
+            v.emplace_back(data::make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
         }
     }
     return v;
@@ -157,7 +157,7 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
             std::cerr << table << " get_block_state null!" << std::endl;
             continue;
         }
-        auto table_state = std::make_shared<xtable_bstate_t>(bstate.get());
+        auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
         auto const & units = table_state->get_all_accounts();
         accounts.insert(units.cbegin(), units.cend());
     }
@@ -507,7 +507,7 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
         }
     }
     auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>("{}");
-    xrootblock_para_t rootblock_para;
+    data::xrootblock_para_t rootblock_para;
     genesis_loader->extract_genesis_para(rootblock_para);
     auto const genesis_accounts = rootblock_para.m_account_balances;
     for (auto const & account : genesis_accounts) {
@@ -551,7 +551,7 @@ void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
         std::cerr << "account: " << account << ", height: " << h << " state null" << std::endl;
         return;
     }
-    auto const table_state = std::make_shared<xtable_bstate_t>(bstate.get());
+    auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
     auto const units = table_state->get_all_accounts();
     for (auto const & unit : units) {
         json root_unit;
@@ -629,11 +629,11 @@ void xdb_export_tools_t::query_balance() {
             table_vote_balance = 0;
             table_burn_balance = 0;
         } else {
-            table_balance = j_table[XPROPERTY_BALANCE_AVAILABLE].get<uint64_t>();
-            table_lock_balance = j_table[XPROPERTY_BALANCE_LOCK].get<uint64_t>();
-            table_tgas_balance = j_table[XPROPERTY_BALANCE_PLEDGE_TGAS].get<uint64_t>();
-            table_vote_balance = j_table[XPROPERTY_BALANCE_PLEDGE_VOTE].get<uint64_t>();
-            table_burn_balance = j_table[XPROPERTY_BALANCE_BURN].get<uint64_t>();
+            table_balance = j_table[data::XPROPERTY_BALANCE_AVAILABLE].get<uint64_t>();
+            table_lock_balance = j_table[data::XPROPERTY_BALANCE_LOCK].get<uint64_t>();
+            table_tgas_balance = j_table[data::XPROPERTY_BALANCE_PLEDGE_TGAS].get<uint64_t>();
+            table_vote_balance = j_table[data::XPROPERTY_BALANCE_PLEDGE_VOTE].get<uint64_t>();
+            table_burn_balance = j_table[data::XPROPERTY_BALANCE_BURN].get<uint64_t>();
         }
         std::cout << "table: " << table;
         std::cout << ", available balance: " << table_balance;
@@ -899,7 +899,7 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, st
     // current_state->serialize_to_string(bin_data);
     // j_state["table_state"] = base::xstring_utl::to_hex(bin_data);
 
-    auto const & table_bstate = std::make_shared<xtable_bstate_t>(current_state.get());
+    auto const & table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
     auto const & table_units = table_bstate->get_all_accounts();
     json j_unit_data;
     // json j_unit_state;
@@ -997,7 +997,7 @@ void xdb_export_tools_t::query_table_latest_fullblock(std::string const & accoun
     j["last_committed_block"]["height"] = height_commit;
     j["last_full_block"]["height"] = height_full;
     if (height_full != 0) {
-        j["last_full_block"]["hash"] = to_hex_str(block->get_fullstate_hash());
+        j["last_full_block"]["hash"] = data::to_hex_str(block->get_fullstate_hash());
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
         if (bstate == nullptr) {
             j["last_full_block"]["bstate"] = "null";
@@ -1063,7 +1063,7 @@ void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const 
 
 bool xdb_export_tools_t::xdbtool_all_table_info_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext) {
     std::lock_guard<std::mutex> lck(m_lock);
-    if (subtype == enum_transaction_subtype_send) {
+    if (subtype == data::enum_transaction_subtype_send) {
         if (not_need_confirm) {
             auto iter = recvonly.find(tx_ext.hash);
             if (iter != recvonly.end()) {
@@ -1078,7 +1078,7 @@ bool xdb_export_tools_t::xdbtool_all_table_info_t::all_table_set_txinfo(const tx
         } else {
             sendonly[tx_ext.hash] = tx_ext;
         }
-    } else if (subtype == enum_transaction_subtype_recv) {
+    } else if (subtype == data::enum_transaction_subtype_recv) {
         if (not_need_confirm) {
             auto iter = sendonly.find(tx_ext.hash);
             if (iter != sendonly.end()) {
@@ -1091,7 +1091,7 @@ bool xdb_export_tools_t::xdbtool_all_table_info_t::all_table_set_txinfo(const tx
                 recvonly[tx_ext.hash] = tx_ext;
             }
         }
-    } else if (subtype == enum_transaction_subtype_confirm) {
+    } else if (subtype == data::enum_transaction_subtype_confirm) {
         auto iter = sendonly.find(tx_ext.hash);
         if (iter != sendonly.end()) {
             pair_tx_ext = iter->second;
@@ -1271,20 +1271,20 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
             }
             phase_count++;
             tx_phase_count[tx_ext.hash] = phase_count;
-            if ((phase_count > 1) && (type == enum_transaction_subtype_self || type == enum_transaction_subtype_send || (type == enum_transaction_subtype_recv && is_cross_table_tx))) {
+            if ((phase_count > 1) && (type == data::enum_transaction_subtype_self || type == data::enum_transaction_subtype_send || (type == data::enum_transaction_subtype_recv && is_cross_table_tx))) {
                 multi_txs.push_back(tx_ext);
             } else if (phase_count > 2) {
-                if (((type == enum_transaction_subtype_confirm) && is_cross_table_tx) || (type == enum_transaction_subtype_recv && !is_cross_table_tx)) {
+                if (((type == data::enum_transaction_subtype_confirm) && is_cross_table_tx) || (type == data::enum_transaction_subtype_recv && !is_cross_table_tx)) {
                     multi_txs.push_back(tx_ext);
                 }
             }
             // statistic
             json j;
-            if (type == enum_transaction_subtype_self) {
+            if (type == data::enum_transaction_subtype_self) {
                 table_info.selftx_num++;
                 j[tx_ext.hash] = set_txinfo_to_json(tx_ext);
                 normal_stream << std::setw(4) << j << std::endl;
-            } else if (type == enum_transaction_subtype_send) {
+            } else if (type == data::enum_transaction_subtype_send) {
                 table_info.sendtx_num++;
                 tx_ext_t pair_tx_ext;
                 bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
@@ -1293,7 +1293,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                     j[tx_ext.hash] = set_txinfo_to_json(tx_ext, pair_tx_ext);
                     normal_stream << std::setw(4) << j << std::endl;
                 }
-            } else if (type == enum_transaction_subtype_recv) {
+            } else if (type == data::enum_transaction_subtype_recv) {
                 table_info.recvtx_num++;
                 tx_ext_t pair_tx_ext;
                 bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
@@ -1302,7 +1302,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                     j[tx_ext.hash] = set_txinfo_to_json(pair_tx_ext, tx_ext);
                     normal_stream << std::setw(4) << j << std::endl;
                 }
-            } else if (type == enum_transaction_subtype_confirm) {
+            } else if (type == data::enum_transaction_subtype_confirm) {
                 table_info.confirmtx_num++;
                 tx_ext_t pair_tx_ext;
                 bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
@@ -1413,10 +1413,10 @@ void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit,
         return;
     }
     std::map<std::string, std::string> table_account_index;
-    if (false == bstate->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        std::cerr << "table: " << table << ", latest committed block state fail-find property XPROPERTY_TABLE_ACCOUNT_INDEX " << XPROPERTY_TABLE_ACCOUNT_INDEX << std::endl;
+    if (false == bstate->find_property(data::XPROPERTY_TABLE_ACCOUNT_INDEX)) {
+        std::cerr << "table: " << table << ", latest committed block state fail-find property XPROPERTY_TABLE_ACCOUNT_INDEX " << data::XPROPERTY_TABLE_ACCOUNT_INDEX << std::endl;
     } else {
-        auto propobj = bstate->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
+        auto propobj = bstate->load_string_map_var(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
         table_account_index = propobj->query();
     }
     uint64_t balance = 0;
@@ -1442,37 +1442,37 @@ void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit,
         uint64_t unit_tgas_balance = 0;
         uint64_t unit_vote_balance = 0;
         uint64_t unit_burn_balance = 0;
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_AVAILABLE)) {
-            unit_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
+        if (unit_bstate->find_property(data::XPROPERTY_BALANCE_AVAILABLE)) {
+            unit_balance = unit_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance();
         }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_LOCK)) {
-            unit_lock_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
+        if (unit_bstate->find_property(data::XPROPERTY_BALANCE_LOCK)) {
+            unit_lock_balance = unit_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance();
         }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_TGAS)) {
-            unit_tgas_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_TGAS)->get_balance();
+        if (unit_bstate->find_property(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) {
+            unit_tgas_balance = unit_bstate->load_token_var(data::XPROPERTY_BALANCE_PLEDGE_TGAS)->get_balance();
         }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_PLEDGE_VOTE)) {
-            unit_vote_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_PLEDGE_VOTE)->get_balance();
+        if (unit_bstate->find_property(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) {
+            unit_vote_balance = unit_bstate->load_token_var(data::XPROPERTY_BALANCE_PLEDGE_VOTE)->get_balance();
         }
-        if (unit_bstate->find_property(XPROPERTY_BALANCE_BURN)) {
-            unit_burn_balance = unit_bstate->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
+        if (unit_bstate->find_property(data::XPROPERTY_BALANCE_BURN)) {
+            unit_burn_balance = unit_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance();
         }
-        j_unit[account][XPROPERTY_BALANCE_AVAILABLE] = unit_balance;
-        j_unit[account][XPROPERTY_BALANCE_LOCK] = unit_lock_balance;
-        j_unit[account][XPROPERTY_BALANCE_PLEDGE_TGAS] = unit_tgas_balance;
-        j_unit[account][XPROPERTY_BALANCE_PLEDGE_VOTE] = unit_vote_balance;
-        j_unit[account][XPROPERTY_BALANCE_BURN] = unit_burn_balance;
+        j_unit[account][data::XPROPERTY_BALANCE_AVAILABLE] = unit_balance;
+        j_unit[account][data::XPROPERTY_BALANCE_LOCK] = unit_lock_balance;
+        j_unit[account][data::XPROPERTY_BALANCE_PLEDGE_TGAS] = unit_tgas_balance;
+        j_unit[account][data::XPROPERTY_BALANCE_PLEDGE_VOTE] = unit_vote_balance;
+        j_unit[account][data::XPROPERTY_BALANCE_BURN] = unit_burn_balance;
         balance += unit_balance;
         lock_balance += unit_lock_balance;
         tgas_balance += unit_tgas_balance;
         vote_balance += unit_vote_balance;
         burn_balance += unit_burn_balance;
     }
-    j_table[XPROPERTY_BALANCE_AVAILABLE] = balance;
-    j_table[XPROPERTY_BALANCE_BURN] = burn_balance;
-    j_table[XPROPERTY_BALANCE_LOCK] = lock_balance;
-    j_table[XPROPERTY_BALANCE_PLEDGE_TGAS] = tgas_balance;
-    j_table[XPROPERTY_BALANCE_PLEDGE_VOTE] = vote_balance;
+    j_table[data::XPROPERTY_BALANCE_AVAILABLE] = balance;
+    j_table[data::XPROPERTY_BALANCE_BURN] = burn_balance;
+    j_table[data::XPROPERTY_BALANCE_LOCK] = lock_balance;
+    j_table[data::XPROPERTY_BALANCE_PLEDGE_TGAS] = tgas_balance;
+    j_table[data::XPROPERTY_BALANCE_PLEDGE_VOTE] = vote_balance;
 }
 
 void xdb_export_tools_t::load_db_unit_accounts_info() {
@@ -1488,7 +1488,7 @@ void xdb_export_tools_t::load_db_unit_accounts_info() {
             std::cerr << table << " get_block_state null!" << std::endl;
             continue;
         }
-        auto const table_bstate = std::make_shared<xtable_bstate_t>(bstate.get());
+        auto const table_bstate = std::make_shared<data::xtable_bstate_t>(bstate.get());
         auto const & table_units = table_bstate->get_all_accounts();
         std::map<std::string, base::xaccount_index_t> table_indexs;
         for (auto const & unit : table_units) {
@@ -1761,7 +1761,7 @@ std::set<std::string> xdb_export_tools_t::get_special_genesis_accounts() {
         accounts_set.insert(user_data.address);
     }
     auto const genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>("{}");
-    xrootblock_para_t rootblock_para;
+    data::xrootblock_para_t rootblock_para;
     genesis_loader->extract_genesis_para(rootblock_para);
     for (auto const & account : rootblock_para.m_account_balances) {
         accounts_set.insert(account.first);

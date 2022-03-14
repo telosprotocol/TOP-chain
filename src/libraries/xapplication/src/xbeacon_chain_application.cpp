@@ -47,7 +47,7 @@ xtop_beacon_chain_application::xtop_beacon_chain_application(observer_ptr<xappli
 /// @param returned_data_block_height The height of the block contains the return election data.
 /// @param ec Log the error code in the operation.
 /// @return The election data.
-static top::data::election::xelection_result_store_t load_election_data(observer_ptr<xvblockstore_t> const & blockstore,
+static top::data::election::xelection_result_store_t load_election_data(observer_ptr<data::xvblockstore_t> const & blockstore,
                                                                         common::xaccount_address_t const & contract_address,
                                                                         uint64_t const block_height_upper_limit,
                                                                         std::string const & property_name,
@@ -56,12 +56,12 @@ static top::data::election::xelection_result_store_t load_election_data(observer
     assert(!ec);
 
     std::string result;
-    xobject_ptr_t<xblock_t> block{ nullptr };
+    xobject_ptr_t<data::xblock_t> block{nullptr};
     auto block_height = block_height_upper_limit;
 
     do {
         // get committed lightunit from a specified height. the height of the returned block won't be higher than the specified height.
-        xobject_ptr_t<xvblock_t> const vblock = xblocktool_t::get_committed_state_changed_block(blockstore.get(), contract_address.value(), block_height);
+        xobject_ptr_t<data::xvblock_t> const vblock = data::xblocktool_t::get_committed_state_changed_block(blockstore.get(), contract_address.value(), block_height);
         if (vblock == nullptr) {
             ec = error::xerrc_t::load_election_data_missing_block;
 
@@ -75,7 +75,7 @@ static top::data::election::xelection_result_store_t load_election_data(observer
         }
         assert(vblock->get_height() <= block_height);
 
-        block = dynamic_xobject_ptr_cast<xblock_t>(vblock);
+        block = dynamic_xobject_ptr_cast<data::xblock_t>(vblock);
         if (block == nullptr) {
             ec = error::xerrc_t::load_election_data_block_type_mismatch;
 
@@ -107,7 +107,7 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 
             break;
         }
-        xunit_bstate_t unitstate(bstate.get());
+        data::xunit_bstate_t unitstate(bstate.get());
         if (true == unitstate.string_get(property_name, result)) {
             block_height = block->get_height();
             break;

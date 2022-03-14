@@ -57,7 +57,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
     int db_kind = top::db::xdb_kind_kvdb;
     std::vector<db::xdb_path_t> db_data_paths {};
-    xvchain_t::instance().get_db_config_custom(db_data_paths, db_kind);
+    base::xvchain_t::instance().get_db_config_custom(db_data_paths, db_kind);
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create(db_kind, XGET_CONFIG(db_path), db_data_paths);
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
@@ -280,7 +280,7 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
 int32_t xtop_application::handle_register_node(std::string const & node_addr, std::string const & node_sign) {
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
     // filter seed node
-    if (xrootblock_t::is_seed_node(node_addr)) {
+    if (data::xrootblock_t::is_seed_node(node_addr)) {
         xinfo("[register_node_callback] success, seed node, node_addr: %s", node_addr.c_str());
         return store::xstore_success;
     }
@@ -344,7 +344,7 @@ void xtop_application::update_node_size(uint64_t & node_size, std::error_code & 
 
     data::election::xstandby_result_store_t standby_result_store;
     std::string serialized_value{};
-    if (m_store->string_get(sys_contract_rec_standby_pool_addr, XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
+    if (m_store->string_get(sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
         auto const & standby_result_store = codec::msgpack_decode<data::election::xstandby_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         auto const & standby_network_storage_result = standby_result_store.result_of(network_id);
@@ -365,7 +365,7 @@ void xtop_application::update_node_size(uint64_t & node_size, std::error_code & 
 }
 
 bool xtop_application::is_genesis_node() const noexcept {
-    const std::vector<node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
+    const std::vector<data::node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
     auto const & user_params = data::xuser_params::get_instance();
     top::common::xnode_id_t node_id = user_params.account;
 
@@ -386,14 +386,14 @@ bool xtop_application::is_beacon_account() const noexcept {
         top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
         std::string result;
-        auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore.get(), xvaccount_t{sys_contract_rec_elect_rec_addr});
+        auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore.get(), data::xvaccount_t{sys_contract_rec_elect_rec_addr});
         base::xauto_ptr<base::xvbstate_t> bstate =
             base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
         if (bstate == nullptr) {
             xerror("xtop_application::is_beacon_account fail-get state.");
             return false;
         }
-        xunit_bstate_t unitstate(bstate.get());
+        data::xunit_bstate_t unitstate(bstate.get());
 
         auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};

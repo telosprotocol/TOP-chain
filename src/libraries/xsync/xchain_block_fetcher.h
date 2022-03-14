@@ -50,14 +50,14 @@ public:
     void on_timer();
     void on_newblock(data::xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
     void on_newblockhash(uint64_t height, const std::string &hash, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
-    void on_response_blocks(xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
+    void on_response_blocks(data::xblock_ptr_t & block, const vnetwork::xvnode_address_t & network_self, const vnetwork::xvnode_address_t & from_address);
 
 private:
 
     void request_sync_blocks(const xsync_block_announce_ptr_t &announce);
-    void insert_block(const xblock_ptr_t &block);
+    void insert_block(const data::xblock_ptr_t & block);
     void add_blocks();
-    void import_block(xblock_ptr_t &block);
+    void import_block(data::xblock_ptr_t & block);
     void forget_hash(const std::string &hash);
     void forget_block(const std::string &hash);
     int64_t get_time();

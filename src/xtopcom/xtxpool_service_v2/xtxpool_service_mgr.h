@@ -37,7 +37,7 @@ public:
     bool start(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool unreg(const xvip2_t & xip) override;
     bool fade(const xvip2_t & xip) override;
-    xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override;
+    data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override;
     void start() override;
     void stop() override;
     void on_timer();
@@ -45,7 +45,7 @@ public:
 private:
     std::shared_ptr<xtxpool_service_face> find(const xvip2_t & xip);
     void on_block_to_db_event(mbus::xevent_ptr_t e);
-    void on_block_confirmed(xblock_t * block);
+    void on_block_confirmed(data::xblock_t * block);
 
 private:
     xobject_ptr_t<xtxpool_svc_para_t> m_para;

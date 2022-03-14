@@ -87,7 +87,7 @@ private:
     /**
      * @brief add_workload_with_fullblock
      */
-    void accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload);
+    void accumulate_workload(data::xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload);
 
     /**
      * @brief add_workload_with_fullblock

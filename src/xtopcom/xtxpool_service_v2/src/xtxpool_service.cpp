@@ -501,11 +501,11 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return xtxpool_v2::xtxpool_error_service_invalid_account_address;
     }
 
-    if (is_sys_sharding_contract_address(account_address)) {
+    if (data::is_sys_sharding_contract_address(account_address)) {
         tx->adjust_target_address(tableid.get_subaddr());
     }
 
-    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(cons_tx, para);
     ret = m_para->get_txpool()->push_send_tx(tx_ent);
@@ -659,7 +659,7 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
         }
 
         if (!pushed_receipt.m_receipts.empty()) {
-            pushed_receipt.m_receipt_type = is_pull_recv ? enum_transaction_subtype_recv : enum_transaction_subtype_confirm;
+            pushed_receipt.m_receipt_type = is_pull_recv ? data::enum_transaction_subtype_recv : data::enum_transaction_subtype_confirm;
             pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
             pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
             pushed_receipt.m_req_node = pulled_receipt.m_req_node;
@@ -681,7 +681,7 @@ void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_addr
     property_prove_ptr.attach(_property_prove_raw);
     xassert(property_prove_ptr->is_valid());
 
-    auto receiptid_state = xblocktool_t::get_receiptid_from_property_prove(property_prove_ptr);
+    auto receiptid_state = data::xblocktool_t::get_receiptid_from_property_prove(property_prove_ptr);
     m_para->get_txpool()->update_peer_receipt_id_state(property_prove_ptr, receiptid_state);
 }
 
@@ -708,8 +708,8 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     if (property_prove == nullptr) {
         auto latest_commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_id_state);
 
-        xtablestate_ptr_t tablestate_ptr = nullptr;
-        auto ret = xblocktool_t::get_receiptid_state_and_prove(m_para->get_vblockstore(), vaccount, latest_commit_block.get() , property_prove, tablestate_ptr);
+        data::xtablestate_ptr_t tablestate_ptr = nullptr;
+        auto ret = data::xblocktool_t::get_receiptid_state_and_prove(m_para->get_vblockstore(), vaccount, latest_commit_block.get() , property_prove, tablestate_ptr);
         if (!ret) {
             xwarn("xtxpool_service::send_table_receipt_id_state create receipt state fail.table:%s, commit height:%llu", table_addr.c_str(), latest_commit_block->get_height());
             return;

@@ -21,12 +21,11 @@
 
 NS_BEG2(top, contract_common)
 
-
 class xtop_contract_execution_context {
 private:
     observer_ptr<xcontract_state_t> m_contract_state{};
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
-    xreceipt_data_store_t m_receipt_data; // input receipt
+    data::xreceipt_data_store_t m_receipt_data; // input receipt
 
     data::xconsensus_action_stage_t m_stage{data::xconsensus_action_stage_t::invalid};
     xcontract_execution_result_t m_execution_result; // execution result
@@ -55,8 +54,8 @@ public:
     void add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type);
     std::vector<xfollowup_transaction_datum_t> const & followup_transaction() const noexcept;
 
-    void input_receipt_data(xreceipt_data_store_t const& receipt_data);
-    xreceipt_data_store_t& output_receipt_data() noexcept;
+    void input_receipt_data(data::xreceipt_data_store_t const& receipt_data);
+    data::xreceipt_data_store_t& output_receipt_data() noexcept;
     xbyte_buffer_t input_receipt_data(std::string const & key) const;
     void remove_input_receipt_data(std::string const & key);
     data::xaction_consensus_exec_status action_consensus_result() const noexcept;

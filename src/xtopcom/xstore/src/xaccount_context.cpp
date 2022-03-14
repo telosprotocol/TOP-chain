@@ -59,7 +59,7 @@ do {\
     }\
 }while(0)
 
-xaccount_context_t::xaccount_context_t(const xaccount_ptr_t & unitstate) {
+xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate) {
     m_account = unitstate;
 
     m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
@@ -72,7 +72,7 @@ xaccount_context_t::xaccount_context_t(const xaccount_ptr_t & unitstate) {
 }
 
 // TODO(jimmy) this constructor api will be deleted later
-xaccount_context_t::xaccount_context_t(const xaccount_ptr_t & unitstate, xstore_face_t* store) {
+xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate, xstore_face_t * store) {
     m_account = unitstate;
 
     m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
@@ -91,7 +91,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     assert(address == get_address());
     xinfo("xaccount_context_t::create_user_account address:%s", address.c_str());
 
-    auto old_token = token_balance(XPROPERTY_BALANCE_AVAILABLE);
+    auto old_token = token_balance(data::XPROPERTY_BALANCE_AVAILABLE);
     if (old_token != 0) {
         xerror("xaccount_context_t::create_user_account fail-token not zero");
         return -1;
@@ -99,7 +99,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
 
     // just for test debug
     base::vtoken_t add_token = (base::vtoken_t)(ASSET_TOP(100000000));
-    return token_deposit(XPROPERTY_BALANCE_AVAILABLE, add_token);
+    return token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, add_token);
 }
 
 int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee, uint64_t service_fee) {
@@ -122,19 +122,19 @@ int32_t xaccount_context_t::top_token_transfer_out(uint64_t amount, uint64_t gas
     }
     int32_t ret = xsuccess;
     if (amount > 0) {
-        ret = token_withdraw(XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)amount);
+        ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)amount);
         if (ret != xsuccess) {
             return ret;
         }
     }
     if (gas_fee > 0) {
-        ret = token_withdraw(XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)gas_fee);
+        ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)gas_fee);
         if (ret != xsuccess) {
             return ret;
         }
     }
     if (service_fee > 0) {
-        ret = token_withdraw(XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)service_fee);
+        ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)service_fee);
         if (ret != xsuccess) {
             return ret;
         }
@@ -156,7 +156,7 @@ int32_t xaccount_context_t::top_token_transfer_in(uint64_t amount) {
     if (amount == 0) {
         return xstore_success;
     }
-    return token_deposit(XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)amount);
+    return token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)amount);
 }
 
 // how many tgas you can get from pledging 1TOP
@@ -167,7 +167,7 @@ uint32_t xaccount_context_t::get_token_price() const {
 uint64_t xaccount_context_t::get_used_tgas(){
     int32_t ret = 0;
     std::string v;
-    ret = string_get(XPROPERTY_USED_TGAS_KEY, v);
+    ret = string_get(data::XPROPERTY_USED_TGAS_KEY, v);
     if (0 == ret) {
         return (uint64_t)std::stoull(v);
     }
@@ -175,15 +175,15 @@ uint64_t xaccount_context_t::get_used_tgas(){
 }
 
 int32_t xaccount_context_t::set_used_tgas(uint64_t num){
-    string_set(XPROPERTY_USED_TGAS_KEY, std::to_string(num));
-    string_set(XPROPERTY_LAST_TX_HOUR_KEY, std::to_string(m_timer_height));
+    string_set(data::XPROPERTY_USED_TGAS_KEY, std::to_string(num));
+    string_set(data::XPROPERTY_LAST_TX_HOUR_KEY, std::to_string(m_timer_height));
     return 0;
 }
 // set actual used tgas
 int32_t xaccount_context_t::incr_used_tgas(uint64_t num){
     auto used_tgas = calc_decayed_tgas();
-    string_set(XPROPERTY_USED_TGAS_KEY, std::to_string(num + used_tgas));
-    string_set(XPROPERTY_LAST_TX_HOUR_KEY, std::to_string(m_timer_height));
+    string_set(data::XPROPERTY_USED_TGAS_KEY, std::to_string(num + used_tgas));
+    string_set(data::XPROPERTY_LAST_TX_HOUR_KEY, std::to_string(m_timer_height));
     return 0;
 }
 // get actual used tgas
@@ -235,7 +235,7 @@ int32_t xaccount_context_t::update_tgas_sender(uint64_t tgas_usage, const uint32
     if(ret == 0) {
         incr_used_tgas(tgas_usage);
     }
-    available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(deposit_usage));
+    available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(deposit_usage));
     xdbg("xaccount_context_t::update_tgas_sender tgas_usage: %llu, deposit: %u, deposit_usage: %llu", tgas_usage, deposit, deposit_usage);
     return ret;
 }
@@ -309,7 +309,7 @@ int32_t xaccount_context_t::calc_resource(uint64_t& tgas, uint32_t deposit, uint
 
     if (used_deposit > 0) {
         xdbg("xaccount_context_t::calc_resource balance withdraw used_deposit=%u", used_deposit);
-        ret = available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(used_deposit));
+        ret = available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(used_deposit));
     }
     return ret;
 }
@@ -317,7 +317,7 @@ int32_t xaccount_context_t::calc_resource(uint64_t& tgas, uint32_t deposit, uint
 uint64_t xaccount_context_t::get_last_tx_hour(){
     int32_t ret = 0;
     std::string v;
-    ret = string_get(XPROPERTY_LAST_TX_HOUR_KEY, v);
+    ret = string_get(data::XPROPERTY_LAST_TX_HOUR_KEY, v);
     if (0 == ret) {
         return (uint64_t)std::stoull(v);
     }
@@ -325,7 +325,7 @@ uint64_t xaccount_context_t::get_last_tx_hour(){
 }
 
 int32_t xaccount_context_t::set_last_tx_hour(uint64_t num){
-    string_set(XPROPERTY_LAST_TX_HOUR_KEY, std::to_string(num));
+    string_set(data::XPROPERTY_LAST_TX_HOUR_KEY, std::to_string(num));
     return 0;
 }
 
@@ -339,14 +339,14 @@ int32_t xaccount_context_t::lock_token(const uint256_t &tran_hash, uint64_t amou
 
     int32_t ret = xsuccess;
     // firstly, withdraw amount from available balance
-    ret = available_balance_to_other_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(amount));
+    ret = available_balance_to_other_balance(data::XPROPERTY_BALANCE_LOCK, base::vtoken_t(amount));
     if (xsuccess != ret) {
         return ret;
     }
     // thirdly, save lock token record by txhash  TODO(jimmy) should limit record number
     std::string v;
     std::string hash_str((char *)tran_hash.data(), tran_hash.size());
-    ret = map_get(XPROPERTY_LOCK_TOKEN_KEY, hash_str, v);
+    ret = map_get(data::XPROPERTY_LOCK_TOKEN_KEY, hash_str, v);
     if (xsuccess == ret) {
         xerror("xaccount_context_t::lock_token failed, same tx hash %s", hash_str.c_str());
         return xaccount_property_lock_token_key_same;
@@ -355,7 +355,7 @@ int32_t xaccount_context_t::lock_token(const uint256_t &tran_hash, uint64_t amou
     stream << m_timer_height;
     stream << tran_params;
     std::string record_str = std::string((char *)stream.data(), stream.size());
-    ret = map_set(XPROPERTY_LOCK_TOKEN_KEY, hash_str, record_str);
+    ret = map_set(data::XPROPERTY_LOCK_TOKEN_KEY, hash_str, record_str);
     if (xsuccess != ret) {
         xerror("xaccount_context_t::lock_token set failed tx hash %s", hash_str.c_str());
         return xaccount_property_lock_token_key_same;
@@ -367,7 +367,7 @@ int32_t xaccount_context_t::lock_token(const uint256_t &tran_hash, uint64_t amou
 int32_t xaccount_context_t::unlock_token(const uint256_t &tran_hash, const std::string &lock_hash_str, const std::vector<std::string> trans_signs) {
     // 1. find lock token record by txhash and remove this record
     std::string v;
-    int32_t ret = map_get(XPROPERTY_LOCK_TOKEN_KEY, lock_hash_str, v);
+    int32_t ret = map_get(data::XPROPERTY_LOCK_TOKEN_KEY, lock_hash_str, v);
     if (xsuccess != ret) {
         xerror("xaccount_context_t::unlock_token fail-find lock record, tx_hash=%s", base::xstring_utl::to_hex(lock_hash_str).c_str());
         return xaccount_property_unlock_token_key_not_exist;
@@ -385,7 +385,7 @@ int32_t xaccount_context_t::unlock_token(const uint256_t &tran_hash, const std::
     data::xaction_lock_account_token lock_action;
     ret = lock_action.parse_param(raw_input);
     assert(0 == ret);
-    if (lock_action.m_unlock_type == xaction_lock_account_token::UT_time) {
+    if (lock_action.m_unlock_type == data::xaction_lock_account_token::UT_time) {
         uint64_t dure = xstring_utl::touint64(lock_action.m_unlock_values.at(0));
         if ( (now_clock < clock_timer) || ((now_clock - clock_timer) * 10 < dure) ) {
             xwarn("xaccount_context_t::unlock_token %d, but time not reach, lock clock %llu, now clock %llu", lock_action.m_amount, clock_timer, now_clock);
@@ -398,14 +398,14 @@ int32_t xaccount_context_t::unlock_token(const uint256_t &tran_hash, const std::
     }
 
     // 3. remove token lock record
-    ret = map_remove(XPROPERTY_LOCK_TOKEN_KEY, lock_hash_str);
+    ret = map_remove(data::XPROPERTY_LOCK_TOKEN_KEY, lock_hash_str);
     if (xsuccess != ret) {
         xerror("xaccount_context_t::unlock_token tx erase failed, tx_hash %s not exist", base::xstring_utl::to_hex(lock_hash_str).c_str());
         return xaccount_property_unlock_token_key_not_exist;
     }
 
     // 4. withdraw lock balance and deposit available balance
-    ret = other_balance_to_available_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(lock_action.m_amount));
+    ret = other_balance_to_available_balance(data::XPROPERTY_BALANCE_LOCK, base::vtoken_t(lock_action.m_amount));
     if (xsuccess != ret) {
         return ret;
     }
@@ -416,9 +416,9 @@ int32_t xaccount_context_t::unlock_all_token(){
     std::string v;
 
     std::map<std::string, std::string> lock_txs;
-    map_copy_get(XPROPERTY_LOCK_TOKEN_KEY, lock_txs);
+    map_copy_get(data::XPROPERTY_LOCK_TOKEN_KEY, lock_txs);
     for(auto tx : lock_txs){
-        int32_t ret = map_get(XPROPERTY_LOCK_TOKEN_KEY, tx.first, v);
+        int32_t ret = map_get(data::XPROPERTY_LOCK_TOKEN_KEY, tx.first, v);
         xdbg("xaccount_context_t::unlock_all_token, first: %s, second: %s, ret=%d", base::xstring_utl::to_hex(tx.first).c_str(), tx.second.c_str(), ret);
 
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)v.c_str(), (uint32_t)v.size());
@@ -431,7 +431,7 @@ int32_t xaccount_context_t::unlock_all_token(){
         data::xaction_lock_account_token lock_action;
         ret = lock_action.parse_param(raw_input);
         assert(0 == ret);
-        if (lock_action.m_unlock_type == xaction_lock_account_token::UT_time) {
+        if (lock_action.m_unlock_type == data::xaction_lock_account_token::UT_time) {
             uint64_t dure = xstring_utl::touint64(lock_action.m_unlock_values.at(0));
             xwarn("xaccount_context_t::unlock_all_token duration: %s, %d", lock_action.m_unlock_values.at(0).c_str(), dure);
             if ((now_clock - clock_timer) * 10 < dure) {
@@ -446,13 +446,13 @@ int32_t xaccount_context_t::unlock_all_token(){
         xinfo("xaccount_context_t::unlock_all_token account: %s, amount: %d, unlock amount: %d, lock clock %llu, now clock %llu, tx hash: %s",
                get_address().c_str(), lock_action.m_amount, lock_action.m_amount, clock_timer, now_clock, base::xstring_utl::to_hex(tx.first).c_str());
 
-        ret = map_remove(XPROPERTY_LOCK_TOKEN_KEY, tx.first);
+        ret = map_remove(data::XPROPERTY_LOCK_TOKEN_KEY, tx.first);
         if (0 != ret) {
             xerror("xaccount_context_t::unlock_all_token tx erase failed, tx_hash %s not exist", base::xstring_utl::to_hex(tx.first).c_str());
             return xaccount_property_unlock_token_key_not_exist;
         }
 
-        ret = other_balance_to_available_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(lock_action.m_amount));
+        ret = other_balance_to_available_balance(data::XPROPERTY_BALANCE_LOCK, base::vtoken_t(lock_action.m_amount));
         if (xsuccess != ret) {
             return ret;
         }
@@ -485,7 +485,7 @@ std::string xaccount_context_t::serilize_vote_map_value(uint64_t vote_num){
 // only merge expire lock record
 int32_t xaccount_context_t::merge_pledge_vote_property(){
     std::map<std::string, std::string> pledge_votes;
-    map_copy_get(XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes);
+    map_copy_get(data::XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes);
     if (pledge_votes.empty()) {
         // do nothing
         return 0;
@@ -505,7 +505,7 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
 #else
         if(m_timer_height - lock_time >= duration * 24 * 60 * 6){
 #endif
-            map_remove(XPROPERTY_PLEDGE_VOTE_KEY, v.first);
+            map_remove(data::XPROPERTY_PLEDGE_VOTE_KEY, v.first);
             vote_sum += vote_num;
             if(0 != duration){ // if not calculated in XPROPERTY_EXPIRE_VOTE_TOKEN_KEY
                 expire_token += get_top_by_vote(vote_num, duration);
@@ -515,21 +515,21 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
     }
 
     if(vote_sum > 0){
-        map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_sum));
+        map_set(data::XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_sum));
     }
     if(expire_token > 0){
         std::string val;
-        string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, val);
+        string_get(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, val);
         expire_token += xstring_utl::touint64(val);
         xdbg("xaccount_context_t::merge_pledge_vote_property expire old: %llu, new: %llu", xstring_utl::touint64(val), expire_token);
-        string_set(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token));
+        string_set(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token));
     }
     return 0;
 }
 
-int32_t xaccount_context_t::insert_pledge_vote_property(xaction_pledge_token_vote& action){
+int32_t xaccount_context_t::insert_pledge_vote_property(data::xaction_pledge_token_vote & action) {
     std::map<std::string, std::string> pledge_votes;
-    map_copy_get(XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes);
+    map_copy_get(data::XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes);
     const size_t max_property_deque_size{128};
     if (pledge_votes.size() >= max_property_deque_size) {
         xwarn("xaccount_context_t::insert_pledge_vote_property XPROPERTY_PLEDGE_VOTE_KEY size overflow %zu", pledge_votes.size());
@@ -551,17 +551,17 @@ int32_t xaccount_context_t::insert_pledge_vote_property(xaction_pledge_token_vot
             xdbg("xaccount_context_t::insert_pledge_vote_property merge old record.clock=%ld,vote_num=%ld,duration=%d,lock_time=%ld,action.m_vote_num=%ld",
                     m_timer_height, vote_num, duration, lock_time, action.m_vote_num);
             action.m_vote_num += vote_num;
-            map_set(XPROPERTY_PLEDGE_VOTE_KEY, v.first, serilize_vote_map_value(action.m_vote_num));
+            map_set(data::XPROPERTY_PLEDGE_VOTE_KEY, v.first, serilize_vote_map_value(action.m_vote_num));
             return xsuccess;
         }
     }
     xdbg("xaccount_context_t::insert_pledge_vote_property add new record.vote_num=%ld,duration=%d,lock_time=%ld",
             action.m_vote_num, action.m_lock_duration, m_timer_height);
-    map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(action.m_lock_duration, m_timer_height), serilize_vote_map_value(action.m_vote_num));
+    map_set(data::XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(action.m_lock_duration, m_timer_height), serilize_vote_map_value(action.m_vote_num));
     return xsuccess;
 }
 
-int32_t xaccount_context_t::update_pledge_vote_property(xaction_pledge_token_vote& action){
+int32_t xaccount_context_t::update_pledge_vote_property(data::xaction_pledge_token_vote & action) {
     merge_pledge_vote_property();
     return insert_pledge_vote_property(action);
 }
@@ -574,7 +574,7 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
     int32_t ret = xsuccess;
 
     std::map<std::string, std::string> pledge_votes;
-    map_copy_get(XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes);
+    map_copy_get(data::XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes);
 
     for (auto & v : pledge_votes) {
         uint64_t vote_num{0};
@@ -591,7 +591,7 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
 
             // calc balance change
             std::string val;
-            string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, val);
+            string_get(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, val);
             uint64_t expire_token = xstring_utl::touint64(val);
             // 1 vote = [500,000 : 1,000,000] expire_token
             uint64_t balance_change = 0;
@@ -603,18 +603,18 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
 
             xdbg("xaccount_context_t::redeem_pledge_vote_property redeem_num:%llu, expire_num:%llu, expire_token:%llu, balance_change:%lld", num, vote_num, expire_token, balance_change);
             if (balance_change > 0) {
-                string_set(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token - balance_change));
+                string_set(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, xstring_utl::tostring(expire_token - balance_change));
                 vote_num -= num;
 
                 // update field
-                map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_num));
+                map_set(data::XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_num));
 
                 // update unvote num, balance, vote pledge balance
-                ret = uint64_sub(XPROPERTY_UNVOTE_NUM, num);
+                ret = uint64_sub(data::XPROPERTY_UNVOTE_NUM, num);
                 if (xsuccess != ret) {
                     return ret;
                 }
-                ret = other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_VOTE, base::vtoken_t(balance_change));
+                ret = other_balance_to_available_balance(data::XPROPERTY_BALANCE_PLEDGE_VOTE, base::vtoken_t(balance_change));
                 if (xsuccess != ret) {
                     return ret;
                 }
@@ -660,7 +660,7 @@ int32_t xaccount_context_t::other_balance_to_available_balance(const std::string
         xwarn("xaccount_context_t::other_balance_to_available_balance fail-withdraw balance, amount=%ld", token);
         return ret;
     }
-    ret = token_deposit(XPROPERTY_BALANCE_AVAILABLE, token);
+    ret = token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, token);
     if (xsuccess != ret) {
         xwarn("xaccount_context_t::other_balance_to_available_balance fail-deposit balance, amount=%ld", token);
         return ret;
@@ -670,7 +670,7 @@ int32_t xaccount_context_t::other_balance_to_available_balance(const std::string
 }
 int32_t xaccount_context_t::available_balance_to_other_balance(const std::string & property_name, base::vtoken_t token) {
     int32_t ret;
-    ret = token_withdraw(XPROPERTY_BALANCE_AVAILABLE, token);
+    ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, token);
     if (xsuccess != ret) {
         xwarn("xaccount_context_t::available_balance_to_other_balance fail-withdraw balance, amount=%ld", token);
         return ret;
@@ -689,21 +689,21 @@ int32_t xaccount_context_t::available_balance_to_other_balance(const std::string
 // ================== tx related info apis ======================
 void xaccount_context_t::set_tx_info_unconfirm_tx_num(uint32_t num) {
     std::string value = base::xstring_utl::tostring(num);
-    int32_t ret = map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, value);
+    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, value);
     xassert(ret == xsuccess);
 }
 void xaccount_context_t::set_tx_info_latest_sendtx_num(uint64_t num) {
     std::string value = base::xstring_utl::tostring(num);
-    int32_t ret = map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, value);
+    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, value);
     xassert(ret == xsuccess);
 }
 void xaccount_context_t::set_tx_info_latest_sendtx_hash(const std::string & hash) {
-    int32_t ret = map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, hash);
+    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, hash);
     xassert(ret == xsuccess);
 }
 void xaccount_context_t::set_tx_info_recvtx_num(uint64_t num) {
     std::string value = base::xstring_utl::tostring(num);
-    int32_t ret = map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_RECVTX_NUM, value);
+    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_RECVTX_NUM, value);
     xassert(ret == xsuccess);
 }
 
@@ -1175,7 +1175,7 @@ size_t xaccount_context_t::get_op_records_size() const {
     return m_canvas.get()->get_op_records_size();
 }
 
-bool xaccount_context_t::add_transaction(const xcons_transaction_ptr_t& trans) {
+bool xaccount_context_t::add_transaction(const data::xcons_transaction_ptr_t & trans) {
     m_contract_txs.clear();
     if (trans->is_self_tx() || trans->is_send_tx()) {
         if (m_latest_exec_sendtx_nonce != trans->get_transaction()->get_last_nonce()) {
@@ -1193,7 +1193,7 @@ bool xaccount_context_t::add_transaction(const xcons_transaction_ptr_t& trans) {
     m_currect_transaction = trans;
     return true;
 }
-bool xaccount_context_t::finish_exec_all_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
+bool xaccount_context_t::finish_exec_all_txs(const std::vector<data::xcons_transaction_ptr_t> & txs) {
     xassert(m_currect_transaction != nullptr);
 
     // update account create time propertys
@@ -1260,8 +1260,8 @@ bool xaccount_context_t::finish_exec_all_txs(const std::vector<xcons_transaction
 }
 
 void xaccount_context_t::set_account_create_time() {
-    if (false == get_bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
-        auto propobj = get_bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, m_canvas.get());
+    if (false == get_bstate()->find_property(data::XPROPERTY_ACCOUNT_CREATE_TIME)) {
+        auto propobj = get_bstate()->new_uint64_var(data::XPROPERTY_ACCOUNT_CREATE_TIME, m_canvas.get());
         uint64_t create_time = m_timer_height == 0 ? base::TOP_BEGIN_GMTIME : m_timer_height;
         propobj->set(create_time, m_canvas.get());
     }
@@ -1280,7 +1280,7 @@ void xaccount_context_t::get_latest_create_nonce_hash(uint64_t & nonce, uint256_
     hash = m_latest_create_sendtx_hash;
 }
 
-void xaccount_context_t::update_latest_create_nonce_hash(const xcons_transaction_ptr_t & tx) {
+void xaccount_context_t::update_latest_create_nonce_hash(const data::xcons_transaction_ptr_t & tx) {
     xassert(tx->is_self_tx() || tx->is_send_tx());
     // maybe not need update, it's ok
     if (m_latest_create_sendtx_nonce == tx->get_tx_last_nonce()) {
@@ -1301,8 +1301,8 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
     uint256_t latest_sendtx_hash;
     get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
 
-    xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_transfer(get_address(), receiver, latest_sendtx_nonce, latest_sendtx_hash, amount, m_timestamp);
-    xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());
+    data::xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_transfer(get_address(), receiver, latest_sendtx_nonce, latest_sendtx_hash, amount, m_timestamp);
+    data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(tx.get());
 
     uint32_t contract_call_contracts_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
     if (m_contract_txs.size() >= contract_call_contracts_num) {
@@ -1328,8 +1328,9 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
     uint256_t latest_sendtx_hash;
     get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
 
-    xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_call_contract(get_address(), target_addr, latest_sendtx_nonce, latest_sendtx_hash, func_name, func_param, m_timestamp);
-    xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());
+    data::xtransaction_ptr_t tx =
+        data::xtx_factory::create_contract_subtx_call_contract(get_address(), target_addr, latest_sendtx_nonce, latest_sendtx_hash, func_name, func_param, m_timestamp);
+    data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     uint32_t contract_call_contracts_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
     if (m_contract_txs.size() >= contract_call_contracts_num) {
         xwarn("xaccount_context_t::generate_tx contract transaction exceeds max from:%s,to:%s,func_name:%s",

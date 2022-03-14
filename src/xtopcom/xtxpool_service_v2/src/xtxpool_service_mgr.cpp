@@ -65,7 +65,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         mbus::xevent_object_t* _event_obj = dynamic_cast<mbus::xevent_object_t*>(call.get_param1().get_object());
         xassert(_event_obj != nullptr);
         mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(_event_obj->event);
-        const xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
+        const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
         base::xvaccount_t _vaccount(block->get_account());
         // TODO(jimmy) load block input for get raw tx nonce
         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get(), metrics::blockstore_access_from_txpool_on_block_event)) {
@@ -82,7 +82,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     m_dispatcher->dispatch(asyn_call);
 }
 
-void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
+void xtxpool_service_mgr::on_block_confirmed(data::xblock_t * block) {
     xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,block:%s", block->get_block_level(), block->get_block_class(), block->dump().c_str());
 
     if (block->is_lighttable()) {
@@ -190,7 +190,7 @@ bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
     return false;
 }
 
-xcons_transaction_ptr_t xtxpool_service_mgr::query_tx(const std::string & account, const uint256_t & hash) const {
+data::xcons_transaction_ptr_t xtxpool_service_mgr::query_tx(const std::string & account, const uint256_t & hash) const {
     auto & tx_ent = m_para->get_txpool()->query_tx(account, hash);
     if (tx_ent == nullptr) {
         return nullptr;

@@ -58,7 +58,10 @@ int xlightunit_builder_t::construct_block_builder_para(const data::xblock_ptr_t 
     return exec_ret;
 }
 
-xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state) {
+xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block,
+                                                const data::xblock_consensus_para_t & cs_para,
+                                                const data::xlightunit_block_para_t & lightunit_para,
+                                                const base::xreceiptid_state_ptr_t & receiptid_state) {
     alloc_tx_receiptid(lightunit_para.get_succ_txs(), receiptid_state);
     
     if (lightunit_para.get_input_txs().empty() && !lightunit_para.get_unchange_txs().empty()) {
@@ -169,7 +172,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
             return nullptr;
         }
 
-        xlightunit_block_para_t lightunit_para;
+        data::xlightunit_block_para_t lightunit_para;
         // set lightunit para by tx result
         lightunit_para.set_input_txs(exec_result.m_exec_succ_txs);
         lightunit_para.set_unchange_txs(exec_result.m_exec_unchange_txs);
@@ -201,7 +204,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     XMETRICS_TIMER(metrics::cons_unitbuilder_fullunit_tick);
 
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
-    xfullunit_block_para_t para;
+    data::xfullunit_block_para_t para;
 
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
 

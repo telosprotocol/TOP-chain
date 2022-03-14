@@ -28,7 +28,7 @@ base::xvblock_t *xtimer_block_maker_t::make_block(const std::string &account, ui
 
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     uint64_t gmtime = 0;  // drand block no need set second gmtime
-    xblock_consensus_para_t cs_para(account, clock, viewid, viewtoken, prev_block->get_height() + 1, gmtime);
+    data::xblock_consensus_para_t cs_para(account, clock, viewid, viewtoken, prev_block->get_height() + 1, gmtime);
     cs_para.set_validator(leader_xip);
 
     base::xvblock_t *              block = data::xblocktool_t::create_next_emptyblock(prev_block.get(), cs_para);

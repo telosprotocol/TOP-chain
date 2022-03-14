@@ -221,7 +221,8 @@ using xblock_rules_face_ptr_t = std::shared_ptr<xblock_rules_face_t>;
 class xblock_builder_para_face_t {
  public:
     xblock_builder_para_face_t() = default;
-    xblock_builder_para_face_t(const xblockmaker_resources_ptr_t & resources, const std::vector<xlightunit_tx_info_ptr_t> & txs_info = std::vector<xlightunit_tx_info_ptr_t>{})
+     xblock_builder_para_face_t(const xblockmaker_resources_ptr_t & resources,
+                                const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info = std::vector<data::xlightunit_tx_info_ptr_t>{})
     : m_resources(resources), m_txs_info(txs_info) {}
 
  public:
@@ -231,7 +232,7 @@ class xblock_builder_para_face_t {
     virtual void                        set_error_code(int32_t error_code) {m_error_code = error_code;}
     int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
     void set_tgas_balance_change(const int64_t amount) { m_tgas_balance_change = amount; }
-    const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs_info;}
+    const std::vector<data::xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs_info;}
     void set_changed_confirm_ids(const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids) {m_changed_confirm_ids = changed_confirm_ids;}
     const std::map<base::xtable_shortid_t, uint64_t> & get_changed_confirm_ids() const {return m_changed_confirm_ids;}
 
@@ -239,7 +240,7 @@ class xblock_builder_para_face_t {
     xblockmaker_resources_ptr_t m_resources{nullptr};
     int32_t                     m_error_code{0};
     int64_t                     m_tgas_balance_change{0};
-    std::vector<xlightunit_tx_info_ptr_t> m_txs_info;
+    std::vector<data::xlightunit_tx_info_ptr_t> m_txs_info;
     std::map<base::xtable_shortid_t, uint64_t> m_changed_confirm_ids;
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;

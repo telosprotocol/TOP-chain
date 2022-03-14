@@ -115,13 +115,13 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
     std::vector<xcons_transaction_ptr_t> contract_create_txs;
     int32_t error_code = xsuccess;  // record the last failure tx error code
     std::shared_ptr<store::xaccount_context_t> _account_context = nullptr;
-    xaccount_ptr_t proposal_state = nullptr;
+    data::xaccount_ptr_t proposal_state = nullptr;
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = nullptr;
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block, cs_para.get_clock());
     do {
         // clone new bstate firstly
         proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
-        proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
+        proposal_state = std::make_shared<data::xunit_bstate_t>(proposal_bstate.get());
 
         // create tx execute context
         _account_context = std::make_shared<store::xaccount_context_t>(proposal_state);
@@ -187,20 +187,20 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
     // merge all pack txs and set exec status
     std::vector<xcons_transaction_ptr_t> all_pack_txs;
     for (auto & tx : exec_txs) {
-        tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+        tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
         all_pack_txs.push_back(tx);
     }
     for (auto & tx : contract_create_txs) {
-        tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+        tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
         all_pack_txs.push_back(tx);
     }
     for (auto & tx : failure_receipt_txs) {
-        tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
+        tx->set_current_exec_status(data::enum_xunit_tx_exec_status_fail);
         xassert(tx->is_recv_tx());  // confirm tx should not fail
         all_pack_txs.push_back(tx);
     }
     for (auto & tx : unchange_confirm_txs) {
-        tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
+        tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
         xassert(tx->is_confirm_tx());
         xdbg("xtransaction_executor::exec_batch_txs tx_hash:%s, type:%s", tx->get_transaction()->get_digest_hex_str().c_str(), tx->get_tx_subtype_str().c_str());
         // all_pack_txs.push_back(tx);

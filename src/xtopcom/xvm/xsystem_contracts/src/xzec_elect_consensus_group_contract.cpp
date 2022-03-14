@@ -255,11 +255,11 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
 #endif
 
 void xtop_zec_elect_consensus_group_contract::setup() {
-    election::legacy::xelection_result_store_t election_result_store;
+    data::election::legacy::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 
     STRING_CREATE(data::XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY);
@@ -455,7 +455,7 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
                 serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
                     *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
             } else {
-                serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+                serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
                     *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store.legacy());
             }
 #if defined(DEBUG)

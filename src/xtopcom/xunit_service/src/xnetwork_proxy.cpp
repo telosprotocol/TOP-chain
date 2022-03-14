@@ -37,7 +37,7 @@ bool xnetwork_proxy::send_out(uint32_t msg_type, const xvip2_t & from_addr, cons
 
 bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t * block) {
     base::xstream_t stream(base::xcontext_t::instance());
-    xblock_t* block_ptr = dynamic_cast<xblock_t*>(block);
+    data::xblock_t * block_ptr = dynamic_cast<data::xblock_t *>(block);
     xassert(block_ptr != nullptr);
     block_ptr->full_block_serialize_to(stream);
     return send_out(id, from_addr, to_addr, stream, block->get_account());

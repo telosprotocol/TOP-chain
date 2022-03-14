@@ -15,22 +15,22 @@ class xdatamock_tx {
     void init_account_context() {
         {
             xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(m_source_account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-            xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+            data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
             m_source_context = std::make_shared<xaccount_context_t>(xaccount_context_t(unitstate, m_store.get()));
         }
 
         {
             xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(m_target_account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-            xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+            data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
             m_target_context = std::make_shared<xaccount_context_t>(xaccount_context_t(unitstate, m_store.get()));
         }
     }
 
     // only for transfer now
-    void construct_tx(xtransaction_ptr_t & tx) {
+    void construct_tx(data::xtransaction_ptr_t & tx) {
         m_store = xstore_factory::create_store_with_memdb();
         init_account_context();
-        xproperty_asset asset{m_transfer_out_amount};
+        data::xproperty_asset asset{m_transfer_out_amount};
         tx->make_tx_transfer(asset);
         tx->set_different_source_target_address(m_source_account, m_target_account);
         tx->set_deposit(m_deposit);

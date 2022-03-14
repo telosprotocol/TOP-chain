@@ -16,9 +16,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xtableblock.h"
-#include "xstore/xstore_error.h"
-#include "xstore/xstore_face.h"
+// #include "xdata/xtableblock.h"
 
 #include <algorithm>
 #include <cassert>
@@ -551,15 +549,6 @@ private:
      */
     int32_t do_read(base::xstream_t & stream) override;
 };
-
-/**
- * @brief Get the reg info object from node_addr
- *
- * @param store store
- * @param node_addr node address
- * @return xreg_node_info
- */
-xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr);
 
 struct xslash_info final : public xserializable_based_on<void> {
 public:

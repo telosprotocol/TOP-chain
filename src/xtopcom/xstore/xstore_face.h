@@ -8,14 +8,14 @@
 #include <map>
 #include <vector>
 
+#include "xbase/xobject.h"
+#include "xbasic/xmemory.hpp"
+#include "xcommon/xaccount_address.h"
+#include "xdata/xblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xunit_bstate.h"
 #include "xdb/xdb_face.h"
 #include "xvledger/xvdbstore.h"
-#include "xbase/xobject.h"
-#include "xdata/xblock.h"
-#include "xdata/xunit_bstate.h"
-#include "xbasic/xmemory.hpp"
-
-using namespace top::data;
 
 namespace top { namespace store {
 
@@ -28,7 +28,7 @@ class xstore_face_t : public base::xvdbstore_t {
     virtual ~xstore_face_t() {}
  public:
     virtual bool open() const = 0;
-    virtual xaccount_ptr_t query_account(const std::string& address) const = 0;
+    virtual data::xaccount_ptr_t query_account(const std::string& address) const = 0;
     virtual bool           string_property_get(base::xvblock_t* block, const std::string& prop, std::string& value) const = 0;
 
     virtual uint64_t get_blockchain_height(const std::string& account) = 0;
@@ -56,6 +56,15 @@ class xstore_factory {
     static xobject_ptr_t<xstore_face_t> create_store_with_static_kvdb(const std::string & db_path);
     static xobject_ptr_t<xstore_face_t> create_store_with_static_kvdb(std::shared_ptr<db::xdb_face_t>& db);
 };
+
+/**
+ * @brief Get the reg info object from node_addr
+ *
+ * @param store store
+ * @param node_addr node address
+ * @return xreg_node_info
+ */
+data::system_contract::xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr);
 
 }  // namespace store
 }  // namespace top

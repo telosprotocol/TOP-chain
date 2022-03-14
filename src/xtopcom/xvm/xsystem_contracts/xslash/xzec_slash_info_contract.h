@@ -65,11 +65,18 @@ private:
      */
 
     bool summarize_slash_info_internal(std::string const& slash_info, std::string const& summarize_info_str, std::string const& summarize_tableblock_count_str, uint64_t const summarized_height,
-                                      xunqualified_node_info_t& summarize_info,  uint32_t&  summarize_tableblock_count, std::uint64_t& cur_statistic_height);
+                                       data::xunqualified_node_info_t & summarize_info,
+                                       uint32_t & summarize_tableblock_count,
+                                       std::uint64_t & cur_statistic_height);
 
 
     bool do_unqualified_node_slash_internal(std::string const& last_slash_time_str, uint32_t summarize_tableblock_count, uint32_t slash_interval_table_block_param, uint32_t slash_interval_time_block_param , common::xlogic_time_t const timestamp,
-                                            xunqualified_node_info_t const & summarize_info, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold, std::vector<xaction_node_info_t>& node_to_action);
+                                            data::xunqualified_node_info_t const & summarize_info,
+                                            uint32_t slash_vote_threshold,
+                                            uint32_t slash_persent_threshold,
+                                            uint32_t award_vote_threshold,
+                                            uint32_t award_persent_threshold,
+                                            std::vector<data::xaction_node_info_t> & node_to_action);
 
     /**
      * @brief print the summarize info
@@ -91,7 +98,7 @@ private:
      * @param tableblock_count  in&out  the tableblock count property
      *
      */
-    void pre_condition_process(xunqualified_node_info_t& summarize_info, uint32_t& tableblock_count);
+    void pre_condition_process(data::xunqualified_node_info_t & summarize_info, uint32_t & tableblock_count);
 
     /**
      * @brief filter out the slash node according the summarized slash info
@@ -123,7 +130,7 @@ private:
      * @param last_read_height the height of full tableblock last time read
      * @
      */
-    std::vector<base::xauto_ptr<xblock_t>> get_next_fulltableblock(common::xaccount_address_t const& owner, uint64_t time_interval, uint64_t last_read_height) const;
+    std::vector<base::xauto_ptr<data::xblock_t>> get_next_fulltableblock(common::xaccount_address_t const & owner, uint64_t time_interval, uint64_t last_read_height) const;
 
 
     /**
@@ -132,7 +139,7 @@ private:
      * @param block_statistic_data  the statistic data of a fulltable block
      * @return xunqualified_node_info_t  the node info from statistic data
      */
-    xunqualified_node_info_t process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service);
+    data::xunqualified_node_info_t process_statistic_data(top::data::xstatistics_data_t const & block_statistic_data, base::xvnodesrv_t * node_service);
 
 
     /**
@@ -142,7 +149,7 @@ private:
      * @param  summarize_info  in&out  the accumulated node info
      *
      */
-    void  accumulate_node_info(xunqualified_node_info_t const&  node_info, xunqualified_node_info_t& summarize_info);
+    void accumulate_node_info(data::xunqualified_node_info_t const & node_info, data::xunqualified_node_info_t & summarize_info);
 
     /**
      * @brief check if statisfy the slash condition

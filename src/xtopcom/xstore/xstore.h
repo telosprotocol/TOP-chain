@@ -62,9 +62,9 @@ public:
 
  public://other old api
 
-    xaccount_ptr_t query_account(const std::string& address) const override;
-    xaccount_ptr_t get_target_state(base::xvblock_t* block) const;
-    xaccount_ptr_t get_target_state(const std::string &address, uint64_t height) const;
+    data::xaccount_ptr_t query_account(const std::string& address) const override;
+    data::xaccount_ptr_t get_target_state(base::xvblock_t * block) const;
+    data::xaccount_ptr_t get_target_state(const std::string & address, uint64_t height) const;
     bool           string_property_get(base::xvblock_t* block, const std::string& prop, std::string& value) const override;
 
     uint64_t get_blockchain_height(const std::string& account) override;
