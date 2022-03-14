@@ -598,6 +598,9 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get
                 }
             }
         }
+        if (!lacking_receipt_ids.empty()) {
+            lacking_ids_vec_ret.push_back(xtxpool_table_lacking_receipt_ids_t(peer_table_sid, lacking_receipt_ids));
+        }
     }
 
     return lacking_ids_vec_ret;
