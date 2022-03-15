@@ -148,6 +148,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
 
     base::enum_transaction_subtype last_tx_subtype = base::enum_transaction_subtype_invalid;
     base::xtable_shortid_t last_tableid = 0xFFFF;
+    base::xtable_shortid_t last_confirm_tx_fail_tableid = 0xFFFF;
     uint64_t last_receipt_id = 0;
     std::map<std::string, bool> account_check_state_ret;
 
@@ -158,11 +159,27 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     for (auto & tx : input_table_txs) {
         std::string unit_account = tx->get_account_addr();
         bool need_check_state = true;
+        bool is_confirm_tx = tx->is_confirm_tx();
+        base::xtable_shortid_t cur_tableid = tx->get_peer_tableid();
+        if (is_confirm_tx && cur_tableid == last_confirm_tx_fail_tableid) {
+            xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for last confirm tx is droped,%s,account=%s,tx=%s",
+                  cs_para.dump().c_str(),
+                  unit_account.c_str(),
+                  tx->dump(true).c_str());
+            continue;
+        }
         auto iter = account_check_state_ret.find(unit_account);
         if (iter != account_check_state_ret.end()) {
             if (iter->second == true) {
                 need_check_state = false;
             } else {
+                xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,tx=%s",
+                  cs_para.dump().c_str(),
+                  unit_account.c_str(),
+                  tx->dump(true).c_str());
+                if (is_confirm_tx) {
+                    last_confirm_tx_fail_tableid = cur_tableid;
+                }
                 continue;
             }
         }
@@ -181,6 +198,9 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
                 set_packtx_metrics(tx, false);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
                     cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str(), tx->dump(true).c_str());
+                if (is_confirm_tx) {
+                    last_confirm_tx_fail_tableid = cur_tableid;
+                }
                 continue;
             }
         }
@@ -192,19 +212,13 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             unitmakers[unit_account] = unitmaker;
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for fullunit but make fullunit,%s,account=%s,tx=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
-            auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-            bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
-            if (!is_forked)
-                continue;
         }
 
         // 3.then check if tx is invalid
         base::enum_transaction_subtype cur_tx_subtype = base::enum_transaction_subtype_invalid;
-        base::xtable_shortid_t cur_tableid = 0xFFFF;
         uint64_t cur_receipt_id = 0;
-        if (tx->is_recv_tx() || tx->is_confirm_tx()) {
+        if (tx->is_recv_tx()) {
             cur_tx_subtype = tx->get_tx_subtype();
-            cur_tableid = tx->get_peer_tableid();
 
             cur_receipt_id = tx->get_last_action_receipt_id();
             if (last_tx_subtype != cur_tx_subtype || cur_tableid != last_tableid) {
@@ -243,20 +257,17 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         }
 
         if (false == unitmaker->push_tx(cs_para, tx)) {
-            auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-            bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
-            xdbg("xtable_maker_t::create_lightunit_makers remove empty unit:%d", is_forked);
-            if (is_forked && unitmaker->can_make_next_full_block()) {
+            if (unitmaker->can_make_next_full_block()) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-                set_packtx_metrics(tx, false);
                 unitmakers[unit_account] = unitmaker;
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for fullunit but make fullunit,%s,account=%s,tx=%s",
                     cs_para.dump().c_str(), unit_account.c_str(), tx->dump(true).c_str());
-                continue;
-            } else {
-                set_packtx_metrics(tx, false);
-                continue;
             }
+            if (is_confirm_tx) {
+                last_confirm_tx_fail_tableid = cur_tableid;
+            }
+            set_packtx_metrics(tx, false);
+            continue;
         }
         set_packtx_metrics(tx, true);
 
