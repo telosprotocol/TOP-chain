@@ -79,6 +79,7 @@ bool xunconfirm_id_height_list_t::get_need_confirm_ids(uint64_t lower_receipt_id
             return false;
         }
         if (iter->second.m_need_confirm) {
+            xdbg("xunconfirm_id_height_list_t::get_need_confirm_ids.self:%d,peer:%d,id:%llu", m_self_table_sid, m_peer_table_sid, id);
             receipt_ids.push_back(id);
         }
     }
