@@ -147,16 +147,12 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
 
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
 
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(), is_forked);
-            if (!is_forked)
-                return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
         }
     }
 
@@ -164,10 +160,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_recv_tx()) {
         if (is_match_account_fullunit_recv_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(),is_forked);
-            if (!is_forked)
-                return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
         }
     }
 

@@ -292,11 +292,19 @@ void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint
 // }
 
 void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool update_txmgr) {
+    base::xvaccount_t _vaccount(table_block->get_account());
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, table_block, metrics::blockstore_access_from_txpool_refresh_table)) {
+        xerror("xtxpool_table_t::deal_commit_table_block fail-load block input output, block=%s", table_block->dump().c_str());
+        return;
+    }
+
     std::vector<xtx_id_height_info> tx_id_height_infos;
     std::vector<xraw_tx_info> raw_txs;
 
     std::vector<update_id_state_para> update_id_state_para_vec;
     auto tx_actions = table_block->get_tx_actions();
+
+    xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
 
     for (auto & action : tx_actions) {
         if (action.get_org_tx_hash().empty()) {  // not txaction
@@ -310,11 +318,12 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
             xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
             if (_rawtx != nullptr) {
                 txnonce = _rawtx->get_tx_nonce();
+                xinfo("xtxpool_table_t::deal_commit_table_block loaded rawtx:%s", _rawtx->dump().c_str());
                 if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send && need_confirm) {
                     raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
                 }
             } else {
-                xtxpool_info("xtxpool_table_t::deal_commit_table_block get raw tx fail table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
+                xtxpool_error("xtxpool_table_t::deal_commit_table_block get raw tx fail table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
                              m_xtable_info.get_account().c_str(),
                              txaction.get_receipt_id_peer_tableid(),
                              txaction.get_tx_subtype(),
@@ -334,7 +343,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
             tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), need_confirm));
 
             xtxpool_info(
-                "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm "
+                "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id:%llu,confirm "
                 "id:%llu,table_height:%llu,need_confirm:%d",
                 m_xtable_info.get_account().c_str(),
                 txaction.get_receipt_id_peer_tableid(),

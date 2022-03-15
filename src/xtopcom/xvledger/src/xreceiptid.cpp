@@ -317,16 +317,17 @@ bool    xreceiptid_check_t::check_contious(const xreceiptid_state_ptr_t & receip
         }
     }
 
-    for (auto & v : m_confirmids) {
-        xtable_shortid_t tableid = v.first;
-        const std::set<uint64_t> & ids = v.second;
-        xreceiptid_pair_t pair;
-        receiptid_state->find_pair(tableid, pair);
-        uint64_t begin_id = pair.get_confirmid_max();
-        if (false == check_receiptids_contious(ids, begin_id)) {
-            return false;
-        }
-    }
+    // not check in the version of partly remote confirm tx
+    // for (auto & v : m_confirmids) {
+    //     xtable_shortid_t tableid = v.first;
+    //     const std::set<uint64_t> & ids = v.second;
+    //     xreceiptid_pair_t pair;
+    //     receiptid_state->find_pair(tableid, pair);
+    //     uint64_t begin_id = pair.get_confirmid_max();
+    //     if (false == check_receiptids_contious(ids, begin_id)) {
+    //         return false;
+    //     }
+    // }
 
     return true;
 }
