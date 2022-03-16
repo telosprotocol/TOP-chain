@@ -31,6 +31,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xmigrate/xvmigrate.h"
 #include "xdata/xcheckpoint.h"
+#include "xsync/xsync_object.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -111,7 +112,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
             
             //trigger save data before coredump
             top::base::xvchain_t::instance().on_process_close();
-            
+            top::sync::xtop_sync_out_object::instance().save_span();
             //forward to default handler
             signal(signum, SIG_DFL);//restore to default handler
             kill(getpid(), signum); //send signal again to genereate core dump by default hander
@@ -128,7 +129,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
             
             //trigger save data before terminate
             top::base::xvchain_t::instance().on_process_close();
-            
+            top::sync::xtop_sync_out_object::instance().save_span();
             //forward to default handler
             signal(signum, SIG_DFL);//restore to default handler
             kill(getpid(), signum); //send signal again to default handler
@@ -143,6 +144,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
             
             //trigger save data
             top::base::xvchain_t::instance().save_all();
+            top::sync::xtop_sync_out_object::instance().save_span();
         }
         break;
         
@@ -285,17 +287,21 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     // end admin http service
 
     //xmutisig::xmutisig::init_openssl();
-    application::xapplication_t app{
-        user_params.account,
-        xpublic_key_t{ user_params.publickey },
-        user_params.signkey
-    };
+    application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
+    try {
+        app.start();
+    } catch (top::error::xtop_error_t const & eh) {
+        assert(false);
+        xerror("application exit with xtop_error_t %d msg %s", eh.code().value(), eh.what());
+    } catch (std::exception const & eh) {
+        assert(false);
+        xerror("application exit with std::exception msg %s", eh.what());
+    }
 
     if (false == db_migrate(v2_db_path)) {
         return 1;
     }
 
-    app.start();
     xinfo("==== app start done ===");
 
     std::cout << std::endl
@@ -314,8 +320,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     }
     // todo adapter to vnode type
 
-    config_center.clear_loaders();
     app.stop();
+    config_center.clear_loaders();
     delete hash_plugin;
     return 0;
 }

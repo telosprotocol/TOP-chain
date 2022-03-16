@@ -6,6 +6,8 @@
 #include "xdata/xelection/xelection_result_store.h"
 
 #include <exception>
+#include <functional>
+#include <iterator>
 #include <utility>
 
 NS_BEG3(top, data, election)
@@ -97,6 +99,16 @@ xtop_election_result_store::size() const noexcept {
 bool
 xtop_election_result_store::empty() const noexcept {
     return m_results.empty();
+}
+
+legacy::xelection_result_store_t xtop_election_result_store::legacy() const {
+    legacy::xelection_result_store_t r;
+
+    std::transform(std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_result_store_t::value_type {
+        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
+    });
+
+    return r;
 }
 
 NS_END3

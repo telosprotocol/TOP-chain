@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "tests/xelection/xdummy_chain_timer.h"
+#include "tests/xelection/xtest_fixtures.h"
 #include "xbasic/xutility.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xelection/xcache/xdata_accessor.h"
@@ -18,6 +19,8 @@ using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
 using top::data::election::xelection_result_t;
 using top::data::election::xstandby_node_info_t;
+
+NS_BEG3(top, tests, election)
 
 TEST(xtest_update_committee_zone, _) {
     top::common::xnetwork_id_t network_id{ top::common::xtopchain_network_id };
@@ -43,17 +46,15 @@ TEST(xtest_update_committee_zone, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::rec, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -106,17 +107,15 @@ TEST(xtest_update_zec_zone, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::zec, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -169,17 +168,15 @@ TEST(xtest_update_edge_zone, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::edge, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -232,9 +229,7 @@ TEST(xtest_update_archive_zone, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::storage_archive, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
@@ -242,7 +237,7 @@ TEST(xtest_update_archive_zone, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -305,17 +300,15 @@ TEST(xtest_update_consensus_zone, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::consensus_auditor, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         auditor_group_result.insert(std::move(election_info_bundle));
@@ -327,9 +320,7 @@ TEST(xtest_update_consensus_zone, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::consensus_validator, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::validator;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::validator;
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
@@ -337,7 +328,7 @@ TEST(xtest_update_consensus_zone, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i + 1023) });
+        election_info_bundle.node_id(build_account_address(i + 1023));
         election_info_bundle.election_info(std::move(new_election_info));
 
         validator_group_result.insert(std::move(election_info_bundle));
@@ -395,17 +386,15 @@ TEST(xtest_update_committee_zone, update_twice) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(zone_type, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -434,17 +423,15 @@ TEST(xtest_update_committee_zone, update_twice) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(zone_type, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 1 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(1023 - i - 1) });
+        election_info_bundle.node_id(build_account_address(1023 - i - 1));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result2.insert(std::move(election_info_bundle));
@@ -481,3 +468,5 @@ TEST(xtest_update_committee_zone, update_twice) {
     ASSERT_NE(nullptr, faded);
     ASSERT_NE(nullptr, added);
 }
+
+NS_END3

@@ -50,7 +50,7 @@ public:
 
     void init() override;
     void update_time(common::xlogic_time_t time, xlogic_timer_update_strategy_t update_strategy) override;
-    uint64_t logic_time() const noexcept override;
+    common::xlogic_time_t logic_time() const noexcept override;
 
     // note: interval is 10s/round, not second!!
     bool watch(const std::string & key, uint64_t interval, xchain_time_watcher cb) override;

@@ -12,7 +12,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xconfig/xconfig_update_parameter_action.h"
 
 #define private public

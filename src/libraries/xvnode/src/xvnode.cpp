@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xvnode/xvnode.h"
+
 #include "xmbus/xevent_role.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvnetwork_driver.h"
@@ -15,6 +16,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        common::xsharding_address_t const & sharding_address,
                        common::xslot_id_t const & slot_id,
                        common::xelection_round_t joined_election_round,
+                       common::xminer_type_t miner_type,
+                       bool genesis,
                        common::xelection_round_t election_round,
                        std::uint16_t const group_size,
                        std::uint64_t const associated_blk_height,
@@ -30,12 +33,15 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                     //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                       observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xbasic_vnode_t{common::xnode_address_t{sharding_address,
                                            common::xaccount_election_address_t{vhost->host_node_id(), slot_id},
                                            election_round,
                                            group_size,
                                            associated_blk_height},
+                   miner_type,
+                   genesis,
                    joined_election_round,
                    vhost,
                    election_cache_data_accessor}
@@ -54,6 +60,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
+
         joined_election_round)} {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
@@ -68,6 +75,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
     m_prune_data = make_unique<components::prune_data::xprune_data>();
+    m_sniff = make_unique<components::sniffing::xsniffer_t>(
+        store, nodesvr, make_observer(contract_runtime::system::xsystem_contract_manager_t::instance()), make_observer(this));
 }
 
 xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
@@ -84,11 +93,14 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                       observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xtop_vnode{elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
                group_info->node_element(vhost->host_node_id())->slot_id(),
                group_info->node_element(vhost->host_node_id())->joined_election_round(),
+               group_info->node_element(vhost->host_node_id())->election_info().miner_type,
+               group_info->node_element(vhost->host_node_id())->election_info().genesis,
                group_info->election_round(),
                group_info->group_size(),
                group_info->associated_blk_height(),
@@ -104,11 +116,15 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                //    cons_mgr,
                txpool_service_mgr,
                txpool,
-               election_cache_data_accessor} {
+               election_cache_data_accessor,
+               nodesvr} {}
+
+std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_driver() const {
+    return m_the_binding_driver;
 }
 
-std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_driver() const noexcept {
-    return m_the_binding_driver;
+xtxpool_service_v2::xtxpool_proxy_face_ptr const & xtop_vnode::txpool_proxy() const {
+    return m_txpool_face;
 }
 
 void xtop_vnode::synchronize() {
@@ -254,6 +270,18 @@ void xtop_vnode::sync_add_vnet() {
 
 void xtop_vnode::sync_remove_vnet() {
     m_sync_obj->remove_vnet(vnetwork_driver());
+}
+
+//std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {
+//    assert(!ec);
+//
+//    if (address().xip2().xip().group_xip() == group_xip) {
+//        return neighbors_xip2(ec);
+//    }
+//}
+
+components::sniffing::xsniffer_config_t xtop_vnode::sniff_config() const {
+    return m_sniff->sniff_config();
 }
 
 NS_END2

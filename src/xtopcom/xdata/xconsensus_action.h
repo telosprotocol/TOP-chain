@@ -7,9 +7,11 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xaddress.h"
+#include "xdata/xaction.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
 #include "xdata/xconsensus_action_stage.h"
+#include "xdata/xreceipt_data_store.h"
 #include "xdata/xtop_action.h"
 
 #include <cstdint>
@@ -17,6 +19,7 @@
 
 NS_BEG2(top, data)
 
+using xaction_consensus_exec_status = data::enum_xunit_tx_exec_status;
 template <xtop_action_type_t ActionTypeV>
 class xtop_consensus_action : public xtop_action_t<ActionTypeV> {
 public:
@@ -29,14 +32,32 @@ public:
     explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept;
 
     xconsensus_action_stage_t stage() const noexcept;
-    common::xaccount_address_t from_address() const;
-    common::xaccount_address_t to_address() const;
+    common::xaccount_address_t sender() const;
+    common::xaccount_address_t recver() const;
     common::xaccount_address_t contract_address() const;
     common::xaccount_address_t execution_address() const;
     uint64_t max_gas_amount() const;
+    uint64_t last_nonce() const noexcept;
     uint64_t nonce() const noexcept;
-    std::string action_name() const;
-    xbyte_buffer_t action_data() const;
+    uint256_t hash() const noexcept;
+    std::string source_action_name() const;
+    std::string target_action_name() const;
+    xbyte_buffer_t source_action_data() const;
+    xbyte_buffer_t target_action_data() const;
+    xreceipt_data_store_t receipt_data() const;
+    xaction_consensus_exec_status action_consensus_result() const;
+    data::enum_xtransaction_type transaction_type() const;
+    data::enum_xaction_type source_action_type() const;
+    data::enum_xaction_type target_action_type() const;
+    uint32_t size() const;
+    uint64_t deposit() const;
+    std::string digest_hex() const;
+    uint32_t used_tgas() const;
+    uint32_t used_disk() const;
+    uint32_t last_action_send_tx_lock_tgas() const;
+    uint32_t last_action_used_deposit() const;
+    uint32_t last_action_recv_tx_use_send_tx_tgas() const;
+    enum_xunit_tx_exec_status last_action_exec_status() const;
 };
 
 NS_END2
@@ -75,14 +96,14 @@ xconsensus_action_stage_t xtop_consensus_action<ActionTypeV>::stage() const noex
 }
 
 template <xtop_action_type_t ActionTypeV>
-common::xaccount_address_t xtop_consensus_action<ActionTypeV>::from_address() const {
+common::xaccount_address_t xtop_consensus_action<ActionTypeV>::sender() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
     return common::xaccount_address_t{ tx->get_source_addr() };
 }
 
 template <xtop_action_type_t ActionTypeV>
-common::xaccount_address_t xtop_consensus_action<ActionTypeV>::to_address() const {
+common::xaccount_address_t xtop_consensus_action<ActionTypeV>::recver() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
     return common::xaccount_address_t{ tx->get_target_addr() };
@@ -129,24 +150,175 @@ template <xtop_action_type_t ActionTypeV>
 uint64_t xtop_consensus_action<ActionTypeV>::nonce() const noexcept {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
-    
+
     return tx->get_transaction()->get_tx_nonce();
 }
 
 template <xtop_action_type_t ActionTypeV>
-std::string xtop_consensus_action<ActionTypeV>::action_name() const {
+uint64_t xtop_consensus_action<ActionTypeV>::last_nonce() const noexcept {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return tx->get_target_action().get_action_name();
+    return tx->get_transaction()->get_last_nonce();
 }
 
 template <xtop_action_type_t ActionTypeV>
-xbyte_buffer_t xtop_consensus_action<ActionTypeV>::action_data() const {
+uint256_t xtop_consensus_action<ActionTypeV>::hash() const noexcept {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
 
-    return { std::begin(tx->get_target_action().get_action_param()), std::end(tx->get_target_action().get_action_param()) };
+    return tx->get_tx_hash_256();
 }
+
+template <xtop_action_type_t ActionTypeV>
+std::string xtop_consensus_action<ActionTypeV>::source_action_name() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_source_action_name();
+}
+
+template <xtop_action_type_t ActionTypeV>
+std::string xtop_consensus_action<ActionTypeV>::target_action_name() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_target_action_name();
+}
+
+template <xtop_action_type_t ActionTypeV>
+xbyte_buffer_t xtop_consensus_action<ActionTypeV>::source_action_data() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    auto const & transaction = tx->get_transaction();
+    auto const & action_param = transaction->get_source_action_para();
+    xdbg("action param size %zu", action_param.size());
+
+    return {std::begin(action_param), std::end(action_param)};
+}
+
+template <xtop_action_type_t ActionTypeV>
+xbyte_buffer_t xtop_consensus_action<ActionTypeV>::target_action_data() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    auto const & transaction = tx->get_transaction();
+    auto const & action_param = transaction->get_target_action_para();
+
+    return { std::begin(action_param), std::end(action_param) };
+}
+
+template <xtop_action_type_t ActionTypeV>
+xreceipt_data_store_t xtop_consensus_action<ActionTypeV>::receipt_data() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+    return tx->get_last_action_receipt_data();
+}
+
+template <xtop_action_type_t ActionTypeV>
+xaction_consensus_exec_status xtop_consensus_action<ActionTypeV>::action_consensus_result() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+    return tx->get_last_action_exec_status();
+}
+
+template <xtop_action_type_t ActionTypeV>
+data::enum_xtransaction_type xtop_consensus_action<ActionTypeV>::transaction_type() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return data::enum_xtransaction_type(tx->get_tx_type());
+}
+
+template <xtop_action_type_t ActionTypeV>
+data::enum_xaction_type xtop_consensus_action<ActionTypeV>::source_action_type() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_source_action_type();
+}
+
+template <xtop_action_type_t ActionTypeV>
+data::enum_xaction_type xtop_consensus_action<ActionTypeV>::target_action_type() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_target_action_type();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::size() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_tx_len();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint64_t xtop_consensus_action<ActionTypeV>::deposit() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_transaction()->get_deposit();
+}
+
+template <xtop_action_type_t ActionTypeV>
+std::string xtop_consensus_action<ActionTypeV>::digest_hex() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_digest_hex_str();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::used_tgas() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_current_used_tgas();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::used_disk() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_current_used_disk();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::last_action_send_tx_lock_tgas() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_send_tx_lock_tgas();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::last_action_used_deposit() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_used_deposit();
+}
+
+template <xtop_action_type_t ActionTypeV>
+uint32_t xtop_consensus_action<ActionTypeV>::last_action_recv_tx_use_send_tx_tgas() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_recv_tx_use_send_tx_tgas();
+}
+
+template <xtop_action_type_t ActionTypeV>
+enum_xunit_tx_exec_status xtop_consensus_action<ActionTypeV>::last_action_exec_status() const {
+    auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
+    assert(tx != nullptr);
+
+    return tx->get_last_action_exec_status();
+}
+
+
 
 NS_END2

@@ -134,6 +134,11 @@ void EcVHost::send_to_through_root(common::xip2_t const & src, common::xnode_id_
         auto recv_node = kroot_rt->GetRandomNode();
         recv_kad_key = base::GetKadmliaKey(recv_node->node_id);
     }
+    xinfo("[EcVHost][send_to_through_root] src_xip2:%s dst_node_id:%s src_key:%s recv_key:%s",
+          src.to_string().c_str(),
+          dst_node_id.value().c_str(),
+          send_kad_key->Get().c_str(),
+          recv_kad_key->Get().c_str());
     ec_netcard_->send_to(send_kad_key, recv_kad_key, byte_message, ec);
 }
 

@@ -8,7 +8,7 @@
 #include "xdata/xelection/xelection_info_bundle.h"
 #include "xdata/xelection/xstandby_network_result.h"
 #include "xdata/xelection/xstandby_node_info.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xunit_service/xcons_face.h"
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract.h"
@@ -363,9 +363,9 @@ public:
     void test_stake_reward_v1(bool has_tx_workload, uint32_t account_num = 32, uint32_t test_days = 10) {
         set_group_size(account_num, account_num);
         // make map nodes
-        std::map<common::xaccount_address_t, xstake::xreg_node_info> map_nodes;
+        std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> map_nodes;
         for (size_t i = 0; i < account_num; i++) {
-            xstake::xreg_node_info node;
+            data::system_contract::xreg_node_info node;
             node.m_account = common::xaccount_address_t{test_accounts[i]};
             node.miner_type(common::xminer_type_t::advance);
             node.m_vote_amount = 10;
@@ -395,9 +395,9 @@ public:
         uint64_t time_height = 0;
         const uint32_t table_blocks_per_12h = 90;
         const uint32_t table_num = 32;
-        std::map<std::string, xstake::uint128_t> reward;
+        std::map<std::string, ::uint128_t> reward;
         std::vector<uint64_t> workload(account_num, 0);
-        xstake::xaccumulated_reward_record reward_record;
+        data::system_contract::xaccumulated_reward_record reward_record;
         for (size_t days = 0; days < test_days; days++) {
         // for (size_t days = 0; days < 1; days++) {
             for (size_t count = 0; count < 2; count++) {
@@ -435,12 +435,12 @@ public:
                 // }
                 // caculate reward
                 time_height += 4320;
-                top::xstake::uint128_t total_issuance = m_reward_contract.calc_total_issuance(
+                ::uint128_t total_issuance = m_reward_contract.calc_total_issuance(
                     time_height, XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_ratio_annual_total_reward), XGET_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio), reward_record);
-                top::xstake::uint128_t auditor_total_workload_rewards = total_issuance * XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio) / 100;
+                ::uint128_t auditor_total_workload_rewards = total_issuance * XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio) / 100;
                 // make workload
-                std::map<common::xcluster_address_t, xstake::cluster_workload_t> auditor_workloads_detail;
-                xstake::cluster_workload_t workload;
+                std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> auditor_workloads_detail;
+                data::system_contract::cluster_workload_t workload;
                 workload.cluster_id = group_addr.to_string();
                 for (size_t i = 0; i < account_num; i++) {
                     if (workload.m_leader_count.count(test_accounts[i])) {
@@ -453,7 +453,7 @@ public:
                 auditor_workloads_detail.insert(std::make_pair(group_addr, workload));
                 // caculate reward
                 for (auto const & node : map_nodes) {
-                    xstake::uint128_t reward_to_self = 0;
+                    ::uint128_t reward_to_self = 0;
                     m_reward_contract.calc_auditor_workload_rewards(node.second, {account_num, account_num, 0}, auditor_workloads_detail, auditor_total_workload_rewards, reward_to_self);
                     if (reward.count(node.first.to_string())) {
                         reward[node.first.to_string()] += reward_to_self;
@@ -463,28 +463,30 @@ public:
                 }
             }
         }
-        xstake::uint128_t total_reward = 0;
+        ::uint128_t total_reward = 0;
         for (size_t i = 0; i < account_num; i++) {
-            std::cout << test_accounts[i] << "  stake: " << stake[i] << ",  workload: " << workload[i] << ",  reward: " << static_cast<uint64_t>(reward[test_accounts[i]] / xstake::REWARD_PRECISION) << '.'
-                      << static_cast<uint32_t>(reward[test_accounts[i]] % xstake::REWARD_PRECISION) << std::endl;
+            std::cout << test_accounts[i] << "  stake: " << stake[i] << ",  workload: " << workload[i] << ",  reward: " << static_cast<uint64_t>(reward[test_accounts[i]] / data::system_contract::REWARD_PRECISION) << '.'
+                      << static_cast<uint32_t>(reward[test_accounts[i]] % data::system_contract::REWARD_PRECISION) << std::endl;
             total_reward += reward[test_accounts[i]];
         }
-        xstake::xaccumulated_reward_record calc;
-        top::xstake::uint128_t total_issuance = m_reward_contract.calc_total_issuance(
+        data::system_contract::xaccumulated_reward_record calc;
+        ::uint128_t total_issuance = m_reward_contract.calc_total_issuance(
                 8640 * 10, XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_ratio_annual_total_reward), XGET_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio), calc);
         total_issuance =  total_issuance * XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio) / 100;
-        std::cout << "should reward: " << static_cast<uint64_t>(total_issuance / xstake::REWARD_PRECISION) << '.' << static_cast<uint32_t>(total_issuance % xstake::REWARD_PRECISION)
+        std::cout << "should reward: " << static_cast<uint64_t>(total_issuance / data::system_contract::REWARD_PRECISION) << '.'
+                  << static_cast<uint32_t>(total_issuance % data::system_contract::REWARD_PRECISION)
                   << std::endl;
-        std::cout << "total reward: " << static_cast<uint64_t>(total_reward / xstake::REWARD_PRECISION) << '.' << static_cast<uint32_t>(total_reward % xstake::REWARD_PRECISION)
+        std::cout << "total reward: " << static_cast<uint64_t>(total_reward / data::system_contract::REWARD_PRECISION) << '.'
+                  << static_cast<uint32_t>(total_reward % data::system_contract::REWARD_PRECISION)
                   << std::endl;
     }
 
     void test_stake_reward_v2(uint32_t account_num = 32, uint32_t test_days = 10) {
         set_group_size(account_num, account_num);
         // make map nodes
-        std::map<common::xaccount_address_t, xstake::xreg_node_info> map_nodes;
+        std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> map_nodes;
         for (size_t i = 0; i < account_num; i++) {
-            xstake::xreg_node_info node;
+            data::system_contract::xreg_node_info node;
             node.m_account = common::xaccount_address_t{test_accounts[i]};
             node.miner_type(common::xminer_type_t::advance);
             node.m_vote_amount = 10;
@@ -509,14 +511,14 @@ public:
             elect_set.emplace_back(elect_data);
             // std::cout << "xip: " << node_addr.xip2().value().high_addr << " " << node_addr.xip2().value().low_addr << std::endl;
         }
-        top::xstake::uint128_t total_reserve =
-            static_cast<top::xstake::uint128_t>(xstake::TOTAL_RESERVE) * xstake::REWARD_PRECISION * XGET_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio) / 100;
-        top::xstake::uint128_t reward_unit = total_reserve / xstake::TIMER_BLOCK_HEIGHT_PER_YEAR;
+        ::uint128_t total_reserve = static_cast<::uint128_t>(data::system_contract::TOTAL_RESERVE) * data::system_contract::REWARD_PRECISION *
+                                        XGET_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio) / 100;
+        ::uint128_t reward_unit = total_reserve / data::system_contract::TIMER_BLOCK_HEIGHT_PER_YEAR;
         const uint32_t table_num = 32;
         const uint64_t total_time_height = test_days * 24 * 360;
         std::vector<uint64_t> table_time_last(table_num, 0);
         std::vector<uint64_t> table_reward_last(table_num, 0);
-        std::map<std::string, xstake::uint128_t> reward;
+        std::map<std::string, ::uint128_t> reward;
         for (size_t i = 0; i < table_num; i++) {
             int viewid = 0;
             uint64_t time_height_left = total_time_height;
@@ -559,19 +561,21 @@ public:
                 }
             }
         }
-        xstake::uint128_t total_reward = 0;
+        ::uint128_t total_reward = 0;
         for (size_t i = 0; i < account_num; i++) {
-            std::cout << test_accounts[i] << "  stake: " << stake[i] << ",  reward: " << static_cast<uint64_t>(reward[test_accounts[i]] / xstake::REWARD_PRECISION) << '.'
-                        << static_cast<uint32_t>(reward[test_accounts[i]] % xstake::REWARD_PRECISION) << std::endl;
+            std::cout << test_accounts[i] << "  stake: " << stake[i] << ",  reward: " << static_cast<uint64_t>(reward[test_accounts[i]] / data::system_contract::REWARD_PRECISION)
+                      << '.' << static_cast<uint32_t>(reward[test_accounts[i]] % data::system_contract::REWARD_PRECISION) << std::endl;
             total_reward += reward[test_accounts[i]];
         }
-        xstake::xaccumulated_reward_record calc;
-        top::xstake::uint128_t total_issuance = m_reward_contract.calc_total_issuance(
+        data::system_contract::xaccumulated_reward_record calc;
+        ::uint128_t total_issuance = m_reward_contract.calc_total_issuance(
                 8640 * 10, XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_ratio_annual_total_reward), XGET_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio), calc);
         total_issuance =  total_issuance * XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio) / 100 / 2;
-        std::cout << "should reward: " << static_cast<uint64_t>(total_issuance / xstake::REWARD_PRECISION) << '.' << static_cast<uint32_t>(total_issuance % xstake::REWARD_PRECISION)
+        std::cout << "should reward: " << static_cast<uint64_t>(total_issuance / data::system_contract::REWARD_PRECISION) << '.'
+                  << static_cast<uint32_t>(total_issuance % data::system_contract::REWARD_PRECISION)
                     << std::endl;
-        std::cout << "total reward: " << static_cast<uint64_t>(total_reward / xstake::REWARD_PRECISION) << '.' << static_cast<uint32_t>(total_reward % xstake::REWARD_PRECISION)
+        std::cout << "total reward: " << static_cast<uint64_t>(total_reward / data::system_contract::REWARD_PRECISION) << '.'
+                  << static_cast<uint32_t>(total_reward % data::system_contract::REWARD_PRECISION)
                     << std::endl;
     }
 

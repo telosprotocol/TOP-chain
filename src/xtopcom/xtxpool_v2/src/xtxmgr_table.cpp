@@ -146,6 +146,37 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     return ready_txs;
 }
 
+std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para, const xunconfirm_id_height & unconfirm_id_height) {
+    uint32_t confirm_tx_num = 0;
+    uint32_t recv_tx_num = 0;
+    std::vector<xcons_transaction_ptr_t> ready_txs = m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(),
+                                                                                 pack_para.get_confirm_txs_max_num(),
+                                                                                 pack_para.get_table_state_highqc()->get_receiptid_state(),
+                                                                                 unconfirm_id_height,
+                                                                                 confirm_tx_num);
+    recv_tx_num = ready_txs.size() - confirm_tx_num;
+
+    auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_table_state_highqc());
+    uint32_t send_tx_num = send_txs.size();
+    ready_txs.insert(ready_txs.end(), send_txs.begin(), send_txs.end());
+
+    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_sendtx_count, send_tx_num);
+    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
+    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
+
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u",
+                 m_xtable_info->get_table_addr().c_str(),
+                 ready_txs.size(),
+                 send_tx_num,
+                 recv_tx_num,
+                 confirm_tx_num);
+    for (auto & tx : ready_txs) {
+        xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
+    }
+
+    return ready_txs;
+}
+
 const std::shared_ptr<xtx_entry> xtxmgr_table_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
     auto tx = m_send_tx_queue.find(account_addr, hash);
     if (tx == nullptr) {
@@ -180,6 +211,12 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacki
     return m_new_receipt_queue.get_lacking_confirm_tx_ids(total_num);
 }
 
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_discrete_confirm_tx_ids(
+    const std::map<base::xtable_shortid_t, xneed_confirm_ids> & need_confirm_ids_map,
+    uint32_t & total_num) const {
+    return m_new_receipt_queue.get_lacking_discrete_confirm_tx_ids(need_confirm_ids_map, total_num);
+}
+
 void xtxmgr_table_t::clear_expired_txs() {
 #ifdef ENABLE_METRICS
     auto queue_size_before = m_send_tx_queue.size();
@@ -194,8 +231,7 @@ void xtxmgr_table_t::clear_expired_txs() {
 #endif
 }
 
-void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state)
-{
+void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     m_new_receipt_queue.update_receiptid_state(receiptid_state);
 }
 

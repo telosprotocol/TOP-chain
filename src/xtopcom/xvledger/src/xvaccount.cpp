@@ -130,6 +130,182 @@ namespace top
                 return {};
             }
         }
+
+        bool xvaccount_t::check_address(const std::string & account_addr, bool isTransaction)
+        {
+            // check address min-length and max-length
+            if(account_addr.size() <= enum_vaccount_address_prefix_size || account_addr.size() > enum_vaccount_address_max_size) {
+                xwarn("xvaccount_t::check_address fail-too short address,size=%zu", account_addr.size());
+                return false;
+            }
+
+            // check if first-char is T
+            char first_type = account_addr[0];
+            if (first_type != 'T') {
+                xwarn("xvaccount_t::check_address fail-not top addr");
+                return false;
+            }
+
+            // check parts number
+            std::vector<std::string> parts;
+            int parts_num = base::xstring_utl::split_string(account_addr,'@',parts);
+            if (parts_num > 2) {
+                xwarn("xvaccount_t::check_address fail-too many parts %d", parts_num);
+                return false;
+            }
+
+            // check addr type
+            enum_vaccount_addr_type addr_type = get_addrtype_from_account(account_addr);
+            switch (addr_type) {
+                case enum_vaccount_addr_type_root_account:
+                case enum_vaccount_addr_type_black_hole:
+                case enum_vaccount_addr_type_timer:
+                case enum_vaccount_addr_type_drand:
+                case enum_vaccount_addr_type_secp256k1_user_account:
+                case enum_vaccount_addr_type_secp256k1_eth_user_account:
+                    if (parts_num != 1) {
+                        xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. type=%d,parts_num=%d", addr_type, parts_num);
+                        return false;
+                    }
+                    break;
+                case enum_vaccount_addr_type_native_contract:
+                    if (isTransaction) {
+                        std::string strLedgrid = account_addr.substr(2, 4);
+                        if (strLedgrid == std::string("0000")) { // shard constracts
+                            if (parts_num != 2 && parts_num != 1) {
+                                xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. isTransaction:%d type=%d,parts_num=%d,ledgrid:%s", isTransaction, addr_type, parts_num, strLedgrid.c_str());
+                                return false;
+                            }
+                        } else {
+                            if (parts_num != 2) {
+                                xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. isTransaction:%d type=%d,parts_num=%d,ledgrid:%s", isTransaction, addr_type, parts_num, strLedgrid.c_str());
+                                return false;
+                            }
+                        }
+                    } else {
+                        if (parts_num != 2) {
+                            xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. isTransaction:%d type=%d,parts_num=%d", isTransaction, addr_type, parts_num);
+                            return false;
+                        }
+                    }
+                    break;
+                case enum_vaccount_addr_type_block_contract:
+                    if (parts_num != 2) {
+                        xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. type=%d,parts_num=%d", addr_type, parts_num);
+                        return false;
+                    }
+                    break;
+                default:
+                    xwarn("xvaccount_t::check_address fail-invalid type. type=%d", addr_type);
+                    return false;
+            }
+
+            // check subaddr
+            if (parts_num > 1) {
+                std::string subaddr_str = parts[1];
+                if (false == base::xstring_utl::digital_string(subaddr_str)) {
+                    xwarn("xvaccount_t::check_address fail-subaddr not digital.");
+                    return false;
+                }
+                int32_t subaddr_int32 = base::xstring_utl::toint32(subaddr_str);
+
+                std::string strLedgrid = account_addr.substr(2, 4);
+
+                for (size_t i = 0; i < strLedgrid.size(); i++) {
+                    if (('0' > strLedgrid[i]) || (('9' < strLedgrid[i]) && ('a' > strLedgrid[i])) || ('f' < strLedgrid[i])) {
+                        xwarn("xvaccount_t::check_address ledger id address not all hex char");
+                        return false;
+                    }
+                }
+
+                uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
+                // table addr judge subaddr size
+                if (addr_type == enum_vaccount_addr_type_block_contract) {
+                    if (ledger_id == enum_chain_zone_consensus_index) {
+                        if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    } else if (ledger_id == enum_chain_zone_beacon_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    } else if (ledger_id == enum_chain_zone_zec_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    } else {
+                        // invalid table addr
+                        xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
+                        return false;
+                    }
+                    // contracts addr judge subaddr size
+                } else if (addr_type == enum_vaccount_addr_type_native_contract) {
+                    // shard contracts addr judge subaddr size
+                    if (ledger_id == enum_chain_zone_consensus_index) {
+                        if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    // root beacon contracts addr judge subaddr size 
+                    } else if (ledger_id == enum_chain_zone_beacon_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    // sub beacon contracts addr judge subaddr size 
+                    } else if (ledger_id == enum_chain_zone_zec_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    } else {
+                        //invalid contracts addr
+                        xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
+                        return false;
+                    }
+                }
+            }
+
+            // check T8 eth address
+            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+                std::string addrtemp = account_addr.substr(enum_vaccount_address_prefix_size);
+                // check if all lower char
+                std::string addrtemp2 = addrtemp;
+                base::xstring_utl::tolower_string(addrtemp2);
+                if (addrtemp != addrtemp2) {
+                    xwarn("xvaccount_t::check_address fail-has upper char");
+                    return false;
+                }
+
+                // check if all hex char
+                for (size_t i = 0; i < addrtemp2.size(); i++) {
+                    if (('0' > addrtemp2[i]) || (('9' < addrtemp2[i]) && ('a' > addrtemp2[i])) || ('f' < addrtemp2[i])) {
+                        xwarn("xvaccount_t::check_address T8 eth address not all hex char");
+                        return false;
+                    }
+                }
+
+                // check ledger_id
+                std::string strLedgrid = account_addr.substr(2, 4);
+
+                for (size_t i = 0; i < strLedgrid.size(); i++) {
+                    if (('0' > strLedgrid[i]) || (('9' < strLedgrid[i]) && ('a' > strLedgrid[i])) || ('f' < strLedgrid[i])) {
+                        xwarn("xvaccount_t::check_address ledger id address not all hex char");
+                        return false;
+                    }
+                }
+                uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
+                if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
+                    xwarn("xvaccount_t::check_address T8 eth address ledger id error");
+                    return false;
+                }
+            }
+
+            return true;
+        }
     
         bool  xvaccount_t::is_unit_address() const
         {
@@ -433,7 +609,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            _highest_saved_block_height = 0;
             #ifdef DEBUG
             m_account_address = _account.get_address();
             #else
@@ -453,7 +629,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            _highest_saved_block_height = 0;
             *this = obj;
         }
     
@@ -462,7 +638,7 @@ namespace top
         {
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
-
+            _highest_saved_block_height = 0;
             *this = obj;
         }
     
@@ -480,6 +656,7 @@ namespace top
             _meta_process_id = obj._meta_process_id;      //reserved for future
             _meta_spec_version = obj._meta_spec_version; //add version control for compatible case
             m_account_address = obj.m_account_address;
+            _highest_saved_block_height = obj._highest_saved_block_height;
             
             xblockmeta_t::operator=(obj);
             xstatemeta_t::operator=(obj);
@@ -489,6 +666,12 @@ namespace top
             return *this;
         }
     
+        void   xvactmeta_t::update_highest_saved_block_height(const uint64_t new_height)
+        {
+            if(new_height > _highest_saved_block_height)
+                _highest_saved_block_height = new_height;
+        }
+        
         void   xvactmeta_t::update_meta_process_id(const uint16_t _process_id)
         {
             if(_meta_process_id != _process_id)
@@ -857,6 +1040,10 @@ namespace top
                     update_cp_connect(cp_connect_height, cp_connect_hash);
                 }
             }
+            
+            //init by saved meta
+            if(_highest_saved_block_height < _highest_cert_block_height)
+                _highest_saved_block_height = _highest_cert_block_height;
 
             init_version_control();  // reinit version control
 

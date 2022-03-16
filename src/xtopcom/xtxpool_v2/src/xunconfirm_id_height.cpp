@@ -22,8 +22,8 @@ void xunconfirm_id_height_list_t::update_confirm_id(uint64_t confirm_id) {
         m_confirm_id = confirm_id;
         for (auto iter = m_id_height_map.begin(); iter != m_id_height_map.end();) {
             if (iter->first <= m_confirm_id) {
-                if (iter->second > m_confirmed_height_max) {
-                    m_confirmed_height_max = iter->second;
+                if (iter->second.m_height > m_confirmed_height_max) {
+                    m_confirmed_height_max = iter->second.m_height;
                 }
                 iter = m_id_height_map.erase(iter);
             } else {
@@ -33,16 +33,17 @@ void xunconfirm_id_height_list_t::update_confirm_id(uint64_t confirm_id) {
     }
 }
 
-void xunconfirm_id_height_list_t::add_id_height(uint64_t receipt_id, uint64_t height, uint64_t time) {
+void xunconfirm_id_height_list_t::add_id_height(uint64_t receipt_id, uint64_t height, bool need_confirm, uint64_t time) {
     if (receipt_id > m_confirm_id) {
-        xdbg("xunconfirm_id_height_list_t::add_id_height confirmid selfid:%d,peerid:%d,as sender:%d,receipt_id:%llu,height:%llu,m_confirm_id:%llu",
+        xdbg("xunconfirm_id_height_list_t::add_id_height confirmid selfid:%d,peerid:%d,as sender:%d,receipt_id:%llu,height:%llu,need_confirm:%d,m_confirm_id:%llu",
              m_self_table_sid,
              m_peer_table_sid,
              m_as_sender,
              receipt_id,
              height,
+             need_confirm,
              m_confirm_id);
-        m_id_height_map[receipt_id] = height;
+        m_id_height_map[receipt_id] = xheight_confirm_info(height, need_confirm);
         if (m_id_height_map.rbegin()->first == receipt_id) {
             m_update_time = time;
         }
@@ -62,11 +63,126 @@ bool xunconfirm_id_height_list_t::is_lacking() const {
     }
 }
 
+bool xunconfirm_id_height_list_t::get_need_confirm_ids(uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const {
+    if (m_id_height_map.empty()) {
+        return false;
+    }
+    for (uint64_t id = lower_receipt_id; id <= upper_receipt_id; id++) {
+        auto iter = m_id_height_map.find(id);
+        if (iter == m_id_height_map.end()) {
+            xdbg("xunconfirm_id_height_list_t::get_need_confirm_ids fail-id:%llu not found in map.self:%d,peer:%d,id:%llu:%llu",
+                 id,
+                 m_self_table_sid,
+                 m_peer_table_sid,
+                 lower_receipt_id,
+                 upper_receipt_id);
+            return false;
+        }
+        if (iter->second.m_need_confirm) {
+            xdbg("xunconfirm_id_height_list_t::get_need_confirm_ids.self:%d,peer:%d,id:%llu", m_self_table_sid, m_peer_table_sid, id);
+            receipt_ids.push_back(id);
+        }
+    }
+    return true;
+}
+
+bool xunconfirm_id_height_list_t::get_max_not_need_confirm_id(uint64_t lower_receipt_id, uint64_t & max_id) const {
+    if (m_id_height_map.empty()) {
+        return false;
+    }
+    uint64_t last_id = m_id_height_map.rbegin()->first;
+
+    for (uint64_t id = lower_receipt_id; id <= last_id; id++) {
+        auto iter = m_id_height_map.find(id);
+        if (iter == m_id_height_map.end()) {
+            xdbg(
+                "xunconfirm_id_height_list_t::get_max_not_need_confirm_id fail-lack receipt id.selfid:%d,peerid:%d,as "
+                "sender:%d,receipt_id:%llu,lower_receipt_id:%llu,m_confirm_id:%llu",
+                m_self_table_sid,
+                m_peer_table_sid,
+                m_as_sender,
+                id,
+                lower_receipt_id,
+                m_confirm_id);
+            return false;
+        }
+
+        xdbg("xunconfirm_id_height_list_t::get_max_not_need_confirm_id selfid:%d,peerid:%d,as sender:%d,receipt_id:%llu,need_confirm:%d,lower_receipt_id:%llu,m_confirm_id:%llu",
+             m_self_table_sid,
+             m_peer_table_sid,
+             m_as_sender,
+             id,
+             iter->second.m_need_confirm,
+             lower_receipt_id,
+             m_confirm_id);
+
+        if (iter->second.m_need_confirm) {
+            if (id > lower_receipt_id) {
+                max_id = id - 1;
+                return true;
+            }
+            return false;
+        }
+    }
+    max_id = last_id;
+    return true;
+}
+
+bool xunconfirm_id_height_list_t::check_need_confirm(uint64_t receipt_id, bool & need_confirm) const {
+    auto it = m_id_height_map.find(receipt_id);
+    if (it != m_id_height_map.end()) {
+        need_confirm = it->second.m_need_confirm;
+        return true;
+    }
+    return false;
+}
+
+std::vector<uint64_t> xunconfirm_id_height_list_t::filter_continuous_need_confirm_ids(uint64_t lower_receipt_id, const std::vector<uint64_t> & receipt_ids) const {
+    if (m_id_height_map.empty() || receipt_ids.empty()) {
+        return {};
+    }
+    uint64_t upper_receipt_id = std::min(m_id_height_map.rbegin()->first, receipt_ids[receipt_ids.size() - 1]);
+
+    std::vector<uint64_t> filted_ids;
+    uint32_t pos = 0;
+    for (uint64_t id = lower_receipt_id; id <= upper_receipt_id && pos < receipt_ids.size(); id++) {
+        auto iter = m_id_height_map.find(id);
+        if (iter == m_id_height_map.end()) {
+            break;
+        }
+        if (iter->second.m_need_confirm) {
+            if (id == receipt_ids[pos]) {
+                filted_ids.push_back(id);
+                pos++;
+            } else if (id > receipt_ids[pos]) {
+                xinfo("filter_continuous_need_confirm_ids selfid:%d,peerid:%d,as sender:%d,receipt_id:%llu not need confirm", m_self_table_sid, m_peer_table_sid, m_as_sender, receipt_ids[pos]);
+                pos++;
+                while (pos < receipt_ids.size()) {
+                    if (id == receipt_ids[pos]) {
+                        filted_ids.push_back(id);
+                        pos++;
+                        break;
+                    } else if (id > receipt_ids[pos]) {
+                        xinfo("filter_continuous_need_confirm_ids selfid:%d,peerid:%d,as sender:%d,receipt_id:%llu not need confirm", m_self_table_sid, m_peer_table_sid, m_as_sender, receipt_ids[pos]);
+                        pos++;
+                        continue;
+                    } else {
+                        return filted_ids;
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+    }
+    return filted_ids;
+}
+
 bool xunconfirm_id_height_list_t::get_min_height(uint64_t & min_height) const {
     auto min_unconfirmid = m_confirm_id + 1;
     auto it = m_id_height_map.find(min_unconfirmid);
     if (it != m_id_height_map.end()) {
-        min_height = it->second;
+        min_height = it->second.m_height;
 
         xdbg("xunconfirm_id_height_list_t::get_min_height succ selfid:%d,peerid:%d,as sender:%d,min_unconfirmid:%llu,height:%llu",
              m_self_table_sid,
@@ -92,12 +208,13 @@ bool xunconfirm_id_height_list_t::get_min_height(uint64_t & min_height) const {
     return false;
 }
 
-bool xunconfirm_id_height_list_t::get_height_by_id(uint64_t receipt_id, uint64_t & height) const {
+bool xunconfirm_id_height_list_t::get_height_by_id(uint64_t receipt_id, uint64_t & height, bool & need_confirm) const {
     auto iter = m_id_height_map.find(receipt_id);
     if (iter == m_id_height_map.end()) {
         return false;
     }
-    height = iter->second;
+    height = iter->second.m_height;
+    need_confirm = iter->second.m_need_confirm;
 
     return true;
 }
@@ -111,7 +228,7 @@ bool xunconfirm_id_height_list_t::get_resend_id_height(uint64_t & receipt_id, ui
     auto iter = m_id_height_map.rbegin();
     if (iter != m_id_height_map.rend()) {
         receipt_id = iter->first;
-        height = iter->second;
+        height = iter->second.m_height;
         return true;
     }
     return false;
@@ -132,15 +249,15 @@ void xtable_unconfirm_id_height_t::update_confirm_id(base::xtable_shortid_t peer
     iter->second->update_confirm_id(confirm_id);
 }
 
-void xtable_unconfirm_id_height_t::add_id_height(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t height, uint64_t time) {
+void xtable_unconfirm_id_height_t::add_id_height(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t height, bool need_confirm, uint64_t time) {
     auto iter = m_table_sid_unconfirm_list_map.find(peer_table_sid);
     if (iter == m_table_sid_unconfirm_list_map.end()) {
         auto unconfirm_list = std::make_shared<xunconfirm_id_height_list_t>(m_self_table_sid, peer_table_sid, is_sender());
-        unconfirm_list->add_id_height(receipt_id, height, time);
+        unconfirm_list->add_id_height(receipt_id, height, need_confirm, time);
         m_table_sid_unconfirm_list_map[peer_table_sid] = unconfirm_list;
         return;
     }
-    iter->second->add_id_height(receipt_id, height, time);
+    iter->second->add_id_height(receipt_id, height, need_confirm, time);
 }
 
 bool xtable_unconfirm_id_height_t::get_min_height(const xreceiptid_state_cache_t & receiptid_state_cache,
@@ -154,14 +271,14 @@ bool xtable_unconfirm_id_height_t::get_min_height(const xreceiptid_state_cache_t
     for (auto & peer_table_sid : all_table_sids) {
         uint64_t confirm_id;
         uint64_t unconfirm_id_max;
-        get_unconfirm_id_section(receiptid_state_cache, m_self_table_sid, peer_table_sid, confirm_id, unconfirm_id_max);
+        get_unconfirm_id_section(receiptid_state_cache, m_self_table_sid, peer_table_sid, confirm_id, unconfirm_id_max, false);
         xdbg("xtable_unconfirm_id_height_t::get_min_height_as_sender selfid:%d,peerid:%d,as sender:%d,confirm_id:%llu,unconfirm_id_max:%llu,self_height:%llu",
-                     m_self_table_sid,
-                     peer_table_sid,
-                     is_sender(),
-                     confirm_id,
-                     unconfirm_id_max,
-                     self_height);
+             m_self_table_sid,
+             peer_table_sid,
+             is_sender(),
+             confirm_id,
+             unconfirm_id_max,
+             self_height);
         if (confirm_id < unconfirm_id_max) {
             auto it = m_table_sid_unconfirm_list_map.find(peer_table_sid);
             if (it == m_table_sid_unconfirm_list_map.end()) {
@@ -217,10 +334,10 @@ bool xtable_unconfirm_id_height_t::get_min_height(const xreceiptid_state_cache_t
     return true;
 }
 
-bool xtable_unconfirm_id_height_t::get_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const {
+bool xtable_unconfirm_id_height_t::get_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height, bool & need_confirm) const {
     auto iter = m_table_sid_unconfirm_list_map.find(peer_table_sid);
     if (iter != m_table_sid_unconfirm_list_map.end()) {
-        return iter->second->get_height_by_id(receipt_id, height);
+        return iter->second->get_height_by_id(receipt_id, height, need_confirm);
     }
     return false;
 }
@@ -249,12 +366,77 @@ uint32_t xtable_unconfirm_id_height_t::size() const {
     return count;
 }
 
+bool xtable_unconfirm_id_height_t::get_need_confirm_ids(base::xtable_shortid_t peer_table_sid,
+                                                        uint64_t lower_receipt_id,
+                                                        uint64_t upper_receipt_id,
+                                                        std::vector<uint64_t> & receipt_ids) const {
+    auto iter = m_table_sid_unconfirm_list_map.find(peer_table_sid);
+    if (iter != m_table_sid_unconfirm_list_map.end()) {
+        return iter->second->get_need_confirm_ids(lower_receipt_id, upper_receipt_id, receipt_ids);
+    }
+    xdbg("xtable_unconfirm_id_height_t::get_need_confirm_ids fail-not found in map.self:%d,peer:%d,id:%llu:%llu",
+         m_self_table_sid,
+         peer_table_sid,
+         lower_receipt_id,
+         upper_receipt_id);
+    return false;
+}
+
+std::vector<uint64_t> xtable_unconfirm_id_height_t::filter_continuous_need_confirm_ids(base::xtable_shortid_t peer_table_sid,
+                                                                                       uint64_t lower_receipt_id,
+                                                                                       const std::vector<uint64_t> & receipt_ids) const {
+    auto iter = m_table_sid_unconfirm_list_map.find(peer_table_sid);
+    if (iter != m_table_sid_unconfirm_list_map.end()) {
+        return iter->second->filter_continuous_need_confirm_ids(lower_receipt_id, receipt_ids);
+    }
+    return {};
+}
+
+const std::map<base::xtable_shortid_t, xneed_confirm_ids> xtable_unconfirm_id_height_t::get_all_need_confirm_ids(const xreceiptid_state_cache_t & receiptid_state_cache,
+                                                                                                                 bool for_pull_lacking) const {
+    std::map<base::xtable_shortid_t, xneed_confirm_ids> need_confirm_ids_map;
+    for (auto & unconfirm_list_pair : m_table_sid_unconfirm_list_map) {
+        auto & unconfirm_list = unconfirm_list_pair.second;
+        if (unconfirm_list->size() > 0) {
+            auto & peer_table_sid = unconfirm_list_pair.first;
+            uint64_t confirm_id = 0;
+            uint64_t unconfirm_id_max = 0;
+            get_unconfirm_id_section(receiptid_state_cache, m_self_table_sid, peer_table_sid, confirm_id, unconfirm_id_max, for_pull_lacking);
+            if (confirm_id < unconfirm_id_max) {
+                std::vector<uint64_t> need_confirm_ids;
+                auto ret = unconfirm_list->get_need_confirm_ids(confirm_id + 1, unconfirm_id_max, need_confirm_ids);
+                if (ret && !need_confirm_ids.empty()) {
+                    need_confirm_ids_map[peer_table_sid] = xneed_confirm_ids(confirm_id + 1, unconfirm_id_max, need_confirm_ids);
+                }
+            }
+        }
+    }
+    return need_confirm_ids_map;
+}
+
+bool xtable_unconfirm_id_height_t::get_max_not_need_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t & max_id) const {
+    auto iter = m_table_sid_unconfirm_list_map.find(peer_table_sid);
+    if (iter != m_table_sid_unconfirm_list_map.end()) {
+        return iter->second->get_max_not_need_confirm_id(lower_receipt_id, max_id);
+    }
+    return false;
+}
+
+bool xtable_unconfirm_id_height_t::check_need_confirm(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, bool & need_confirm) const {
+    auto iter = m_table_sid_unconfirm_list_map.find(peer_table_sid);
+    if (iter != m_table_sid_unconfirm_list_map.end()) {
+        return iter->second->check_need_confirm(receipt_id, need_confirm);
+    }
+    return false;
+}
+
 void xtable_unconfirm_id_height_as_sender_t::get_unconfirm_id_section(const xreceiptid_state_cache_t & receiptid_state_cache,
                                                                       base::xtable_shortid_t self_table_id,
                                                                       base::xtable_shortid_t peer_table_id,
                                                                       uint64_t & confirm_id,
-                                                                      uint64_t & unconfirm_id_max) const {
-    return receiptid_state_cache.get_unconfirm_id_section_as_sender(self_table_id, peer_table_id, confirm_id, unconfirm_id_max);
+                                                                      uint64_t & unconfirm_id_max,
+                                                                      bool for_pull_lacking) const {
+    return receiptid_state_cache.get_unconfirm_id_section_as_sender(self_table_id, peer_table_id, confirm_id, unconfirm_id_max, for_pull_lacking);
 }
 
 bool xtable_unconfirm_id_height_as_sender_t::is_sender() const {
@@ -265,7 +447,8 @@ void xtable_unconfirm_id_height_as_receiver_t::get_unconfirm_id_section(const xr
                                                                         base::xtable_shortid_t self_table_id,
                                                                         base::xtable_shortid_t peer_table_id,
                                                                         uint64_t & confirm_id,
-                                                                        uint64_t & unconfirm_id_max) const {
+                                                                        uint64_t & unconfirm_id_max,
+                                                                        bool for_pull_lacking) const {
     return receiptid_state_cache.get_unconfirm_id_section_as_receiver(self_table_id, peer_table_id, confirm_id, unconfirm_id_max);
 }
 
@@ -423,10 +606,10 @@ void xunconfirm_id_height::update_unconfirm_id_height(uint64_t table_height, uin
     std::lock_guard<std::mutex> lck(m_mutex);
     for (auto & tx_info : tx_id_height_infos) {
         if (tx_info.m_subtype == base::enum_transaction_subtype_send) {
-            m_sender_unconfirm_id_height.add_id_height(tx_info.m_peer_table_sid, tx_info.m_receipt_id, table_height, time);
+            m_sender_unconfirm_id_height.add_id_height(tx_info.m_peer_table_sid, tx_info.m_receipt_id, table_height, tx_info.m_need_confirm, time);
 
         } else if (tx_info.m_subtype == base::enum_transaction_subtype_recv) {
-            m_receiver_unconfirm_id_height.add_id_height(tx_info.m_peer_table_sid, tx_info.m_receipt_id, table_height, time);
+            m_receiver_unconfirm_id_height.add_id_height(tx_info.m_peer_table_sid, tx_info.m_receipt_id, table_height, tx_info.m_need_confirm, time);
         }
     }
     m_processed_height_record.record_height(table_height);
@@ -442,14 +625,14 @@ void xunconfirm_id_height::update_peer_confirm_id(base::xtable_shortid_t peer_ta
 //     m_sender_unconfirm_id_height.update_confirm_id(peer_table_sid, confirm_id);
 // }
 
-bool xunconfirm_id_height::get_sender_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const {
+bool xunconfirm_id_height::get_sender_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height, bool & need_confirm) const {
     std::lock_guard<std::mutex> lck(m_mutex);
-    return m_sender_unconfirm_id_height.get_height_by_id(peer_table_sid, receipt_id, height);
+    return m_sender_unconfirm_id_height.get_height_by_id(peer_table_sid, receipt_id, height, need_confirm);
 }
 
-bool xunconfirm_id_height::get_receiver_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height) const {
+bool xunconfirm_id_height::get_receiver_table_height_by_id(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t & height, bool & need_confirm) const {
     std::lock_guard<std::mutex> lck(m_mutex);
-    return m_receiver_unconfirm_id_height.get_height_by_id(peer_table_sid, receipt_id, height);
+    return m_receiver_unconfirm_id_height.get_height_by_id(peer_table_sid, receipt_id, height, need_confirm);
 }
 
 std::vector<xresend_id_height_t> xunconfirm_id_height::get_sender_resend_id_height_list(uint64_t cur_time) const {
@@ -501,6 +684,37 @@ bool xunconfirm_id_height::get_min_height(const xreceiptid_state_cache_t & recei
          receiver_min_height,
          min_height);
     return true;
+}
+
+bool xunconfirm_id_height::get_sender_need_confirm_ids(base::xtable_shortid_t peer_table_sid,
+                                                       uint64_t lower_receipt_id,
+                                                       uint64_t upper_receipt_id,
+                                                       std::vector<uint64_t> & receipt_ids) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    return m_sender_unconfirm_id_height.get_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);
+}
+
+std::vector<uint64_t> xunconfirm_id_height::filter_sender_continuous_need_confirm_ids(base::xtable_shortid_t peer_table_sid,
+                                                                                      uint64_t lower_receipt_id,
+                                                                                      const std::vector<uint64_t> & receipt_ids) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    return m_sender_unconfirm_id_height.filter_continuous_need_confirm_ids(peer_table_sid, lower_receipt_id, receipt_ids);
+}
+
+const std::map<base::xtable_shortid_t, xneed_confirm_ids> xunconfirm_id_height::get_sender_all_need_confirm_ids(const xreceiptid_state_cache_t & receiptid_state_cache,
+                                                                                                                bool for_pull_lacking) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    return m_sender_unconfirm_id_height.get_all_need_confirm_ids(receiptid_state_cache, for_pull_lacking);
+}
+
+bool xunconfirm_id_height::get_sender_max_not_need_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t & max_id) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    return m_sender_unconfirm_id_height.get_max_not_need_confirm_id(peer_table_sid, lower_receipt_id, max_id);
+}
+
+bool xunconfirm_id_height::sender_check_need_confirm(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, bool & need_confirm) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    return m_sender_unconfirm_id_height.check_need_confirm(peer_table_sid, receipt_id, need_confirm);
 }
 
 NS_END2

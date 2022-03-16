@@ -24,12 +24,11 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xenable_to_string.h"
 #include "xbasic/xhashable.hpp"
+#include "xcommon/xip.h"
 #include "xcommon/xnode_id.h"
 #include "xcommon/xnode_type.h"
 #include "xcommon/xsharding_info.h"
-#include "xcommon/xsimple_address.hpp"
 #include "xcommon/xversion.h"
 
 #include <functional>
@@ -40,8 +39,7 @@ NS_BEG2(top, common)
 
 using xaccount_address_t = xnode_id_t;
 
-class xtop_cluster_address final : public xhashable_t<xtop_cluster_address>
-                                 , public xenable_to_string_t<xtop_cluster_address> {
+class xtop_cluster_address final : public xhashable_t<xtop_cluster_address> {
     xip_t m_xip{};
     xnode_type_t m_type{ xnode_type_t::invalid };
 
@@ -122,7 +120,7 @@ public:
     hash() const override;
 
     std::string
-    to_string() const override;
+    to_string() const;
 
     void
     swap(xtop_cluster_address & other) noexcept;
@@ -154,8 +152,7 @@ std::int32_t operator >>(base::xstream_t & stream, xcluster_address_t & o);
 std::int32_t operator <<(base::xbuffer_t & buffer, xcluster_address_t const & o);
 std::int32_t operator >>(base::xbuffer_t & buffer, xcluster_address_t & o);
 
-class xtop_account_election_address final : public xhashable_t<xtop_account_election_address>
-                                          , public xenable_to_string_t<xtop_account_election_address>{
+class xtop_account_election_address final : public xhashable_t<xtop_account_election_address> {
     xaccount_address_t m_account_address{};
     xslot_id_t m_slot_id{};
 
@@ -207,7 +204,7 @@ public:
     hash() const override;
 
     std::string
-    to_string() const override;
+    to_string() const;
 };
 using xaccount_election_address_t = xtop_account_election_address;
 
@@ -256,12 +253,13 @@ public:
     hash_result_type hash() const override;
 
     std::string to_string() const override;
+
+    void from_string(std::string const & input, std::error_code & ec) override;
 };
 using xlogical_version_t = xtop_logical_version;
 using xlogic_epoch_t = xtop_logical_version;
 
 class xtop_node_address final : public xhashable_t<xtop_node_address>
-                              , public xenable_to_string_t<xtop_node_address>
 {
 private:
     xgroup_address_t m_cluster_address{};
@@ -379,7 +377,7 @@ public:
     hash() const override;
 
     std::string
-    to_string() const override;
+    to_string() const;
 
     void
     swap(xtop_node_address & other) noexcept;

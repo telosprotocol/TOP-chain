@@ -6,6 +6,7 @@
 
 #include "xdata/xdata_common.h"
 #include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xlegacy/xelection_result_store.h"
 
 #include <cstdint>
 
@@ -80,6 +81,8 @@ public:
 
     size_type
     erase(key_type const & key);
+
+    legacy::xelection_result_store_t legacy() const;
 };
 using xelection_result_store_t = xtop_election_result_store;
 

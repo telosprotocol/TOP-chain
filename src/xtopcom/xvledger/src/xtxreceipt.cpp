@@ -179,7 +179,7 @@ namespace top
                     if (false == action.get_org_tx_hash().empty()) {
                         enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
                         // only send and recv action need make receipt
-                        if (_actionid == base::enum_transaction_subtype_send || _actionid == base::enum_transaction_subtype_recv) {
+                        if (_actionid == base::enum_transaction_subtype_send || (_actionid == base::enum_transaction_subtype_recv)) {
                             receipt_actions.push_back(action);
                         }
                     }

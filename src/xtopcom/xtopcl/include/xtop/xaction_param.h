@@ -1,8 +1,7 @@
 #pragma once
 #include <string>
 #include "api_method_imp.h"
-
-constexpr char const* XPROPERTY_ASSET_TOP = "TOP";
+#include "xdata/xproperty.h"
 
 namespace xChainSDK {
 
@@ -19,7 +18,7 @@ namespace xChainSDK {
         xaction_asset_param(api_method_imp* method, const std::string& token_name, uint64_t amount);
         virtual std::string create() override;
     private:
-        std::string m_token_name{ XPROPERTY_ASSET_TOP };
+        std::string m_token_name{ top::data::XPROPERTY_ASSET_TOP };
         uint64_t    m_amount{ 0 };
     };
     class xaction_pledge_token_vote_param : public xaction_param {

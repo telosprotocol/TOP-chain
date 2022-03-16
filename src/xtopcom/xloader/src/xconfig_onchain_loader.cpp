@@ -9,6 +9,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xelect_transaction.hpp"
 #include "xmbus/xevent.h"

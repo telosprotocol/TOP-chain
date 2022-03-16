@@ -245,6 +245,44 @@ void xconspacemaker_t::on_receive_timeout_stage2(xvip2_t const & from_addr, base
     add_vote(from_addr, model_block, vote);
 }
 
+void xconspacemaker_t::update_local_tc_block(base::xvblock_t *tc_block) {    
+    if (m_latest_cert != nullptr) {
+        xassert(tc_block->get_clock() > m_latest_cert->get_clock());
+        uint64_t distance = tc_block->get_clock() - m_latest_cert->get_clock();
+        if (distance > 1) {
+            XMETRICS_GAUGE(metrics::cons_pacemaker_tc_discontinuity, 1);
+            xwarn("[xconspacemaker_t::add_vote] tc discontinuity latest=%" PRIu64 ",cur=%" PRIu64 ",distance=%" PRIu64 , m_latest_cert->get_clock(), tc_block->get_clock(), distance);
+        }
+        m_latest_cert->release_ref();
+    }
+
+    m_latest_cert = tc_block;
+    m_latest_cert->add_ref();
+    m_latest_cert_gmt_time = (uint64_t)base::xtime_utl::gmttime();
+    m_broadcast_round_notify = 0;
+
+    XMETRICS_GAUGE_SET_VALUE(metrics::clock_aggregate_height, m_latest_cert->get_height());
+    xinfo("[xconspacemaker_t::add_vote] tc_aggregate_success time=%" PRIu64 ",clock=%" PRIu64, m_latest_cert_gmt_time, m_latest_cert->get_clock());
+
+    // notify first leader to broadcast all nodes
+    base::xauto_ptr<xcstc_fire> _event_obj(new xcstc_fire(m_latest_cert, m_broadcast_round_notify));
+    get_parent_node()->push_event_up(*_event_obj, this, 0, 0);
+    m_broadcast_round_notify++;
+}
+
+void xconspacemaker_t::try_second_round_broadcast(uint64_t now_s) {
+    if (nullptr == m_latest_cert) {
+        return;
+    }
+    if (now_s >= (m_latest_cert_gmt_time + 2)) { // over 2 seconds, should try second round broadcast
+        if (m_broadcast_round_notify == 1) {  // should only notify once time
+            base::xauto_ptr<xcstc_fire> _event_obj(new xcstc_fire(m_latest_cert, m_broadcast_round_notify));
+            get_parent_node()->push_event_up(*_event_obj, this, 0, 0);
+            m_broadcast_round_notify++;
+        }
+    }
+}
+
 // model_block is a block without signed-data.
 // the content of the model_block is the target of the sign function and the multi-sign function.
 // the content contains height, viewid, clock, xip_group, etc.
@@ -277,26 +315,9 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
         return;
     }
 
-    if (m_latest_cert != nullptr) {
-        // for debug purpose
-        if ((m_latest_cert->get_clock() + 1) != model_block->get_clock()) {
-            XMETRICS_GAUGE(metrics::cons_pacemaker_tc_discontinuity, 1);
-            xwarn("[xconspacemaker_t::add_vote] tc discontinuity latest=%llu,cur=%llu", m_latest_cert->get_clock(), model_block->get_clock());
-        }
-        m_latest_cert->release_ref();
-    }
-
-    m_latest_cert = model_block;
-    m_latest_cert->add_ref();
-
-    XMETRICS_GAUGE_SET_VALUE(metrics::clock_aggregate_height, m_latest_cert->get_height());
-
-    xinfo("[xconspacemaker_t::add_vote] tc_aggregate_success %p view %" PRIu64" clock %" PRIu64, m_latest_cert, m_latest_cert->get_viewid(), m_latest_cert->get_clock());
+    update_local_tc_block(model_block);
 
     m_vote_cache.clear();
-
-    base::xauto_ptr<xcstc_fire> _event_obj(new xcstc_fire(m_latest_cert));
-    get_parent_node()->push_event_up(*_event_obj, this, 0, 0);
 
     std::function<void(void*)> _aysn_update_view = [this](void*)->void{
         fire_view(get_account(), this->m_latest_cert->get_viewid(), this->m_latest_cert->get_viewid(), 0, 0);
@@ -327,6 +348,9 @@ void xconspacemaker_t::on_timeout(time_t cur_time) {
 
     if (xip_addr.low_addr == 0)
         return;
+
+    uint64_t now_s = (uint64_t)base::xtime_utl::gmttime();
+    try_second_round_broadcast(now_s);   
 
     m_vote_cache.clear_timeout_clock();
 

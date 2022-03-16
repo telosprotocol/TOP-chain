@@ -2,9 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
 #include "xdata/xblockaction.h"
+
+#include "xdata/xdata_common.h"
 #include "xdata/xlightunit_info.h"
+
+#include <string>
 
 namespace top { namespace data {
 
@@ -63,6 +66,7 @@ uint64_t xlightunit_action_t::get_receipt_id() const {
     }
     return 0;
 }
+
 base::xtable_shortid_t xlightunit_action_t::get_receipt_id_self_tableid()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);
     if (!value.empty()) {
@@ -84,6 +88,15 @@ uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
         return base::xstring_utl::touint64(value);
     }
     return 0;
+}
+
+bool xlightunit_action_t::get_not_need_confirm() const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_FLAGS);
+    if (!value.empty()) {
+        auto flags = (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        return flags & XTX_NOT_NEED_CONFIRM_FLAG_MASK;
+    }
+    return false;
 }
 
 std::string xlightunit_action_t::get_action_result_property(const std::string & key) const {

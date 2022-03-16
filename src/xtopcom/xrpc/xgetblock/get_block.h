@@ -82,7 +82,7 @@ public:
         REGISTER_QUERY_METHOD(getLatestBlock);
         REGISTER_QUERY_METHOD(getLatestFullBlock);
         REGISTER_QUERY_METHOD(getBlockByHeight);
-
+        REGISTER_QUERY_METHOD(getBlocksByHeight);
         REGISTER_QUERY_METHOD(getSyncNeighbors);
         // REGISTER_QUERY_METHOD(get_sync_overview);
         // REGISTER_QUERY_METHOD(get_sync_detail_all_table);
@@ -102,12 +102,14 @@ public:
         return rsp;
     }
     xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
+    xJson::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
     void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
     void getLatestBlock();
     void getLatestFullBlock();
     void getBlockByHeight();
+    void getBlocksByHeight();
     void getAccount();
     uint64_t get_timer_height() const;
     void getTimerInfo();
@@ -120,7 +122,7 @@ public:
     xJson::Value parse_tx(xtransaction_t * tx_ptr, const std::string & version);
     int parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & version, xJson::Value& result_json);
     xJson::Value parse_action(const xaction_t & action);
-    xJson::Value get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version);
+    xJson::Value get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & send_txinfo, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version, bool is_confirm, uint64_t send_height);
     void getRecs();
     void getZecs();
     void getEdges();

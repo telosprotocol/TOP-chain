@@ -146,7 +146,7 @@ int32_t xtransaction_context_t::exec() {
     ret = check();
     if (ret) {
         xwarn("[global_trace][unit_service][tx consensus][exec check][fail]%s error:%s",
-            m_trans->get_digest_hex_str().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+            m_trans->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
         return ret;
     }
 
@@ -154,33 +154,33 @@ int32_t xtransaction_context_t::exec() {
         ret = source_action_exec();
         if (ret) {
             xwarn("[global_trace][unit_service][tx consensus][tx exec source action][fail]%s error:%s",
-                m_trans->get_digest_hex_str().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+                m_trans->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xdbg("[global_trace][unit_service][tx consensus][tx exec source action][success]%s transaction type:%d",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_tx_subtype());
+            xinfo("[global_trace][unit_service][tx consensus][tx exec source action][success]%s",
+                m_trans->dump().c_str());
         }
     }
     if (m_trans->is_self_tx() || m_trans->is_recv_tx()) {
         ret = target_action_exec();
         if (ret) {
             xwarn("[global_trace][unit_service][tx consensus][tx exec target action][fail]%s action_name:%s error:%s",
-                m_trans->get_digest_hex_str().c_str(), m_trans_obj->get_function_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+                m_trans->dump().c_str(), m_trans_obj->get_function_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xdbg("[global_trace][unit_service][tx consensus][tx exec target action][success]%s action_name:%s transaction type:%d",
-                m_trans->get_digest_hex_str().c_str(), m_trans_obj->get_function_name().c_str(), m_trans->get_tx_subtype());
+            xinfo("[global_trace][unit_service][tx consensus][tx exec target action][success]%s action_name:%s",
+                m_trans->dump().c_str(), m_trans_obj->get_function_name().c_str());
         }
     }
     if (m_trans->is_confirm_tx()) {
         ret = source_confirm_action_exec();
         if (ret) {
             xwarn("[global_trace][unit_service][tx consensus][tx exec source confirm action][fail]%s error:%s",
-                m_trans->get_digest_hex_str().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+                m_trans->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xdbg("[global_trace][unit_service][tx consensus][tx exec source confirm action][success]%s transaction type:%d",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_tx_subtype());
+            xinfo("[global_trace][unit_service][tx consensus][tx exec source confirm action][success]%s",
+                m_trans->dump().c_str());
         }
     }
 
@@ -285,7 +285,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
     auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
-        if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
+        if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1 && !m_trans->get_not_need_confirm()) {
             ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
         } else {
             if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
@@ -303,7 +303,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
 }
 
 int32_t xtransaction_transfer::source_confirm_fee_exec() {
-    if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1) {
+    if (m_trans->get_transaction()->get_tx_version() == xtransaction_version_1 && !m_trans->get_not_need_confirm()) {
         return xtransaction_face_t::source_confirm_fee_exec();
     } else {
         return 0;

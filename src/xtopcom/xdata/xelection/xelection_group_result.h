@@ -11,6 +11,7 @@
 #include "xcommon/xversion.h"
 #include "xdata/xelection/xelection_info.h"
 #include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xlegacy/xelection_group_result.h"
 
 #include <cstdint>
 #include <limits>
@@ -162,6 +163,8 @@ public:
 
     void
     normalize() noexcept;
+
+    legacy::xelection_group_result_t legacy() const;
 
 private:
     void

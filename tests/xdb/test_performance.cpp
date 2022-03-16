@@ -6,6 +6,8 @@
 #include "xbase/xutl.h"
 #include "xdb/xdb.h"
 #include "xdb/xdb_factory.h"
+#include "xdb/xdb_face.h"
+#include "xvledger/xvdbkey.h"
 
 using namespace top::db;
 using namespace std;
@@ -17,7 +19,7 @@ protected:
     void SetUp() override {
         string db_dir = DB_NAME;
         remove(db_dir.c_str());
-		xset_log_level(enum_xlog_level_error);
+		//xset_log_level(enum_xlog_level_error);
     }
 
     void TearDown() override {
@@ -533,3 +535,145 @@ TEST_F(test_performance, db_write_and_delete_6_BENCH) {
     }       
 }
 
+TEST_F(test_performance, db_write_single_path) {
+    xinfo("db_write_single_path start:"); 
+    string db_dir[2] = {"./db_single/", "./db_single_2/"};
+    for (int j = 0; j < 2; j++) {   
+        std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir[j]);
+        ASSERT_NE(db, nullptr);
+        uint32_t count = 20001;
+        std::string value(2048, 'A');
+        int64_t begin = top::base::xtime_utl::gmttime_ms();
+        for (uint32_t i=0; i < count; i++) {
+            std::string keyStr = std::to_string(i);
+            db->write(keyStr, value);
+            if ((i % 1000000) == 0) {
+               db->GetDBMemStatus();
+            }
+        }
+        int64_t end = top::base::xtime_utl::gmttime_ms();
+        std::cout << db_dir[j] << " db_write_single_path count:" << count << " time(ms):" << end-begin << " qps:" << 1.0*count/(end-begin)*1000 << std::endl;
+        xinfo("db_dir %s db_write_single_path count: %ld time(ms): %ld qps: %lf ." ,db_dir[j].c_str(), count, end-begin ,   1.0*count/(end-begin)*1000);
+    }
+    
+}
+
+TEST_F(test_performance, db_read_single_path) {
+    string db_dir[2] = {"./db_single/",  "./db_single_2/"};
+    for (int j = 0; j < 2; j++) {   
+        std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir[j]);
+        ASSERT_NE(db, nullptr);
+       
+        uint32_t count = 20001;
+        std::string value;
+        int64_t begin = top::base::xtime_utl::gmttime_ms();
+        for (uint32_t i=0; i < count; i++) {
+            std::string keyStr = std::to_string(i);
+            if (!db->read(keyStr, value)) {
+			    std::cout << "read fail"<<std::endl;
+                 break;
+            }
+            if ((i % 1000000) == 0) {
+               db->GetDBMemStatus();
+            }
+        }
+        int64_t end = top::base::xtime_utl::gmttime_ms();
+        std::cout << db_dir[j] << " db_read_single_path count:" << count << " time(ms):" << end-begin << " qps:" << 1.0*count/(end-begin)*1000 << std::endl;
+        xinfo("db_dir %s db_read_single_path count: %ld time(ms): %ld qps: %lf ." ,db_dir[j].c_str() , count, end-begin ,   1.0*count/(end-begin)*1000);
+    }
+ 
+}
+
+
+TEST_F(test_performance, db_write_mult_path) {
+    std::string db_dir = "./db_mult";
+    std::string key_db_path[2] = { "./db_mult_db_1", "./db_mult_db_2"};
+    int path_num = 2;
+    std::vector<top::db::xdb_path_t> db_data_paths;
+    for (int i = 0; i < path_num; i++) {
+        uint64_t key_db_size = 0;
+        key_db_size = 10L << 30 << i;
+        db_data_paths.emplace_back(key_db_path[i], key_db_size); 
+    }
+  
+    std::shared_ptr< top::db::xdb_face_t> db = top::db::xdb_factory_t::instance(db_dir, db_data_paths);
+    ASSERT_NE(db, nullptr);
+
+	int64_t begin = top::base::xtime_utl::gmttime_ms();
+	uint32_t count = 20001;
+	string key;
+	std::string value(2048, 'A');
+	for (uint32_t i=0; i < count; i++) {
+        std::string keyStr = std::to_string(i);
+        db->write(keyStr, value);
+        if ((i % 1000000) == 0) {
+            db->GetDBMemStatus();
+        }
+	}
+    int64_t end = top::base::xtime_utl::gmttime_ms();
+    std::cout << "db_write_mult_path count:" << count << " time(ms):" << end-begin << " qps:" << 1.0*count/(end-begin)*1000 << std::endl;
+    xinfo("db_dir %s db_write_mult_path count: %ld time(ms): %ld qps: %lf ." ,db_dir.c_str(), count, end-begin ,  1.0*count/(end-begin)*1000);
+}
+
+TEST_F(test_performance, db_read_mult_path) {
+    std::string db_dir = "./db_mult";
+    std::string key_db_path[2] = { "./db_mult_db_1", "./db_mult_db_2"};
+    int path_num = 2;
+    std::vector<top::db::xdb_path_t> db_data_paths;
+    for (int i = 0; i < path_num; i++) {
+        uint64_t key_db_size = 0;
+        key_db_size = 10L << 30 << i;
+        db_data_paths.emplace_back(key_db_path[i], key_db_size); 
+    }
+  
+    std::shared_ptr< top::db::xdb_face_t> db = top::db::xdb_factory_t::instance(db_dir, db_data_paths);
+    ASSERT_NE(db, nullptr);
+
+	int64_t begin = top::base::xtime_utl::gmttime_ms();
+	uint32_t count = 20001;
+    std::string result;
+	for (uint32_t i=0; i < count; i++) {
+        std::string keyStr = std::to_string(i);
+        if (!db->read(keyStr, result)) {
+            std::cout << "read fail"<<std::endl;
+            break;
+        }
+        if ((i % 1000000) == 0) {
+            db->GetDBMemStatus();
+        }
+	}
+	int64_t end = top::base::xtime_utl::gmttime_ms();
+	std::cout << "db_read_mult_path count:" << count << " time(ms):" << end-begin << " qps:" << 1.0*count/(end-begin)*1000 << std::endl;
+    xinfo("db_dir %s db_read_mult_path count: %ld time(ms): %ld qps: %lf ." ,db_dir.c_str(), count, end-begin ,  1.0*count/(end-begin)*1000);
+}
+
+
+TEST_F(test_performance, db_test_db_compactions) {
+    string db_dir[4] = {"./db_single_default/", "./db_single_high_compress/", "./db_single_bottom_compress/", "./db_single_no_compress/"};
+    for (size_t i = 0; i < 4; i++) {
+        remove(db_dir[i].c_str());
+    }
+
+    for (int j = 0; j < 4; j++) {   
+         int db_kinds = xdb_kind_kvdb;
+        if(j > 0){
+            db_kinds |= (xdb_kind_high_compress << (j-1));
+        }
+        std::shared_ptr<xdb_face_t> db = xdb_factory_t::create(db_kinds, db_dir[j]);
+        ASSERT_NE(db, nullptr);
+       
+        uint32_t count = 2000;
+        std::string value(2048, 'A');
+        int64_t begin = top::base::xtime_utl::gmttime_ms();
+        for (uint32_t i=0; i < count; i++) {
+            std::string keyStr = top::base::xvdbkey_t::create_prunable_tx_key(std::to_string(i+1000000000));
+            if (!db->write(keyStr, value)) {
+			    std::cout << "read fail"<<std::endl;
+                 break;
+            }
+        }
+        int64_t end = top::base::xtime_utl::gmttime_ms();
+        std::cout << db_dir[j] << " db_read_single_path count:" << count << " time(ms):" << end-begin << " qps:" << 1.0*count/(end-begin)*1000 << std::endl;
+        xinfo("db_dir %s db_read_single_path count: %ld time(ms): %ld qps: %lf ." ,db_dir[j].c_str() , count, end-begin ,   1.0*count/(end-begin)*1000);
+    }
+}

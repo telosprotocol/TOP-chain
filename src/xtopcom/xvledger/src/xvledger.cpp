@@ -7,7 +7,11 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xmetrics/xmetrics.h"
-
+#include "json/value.h"
+#include "json/reader.h"
+#include "json/writer.h"
+#include <fstream>
+#include <sstream>
 #ifdef DEBUG
     #define DEBUG_XVLEDGER
 #endif
@@ -196,6 +200,8 @@ namespace top
             if(NULL == plugin)
                 return false;
             
+            uint64_t new_highest_cert_height = 0;
+            
             std::string vmeta_bin;
             bool update_success = false;
             if(NULL != plugin->get_block_meta())
@@ -203,9 +209,12 @@ namespace top
                 xauto_lock<xspinlock_t> locker(get_spin_lock());
                 xvactmeta_t * meta_ptr = get_meta();
                 update_success = meta_ptr->set_block_meta(*plugin->get_block_meta());
+                new_highest_cert_height = meta_ptr->_highest_cert_block_height;
                 if(update_success)
                 {
                     if(  (meta_ptr->get_modified_count() > enum_account_save_meta_interval)
+                       ||(is_table_address() && new_highest_cert_height >= (meta_ptr->get_highest_saved_block_height() + enum_account_save_meta_interval) )
+                       ||(!is_table_address() && new_highest_cert_height >= (meta_ptr->get_highest_saved_block_height() + enum_account_save_meta_offset) )
                        ||(meta_ptr->_highest_commit_block_height <= 2) )//froce save to db for the first 3 blocks
                     {
                         m_meta_ptr->update_meta_process_id(base::xvchain_t::instance().get_current_process_id());
@@ -214,7 +223,13 @@ namespace top
                     }
                 }
             }
-            save_meta(vmeta_bin);
+            
+            bool result = save_meta(vmeta_bin);
+            if(result)
+            {
+                //update_highest_saved_block_height safe to call without lock
+                get_meta()->update_highest_saved_block_height(new_highest_cert_height);
+            }
             return update_success;
         }
            
@@ -419,7 +434,7 @@ namespace top
                     return false;
                 }
             }
-            return true;
+            return false;
         }
         
         bool  xvaccountobj_t::save_meta(bool carry_process_id)
@@ -441,11 +456,13 @@ namespace top
                 }
             }
             
-            if(vmeta_bin.empty() == false)
+            bool result = save_meta(vmeta_bin);
+            if(result)
             {
-                return save_meta(vmeta_bin);
+                //update_highest_saved_block_height safe to call without lock
+                get_meta()->update_highest_saved_block_height(get_meta()->_highest_cert_block_height);
             }
-            return true;
+            return result;
         }
     
         xauto_ptr<xvactplugin_t> xvaccountobj_t::get_plugin(enum_xvaccount_plugin_type plugin_type)
@@ -1586,6 +1603,59 @@ namespace top
             else
                 m_is_auto_prune = 0;
         }
-    
+
+        void    xvchain_t::get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind)
+        {
+            int db_kind = top::db::xdb_kind_kvdb;
+            std::vector<db::xdb_path_t> db_data_paths;
+            std::string extra_config = get_data_dir_path();
+            if(extra_config.empty()) {
+                extra_config = ".extra_conf.json"; 
+            } else {
+                extra_config += "/.extra_conf.json"; 
+            }
+
+            std::ifstream keyfile(extra_config, std::ios::in);
+            xinfo("xvchain_t:get_db_path  extra_config %s", extra_config.c_str());
+            if (keyfile) {
+                xJson::Value key_info_js;
+                std::stringstream buffer;
+                buffer << keyfile.rdbuf();
+                keyfile.close();
+                std::string key_info = buffer.str();
+                xJson::Reader reader;
+                reader.parse(key_info, key_info_js);
+
+                //get db kind
+                std::string db_compress = key_info_js["db_compress"].asString();
+                if (db_compress == "high_compress") {
+                    db_kind |= top::db::xdb_kind_high_compress;
+                } else if (db_compress == "no_compress" ) {
+                    db_kind |= top::db::xdb_kind_no_compress;
+                } else if (db_compress == "bottom_compress" ) {
+                    db_kind |= top::db::xdb_kind_bottom_compress;
+                }
+                //get db path
+                if (key_info_js["db_path_num"] > 1) {   
+                    int db_path_num  = key_info_js["db_path_num"].asInt();
+                    for (int i = 0; i < db_path_num; i++) {
+                        std::string key_db_path = "db_path_" + std::to_string(i+1);
+                        std::string key_db_size = "db_path_size_" + std::to_string(i+1);
+                        std::string db_path_result =  key_info_js[key_db_path].asString();
+                        uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
+                        if (db_path_result.empty() || db_size_result < 1) {
+                            db_path_num = 1;
+                            xwarn("xvchain_t::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
+                            break;
+                        }
+                        xinfo("xvchain_t::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
+                        db_data_paths.emplace_back(db_path_result, db_size_result);
+                    }
+                }
+            }
+            extra_db_path = db_data_paths;
+            extra_db_kind = db_kind;
+        }
+
     };//end of namespace of base
 };//end of namespace of top

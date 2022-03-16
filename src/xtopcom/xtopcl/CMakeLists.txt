@@ -50,7 +50,7 @@ endif()
 
 # SET TARGET
 add_library(xtopcl STATIC ${cppsdk_src})
-#add_dependencies(xtopcl xxbase xdata xcrypto xelect_net)
+add_dependencies(xtopcl xconfig xdata xxbase xelect_net)
 target_include_directories(xtopcl  PUBLIC   ${PROJ_DIR}/include
                                             ${PROJ_DIR}/include/base
                                             ${PROJ_DIR}/include/network
@@ -58,5 +58,5 @@ target_include_directories(xtopcl  PUBLIC   ${PROJ_DIR}/include
                                             ${PROJ_DIR}/include/web
                                             ${PROJ_DIR}/include/xtop
 )
-target_link_libraries(xtopcl PRIVATE ${LINK_ARGS} xxbase xdata xelect_net jsoncpp)
+target_link_libraries(xtopcl PRIVATE ${LINK_ARGS} xconfig xdata xelect_net xxbase jsoncpp)
 

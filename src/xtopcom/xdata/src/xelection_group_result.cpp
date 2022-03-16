@@ -9,6 +9,9 @@
 #include "xbasic/xutility.h"
 #include "xdata/xerror/xerror.h"
 
+#include <functional>
+#include <iterator>
+
 NS_BEG3(top, data, election)
 
 bool xtop_election_group_result::operator==(xtop_election_group_result const & other) const noexcept {
@@ -293,6 +296,23 @@ void xtop_election_group_result::do_clear(common::xslot_id_t const & slot_id) {
     assert(!broadcast(slot_id));
     assert(m_nodes.find(slot_id) != std::end(m_nodes));
     m_nodes[slot_id].clear();
+}
+
+legacy::xelection_group_result_t xtop_election_group_result::legacy() const {
+    legacy::xelection_group_result_t r;
+    r.timestamp(m_timestamp);
+    r.start_time(m_start_time);
+    r.group_version(m_group_version);
+    r.associated_group_version(m_associated_group_version);
+    r.cluster_version(m_cluster_version);
+    r.election_committee_version(m_election_committee_version);
+    r.associated_group_id(m_associated_group_id);
+
+    std::transform(std::begin(m_nodes), std::end(m_nodes), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xelection_group_result_t::value_type {
+        return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
+    });
+
+    return r;
 }
 
 NS_END3

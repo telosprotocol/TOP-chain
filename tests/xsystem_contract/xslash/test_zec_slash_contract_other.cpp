@@ -15,7 +15,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_face.h"
 
 #include "xchain_upgrade/xchain_data_galileo.h"
@@ -42,6 +42,14 @@ using namespace top::xvm::xcontract;
 using json = nlohmann::json;
 
 std::string shard_table_statistic_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
+static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
+    auto account_string = account_prefix + std::to_string(index);
+    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH - account_string.length(), 'x');
+    }
+    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH);
+    return common::xaccount_address_t{account_string};
+}
 class test_zec_slash_contract_other: public xzec_slash_info_contract, public testing::Test {
 public:
     test_zec_slash_contract_other(): xzec_slash_info_contract{common::xnetwork_id_t{0}}{};
@@ -107,13 +115,13 @@ TEST_F(test_zec_slash_contract_other, zec_setup_reset_data) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
     std::vector<std::pair<std::string, std::string>> db_kv_131;
     auto slash_property_json_parse = json::parse(top::chain_data::stake_property_json);
 
-    auto data = slash_property_json_parse.at(sys_contract_zec_slash_info_addr).at(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+    auto data = slash_property_json_parse.at(sys_contract_zec_slash_info_addr).at(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     for (auto _p = data.begin(); _p != data.end(); ++_p)
     {
         db_kv_131.push_back(std::make_pair(base::xstring_utl::base64_decode(_p.key()), base::xstring_utl::base64_decode(_p.value())));
@@ -129,16 +137,16 @@ TEST_F(test_zec_slash_contract_other, zec_slash_info_summarize) {
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
     xunqualified_node_info_t  node_info;
     for (auto i = 0; i < 5; ++i) {
         xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;
         node_content.subset_count = i + 1;
-        node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
-        node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
+        node_info.auditor_info[build_account_address("T00000auditor", i)] = node_content;
+        node_info.validator_info[build_account_address("T00000validator", i)] = node_content;
     }
 
     base::xstream_t target_stream(base::xcontext_t::instance());
@@ -161,12 +169,12 @@ TEST_F(test_zec_slash_contract_other, zec_slash_do_slash) {
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
-    m_zec_slash_account_ctx_ptr->map_set(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, "SLASH_DELETE_PROPERTY", "false");
-    m_zec_slash_account_ctx_ptr->map_set(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, "LAST_SLASH_TIME", "0");
-    m_zec_slash_account_ctx_ptr->map_set(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, "SLASH_TABLE_ROUND", "0");
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+    m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
+    m_zec_slash_account_ctx_ptr->map_set(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, "SLASH_DELETE_PROPERTY", "false");
+    m_zec_slash_account_ctx_ptr->map_set(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, "LAST_SLASH_TIME", "0");
+    m_zec_slash_account_ctx_ptr->map_set(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, "SLASH_TABLE_ROUND", "0");
 
     auto const time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
     auto trx_ptr = do_unqualified_node_slash(time_interval + 1);

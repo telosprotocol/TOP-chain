@@ -294,7 +294,7 @@ public:
     GetProposalCmd();
     virtual ~GetProposalCmd();
     virtual void decode(const std::string & params, task_info * info) override;
-    std::vector<std::string> _cur_param_names = {"account_addr", "node_account_addr"};
+    std::vector<std::string> _cur_param_names = {"account_addr", "proposal_id"};
 };
 
 class StandbysInfoCmd : public protocol {

@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <string>
 #include "xbasic/xoptional.hpp"
 #include "xchain_upgrade_type.h"
+
+#include <cstdint>
 
 namespace top {
     namespace chain_fork {
@@ -29,11 +30,11 @@ namespace top {
             static bool is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept;
 
         public:
-            static void    init();
+            static void init();
             static xchain_fork_config_t const & get_chain_fork_config() noexcept {return m_fork_config;}
 
         private:
-            static xchain_fork_config_t    m_fork_config;
+            static xchain_fork_config_t m_fork_config;
         };
         using xchain_fork_config_center_t = xtop_chain_fork_config_center;
     }

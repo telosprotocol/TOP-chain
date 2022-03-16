@@ -17,7 +17,7 @@
 // #include "xblockstore/xblockstore_face.h"
 // #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 // #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
-// #include "xstake/xstake_algorithm.h"
+// #include "xstake/xdata_structures.h"
 
 // #define private public
 // #include "xvm/xvm_service.h"

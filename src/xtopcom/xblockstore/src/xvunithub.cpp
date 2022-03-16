@@ -422,6 +422,18 @@ namespace top
             return account_obj->get_latest_committed_block_height();
         }
 
+        uint64_t xvblockstore_impl::get_latest_locked_block_height(const base::xvaccount_t & account, const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_locked_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_cert_block_height(const base::xvaccount_t & account, const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_cert_block_height();
+        }
+
         uint64_t xvblockstore_impl::get_latest_connected_block_height(const base::xvaccount_t & account,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
@@ -933,7 +945,7 @@ namespace top
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_recv)
             {
                 base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_recv);
-                if(!txindex)
+                if(txindex == nullptr)
                 {
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
@@ -943,7 +955,7 @@ namespace top
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
             {
                 base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_confirm);
-                if(!txindex)
+                if(txindex == nullptr)
                 {
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;

@@ -6,6 +6,9 @@
 
 #include "xbasic/xutility.h"
 
+#include <functional>
+#include <iterator>
+
 NS_BEG3(top, data, election)
 
 bool xtop_standby_network_storage_result::activated_state() const {
@@ -33,7 +36,7 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result() 
     for (auto const & p : m_results) {
         auto const & node_id = get<common::xnode_id_t const>(p);
         auto const & standby_node_info = get<election::xstandby_node_info_t>(p);
-        if (m_mainnet_activated || standby_node_info.is_genesis_node) {
+        if (m_mainnet_activated || standby_node_info.genesis) {
             for (auto const & stake : standby_node_info.stake_container) {
                 auto const & node_type = get<common::xnode_type_t const>(stake);
                 standby_network_result.result_of(node_type).insert(std::make_pair(node_id, standby_node_info));
@@ -59,31 +62,11 @@ std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_netw
     if (m_results.find(value.first) == m_results.end() || m_results[value.first] == value.second) {
         return m_results.insert(value);
     }
-    for (auto & _stake : value.second.stake_container) {
-        m_results.at(value.first).stake_container[top::get<common::xnode_type_t const>(_stake)] = top::get<uint64_t>(_stake);
-    }
-    return std::make_pair(m_results.find(value.first), true);
-}
-
-std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_network_storage_result::insert(value_type && value) {
-    if (m_results.find(value.first) == m_results.end() || m_results[value.first] == value.second) {
-        return m_results.insert(std::move(value));
-    }
-    for (auto & _stake : value.second.stake_container) {
-        m_results.at(value.first).stake_container[top::get<common::xnode_type_t const>(_stake)] = top::get<uint64_t>(_stake);
-    }
-    return std::make_pair(m_results.find(value.first), true);
-}
-
-std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_network_storage_result::insert2(value_type const & value) {
-    if (m_results.find(value.first) == m_results.end() || m_results[value.first] == value.second) {
-        return m_results.insert(value);
-    }
     m_results.at(value.first) = value.second;
     return std::make_pair(m_results.find(value.first), true);
 }
 
-std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_network_storage_result::insert2(value_type && value) {
+std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_network_storage_result::insert(value_type && value) {
     if (m_results.find(value.first) == m_results.end() || m_results[value.first] == value.second) {
         return m_results.insert(std::move(value));
     }
@@ -156,6 +139,17 @@ xtop_standby_network_storage_result::iterator xtop_standby_network_storage_resul
 
 xtop_standby_network_storage_result::size_type xtop_standby_network_storage_result::erase(key_type const & key) {
     return m_results.erase(key);
+}
+
+legacy::xstandby_network_storage_result_t xtop_standby_network_storage_result::legacy() const {
+    legacy::xstandby_network_storage_result_t r;
+    r.set_activate_state(activated_state());
+
+    std::transform(
+        std::begin(m_results), std::end(m_results), std::inserter(r, std::end(r)), [](value_type const & input) -> legacy::xstandby_network_storage_result_t::value_type {
+            return {top::get<key_type const>(input), top::get<mapped_type>(input).legacy()};
+    });
+    return r;
 }
 
 NS_END3

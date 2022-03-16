@@ -69,11 +69,11 @@ bool ServiceType::operator<(ServiceType const &other) const {
     return m_type < other.value();
 }
 
-bool ServiceType::IsNewer(ServiceType const &other, int _value) const {
+bool ServiceType::IsNewer(ServiceType const &other) const {
     if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type))
         return false;
     if (BROADCAST_HEIGHT(other.value()) == BROADCAST_HEIGHT(m_type)) {
-        if ((m_type & 0x1FFFFFULL) >= ((other.value() & 0x1FFFFFULL) + _value))
+        if ((m_type & 0x1FFFFFULL) > ((other.value() & 0x1FFFFFULL)))
             return true;
     }
     return false;

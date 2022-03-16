@@ -4,24 +4,24 @@
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
-#include "xvledger/xvblock.h"
-#include "xvledger/xvledger.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
-#include "xdata/xtableblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
-#include "xdata/xfull_tableblock.h"
+#include "xdata/xtableblock.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
-#include "xstake/xstake_algorithm.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
 #include "xtxexecutor/xtransaction_fee.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
 
@@ -152,7 +152,7 @@ void get_block_handle::getGeneralInfos() {
     auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
     j["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
     std::map<std::string, std::string> ms;
-    m_store->map_copy_get(sys_contract_zec_reward_addr, xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, ms);
+    m_store->map_copy_get(sys_contract_zec_reward_addr, data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, ms);
     if (!ms.empty()) {
         j["total_issuance"] = (xJson::UInt64)base::xstring_utl::touint64(ms["total"]);
     }
@@ -218,7 +218,7 @@ void get_block_handle::getIssuanceDetail() {
             for (auto m : workloads) {
                 auto detail = m.second;
                 base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-                xstake::cluster_workload_t workload;
+                data::system_contract::cluster_workload_t workload;
                 workload.serialize_from(stream);
                 xJson::Value jn;
                 jn["cluster_total_workload"] = workload.cluster_total_workload;
@@ -243,11 +243,14 @@ void get_block_handle::getIssuanceDetail() {
     xJson::Value j;
 
     std::string xissue_detail_str;
-    if (m_store->get_string_property(sys_contract_zec_reward_addr, height, xstake::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
-        xwarn("[grpc::getIssuanceDetail] contract_address： %s, height: %llu, property_name: %s", sys_contract_zec_reward_addr, height, xstake::XPROPERTY_REWARD_DETAIL);
+    if (m_store->get_string_property(sys_contract_zec_reward_addr, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
+        xwarn("[grpc::getIssuanceDetail] contract_address： %s, height: %llu, property_name: %s",
+              sys_contract_zec_reward_addr,
+              height,
+              data::system_contract::XPROPERTY_REWARD_DETAIL);
         return;
     }
-    xstake::xissue_detail issue_detail;
+    data::system_contract::xissue_detail issue_detail;
     if (issue_detail.from_string(xissue_detail_str) <= 0) {
         xwarn("[grpc::getIssuanceDetail] deserialize failed");
     }
@@ -282,11 +285,12 @@ void get_block_handle::getIssuanceDetail() {
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
     std::map<std::string, std::string> contract_auditor_votes;
-    if (m_store->get_map_property(sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, xstake::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
+    if (m_store->get_map_property(
+            sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
         xwarn("[grpc::getIssuanceDetail] contract_address： %s, height: %llu, property_name: %s",
               sys_contract_zec_vote_addr,
               issue_detail.m_zec_vote_contract_height,
-              xstake::XPORPERTY_CONTRACT_TICKETS_KEY);
+              data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY);
     }
     xJson::Value jvt;
     for (auto const & table_vote : contract_auditor_votes) {
@@ -304,28 +308,28 @@ void get_block_handle::getIssuanceDetail() {
     jv["table_votes"] = jvt;
     xJson::Value jw1;
     common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_WORKLOAD_KEY;
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
     get_zec_workload_map(m_store, contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw1);
     jv["auditor_workloads"] = jw1[prop_name];
     xJson::Value jw2;
-    prop_name = xstake::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
+    prop_name = data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
     get_zec_workload_map(m_store, contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw2);
     jv["validator_workloads"] = jw2[prop_name];
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
-        ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_edge_reward % xstake::REWARD_PRECISION)
-           << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_archive_reward % xstake::REWARD_PRECISION)
-           << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_validator_reward % xstake::REWARD_PRECISION)
-           << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_auditor_reward % xstake::REWARD_PRECISION)
-           << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION)
-           << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_self_reward % xstake::REWARD_PRECISION);
+        ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_edge_reward % data::system_contract::REWARD_PRECISION)
+           << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_archive_reward % data::system_contract::REWARD_PRECISION)
+           << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % data::system_contract::REWARD_PRECISION)
+           << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
+           << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION)
+           << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_vote_reward % data::system_contract::REWARD_PRECISION)
+           << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_self_reward % data::system_contract::REWARD_PRECISION);
         jr[node_reward.first] = ss.str();
     }
     jv["node_rewards"] = jr;
@@ -453,13 +457,35 @@ void get_block_handle::set_unlock_token_info(xJson::Value & j, const xaction_t &
 void get_block_handle::set_create_sub_account_info(xJson::Value & j, const xaction_t & action) {
 }
 
-xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version) {
+xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & send_txinfo, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version, bool is_confirm, uint64_t send_height) {
     xJson::Value jv;
     if (account.empty()) {
         return jv;
     }
 
     base::xvaccount_t _account_vaddress(account);
+
+    if (is_confirm) {
+        if (send_txinfo != nullptr && send_txinfo->get_not_need_confirm()) {
+            xdbg("get_block_handle::get_tx_exec_result tx not need confirm,tx:%s", tx_ptr->dump().c_str());
+            jv["height"] = static_cast<xJson::UInt64>(send_height);
+            if (rpc_version == RPC_VERSION_V2) {
+                jv["account"] = account;
+            }
+            jv["used_gas"] = 0;
+            jv["used_deposit"] = 0;
+            if (recv_txinfo != nullptr) {
+                jv["recv_tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+                jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+            }
+            return jv;
+        }
+
+        if (block_height == 0) {
+            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address does not exist or block height does not exist"};
+        }
+    }
+
     auto vb = m_block_store->load_block_object(_account_vaddress, block_height, 0, true, metrics::blockstore_access_from_rpc_get_unit);
     auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
     if (block_ptr == nullptr) {
@@ -478,11 +504,12 @@ xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, u
             jv["used_deposit"] = tx_info->get_used_deposit();
         }
         if (tx_info->is_send_tx()) {
-            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2)) {
+            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2 || tx_info->get_not_need_confirm())) {
                 jv["used_deposit"] = tx_info->get_used_deposit();
             } else {
                 jv["used_deposit"] = 0;
             }
+            send_txinfo = tx_info;
         }
         if (tx_info->is_confirm_tx()) {
             jv["used_deposit"] = tx_info->get_used_deposit();
@@ -544,15 +571,17 @@ int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_
         tx_ptr.attach(tx);
 
         const xtx_exec_json_key jk(rpc_version);
+        xlightunit_tx_info_ptr_t send_txinfo = nullptr;
         xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
+        auto send_height = tx_store_ptr->get_send_block_height();
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
-            cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, recv_txinfo, rpc_version);
+            cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
             auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
             cons[jk.m_send]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
-            cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, recv_txinfo, rpc_version);
+            cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
         }
-        cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, recv_txinfo, rpc_version);
+        cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, true, send_height);
         result_json["tx_consensus_state"] = cons;
 
         update_tx_state(result_json, cons, rpc_version);
@@ -848,22 +877,29 @@ void get_block_handle::getStandbys() {
 void get_block_handle::queryNodeInfo() {
     xJson::Value jv;
     std::string contract_addr = sys_contract_rec_registration_addr;
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_REG_KEY;
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_REG_KEY;
     query_account_property(jv, contract_addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     m_js_rsp["value"] = jv[prop_name];
 }
 
 void get_block_handle::queryNodeReward() {
     xJson::Value jv;
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
     std::string target = m_js_req["node_account_addr"].asString();
+
+    //add top address check
+    if (xverifier::xtx_utl::address_is_valid(target) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
+
     m_js_rsp["value"] = parse_sharding_reward(target, prop_name);
 }
 
 xJson::Value get_block_handle::parse_sharding_reward(const std::string & target, const std::string & prop_name) {
     xJson::Value jv;
     if (target == "") {
-        if (prop_name == xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY) {
+        if (prop_name == data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY) {
             for (size_t i = 0; i < enum_vbucket_has_tables_count; ++i) {
                 auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, i);
                 xdbg("target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
@@ -881,7 +917,7 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
                 auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, i);
                 xJson::Value j;
                 for (int sub_map_no = 1; sub_map_no <= 4; sub_map_no++) {
-                    std::string prop_name = std::string(xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE) + "-" + std::to_string(sub_map_no);
+                    std::string prop_name = std::string(data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE) + "-" + std::to_string(sub_map_no);
                     xdbg("[get_block_handle::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
                     query_account_property(j, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
                     auto tmp = j[prop_name];
@@ -905,6 +941,11 @@ xJson::Value get_block_handle::parse_sharding_reward(const std::string & target,
 
 void get_block_handle::getLatestBlock() {
     std::string owner = m_js_req["account_addr"].asString();
+    // add top address check
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     auto vblock = m_block_store->get_latest_committed_block(owner, metrics::blockstore_access_from_rpc_get_block_committed_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (owner == sys_contract_zec_slash_info_addr) {
@@ -925,6 +966,11 @@ void get_block_handle::getLatestBlock() {
 
 void get_block_handle::getLatestFullBlock() {
     std::string owner = m_js_req["account_addr"].asString();
+    // add top address check
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     auto vblock = m_block_store->get_latest_committed_full_block(owner, metrics::blockstore_access_from_rpc_get_block_full_block);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (bp) {
@@ -946,10 +992,10 @@ void get_block_handle::getLatestFullBlock() {
 
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
-    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
-    //     set_result(INVALID_ACCOUNT);
-    //     return;
-    // }
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     uint64_t height = m_js_req["height"].asUInt64();
     if (owner == sys_contract_zec_slash_info_addr) {
         std::error_code ec;
@@ -968,13 +1014,46 @@ void get_block_handle::getBlockByHeight() {
     }
 }
 
+void get_block_handle::getBlocksByHeight() {
+    std::string type = m_js_req["type"].asString();
+    std::string owner = m_js_req["account_addr"].asString();
+    uint64_t height = m_js_req["height"].asUInt64();
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
+    std::string version = m_js_req["version"].asString();
+    if (version.empty()) {
+        version = RPC_VERSION_V1;
+    }
+    xJson::Value value;
+    base::xvaccount_t _owner_vaddress(owner);
+    if (type == "last") {
+        uint64_t lastHeight = m_block_store->get_latest_cert_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, lastHeight, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblocks = vblock_vector.get_vector();
+        for (base::xvblock_t * vblock : vblocks) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+            value.append(get_blocks_json(bp, version));
+        }
+    } else {
+        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, height, metrics::blockstore_access_from_rpc_get_block_by_height);
+        auto vblocks = vblock_vector.get_vector();
+        for (base::xvblock_t * vblock : vblocks) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+            value.append(get_blocks_json(bp, version));
+        }
+    }
+    m_js_rsp["value"] = value;
+}
+
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
-    // if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
-    //     set_result(INVALID_ACCOUNT);
-    //     return;
-    // }
+    if (xverifier::xtx_utl::address_is_valid(owner) != xverifier::xverifier_error::xverifier_success) {
+        set_result(INVALID_ACCOUNT);
+        return;
+    }
     std::string version = m_js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
@@ -1124,32 +1203,30 @@ bool is_prop_name_already_set_property(const std::string & prop_name) {
 }
 
 bool is_prop_name_not_set_property(const std::string & prop_name) {
-    static std::set<std::string> property_names = {
-        xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY,
-        xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY,
-        xstake::XPORPERTY_CONTRACT_REG_KEY,
-        xstake::XPORPERTY_CONTRACT_TICKETS_KEY,
-        xstake::XPORPERTY_CONTRACT_WORKLOAD_KEY,
-        xstake::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY,
-        xstake::XPORPERTY_CONTRACT_TASK_KEY,
-        xstake::XPORPERTY_CONTRACT_VOTES_KEY1,
-        xstake::XPORPERTY_CONTRACT_VOTES_KEY2,
-        xstake::XPORPERTY_CONTRACT_VOTES_KEY3,
-        xstake::XPORPERTY_CONTRACT_VOTES_KEY4,
-        xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1,
-        xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2,
-        xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3,
-        xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4,
-        xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY,
-        xstake::XPORPERTY_CONTRACT_REFUND_KEY,
-        xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE,
-        xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY,
-        xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY,
-        xstake::XPROPERTY_CONTRACT_SLASH_INFO_KEY,
-        xstake::XPROPERTY_REWARD_DETAIL,
-        PROPOSAL_MAP_ID,
-        VOTE_MAP_ID
-    };
+    static std::set<std::string> property_names = {data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY,
+                                                   data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_REG_KEY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_TASK_KEY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY1,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY2,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY3,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY4,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3,
+                                                   data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4,
+                                                   data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY,
+                                                   data::system_contract::XPORPERTY_CONTRACT_REFUND_KEY,
+                                                   data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE,
+                                                   data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY,
+                                                   data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY,
+                                                   data::system_contract::XPROPERTY_CONTRACT_SLASH_INFO_KEY,
+                                                   data::system_contract::XPROPERTY_REWARD_DETAIL,
+                                                   PROPOSAL_MAP_ID,
+                                                   VOTE_MAP_ID};
 
     auto iter = property_names.find(prop_name);
     if (iter != property_names.end()) {
@@ -1275,13 +1352,13 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
 
 void get_block_handle::set_accumulated_issuance_yearly(xJson::Value & j, const std::string & value) {
     xJson::Value jv;
-    xstake::xaccumulated_reward_record record;
+    data::system_contract::xaccumulated_reward_record record;
     xstream_t stream(xcontext_t::instance(), (uint8_t *)value.c_str(), (uint32_t)value.size());
     record.serialize_from(stream);
     jv["last_issuance_time"] = (xJson::UInt64)record.last_issuance_time;
-    jv["issued_until_last_year_end"] = (xJson::UInt64) static_cast<uint64_t>(record.issued_until_last_year_end / xstake::REWARD_PRECISION);
-    jv["issued_until_last_year_end_decimals"] = (xJson::UInt) static_cast<uint32_t>(record.issued_until_last_year_end % xstake::REWARD_PRECISION);
-    j[xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY] = jv;
+    jv["issued_until_last_year_end"] = (xJson::UInt64) static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION);
+    jv["issued_until_last_year_end_decimals"] = (xJson::UInt) static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION);
+    j[data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY] = jv;
 }
 
 void get_block_handle::set_unqualified_node_map(xJson::Value & j, std::map<std::string, std::string> const & ms) {
@@ -1317,7 +1394,7 @@ void get_block_handle::set_unqualified_node_map(xJson::Value & j, std::map<std::
 }
 
 void get_block_handle::set_unqualified_slash_info_map(xJson::Value & j, std::map<std::string, std::string> const & ms) {
-    xstake::xslash_info s_info;
+    data::system_contract::xslash_info s_info;
     for (auto const & m : ms) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1511,6 +1588,45 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp, const std::string &
 
     root["body"] = body;
 
+    return root;
+}
+
+xJson::Value get_block_handle::get_blocks_json(xblock_t * bp, const std::string & rpc_version) {
+    xJson::Value root;
+    if (bp == nullptr) {
+        return root;
+    }
+
+    if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+        // genesis empty non-stored block, should not return
+        return root;
+    }
+
+    // load input for raw tx get
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {
+        xassert(false);  // db block should always load input success
+        return root;
+    }
+
+    set_shared_info(root, bp);
+
+    xJson::Value header;
+    set_header_info(header, bp);
+    root["header"] = header;
+
+    xJson::Value body;
+    set_body_info(body, bp, rpc_version);
+
+    root["body"] = body;
+    if (bp->check_block_flag(base::enum_xvblock_flag_committed)) {
+        root["status"] = "committed";
+    } else if (bp->check_block_flag(base::enum_xvblock_flag_locked)) {
+        root["status"] = "locked";
+    } else if (bp->check_block_flag(base::enum_xvblock_flag_authenticated)) {
+        root["status"] = "cert";
+    } else {
+        root["status"] = "unknown";
+    }
     return root;
 }
 

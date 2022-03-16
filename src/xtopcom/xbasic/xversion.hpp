@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xenable_to_string.h"
 #include "xbasic/xhashable.hpp"
 
 #include <cassert>
@@ -28,7 +27,6 @@ using xbad_version_access_t = xtop_bad_version_access;
 
 template <typename TagT, typename ValueT>
 class xtop_epoch final : public xhashable_t<xtop_epoch<TagT, std::size_t>>
-                         , public xenable_to_string_t<xtop_epoch<TagT, ValueT>>
 {
     XSTATIC_ASSERT(std::is_integral<ValueT>::value);
 
@@ -329,7 +327,7 @@ public:
     }
 
     std::string
-    to_string() const override {
+    to_string() const {
         if (has_value()) {
             return std::to_string(m_value);
         }

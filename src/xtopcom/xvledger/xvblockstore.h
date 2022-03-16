@@ -164,6 +164,8 @@ namespace top
             virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account,const int atag = 0)  = 0; // full block with committed status, genesis is a full block
             virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account,const int atag = 0)      = 0; //better performance for batch operations
             virtual uint64_t get_latest_committed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_latest_locked_block_height(const base::xvaccount_t & account, const int atag = 0) = 0;
+            virtual uint64_t get_latest_cert_block_height(const base::xvaccount_t & account, const int atag = 0) = 0;
             virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) = 0;
@@ -188,6 +190,7 @@ namespace top
             virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag = 0) = 0;
             virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load,const int atag = 0) = 0;
             virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block,bool ask_full_load,const int atag = 0) = 0; //just return the highest viewid of matched flag
+            //virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account, const uint64_t height, bool ask_full_load, const int atag = 0) = 0;
             virtual std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const enum_transaction_subtype type,const int atag = 0) = 0;
 
             virtual bool                  load_block_input(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;

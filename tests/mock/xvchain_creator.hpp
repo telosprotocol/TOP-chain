@@ -8,6 +8,7 @@
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvledger.h"
+#include "xmbus/xmessage_bus.h"
 #include "tests/mock/xtestdb.hpp"
 #include "xbasic/xtimer_driver.h"
 #include "xbasic/xasio_io_context_wrapper.h"

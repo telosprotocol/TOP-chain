@@ -3,22 +3,39 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xerror/xerror.h"
 
 #include <cassert>
 
 NS_BEG3(top, state_accessor, properties)
 
-xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name, xproperty_category_t category) noexcept
+xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name, xproperty_category_t category)
     : m_name{ std::move(name) }, m_category{ category } {
     assert(!m_name.empty());
     assert(category != xproperty_category_t::invalid);
+    // if (m_name.front() == category_character(m_category)) {
+    //     m_name = m_name.substr(1);
+        if (m_name.empty()) {
+            assert(false);
+            top::error::throw_error(state_accessor::error::xerrc_t::empty_property_name);
+        }
+    // }
 }
 
+xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name) : xtop_typeless_property_identifier {std::move(name), xproperty_category_t::user} {
+}
+
+xtop_typeless_property_identifier::xtop_typeless_property_identifier(xtop_property_identifier const & property_identifier)
+    : xtop_typeless_property_identifier{property_identifier.name(), property_identifier.category()} {
+}
+
+
 std::string xtop_typeless_property_identifier::full_name() const {
-    if (m_fullname.empty()) {
-        m_fullname = category_character(m_category) + m_name;
-    }
-    return m_fullname;
+    // if (m_fullname.empty()) {
+    //     m_fullname = category_character(m_category) + m_name;
+    // }
+    // return m_fullname;
+    return m_name;
 }
 
 std::string const & xtop_typeless_property_identifier::name() const {
@@ -53,6 +70,7 @@ xproperty_type_t xtop_property_identifier::type() const noexcept {
 bool xtop_property_identifier::operator==(xtop_property_identifier const & other) const {
     auto const same = xtypeless_property_identifier_t::operator==(other);
     if (same && m_type != other.m_type) {
+        assert(false);
         top::error::throw_error({ error::xerrc_t::invalid_property_type }, "property id: " + full_name() + " type mismatch (" + to_string(m_type) + " vs " + to_string(other.m_type) + ")");
     }
 

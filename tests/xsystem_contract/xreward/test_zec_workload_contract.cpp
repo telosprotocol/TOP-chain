@@ -10,6 +10,7 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
 #include "xvm/manager/xcontract_manager.h"
@@ -244,7 +245,7 @@ public:
         return res;
     }
 
-    void test_accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
+    void test_accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload) {
         // auto node_service = contract::xcontract_manager_t::instance().get_node_service();
         auto workload_per_tableblock = 2;
         auto workload_per_tx = 1;
@@ -271,7 +272,7 @@ public:
                     if (workload > 0) {
                         auto it2 = group_workload.find(group_addr);
                         if (it2 == group_workload.end()) {
-                            xgroup_workload_t group_workload_info;
+                            data::system_contract::xgroup_workload_t group_workload_info;
                             auto ret = group_workload.insert(std::make_pair(group_addr, group_workload_info));
                             XCONTRACT_ENSURE(ret.second, "insert workload failed");
                             it2 = ret.first;
@@ -284,7 +285,8 @@ public:
         }
     }
 
-    void test_accumulate_workload_with_fullblock(common::xlogic_time_t const timestamp, std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
+    void test_accumulate_workload_with_fullblock(common::xlogic_time_t const timestamp,
+                                                 std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload) {
         // XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "accumulate_total_time");
         // xinfo("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] enum_vbucket_has_tables_count %d, timestamp: %llu", enum_vledger_const::enum_vbucket_has_tables_count, timestamp);
         int64_t table_pledge_balance_change_tgas = 0;
@@ -294,7 +296,7 @@ public:
             auto table_owner = common::xaccount_address_t{xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, i)};
             {
                 std::string value_str;
-                m_store->map_get(sys_contract_zec_workload_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
+                m_store->map_get(sys_contract_zec_workload_addr, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
                 if (!value_str.empty()) {
                     uint32_t last_read_height = base::xstring_utl::touint64(value_str);
                 }
@@ -315,14 +317,14 @@ public:
             }
             {
                 std::string value_str;
-                m_store->map_get(sys_contract_zec_workload_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
+                m_store->map_get(sys_contract_zec_workload_addr, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
                 if (!value_str.empty()) {
                     uint32_t last_read_height = base::xstring_utl::touint64(value_str);
                 }
             }
             {
                 std::string value_str;
-                m_store->map_get(sys_contract_zec_workload_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
+                m_store->map_get(sys_contract_zec_workload_addr, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
                 if (!value_str.empty()) {
                     uint32_t last_read_height = base::xstring_utl::touint64(value_str);
                 }
@@ -419,7 +421,7 @@ TEST_F(xtest_workload_contract_v2_t, test_construct_data){
 TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload){
     construct_data();
     auto const stat_data = data;
-    std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> group_workload;
     test_accumulate_workload(stat_data, group_workload);
     EXPECT_EQ(group_workload.size(), 3);
     common::xgroup_address_t group_addr7(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{7});
@@ -461,7 +463,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload_with_fullblock) {
     clock_t start, end;
     {
         start = clock();
-        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+        std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> group_workload;
         test_accumulate_workload_with_fullblock(20, group_workload);
         end = clock();
         clock_t interval = end - start;
@@ -477,7 +479,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload_with_fullblock) {
     }
     {
         start = clock();
-        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+        std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> group_workload;
         test_accumulate_workload_with_fullblock(50, group_workload);
         end = clock();
         clock_t interval = end - start;
@@ -485,7 +487,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload_with_fullblock) {
     }
     {
         start = clock();
-        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+        std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> group_workload;
         test_accumulate_workload_with_fullblock(100, group_workload);
         end = clock();
         clock_t interval = end - start;
@@ -1057,7 +1059,7 @@ using xtest_workload_contract_t = xtop_test_workload_contract;
 
 TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
     int64_t total_tgas = 0;
-    std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> group_workload;
     // construct data
     std::map<std::string, uint32_t> w1;
     uint64_t w1_total = 0;
@@ -1065,7 +1067,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
         w1[std::to_string(j)] = j;
         w1_total += j;
     }
-    xgroup_workload_t g1;
+    data::system_contract::xgroup_workload_t g1;
     g1.cluster_total_workload = w1_total;
     g1.m_leader_count = w1;
     group_workload[m_group_addr1] = g1;
@@ -1075,7 +1077,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
     stream << uint64_t(10);
     stream << uint64_t(10);
     std::string group_workload_upload_str = std::string((char *)stream.data(), stream.size());
-    xactivation_record record;
+    data::system_contract::xactivation_record record;
     record.activated = 1;
     xstream_t stream_active(xcontext_t::instance());
     record.serialize_to(stream_active);
@@ -1089,19 +1091,19 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
     m_workload_contract.handle_workload_str(active_str, group_workload_upload_str, workload_str, tgas_str, height_str, map_str, tgas_str_new);
     EXPECT_EQ(tgas_str_new, "20");
 
-    std::map<common::xgroup_address_t, xgroup_workload_t> map;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> map;
     for (auto it = map_str.begin(); it != map_str.end(); it++) {
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)it->first.data(), it->first.size());
         common::xgroup_address_t group_address;
         key_stream >> group_address;
         xstream_t value_stream(xcontext_t::instance(), (uint8_t *)it->second.data(), it->second.size());
-        xgroup_workload_t total_workload;
+        data::system_contract::xgroup_workload_t total_workload;
         total_workload.serialize_from(value_stream);
         map[group_address] = total_workload;
     }
     // verify
     {
-        xgroup_workload_t total_workload = map[m_group_addr1];
+        data::system_contract::xgroup_workload_t total_workload = map[m_group_addr1];
         // EXPECT_EQ(total_workload.cluster_total_workload, );
         EXPECT_EQ(total_workload.m_leader_count.size(), 10);
         for (auto i = 1; i <= 10; i++) {
@@ -1128,7 +1130,7 @@ TEST_F(xtest_workload_contract_t, upload_workload_internal) {
         w1[std::to_string(j)] = j;
         w1_total += j;
     }
-    xgroup_workload_t g1;
+    data::system_contract::xgroup_workload_t g1;
     g1.cluster_total_workload = w1_total;
     g1.m_leader_count = w1;
     m_workload_contract.set_workload(m_group_addr1, g1);
@@ -1142,9 +1144,9 @@ TEST_F(xtest_workload_contract_t, upload_workload_internal) {
     stream >> group_workload_upload_str;
 
     xstream_t stream2(xcontext_t::instance(), (uint8_t *)group_workload_upload_str.data(), group_workload_upload_str.size());
-    std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> group_workload;
     MAP_OBJECT_DESERIALZE2(stream2, group_workload);
-    xgroup_workload_t total_workload = group_workload[m_group_addr1];
+    data::system_contract::xgroup_workload_t total_workload = group_workload[m_group_addr1];
         
     EXPECT_EQ(total_workload.m_leader_count.size(), 10);
     for (auto i = 1; i <= 10; i++) {

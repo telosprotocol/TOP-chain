@@ -6,6 +6,7 @@
 
 #include "xcommon/xip.h"
 #include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xlegacy/xelection_result.h"
 
 #include <map>
 #include <string>
@@ -78,6 +79,8 @@ public:
 
     size_type
     erase(key_type const & key);
+
+    legacy::xelection_result_t legacy() const;
 };
 using xelection_result_t = xtop_election_result;
 

@@ -2,11 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvledger/xvledger.h"
-#include "xstake/xstake_algorithm.h"
-#include "xdata/xgenesis_data.h"
 #include "xstore/xtgas_singleton.h"
+
+#include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xmetrics/xmetrics.h"
+#include "xvledger/xvledger.h"
 
 NS_BEG2(top, store)
 
@@ -30,7 +32,7 @@ bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height
         xassert(false);
         return false;
     }
-    auto propobj = bstate->load_string_var(xstake::XPORPERTY_CONTRACT_TGAS_KEY);
+    auto propobj = bstate->load_string_var(data::system_contract::XPORPERTY_CONTRACT_TGAS_KEY);
     if (propobj == nullptr) {
         xassert(false);
         return false;
@@ -86,7 +88,7 @@ bool xtgas_singleton::backup_get_total_lock_tgas_token(uint64_t timer_height, ui
         xwarn("xtgas_singleton::backup_get_total_lock_tgas_token can't load block. height=%ld", property_height);
         return false;
     }
-    auto propobj = bstate->load_string_var(xstake::XPORPERTY_CONTRACT_TGAS_KEY);
+    auto propobj = bstate->load_string_var(data::system_contract::XPORPERTY_CONTRACT_TGAS_KEY);
     if (propobj == nullptr) {
         xassert(false);
         return false;

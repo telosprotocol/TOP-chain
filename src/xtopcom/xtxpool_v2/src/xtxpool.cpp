@@ -5,6 +5,7 @@
 #include "xtxpool_v2/xtxpool.h"
 
 #include "xdata/xblocktool.h"
+#include "xdata/xnative_contract_address.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"
@@ -149,6 +150,14 @@ std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const xtxs_pack_pa
     return table->get_ready_txs(pack_para);
 }
 
+xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
+    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_pack_resource(pack_para);
+}
+
 const std::shared_ptr<xtx_entry> xtxpool_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
@@ -283,14 +292,14 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 //     }
 // }
 
-void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) {
+void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->get_account().c_str(), table_state->get_block_height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_state->get_account().c_str());
     if (table == nullptr) {
         return;
     }
-    m_para->get_receiptid_state_cache().update_table_receiptid_state(table_state->get_receiptid_state());
+    m_para->get_receiptid_state_cache().update_table_receiptid_state(property_prove_ptr, table_state->get_receiptid_state());
     table->update_table_state(table_state);
 }
 
@@ -370,8 +379,8 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     return true;
 }
 
-void xtxpool_t::update_peer_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    m_para->get_receiptid_state_cache().update_table_receiptid_state(receiptid_state);
+void xtxpool_t::update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    m_para->get_receiptid_state_cache().update_table_receiptid_state(property_prove_ptr, receiptid_state);
 }
 
 std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
@@ -414,6 +423,19 @@ xtransaction_ptr_t xtxpool_t::get_raw_tx(const std::string & account_addr, base:
     }
 
     return table->get_raw_tx(peer_table_sid, receipt_id);
+}
+
+const std::set<base::xtable_shortid_t> & xtxpool_t::get_all_table_sids() const {
+    return m_all_table_sids;
+}
+
+bool xtxpool_t::get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const {
+    auto table = get_txpool_table_by_addr(account);
+    if (table == nullptr) {
+        return xtxpool_error_account_not_in_charge;
+    }
+
+    return table->get_sender_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);
 }
 
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,

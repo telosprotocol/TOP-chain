@@ -12,6 +12,8 @@
 
 NS_BEG3(top, tests, election)
 
+common::xaccount_address_t build_account_address(size_t const i);
+
 class xtop_election_cache_data_accessor_fixture : public testing::Test {
 public:
     XDECLARE_DEFAULTED_DEFAULT_CONSTRUCTOR(xtop_election_cache_data_accessor_fixture);

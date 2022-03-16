@@ -195,6 +195,8 @@ namespace top
             if (ret) {
                 if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
                     return is_eth_valid();                
+                if (addr_type == base::enum_vaccount_addr_type_block_contract)
+                    return true;
                 std::string public_address;
                 ret =  base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
                 if (ret) {

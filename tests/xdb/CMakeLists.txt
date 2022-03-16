@@ -8,6 +8,7 @@ if (XDB_TYPE STREQUAL "ROCKSDB")
     target_link_libraries(xdb_test
         xdb
         xxbase
+        xvledger
         rocksdb zstd snappy bz2 z
         -lgtest
     )

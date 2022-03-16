@@ -74,6 +74,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     enum_xunit_tx_exec_status   get_last_action_exec_status() const;
     uint64_t                get_last_action_receipt_id() const;
     uint64_t                get_last_action_sender_confirmed_receipt_id() const;
+    data::xreceipt_data_t   get_last_action_receipt_data() const;
+    bool                    get_last_not_need_confirm() const;
 
  public:
     const xtransaction_exec_state_t & get_tx_execute_state() const {return m_execute_state;}
@@ -96,6 +98,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint64_t                get_receipt_clock() const {return get_prove_cert()->get_clock();}
     uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_gmtime();}
     bool                    is_receipt_valid() const {return m_receipt->is_valid();}
+    void                    set_receipt_data(data::xreceipt_data_t data) {return m_execute_state.set_receipt_data(data);}
+    bool                    get_not_need_confirm() const {return (is_self_tx() ? false : m_execute_state.get_not_need_confirm());}
 
  public:  // for debug use
     void                    set_push_pool_timestamp(uint64_t push_pool_timestamp) {m_push_pool_timestamp = push_pool_timestamp;};
@@ -103,6 +107,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
 
  public:
     xobject_ptr_t<base::xvqcert_t> get_receipt_prove_cert_and_account(std::string & account) const;
+    void                           set_not_need_confirm();
 
  private:
     void                    set_tx_subtype(enum_transaction_subtype _subtype);

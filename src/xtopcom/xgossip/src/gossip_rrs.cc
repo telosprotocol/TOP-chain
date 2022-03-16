@@ -39,13 +39,13 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         gossip_max_hop_num = message.gossip().max_hop_num();
     }
     if (gossip_max_hop_num <= message.hop_num()) {
-        xkinfo("[GossipRRS]message.type(%d) hop_num(%d) larger than gossip_max_hop_num(%d)", message.type(), hop_num, gossip_max_hop_num);
+        xwarn("[GossipRRS]message.type(%d) hop_num(%d) larger than gossip_max_hop_num(%d)", message.type(), hop_num, gossip_max_hop_num);
         return;
     }
 
     MessageKey msg_key(message.gossip().header_hash());
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipRRSStopTimes)) {
-        xkinfo("[GossipRRS]stop gossip for message.type(%d) stop_time(%d),hop_num(%d)", message.type(), kGossipRRSStopTimes, hop_num);
+        xdbg("[GossipRRS]stop gossip for message.type(%d) stop_time(%d),hop_num(%d)", message.type(), kGossipRRSStopTimes, hop_num);
         return;
     }
 
@@ -64,7 +64,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
 
         for (auto iter = tmp_neighbors.begin(); iter != tmp_neighbors.end(); ++iter) {
             if ((*iter)->hash64 == 0) {
-                xkinfo("[GossipRRS]node:%s hash64 empty, invalid", HexEncode((*iter)->node_id).c_str());
+                xwarn("[GossipRRS]node:%s hash64 empty, invalid", HexEncode((*iter)->node_id).c_str());
                 continue;
             }
 
@@ -76,7 +76,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         }
 
         if (rest_random_neighbors.empty()) {
-            xkinfo("[GossipRRS]stop Broadcast, rest_random_neighbors empty, broadcast failed, msg.hop_num(%d), msg.type(%d)", message.hop_num(), message.type());
+            xwarn("[GossipRRS]stop Broadcast, rest_random_neighbors empty, broadcast failed, msg.hop_num(%d), msg.type(%d)", message.hop_num(), message.type());
             return;
         }
 
@@ -92,7 +92,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
             message.add_bloomfilter(bloomfilter_vec[i]);
         }
 
-        xkinfo("[GossipRRS][do_send] Broadcast %d neighbors msg header_hash:%s", rest_random_neighbors.size(), message.gossip().header_hash().c_str());
+        xdbg("[GossipRRS][do_send] Broadcast %d neighbors msg header_hash:%s", rest_random_neighbors.size(), message.gossip().header_hash().c_str());
         if (message.has_is_root() && message.is_root()) {
             MutableSend(message, rest_random_neighbors);
         } else {
@@ -115,7 +115,7 @@ void GossipRRS::BroadcastHash(transport::protobuf::RoutingMessage & message, std
     }
     std::vector<kadmlia::NodeInfoPtr> random_neighbors;
     random_neighbors = GetRandomNodes(neighbors, rrs_params_neighbour_num);
-    xkinfo("[GossipRRS][do_send] Broadcast %d neighbors only header_hash:%s", random_neighbors.size(), header_message.gossip().header_hash().c_str());
+    xdbg("[GossipRRS][do_send] Broadcast %d neighbors only header_hash:%s", random_neighbors.size(), header_message.gossip().header_hash().c_str());
     if (header_message.has_is_root() && header_message.is_root()) {
         header_message.clear_src_node_id();
         header_message.clear_des_node_id();

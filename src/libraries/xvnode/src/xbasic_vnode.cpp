@@ -10,12 +10,16 @@
 NS_BEG2(top, vnode)
 
 xtop_basic_vnode::xtop_basic_vnode(common::xnode_address_t address,
+                                   common::xminer_type_t miner_type,
+                                   bool genesis,
                                    common::xelection_round_t joined_election_round,
                                    observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept
   : m_vhost{vhost}
   , m_election_cache_data_accessor{election_cache_data_accessor}
   , m_address{std::move(address)}
+  , m_miner_type{miner_type}
+  , m_genesis{genesis}
   , m_joined_election_round{std::move(joined_election_round)} {
 }
 
@@ -27,6 +31,14 @@ common::xnode_address_t const & xtop_basic_vnode::address() const noexcept {
     return m_address;
 }
 
+common::xminer_type_t xtop_basic_vnode::miner_type() const noexcept {
+    return m_miner_type;
+}
+
+bool xtop_basic_vnode::genesis() const noexcept {
+    return m_genesis;
+}
+
 common::xelection_round_t const & xtop_basic_vnode::joined_election_round() const noexcept {
     return m_joined_election_round;
 }
@@ -35,14 +47,14 @@ void xtop_basic_vnode::broadcast(common::xip2_t const & broadcast_dst, vnetwork:
     assert(m_vhost != nullptr);
 
     if (!running()) {
-        ec = vnode::error::xerrc::vnode_is_not_running;
+        ec = vnode::error::xerrc_t::vnode_is_not_running;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
     if (!common::broadcast(broadcast_dst.network_id()) && !common::broadcast(broadcast_dst.zone_id()) && !common::broadcast(broadcast_dst.cluster_id()) &&
         !common::broadcast(broadcast_dst.group_id()) && !common::broadcast(broadcast_dst.slot_id())) {
-        ec = vnode::error::xerrc::invalid_address;
+        ec = vnode::error::xerrc_t::invalid_address;
         xwarn("%s %s. dst address is a broadcast address %s", ec.category().name(), ec.message().c_str(), broadcast_dst.to_string().c_str());
         return;
     }
@@ -58,14 +70,14 @@ void xtop_basic_vnode::send_to(common::xip2_t const & unicast_dst, vnetwork::xme
     assert(!ec);
 
     if (!running()) {
-        ec = vnode::error::xerrc::vnode_is_not_running;
+        ec = vnode::error::xerrc_t::vnode_is_not_running;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
 
     if (common::broadcast(unicast_dst.network_id()) || common::broadcast(unicast_dst.zone_id()) || common::broadcast(unicast_dst.cluster_id()) ||
         common::broadcast(unicast_dst.group_id()) || common::broadcast(unicast_dst.slot_id())) {
-        ec = vnode::error::xerrc::invalid_address;
+        ec = vnode::error::xerrc_t::invalid_address;
         xwarn("%s %s. dst address is a broadcast address %s", ec.category().name(), ec.message().c_str(), unicast_dst.to_string().c_str());
         return;
     }
@@ -80,7 +92,7 @@ void xtop_basic_vnode::send_to(common::xip2_t const & unicast_dst, vnetwork::xme
                                common::xaccount_election_address_t{dst_account_address, unicast_dst.slot_id()},
                                common::xlogic_epoch_t{unicast_dst.size(), unicast_dst.height()}};
     if (address().group_address() == to.group_address() && address().account_address() == to.account_address()) {
-        ec = error::xerrc::invalid_address;
+        ec = error::xerrc_t::invalid_address;
         return;
     }
 
@@ -94,7 +106,7 @@ common::xrotation_status_t xtop_basic_vnode::status() const noexcept {
     return rotation_status(m_vhost->last_logic_time());
 }
 
-std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & ec) const noexcept {
+std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & ec) const {
     assert(m_election_cache_data_accessor != nullptr);
     assert(!ec);
 
@@ -135,7 +147,7 @@ std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & e
     }
 }
 
-std::vector<common::xip2_t> xtop_basic_vnode::associated_parent_nodes_xip2(std::error_code & ec) const noexcept {
+std::vector<common::xip2_t> xtop_basic_vnode::associated_parent_nodes_xip2(std::error_code & ec) const {
     assert(!ec);
     assert(m_election_cache_data_accessor != nullptr);
 
@@ -176,7 +188,7 @@ std::vector<common::xip2_t> xtop_basic_vnode::associated_parent_nodes_xip2(std::
     }
 }
 
-std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const noexcept {
+std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const {
     assert(m_election_cache_data_accessor != nullptr);
     assert(!ec);
 
@@ -202,7 +214,7 @@ std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common
                                     return address.group_address().xip() == child_group_address.xip() && address.associated_blk_height() == child_group_xip2.height();
                                 });
     if (it == std::end(child_group_addresses)) {
-        ec = error::xerrc::invalid_address;
+        ec = error::xerrc_t::invalid_address;
         return {};
     }
 

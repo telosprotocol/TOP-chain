@@ -158,9 +158,9 @@ void EcNetcard::send_to(base::KadmliaKeyPtr const & send_kad_key,
 
     // point to point
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
-    // if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
-        // error code
-    // }
+    if (ec) {
+        xwarn("send fail. %s %s", ec.category().name(), ec.message().c_str());
+    }
     return;
 }
 
@@ -248,8 +248,8 @@ void EcNetcard::broadcast(base::KadmliaKeyPtr const & send_kad_key,
     pbft_message.set_data(vdata);
 
     // root broadcast
-    GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, ec);
-    // GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, ec);
+    // GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, ec);
+    GossipWithHeaderBlock(pbft_message, gossip::kGossipRRS, ec);
 #ifdef XENABLE_P2P_TEST
     if (!ec) {
         XMETRICS_PACKET_INFO("p2ptest_send_broadcast_info", MESSAGE_BASIC_INFO(pbft_message), MESSAGE_FEATURE(pbft_message), IS_ROOT_BROADCAST(pbft_message), NOW_TIME);
@@ -375,7 +375,7 @@ void EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pb
     pbft_message.clear_data();
 
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
-    if (!ec) {
+    if (ec) {
         xwarn("speard rumor fail. %s %s", ec.category().name(), ec.message().c_str());
     }
     return;

@@ -20,10 +20,14 @@ NS_BEG2(top, vnode)
 
 class xtop_basic_vnode : public xvnode_face_t {
 protected:
+    // std::shared_ptr<election::cache::xgroup_element_t> m_associated_group_element;
+
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
 
     common::xnode_address_t m_address;
+    common::xminer_type_t m_miner_type{common::xminer_type_t::invalid};
+    bool m_genesis{false};
     common::xelection_round_t m_joined_election_round;
 
     mutable std::mutex m_neighbors_xip2_mutex{};
@@ -42,6 +46,8 @@ protected:
     xtop_basic_vnode() = default;
 
     explicit xtop_basic_vnode(common::xnode_address_t address,
+                              common::xminer_type_t miner_type,
+                              bool genesis,
                               common::xelection_round_t joined_election_round,
                               observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept;
@@ -54,6 +60,8 @@ public:
     ~xtop_basic_vnode() = default;
 
     common::xnode_type_t type() const noexcept override;
+    common::xminer_type_t miner_type() const noexcept override;
+    bool genesis() const noexcept override;
     common::xnode_address_t const & address() const noexcept override;
 
     common::xelection_round_t const & joined_election_round() const noexcept override;
@@ -63,9 +71,9 @@ public:
 
     common::xrotation_status_t status() const noexcept override;
 
-    std::vector<common::xip2_t> neighbors_xip2(std::error_code & ec) const noexcept override;
-    std::vector<common::xip2_t> associated_parent_nodes_xip2(std::error_code & ec) const noexcept override;
-    std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const noexcept override;
+    std::vector<common::xip2_t> neighbors_xip2(std::error_code & ec) const override;
+    std::vector<common::xip2_t> associated_parent_nodes_xip2(std::error_code & ec) const override;
+    std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const override;
 
     //std::vector<common::xip2_t> associated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const override;
     //std::vector<common::xip2_t> nonassociated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const override;

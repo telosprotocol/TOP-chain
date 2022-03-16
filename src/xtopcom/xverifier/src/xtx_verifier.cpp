@@ -8,7 +8,7 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
@@ -29,8 +29,8 @@ int32_t xtx_verifier::verify_address(data::xtransaction_t const * trx) {
         return xverifier_error::xverifier_error_addr_invalid;
     }
 
-    if (xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(src_addr) ||
-        xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(dst_addr)) {
+    if (xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(src_addr, true) ||
+        xverifier_error::xverifier_success != xverifier::xtx_utl::address_is_valid(dst_addr, true)) {
         xwarn("[global_trace][xtx_verifier][address_verify][address invalid], tx:%s,%s,%s", trx->dump().c_str(), src_addr.c_str(), dst_addr.c_str());
         return  xverifier_error::xverifier_error_addr_invalid;
     }
@@ -130,7 +130,7 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
             check_success = true;
 #else
             assert(store != nullptr);
-            xpublic_key_t pub_key = top::xstake::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
+            xpublic_key_t pub_key = top::data::system_contract::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
             xdbg("[global_trace][xtx_verifier][verify_tx_signature][pub_key_sign_check], tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
             check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);

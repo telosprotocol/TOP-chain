@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "tests/xelection/xdummy_chain_timer.h"
+#include "tests/xelection/xtest_fixtures.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xaddress.h"
 #include "xdata/xelection/xelection_result_store.h"
@@ -20,6 +21,8 @@ using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
 using top::data::election::xelection_result_t;
 using top::data::election::xstandby_node_info_t;
+
+NS_BEG3(top, tests, election)
 
 TEST(xtest_committee_sharding_nodes, _) {
     top::common::xnetwork_id_t network_id{ top::common::xtopchain_network_id };
@@ -46,9 +49,7 @@ TEST(xtest_committee_sharding_nodes, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::rec, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
@@ -56,11 +57,13 @@ TEST(xtest_committee_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
-        group_result.insert(std::move(election_info_bundle));
+        auto r = group_result.insert(std::move(election_info_bundle));
+        ASSERT_TRUE(top::get<bool>(r));
     }
+    assert(group_result.size() == node_count);
 
     std::error_code ec;
     auto const & update_result = data_accessor.update_zone(zone_id, election_result_store, 0, ec);
@@ -83,7 +86,7 @@ TEST(xtest_committee_sharding_nodes, _) {
 
         ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
         ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(xnode_id_t{ std::to_string(i) }, top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
         ASSERT_EQ(committee_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
@@ -113,17 +116,15 @@ TEST(xtest_zec_sharding_nodes, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::zec, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -150,7 +151,7 @@ TEST(xtest_zec_sharding_nodes, _) {
 
         ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
         ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(xnode_id_t{ std::to_string(i) }, top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
         ASSERT_EQ(zec_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
@@ -180,17 +181,15 @@ TEST(xtest_edge_sharding_nodes, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::edge, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -217,7 +216,7 @@ TEST(xtest_edge_sharding_nodes, _) {
 
         ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
         ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(xnode_id_t{ std::to_string(i) }, top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
         ASSERT_EQ(edge_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
@@ -247,9 +246,7 @@ TEST(xtest_archive_sharding_nodes, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::storage_archive, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
@@ -257,7 +254,7 @@ TEST(xtest_archive_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -284,7 +281,7 @@ TEST(xtest_archive_sharding_nodes, _) {
 
         ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
         ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(xnode_id_t{ std::to_string(i) }, top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
         ASSERT_EQ(archive_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
@@ -324,17 +321,15 @@ TEST(xtest_consensus_sharding_nodes, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::consensus_auditor, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::advance;
-#endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.miner_type = top::common::xminer_type_t::advance;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i) });
+        election_info_bundle.node_id(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         auditor_group_result.insert(std::move(election_info_bundle));
@@ -346,9 +341,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
 #if defined XENABLE_TESTS
         standby_node_info.stake(xnode_type_t::consensus_validator, i);
 #endif
-#if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xminer_type_t::validator;
-#endif
+        standby_node_info.miner_type = top::common::xminer_type_t::validator;
         standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
@@ -356,7 +349,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{ std::to_string(i + node_count) });
+        election_info_bundle.node_id(build_account_address(i + node_count));
         election_info_bundle.election_info(std::move(new_election_info));
 
         validator_group_result.insert(std::move(election_info_bundle));
@@ -398,7 +391,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
 
                 ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
                 ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-                ASSERT_EQ(xnode_id_t{ std::to_string(i) }, top::get<top::data::xnode_info_t>(*it).address.node_id());
+                ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
                 ASSERT_EQ(auditor_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
             }
         } else {
@@ -407,9 +400,11 @@ TEST(xtest_consensus_sharding_nodes, _) {
 
                 ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
                 ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-                ASSERT_EQ(xnode_id_t{ std::to_string(i + node_count) }, top::get<top::data::xnode_info_t>(*it).address.node_id());
+                ASSERT_EQ(build_account_address(i + node_count), top::get<top::data::xnode_info_t>(*it).address.node_id());
                 ASSERT_EQ(validator_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
             }
         }
     }
 }
+
+NS_END3

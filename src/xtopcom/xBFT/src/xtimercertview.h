@@ -126,11 +126,16 @@ protected:
     // note: to return false may call parent'push_event_up,or stop further routing when return true
     virtual bool on_consensus_update(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
 
+private:
+    void    update_local_tc_block(base::xvblock_t *tc_block);
+    void    try_second_round_broadcast(uint64_t now_s);
 protected:
     uint16_t            m_nonce{};
     xvote_cache_t       m_vote_cache;
     base::xvblock_t     *m_latest_cert{};   // latest block
     uint64_t            m_last_send_time{};
+    uint64_t            m_latest_cert_gmt_time{0};
+    uint32_t            m_broadcast_round_notify{0};
 };
 
 NS_END2

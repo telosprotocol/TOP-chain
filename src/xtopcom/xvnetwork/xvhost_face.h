@@ -78,7 +78,7 @@ public:
     // handshake(xvnode_address_t const & src, std::vector<xvnode_address_t> const & seeds) = 0;
 
     /**
-     * @brief Send message.
+     * @brief [Deprecated] Send message.
      * @param message The message to be sent.
      * @param src The send address of the message.
      * @param dst The receive address of the message.
@@ -92,6 +92,7 @@ public:
     // virtual void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
     // virtual void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
 
+    virtual void send_to_through_frozen(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
     virtual void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
     virtual void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
 
@@ -141,6 +142,9 @@ public:
      * @return common::xlogic_time_t 
      */
     virtual common::xlogic_time_t last_logic_time() const noexcept = 0;
+
+    // virtual common::xminer_type_t miner_type() const noexcept = 0;
+    // virtual bool genesis() const noexcept = 0;
 };
 
 NS_END2

@@ -8,6 +8,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 #include "xdepends/include/asio/post.hpp"
 #include "xdepends/include/asio/thread_pool.hpp"
@@ -15,10 +16,14 @@
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xrpc/xgetblock/get_block.h"
-#include "xstake/xstake_algorithm.h"
+#include "xvledger/xvdbkey.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvledger/xvdbkey.h"
+#include "xdb/xdb_factory.h"
+#include "xvledger/xvaccount.h"
+#include "xbase/xhash.h"
+
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
@@ -29,7 +34,52 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     auto io_obj = std::make_shared<xbase_io_context_wrapper_t>();
     m_timer_driver = make_unique<xbase_timer_driver_t>(io_obj);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
-    m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
+
+    int db_path_num = 0;
+    std::vector<db::xdb_path_t> db_data_paths;
+    std::string extra_config = base::xvchain_t::instance().get_data_dir_path();
+    if(extra_config.empty()) {
+        extra_config = ".extra_conf.json"; 
+    } else {
+        extra_config += "/.extra_conf.json"; 
+    }
+    std::ifstream keyfile(extra_config, std::ios::in);
+    xinfo("xdb_export_tools_t::read db start extra_config %s", extra_config.c_str());
+    if (keyfile) {
+        xJson::Value key_info_js;
+        std::stringstream buffer;
+        buffer << keyfile.rdbuf();
+        keyfile.close();
+        std::string key_info = buffer.str();
+        xJson::Reader reader;
+        // ignore any error when parse
+        reader.parse(key_info, key_info_js);
+        if (key_info_js["db_path_num"] > 1) {   
+            db_path_num = key_info_js["db_path_num"].asInt();
+            for (int i = 0; i < db_path_num; i++) {
+                std::string key_db_path = "db_path_" + std::to_string(i+1);
+                std::string key_db_size = "db_path_size_" + std::to_string(i+1);
+                std::string db_path_result =  key_info_js[key_db_path].asString();
+                uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
+                if (db_path_result.empty() || db_size_result < 1) {
+                    db_path_num = 1;
+                    xwarn("xtop_application::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
+                    break;
+                }
+                xinfo("xtop_application::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
+                db_data_paths.emplace_back(db_path_result, db_size_result);
+            }
+        }
+    }
+    
+    std::shared_ptr<db::xdb_face_t> db;
+    if (db_path_num > 1)    {
+        db = db::xdb_factory_t::instance(db_path, db_data_paths);
+    } else {
+        db = db::xdb_factory_t::instance(db_path);
+    }
+    m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
+   // m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
@@ -208,6 +258,8 @@ void xdb_export_tools_t::query_tx_info(std::vector<std::string> const & tables, 
         asio::post(pool, std::bind(&xdb_export_tools_t::query_tx_info_internal, this, tables[i], start_timestamp, end_timestamp));
     }
     pool.join();
+
+    print_all_table_txinfo_to_file();
 }
 
 void xdb_export_tools_t::query_block_exist(std::string const & address, const uint64_t height) {
@@ -354,6 +406,11 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, const ui
 void xdb_export_tools_t::query_meta(std::vector<std::string> const & account_vec) {
     json root;
     for (auto const & account : account_vec) {
+        query_meta(account, root[account]);
+    }
+
+    auto const unit_account_vec = get_db_unit_accounts();
+    for (auto const & account : unit_account_vec) {
         query_meta(account, root[account]);
     }
     generate_json_file(std::string{"all_meta_data.json"}, root);
@@ -605,8 +662,8 @@ void xdb_export_tools_t::query_balance() {
     std::cout << "===> top reward issurance" << std::endl;
     auto reward_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{sys_contract_zec_reward_addr});
     auto reward_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(reward_vblock.get());
-    if (reward_bstate != nullptr && true == reward_bstate->find_property(xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
-        auto map = reward_bstate->load_string_map_var(xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
+    if (reward_bstate != nullptr && true == reward_bstate->find_property(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
+        auto map = reward_bstate->load_string_map_var(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
         std::cout << map["total"] << std::endl;
     } else {
         std::cerr << "load error!" << std::endl;
@@ -897,58 +954,30 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, st
     std::cout << table << " cp checkout finish!" << std::endl;
 }
 
-void xdb_export_tools_t::query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s, int init_e) {
-    int start = h_s;
-    int end = -1;
-    if (init_s != -1) {
-        start = init_s;
-    }
-    if (init_e != -1) {
-        end = init_e;
-    }
-    for (uint64_t h = h_s; h <= h_e; h++) {
-        auto vblock = m_blockstore->load_block_object(account, h, 0, false);
+void xdb_export_tools_t::query_sync_result(std::string const & account,  const uint64_t h_end, std::string & result) {
+    uint64_t  num = 0;
+    for(uint64_t index = 0; index <= h_end; index++) {
+        auto vblock = m_blockstore->load_block_object(account, index, base::enum_xvblock_flag_committed, false);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr) {
-            if (end != -1) {
-                if (start == end) {
-                    result += std::to_string(start) + ',';
-                } else {
-                    result += std::to_string(start) + '-' + std::to_string(end) + ',';
-                }
+            if(num != 0) {
+                result += std::to_string(index-num) + '-' + std::to_string(index-1) + ',';
+                num = 0;
             }
-            start = h + 1;
-            end = -1;
         } else {
-            end = h;
+            num++;
         }
-        if (h == h_e) {
-            if (end != -1) {
-                if (start == end) {
-                    result += std::to_string(start) + ',';
-                } else {
-                    result += std::to_string(start) + '-' + std::to_string(end) + ',';
-                }
-            }
-        }
+    }
+    if (num != 0) {
+        result +=  std::to_string(h_end-(num-1)) + '-' + std::to_string(h_end) ;
     }
 }
 
 void xdb_export_tools_t::query_sync_result(std::string const & account, json & result_json) {
     auto const block_height = m_blockstore->get_latest_committed_block_height(account);
-    auto const connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
-    if (connect_height > block_height) {
-        std::cout << account << " connect_height: " << connect_height << " > block_height: " << block_height << ", error" << std::endl;
-        result_json = "error";
-        return;
-    }
-    if (block_height == connect_height) {
-        result_json = "0-" + base::xstring_utl::tostring(block_height) + ",";
-    } else {
-        std::string result;
-        query_sync_result(account, connect_height + 1, block_height, result, 0, connect_height);
-        result_json = result;
-    }
+    std::string result;
+    query_sync_result(account, block_height, result);
+    result_json = result;
 }
 
 void xdb_export_tools_t::query_table_latest_fullblock(std::string const & account, json & j) {
@@ -979,7 +1008,7 @@ void xdb_export_tools_t::query_table_latest_fullblock(std::string const & accoun
         }
     }
     std::string s;
-    query_sync_result(account, height_full, height_commit, s);
+    query_sync_result(account, height_full, s);
     j["exist_block"] = s;
 }
 
@@ -1013,7 +1042,7 @@ json xdb_export_tools_t::set_txinfo_to_json(const tx_ext_t & send_txinfo, const 
     return tx;
 }
 
-void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {    
+void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {    
     // the second level timestamp of confirm block may less than send block
     uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp > send_txinfo.timestamp ? (confirm_txinfo.timestamp - send_txinfo.timestamp) : 0;
     // the timestamp of send block may less than the timestamp of tx fire_timestamp
@@ -1021,21 +1050,131 @@ void xdb_export_tools_t::set_table_txdelay_time(xdbtool_table_info_t & table_inf
     // the second level timestamp of confirm block may less than send block
     uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp > adjust_tx_fire_timestamp ? (confirm_txinfo.timestamp - adjust_tx_fire_timestamp) : 0;
 
-    table_info.total_confirm_time_from_send += delay_from_send_to_confirm;
-    if (delay_from_send_to_confirm > table_info.max_confirm_time_from_send) {
-        table_info.max_confirm_time_from_send = delay_from_send_to_confirm;
+    // total_confirm_time_from_send += delay_from_send_to_confirm;
+    if (delay_from_send_to_confirm > max_confirm_time_from_send) {
+        max_confirm_time_from_send = delay_from_send_to_confirm;
     }
-    table_info.total_confirm_time_from_fire += delay_from_fire_to_confirm;
-    if (delay_from_fire_to_confirm > table_info.max_confirm_time_from_fire) {
-        table_info.max_confirm_time_from_fire = delay_from_fire_to_confirm;
+    // total_confirm_time_from_fire += delay_from_fire_to_confirm;
+    if (delay_from_fire_to_confirm > max_confirm_time_from_fire) {
+        max_confirm_time_from_fire = delay_from_fire_to_confirm;
     }
-    xassert(table_info.total_confirm_time_from_fire >= table_info.total_confirm_time_from_send);
+    // xassert(total_confirm_time_from_fire >= total_confirm_time_from_send);
+}
+
+bool xdb_export_tools_t::xdbtool_all_table_info_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext) {
+    std::lock_guard<std::mutex> lck(m_lock);
+    if (subtype == enum_transaction_subtype_send) {
+        if (not_need_confirm) {
+            auto iter = recvonly.find(tx_ext.hash);
+            if (iter != recvonly.end()) {
+                pair_tx_ext = iter->second;
+                set_table_txdelay_time(tx_ext, iter->second);
+                recvonly.erase(tx_ext.hash);
+                // confirmedtx_num++;
+                return true;
+            } else {
+                sendonly[tx_ext.hash] = tx_ext;
+            }
+        } else {
+            sendonly[tx_ext.hash] = tx_ext;
+        }
+    } else if (subtype == enum_transaction_subtype_recv) {
+        if (not_need_confirm) {
+            auto iter = sendonly.find(tx_ext.hash);
+            if (iter != sendonly.end()) {
+                pair_tx_ext = iter->second;
+                set_table_txdelay_time(iter->second, tx_ext);
+                sendonly.erase(tx_ext.hash);
+                // confirmedtx_num++;
+                return true;
+            } else {
+                recvonly[tx_ext.hash] = tx_ext;
+            }
+        }
+    } else if (subtype == enum_transaction_subtype_confirm) {
+        auto iter = sendonly.find(tx_ext.hash);
+        if (iter != sendonly.end()) {
+            pair_tx_ext = iter->second;
+            set_table_txdelay_time(iter->second, tx_ext);
+            sendonly.erase(tx_ext.hash);
+            // confirmedtx_num++;
+            return true;
+        } else {
+            // may appear when missing table blocks
+            confirmonly[tx_ext.hash] = tx_ext;
+        }
+    }
+    return false;
+}
+
+void xdb_export_tools_t::print_all_table_txinfo_to_file() {
+    std::string info_file = m_outfile_folder + "all_tx_info.json";
+    std::string abnormal_file = m_outfile_folder + "all_tx_abnormal.json";
+    std::ofstream info_stream(info_file);
+    std::ofstream abnormal_stream(abnormal_file);
+
+    json j; // info json
+    j["send only detail"] = nullptr;
+    j["no need confirm recv only detail"] = nullptr;
+    j["confirmed only detail"] = nullptr;
+    j["multi detail"] = nullptr;
+
+    // int confirmedtx_num = 0;
+    uint64_t max_confirm_time_from_send = 0;
+    uint64_t max_confirm_time_from_fire = 0;
+    uint32_t send_only_count = 0;
+    uint32_t recv_only_count = 0;
+    uint32_t confirm_only_count = 0;
+    for (uint32_t i = 0; i < 32; i++) {
+        // confirmedtx_num += m_all_table_info[i].confirmedtx_num;
+        if (max_confirm_time_from_send < m_all_table_info[i].max_confirm_time_from_send) {
+            max_confirm_time_from_send = m_all_table_info[i].max_confirm_time_from_send;
+        }
+        if (max_confirm_time_from_fire < m_all_table_info[i].max_confirm_time_from_fire) {
+            max_confirm_time_from_fire = m_all_table_info[i].max_confirm_time_from_fire;
+        }
+        send_only_count += m_all_table_info[i].sendonly.size();
+        recv_only_count += m_all_table_info[i].recvonly.size();
+        confirm_only_count += m_all_table_info[i].confirmonly.size();
+
+        for (auto & v : m_all_table_info[i].sendonly) {
+            auto & txinfo = v.second;
+            j["send only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+        }
+        for (auto & v : m_all_table_info[i].recvonly) {
+            auto & txinfo = v.second;
+            j["no need confirm recv only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+        }
+        for (auto & v : m_all_table_info[i].confirmonly) {
+            auto & txinfo = v.second;
+            j["confirmed only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+        }
+    }
+    abnormal_stream << std::setw(4) << j << std::endl;
+
+    j.clear();
+    // j["confirmed count"] = confirmedtx_num;
+    j["send only count"] = send_only_count;
+    j["no need confirm recv only count"] = recv_only_count;
+    j["confirmed only count"] = confirm_only_count;
+    j["confirmed max time"] = max_confirm_time_from_send;
+    j["confirmed_from_fire max time"] = max_confirm_time_from_fire;
+    info_stream << std::setw(4) << j << std::endl;
+
+    info_stream.close();
+    abnormal_stream.close();
+}
+
+bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext) {
+    uint32_t r = (uint32_t)base::xhash64_t::digest(tx_ext.hash);
+    return m_all_table_info[r%32].all_table_set_txinfo(tx_ext, subtype, not_need_confirm, pair_tx_ext);
 }
 
 void xdb_export_tools_t::query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp) {
     xdbtool_table_info_t table_info;
-    std::map<std::string, tx_ext_t> sendonly;  // sendtx without confirmed
-    std::map<std::string, tx_ext_t> confirmonly;  // confirmtx without send
+    // std::map<std::string, tx_ext_t> sendonly;  // sendtx without confirmed
+    // std::map<std::string, tx_ext_t> recvonly;  // sendtx that not need confirm without recv
+    // std::map<std::string, tx_ext_t> confirmonly;  // confirmtx without send
     std::vector<tx_ext_t> multi_txs; // ERROR tx is multi packed in block
     std::map<std::string, uint16_t> tx_phase_count; // tx phase count for check multi txs statistic
 
@@ -1100,11 +1239,22 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                     }
                 }
             }
+
+            auto not_need_confirm = txaction.get_not_need_confirm();
+
+            bool is_cross_table_tx = false;
             // construct tx_ext info
             tx_ext_t tx_ext;
             if (tx_ptr != nullptr) {
                 tx_ext.src = tx_ptr->get_source_addr();
                 tx_ext.target = tx_ptr->get_target_addr();
+
+                base::xvaccount_t source_vaccount(tx_ext.src);
+                base::xvaccount_t target_vaccount(tx_ext.target);
+                if(source_vaccount.get_short_table_id() != target_vaccount.get_short_table_id()) {
+                    is_cross_table_tx == true;
+                }
+                
                 tx_ext.fire_timestamp = tx_ptr->get_fire_timestamp();
             }
             tx_ext.height = block->get_height();
@@ -1121,10 +1271,12 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
             }
             phase_count++;
             tx_phase_count[tx_ext.hash] = phase_count;
-            if ((phase_count > 1) && (type == enum_transaction_subtype_self || type == enum_transaction_subtype_send || type == enum_transaction_subtype_recv)) {
+            if ((phase_count > 1) && (type == enum_transaction_subtype_self || type == enum_transaction_subtype_send || (type == enum_transaction_subtype_recv && is_cross_table_tx))) {
                 multi_txs.push_back(tx_ext);
-            } else if (phase_count > 2 && (type == enum_transaction_subtype_confirm)) {
-                multi_txs.push_back(tx_ext);
+            } else if (phase_count > 2) {
+                if (((type == enum_transaction_subtype_confirm) && is_cross_table_tx) || (type == enum_transaction_subtype_recv && !is_cross_table_tx)) {
+                    multi_txs.push_back(tx_ext);
+                }
             }
             // statistic
             json j;
@@ -1134,21 +1286,30 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 normal_stream << std::setw(4) << j << std::endl;
             } else if (type == enum_transaction_subtype_send) {
                 table_info.sendtx_num++;
-                sendonly[tx_ext.hash] = tx_ext;
+                tx_ext_t pair_tx_ext;
+                bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
+                if (confirmed) {
+                    table_info.confirmedtx_num++;
+                    j[tx_ext.hash] = set_txinfo_to_json(tx_ext, pair_tx_ext);
+                    normal_stream << std::setw(4) << j << std::endl;
+                }
             } else if (type == enum_transaction_subtype_recv) {
                 table_info.recvtx_num++;
+                tx_ext_t pair_tx_ext;
+                bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
+                if (confirmed) {
+                    table_info.confirmedtx_num++;
+                    j[tx_ext.hash] = set_txinfo_to_json(pair_tx_ext, tx_ext);
+                    normal_stream << std::setw(4) << j << std::endl;
+                }
             } else if (type == enum_transaction_subtype_confirm) {
                 table_info.confirmtx_num++;
-                auto iter = sendonly.find(tx_ext.hash);
-                if (iter != sendonly.end()) {
-                    j[tx_ext.hash] = set_txinfo_to_json(iter->second, tx_ext);
-                    normal_stream << std::setw(4) << j << std::endl;
-                    sendonly.erase(tx_ext.hash);
-                    set_table_txdelay_time(table_info, iter->second, tx_ext);
+                tx_ext_t pair_tx_ext;
+                bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
+                if (confirmed) {
                     table_info.confirmedtx_num++;
-                } else {
-                    // may appear when missing table blocks
-                    confirmonly[tx_ext.hash] = tx_ext;
+                    j[tx_ext.hash] = set_txinfo_to_json(pair_tx_ext, tx_ext);
+                    normal_stream << std::setw(4) << j << std::endl;
                 }
             }
         }
@@ -1168,7 +1329,8 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
     j["table info"]["total self num"] = table_info.selftx_num;
     j["table info"]["total send num"] = table_info.sendtx_num;
     j["table info"]["total recv num"] = table_info.recvtx_num;
-    j["table info"]["total confirm num"] = table_info.confirmtx_num;
+    j["table info"]["total real confirm num"] = table_info.confirmtx_num;
+    j["table info"]["total confirm num"] = table_info.confirmedtx_num; // should modify with QA script at the same time!!!
     j["table info"]["total tx v1 num"] = table_info.tx_v1_num;
     j["table info"]["total tx v1 size"] = table_info.tx_v1_total_size;
     if (table_info.tx_v1_num != 0) {
@@ -1179,29 +1341,35 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
     if (table_info.tx_v2_num != 0) {
         j["table info"]["tx v2 avg size"] = table_info.tx_v2_total_size / table_info.tx_v2_num;
     }
-    j["confirmed conut"] = table_info.confirmedtx_num;
-    j["send only count"] = sendonly.size();
-    j["confirmed only count"] = confirmonly.size();
-    j["confirmed total time"] = table_info.total_confirm_time_from_send;
-    j["confirmed max time"] = table_info.max_confirm_time_from_send;
-    j["confirmed avg time"] = float(table_info.total_confirm_time_from_send) / table_info.confirmedtx_num;
-    j["confirmed_from_fire total time"] = table_info.total_confirm_time_from_fire;
-    j["confirmed_from_fire max time"] = table_info.max_confirm_time_from_fire;
-    j["confirmed_from_fire avg time"] = float(table_info.total_confirm_time_from_fire) / table_info.confirmedtx_num;
+
+    // j["confirmed conut"] = table_info.confirmedtx_num;
+    // j["send only count"] = sendonly.size();
+    // j["no need confirm recv only count"] = recvonly.size();
+    // j["confirmed only count"] = confirmonly.size();
+    // // j["confirmed total time"] = table_info.total_confirm_time_from_send;
+    // j["confirmed max time"] = table_info.max_confirm_time_from_send;
+    // // j["confirmed avg time"] = float(table_info.total_confirm_time_from_send) / table_info.confirmedtx_num;
+    // // j["confirmed_from_fire total time"] = table_info.total_confirm_time_from_fire;
+    // j["confirmed_from_fire max time"] = table_info.max_confirm_time_from_fire;
+    // // j["confirmed_from_fire avg time"] = float(table_info.total_confirm_time_from_fire) / table_info.confirmedtx_num;
     info_stream << std::setw(4) << j << std::endl;
     j.clear();
 
-    j["send only detail"] = nullptr;
-    j["confirmed only detail"] = nullptr;
+    // j["send only detail"] = nullptr;
+    // j["confirmed only detail"] = nullptr;
     j["multi detail"] = nullptr;
-    for (auto & v : sendonly) {
-        auto & txinfo = v.second;
-        j["send only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
-    }
-    for (auto & v : confirmonly) {
-        auto & txinfo = v.second;
-        j["confirmed only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
-    }
+    // for (auto & v : sendonly) {
+    //     auto & txinfo = v.second;
+    //     j["send only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+    // }
+    // for (auto & v : recvonly) {
+    //     auto & txinfo = v.second;
+    //     j["no need confirm recv only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+    // }
+    // for (auto & v : confirmonly) {
+    //     auto & txinfo = v.second;
+    //     j["confirmed only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+    // }
     for (auto & v : multi_txs) {
         j["multi detail"][v.hash] = set_txinfo_to_json(v);
     }
@@ -1632,4 +1800,9 @@ void xdb_export_tools_t::generate_common_file(std::string const & filename, std:
     std::cout << "===> " << name << " generated success!" << std::endl;
 }
 
+void xdb_export_tools_t::compact_db() {
+    std::string begin_key;
+    std::string end_key;
+    base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
+}
 NS_END2

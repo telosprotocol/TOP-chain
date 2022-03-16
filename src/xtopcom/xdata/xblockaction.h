@@ -9,14 +9,17 @@
 #include <vector>
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
+#include "xdata/xblock_paras.h"
+#include "xdata/xreceipt_data_store.h"
+#include "xdata/xtransaction.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xventity.h"
-#include "xdata/xtransaction.h"
-#include "xdata/xblock_paras.h"
+
 namespace top { namespace data {
 
+using xreceipt_data_t = xreceipt_data_store_t;
 // lightunit action is wrap for vaction, should not cache any members
 class xlightunit_action_t : public base::xvaction_t {
  protected:
@@ -48,6 +51,7 @@ class xlightunit_action_t : public base::xvaction_t {
     base::xtable_shortid_t      get_receipt_id_self_tableid()const;
     base::xtable_shortid_t      get_receipt_id_peer_tableid()const;
     uint64_t                    get_sender_confirmed_receipt_id() const;
+    bool                        get_not_need_confirm() const;
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;

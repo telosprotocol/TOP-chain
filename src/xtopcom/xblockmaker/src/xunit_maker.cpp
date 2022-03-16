@@ -147,16 +147,12 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
 
     uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
 
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, cs_para.get_clock());
     // send and self tx is filtered when matching fullunit limit
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(), is_forked);
-            if (!is_forked)
-                return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
         }
     }
 
@@ -164,10 +160,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_recv_tx()) {
         if (is_match_account_fullunit_recv_tx_limit(current_lightunit_count)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_fullunit_limit, 1);
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s,forked:%d",
-                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str(),is_forked);
-            if (!is_forked)
-                return false;
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
         }
     }
 
@@ -285,8 +279,8 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     uint64_t now = cs_para.get_gettimeofday_s();
     for (auto & tx : result.m_pack_txs) {
         uint64_t delay = now - tx->get_push_pool_timestamp();
-        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
-            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp());
+        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu,need_confirm:%d",
+            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp(), !tx->get_not_need_confirm());
         if (unit_para.m_is_leader) {
             if (tx->is_recv_tx()) {
                 XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_pack_recv, delay);

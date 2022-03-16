@@ -3,15 +3,15 @@
 #include "uint128_t.h"
 
 TEST(Arithmetic, multiply){
-    top::xstake::uint128_t val(0xfedbca9876543210ULL);
+    uint128_t val(0xfedbca9876543210ULL);
 
-    EXPECT_EQ(val * val, top::xstake::uint128_t(0xfdb8e2bacbfe7cefULL, 0x010e6cd7a44a4100ULL));
+    EXPECT_EQ(val * val, uint128_t(0xfdb8e2bacbfe7cefULL, 0x010e6cd7a44a4100ULL));
 
-    const top::xstake::uint128_t zero = 0;
+    const uint128_t zero = 0;
     EXPECT_EQ(val  * zero, zero);
     EXPECT_EQ(zero * val,  zero);
 
-    const top::xstake::uint128_t one = 1;
+    const uint128_t one = 1;
     EXPECT_EQ(val * one, val);
     EXPECT_EQ(one * val, val);
 }
@@ -24,14 +24,14 @@ TEST(External, multiply){
     uint32_t u32 = 0xaaaaaaaaULL;
     uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-    const top::xstake::uint128_t val(0xf0f0f0f0f0f0f0f0, 0xf0f0f0f0f0f0f0f0ULL);
+    const uint128_t val(0xf0f0f0f0f0f0f0f0, 0xf0f0f0f0f0f0f0f0ULL);
 
     EXPECT_EQ(t   *  val, val);
     EXPECT_EQ(f   *  val, 0);
-    EXPECT_EQ(u8  *  val, top::xstake::uint128_t(0xffffffffffffffff, 0xffffffffffffff60ULL));
-    EXPECT_EQ(u16 *  val, top::xstake::uint128_t(0xffffffffffffffff, 0xffffffffffff5f60ULL));
-    EXPECT_EQ(u32 *  val, top::xstake::uint128_t(0xffffffffffffffff, 0xffffffff5f5f5f60ULL));
-    EXPECT_EQ(u64 *  val, top::xstake::uint128_t(0xffffffffffffffff, 0x5f5f5f5f5f5f5f60ULL));
+    EXPECT_EQ(u8  *  val, uint128_t(0xffffffffffffffff, 0xffffffffffffff60ULL));
+    EXPECT_EQ(u16 *  val, uint128_t(0xffffffffffffffff, 0xffffffffffff5f60ULL));
+    EXPECT_EQ(u32 *  val, uint128_t(0xffffffffffffffff, 0xffffffff5f5f5f60ULL));
+    EXPECT_EQ(u64 *  val, uint128_t(0xffffffffffffffff, 0x5f5f5f5f5f5f5f60ULL));
 
     EXPECT_EQ(t   *= val, true);
     EXPECT_EQ(f   *= val, false);

@@ -6,6 +6,7 @@
 
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xunit_bstate.h"

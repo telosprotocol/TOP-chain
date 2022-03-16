@@ -15,7 +15,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstake/xstake_algorithm.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_face.h"
 
 #include "xchain_upgrade/xchain_data_galileo.h"
@@ -43,6 +43,15 @@ using namespace top::xvm::xcontract;
 using json = nlohmann::json;
 
 std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
+
+static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
+    auto account_string = account_prefix + std::to_string(index);
+    if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH) {
+        account_string.append(top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH - account_string.length(), 'x');
+    }
+    assert(account_string.length() == top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH);
+    return common::xaccount_address_t{account_string};
+}
 
 class test_table_slash_contract_other: public xtable_statistic_info_collection_contract, public testing::Test {
 public:
@@ -274,17 +283,17 @@ TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
         xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;
         node_content.subset_count = i + 1;
-        node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
-        node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
+        node_info.auditor_info[build_account_address("T00000auditor", i)] = node_content;
+        node_info.validator_info[build_account_address("T00000validator", i)] = node_content;
     }
 
     using namespace top::mock;
     xdatamock_unit  table_account{shard_table_slash_addr};
 
     m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(table_account.get_account_state(), m_store.get());
-    m_table_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-    m_table_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
-    m_table_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
+    m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+    m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+    m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
     set_contract_helper(std::make_shared<xcontract_helper>(m_table_slash_account_ctx_ptr.get(), top::common::xnode_id_t{table_account.get_account()}, table_account.get_account()));
 
 

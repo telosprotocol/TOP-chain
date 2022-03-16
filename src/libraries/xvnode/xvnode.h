@@ -25,8 +25,9 @@
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xbasic_vnode.h"
-#include "xvnode/xvnode_face.h"
+#include "xvnode/xcomponents/xblock_sniffing/xsniffer.h"
 #include "xvnode/xcomponents/xprune_data/xprune_data.h"
+#include "xvnode/xvnode_face.h"
 
 #include <memory>
 
@@ -45,7 +46,6 @@ private:
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
-    
     observer_ptr<data::xdev_params> m_dev_params;
     observer_ptr<data::xuser_params> m_user_params;
 
@@ -55,6 +55,9 @@ private:
     // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
     std::unique_ptr<components::prune_data::xprune_data> m_prune_data;
+
+    std::unique_ptr<components::sniffing::xsniffer_t> m_sniff;
+
 public:
     xtop_vnode(xtop_vnode const &) = delete;
     xtop_vnode & operator=(xtop_vnode const &) = delete;
@@ -76,12 +79,15 @@ public:
                //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+               observer_ptr<base::xvnodesrv_t> const & nodesvr);
 
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
                common::xslot_id_t const & slot_id,
                common::xelection_round_t joined_election_round,
+               common::xminer_type_t miner_type,
+               bool genesis,
                common::xelection_round_t election_round,
                std::uint16_t const group_size,
                std::uint64_t const associated_blk_height,
@@ -97,15 +103,18 @@ public:
                //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
-
-    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const noexcept;
+               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+               observer_ptr<base::xvnodesrv_t> const & nodesvr);
 
     void synchronize() override;
 
     void start() override;
     void fade() override;
     void stop() override;
+    components::sniffing::xsniffer_config_t sniff_config() const override;
+    
+    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const override;
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const override;
 
 private:
     void new_driver_added();

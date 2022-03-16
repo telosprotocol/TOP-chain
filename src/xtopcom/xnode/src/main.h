@@ -47,6 +47,7 @@ struct config_t {
     std::string  so_func_name; // func name in libxtopchain.so
     bool         daemon { true }; // start as daemon process default
     bool         genesis { false };
+    std::string  db_compress;
     int argc;
     char **argv;
 };

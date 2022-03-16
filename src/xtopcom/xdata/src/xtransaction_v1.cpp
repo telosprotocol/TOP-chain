@@ -138,6 +138,17 @@ int32_t xtransaction_v1_t::do_read(base::xstream_t & stream) {
     stream >> m_authorization;
     stream >> m_edge_nodeid;
     stream >> m_target_addr;
+
+    std::error_code ec;
+    auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
+    if (ec) {
+        throw enum_xerror_code_bad_transaction;
+    }
+    auto const source_account_address = common::xaccount_address_t::build_from(get_source_addr(), ec);
+    if (ec) {
+        throw enum_xerror_code_bad_transaction;
+    }
+
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
 }

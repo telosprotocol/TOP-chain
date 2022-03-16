@@ -3,15 +3,13 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-
+#include "xcommon/xaccount_address.h"
 #include "xbase/xcxx_config.h"
+#include "xvledger/xvaccount.h"
 
 #include <cstdint>
 
-namespace top {
-
-XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
-XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
+NS_BEG1(top)
 
 XINLINE_CONSTEXPR char const * black_hole_addr{"T!000131R4UAjgF6ZBWnwZESMWx4nCnqL1GhM3nT3"};
 XINLINE_CONSTEXPR char const * genesis_root_addr_main_chain{"T$000132i21FyYZvjTKiEwvBjshUbfQx6xoNT68v5"};
@@ -43,4 +41,33 @@ XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
 
-}  // namespace top
+extern common::xaccount_address_t const black_hole_system_address;
+extern common::xaccount_address_t const genesis_root_system_address;
+extern common::xaccount_address_t const timer_system_address;
+extern common::xaccount_address_t const drand_system_address;
+
+extern common::xaccount_address_t const rec_registration_contract_address;
+extern common::xaccount_address_t const rec_elect_edge_contract_address;
+extern common::xaccount_address_t const rec_elect_archive_contract_address;
+extern common::xaccount_address_t const rec_elect_rec_contract_address;
+extern common::xaccount_address_t const rec_elect_zec_contract_address;
+extern common::xaccount_address_t const rec_tcc_contract_address;
+extern common::xaccount_address_t const rec_standby_pool_contract_address;
+
+extern common::xaccount_address_t const zec_workload_contract_address;
+extern common::xaccount_address_t const zec_vote_contract_address;
+extern common::xaccount_address_t const zec_reward_contract_address;
+extern common::xaccount_address_t const zec_slash_info_contract_address;
+extern common::xaccount_address_t const zec_elect_consensus_contract_address;
+extern common::xaccount_address_t const zec_standby_pool_contract_address;
+extern common::xaccount_address_t const zec_group_assoc_contract_address;
+
+extern common::xaccount_address_t const sharding_vote_contract_address;
+extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
+extern common::xaccount_address_t const sharding_statistic_info_contract_address;
+
+extern common::xaccount_address_t const rec_table_address;
+extern common::xaccount_address_t const zec_table_address;
+extern common::xaccount_address_t const sharding_table_address;
+
+NS_END1

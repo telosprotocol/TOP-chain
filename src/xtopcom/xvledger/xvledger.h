@@ -15,6 +15,7 @@
 #include "xveventbus.h"
 #include "xvdrecycle.h"
 #include "xbase/xlock.h"
+#include "xdb/xdb_factory.h"
 
 namespace top
 {
@@ -56,6 +57,7 @@ namespace top
             enum_plugin_idle_timeout_ms     = 60000,  //idle duration for plugin
             
             enum_account_save_meta_interval = 64, //force save meta every 64 modification
+            enum_account_save_meta_offset   = 8,  //force save meta when height offset skip
         };
     
         class xvaccountobj_t : public xiobject_t,public xvaccount_t
@@ -349,6 +351,7 @@ namespace top
             virtual bool                on_process_close();//send process_close event to every objects
             uint16_t                    get_round_number() {return m_round_number;}
             void                        add_round_number() {m_round_number++;}
+            void                        get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind);
         protected:
             virtual xvledger_t*         create_ledger_object(const uint64_t ledger_id);//give default implementation
             bool                        set_xrecyclemgr(xvdrecycle_mgr* new_mgr);

@@ -24,6 +24,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     virtual int                 verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) override;
 
     bool                        update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para);
+    static std::set<base::xtable_shortid_t> select_peer_sids_for_confirm_id(const std::vector<base::xtable_shortid_t> & all_sid_vec, uint64_t height);
  protected:
     const std::string &         get_account() const {return m_table_maker->get_account();}
     base::xvblockstore_t*       get_blockstore() const {return m_table_maker->get_blockstore();}

@@ -7,7 +7,7 @@
 namespace top {
 namespace contract_common {
 
-xtop_followup_transaction_datum::xtop_followup_transaction_datum(data::xtransaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type) : followed_transaction(std::move(tx)), schedule_type(type) {
+xtop_followup_transaction_datum::xtop_followup_transaction_datum(data::xcons_transaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type) : followed_transaction(std::move(tx)), schedule_type(type) {
 }
 
 }
