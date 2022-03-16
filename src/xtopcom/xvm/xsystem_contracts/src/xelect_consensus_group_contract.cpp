@@ -127,6 +127,10 @@ common::xminer_type_t xtop_election_awared_data::miner_type() const noexcept {
     return m_miner_type;
 }
 
+uint64_t xtop_election_awared_data::raw_credit_score() const noexcept {
+    return m_raw_credit_score;
+}
+
 xtop_elect_consensus_group_contract::xtop_elect_consensus_group_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 static uint64_t calc_comprehensive_stake(int i) {
@@ -346,6 +350,7 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         new_election_info.consensus_public_key = elect_in_pos->public_key();
         new_election_info.miner_type = elect_in_pos->miner_type();
         new_election_info.genesis = elect_in_pos->genesis();
+        new_election_info.raw_credit_score = elect_in_pos->raw_credit_score();
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(node_id);

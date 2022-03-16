@@ -24,6 +24,7 @@ public:
     xpublic_key_t consensus_public_key{};    // public key for consensus business
     common::xminer_type_t miner_type{common::xminer_type_t::invalid};
     bool genesis{false};
+    uint64_t raw_credit_score{0};
 
     bool
     operator==(xtop_election_info const & other) const noexcept;

@@ -559,6 +559,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                 j["public_key"] = election_info.consensus_public_key.to_string();
                                 j["genesis"] = election_info.genesis ? "true" : "false";
                                 j["miner_type"] = common::to_string(election_info.miner_type);
+                                j["credit_score"] = std::to_string(election_info.raw_credit_score);
                                 jn[node_id.to_string()].append(j);
 
                                 break;
@@ -641,6 +642,7 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                                 j["public_key"] = election_info.consensus_public_key.to_string();
                                 j["genesis"] = election_info.genesis ? "true" : "false";
                                 j["miner_type"] = common::to_string(election_info.miner_type);
+                                j["credit_score"] = std::to_string(election_info.raw_credit_score);
                                 jn[node_id.to_string()].append(j);
 
                                 break;
@@ -703,6 +705,7 @@ static void get_rec_standby_pool_property_data(observer_ptr<store::xstore_face_t
                         j["is_genesis_node"] = std::string{standby_node_info.genesis ? "true" : "false"};
                         j["program_version"] = standby_node_info.program_version;
                         j["miner_type"] = common::to_string(standby_node_info.miner_type);
+                        j["credit_score"] = std::to_string(standby_node_info.raw_credit_score(node_type));
                         json[node_type_str].append(j);
                         break;
                     }

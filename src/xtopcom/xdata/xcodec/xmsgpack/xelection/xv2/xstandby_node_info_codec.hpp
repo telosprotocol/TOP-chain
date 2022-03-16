@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+﻿// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,12 +17,13 @@ NS_BEG1(msgpack)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 NS_BEG1(adaptor)
 
-XINLINE_CONSTEXPR std::size_t xstandby_node_info_field_count{ 5 };
-XINLINE_CONSTEXPR std::size_t xstandby_node_info_public_key_index{ 0 };
-XINLINE_CONSTEXPR std::size_t xstandby_node_info_stake_index{ 1 };
-XINLINE_CONSTEXPR std::size_t xstandby_node_info_program_version_index{ 2 };
-XINLINE_CONSTEXPR std::size_t xstandby_node_info_genesis_index{ 3 };
-XINLINE_CONSTEXPR std::size_t xstandby_node_info_miner_type_index{ 4 };
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_field_count{6};
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_public_key_index{0};
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_stake_index{1};
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_program_version_index{2};
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_genesis_index{3};
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_miner_type_index{4};
+XINLINE_CONSTEXPR std::size_t xv2_standby_node_info_credit_scores_index{5};
 
 template <>
 struct convert<top::data::election::v2::xstandby_node_info_t> final {
@@ -40,29 +41,34 @@ struct convert<top::data::election::v2::xstandby_node_info_t> final {
             XATTRIBUTE_FALLTHROUGH;
         }
 
-        case xstandby_node_info_miner_type_index: {
-            node_info.miner_type = o.via.array.ptr[xstandby_node_info_miner_type_index].as<top::common::xminer_type_t>();
+        case xv2_standby_node_info_credit_scores_index: {
+            node_info.raw_credit_scores = o.via.array.ptr[xv2_standby_node_info_credit_scores_index].as<std::map<top::common::xnode_type_t, uint64_t>>();
             XATTRIBUTE_FALLTHROUGH;
         }
 
-        case xstandby_node_info_genesis_index: {
-            node_info.genesis = o.via.array.ptr[xstandby_node_info_genesis_index].as<bool>();
+        case xv2_standby_node_info_miner_type_index: {
+            node_info.miner_type = o.via.array.ptr[xv2_standby_node_info_miner_type_index].as<top::common::xminer_type_t>();
             XATTRIBUTE_FALLTHROUGH;
         }
 
-        case xstandby_node_info_program_version_index: {
-            node_info.program_version = o.via.array.ptr[xstandby_node_info_program_version_index].as<std::string>();
+        case xv2_standby_node_info_genesis_index: {
+            node_info.genesis = o.via.array.ptr[xv2_standby_node_info_genesis_index].as<bool>();
             XATTRIBUTE_FALLTHROUGH;
         }
 
-        case xstandby_node_info_stake_index: {
-            node_info.stake_container = o.via.array.ptr[xstandby_node_info_stake_index].as<std::map<top::common::xnode_type_t, uint64_t>>();
+        case xv2_standby_node_info_program_version_index: {
+            node_info.program_version = o.via.array.ptr[xv2_standby_node_info_program_version_index].as<std::string>();
+            XATTRIBUTE_FALLTHROUGH;
+        }
+
+        case xv2_standby_node_info_stake_index: {
+            node_info.stake_container = o.via.array.ptr[xv2_standby_node_info_stake_index].as<std::map<top::common::xnode_type_t, uint64_t>>();
             XATTRIBUTE_FALLTHROUGH;
         }
         
 
-        case xstandby_node_info_public_key_index: {
-            node_info.consensus_public_key = o.via.array.ptr[xstandby_node_info_public_key_index].as<top::xpublic_key_t>();
+        case xv2_standby_node_info_public_key_index: {
+            node_info.consensus_public_key = o.via.array.ptr[xv2_standby_node_info_public_key_index].as<top::xpublic_key_t>();
             XATTRIBUTE_FALLTHROUGH;
         }
         }
@@ -75,12 +81,13 @@ template <>
 struct pack<::top::data::election::v2::xstandby_node_info_t> {
     template <typename StreamT>
     msgpack::packer<StreamT> & operator()(msgpack::packer<StreamT> & o, top::data::election::v2::xstandby_node_info_t const & node_info) const {
-        o.pack_array(xstandby_node_info_field_count);
+        o.pack_array(xv2_standby_node_info_field_count);
         o.pack(node_info.consensus_public_key);
         o.pack(node_info.stake_container);
         o.pack(node_info.program_version);
         o.pack(node_info.genesis);
         o.pack(node_info.miner_type);
+        o.pack(node_info.raw_credit_scores);
 
         return o;
     }
@@ -90,13 +97,14 @@ template <>
 struct object_with_zone<::top::data::election::v2::xstandby_node_info_t> {
     void operator()(msgpack::object::with_zone & o, top::data::election::v2::xstandby_node_info_t const & node_info) const {
         o.type = msgpack::type::ARRAY;
-        o.via.array.size = xstandby_node_info_field_count;
+        o.via.array.size = xv2_standby_node_info_field_count;
         o.via.array.ptr = static_cast<msgpack::object *>(o.zone.allocate_align(sizeof(::msgpack::object) * o.via.array.size));
-        o.via.array.ptr[xstandby_node_info_public_key_index] = msgpack::object{ node_info.consensus_public_key, o.zone };
-        o.via.array.ptr[xstandby_node_info_stake_index] = msgpack::object{ node_info.stake_container, o.zone };
-        o.via.array.ptr[xstandby_node_info_program_version_index] = msgpack::object{node_info.program_version, o.zone};
-        o.via.array.ptr[xstandby_node_info_genesis_index] = msgpack::object{node_info.genesis, o.zone};
-        o.via.array.ptr[xstandby_node_info_miner_type_index] = msgpack::object{node_info.miner_type, o.zone};
+        o.via.array.ptr[xv2_standby_node_info_public_key_index] = msgpack::object{node_info.consensus_public_key, o.zone};
+        o.via.array.ptr[xv2_standby_node_info_stake_index] = msgpack::object{node_info.stake_container, o.zone};
+        o.via.array.ptr[xv2_standby_node_info_program_version_index] = msgpack::object{node_info.program_version, o.zone};
+        o.via.array.ptr[xv2_standby_node_info_genesis_index] = msgpack::object{node_info.genesis, o.zone};
+        o.via.array.ptr[xv2_standby_node_info_miner_type_index] = msgpack::object{node_info.miner_type, o.zone};
+        o.via.array.ptr[xv2_standby_node_info_credit_scores_index] = msgpack::object{node_info.raw_credit_scores, o.zone};
     }
 };
 
