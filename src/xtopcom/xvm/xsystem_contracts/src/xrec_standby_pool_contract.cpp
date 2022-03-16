@@ -349,11 +349,6 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::xreg_node_info const & reg_node,
                                                          xstandby_node_info_t & standby_node_info,
                                                          common::xlogic_time_t const current_logic_time) const {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    // make sure fullnode must be elected out before clearing auditor type.
-    auto const fullnode_enabled = chain_fork::xchain_fork_config_center_t::is_forked(
-        fork_config.enable_fullnode_election_fork_point, 2 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval), current_logic_time);
-
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::rec, reg_node.rec_stake() });
@@ -364,15 +359,8 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (reg_node.can_be_fullnode()) {
         new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
     }
-    if (fullnode_enabled) {
-        // after fullnode enabled, archive node generates from genesis node. Normal advance miner won't be arhive node anymore.
-        if (reg_node.can_be_archive() || reg_node.is_genesis_node()) {
-            new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
-        }
-    } else {
-        if (reg_node.legacy_can_be_archive()) {
-            new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
-        }
+    if (reg_node.can_be_archive() || reg_node.is_genesis_node()) {
+        new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
     }
     if (reg_node.can_be_auditor()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::consensus_auditor, reg_node.auditor_stake() });

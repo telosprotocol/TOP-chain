@@ -29,8 +29,6 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store miner type & genesis flag"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
@@ -42,8 +40,6 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store miner type & genesis flag"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
@@ -54,8 +50,6 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store miner type & genesis flag"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
@@ -66,8 +60,6 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7481160, "election contract store miner type & genesis flag"},
             xfork_point_t{xfork_point_type_t::logic_time, 7482600, "partly remove confirm"},
@@ -79,8 +71,6 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7481160, "election contract store miner type & genesis flag"},
             xfork_point_t{xfork_point_type_t::logic_time, 7482600, "partly remove confirm"},
@@ -92,8 +82,6 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},//2022-2-21 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 7481160, "election contract store miner type & genesis flag"},
             xfork_point_t{xfork_point_type_t::logic_time, 7482600, "partly remove confirm"},
@@ -116,13 +104,6 @@ namespace top {
 
             xdbg("xtop_chain_fork_config_center::is_forked target:%llu, fork point:%llu", target, fork_point.value().point);
             return  target >= fork_point.value().point;
-        }
-
-        bool xtop_chain_fork_config_center::is_forked(top::optional<xfork_point_t> const & fork_point, uint64_t fork_point_offset, uint64_t target) noexcept {
-            auto const fork_point_value = (fork_point.has_value() ? fork_point.value().point : static_cast<uint64_t>(0)) + fork_point_offset;
-
-            xdbg("xtop_chain_fork_config_center::is_forked target:%" PRIu64 ", fork point:%" PRIu64, target, fork_point_value);
-            return target >= fork_point_value;
         }
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {

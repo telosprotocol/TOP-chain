@@ -128,11 +128,6 @@ void xtop_rec_elect_fullnode_contract::on_timer(const uint64_t current_time) {
     }
 #endif
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
-    if (!chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_election_fork_point, current_time)) {
-        return;
-    }
-
     XMETRICS_TIME_RECORD(XFULLNODE_ELECT "on_timer_all_time");
     XMETRICS_CPU_TIME_RECORD(XFULLNODE_ELECT "on_timer_cpu_time");
     XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xrec_elect_fullnode_contract_t instance is triggled by others");
@@ -162,12 +157,7 @@ void xtop_rec_elect_fullnode_contract::on_timer(const uint64_t current_time) {
                         range,
                         standby_network_result,
                         election_network_result)) {
-            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
-                xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
-            } else {
-                xvm::serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.legacy());
-            }
+            xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
         }
     }
 }

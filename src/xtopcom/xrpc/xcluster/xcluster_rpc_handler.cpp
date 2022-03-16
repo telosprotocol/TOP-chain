@@ -54,17 +54,8 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
                 self->cluster_process_request(msg, edge_sender, message);
                 XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
             } else {
-                auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-                auto clock = self->m_cluster_query_mgr->getTimerHeight();
-                auto forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, clock);
-                xdbg("xcluster_rpc_handler::on_message clock:%llu, forked:%d", clock, forked);
-                if (forked) {
-                    xwarn("xcluster_rpc_handler::on_message auditor tackle query:%" PRIx64, message.hash());
-                    return true;
-                } else {
-                    self->cluster_process_query_request(msg, edge_sender, message);
-                    XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
-                }
+                xwarn("xcluster_rpc_handler::on_message auditor tackle query:%" PRIx64, message.hash());
+                return true;
             }
         } else if (msgid == rpc_msg_response) {
             // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
