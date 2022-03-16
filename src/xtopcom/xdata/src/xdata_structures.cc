@@ -8,7 +8,7 @@
 
 NS_BEG3(top, data, system_contract)
 
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled) {
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes) {
     uint32_t auditor_num = 0;
     uint32_t validator_num = 0;
     uint32_t archive_num = 0;
@@ -26,13 +26,12 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         xreg_node_info reg_node_info;
         reg_node_info.serialize_from(stream);
 
-        xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, if_fullnode: %d, votes: %llu\n",
+        xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, votes: %llu",
              reg_node_info.m_account.c_str(),
              reg_node_info.can_be_auditor(),
              reg_node_info.can_be_validator(),
-             fullnode_enabled ? reg_node_info.can_be_archive() : reg_node_info.legacy_can_be_archive(),
+             reg_node_info.can_be_archive(),
              reg_node_info.can_be_edge(),
-             fullnode_enabled ? reg_node_info.can_be_fullnode() : 0,
              reg_node_info.m_vote_amount);
 
         if (reg_node_info.is_invalid_node())
@@ -44,21 +43,12 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         if (reg_node_info.can_be_validator()) {
             validator_num++;
         }
-
-        if (fullnode_enabled) {
-            if (reg_node_info.can_be_archive()) {
-                archive_num++;
-            }
-
-            if (reg_node_info.can_be_fullnode()) {
-                fullnode_num++;
-            }
-        } else {
-            if (reg_node_info.legacy_can_be_archive()) {
-                archive_num++;
-            }
+        if (reg_node_info.can_be_archive()) {
+            archive_num++;
         }
-
+        if (reg_node_info.can_be_fullnode()) {
+            fullnode_num++;
+        }
         if (reg_node_info.can_be_edge()) {
             edge_num++;
         }

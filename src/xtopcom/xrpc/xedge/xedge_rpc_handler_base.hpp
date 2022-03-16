@@ -121,52 +121,23 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                 auto count = 0;
                 auto msghash = msg.hash();
 
-                auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
-                if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_related_func_fork_point, vd->virtual_host()->last_logic_time())) {
-                    auto cluster_addresses = vd->archive_addresses(common::xnode_type_t::storage_archive);
+                auto cluster_addresses = vd->archive_addresses(common::xnode_type_t::storage_archive);
 
-                    for (auto & cluster : cluster_addresses) {
-                        if ((msghash % cluster_addresses.size() == count || (msghash + 1) % cluster_addresses.size() == count)) {
-                            xdbg("[edge][forward archive]%s,src %s, dst %s, archive group size %zu, %" PRIx64,
-                                 msg_ptr->m_account.c_str(),
-                                 vd->address().to_string().c_str(),
-                                 cluster.to_string().c_str(),
-                                 cluster_addresses.size(),
-                                 msg.hash());
-                            std::error_code ec;
-                            vd->send_to(cluster.xip2(), msg, ec);
-                            if (ec) {
-                                xwarn("send_to arc fail: %s %s", ec.category().name(), ec.message().c_str());
-                            }
+                for (auto & cluster : cluster_addresses) {
+                    if ((msghash % cluster_addresses.size() == count || (msghash + 1) % cluster_addresses.size() == count)) {
+                        xdbg("[edge][forward archive]%s,src %s, dst %s, archive group size %zu, %" PRIx64,
+                                msg_ptr->m_account.c_str(),
+                                vd->address().to_string().c_str(),
+                                cluster.to_string().c_str(),
+                                cluster_addresses.size(),
+                                msg.hash());
+                        std::error_code ec;
+                        vd->send_to(cluster.xip2(), msg, ec);
+                        if (ec) {
+                            xwarn("send_to arc fail: %s %s", ec.category().name(), ec.message().c_str());
                         }
-                        ++count;
                     }
-                } else {
-                    std::error_code ec;
-                    auto const & auditor_addresses = m_election_cache_data_accessor->sharding_nodes(group_addr, common::xelection_round_t{}, ec);
-                    if (ec) {
-                        xwarn("[edge][forward auditor] failed: %s %s", ec.category().name(), ec.message().c_str());
-                        assert(auditor_addresses.empty());
-                    }
-
-                    for (auto const & auditor_address : auditor_addresses) {
-                        if ((msghash % auditor_addresses.size() == count || (msghash + 1) % auditor_addresses.size() == count)) {
-                            xdbg("[edge][forward auditor]%s,src %s, dst %s, dst auditor %s, auditor group size %zu, %" PRIx64,
-                                 msg_ptr->m_account.c_str(),
-                                 vd->address().to_string().c_str(),
-                                 auditor_address.second.address.to_string().c_str(),
-                                 dst.to_string().c_str(),
-                                 auditor_addresses.size(),
-                                 msg.hash());
-
-                            ec.clear();
-                            vd->send_to(auditor_address.second.address, msg, ec);
-                            if (ec) {
-                                xwarn("[edge][forward auditor] send_to auditor fail: %s %s", ec.category().name(), ec.message().c_str());
-                            }
-                        }
-                        ++count;
-                    }
+                    ++count;
                 }
 
                 XMETRICS_GAUGE(metrics::rpc_edge_query_request, 1);

@@ -825,9 +825,7 @@ void xrec_registration_contract::check_and_set_genesis_stage() {
         xdbg("[xrec_registration_contract::check_and_set_genesis_stage] MAP COPY GET error:%s", e.what());
     }
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const fullnode_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_election_fork_point, TIME());
-    bool active = data::system_contract::check_registered_nodes_active(map_nodes, fullnode_enabled);
+    bool active = data::system_contract::check_registered_nodes_active(map_nodes);
     if (active) {
         record.activated = 1;
         record.activation_time = TIME();
