@@ -8,8 +8,13 @@
 #include "xcommon/xfts.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcodec/xmsgpack/xelection_network_result_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xelection/xelection_info.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xstandby_network_result.h"
+#include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xstandby_result.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xerror/xvm_error.h"
@@ -577,8 +582,8 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
                                                              common::xnode_type_t const node_type,
                                                              std::uint64_t const random_seed,
                                                              std::size_t shrink_size,
-                                                             data::election::xstandby_result_t const & standby_result,
-                                                             data::election::xelection_group_result_t & current_group_nodes) const {
+                                                             data::election::v2::xstandby_result_t const & standby_result,
+                                                             data::election::v2::xelection_group_result_t & current_group_nodes) const {
     auto const log_prefix = "[elect consensus group contract - shrink] zone " + zid.to_string() + " cluster " + cid.to_string() + " group " + gid.to_string() + ":";
     std::size_t unqualified_node_count{0};
     std::size_t elect_out_count{0};

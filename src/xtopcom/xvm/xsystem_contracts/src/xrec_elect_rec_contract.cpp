@@ -7,13 +7,15 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
-#include "xdata/xelection/xelection_result_property.h"
-#include "xdata/xgenesis_data.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_node_info_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv0/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv1/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xgenesis_data.h"
 #include "xdata/xrootblock.h"
 #include "xvm/xserialization/xserialization.h"
 
@@ -27,16 +29,13 @@
 
 NS_BEG4(top, xvm, system_contracts, rec)
 
-using data::election::xelection_info_bundle_t;
-using data::election::xelection_info_t;
 using data::election::xelection_result_store_t;
-using data::election::xstandby_node_info_t;
 using data::election::xstandby_result_store_t;
 
 xtop_rec_elect_rec_contract::xtop_rec_elect_rec_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 void xtop_rec_elect_rec_contract::setup() {
-    data::election::legacy::xelection_result_store_t election_result_store;
+    data::election::v0::xelection_result_store_t election_result_store;
     common::xelection_round_t group_version{0};
 
     auto & current_group_nodes =
@@ -54,12 +53,12 @@ void xtop_rec_elect_rec_contract::setup() {
 
         common::xnode_id_t node_id{item.m_account};
 
-        data::election::legacy::xelection_info_t election_info{};
+        data::election::v0::xelection_info_t election_info{};
         election_info.joined_version = group_version;
         election_info.stake = 0;
         election_info.consensus_public_key = xpublic_key_t{item.m_publickey};
 
-        data::election::legacy::xelection_info_bundle_t election_info_bundle{};
+        data::election::v0::xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(node_id);
         election_info_bundle.election_info(std::move(election_info));
 
@@ -67,7 +66,7 @@ void xtop_rec_elect_rec_contract::setup() {
     }
 
     STRING_CREATE(data::election::get_property_by_group_id(common::xcommittee_group_id));
-    serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+    serialization::xmsgpack_t<data::election::v0::xelection_result_store_t>::serialize_to_string_prop(
         *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
 }
 
@@ -113,12 +112,12 @@ void xtop_rec_elect_rec_contract::on_timer(common::xlogic_time_t const current_t
                                         election_network_result);
     if (successful) {
         auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
             serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
                 *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
         } else {
-            serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
-                *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store.legacy());
+            serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(
+                *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store.v1());
         }
     }
 }

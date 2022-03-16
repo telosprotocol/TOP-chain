@@ -12,9 +12,6 @@
 
 NS_BEG3(top, tests, rec_standby)
 
-using top::data::election::xstandby_network_result_t;
-using top::data::election::xstandby_node_info_t;
-
 class xtop_test_registration_data_manager_fixture {
 public:
     XDECLARE_DEFAULTED_DEFAULT_CONSTRUCTOR(xtop_test_registration_data_manager_fixture);

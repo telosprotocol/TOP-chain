@@ -7,6 +7,8 @@
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xip.h"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xelection/xcache/xnetwork_element.h"
 

@@ -2,14 +2,6 @@
 
 #include "json/json.h"
 #include "xbase/xobject.h"
-#include "xcodec/xmsgpack_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
-#include "xdata/xelection/xelection_association_result_store.h"
-#include "xdata/xelection/xelection_cluster_result.h"
-#include "xdata/xelection/xelection_result_store.h"
-#include "xdata/xelection/xstandby_result_store.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xstore/xstore.h"
 #include "xsyncbase/xsync_face.h"
@@ -19,8 +11,6 @@
 namespace top {
 
 namespace chain_info {
-
-using namespace data::election;
 
 const uint8_t ARG_TYPE_UINT64 = 1;
 const uint8_t ARG_TYPE_STRING = 2;

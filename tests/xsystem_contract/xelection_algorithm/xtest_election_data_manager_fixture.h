@@ -6,18 +6,18 @@
 #pragma once
 
 #include "xcommon/xip.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_network_result.h"
+#include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xelection/xstandby_result_store.h"
 
 NS_BEG3(top, tests, election)
 
-using top::data::election::xelection_cluster_result_t;
-using top::data::election::xelection_group_result_t;
 using top::data::election::xelection_info_bundle_t;
-using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
-using top::data::election::xelection_result_t;
 using top::data::election::xstandby_network_result_t;
 using top::data::election::xstandby_node_info_t;
 

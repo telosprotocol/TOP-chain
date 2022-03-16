@@ -5,9 +5,23 @@
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
+#include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
+#include "xdata/xelection/xelection_association_result_store.h"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
@@ -1494,18 +1508,18 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
 
                     for (auto const & cluster_result_info : election_result) {
                         auto const & cluster_id = top::get<common::xcluster_id_t const>(cluster_result_info);
-                        auto const & cluster_result = top::get<xelection_cluster_result_t>(cluster_result_info);
+                        auto const & cluster_result = top::get<data::election::xelection_cluster_result_t>(cluster_result_info);
 
                         for (auto const & group_result_info : cluster_result) {
                             auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
-                            auto const & group_result = top::get<xelection_group_result_t>(group_result_info);
+                            auto const & group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                             for (auto const & node_info : group_result) {
-                                auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
                                 if (node_id.empty()) {
                                     continue;
                                 }
-                                auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
+                                auto const & election_info = top::get<data::election::xelection_info_bundle_t>(node_info).election_info();
                                 common::xip2_t xip2{network_id, zid, cluster_id, group_id, top::get<common::xslot_id_t const>(node_info), (uint16_t)group_result.size(), bp->get_height()};
 
                                 xJson::Value j;

@@ -7,7 +7,11 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
 #include "xdata/xnative_contract_address.h"
 #include "xelection/xdata_accessor_error.h"
 

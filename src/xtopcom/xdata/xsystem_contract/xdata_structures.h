@@ -492,7 +492,7 @@ public:
 
     template <common::xminer_type_t MinerTypeV>
     bool miner_type_has() const noexcept {
-        return common::has<MinerTypeV>(m_registered_miner_type);
+        return common::has<MinerTypeV>(miner_type());
     }
 
     /**

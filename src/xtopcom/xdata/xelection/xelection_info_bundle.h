@@ -4,61 +4,10 @@
 
 #pragma once
 
-#include "xcommon/xnode_id.h"
-#include "xdata/xelection/xelection_info.h"
-#include "xdata/xelection/xlegacy/xelection_info_bundle.h"
+#include "xdata/xelection/xv2/xelection_info_bundle.h"
 
 NS_BEG3(top, data, election)
 
-class xtop_election_info_bundle final {
-private:
-    common::xnode_id_t m_node_id{};
-    xelection_info_t m_election_info{};
-
-public:
-    bool 
-    operator==(xtop_election_info_bundle const & other) const noexcept;
-
-    bool 
-    operator!=(xtop_election_info_bundle const & other) const noexcept;
-
-    common::xnode_id_t const &
-    node_id() const noexcept;
-
-    common::xnode_id_t &
-    node_id() noexcept;
-
-    void
-    node_id(common::xnode_id_t && nid) noexcept;
-
-    void
-    node_id(common::xnode_id_t const & nid);
-
-    common::xaccount_address_t const & account_address() const noexcept;
-    common::xaccount_address_t & account_address() noexcept;
-    void account_address(common::xaccount_address_t && addr) noexcept;
-    void account_address(common::xaccount_address_t const & addr);
-
-    xelection_info_t const &
-    election_info() const noexcept;
-
-    xelection_info_t &
-    election_info() noexcept;
-
-    void
-    election_info(xelection_info_t && info) noexcept;
-
-    void
-    election_info(xelection_info_t const & info);
-
-    void
-    clear() noexcept;
-
-    bool
-    empty() const noexcept;
-
-    legacy::xelection_info_bundle_t legacy() const;
-};
-using xelection_info_bundle_t = xtop_election_info_bundle;
+using xelection_info_bundle_t = v2::xelection_info_bundle_t;
 
 NS_END3

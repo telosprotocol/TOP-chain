@@ -7,7 +7,8 @@
 #include "xcommon/xip.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xrole_type.h"
-#include "xdata/xelection/xlegacy/xstandby_result_store.h"
+#include "xdata/xelection/xstandby_network_storage_result.h"
+#include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xcontract/xcontract_base.h"
@@ -62,22 +63,6 @@ private:
 
     bool update_activated_state(data::election::xstandby_network_storage_result_t & standby_network_storage_result,
                                 data::system_contract::xactivation_record const & activation_record);
-
-    bool legacyNodeJoinNetworkImpl(std::string const & program_version,
-                                   data::system_contract::xreg_node_info const & node,
-                                   data::election::legacy::xstandby_result_store_t & standby_result_store);
-
-    bool legacy_update_standby_result_store(std::map<common::xnode_id_t, data::system_contract::xreg_node_info> const & registration_data,
-                                            data::election::legacy::xstandby_result_store_t & standby_result_store,
-                                            data::system_contract::xactivation_record const & activation_record,
-                                            common::xlogic_time_t const current_logic_time);
-
-    bool legacy_update_standby_node(top::data::system_contract::xreg_node_info const & reg_node,
-                                    top::data::election::legacy::xstandby_node_info_t & standby_node_info,
-                                    common::xlogic_time_t const current_logic_time) const;
-
-    bool legacy_update_activated_state(data::election::legacy::xstandby_network_storage_result_t & standby_network_storage_result,
-                                       data::system_contract::xactivation_record const & activation_record);
 };
 using xrec_standby_pool_contract_t = xtop_rec_standby_pool_contract;
 
