@@ -11,10 +11,14 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xrole_type.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcodec/xmsgpack/xlegacy/xstandby_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
-#include "xdata/xelection/xlegacy/xstandby_node_info.h"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv0/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv1/xstandby_result_store_codec.hpp"
+#include "xdata/xelection/xstandby_network_storage_result.h"
 #include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xelection/xv0/xstandby_node_info.h"
+#include "xdata/xelection/xv1/xstandby_result_store.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
@@ -41,14 +45,14 @@ using data::election::xstandby_network_storage_result_t;
 xtop_rec_standby_pool_contract::xtop_rec_standby_pool_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 void xtop_rec_standby_pool_contract::setup() {
-    election::legacy::xstandby_result_store_t standby_result_store;
+    election::v0::xstandby_result_store_t standby_result_store;
     const std::vector<node_info_t> & seed_nodes = data::xrootblock_t::get_seed_nodes();
     for (size_t i = 0u; i < seed_nodes.size(); i++) {
         auto const & node_data = seed_nodes[i];
 
         common::xnode_id_t node_id{node_data.m_account};
 
-        election::legacy::xstandby_node_info_t seed_node_info;
+        election::v0::xstandby_node_info_t seed_node_info;
         seed_node_info.consensus_public_key = xpublic_key_t{node_data.m_publickey};
         seed_node_info.stake_container.insert({common::xnode_type_t::rec, 0});
         seed_node_info.stake_container.insert({common::xnode_type_t::zec, 0});
@@ -69,7 +73,7 @@ void xtop_rec_standby_pool_contract::setup() {
     auto const static_consensus_nodes_info = xstatic_election_center::instance().get_standby_config();
     for (auto const & node_info : static_consensus_nodes_info) {
         common::xnode_id_t node_id{node_info.node_id};
-        election::legacy::xstandby_node_info_t seed_node_info;
+        election::v0::xstandby_node_info_t seed_node_info;
         seed_node_info.consensus_public_key = node_info.pub_key;
         for (auto const & _pair : node_info.type_stake_pair) {
             common::xnode_type_t const & node_type = top::get<common::xnode_type_t>(_pair);
@@ -82,13 +86,13 @@ void xtop_rec_standby_pool_contract::setup() {
         standby_result_store.result_of(network_id()).insert({node_id, seed_node_info});
     }
     for (auto & standby_network_result_info : standby_result_store) {
-        auto & standby_network_storage_result = top::get<election::legacy::xstandby_network_storage_result_t>(standby_network_result_info);
+        auto & standby_network_storage_result = top::get<election::v0::xstandby_network_storage_result_t>(standby_network_result_info);
         standby_network_storage_result.set_activate_state(true);
     }
 #endif
 
     STRING_CREATE(XPROPERTY_CONTRACT_STANDBYS_KEY);
-    serialization::xmsgpack_t<election::legacy::xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
+    serialization::xmsgpack_t<election::v0::xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
 }
 
 void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t const & node_id,
@@ -124,10 +128,10 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     if (nodeJoinNetworkImpl(program_version, node, standby_result_store)) {
         XMETRICS_PACKET_INFO(XREC_STANDBY "nodeJoinNetwork", "node_id", node_id.value(), "miner_type", common::to_string(node.miner_type()));
         auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, TIME())) {
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, TIME())) {
             serialization::xmsgpack_t<xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
         } else {
-            serialization::xmsgpack_t<election::legacy::xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store.legacy());
+            serialization::xmsgpack_t<election::v1::xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store.v1());
         }
     }
 
@@ -479,10 +483,10 @@ void xtop_rec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
         xdbg("[xrec_standby_pool_contract_t][on_timer] standby pool updated");
 
         auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
             serialization::xmsgpack_t<xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
         } else {
-            serialization::xmsgpack_t<election::legacy::xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store.legacy());
+            serialization::xmsgpack_t<election::v1::xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store.v1());
         }
     }
 }

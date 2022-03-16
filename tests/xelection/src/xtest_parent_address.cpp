@@ -11,10 +11,7 @@ using top::common::xnode_type_t;
 using top::common::xsharding_address_t;
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;
-using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
-using top::data::election::xelection_result_t;
-using top::data::election::xstandby_node_info_t;
 using top::tests::election::xcommittee_fixture_t;
 
 TEST_F(xcommittee_fixture_t, committee_parent_address_empty_child_address) {

@@ -8,18 +8,23 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_node_info_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv0/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv1/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xelection/xv1/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xvm/xserialization/xserialization.h"
 
 #include <cinttypes>
 
 #ifdef STATIC_CONSENSUS
-#    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xdata/xelection/xelection_info.h"
+#   include "xdata/xelection/xelection_info_bundle.h"
 #endif
 
 #ifndef XSYSCONTRACT_MODULE
@@ -31,7 +36,6 @@
 NS_BEG4(top, xvm, system_contracts, rec)
 
 using data::election::xelection_result_store_t;
-using data::election::xstandby_node_info_t;
 using data::election::xstandby_result_store_t;
 
 xtop_rec_elect_zec_contract::xtop_rec_elect_zec_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
@@ -57,7 +61,6 @@ void xtop_rec_elect_zec_contract::elect_config_nodes(common::xlogic_time_t const
     using top::data::election::xelection_info_bundle_t;
     using top::data::election::xelection_info_t;
     using top::data::election::xelection_result_store_t;
-    using top::data::election::xstandby_node_info_t;
 
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     auto election_result_store =
@@ -96,11 +99,11 @@ void xtop_rec_elect_zec_contract::elect_config_nodes(common::xlogic_time_t const
 #endif
 
 void xtop_rec_elect_zec_contract::setup() {
-    data::election::legacy::xelection_result_store_t election_result_store;
+    data::election::v0::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<data::election::v0::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 }
 
@@ -167,10 +170,10 @@ void xtop_rec_elect_zec_contract::on_timer(common::xlogic_time_t const current_t
                                             election_network_result);
         if (successful) {
             auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
+            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
                 serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
             } else {
-                serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.legacy());
+                serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.v1());
             }
             xwarn("[zec committee election] successful. timestamp %" PRIu64 " start time %" PRIu64 " random seed %" PRIu64, current_time, start_time, random_seed);
         }

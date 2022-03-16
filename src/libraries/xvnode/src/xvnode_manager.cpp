@@ -6,7 +6,7 @@
 
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcrypto/xckey.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xdata_common.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore_error.h"

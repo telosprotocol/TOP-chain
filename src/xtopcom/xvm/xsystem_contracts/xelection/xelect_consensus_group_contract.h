@@ -6,6 +6,7 @@
 
 #include "xcommon/xfts.h"
 #include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xstandby_result.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xsystem_contracts/xelection/xelect_group_contract.h"
 

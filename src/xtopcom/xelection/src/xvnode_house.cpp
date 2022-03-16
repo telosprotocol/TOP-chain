@@ -2,24 +2,29 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
-
 #include "xelection/xvnode_house.h"
-#include "xmbus/xevent_behind.h"
+
+#include "xbasic/xutility.h"
+#include "xcodec/xmsgpack_codec.hpp"
+#include "xdata/xblock.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
+#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xblock.h"
-#include "xcodec/xmsgpack_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xelection/xelection_group_result.h"
-#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xunit_bstate.h"
-#include "xbasic/xutility.h"
-#include "xvledger/xvblockstore.h"
-#include "xvledger/xvstate.h"
-#include "xvledger/xvledger.h"
-#include "xtopcl/include/user_info.h"
+#include "xmbus/xevent_behind.h"
 #include "xpbase/base/top_utils.h"
+#include "xtopcl/include/user_info.h"
+#include "xvledger/xvblockstore.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvstate.h"
+
+#include <cinttypes>
 
 NS_BEG2(top, election)
 
