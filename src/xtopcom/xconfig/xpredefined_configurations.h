@@ -474,6 +474,11 @@ XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
 XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
 XDECLARE_CONFIGURATION(auto_prune_data, const char *, "off");
+#if defined(XBUILD_CI) || defined(XBUILD_DEV)
+XDECLARE_CONFIGURATION(prune_reserve_number, std::uint64_t, 128);
+#else
+XDECLARE_CONFIGURATION(prune_reserve_number, std::uint64_t, 10000);
+#endif
 
 /* end of development parameters */
 

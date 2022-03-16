@@ -106,6 +106,7 @@ namespace top
         bool  refresh_block_recycler_rule(const chainbase::enum_xmodule_type mod_id, const base::xvaccount_t & account_obj, const uint64_t permit_prune_upper_boundary) {
             auto recycler = base::xvchain_t::instance().get_xrecyclemgr()->get_block_recycler();
             if(recycler == NULL) {
+                xwarn("refresh_block_recycler_rule fail.");
                 return false; //has been installed
             }
 

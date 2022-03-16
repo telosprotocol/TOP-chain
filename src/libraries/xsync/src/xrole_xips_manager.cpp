@@ -259,5 +259,8 @@ bool xrole_xips_manager_t::get_self_addr(common::xnode_type_t node_type, uint16_
 
     return false;
 }
-
+void xrole_xips_manager_t::set_miner(common::xminer_type_t miner_type, bool genesis) {
+    m_miner_type = miner_type;
+    m_genesis = genesis;
+}
 NS_END2
