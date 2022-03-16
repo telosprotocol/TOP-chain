@@ -30,9 +30,9 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store miner type & genesis flag"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store credit score"},
             };
 
             // !!!change!!! fork time for galileo
@@ -42,9 +42,9 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store miner type & genesis flag"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store credit score"},
            };
 
             xchain_fork_config_t default_chain_config {
@@ -53,9 +53,9 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store miner type & genesis flag"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store credit score"},
             };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
@@ -64,9 +64,9 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7481160, "election contract store miner type & genesis flag"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7482600, "partly remove confirm"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7472520, "election contract store credit score"},
         };
 
         // !!!change!!! fork time for galileo
@@ -76,9 +76,9 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7481160, "election contract store miner type & genesis flag"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7482600, "partly remove confirm"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7472520, "election contract store credit score"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -88,9 +88,9 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},//2022-2-21 10:00:00
-            xfork_point_t{xfork_point_type_t::logic_time, 7481160, "election contract store miner type & genesis flag"},
-            xfork_point_t{xfork_point_type_t::logic_time, 7482600, "partly remove confirm"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7472520, "election contract store credit score"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {

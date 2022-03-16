@@ -7,6 +7,7 @@
 #include "tests/xelection/xdummy_chain_timer.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_node_info.h"
 #include "xelection/xcache/xdata_accessor.h"
 
 using top::common::xbroadcast_id_t;
@@ -15,9 +16,7 @@ using top::common::xnode_type_t;
 using top::common::xslot_id_t;
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;
-using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
-using top::data::election::xelection_result_t;
 using top::data::election::xstandby_node_info_t;
 
 NS_BEG3(top, tests, election)
