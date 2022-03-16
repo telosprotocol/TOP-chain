@@ -22,6 +22,7 @@ public:
     std::string program_version{};
     common::xminer_type_t miner_type{common::xminer_type_t::invalid};
     bool genesis{false};
+    std::map<common::xnode_type_t, uint64_t> raw_credit_scores;
 
     bool operator==(xtop_standby_node_info const & other) const noexcept;
 
@@ -32,6 +33,9 @@ public:
     uint64_t stake(common::xnode_type_t const & node_type) const noexcept;
 
     void stake(common::xnode_type_t const & node_type, uint64_t stake) noexcept;
+
+    uint64_t raw_credit_score(common::xnode_type_t const node_type) const noexcept;
+    void raw_credit_score(common::xnode_type_t const node_type, uint64_t const credit_score) noexcept;
 
     v1::xstandby_node_info_t v1() const;
 };

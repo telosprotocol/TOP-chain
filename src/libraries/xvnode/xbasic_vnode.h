@@ -28,6 +28,7 @@ protected:
     common::xnode_address_t m_address;
     common::xminer_type_t m_miner_type{common::xminer_type_t::invalid};
     bool m_genesis{false};
+    uint64_t m_raw_credit_score{0};
     common::xelection_round_t m_joined_election_round;
 
     mutable std::mutex m_neighbors_xip2_mutex{};
@@ -48,6 +49,7 @@ protected:
     explicit xtop_basic_vnode(common::xnode_address_t address,
                               common::xminer_type_t miner_type,
                               bool genesis,
+                              uint64_t raw_credit_score,
                               common::xelection_round_t joined_election_round,
                               observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                               observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept;
@@ -77,6 +79,8 @@ public:
 
     //std::vector<common::xip2_t> associated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const override;
     //std::vector<common::xip2_t> nonassociated_nodes_xip2(common::xip_t const & group_xip, std::error_code & ec) const override;
+
+    uint64_t raw_credit_score() const noexcept override;
 };
 using xbasic_vnode_t = xtop_basic_vnode;
 

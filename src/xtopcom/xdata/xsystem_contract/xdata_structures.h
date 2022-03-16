@@ -495,6 +495,8 @@ public:
         return common::has<MinerTypeV>(miner_type());
     }
 
+    uint64_t raw_credit_score_data(common::xnode_type_t const node_type) const noexcept;
+
     /**
      * @brief Get required min deposit
      *

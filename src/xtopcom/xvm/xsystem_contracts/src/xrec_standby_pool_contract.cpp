@@ -353,6 +353,8 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::xreg_node_info const & reg_node,
                                                          xstandby_node_info_t & standby_node_info,
                                                          common::xlogic_time_t const current_logic_time) const {
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::rec, reg_node.rec_stake() });
@@ -368,9 +370,15 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     }
     if (reg_node.can_be_auditor()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::consensus_auditor, reg_node.auditor_stake() });
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_logic_time)) {
+            new_node_info.raw_credit_score(common::xnode_type_t::consensus_auditor, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_auditor));
+        }
     }
     if (reg_node.can_be_validator()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::consensus_validator, reg_node.validator_stake() });
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_logic_time)) {
+            new_node_info.raw_credit_score(common::xnode_type_t::consensus_validator, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_validator));
+        }
     }
     if (reg_node.can_be_edge()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::edge, reg_node.edge_stake() });

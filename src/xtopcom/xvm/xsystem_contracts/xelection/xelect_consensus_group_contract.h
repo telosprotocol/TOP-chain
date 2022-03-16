@@ -25,6 +25,7 @@ private:
     xpublic_key_t m_public_key{};
     common::xminer_type_t m_miner_type{common::xminer_type_t::invalid};
     bool m_genesis{false};
+    uint64_t m_raw_credit_score{0};
 
 public:
     xtop_election_awared_data(xtop_election_awared_data const &) = default;
@@ -83,6 +84,8 @@ public:
 
     bool genesis() const noexcept;
     common::xminer_type_t miner_type() const noexcept;
+
+    uint64_t raw_credit_score() const noexcept;
 };
 using xelection_awared_data_t = xtop_election_awared_data;
 using xeffective_standby_data_t = xelection_awared_data_t;

@@ -45,6 +45,9 @@ public:
     virtual components::sniffing::xsniffer_config_t sniff_config() const = 0;
     virtual xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const =0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const = 0;
+
+    virtual uint64_t raw_credit_score() const noexcept = 0;
+
 protected:
     xtop_vnode_face() = default;
 };

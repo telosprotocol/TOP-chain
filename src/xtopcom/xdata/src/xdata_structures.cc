@@ -522,6 +522,19 @@ int32_t xslash_info::do_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
+uint64_t xreg_node_info::raw_credit_score_data(common::xnode_type_t const node_type) const noexcept {
+    switch (node_type) {
+    case common::xnode_type_t::consensus_auditor:
+        return m_auditor_credit_numerator;
+
+    case common::xnode_type_t::consensus_validator:
+        return m_validator_credit_numerator;
+
+    default:
+        return 0;
+    }
+}
+
 void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
     uint64_t slash_creditscore_numerator{0};
     if (common::has<common::xnode_type_t::validator>(node_type)) {
