@@ -24,7 +24,7 @@ public:
 
     bool update_reg_info(data::system_contract::xreg_node_info const & node_info);
 
-    void change_role_type(common::xnode_id_t const & node_id, common::xminer_type_t const & new_role_type);
+    void change_miner_type(common::xnode_id_t const & node_id, common::xminer_type_t const & new_role_type);
 
     void change_account_mortgage(common::xnode_id_t const & node_id, uint64_t new_account_mortgage);
 

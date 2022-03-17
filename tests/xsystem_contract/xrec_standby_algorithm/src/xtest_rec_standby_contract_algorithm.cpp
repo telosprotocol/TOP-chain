@@ -87,25 +87,25 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     // changed pub_key in reg && rec_standby on_timer update:
     top::xpublic_key_t pub_key_2{"test_pub_key_2"};
     change_public_key(xnode_id, pub_key_2);
-    // EXPECT_TRUE(rec_standby_on_timer_update);
-    // EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_2);
+    EXPECT_TRUE(rec_standby_on_timer_update);
+    EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_2);
     change_public_key(xnode_id, pub_key_1);
-    // EXPECT_TRUE(rec_standby_on_timer_update);
+    EXPECT_TRUE(rec_standby_on_timer_update);
 
 #define EXPECT_HAS(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) != standby_node_info.stake_container.end())
 #define EXPECT_HAS_NOT(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) == standby_node_info.stake_container.end())
 
     EXPECT_HAS(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS(common::xnode_type_t::storage_archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);  // advance won't be elected as archive since v1.3.0
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
     EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
 
-    change_role_type(xnode_id, common::xminer_type_t::validator);
+    change_miner_type(xnode_id, common::xminer_type_t::validator);
     EXPECT_HAS(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS(common::xnode_type_t::storage_archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);  // advance won't be elected as archive since v1.3.0
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
@@ -120,7 +120,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
     EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
 
-    change_role_type(xnode_id, common::xminer_type_t::edge);
+    change_miner_type(xnode_id, common::xminer_type_t::edge);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     // EXPECT_HAS_NOT(common::xnode_type_t::rec);
@@ -137,7 +137,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     // EXPECT_HAS(common::xnode_type_t::edge);
     EXPECT_HAS_NOT(common::xnode_type_t::storage_exchange);
 
-    change_role_type(xnode_id, common::xminer_type_t::exchange);
+    change_miner_type(xnode_id, common::xminer_type_t::exchange);
     // EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
     // EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     // EXPECT_HAS_NOT(common::xnode_type_t::rec);
