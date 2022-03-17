@@ -13,7 +13,8 @@ enum class xtop_enum_fork_point_type: uint8_t {
     invalid,
     logic_time,
     drand_height,
-    block_height
+    block_height,
+    fork_type_num
 };
 using xfork_point_type_t = xtop_enum_fork_point_type;
 

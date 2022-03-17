@@ -79,6 +79,28 @@ void xchain_params::load_dev_config() {
     if (!config_register.get("seed_edge_host", dev_params.seed_edge_host)) {
         //assert(0);
     }
+
+    auto parse_fork_config = [](std::string str) -> std::map<std::string, std::pair<uint8_t, uint64_t>> {
+        using top::base::xstring_utl;
+        std::map<std::string, std::pair<uint8_t, uint64_t>> map;
+        std::vector<std::string> str_vec;
+        xstring_utl::split_string(str, ',', str_vec);
+        for (auto s : str_vec) {
+            std::vector<std::string> values;
+            xstring_utl::split_string(s, '.', values);
+            if (values.size() != 3) {
+                continue;
+            }
+            std::replace(values[0].begin(), values[0].end(), '_', ' ');
+            map.insert({values[0], {xstring_utl::touint32(values[1]), xstring_utl::touint32(values[2])}});
+        }
+        return map;
+    };
+
+    std::string fork_config_str;
+    if (config_register.get("fork_config", fork_config_str) && !fork_config_str.empty()) {
+        dev_params.fork_config = parse_fork_config(fork_config_str);
+    }
 }
 
 void xchain_params::load_platform_config() {

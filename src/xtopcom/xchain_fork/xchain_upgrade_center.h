@@ -31,6 +31,7 @@ namespace top {
 
         public:
             static void init();
+            static void update(uint64_t cur_time, std::map<std::string, std::pair<uint8_t, uint64_t>> const & new_config);
             static xchain_fork_config_t const & get_chain_fork_config() noexcept {return m_fork_config;}
 
         private:

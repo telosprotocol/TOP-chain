@@ -27,7 +27,7 @@ namespace top {
             xchain_fork_config_t  mainnet_chain_config{
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "node initial credit fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
@@ -41,7 +41,7 @@ namespace top {
             xchain_fork_config_t  testnet_chain_config{
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "node initial credit fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
@@ -54,7 +54,7 @@ namespace top {
             xchain_fork_config_t default_chain_config {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "node initial credit fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode election"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable fullnode related func"},
@@ -67,7 +67,7 @@ namespace top {
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node initial credit fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
             xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
@@ -81,7 +81,7 @@ namespace top {
         xchain_fork_config_t  testnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node initial credit fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
             xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
@@ -95,7 +95,7 @@ namespace top {
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
+            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node initial credit fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "enable fullnode election"},
             xfork_point_t{xfork_point_type_t::logic_time, 7129260, "enable fullnode related func"},
@@ -153,6 +153,40 @@ namespace top {
             } else {
                 m_fork_config = default_chain_config;
                 xinfo("xtop_chain_fork_config_center::init default config");
+            }
+        }
+
+        void xtop_chain_fork_config_center::update(uint64_t cur_time, std::map<std::string, std::pair<uint8_t, uint64_t>> const & new_config) {
+            auto old_cnt = sizeof(xchain_fork_config_t) / sizeof(top::optional<xfork_point_t>);
+            auto new_cnt = new_config.size();
+
+            top::optional<xfork_point_t> * ptr = reinterpret_cast<top::optional<xfork_point_t> *>(&m_fork_config);
+            for (size_t i = 0; i < old_cnt && new_cnt > 0; i++, ptr++) {
+                if (!ptr->has_value()) {
+                    continue;
+                }
+                auto fork_description = ptr->value().description;
+                if (!new_config.count(fork_description)) {
+                    continue;
+                }
+                auto new_type = static_cast<xfork_point_type_t>(new_config.at(fork_description).first);
+                auto new_point = new_config.at(fork_description).second;
+                if (new_type >= xfork_point_type_t::fork_type_num) {
+                    xwarn("xtop_chain_fork_config_center::update invalid fork type (%u) to cover!", new_type);
+                    continue;
+                }
+                if ((new_type == xfork_point_type_t::logic_time || ptr->value().fork_type == xfork_point_type_t::logic_time) &&
+                    (new_point < cur_time || ptr->value().point < cur_time)) {
+                    xwarn("xtop_chain_fork_config_center::update invalid fork time (%lu->%lu), cur time (%lu)!", ptr->value().point, new_point, cur_time);
+                    continue;
+                }
+                ptr->value().fork_type = new_type;
+                ptr->value().point = new_point;
+                xinfo("xtop_chain_fork_config_center::update fork (%s) cover with new type (%u), new value (%lu)",
+                      fork_description.c_str(),
+                      ptr->value().fork_type,
+                      ptr->value().point);
+                new_cnt--;
             }
         }
     }
