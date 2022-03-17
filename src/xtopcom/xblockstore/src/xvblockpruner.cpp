@@ -92,16 +92,16 @@ namespace top
     
         bool  xvblockprune_impl::recycle_contract(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
-            xinfo("xvblockprune_impl::recycle contract, %s, %llu, %llu, %llu", account_obj.get_address().c_str(), account_meta._highest_cert_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height);
-            if(account_meta._highest_cert_block_height <= (enum_min_batch_recycle_blocks_count << 1))
+            xinfo("xvblockprune_impl::recycle contract, %s, %llu, %llu, %llu", account_obj.get_address().c_str(), account_meta._highest_full_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height);
+            if(account_meta._highest_full_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
-            
+             
             //[lower_bound_height,upper_bound_height)
-            uint64_t upper_bound_height = account_meta._highest_cert_block_height - (enum_min_batch_recycle_blocks_count << 1);
+            uint64_t upper_bound_height = account_meta._highest_full_block_height - enum_reserved_blocks_count;
             const uint64_t lower_bound_height = std::max(account_meta._lowest_vkey2_block_height,account_meta._highest_deleted_block_height) + 1;
             
             xinfo("xvblockprune_impl::recycle contract %s, upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
-                upper_bound_height, lower_bound_height, account_meta._highest_cert_block_height);
+                upper_bound_height, lower_bound_height, account_meta._highest_connect_block_height);
             
             if(lower_bound_height >= upper_bound_height)
                 return false;
