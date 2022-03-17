@@ -93,6 +93,11 @@ namespace top
         bool  xvblockprune_impl::recycle_contract(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
             xinfo("xvblockprune_impl::recycle contract, %s, %llu, %llu, %llu", account_obj.get_address().c_str(), account_meta._highest_full_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height);
+/*            if (m_prune_contract.find(account_obj.get_address()) == m_prune_contract.end())
+                return false;
+            if (m_prune_contract[account_obj.get_address()] == enum_prune_none)
+                return false;
+*/
             if(account_meta._highest_full_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
              
@@ -114,18 +119,20 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xinfo("xvblockprune_impl::recycle contract,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle contract,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
             }
             return true;
         }
         
         bool  xvblockprune_impl::recycle_table(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
+            xinfo("xvblockprune_impl::recycle table, %s, %llu, %llu, %llu", account_obj.get_address().c_str(),
+                account_meta._highest_full_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height);
             if(account_meta._highest_full_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
             uint64_t upper_bound_height = account_meta._highest_full_block_height - enum_reserved_blocks_count;
@@ -154,13 +161,13 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xinfo("xvblockprune_impl::recycle table,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
 
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle table,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
             }
             return true;
         }
@@ -280,7 +287,7 @@ namespace top
                 // if consensus zone
                 auto zone_id = account_obj.get_zone_index();
                 if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-                    return false;
+                    //return false;
                 }
             } else if (!account_obj.is_drand_address()) {
                 return false;
@@ -312,7 +319,7 @@ namespace top
                 // if consensus zone
                 auto zone_id = account_obj.get_zone_index();
                 if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-                    return false;
+                    //return false;
                 }
             } else if (!account_obj.is_drand_address()) {
                 return false;
@@ -340,7 +347,7 @@ namespace top
                 // if consensus zone
                 auto zone_id = account_obj.get_zone_index();
                 if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-                    return false;
+                    //return false;
                 }
             } else if (!account_obj.is_drand_address()) {
                 return false;

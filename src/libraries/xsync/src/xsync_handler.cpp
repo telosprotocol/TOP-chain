@@ -827,7 +827,14 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
                 store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
                 store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
             }
-
+            if (common::has<common::xnode_type_t::frozen>(vnetwork_driver->type())) {
+                base::xvaccount_t _vaddr(it.second.address);
+                auto zone_id = _vaddr.get_zone_index();
+                if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                    store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
+                    store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
+                }                
+            }
             xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_add_role_t>(it.second.address);
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);

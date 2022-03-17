@@ -166,6 +166,42 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
             }
         }
 
+        if (common::has<common::xnode_type_t::frozen>(self_addr.type())) {
+            base::xvaccount_t _vaddr(address);
+            auto zone_id = _vaddr.get_zone_index();
+            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                uint64_t height = m_sync_store->get_latest_block_with_state(address);
+                xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);
+                uint64_t height_state = height;
+                uint64_t height1 = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
+                height = m_sync_store->get_latest_stable_connected_checkpoint_height(address);
+                if (height1 > height) {
+                    height = height1;
+                }
+
+                // reserve 100 blocks
+                if (height > 100) {
+                    height = height - 100;
+                }
+                xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height);
+
+                uint64_t peer_start_height = 0;
+                uint64_t peer_end_height = 0;
+                vnetwork::xvnode_address_t peer_addr;
+                if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
+                    xsync_prune_sigleton_t::instance().update(address, enum_height_type::confirm_height, peer_end_height);
+                }
+                xsync_info("xsync_peer_keeper walk_role frozen update, %s, %llu, %llu, %llu, %llu", address.c_str(), height_state, height1, height, peer_end_height);
+
+                uint64_t min_height;
+                bool succ = xsync_prune_sigleton_t::instance().get_height(address, min_height);
+                if (succ && m_sync_store->is_full_node_forked()) {
+                    store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
+                    xsync_info("xsync_peer_keeper walk_role frozen,refresh prune height account %s, height %llu", address.c_str(), min_height);
+                }
+            }
+        }
+
         xchain_state_info_t info;
         info.address = address;
         if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
