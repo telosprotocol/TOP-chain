@@ -166,6 +166,7 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
     } else {
         if (m_archive_flag) {
             xdbg("local arc query method: %s", method.c_str());
+            json_proc.m_request_json["params"]["version"] = version;
             string strErrorMsg = RPC_OK_MSG;
             uint32_t nErrorCode = 0;
             m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
