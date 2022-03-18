@@ -41,6 +41,7 @@ namespace top
     
         xvblockprune_impl::~xvblockprune_impl()
         {
+            xwarn("~xvblockprune_impl");
         }
     
         bool  xvblockprune_impl::recycle(const base::xvbindex_t * block) //recyle one block
