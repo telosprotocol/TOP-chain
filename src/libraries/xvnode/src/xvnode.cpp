@@ -220,7 +220,7 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
         return false;
     }
 
-    if (!(common::has<common::xnode_type_t::storage>(node_type) ||common::has<common::xnode_type_t::rec>(node_type))) {
+    if (!common::has<common::xnode_type_t::storage>(node_type)) {
         return true;
     }
     
