@@ -80,19 +80,18 @@ void xchain_params::load_dev_config() {
         //assert(0);
     }
 
-    auto parse_fork_config = [](std::string str) -> std::map<std::string, std::pair<uint8_t, uint64_t>> {
+    auto parse_fork_config = [](std::string str) -> std::map<std::string, uint64_t> {
         using top::base::xstring_utl;
-        std::map<std::string, std::pair<uint8_t, uint64_t>> map;
+        std::map<std::string, uint64_t> map;
         std::vector<std::string> str_vec;
         xstring_utl::split_string(str, ',', str_vec);
         for (auto s : str_vec) {
             std::vector<std::string> values;
             xstring_utl::split_string(s, '.', values);
-            if (values.size() != 3) {
+            if (values.size() != 2) {
                 continue;
             }
-            std::replace(values[0].begin(), values[0].end(), '_', ' ');
-            map.insert({values[0], {xstring_utl::touint32(values[1]), xstring_utl::touint32(values[2])}});
+            map.insert({values[0], xstring_utl::touint32(values[1])});
         }
         return map;
     };

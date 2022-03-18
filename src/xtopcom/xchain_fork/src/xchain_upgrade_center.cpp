@@ -156,37 +156,45 @@ namespace top {
             }
         }
 
-        void xtop_chain_fork_config_center::update(uint64_t cur_time, std::map<std::string, std::pair<uint8_t, uint64_t>> const & new_config) {
-            auto old_cnt = sizeof(xchain_fork_config_t) / sizeof(top::optional<xfork_point_t>);
-            auto new_cnt = new_config.size();
+        void xtop_chain_fork_config_center::update(uint64_t cur_time, std::map<std::string, uint64_t> const & new_config) {
+            for (auto config : new_config) {
+                auto name = config.first;
+                auto new_point = config.second;
+                top::optional<xfork_point_t> * ptr = nullptr;
 
-            top::optional<xfork_point_t> * ptr = reinterpret_cast<top::optional<xfork_point_t> *>(&m_fork_config);
-            for (size_t i = 0; i < old_cnt && new_cnt > 0; i++, ptr++) {
+                if (name == "block_fork_point") {
+                    ptr = &m_fork_config.block_fork_point;
+                } else if (name == "blacklist_function_fork_point") {
+                    ptr = &m_fork_config.blacklist_function_fork_point;
+                } else if (name == "node_initial_credit_fork_point") {
+                    ptr = &m_fork_config.node_initial_credit_fork_point;
+                } else if (name == "V3_0_0_0_block_fork_point") {
+                    ptr = &m_fork_config.V3_0_0_0_block_fork_point;
+                } else if (name == "enable_fullnode_election_fork_point") {
+                    ptr = &m_fork_config.enable_fullnode_election_fork_point;
+                } else if (name == "enable_fullnode_related_func_fork_point") {
+                    ptr = &m_fork_config.enable_fullnode_related_func_fork_point;
+                } else if (name == "tx_v2_fee_fork_point") {
+                    ptr = &m_fork_config.tx_v2_fee_fork_point;
+                } else if (name == "election_contract_stores_miner_type_and_genesis_fork_point") {
+                    ptr = &m_fork_config.election_contract_stores_miner_type_and_genesis_fork_point;
+                } else if (name == "partly_remove_confirm") {
+                    ptr = &m_fork_config.partly_remove_confirm;
+                } else {
+                    xwarn("xtop_chain_fork_config_center::update invalid fork point (%s) not found!", name.c_str());
+                    continue;
+                }
+
                 if (!ptr->has_value()) {
+                    xwarn("xtop_chain_fork_config_center::update invalid fork point (%s) empty!", name.c_str());
                     continue;
                 }
-                auto fork_description = ptr->value().description;
-                if (!new_config.count(fork_description)) {
+                if (new_point < cur_time || ptr->value().point < cur_time) {
+                    xwarn("xtop_chain_fork_config_center::update invalid fork time convertion (%lu->%lu), cur time (%lu)!", ptr->value().point, new_point, cur_time);
                     continue;
                 }
-                auto new_type = static_cast<xfork_point_type_t>(new_config.at(fork_description).first);
-                auto new_point = new_config.at(fork_description).second;
-                if (new_type >= xfork_point_type_t::fork_type_num) {
-                    xwarn("xtop_chain_fork_config_center::update invalid fork type (%u) to cover!", new_type);
-                    continue;
-                }
-                if ((new_type == xfork_point_type_t::logic_time || ptr->value().fork_type == xfork_point_type_t::logic_time) &&
-                    (new_point < cur_time || ptr->value().point < cur_time)) {
-                    xwarn("xtop_chain_fork_config_center::update invalid fork time (%lu->%lu), cur time (%lu)!", ptr->value().point, new_point, cur_time);
-                    continue;
-                }
-                ptr->value().fork_type = new_type;
                 ptr->value().point = new_point;
-                xinfo("xtop_chain_fork_config_center::update fork (%s) cover with new type (%u), new value (%lu)",
-                      fork_description.c_str(),
-                      ptr->value().fork_type,
-                      ptr->value().point);
-                new_cnt--;
+                xinfo("xtop_chain_fork_config_center::update fork (%s) with new value (%lu)", name.c_str(), ptr->value().point);
             }
         }
     }

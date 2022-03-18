@@ -39,19 +39,18 @@ protected:
         top::data::xdev_params& dev_params = top::data::xdev_params::get_instance();
         auto& config_register = top::config::xconfig_register_t::get_instance();
 
-        auto parse_fork_config = [](std::string str) -> std::map<std::string, std::pair<uint8_t, uint64_t>> {
+        auto parse_fork_config = [](std::string str) -> std::map<std::string, uint64_t> {
             using top::base::xstring_utl;
-            std::map<std::string, std::pair<uint8_t, uint64_t>> map;
+            std::map<std::string, uint64_t> map;
             std::vector<std::string> str_vec;
             xstring_utl::split_string(str, ',', str_vec);
             for (auto s : str_vec) {
                 std::vector<std::string> values;
                 xstring_utl::split_string(s, '.', values);
-                if (values.size() != 3) {
+                if (values.size() != 2) {
                     continue;
                 }
-                std::replace(values[0].begin(), values[0].end(), '_', ' ');
-                map.insert({values[0], {xstring_utl::touint32(values[1]), xstring_utl::touint32(values[2])}});
+                map.insert({values[0], xstring_utl::touint32(values[1])});
             }
             return map;
         };
@@ -115,16 +114,25 @@ TEST_F(test_xchain_upgrade, test_config_select) {
 // xfork_point_t{xfork_point_type_t::logic_time, 7472520, "election contract store miner type & genesis flag"},
 // xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
 
+// top::optional<xfork_point_t> block_fork_point;
+// top::optional<xfork_point_t> blacklist_function_fork_point;
+// top::optional<xfork_point_t> node_initial_credit_fork_point;
+// top::optional<xfork_point_t> V3_0_0_0_block_fork_point;
+// top::optional<xfork_point_t> enable_fullnode_election_fork_point;
+// top::optional<xfork_point_t> enable_fullnode_related_func_fork_point;
+// top::optional<xfork_point_t> tx_v2_fee_fork_point;
+// top::optional<xfork_point_t> election_contract_stores_miner_type_and_genesis_fork_point;
+// top::optional<xfork_point_t> partly_remove_confirm;
 TEST_F(test_xchain_upgrade, test_fork_param_set_one) {
     xtop_chain_fork_config_center::init();
 
-    std::map<std::string, std::pair<uint8_t, uint64_t>> new_config;
-    new_config.insert({"tx v2 fee fork point", {3, 9999996}});
+    std::map<std::string, uint64_t> new_config;
+    new_config.insert({"tx_v2_fee_fork_point", 9999996});
 
     xtop_chain_fork_config_center::update(0, new_config);
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
-    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 9999996);
 #ifndef XCHAIN_FORKED_BY_DEFAULT
     EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
@@ -149,115 +157,105 @@ TEST_F(test_xchain_upgrade, test_fork_param_set_one) {
 TEST_F(test_xchain_upgrade, test_fork_param_set_all) {
     xtop_chain_fork_config_center::init();
 
-    std::map<std::string, std::pair<uint8_t, uint64_t>> new_config;
-    new_config.insert({"block fork point", {2, 9999990}});
-    new_config.insert({"blacklist function fork point", {2, 9999991}});
-    new_config.insert({"node_initial_credit_fork_point", {2, 9999992}});
-    new_config.insert({"v3 block fork point", {2, 9999993}});
-    new_config.insert({"enable fullnode election", {2, 9999994}});
-    new_config.insert({"enable fullnode related func", {3, 9999995}});
-    new_config.insert({"tx v2 fee fork point", {3, 9999996}});
-    new_config.insert({"election contract store miner type & genesis flag", {3, 9999997}});
-    new_config.insert({"partly remove confirm", {3, 9999998}});
-
+    std::map<std::string, uint64_t> new_config;
+    new_config.insert({"block_fork_point", 9999990});
+    new_config.insert({"blacklist_function_fork_point", 9999991});
+    new_config.insert({"node_initial_credit_fork_point", 9999992});
+    new_config.insert({"V3_0_0_0_block_fork_point", 9999993});
+    new_config.insert({"enable_fullnode_election_fork_point", 9999994});
+    new_config.insert({"enable_fullnode_related_func_fork_point", 9999995});
+    new_config.insert({"tx_v2_fee_fork_point", 9999996});
+    new_config.insert({"election_contract_stores_miner_type_and_genesis_fork_point", 9999997});
+    new_config.insert({"partly_remove_confirm", 9999998});
     xtop_chain_fork_config_center::update(0, new_config);
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
-    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 9999990);
-    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 9999991);
-    EXPECT_EQ((int)config.node_initial_credit_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.node_initial_credit_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.node_initial_credit_fork_point.value().point, 9999992);
-    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 9999993);
-    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_election_fork_point.value().point, 9999994);
-    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_related_func_fork_point.value().point, 9999995);
-    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 9999996);
-    EXPECT_EQ((int)config.election_contract_stores_miner_type_and_genesis_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.election_contract_stores_miner_type_and_genesis_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.election_contract_stores_miner_type_and_genesis_fork_point.value().point, 9999997);
-    EXPECT_EQ((int)config.partly_remove_confirm.value().fork_type, 3);
+    EXPECT_EQ((int)config.partly_remove_confirm.value().fork_type, 1);
     EXPECT_EQ(config.partly_remove_confirm.value().point, 9999998);
 }
 
 TEST_F(test_xchain_upgrade, test_fork_param_set_more) {
     xtop_chain_fork_config_center::init();
 
-    std::map<std::string, std::pair<uint8_t, uint64_t>> new_config;
-    new_config.insert({"block fork point", {2, 9999990}});
-    new_config.insert({"blacklist function fork point", {2, 9999991}});
-    new_config.insert({"node_initial_credit_fork_point", {2, 9999992}});
-    new_config.insert({"v3 block fork point", {2, 9999993}});
-    new_config.insert({"enable fullnode election", {2, 9999994}});
-    new_config.insert({"enable fullnode related func", {3, 9999995}});
-    new_config.insert({"tx v2 fee fork point", {3, 9999996}});
-    new_config.insert({"election contract store miner type & genesis flag", {3, 9999997}});
-    new_config.insert({"partly remove confirm", {3, 9999998}});
-    new_config.insert({"more fork1", {3, 9999999}});
-    new_config.insert({"more fork2", {3, 9999999}});
-    new_config.insert({"more fork3", {3, 9999999}});
+    std::map<std::string, uint64_t> new_config;
+    new_config.insert({"block_fork_point", 9999990});
+    new_config.insert({"blacklist_function_fork_point", 9999991});
+    new_config.insert({"node_initial_credit_fork_point", 9999992});
+    new_config.insert({"V3_0_0_0_block_fork_point", 9999993});
+    new_config.insert({"enable_fullnode_election_fork_point", 9999994});
+    new_config.insert({"enable_fullnode_related_func_fork_point", 9999995});
+    new_config.insert({"tx_v2_fee_fork_point", 9999996});
+    new_config.insert({"election_contract_stores_miner_type_and_genesis_fork_point", 9999997});
+    new_config.insert({"partly_remove_confirm", 9999998});
+    new_config.insert({"more_fork1", 9999999});
+    new_config.insert({"more_fork2", 9999999});
+    new_config.insert({"more_fork3", 9999999});
 
     xtop_chain_fork_config_center::update(0, new_config);
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
-    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 9999990);
-    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 9999991);
-    EXPECT_EQ((int)config.node_initial_credit_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.node_initial_credit_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.node_initial_credit_fork_point.value().point, 9999992);
-    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 9999993);
-    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 2);
+    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_election_fork_point.value().point, 9999994);
-    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_related_func_fork_point.value().point, 9999995);
-    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 9999996);
-    EXPECT_EQ((int)config.election_contract_stores_miner_type_and_genesis_fork_point.value().fork_type, 3);
+    EXPECT_EQ((int)config.election_contract_stores_miner_type_and_genesis_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.election_contract_stores_miner_type_and_genesis_fork_point.value().point, 9999997);
-    EXPECT_EQ((int)config.partly_remove_confirm.value().fork_type, 3);
+    EXPECT_EQ((int)config.partly_remove_confirm.value().fork_type, 1);
     EXPECT_EQ(config.partly_remove_confirm.value().point, 9999998);
 }
 
 TEST_F(test_xchain_upgrade, test_fork_param_part_wrong) {
     xtop_chain_fork_config_center::init();
 
-    std::map<std::string, std::pair<uint8_t, uint64_t>> new_config;
-    new_config.insert({"block fork point", {2, 9999990}});
-    new_config.insert({"blacklist function fork point", {2, 9999991}});
-    new_config.insert({"node_initial_credit_fork_point", {2, 9999992}});
-    new_config.insert({"v3 block fork point", {2, 9999993}});
-    new_config.insert({"enable fullnode election", {2, 9999994}});
-    new_config.insert({"enable fullnode related func", {3, 9999995}});
-    new_config.insert({"more fork1", {3, 9999999}});
-    new_config.insert({"more fork2", {3, 9999999}});
-    new_config.insert({"more fork3", {3, 9999999}});
+    std::map<std::string, uint64_t> new_config;
+    new_config.insert({"block_fork_point", 9999990});
+    new_config.insert({"blacklist_function_fork_point", 9999991});
+    new_config.insert({"node_initial_credit_fork_point", 9999992});
+    new_config.insert({"V3_0_0_0_block_fork_point", 9999993});
+    new_config.insert({"enable_fullnode_election_fork_point", 9999994});
+    new_config.insert({"enable_fullnode_related_func_fork_point", 9999995});
+    new_config.insert({"more_fork1", 9999999});
+    new_config.insert({"more_fork2", 9999999});
+    new_config.insert({"more_fork3", 9999999});
 
     xtop_chain_fork_config_center::update(0, new_config);
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
-    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 2);
     EXPECT_EQ(config.block_fork_point.value().point, 9999990);
-    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 2);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 9999991);
-    EXPECT_EQ((int)config.node_initial_credit_fork_point.value().fork_type, 2);
     EXPECT_EQ(config.node_initial_credit_fork_point.value().point, 9999992);
-    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 2);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 9999993);
-    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 2);
     EXPECT_EQ(config.enable_fullnode_election_fork_point.value().point, 9999994);
-    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 3);
     EXPECT_EQ(config.enable_fullnode_related_func_fork_point.value().point, 9999995);
 #ifndef XCHAIN_FORKED_BY_DEFAULT
-    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 7221960);
-    EXPECT_EQ((int)config.election_contract_stores_miner_type_and_genesis_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.election_contract_stores_miner_type_and_genesis_fork_point.value().point, 7472520);
-    EXPECT_EQ((int)config.partly_remove_confirm.value().fork_type, 1);
     EXPECT_EQ(config.partly_remove_confirm.value().point, 7473960);
 #endif
 }
@@ -265,39 +263,30 @@ TEST_F(test_xchain_upgrade, test_fork_param_part_wrong) {
 TEST_F(test_xchain_upgrade, test_fork_param_all_wrong) {
     xtop_chain_fork_config_center::init();
 
-    std::map<std::string, std::pair<uint8_t, uint64_t>> new_config;
-    new_config.insert({"more fork1", {3, 9999999}});
-    new_config.insert({"more fork2", {3, 9999999}});
-    new_config.insert({"more fork3", {3, 9999999}});
-    new_config.insert({"more fork4", {3, 9999999}});
-    new_config.insert({"more fork5", {3, 9999999}});
-    new_config.insert({"more fork6", {3, 9999999}});
-    new_config.insert({"more fork7", {3, 9999999}});
-    new_config.insert({"more fork8", {3, 9999999}});
-    new_config.insert({"more fork9", {3, 9999999}});
-    new_config.insert({"more fork10", {3, 9999999}});
+    std::map<std::string, uint64_t> new_config;
+    new_config.insert({"more fork1", 9999999});
+    new_config.insert({"more fork2", 9999999});
+    new_config.insert({"more fork3", 9999999});
+    new_config.insert({"more fork4", 9999999});
+    new_config.insert({"more fork5", 9999999});
+    new_config.insert({"more fork6", 9999999});
+    new_config.insert({"more fork7", 9999999});
+    new_config.insert({"more fork8", 9999999});
+    new_config.insert({"more fork9", 9999999});
+    new_config.insert({"more fork10", 9999999});
 
     xtop_chain_fork_config_center::update(0, new_config);
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
 #ifndef XCHAIN_FORKED_BY_DEFAULT
-    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 6859080);
-    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 6859080);
-    EXPECT_EQ((int)config.node_initial_credit_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.node_initial_credit_fork_point.value().point, 6859080);
-    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 7126740);
-    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_election_fork_point.value().point, 7126740);
-    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_related_func_fork_point.value().point, 7129260);
-    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 7221960);
-    EXPECT_EQ((int)config.election_contract_stores_miner_type_and_genesis_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.election_contract_stores_miner_type_and_genesis_fork_point.value().point, 7472520);
-    EXPECT_EQ((int)config.partly_remove_confirm.value().fork_type, 1);
     EXPECT_EQ(config.partly_remove_confirm.value().point, 7473960);
 #endif
 }
@@ -305,28 +294,23 @@ TEST_F(test_xchain_upgrade, test_fork_param_all_wrong) {
 TEST_F(test_xchain_upgrade, test_fork_param_invalid_time) {
     xtop_chain_fork_config_center::init();
 
-    std::map<std::string, std::pair<uint8_t, uint64_t>> new_config;
-    new_config.insert({"block fork point", {1, 6859070}});
-    new_config.insert({"blacklist function fork point", {1, 7100000}});
-    new_config.insert({"v3 block fork point", {1, 6900000}});
-    new_config.insert({"enable fullnode election", {1, 7100000}});
-    new_config.insert({"enable fullnode related func", {2, 7300000}});
+    std::map<std::string, uint64_t> new_config;
+    new_config.insert({"block_fork_point", 6859070});
+    new_config.insert({"blacklist_function_fork_point", 7100000});
+    new_config.insert({"V3_0_0_0_block_fork_point", 6900000});
+    new_config.insert({"enable_fullnode_election_fork_point", 7100000});
+    new_config.insert({"enable_fullnode_related_func_fork_point", 7300000});
 
     xtop_chain_fork_config_center::update(7000000, new_config);
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
 #ifndef XCHAIN_FORKED_BY_DEFAULT
-    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 6859080);
-    EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 6859080);
-    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 7126740);
-#endif
-    EXPECT_EQ((int)config.enable_fullnode_related_func_fork_point.value().fork_type, 2);
-    EXPECT_EQ(config.enable_fullnode_related_func_fork_point.value().point, 7300000);
-    EXPECT_EQ((int)config.enable_fullnode_election_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.enable_fullnode_election_fork_point.value().point, 7100000);
+    EXPECT_EQ(config.enable_fullnode_related_func_fork_point.value().point, 7300000);
+#endif
 }
 
 // block_fork_point.2.6000000,v3_block_fork_point.2.7000000,tx_v2_fee_fork_point.3.8000000
@@ -362,12 +346,9 @@ TEST_F(test_xchain_upgrade, test_fork_param_from_file) {
 
     auto config = xtop_chain_fork_config_center::get_chain_fork_config();
 #ifndef XCHAIN_FORKED_BY_DEFAULT
-    EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 6859080);
-    EXPECT_EQ((int)config.V3_0_0_0_block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 7126740);
-#endif
-    EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 3);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 8000000);
+#endif
 }
 

@@ -55,7 +55,7 @@ public:
     }
 
     std::string                           seed_edge_host;
-    std::map<std::string, std::pair<uint8_t, uint64_t>> fork_config;
+    std::map<std::string, uint64_t>       fork_config;
 };
 
 class xplatform_params {

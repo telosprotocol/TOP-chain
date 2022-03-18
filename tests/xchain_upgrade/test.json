@@ -4,5 +4,5 @@
     "public_key": "BDK3rky3mc+7Fs84AwCUTmSgQT2/v1uPcCp2+McbitIFeVM/r4spOQ/o26CuyAuXsMcifcanu57NJ4lUVC8MfDQ=",
     "sign_key": "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=",
     "chain_name": "galileo",
-    "fork_config": "block_fork_point.2.6000000,v3_block_fork_point.2.7000000,tx_v2_fee_fork_point.3.8000000"
+    "fork_config": "block_fork_point.6000000,V3_0_0_0_block_fork_point.7000000,tx_v2_fee_fork_point.8000000"
 }

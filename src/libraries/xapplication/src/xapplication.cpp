@@ -100,7 +100,7 @@ void xtop_application::start() {
     config::xconfig_register_t::get_instance().load();
 
     chain_fork::xchain_fork_config_center_t::init();
-    chain_fork::xchain_fork_config_center_t::update(xdev_params::get_instance().fork_config, last_logic_time()->get_height());
+    chain_fork::xchain_fork_config_center_t::update(last_logic_time()->get_height(), xdev_params::get_instance().fork_config);
     base::xvblock_fork_t::instance().init(chain_fork::xchain_fork_config_center_t::is_block_forked);
 
     m_txpool =
