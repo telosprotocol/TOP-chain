@@ -888,9 +888,11 @@ void get_block_handle::queryNodeReward() {
     std::string target = m_js_req["node_account_addr"].asString();
 
     //add top address check
-    if (xverifier::xtx_utl::address_is_valid(target) != xverifier::xverifier_error::xverifier_success) {
-        set_result(INVALID_ACCOUNT);
-        return;
+    if (!target.empty()) {
+        if (xverifier::xtx_utl::address_is_valid(target) != xverifier::xverifier_error::xverifier_success) {
+            set_result(INVALID_ACCOUNT);
+            return;
+        }
     }
 
     m_js_rsp["value"] = parse_sharding_reward(target, prop_name);
