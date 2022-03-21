@@ -89,14 +89,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXENABLE_CONFIG_CHECK=ON"
         echo "enable config check when node boot"
     ;;
-    slash_test)
-        CMAKE_EXTRA_OPTIONS+=" -DSLASH_TEST=ON"
-        echo "enable slash test when node boot"
-    ;;
-    workload_test)
-        CMAKE_EXTRA_OPTIONS+=" -DWORKLOAD_TEST=ON"
-        echo "enable work load test when node boot"
-    ;;
     mainnet_activated)
         CMAKE_EXTRA_OPTIONS+=" -DMAINNET_ACTIVATED=ON"
         echo "enable mainnet activation by default"

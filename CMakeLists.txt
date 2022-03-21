@@ -204,16 +204,6 @@ if (XENABLE_CONFIG_CHECK)
     add_definitions(-DCONFIG_CHECK)
 endif()
 
-# for slash test
-if (SLASH_TEST)
-    add_definitions(-DSLASH_TEST)
-endif()
-
-# for workload test
-if (WORKLOAD_TEST)
-    add_definitions(-DWORKLOAD_TEST)
-endif()
-
 if (MAINNET_ACTIVATED)
     add_definitions(-DMAINNET_ACTIVATED)
 endif()
