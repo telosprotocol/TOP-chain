@@ -200,6 +200,7 @@ void protocol::regist_protocols() {
     regist_create_function(CMD_ACCOUNT_TRANSACTION, []() { return new AccountTransactionCmd(); });
 
     regist_create_function(CMD_TRANSFER, []() { return new TransferCmd(); });
+    regist_create_function(CMD_ESTIMATEGAS, []() { return new TransferCmd(); });
     regist_create_function(CMD_PLEDGETGAS, []() { return new TransferCmd(); });
     regist_create_function(CMD_REDEEMTGAS, []() { return new TransferCmd(); });
     regist_create_function(CMD_PLEDGEDISK, []() { return new TransferCmd(); });
@@ -244,6 +245,7 @@ void protocol::regist_protocols() {
     regist_create_function(CMD_APPROVE_PROPOSAL, []() { return new VoteProposalCmd(); });
 
     regist_create_function(CMD_CHAIN_INFO, []() { return new ChainInfoCmd(); });
+    regist_create_function(CMD_GENERAL_INFO, []() { return new GeneralInfoCmd(); });
     regist_create_function(CMD_NODE_INFO, []() { return new NodeInfoCmd(); });
     regist_create_function(CMD_ELECT_INFO, []() { return new ElectInfoCmd(); });
     regist_create_function(CMD_STANDBYS_INFO, []() { return new StandbysInfoCmd(); });
@@ -1022,6 +1024,29 @@ void ChainInfoCmd::decode(const std::string & params, task_info * info) {
             result->version = root["version"].asString();
             result->first_timerblock_hash = root["first_timerblock_hash"].asString();
             result->first_timerblock_stamp = root["first_timerblock_stamp"].asUInt64();
+        }
+    } catch (...) {
+        result->error = static_cast<int>(ErrorCode::JsonParseError);
+        result->errmsg = "Json Parse Error.";
+    }
+}
+
+GeneralInfoCmd::GeneralInfoCmd() {
+    _param_names = &_cur_param_names;
+}
+
+GeneralInfoCmd::~GeneralInfoCmd() {
+    // std::cout << "Destroy ChainInfoCmd" << std::endl;
+}
+
+void GeneralInfoCmd::decode(const std::string & params, task_info * info) {
+    xJson::Reader reader;
+    xJson::Value root;
+
+    auto result = std::make_shared<GeneralInfoResult>();
+
+    try {
+        if (reader.parse(params, root)) {
         }
     } catch (...) {
         result->error = static_cast<int>(ErrorCode::JsonParseError);

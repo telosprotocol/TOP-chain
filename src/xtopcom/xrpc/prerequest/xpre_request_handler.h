@@ -8,7 +8,8 @@
 #include "xpre_request_data.h"
 #include "xrpc/xrpc_method.h"
 #include "xpre_request_handler_face.h"
-
+#include "xtxstore/xtransaction_prepare.h"
+#include "xdata/xtx_factory.h"
 NS_BEG2(top, xrpc)
 
 
@@ -18,6 +19,7 @@ public:
     void requestToken(xpre_request_data_t & request);
     // void create_account(xpre_request_data_t & request);
     // void account(xpre_request_data_t & request);
+    void getEstimateGas(xpre_request_data_t & request);
 };
 
 NS_END2

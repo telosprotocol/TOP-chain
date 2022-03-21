@@ -1775,8 +1775,10 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j["registered_node_type"] = std::string{"advance,validator,edge"};
+            j["genesis"] = "true";
         } else {
             j["registered_node_type"] = common::to_string(reg_node_info.miner_type());
+            j["genesis"] = "false";
         }
         j["miner_type"] = common::to_string(reg_node_info.miner_type());
         j["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);

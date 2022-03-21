@@ -301,6 +301,28 @@ TEST_F(test_xrpc_query_manager, getTimerInfo) {
     EXPECT_EQ(true, ret);
 }
 
+TEST_F(test_xrpc_query_manager, getGeneralInfos) {
+    xJson::Value jr;
+    xJson::Value js_rsp;
+    std::string strResult = "ok";
+    uint32_t nErrorCode = 0;
+    jr["action"] = "getGeneralInfos";
+    std::string request = jr.toStyledString();
+    auto ret = xrpc_query_manager_ptr->handle(request, jr, js_rsp, strResult, nErrorCode);
+    EXPECT_EQ(true, ret);
+}
+
+TEST_F(test_xrpc_query_manager, getChainId) {
+    xJson::Value jr;
+    xJson::Value js_rsp;
+    std::string strResult = "ok";
+    uint32_t nErrorCode = 0;
+    jr["action"] = "getChainId";
+    std::string request = jr.toStyledString();
+    auto ret = xrpc_query_manager_ptr->handle(request, jr, js_rsp, strResult, nErrorCode);
+    EXPECT_EQ(true, ret);
+}
+
 // TEST_F(test_xrpc_query_manager, get_sync) {
 //     auto sync_status = std::make_shared<syncbase::xsync_status_t>();
 //     std::unordered_map<std::string, syncbase::xaccount_sync_status_t> accounts;

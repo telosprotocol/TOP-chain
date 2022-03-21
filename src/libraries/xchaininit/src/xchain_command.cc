@@ -722,6 +722,16 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     transfer->add_option("-t,--tx_deposit", tx_deposit, "Transaction deposit,a minimum of 0.1 TOP.");
 
     /*
+     * estimategas
+     */
+    auto estimategas = app.add_subcommand("estimategas", "estimate transaction gas.");
+    estimategas->callback(std::bind(&ApiMethod::estimategas, &topcl.api, std::ref(to), std::ref(amount), std::ref(note), std::ref(tx_deposit), std::ref(out_str)));
+    estimategas->add_option("account_addr", to, "The receipt account address.")->required();
+    estimategas->add_option("top_num", amount, "Locked TOP token amount.")->required();
+    estimategas->add_option("note", note, "The note for the transfer,characters of any type, not exceeding 128 in length.");
+    estimategas->add_option("-t,--tx_deposit", tx_deposit, "Transaction deposit,a minimum of 0.1 TOP.");
+
+    /*
      * querytx
      */
     auto querytx_app = app.add_subcommand("querytx", "Get detail information of a transaction.");
@@ -763,6 +773,9 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     queryBlocksByHeight_app->callback(
         std::bind(&ApiMethod::getBlocksByHeight, &topcl.api, std::ref(queryBlocksByHeight_account), std::ref(queryBlocksByHeight_height), std::ref(out_str)));
  #endif
+    // query General Info
+    auto generalInfo_app = chain_app->add_subcommand("generalInfo", "Get General informaion.");
+    generalInfo_app->callback(std::bind(&ApiMethod::general_info, &topcl.api, std::ref(out_str)));
     // query chain info
     auto chainInfo_app = chain_app->add_subcommand("chainInfo", "Get chain informaion.");
     chainInfo_app->callback(std::bind(&ApiMethod::chain_info, &topcl.api, std::ref(out_str)));
