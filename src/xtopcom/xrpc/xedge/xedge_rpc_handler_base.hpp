@@ -127,10 +127,11 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
 
                     for (auto & cluster : cluster_addresses) {
                         if ((msghash % cluster_addresses.size() == count || (msghash + 1) % cluster_addresses.size() == count)) {
-                            xdbg("[edge][forward archive]%s,src %s, dst %s, archive group size %zu, %" PRIx64,
+                            xinfo("[edge][forward archive]%s,src %s, dst %s, txhash %s, archive group size %zu, %" PRIx64,
                                  msg_ptr->m_account.c_str(),
                                  vd->address().to_string().c_str(),
                                  cluster.to_string().c_str(),
+                                 tx_hash.c_str(),
                                  cluster_addresses.size(),
                                  msg.hash());
                             std::error_code ec;
@@ -189,7 +190,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
 template <class T>
 void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_response_t& msg)
 {
-    xdbg_rpc("xrpc_edge_vhost edge_process_response:%s" , msg.to_string().c_str());
+    xinfo_rpc("xrpc_edge_vhost edge_process_response:%s" , msg.to_string().c_str());
     std::lock_guard<std::mutex> lock(m_mutex);
     auto iter = m_forward_session_map.find(msg.m_uuid);
     if (iter != m_forward_session_map.end()) {

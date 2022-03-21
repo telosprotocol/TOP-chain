@@ -88,7 +88,7 @@ void xarc_query_manager::getTransaction(xjson_proc_t & json_proc) {
     const string & account = json_proc.m_request_json["params"]["account_addr"].asString();
     const string & tx_hash_str = json_proc.m_request_json["params"]["tx_hash"].asString();
     const string & version = json_proc.m_request_json["version"].asString();
-    xdbg("xarc_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
+    xinfo("xarc_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
 
     // add top address check
     ADDRESS_CHECK_VALID(account)

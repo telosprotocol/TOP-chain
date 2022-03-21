@@ -480,10 +480,6 @@ xJson::Value get_block_handle::get_tx_exec_result(const std::string & account, u
             }
             return jv;
         }
-
-        if (block_height == 0) {
-            throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address does not exist or block height does not exist"};
-        }
     }
 
     auto vb = m_block_store->load_block_object(_account_vaddress, block_height, 0, true, metrics::blockstore_access_from_rpc_get_unit);

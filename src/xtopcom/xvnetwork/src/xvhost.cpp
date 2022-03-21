@@ -613,7 +613,7 @@ void xtop_vhost::do_handle_network_data() {
                         if (callback) {
                             try {
                                 // callback(sender, receiver, message);
-                                xdbg("[vnetwork] send msg %" PRIx32 " (hash %" PRIx64 ") to callback %p at address %s",
+                                xinfo("[vnetwork] send msg %" PRIx32 " (hash %" PRIx64 ") to callback %p at address %s",
                                      static_cast<std::uint32_t>(message.id()),
                                      message.hash(),
                                      &callback,

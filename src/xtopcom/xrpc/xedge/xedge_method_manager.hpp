@@ -334,7 +334,12 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr());
         } else {
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "");
+            string strTxHash;
+            const string & method = json_proc.m_request_json["method"].asString();
+            if (method == "getTransaction") {
+                strTxHash = json_proc.m_request_json["params"]["tx_hash"].asString();
+            }
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, strTxHash, "");
         }
 #if (defined ENABLE_RPC_SESSION) && (ENABLE_RPC_SESSION != 0)
         m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
