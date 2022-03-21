@@ -16,6 +16,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 
 
 #include "xconfig/xconfig_register.h"

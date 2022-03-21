@@ -187,9 +187,10 @@ XDEFINE_CONFIGURATION(fulltable_interval_block_num);
 XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
 
-XDEFINE_CONFIGURATION(slash_fulltable_interval);
-XDEFINE_CONFIGURATION(slash_table_split_num);
 XDEFINE_CONFIGURATION(prune_reserve_number);
+XDEFINE_CONFIGURATION(redeem_interval);
+XDEFINE_CONFIGURATION(pledge_vote_merge_interval);
+XDEFINE_CONFIGURATION(pledge_vote_clock_per_day);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

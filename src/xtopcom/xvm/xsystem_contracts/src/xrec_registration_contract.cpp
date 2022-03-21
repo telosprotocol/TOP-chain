@@ -417,15 +417,18 @@ void xrec_registration_contract::redeemNodeDeposit() {
     XMETRICS_TIME_RECORD(XREG_CONTRACT "redeemNodeDeposit_ExecutionTime");
     uint64_t cur_time = TIME();
     std::string const & account = SOURCE_ADDRESS();
-    xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance: %lld, account: %s\n", getpid(), GET_BALANCE(), account.c_str());
+    xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance: %lld, account: %s", getpid(), GET_BALANCE(), account.c_str());
 
     data::system_contract::xrefund_info refund;
     auto ret = get_refund(account, refund);
     XCONTRACT_ENSURE(ret == 0, "xrec_registration_contract::redeemNodeDeposit: refund not exist");
-    XCONTRACT_ENSURE(cur_time - refund.create_time >= data::system_contract::REDEEM_INTERVAL,
-                     "xrec_registration_contract::redeemNodeDeposit: interval must be greater than or equal to REDEEM_INTERVAL");
 
-    xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance:%llu, account: %s, refund amount: %llu\n", getpid(), GET_BALANCE(), account.c_str(), refund.refund_amount);
+    uint64_t redeem_interval = XGET_CONFIG(redeem_interval);
+    xinfo("[xrec_registration_contract::redeemNodeDeposit] redeem_interval: %lu, cur_interval: %lu", redeem_interval, cur_time - refund.create_time);
+    XCONTRACT_ENSURE(cur_time - refund.create_time >= redeem_interval,
+                     "xrec_registration_contract::redeemNodeDeposit: interval must be greater than or equal to redeem_interval");
+
+    xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance:%llu, account: %s, refund amount: %llu", getpid(), GET_BALANCE(), account.c_str(), refund.refund_amount);
     // refund
     TRANSFER(account, refund.refund_amount);
 

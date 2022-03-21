@@ -79,12 +79,6 @@ const int XPROPERTY_SPLITED_NUM = 4;
 const int DENOMINATOR = 10000;
 const uint64_t REWARD_PRECISION = 1000000;
 
-#ifdef PERIOD_MOCK
-constexpr common::xlogic_time_t REDEEM_INTERVAL = 2;  // 72 hours
-#else
-constexpr common::xlogic_time_t REDEEM_INTERVAL = 25920;  // 72 hours
-#endif
-
 // percent * 10^2 * 10^6,  total_issue_base / 10^2 / 10^6
 constexpr uint32_t INITIAL_YEAR_PERCENT = 3040000;
 constexpr uint32_t FINAL_YEAR_PERCENT = 2000000;

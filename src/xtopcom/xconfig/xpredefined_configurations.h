@@ -418,14 +418,10 @@ XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128); // TOD
 #endif
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
-#if defined(XBUILD_DEV) || defined(XBUILD_CI)
-XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
-XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 4);
-#else
-XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 32);              // split num (should divisible by total table num)
-// slash fulltable interval
-XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minutes
-#endif
+
+XDECLARE_CONFIGURATION(redeem_interval, xinterval_t, 25920);    // 72 hours
+XDECLARE_CONFIGURATION(pledge_vote_merge_interval, xinterval_t, 8640);  // 24 hours
+XDECLARE_CONFIGURATION(pledge_vote_clock_per_day, xinterval_t, 8640);   // 24 hours
 
 /* beginning of development parameters */
 XDECLARE_CONFIGURATION(http_port, uint16_t, 19081);

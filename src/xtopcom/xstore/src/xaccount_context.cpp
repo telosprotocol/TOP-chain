@@ -500,11 +500,15 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
         deserilize_vote_map_field(v.first, duration, lock_time);
         deserilize_vote_map_value(v.second, vote_num);
 
-#ifdef PERIOD_MOCK
-        if(m_timer_height - lock_time >= duration / 60){
-#else
-        if(m_timer_height - lock_time >= duration * 24 * 60 * 6){
-#endif
+        uint64_t total_time_interval = 0;
+        auto clock_per_second = XGET_CONFIG(pledge_vote_clock_per_day);
+        if (clock_per_second > 0) {
+            total_time_interval = duration * clock_per_second;
+        } else {
+            total_time_interval = duration / 60;
+        }
+
+        if(m_timer_height - lock_time >= total_time_interval) {
             map_remove(data::XPROPERTY_PLEDGE_VOTE_KEY, v.first);
             vote_sum += vote_num;
             if(0 != duration){ // if not calculated in XPROPERTY_EXPIRE_VOTE_TOKEN_KEY
@@ -542,14 +546,18 @@ int32_t xaccount_context_t::insert_pledge_vote_property(data::xaction_pledge_tok
         uint64_t lock_time{0};
         deserilize_vote_map_field(v.first, duration, lock_time);
         deserilize_vote_map_value(v.second, vote_num);
-#ifdef PERIOD_MOCK
-        if(action.m_lock_duration == duration && (m_timer_height - lock_time) < 10){
-#else
+
         // merge vote with same duration in 24 hours
-        if(action.m_lock_duration == duration && (m_timer_height - lock_time) < 24 * 60 * 6){
-#endif
-            xdbg("xaccount_context_t::insert_pledge_vote_property merge old record.clock=%ld,vote_num=%ld,duration=%d,lock_time=%ld,action.m_vote_num=%ld",
-                    m_timer_height, vote_num, duration, lock_time, action.m_vote_num);
+        auto merge_interval = XGET_CONFIG(pledge_vote_merge_interval);
+        xdbg("xaccount_context_t::insert_pledge_vote_property merge old record.clock=%ld,vote_num=%ld,duration=%d,lock_time=%ld,action.m_vote_num=%ld,merge_interval=%lu",
+             m_timer_height,
+             vote_num,
+             duration,
+             lock_time,
+             action.m_vote_num,
+             merge_interval);
+        if (action.m_lock_duration == duration && (m_timer_height - lock_time) < merge_interval) {
+            xdbg("xaccount_context_t::insert_pledge_vote_property process merge!");
             action.m_vote_num += vote_num;
             map_set(data::XPROPERTY_PLEDGE_VOTE_KEY, v.first, serilize_vote_map_value(action.m_vote_num));
             return xsuccess;

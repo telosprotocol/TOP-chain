@@ -118,9 +118,10 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(local_blacklist);
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
 
-    XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
-    XADD_OFFCHAIN_PARAMETER(slash_table_split_num);
     XADD_OFFCHAIN_PARAMETER(prune_reserve_number);
+    XADD_OFFCHAIN_PARAMETER(redeem_interval);
+    XADD_OFFCHAIN_PARAMETER(pledge_vote_merge_interval);
+    XADD_OFFCHAIN_PARAMETER(pledge_vote_clock_per_day);
 
     m_param_lock.release_write();
 }
