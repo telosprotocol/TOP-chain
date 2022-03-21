@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 #include <sys/statvfs.h>
+#include "db_tool/db_prune.h"
 using json = nlohmann::json;
 
 namespace top {
@@ -991,6 +992,11 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     cmd_db_download->add_option("download_addr", download_addr, "Download address.")->mandatory();
     cmd_db_download->callback([&]() {
         db_download(config_extra_json["datadir"].get<std::string>(), download_addr, out_str);
+    });
+
+    auto cmd_db_prune = db->add_subcommand("prune", "prune database.");
+    cmd_db_prune->callback([&]() {
+        db_prune::DbPrune::instance().db_prune(config_extra_json["datadir"].get<std::string>(), out_str);
     });
     /*
      * debug
