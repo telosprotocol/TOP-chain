@@ -250,7 +250,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
                 last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
             }
             if (cur_rsp_id != last_rsp_id + 1) {
-                XMETRICS_GAUGE(metrics::cons_packtx_fail_receiptid_continuous, 1);
+                XMETRICS_GAUGE(metrics::cons_packtx_fail_rspid_continuous, 1);
                 set_packtx_metrics(tx, false);
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for rsp id not continuous. %s, last_rsp_id=%ld tx=%s",
                     cs_para.dump().c_str(), last_rsp_id, tx->dump(true).c_str());
@@ -258,7 +258,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             }
         }
 
-        if (!is_forked && tx->is_send_tx()) {
+        if (tx->is_send_tx()) {
             auto peer_table_sid = tx->get_peer_tableid();
             if (is_forked) {
                 if (get_txpool()->is_reach_limit(get_short_table_id(), peer_table_sid, table_pair_unconfirm_tx_num_max)) {
