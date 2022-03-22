@@ -369,7 +369,13 @@ void ElectRoutingTable::getLastRoundElectNodesInfo(std::vector<std::pair<std::st
             // last round index:
             std::string last_election_xip2 = _p.first;
             assert(m_broadcast_nodes.find(last_election_xip2) != m_broadcast_nodes.end());
-            nodes_info.push_back(std::make_pair(last_election_xip2, m_broadcast_nodes[last_election_xip2]));
+            auto last_round_node_info_ptr = m_broadcast_nodes[last_election_xip2];
+            if (last_round_node_info_ptr == nullptr) {
+                xdbg("[ElectRoutingTable::getLastRoundElectNodesInfo] lack of complete nodes info, can't response request");
+                nodes_info.clear();
+                return;
+            }
+            nodes_info.push_back(std::make_pair(last_election_xip2, last_round_node_info_ptr));
         }
     }
     return;
