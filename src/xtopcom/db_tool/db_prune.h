@@ -1,24 +1,13 @@
 #pragma once
-//#include <string>
-//#include <iostream>
-//#include <sstream> 
-//#include <fstream>
-
-#include "xbasic/xtimer_driver.h"
-
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
-#include "xbase/xobject_ptr.h"
-#include "xvledger/xvstate.h"
-
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <thread>
 
+#include "nlohmann/fifo_map.hpp"
+#include "nlohmann/json.hpp"
+#include "xbase/xobject_ptr.h"
+#include "xvledger/xvstate.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xmessage_bus.h"
 #include "xstore/xstore_face.h"
@@ -29,13 +18,10 @@
 NS_BEG2(top, db_prune)
 class DbPrune {
 private:
-    std::unique_ptr<xbase_timer_driver_t> m_timer_driver;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
     xobject_ptr_t<base::xvtxstore_t> m_txstore;
-    xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
-    std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
     int update_meta(base::xvaccount_t& _vaddr, const uint64_t& height);
 
     int db_init(const std::string datadir);
