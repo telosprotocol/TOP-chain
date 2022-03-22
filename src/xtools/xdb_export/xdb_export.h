@@ -62,6 +62,75 @@ private:
         uint64_t unit_height{0};
         uint8_t phase{0};
         uint64_t fire_timestamp{0}; // origin tx fire timestamp
+        uint16_t self_table{0};
+        uint16_t peer_table{0};
+        bool not_need_confirm{false};
+    };
+
+    struct block_info_t {
+        uint64_t height{0};
+        uint64_t timestamp{0};
+        uint64_t unit_height{0};
+        void copy(const tx_ext_t & tx_ext) {
+            height = tx_ext.height;
+            timestamp = tx_ext.timestamp;
+            unit_height = tx_ext.unit_height;
+        }
+    };
+
+    struct tx_ext_sum_t {
+        std::string hash{};
+        std::string src{};
+        std::string target{};
+        uint16_t self_table{0};
+        uint16_t peer_table{0};
+        block_info_t send_block_info{};
+        block_info_t recv_block_info{};
+        block_info_t confirm_block_info{};
+        uint64_t fire_timestamp{0}; // origin tx fire timestamp
+        bool not_need_confirm{false};
+
+        tx_ext_sum_t() {
+        }
+
+        tx_ext_sum_t(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype) {
+            hash = tx_ext.hash;
+            copy_tx_ext(tx_ext, subtype);
+        }
+
+        void copy_tx_ext(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype) {
+            if (tx_ext.not_need_confirm) {
+                not_need_confirm = true;
+            }
+
+            if (!tx_ext.src.empty() && src.empty()) {
+                src = tx_ext.src;
+                target = tx_ext.target;
+                self_table = tx_ext.self_table;
+                peer_table = tx_ext.peer_table;
+                fire_timestamp = tx_ext.fire_timestamp;   
+            }
+
+            if (subtype == enum_transaction_subtype_send) {
+                send_block_info.copy(tx_ext);
+            } else if (subtype == enum_transaction_subtype_recv) {
+                recv_block_info.copy(tx_ext);
+            } else {
+                confirm_block_info.copy(tx_ext);
+            }
+        }
+
+        bool is_confirmed() {
+            if (send_block_info.height == 0 || recv_block_info.height == 0) {
+                return false;
+            }
+
+            if (not_need_confirm) {
+                return true;
+            }
+
+            return (confirm_block_info.height != 0);
+        }
     };
 
     struct xdbtool_table_info_t {
@@ -93,17 +162,15 @@ private:
     };
 
     struct xdbtool_all_table_info_t {
-        std::map<std::string, tx_ext_t> sendonly;  // sendtx without confirmed
-        std::map<std::string, tx_ext_t> recvonly;  // sendtx that not need confirm without recv
-        std::map<std::string, tx_ext_t> confirmonly;  // confirmtx without send
+        std::map<std::string, tx_ext_sum_t> unconfirmed_tx_map;
         // int confirmedtx_num{0};
         // uint64_t total_confirm_time_from_send{0};
         // uint64_t total_confirm_time_from_fire{0};
         uint64_t max_confirm_time_from_send{0};
         uint64_t max_confirm_time_from_fire{0};
         std::mutex m_lock;
-        bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext);
-        void set_table_txdelay_time(const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
+        bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum);
+        void set_table_txdelay_time(const tx_ext_sum_t & tx_ext_sum);
     };
 
     struct xdbtool_dbsize_key_type_info_t {
@@ -203,10 +270,11 @@ private:
     void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
-    json set_txinfo_to_json(tx_ext_t const & send_txinfo, tx_ext_t const & confirm_txinfo);
+    json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
+    json set_unconfirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
     // void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
 
-    bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext);
+    bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum);
     void print_all_table_txinfo_to_file();
 
     std::set<std::string> get_special_genesis_accounts();

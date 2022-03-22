@@ -1015,40 +1015,69 @@ void xdb_export_tools_t::query_table_latest_fullblock(std::string const & accoun
 json xdb_export_tools_t::set_txinfo_to_json(tx_ext_t const & txinfo) {
     json tx;
     tx["table height"] = txinfo.height;
+    tx["self table"] = txinfo.self_table;
+    tx["peer table"] = txinfo.peer_table;
     tx["timestamp"] = txinfo.timestamp;
     tx["source address"] = txinfo.src;
     tx["target address"] = txinfo.target;
-    tx["unit height"] = txinfo.unit_height;
+    // tx["unit height"] = txinfo.unit_height;
     tx["phase"] = txinfo.phase;
     return tx;
 }
 
-json xdb_export_tools_t::set_txinfo_to_json(const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {
-    uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp - send_txinfo.timestamp;
-    uint64_t adjust_tx_fire_timestamp = send_txinfo.fire_timestamp < send_txinfo.timestamp ? send_txinfo.fire_timestamp : send_txinfo.timestamp;
-    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp - adjust_tx_fire_timestamp;
+json xdb_export_tools_t::set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum) {
+    uint64_t delay_from_send_to_confirm = tx_ext_sum.confirm_block_info.timestamp - tx_ext_sum.send_block_info.timestamp;
+    uint64_t adjust_tx_fire_timestamp = tx_ext_sum.fire_timestamp < tx_ext_sum.send_block_info.timestamp ? tx_ext_sum.fire_timestamp : tx_ext_sum.send_block_info.timestamp;
+    uint64_t delay_from_fire_to_confirm = tx_ext_sum.confirm_block_info.timestamp - adjust_tx_fire_timestamp;
 
     json tx;
     tx["time cost"] = delay_from_send_to_confirm;
     tx["time cost from fire"] = delay_from_fire_to_confirm;
-    tx["send time"] =  send_txinfo.timestamp;        
-    tx["confirm time"] = confirm_txinfo.timestamp;
-    tx["send table height"] = send_txinfo.height;
-    tx["confirm table height"] = confirm_txinfo.height;
-    tx["send unit height"] = send_txinfo.unit_height;
-    tx["confirm unit height"] =confirm_txinfo.unit_height;
-    tx["source address"] = send_txinfo.src;
-    tx["target address"] = send_txinfo.target;
+    tx["send time"] =  tx_ext_sum.send_block_info.timestamp;
+    tx["recv time"] =  tx_ext_sum.recv_block_info.timestamp;
+    tx["confirm time"] = tx_ext_sum.confirm_block_info.timestamp;
+    tx["send table height"] = tx_ext_sum.send_block_info.height;
+    tx["recv table height"] = tx_ext_sum.recv_block_info.height;
+    tx["confirm table height"] = tx_ext_sum.confirm_block_info.height;
+    // tx["send unit height"] = tx_ext_sum.send_block_info.unit_height;
+    // tx["recv unit height"] = tx_ext_sum.recv_block_info.unit_height;
+    // tx["confirm unit height"] =tx_ext_sum.confirm_block_info.unit_height;
+    tx["source address"] = tx_ext_sum.src;
+    tx["target address"] = tx_ext_sum.target;
+    tx["self table"] = tx_ext_sum.self_table;
+    tx["peer table"] = tx_ext_sum.peer_table;
     return tx;
 }
 
-void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo) {    
+json xdb_export_tools_t::set_unconfirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum) {
+    json tx;
+    tx["fire time"] =  tx_ext_sum.fire_timestamp;
+    tx["send time"] =  tx_ext_sum.send_block_info.timestamp;
+    tx["recv time"] =  tx_ext_sum.recv_block_info.timestamp;
+    tx["confirm time"] = tx_ext_sum.confirm_block_info.timestamp;
+    tx["send table height"] = tx_ext_sum.send_block_info.height;
+    tx["recv table height"] = tx_ext_sum.recv_block_info.height;
+    tx["confirm table height"] = tx_ext_sum.confirm_block_info.height;
+    // tx["send unit height"] = tx_ext_sum.send_block_info.unit_height;
+    // tx["recv unit height"] = tx_ext_sum.recv_block_info.unit_height;
+    // tx["confirm unit height"] =tx_ext_sum.confirm_block_info.unit_height;
+    tx["source address"] = tx_ext_sum.src;
+    tx["target address"] = tx_ext_sum.target;
+    tx["self table"] = tx_ext_sum.self_table;
+    tx["peer table"] = tx_ext_sum.peer_table;
+    return tx;
+}
+
+void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const tx_ext_sum_t & tx_ext_sum) {    
     // the second level timestamp of confirm block may less than send block
-    uint64_t delay_from_send_to_confirm = confirm_txinfo.timestamp > send_txinfo.timestamp ? (confirm_txinfo.timestamp - send_txinfo.timestamp) : 0;
+    uint64_t delay_from_send_to_confirm =
+        tx_ext_sum.confirm_block_info.timestamp > tx_ext_sum.send_block_info.timestamp ? (tx_ext_sum.confirm_block_info.timestamp - tx_ext_sum.send_block_info.timestamp) : 0;
     // the timestamp of send block may less than the timestamp of tx fire_timestamp
-    uint64_t adjust_tx_fire_timestamp = send_txinfo.fire_timestamp < send_txinfo.timestamp ? send_txinfo.fire_timestamp : send_txinfo.timestamp;
+    uint64_t adjust_tx_fire_timestamp =
+        tx_ext_sum.fire_timestamp < tx_ext_sum.send_block_info.timestamp ? tx_ext_sum.fire_timestamp : tx_ext_sum.send_block_info.timestamp;
     // the second level timestamp of confirm block may less than send block
-    uint64_t delay_from_fire_to_confirm = confirm_txinfo.timestamp > adjust_tx_fire_timestamp ? (confirm_txinfo.timestamp - adjust_tx_fire_timestamp) : 0;
+    uint64_t delay_from_fire_to_confirm =
+        tx_ext_sum.confirm_block_info.timestamp > adjust_tx_fire_timestamp ? (tx_ext_sum.confirm_block_info.timestamp - adjust_tx_fire_timestamp) : 0;
 
     // total_confirm_time_from_send += delay_from_send_to_confirm;
     if (delay_from_send_to_confirm > max_confirm_time_from_send) {
@@ -1061,49 +1090,22 @@ void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const 
     // xassert(total_confirm_time_from_fire >= total_confirm_time_from_send);
 }
 
-bool xdb_export_tools_t::xdbtool_all_table_info_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext) {
+bool xdb_export_tools_t::xdbtool_all_table_info_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum) {
     std::lock_guard<std::mutex> lck(m_lock);
-    if (subtype == enum_transaction_subtype_send) {
-        if (not_need_confirm) {
-            auto iter = recvonly.find(tx_ext.hash);
-            if (iter != recvonly.end()) {
-                pair_tx_ext = iter->second;
-                set_table_txdelay_time(tx_ext, iter->second);
-                recvonly.erase(tx_ext.hash);
-                // confirmedtx_num++;
-                return true;
-            } else {
-                sendonly[tx_ext.hash] = tx_ext;
-            }
-        } else {
-            sendonly[tx_ext.hash] = tx_ext;
-        }
-    } else if (subtype == enum_transaction_subtype_recv) {
-        if (not_need_confirm) {
-            auto iter = sendonly.find(tx_ext.hash);
-            if (iter != sendonly.end()) {
-                pair_tx_ext = iter->second;
-                set_table_txdelay_time(iter->second, tx_ext);
-                sendonly.erase(tx_ext.hash);
-                // confirmedtx_num++;
-                return true;
-            } else {
-                recvonly[tx_ext.hash] = tx_ext;
-            }
-        }
-    } else if (subtype == enum_transaction_subtype_confirm) {
-        auto iter = sendonly.find(tx_ext.hash);
-        if (iter != sendonly.end()) {
-            pair_tx_ext = iter->second;
-            set_table_txdelay_time(iter->second, tx_ext);
-            sendonly.erase(tx_ext.hash);
-            // confirmedtx_num++;
+
+    auto iter = unconfirmed_tx_map.find(tx_ext.hash);
+    if (iter == unconfirmed_tx_map.end()) {
+        unconfirmed_tx_map[tx_ext.hash] = tx_ext_sum_t(tx_ext, subtype);
+    } else {
+        iter->second.copy_tx_ext(tx_ext, subtype);
+        if (iter->second.is_confirmed()) {
+            tx_ext_sum = iter->second;
+            set_table_txdelay_time(tx_ext_sum);
+            unconfirmed_tx_map.erase(iter);
             return true;
-        } else {
-            // may appear when missing table blocks
-            confirmonly[tx_ext.hash] = tx_ext;
         }
     }
+
     return false;
 }
 
@@ -1133,21 +1135,21 @@ void xdb_export_tools_t::print_all_table_txinfo_to_file() {
         if (max_confirm_time_from_fire < m_all_table_info[i].max_confirm_time_from_fire) {
             max_confirm_time_from_fire = m_all_table_info[i].max_confirm_time_from_fire;
         }
-        send_only_count += m_all_table_info[i].sendonly.size();
-        recv_only_count += m_all_table_info[i].recvonly.size();
-        confirm_only_count += m_all_table_info[i].confirmonly.size();
 
-        for (auto & v : m_all_table_info[i].sendonly) {
-            auto & txinfo = v.second;
-            j["send only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
-        }
-        for (auto & v : m_all_table_info[i].recvonly) {
-            auto & txinfo = v.second;
-            j["no need confirm recv only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
-        }
-        for (auto & v : m_all_table_info[i].confirmonly) {
-            auto & txinfo = v.second;
-            j["confirmed only detail"][txinfo.hash] = set_txinfo_to_json(txinfo);
+        for (auto & v : m_all_table_info[i].unconfirmed_tx_map) {
+            auto & tx_ext_sum = v.second;
+            if (tx_ext_sum.send_block_info.height != 0) {
+                j["send only detail"][tx_ext_sum.hash] = set_unconfirmed_txinfo_to_json(tx_ext_sum);
+                send_only_count++;
+            } else if (tx_ext_sum.recv_block_info.height != 0) {
+                if (tx_ext_sum.not_need_confirm) {
+                    j["recv only detail"][tx_ext_sum.hash] = set_unconfirmed_txinfo_to_json(tx_ext_sum);
+                    recv_only_count++;    
+                }
+            } else {
+                j["confirm only detail"][tx_ext_sum.hash] = set_unconfirmed_txinfo_to_json(tx_ext_sum);
+                confirm_only_count++;
+            }
         }
     }
     abnormal_stream << std::setw(4) << j << std::endl;
@@ -1165,9 +1167,9 @@ void xdb_export_tools_t::print_all_table_txinfo_to_file() {
     abnormal_stream.close();
 }
 
-bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, bool not_need_confirm, tx_ext_t & pair_tx_ext) {
+bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum) {
     uint32_t r = (uint32_t)base::xhash64_t::digest(tx_ext.hash);
-    return m_all_table_info[r%32].all_table_set_txinfo(tx_ext, subtype, not_need_confirm, pair_tx_ext);
+    return m_all_table_info[r%32].all_table_set_txinfo(tx_ext, subtype, tx_ext_sum);
 }
 
 void xdb_export_tools_t::query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp) {
@@ -1240,7 +1242,6 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 }
             }
 
-            auto not_need_confirm = txaction.get_not_need_confirm();
 
             bool is_cross_table_tx = false;
             // construct tx_ext info
@@ -1256,11 +1257,14 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 }
                 
                 tx_ext.fire_timestamp = tx_ptr->get_fire_timestamp();
+                tx_ext.self_table = txaction.get_receipt_id_self_tableid();
+                tx_ext.peer_table = txaction.get_receipt_id_peer_tableid();
             }
+            tx_ext.not_need_confirm = txaction.get_not_need_confirm();
             tx_ext.height = block->get_height();
             tx_ext.timestamp = block->get_second_level_gmtime();  // here should use second level gmtime for statistic
             tx_ext.hash = "0x" + txaction.get_tx_hex_hash();
-            // tx_ext.unit_height = unit_height;
+            // tx_ext.unit_height = unit_height; 
             tx_ext.phase = txaction.get_tx_subtype();
             // check multi
             uint16_t phase_count = 0;
@@ -1284,32 +1288,21 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 table_info.selftx_num++;
                 j[tx_ext.hash] = set_txinfo_to_json(tx_ext);
                 normal_stream << std::setw(4) << j << std::endl;
-            } else if (type == enum_transaction_subtype_send) {
-                table_info.sendtx_num++;
-                tx_ext_t pair_tx_ext;
-                bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
+            } else {
+                tx_ext_sum_t tx_ext_sum;
+                bool confirmed = all_table_set_txinfo(tx_ext, type, tx_ext_sum);
                 if (confirmed) {
                     table_info.confirmedtx_num++;
-                    j[tx_ext.hash] = set_txinfo_to_json(tx_ext, pair_tx_ext);
+                    j[tx_ext.hash] = set_confirmed_txinfo_to_json(tx_ext_sum);
                     normal_stream << std::setw(4) << j << std::endl;
                 }
-            } else if (type == enum_transaction_subtype_recv) {
-                table_info.recvtx_num++;
-                tx_ext_t pair_tx_ext;
-                bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
-                if (confirmed) {
-                    table_info.confirmedtx_num++;
-                    j[tx_ext.hash] = set_txinfo_to_json(pair_tx_ext, tx_ext);
-                    normal_stream << std::setw(4) << j << std::endl;
-                }
-            } else if (type == enum_transaction_subtype_confirm) {
-                table_info.confirmtx_num++;
-                tx_ext_t pair_tx_ext;
-                bool confirmed = all_table_set_txinfo(tx_ext, type, not_need_confirm, pair_tx_ext);
-                if (confirmed) {
-                    table_info.confirmedtx_num++;
-                    j[tx_ext.hash] = set_txinfo_to_json(pair_tx_ext, tx_ext);
-                    normal_stream << std::setw(4) << j << std::endl;
+
+                if (type == enum_transaction_subtype_send) {
+                    table_info.sendtx_num++;
+                } else if (type == enum_transaction_subtype_recv) {
+                    table_info.recvtx_num++;
+                } else if (type == enum_transaction_subtype_confirm) {
+                    table_info.confirmtx_num++;
                 }
             }
         }
