@@ -36,7 +36,7 @@ private:
     xobject_ptr_t<base::xvtxstore_t> m_txstore;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
-
+    int update_meta(base::xvaccount_t& _vaddr, const uint64_t& height);
 
     int db_init(const std::string datadir);
     std::vector<std::string> get_db_unit_accounts();
@@ -44,6 +44,7 @@ private:
 public:
     static DbPrune & instance();
     int db_prune(const std::string datadir, std::ostringstream & out_str);
+    void compact_db(const std::string datadir, std::ostringstream& out_str);
 };
 
 class xtop_hash_t : public top::base::xhashplugin_t {

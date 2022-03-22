@@ -596,8 +596,14 @@ bool check_process_running(const std::string &pid_file) {
     bzero(buff, sizeof(buff));
     in_pid.getline(buff, 16);
     in_pid.close();
-    uint32_t topio_pid = std::stoi(std::string(buff));
 
+    uint32_t topio_pid;
+    try {
+        topio_pid = std::stoi(std::string(buff));
+    } catch(...) {
+        std::cout << "topio.pid error." << std::endl;
+        return false;
+    }
     // kill 0 test process running or not
     if (kill(topio_pid, 0) == -1) {
         // kill 0 error, process not exist
@@ -1358,6 +1364,18 @@ int ExecuteCommands(int argc, char* argv[], config_t& config) {
 int filter_node_commandline(config_t &config, int argc, char *argv[]) {
     if (argc == 1) {
         return 1;
+    }
+    if (argc == 3) {
+        std::string tmp1(argv[1]);
+        std::transform(tmp1.begin(), tmp1.end(), tmp1.begin(), ::tolower);
+        std::string tmp2(argv[2]);
+        std::transform(tmp2.begin(), tmp2.end(), tmp2.begin(), ::tolower);                
+        if (tmp1 == "db" && (tmp2 == "prune" || tmp2 == "compact")) {
+            if (check_process_running(config.pid_file) == true) {
+                std::cout << "Please stop node." << std::endl;
+                return 0;
+            }
+        }
     }
     for (auto i = 0; i < argc; ++i) {
         std::string tmp(argv[i]);

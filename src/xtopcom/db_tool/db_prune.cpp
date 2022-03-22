@@ -95,17 +95,32 @@ int DbPrune::db_init(const std::string datadir) {
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
-    m_txstore = xobject_ptr_t<base::xvtxstore_t>(
+/*    m_txstore = xobject_ptr_t<base::xvtxstore_t>(
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver.get())));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
     m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
     contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
-    contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);    
+    contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);    */
     return 0;
 }
+int DbPrune::update_meta(base::xvaccount_t& _vaddr, const uint64_t& height) {
+    std::string meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
+    const std::string meta_content = m_store->get_value(meta_key);
+    base::xvactmeta_t* meta_ptr = base::xvactmeta_t::load(_vaddr, meta_content);
+    if (meta_ptr == NULL)
+        return 1;
 
+    if (true == meta_ptr->set_latest_deleted_block(height)) {
+        std::string meta_bin;
+        meta_ptr->serialize_to_string(meta_bin);
+        std::string full_meta_path = base::xvdbkey_t::create_account_meta_key(_vaddr);
+        m_store->set_value(full_meta_path, meta_bin);
+    }
+    delete meta_ptr;
+    return 0;
+}
 int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
     std::cout << "init db..." <<std::endl;
     db_init(datadir);
@@ -118,7 +133,7 @@ int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
     for (size_t i = 0; i < sizeof(sys_account)/sizeof(sys_account[0]); i++) {
        auto vblock = m_blockstore->get_latest_cert_block(sys_account[i]);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
-        if (block == nullptr || block->get_height() < 8) {
+        if (block == nullptr || block->get_height() <= 100) {
             //std::cout << " account " << sys_account[i] << " get_latest_cert_block null" << std::endl;
             continue;
         }
@@ -129,6 +144,7 @@ int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
         const uint64_t target_height = block->get_height()-100;
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, target_height);
         m_store->delete_range(begin_delete_key, end_delete_key);
+        update_meta(account_obj, target_height);
     }
 
     //prune account
@@ -150,6 +166,7 @@ int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
         const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, block->get_height());
         m_store->delete_range(begin_delete_key, end_delete_key);
+        update_meta(account_obj, block->get_height());
     }
     
     //prune table
@@ -167,18 +184,16 @@ int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
         std::error_code err;
         auto checkpoint = xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
         if (err) {
-            //std::cout << "Error: table_account " << table_account << " get_latest_checkpoint " << err << std::endl;
+            std::cout << "Error: table_account " << table_account << " get_latest_checkpoint " << err << std::endl;
             continue;
         }
         base::xvaccount_t account_obj{table_account};
         const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, checkpoint.height);
         m_store->delete_range(begin_delete_key, end_delete_key);
+        update_meta(account_obj, checkpoint.height);
     }
-
-    std::string begin_key;
-    std::string end_key;
-    m_store->compact_range(begin_key, end_key);  
+    out_str << "prune database ok." << std::endl;
     return 0;  
 }
 std::vector<std::string> DbPrune::get_db_unit_accounts() {
@@ -219,5 +234,13 @@ std::vector<std::string> DbPrune::get_table_accounts() {
         }
     }
     return v;
+}
+void DbPrune::compact_db(const std::string datadir, std::ostringstream& out_str) {
+    db_init(datadir);
+
+    std::string begin_key;
+    std::string end_key;
+    m_store->compact_range(begin_key, end_key);
+    out_str << "compact database ok." << std::endl;
 }
 NS_END2

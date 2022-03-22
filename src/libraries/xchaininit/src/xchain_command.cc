@@ -998,6 +998,10 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     cmd_db_prune->callback([&]() {
         db_prune::DbPrune::instance().db_prune(config_extra_json["datadir"].get<std::string>(), out_str);
     });
+    auto cmd_db_compact = db->add_subcommand("compact", "compact database.");
+    cmd_db_compact->callback([&]() {
+        db_prune::DbPrune::instance().compact_db(config_extra_json["datadir"].get<std::string>(), out_str);
+    });
     /*
      * debug
      */
