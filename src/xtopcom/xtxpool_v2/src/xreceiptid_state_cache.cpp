@@ -227,7 +227,7 @@ bool xreceiptid_state_cache_t::is_reach_limit(base::xtable_shortid_t self_table_
     }
 
     if (sendid_max > recvid_max + max_unconfirm_num) {
-        xwarn("xreceiptid_state_cache_t::is_reach_limit self:%d,peer:%d,send:%llu,recv:%llu", self_table_id, peer_table_id, sendid_max, recvid_max);
+        xwarn("xreceiptid_state_cache_t::is_reach_limit self:%d,peer:%d,send:%llu,recv:%llu,max_unconfirm:%llu", self_table_id, peer_table_id, sendid_max, recvid_max, max_unconfirm_num);
         return true;
     }
     return false;

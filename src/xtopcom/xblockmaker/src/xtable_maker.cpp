@@ -261,7 +261,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         if (!is_forked && tx->is_send_tx()) {
             auto peer_table_sid = tx->get_peer_tableid();
             if (is_forked) {
-                if (get_txpool()->is_reach_limit(get_short_table_id(), peer_table_sid, table_total_unconfirm_tx_num_max)) {
+                if (get_txpool()->is_reach_limit(get_short_table_id(), peer_table_sid, table_pair_unconfirm_tx_num_max)) {
                     XMETRICS_GAUGE(metrics::cons_packtx_fail_table_unconfirm_limit, 1);
                     xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for table total unconfirm tx num too much. %s tx=%s",
                           cs_para.dump().c_str(),
