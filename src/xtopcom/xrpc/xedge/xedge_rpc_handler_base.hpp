@@ -20,6 +20,11 @@
 #include <atomic>
 #include <cinttypes>
 
+#ifdef __GNUC__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wsign-compare"
+#endif  // __GNUC__
+
 NS_BEG2(top, xrpc)
 using std::atomic_ullong;
 using vnetwork::xmessage_t;
@@ -206,13 +211,15 @@ template <class T>
 void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, const unordered_set<xvnode_address_t>& addr_set, shared_ptr<T>& response)
 {
     using session_type = forward_session<T>;
+    auto & forward_session_map = m_forward_session_map;
+    auto & mutex = m_mutex;
     auto forward_session = shared_ptr<session_type>(new session_type(edge_msg_ptr_list, this, response, m_ioc, addr_set),
-        [&m_forward_session_map = m_forward_session_map, &m_mutex = m_mutex](session_type* session) {
+        [&forward_session_map, &mutex](session_type* session) {
             {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                auto iter = m_forward_session_map.find(session->m_edge_msg_ptr_list.front()->m_uuid);
-                if (iter != m_forward_session_map.end())
-                    m_forward_session_map.erase(iter);
+                std::lock_guard<std::mutex> lock(mutex);
+                auto iter = forward_session_map.find(session->m_edge_msg_ptr_list.front()->m_uuid);
+                if (iter != forward_session_map.end())
+                    forward_session_map.erase(iter);
             }
             DELETE(session);
     });
@@ -222,3 +229,7 @@ void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg
     forward_session->set_timeout(TIME_OUT);
 }
 NS_END2
+
+#ifdef __GNUC__
+#    pragma GCC diagnostic pop
+#endif  // __GNUC__

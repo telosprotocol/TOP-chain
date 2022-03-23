@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <sstream>
 #define private public
 #define METRICS_UNIT_TEST
 #ifndef ENABLE_METRICS

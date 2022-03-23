@@ -13,6 +13,11 @@
 #include "xbase/xcontext.h"
 #include "xmetrics/xmetrics.h"
 
+#ifdef __GNUC__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wsign-compare"
+#endif  // __GNUC__
+
 namespace top
 {
     namespace base
@@ -496,3 +501,6 @@ namespace top
     }//end of namespace of base
 
 }//end of namespace top
+#ifdef __GNUC__
+#    pragma GCC diagnostic pop
+#endif  // __GNUC__

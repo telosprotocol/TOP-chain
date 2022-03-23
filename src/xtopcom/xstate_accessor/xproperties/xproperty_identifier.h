@@ -77,7 +77,7 @@ public:
     /// @return Property data type.
     xproperty_type_t type() const noexcept;
 
-    operator xtypeless_property_identifier_t() const noexcept;
+    // operator xtypeless_property_identifier_t() const noexcept;
 
     /// @brief Compare two property id object. Exception will throw if property's m_name & m_category are the same but m_type is different.
     bool operator==(xtop_property_identifier const & other) const;
