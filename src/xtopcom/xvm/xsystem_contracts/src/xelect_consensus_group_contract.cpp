@@ -258,7 +258,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
             return do_normal_election(zid, cid, gid, node_type, role_type, random_seed, group_size_range, standby_result, current_group_nodes);
         }
     } catch (top::error::xtop_error_t const & eh) {
-        xerror("%s xtop_error_t exception caught. category: %s msg: %s", log_prefix.c_str(), eh.code().category().name(), eh.what());
+        xwarn("%s xtop_error_t exception caught. category: %s msg: %s", log_prefix.c_str(), eh.code().category().name(), eh.what());
         throw;
     } catch (std::exception const & eh) {
         xerror("%s std::exception exception caught: %s", log_prefix.c_str(), eh.what());
