@@ -159,12 +159,15 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
 
-    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u",
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u",
                  m_xtable_info->get_table_addr().c_str(),
                  ready_txs.size(),
                  send_tx_num,
                  recv_tx_num,
-                 confirm_tx_num);
+                 confirm_tx_num,
+                 m_send_tx_queue.size(),
+                 m_xtable_info->get_recv_tx_count(),
+                 m_xtable_info->get_conf_tx_count());
     for (auto & tx : ready_txs) {
         xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
     }

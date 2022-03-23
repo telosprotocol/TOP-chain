@@ -77,7 +77,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_receipt_id(uint64_t latest_receipt_id);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t lower_receipt_id, uint64_t upper_receipt_id, uint32_t max_num) const;
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t lower_receipt_id, uint64_t upper_receipt_id, bool continuous) const;
     void erase(uint64_t receipt_id);
     bool empty() const {
         return m_txs.empty();
