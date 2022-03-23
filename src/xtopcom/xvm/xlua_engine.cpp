@@ -75,8 +75,9 @@ void xlua_engine::init_gas(xvm_context& ctx, int calc_gas) {
 }
 
 void xlua_engine::publish_script(const string& code, xvm_context& ctx) {
-    xtop_scope_executer on_exit([&ctx, &m_lua_mgr = m_lua_mgr] {
-        ctx.m_trace_ptr->m_instruction_usage = lua_getinstructioncount(m_lua_mgr);
+    auto lua_mgr = m_lua_mgr;
+    xtop_scope_executer on_exit([&ctx, &lua_mgr] {
+        ctx.m_trace_ptr->m_instruction_usage = lua_getinstructioncount(lua_mgr);
     });
     init_gas(ctx, CALC_GAS_TRUE);
     validate_script(code, ctx);
@@ -157,8 +158,9 @@ int32_t xlua_engine::arg_parse(const string& action_param) {
 }
 
 void xlua_engine::process(common::xaccount_address_t const &contract_account, const string &code, xvm_context &ctx) {
-    xtop_scope_executer on_exit([&ctx, &m_lua_mgr = m_lua_mgr] {
-        ctx.m_trace_ptr->m_instruction_usage = lua_getinstructioncount(m_lua_mgr);
+    auto lua_mgr = m_lua_mgr;
+    xtop_scope_executer on_exit([&ctx, &lua_mgr] {
+        ctx.m_trace_ptr->m_instruction_usage = lua_getinstructioncount(lua_mgr);
         ctx.m_contract_helper->get_gas_and_disk_usage(ctx.m_trace_ptr->m_tgas_usage, ctx.m_trace_ptr->m_disk_usage);
     });
     if (ctx.m_exec_account.size() >= 64) {

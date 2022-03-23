@@ -664,7 +664,7 @@ namespace top
             {
                 return true;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             
             base::xauto_ptr<base::xvbindex_t> existing_index(account_obj->load_index(block->get_height(), block->get_block_hash()));
@@ -689,7 +689,7 @@ namespace top
             {
                 return true;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             
             base::xauto_ptr<base::xvbindex_t> existing_index(account_obj->load_index(block->get_height(), block->get_block_hash()));
@@ -704,7 +704,7 @@ namespace top
         bool    xvblockstore_impl::store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) {
             xdbg("xvblockstore_impl::store_committed_unit_block enter store block(%s)", container_block->dump().c_str());
             {
-                LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+                LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
                 account_obj->store_committed_unit_block(container_block);
             }
             return true;
@@ -823,7 +823,7 @@ namespace top
 
             bool ret = false;
             {
-                LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+                LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
                 METRICS_TAG(atag, 1);
                 ret = store_block(account_obj,block);
             }
@@ -852,7 +852,7 @@ namespace top
                 return false;
             }
 
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             if(store_block(account_obj,block,false))//force to not execute anymore
             {
                 return true;
@@ -865,7 +865,7 @@ namespace top
             if(batch_store_blocks.empty())
                 return true;
 
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             for(auto it : batch_store_blocks)
             {
                 if((it != nullptr) && (it->get_account() == account_obj->get_address()) )
@@ -884,13 +884,13 @@ namespace top
                 xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             return account_obj->delete_block(block);
         }
 
         bool xvblockstore_impl::try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             return account_obj->try_update_account_index(height, viewid, update_pre_block);
         }
 
@@ -1049,7 +1049,7 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             return account_obj->clean_caches(true,true);
         }
@@ -1254,7 +1254,7 @@ namespace top
         }
 
         bool      xvblockstore_impl::exist_genesis_block(const base::xvaccount_t & account,const int atag) {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             base::xvbindex_t* target_block = account_obj->query_index(0, 0);
             if (target_block != NULL) {
@@ -1338,7 +1338,7 @@ namespace top
         }
 
         bool xvblockstore_impl::set_unit_proof(const base::xvaccount_t & account, const std::string& unit_proof, uint64_t height){
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             return account_obj->set_unit_proof(unit_proof, height);
         }
         

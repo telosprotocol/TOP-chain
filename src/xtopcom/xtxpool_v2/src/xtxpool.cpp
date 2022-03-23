@@ -432,7 +432,7 @@ const std::set<base::xtable_shortid_t> & xtxpool_t::get_all_table_sids() const {
 bool xtxpool_t::get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const {
     auto table = get_txpool_table_by_addr(account);
     if (table == nullptr) {
-        return xtxpool_error_account_not_in_charge;
+        return false;
     }
 
     return table->get_sender_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);

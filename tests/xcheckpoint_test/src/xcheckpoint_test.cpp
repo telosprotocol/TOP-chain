@@ -1,3 +1,4 @@
+#include <sstream>
 #define private public
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/xcheckpoint_test/xcheckpoint_test_fixture.h"

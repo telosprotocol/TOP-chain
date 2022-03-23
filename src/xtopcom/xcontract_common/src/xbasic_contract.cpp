@@ -97,7 +97,7 @@ state_accessor::xtoken_t xtop_basic_contract::last_action_asset(std::error_code 
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)receipt_data.data(), receipt_data.size());
         token.move_from(stream);
     }
-    return std::move(token);
+    return token;
 }
 
 data::enum_xtransaction_type xtop_basic_contract::transaction_type() const {

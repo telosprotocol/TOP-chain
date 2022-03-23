@@ -43,7 +43,8 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
 
     xdbg_rpc("xcluster_rpc_handler on_message,id(%x,%s)", msgid, edge_sender.to_string().c_str());  // address to_string
 
-    auto process_request = [self = shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+    auto self = shared_from_this();
+    auto process_request = [self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         rpc_message_para_t * para = dynamic_cast<rpc_message_para_t *>(call.get_param1().get_object());
         auto message = para->m_message;
         auto edge_sender = para->m_sender;

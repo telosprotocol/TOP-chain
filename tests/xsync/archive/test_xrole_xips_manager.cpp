@@ -1,3 +1,4 @@
+#include <sstream>
 #define protected public
 #define private   public
 #include "../common.h"

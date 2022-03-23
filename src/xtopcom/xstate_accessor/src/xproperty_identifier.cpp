@@ -81,9 +81,9 @@ bool xtop_property_identifier::operator!=(xtop_property_identifier const & other
     return !(*this == other);
 }
 
-xtop_property_identifier::operator xtypeless_property_identifier_t() const noexcept {
-    return *this;
-}
+// xtop_property_identifier::operator xtypeless_property_identifier_t() const noexcept {
+//     return *this;
+// }
 
 bool system_property(xproperty_identifier_t const & property_id) noexcept {
     return property_id.category() == xproperty_category_t::system;

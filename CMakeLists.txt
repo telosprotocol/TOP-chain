@@ -406,6 +406,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/release)
         link_directories(src/xtopcom/xdepends/libs/linux)
     ENDIF()
+    
+    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
@@ -467,6 +469,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if (XENABLE_TESTS)
+    set(CMAKE_CXX_FLAGS "-no-pie")
     enable_testing()
     include_directories(.)
     add_subdirectory(tests)

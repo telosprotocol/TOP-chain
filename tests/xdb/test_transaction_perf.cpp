@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <random>
+#include <functional>
 
 #include <cerrno>
 #include <cstdio>

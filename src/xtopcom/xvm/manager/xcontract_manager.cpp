@@ -141,7 +141,9 @@ void xtop_contract_manager::install_monitors(observer_ptr<xmessage_bus_face_t> c
                                              observer_ptr<vnetwork::xmessage_callback_hub_t> const & msg_callback_hub,
                                              observer_ptr<xstore_face_t> const & store,
                                              xobject_ptr_t<store::xsyncvstore_t> const & syncstore) {
-    msg_callback_hub->register_message_ready_notify([this, nid = msg_callback_hub->network_id(), bus_ptr = bus.get()](xvnode_address_t const &, xmessage_t const & msg, std::uint64_t const) {
+    auto & nid = msg_callback_hub->network_id();
+    auto bus_ptr = bus.get();
+    msg_callback_hub->register_message_ready_notify([this, nid, bus_ptr](xvnode_address_t const &, xmessage_t const & msg, std::uint64_t const) {
         if (msg.id() == xmessage_block_broadcast_id) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)msg.payload().data(), msg.payload().size());
             base::xauto_ptr<xvblock_t> block(data::xblock_t::full_block_read_from(stream));

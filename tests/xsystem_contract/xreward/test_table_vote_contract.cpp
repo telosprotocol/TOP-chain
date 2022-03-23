@@ -1,3 +1,4 @@
+#include <sstream>
 #define private public
 #include <gtest/gtest.h>
 #include "xvm/manager/xcontract_manager.h"

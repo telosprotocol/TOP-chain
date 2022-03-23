@@ -160,6 +160,20 @@ public:
         store::auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
         get_block_account(target_table,account_vid.get_address(),account_obj); \
 
+    #define LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account_vid) \
+        if(is_close())\
+        {\
+            xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
+            return 0;\
+        }\
+        base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
+        if (target_table == nullptr) { \
+            xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
+            return 0;\
+        }\
+        store::auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
+        get_block_account(target_table,account_vid.get_address(),account_obj); \
+
     bool store_block_old(const base::xvaccount_t & account, base::xvblock_t * block, const int atag = 0) {
         if ((nullptr == block) || (account.get_account() != block->get_account())) {
             xerror("xvblockstore_impl::store_block,block NOT match account:%", account.get_account().c_str());
@@ -174,7 +188,7 @@ public:
 
         bool ret = false;
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj, account);
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
             ret = store_block_old(account_obj, block);
         }
 
