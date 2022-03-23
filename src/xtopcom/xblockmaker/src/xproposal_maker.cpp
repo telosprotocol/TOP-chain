@@ -351,8 +351,8 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
     }
 
     std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> receiptid_info_map;
-    if (!use_rsp_id) {
-        //TODO(nathan): tobe deleted after forked.
+    // if (!use_rsp_id) {
+    //     //TODO(nathan): tobe deleted after forked.
         auto self_sid = table_para.get_tablestate()->get_receiptid_state()->get_self_tableid();
         for (auto & prove : proposal_input->get_receiptid_state_proves()) {
             if (!prove->is_valid()) {
@@ -416,11 +416,11 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
                 }
             }
         }
-    } else {
-        if (!proposal_input->get_receiptid_state_proves().empty()) {
-            xerror("xproposal_maker_t::verify_proposal_input use_rsp_id forked, but proposal still has receiptid_state_proves:%s", proposal_block->dump().c_str());
-        }
-    }
+    // } else {
+    //     if (!proposal_input->get_receiptid_state_proves().empty()) {
+    //         xerror("xproposal_maker_t::verify_proposal_input use_rsp_id forked, but proposal still has receiptid_state_proves:%s", proposal_block->dump().c_str());
+    //     }
+    // }
 
     // table_para.set_origin_txs(origin_txs);
     table_para.set_pack_resource(xtxpool_v2::xpack_resource(origin_txs, receiptid_info_map));

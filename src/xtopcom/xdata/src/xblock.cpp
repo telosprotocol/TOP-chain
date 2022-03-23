@@ -120,9 +120,9 @@ void  xblock_t::txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & 
             }
         } else if (tx->is_recv_tx()) {
             receiptid_check.set_recvid(tableid, receiptid);
-            if (rspid != 0) {
-                receiptid_check.set_recv_rsp_id(tableid, rspid);
-            }
+            // if (rspid != 0) {
+            //     receiptid_check.set_recv_rsp_id(tableid, rspid);
+            // }
         } else if (tx->is_confirm_tx()) {
             receiptid_check.set_confirmid(tableid, receiptid);
             if (rspid != 0) {

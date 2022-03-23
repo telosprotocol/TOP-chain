@@ -18,13 +18,13 @@ xreceiptid_pair_t::~xreceiptid_pair_t() {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, -1);
 }
 
-xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id, uint64_t recv_rsp_id) {
+xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id) {
     set_sendid_max(sendid);
     set_confirmid_max(confirmid);
     set_recvid_max(recvid);
-    set_send_rsp_id_max(sendid);
-    set_confirm_rsp_id_max(confirmid);
-    set_recv_rsp_id_max(recvid);
+    set_send_rsp_id_max(send_rsp_id);
+    set_confirm_rsp_id_max(confirm_rsp_id);
+    // set_recv_rsp_id_max(recv_rsp_id);
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, 1);
 }
 
@@ -33,10 +33,10 @@ int32_t xreceiptid_pair_t::do_write(base::xstream_t & stream) const {
     stream.write_compact_var(m_send_id_max);
     stream.write_compact_var(m_unconfirm_num);
     stream.write_compact_var(m_recv_id_max);
-    if (m_send_rsp_id_max != 0 || m_recv_rsp_id_max != 0) {
+    if (m_send_rsp_id_max != 0) {
         stream.write_compact_var(m_send_rsp_id_max);
         stream.write_compact_var(m_unconfirm_rsp_num);
-        stream.write_compact_var(m_recv_rsp_id_max);
+        // stream.write_compact_var(m_recv_rsp_id_max);
     }
     return (stream.size() - begin_size);
 }
@@ -49,7 +49,7 @@ int32_t xreceiptid_pair_t::do_read(base::xstream_t & stream) {
     if (stream.size() > 0) {
         stream.read_compact_var(m_send_rsp_id_max);
         stream.read_compact_var(m_unconfirm_rsp_num);
-        stream.read_compact_var(m_recv_rsp_id_max);
+        // stream.read_compact_var(m_recv_rsp_id_max);
     }
     return (begin_size - stream.size());
 }
@@ -108,16 +108,16 @@ void xreceiptid_pair_t::set_confirm_rsp_id_max(uint64_t value) {
         m_unconfirm_rsp_num -= value - confirm_rsp_id_max;
     }
 }
-void xreceiptid_pair_t::set_recv_rsp_id_max(uint64_t value) {
-    if (value > m_recv_rsp_id_max) {
-        m_recv_rsp_id_max = value;
-    }
-}
+// void xreceiptid_pair_t::set_recv_rsp_id_max(uint64_t value) {
+//     if (value > m_recv_rsp_id_max) {
+//         m_recv_rsp_id_max = value;
+//     }
+// }
 
 std::string xreceiptid_pair_t::dump() const {
     char local_param_buf[64];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{sendid=%" PRIu64 ",unconfirm_num=%u,recvid=%" PRIu64 ",sendrspid=%" PRIu64 ",unconfirm_rspnum=%u,recvrspid=%" PRIu64 "}",
-        m_send_id_max, m_unconfirm_num, m_recv_id_max, m_send_rsp_id_max, m_unconfirm_rsp_num, m_recv_rsp_id_max);
+    xprintf(local_param_buf,sizeof(local_param_buf),"{sendid=%" PRIu64 ",unconfirm_num=%u,recvid=%" PRIu64 ",sendrspid=%" PRIu64 ",unconfirm_rspnum=%u}",
+        m_send_id_max, m_unconfirm_num, m_recv_id_max, m_send_rsp_id_max, m_unconfirm_rsp_num);
     return std::string(local_param_buf);
 }
 
@@ -146,7 +146,7 @@ void xreceiptid_pairs_t::add_pair(xtable_shortid_t sid, const xreceiptid_pair_t 
         old_pair.set_recvid_max(pair.get_recvid_max());
         old_pair.set_confirmid_max(pair.get_confirmid_max());
         old_pair.set_send_rsp_id_max(pair.get_send_rsp_id_max());
-        old_pair.set_recv_rsp_id_max(pair.get_recv_rsp_id_max());
+        // old_pair.set_recv_rsp_id_max(pair.get_recv_rsp_id_max());
         old_pair.set_confirm_rsp_id_max(pair.get_confirm_rsp_id_max());
     } else {
         m_all_pairs[sid] = pair;
@@ -208,16 +208,16 @@ void xreceiptid_pairs_t::set_confirm_rsp_id_max(xtable_shortid_t sid, uint64_t v
         m_all_pairs[sid] = pair;
     }
 }
-void xreceiptid_pairs_t::set_recv_rsp_id_max(xtable_shortid_t sid, uint64_t value) {
-    auto iter = m_all_pairs.find(sid);
-    if (iter != m_all_pairs.end()) {
-        iter->second.set_recv_rsp_id_max(value);
-    } else {
-        xreceiptid_pair_t pair;
-        pair.set_recv_rsp_id_max(value);
-        m_all_pairs[sid] = pair;
-    }
-}
+// void xreceiptid_pairs_t::set_recv_rsp_id_max(xtable_shortid_t sid, uint64_t value) {
+//     auto iter = m_all_pairs.find(sid);
+//     if (iter != m_all_pairs.end()) {
+//         iter->second.set_recv_rsp_id_max(value);
+//     } else {
+//         xreceiptid_pair_t pair;
+//         pair.set_recv_rsp_id_max(value);
+//         m_all_pairs[sid] = pair;
+//     }
+// }
 
 std::string xreceiptid_pairs_t::dump() const {
     std::stringstream ss;
@@ -228,7 +228,7 @@ std::string xreceiptid_pairs_t::dump() const {
         ss << ":" << v.second.get_recvid_max();
         ss << " " << v.second.get_send_rsp_id_max();
         ss << ":" << v.second.get_confirm_rsp_id_max();
-        ss << ":" << v.second.get_recv_rsp_id_max();
+        // ss << ":" << v.second.get_recv_rsp_id_max();
         ss << "}";
     }
     return ss.str();
@@ -392,13 +392,13 @@ void xsend_rsp_ids_check_t::set_receiptid_max(xreceiptid_pair_t & pair, uint64_t
     pair.set_send_rsp_id_max(receiptid);
 }
 
-uint64_t xrecv_rsp_ids_check_t::get_begin_id(xreceiptid_pair_t & pair) const {
-    return pair.get_recv_rsp_id_max();
-}
+// uint64_t xrecv_rsp_ids_check_t::get_begin_id(xreceiptid_pair_t & pair) const {
+//     return pair.get_recv_rsp_id_max();
+// }
 
-void xrecv_rsp_ids_check_t::set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const {
-    pair.set_recv_rsp_id_max(receiptid);
-}
+// void xrecv_rsp_ids_check_t::set_receiptid_max(xreceiptid_pair_t & pair, uint64_t receiptid) const {
+//     pair.set_recv_rsp_id_max(receiptid);
+// }
 
 uint64_t xconfirm_rsp_ids_check_t::get_begin_id(xreceiptid_pair_t & pair) const {
     return pair.get_confirm_rsp_id_max();
@@ -425,9 +425,9 @@ void    xreceiptid_check_t::set_send_rsp_id(xtable_shortid_t sid, uint64_t value
     m_send_rsp_ids.set_id(sid, value);
 }
 
-void    xreceiptid_check_t::set_recv_rsp_id(xtable_shortid_t sid, uint64_t value) {
-    m_recv_rsp_ids.set_id(sid, value);
-}
+// void    xreceiptid_check_t::set_recv_rsp_id(xtable_shortid_t sid, uint64_t value) {
+//     m_recv_rsp_ids.set_id(sid, value);
+// }
 
 void    xreceiptid_check_t::set_confirm_rsp_id(xtable_shortid_t sid, uint64_t value) {
     m_confirm_rsp_ids.set_id(sid, value);
@@ -451,10 +451,10 @@ bool    xreceiptid_check_t::check_continuous(const xreceiptid_state_ptr_t & rece
     if (!ret) {
         return false;
     }
-    ret = m_recv_rsp_ids.check_continuous(receiptid_state);
-    if (!ret) {
-        return false;
-    }
+    // ret = m_recv_rsp_ids.check_continuous(receiptid_state);
+    // if (!ret) {
+    //     return false;
+    // }
     ret = m_confirm_rsp_ids.check_continuous(receiptid_state);
     if (!ret) {
         return false;
@@ -468,7 +468,7 @@ xreceiptid_pairs_ptr_t xreceiptid_check_t::get_modified_pairs(const base::xrecei
     m_recvids.get_modified_pairs(receiptid_state, modified_pairs);
     m_confirmids.get_modified_pairs(receiptid_state, modified_pairs);
     m_send_rsp_ids.get_modified_pairs(receiptid_state, modified_pairs);
-    m_recv_rsp_ids.get_modified_pairs(receiptid_state, modified_pairs);
+    // m_recv_rsp_ids.get_modified_pairs(receiptid_state, modified_pairs);
     m_confirm_rsp_ids.get_modified_pairs(receiptid_state, modified_pairs);
     return modified_pairs;
 }
@@ -483,8 +483,8 @@ std::string xreceiptid_check_t::dump() const {
     m_confirmids.dump(ss);
     ss << "sendrpsid:";
     m_send_rsp_ids.dump(ss);
-    ss << "recvrspid:";
-    m_recv_rsp_ids.dump(ss);
+    // ss << "recvrspid:";
+    // m_recv_rsp_ids.dump(ss);
     ss << "confirmrspid:";
     m_confirm_rsp_ids.dump(ss);
     return ss.str();

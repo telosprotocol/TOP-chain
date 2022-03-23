@@ -223,19 +223,19 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         if (tx->is_recv_tx()) {
             cur_tx_subtype = tx->get_tx_subtype();
             cur_receipt_id = tx->get_last_action_receipt_id();
-            cur_rsp_id = tx->get_last_action_rsp_id();
+            // cur_rsp_id = tx->get_last_action_rsp_id();
             
             if (last_tx_subtype != cur_tx_subtype || cur_tableid != last_tableid) {
                 base::xreceiptid_pair_t receiptid_pair;
                 tablestate->find_receiptid_pair(cur_tableid, receiptid_pair);
                 last_receipt_id = receiptid_pair.get_recvid_max();
-                last_rsp_id = receiptid_pair.get_recv_rsp_id_max();
+                // last_rsp_id = receiptid_pair.get_recv_rsp_id_max();
             }
-            if (cur_receipt_id != last_receipt_id + 1 || (cur_rsp_id != 0 && cur_rsp_id != last_rsp_id + 1)) {
+            if (cur_receipt_id != last_receipt_id + 1 /* || (cur_rsp_id != 0 && cur_rsp_id != last_rsp_id + 1)*/) {
                 XMETRICS_GAUGE(metrics::cons_packtx_fail_receiptid_continuous, 1);
                 set_packtx_metrics(tx, false);
-                xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for receiptid not continuous. %s last_receipt_id=%ld, last_rsp_id=%ld tx=%s",
-                    cs_para.dump().c_str(), last_receipt_id, last_rsp_id, tx->dump(true).c_str());
+                xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for receiptid not continuous. %s last_receipt_id=%ld,tx=%s",
+                    cs_para.dump().c_str(), last_receipt_id, tx->dump(true).c_str());
                 continue;
             }
         }
