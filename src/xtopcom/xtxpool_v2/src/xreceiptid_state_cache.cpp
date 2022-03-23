@@ -202,35 +202,35 @@ const xreceiptid_state_and_prove xreceiptid_state_cache_t::get_receiptid_state_a
     return {};
 }
 
-bool xreceiptid_state_cache_t::is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
-    std::lock_guard<std::mutex> lck(m_mutex);
-    uint64_t recvid_max = 0;
-    uint64_t sendid_max = 0;
-    auto iter_self = m_receiptid_state_map.find(self_table_id);
-    if (iter_self != m_receiptid_state_map.end()) {
-        auto & table_receiptid_state = iter_self->second.m_receiptid_state;
-        base::xreceiptid_pair_t pair;
-        table_receiptid_state->find_pair(peer_table_id, pair);
-        sendid_max = pair.get_sendid_max();
-    } else {
-        return false;
-    }
+// bool xreceiptid_state_cache_t::is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
+//     std::lock_guard<std::mutex> lck(m_mutex);
+//     uint64_t recvid_max = 0;
+//     uint64_t sendid_max = 0;
+//     auto iter_self = m_receiptid_state_map.find(self_table_id);
+//     if (iter_self != m_receiptid_state_map.end()) {
+//         auto & table_receiptid_state = iter_self->second.m_receiptid_state;
+//         base::xreceiptid_pair_t pair;
+//         table_receiptid_state->find_pair(peer_table_id, pair);
+//         sendid_max = pair.get_sendid_max();
+//     } else {
+//         return false;
+//     }
 
-    auto iter_peer = m_receiptid_state_map.find(peer_table_id);
-    if (iter_peer != m_receiptid_state_map.end()) {
-        auto & table_receiptid_state = iter_peer->second.m_receiptid_state;
-        base::xreceiptid_pair_t pair;
-        table_receiptid_state->find_pair(self_table_id, pair);
-        recvid_max = pair.get_recvid_max();
-    } else {
-        return false;
-    }
+//     auto iter_peer = m_receiptid_state_map.find(peer_table_id);
+//     if (iter_peer != m_receiptid_state_map.end()) {
+//         auto & table_receiptid_state = iter_peer->second.m_receiptid_state;
+//         base::xreceiptid_pair_t pair;
+//         table_receiptid_state->find_pair(self_table_id, pair);
+//         recvid_max = pair.get_recvid_max();
+//     } else {
+//         return false;
+//     }
 
-    if (sendid_max > recvid_max + max_unconfirm_num) {
-        xwarn("xreceiptid_state_cache_t::is_reach_limit self:%d,peer:%d,send:%llu,recv:%llu,max_unconfirm:%llu", self_table_id, peer_table_id, sendid_max, recvid_max, max_unconfirm_num);
-        return true;
-    }
-    return false;
-}
+//     if (sendid_max > recvid_max + max_unconfirm_num) {
+//         xwarn("xreceiptid_state_cache_t::is_reach_limit self:%d,peer:%d,send:%llu,recv:%llu,max_unconfirm:%llu", self_table_id, peer_table_id, sendid_max, recvid_max, max_unconfirm_num);
+//         return true;
+//     }
+//     return false;
+// }
 
 NS_END2

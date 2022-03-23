@@ -336,7 +336,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
     }
 
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, proposal_block->get_clock());
+    bool use_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, proposal_block->get_clock());
 
     const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
     if (origin_txs.empty() && other_accounts.empty()) {
@@ -345,13 +345,13 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         return false;
     }
 
-    ret = get_txpool()->verify_txs(get_account(), origin_txs, is_forked);
+    ret = get_txpool()->verify_txs(get_account(), origin_txs, use_rsp_id);
     if (ret != xsuccess) {
         return false;
     }
 
     std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> receiptid_info_map;
-    if (!is_forked) {
+    if (!use_rsp_id) {
         //TODO(nathan): tobe deleted after forked.
         auto self_sid = table_para.get_tablestate()->get_receiptid_state()->get_self_tableid();
         for (auto & prove : proposal_input->get_receiptid_state_proves()) {
@@ -368,12 +368,21 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
             table_para.get_tablestate()->get_receiptid_state()->find_pair(peer_sid, self_pair);
             auto confirmid_max = self_pair.get_confirmid_max();
 
+            if (self_pair.get_send_rsp_id_max() != self_pair.get_confirm_rsp_id_max()) {
+                xerror("xproposal_maker_t::verify_proposal_input fail-send rsp id:%llu not equal to confirm rsp id:%llu. proposal=%s",
+                       self_pair.get_send_rsp_id_max(),
+                       self_pair.get_confirm_rsp_id_max(),
+                       proposal_block->dump().c_str());
+                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
+                return false;
+            }
+
             base::xreceiptid_pair_t peer_pair;
             peer_receiptid_state->find_pair(self_sid, peer_pair);
             auto recvid_max = peer_pair.get_recvid_max();
 
             if (recvid_max <= confirmid_max) {
-                xerror("xproposal_maker_t::verify_proposal_input fail-prove invalid recvid not bigger than confirm id. proposal=%s", proposal_block->dump().c_str());
+                xerror("xproposal_maker_t::verify_proposal_input fail-recvid not bigger than confirm id. proposal=%s", proposal_block->dump().c_str());
                 XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
                 return false;
             }
@@ -474,16 +483,15 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
 
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, proposal_para.get_clock());
-    if (!is_forked) {
-        auto & all_table_sids = get_txpool()->get_all_table_sids();
-        std::vector<base::xtable_shortid_t> all_table_sids_vec;
-        all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
-        peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
-    }
+    bool use_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, proposal_para.get_clock());
+
+    auto & all_table_sids = get_txpool()->get_all_table_sids();
+    std::vector<base::xtable_shortid_t> all_table_sids_vec;
+    all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
+    peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(
-        proposal_para.get_table_account(), tablestate_highqc, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id, is_forked);
+        proposal_para.get_table_account(), tablestate_highqc, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id, use_rsp_id);
     // std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
     auto pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);

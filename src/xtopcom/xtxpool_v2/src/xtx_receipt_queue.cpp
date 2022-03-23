@@ -97,7 +97,7 @@ const std::vector<xcons_transaction_ptr_t> xpeer_table_receipts_t::get_txs(uint6
         }
         if (cur_id <= upper_receipt_id) {
             if (continuous) {
-                if (cur_id == last_id + 1) {
+                if (cur_id != last_id + 1) {
                     break;
                 }
                 last_id = cur_id;

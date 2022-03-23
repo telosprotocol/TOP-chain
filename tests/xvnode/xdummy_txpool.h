@@ -81,9 +81,9 @@ public:
         return true;
     }
 
-     bool is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
-         return false;
-     }
+    //  bool is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
+    //      return false;
+    //  }
 
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;

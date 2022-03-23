@@ -430,9 +430,9 @@ bool xtxpool_t::get_sender_need_confirm_ids(const std::string & account, base::x
     return table->get_sender_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);
 }
 
- bool xtxpool_t::is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
-     return m_para->get_receiptid_state_cache().is_reach_limit(self_table_id, peer_table_id, max_unconfirm_num);
- }
+//  bool xtxpool_t::is_reach_limit(base::xtable_shortid_t self_table_id, base::xtable_shortid_t peer_table_id, uint64_t max_unconfirm_num) const {
+//      return m_para->get_receiptid_state_cache().is_reach_limit(self_table_id, peer_table_id, max_unconfirm_num);
+//  }
 
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,
                               base::xtable_shortid_t to_table_sid,

@@ -34,26 +34,26 @@ namespace xtxpool_v2 {
 bool xtxpool_table_t::is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const {
     if (tx->get_tx()->is_send_tx()) {
         auto peer_table_sid = tx->get_tx()->get_peer_tableid();
-        bool use_rsp_id = m_para->is_use_rspid_forked();
-        if (!use_rsp_id) {
-            auto timer_block = m_para->get_vblockstore()->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr), metrics::blockstore_access_from_us_dispatcher_load_tc);
-            auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-            use_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, timer_block->get_clock());
-            if (use_rsp_id) {
-                m_para->set_use_rspid_forked();
-            }
-        }
-        if (use_rsp_id) {
-            if (m_para->get_receiptid_state_cache().is_reach_limit(m_xtable_info.get_short_table_id(), peer_table_sid, 1024)) {
-                xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
-                return true;
-            }
-        } else {
+        // bool use_rsp_id = m_para->is_use_rspid_forked();
+        // if (!use_rsp_id) {
+        //     auto timer_block = m_para->get_vblockstore()->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr), metrics::blockstore_access_from_us_dispatcher_load_tc);
+        //     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        //     use_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.use_rsp_id, timer_block->get_clock());
+        //     if (use_rsp_id) {
+        //         m_para->set_use_rspid_forked();
+        //     }
+        // }
+        // if (use_rsp_id) {
+        //     if (m_para->get_receiptid_state_cache().is_reach_limit(m_xtable_info.get_short_table_id(), peer_table_sid, 1024)) {
+        //         xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
+        //         return true;
+        //     }
+        // } else {
             if (m_table_state_cache.is_unconfirmed_num_reach_limit(peer_table_sid)) {
                 xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
                 return true;
             }            
-        }
+        // }
     }
     return false;
 }
@@ -272,8 +272,14 @@ xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_
         auto confirmid_max = self_pair.get_confirmid_max();
         uint64_t max_not_need_confirm_receiptid;
 
-        auto ret = m_unconfirm_id_height.get_sender_max_not_need_confirm_id(peer_sid, confirmid_max + 1, max_not_need_confirm_receiptid);
-        if (ret) {
+        auto can_raise_confirmid = true;
+        if (!pack_para.is_use_rspid()) {
+            can_raise_confirmid = m_unconfirm_id_height.get_sender_max_not_need_confirm_id(peer_sid, confirmid_max + 1, max_not_need_confirm_receiptid);
+        } else {
+            can_raise_confirmid = (self_pair.get_send_rsp_id_max() == self_pair.get_confirm_rsp_id_max());
+        }
+        
+        if (can_raise_confirmid) {
             auto receiptid_state_prove =
                 m_para->get_receiptid_state_cache().get_receiptid_state_and_prove(self_sid, peer_sid, confirmid_max + 1, max_not_need_confirm_receiptid);
             if (receiptid_state_prove.m_property_prove_ptr != nullptr && receiptid_state_prove.m_receiptid_state != nullptr) {
