@@ -205,6 +205,11 @@ void EcNetcard::spread_rumor(base::KadmliaKeyPtr const & send_kad_key,
 
     // group broadcast
     GossipDispatchBroadcast(pbft_message, gossip::kGossipDispatcher, ec);
+#ifdef XENABLE_P2P_TEST
+    if (!ec) {
+        XMETRICS_PACKET_INFO("p2ptest_send_broadcast_info", MESSAGE_BASIC_INFO(pbft_message), MESSAGE_FEATURE(pbft_message), IS_ROOT_BROADCAST(pbft_message), NOW_TIME);
+    }
+#endif
     return;
 }
 
@@ -376,7 +381,7 @@ void EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pb
 
     wrouter::Wrouter::Instance()->send(pbft_message, ec);
     if (ec) {
-        xwarn("speard rumor fail. %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("spread rumor fail. %s %s", ec.category().name(), ec.message().c_str());
     }
     return;
 }
@@ -414,7 +419,7 @@ void EcNetcard::HandleRumorMessage(
     if (IS_BROADCAST(message)) {
 
 #if defined(XENABLE_P2P_TEST)
-        if (message.is_root()) {
+        if (message.broadcast()) {
             XMETRICS_PACKET_INFO("p2ptest_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
         }
 #elif defined(XENABLE_P2P_BENDWIDTH)

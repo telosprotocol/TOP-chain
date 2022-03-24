@@ -19,6 +19,8 @@ enum RootMessageType {
     kCompleteNodeResponse = 2,
     kCacheElectNodesRequest = 3,
     kCacheElectNodesResponse = 4,
+    kAddLastRoundElectNodesRequest = 5,
+    kAddLastRoundElectNodesResponse = 6,
 };
 
 class RootRouting : public kadmlia::RootRoutingTable {

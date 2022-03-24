@@ -164,6 +164,9 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
             }
         }
     }
+    if (last_round_out_nodes_map.empty() && service_type.height()) {
+        routing_table_ptr->set_lack_last_round_nodes(true);
+    }
 
     routing_table_ptr->SetElectionNodesExpected(elect_root_kad_key_ptrs, last_round_out_nodes_map);
     local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());

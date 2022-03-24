@@ -81,12 +81,16 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
     std::unordered_map<std::string, std::size_t> const index_map = routing_table->index_map(is_broadcast_height);
     std::vector<std::string> const xip2_for_shuffle = routing_table->get_shuffled_xip2(is_broadcast_height);
 
+    std::size_t const current_round_size = routing_table->nodes_size();
+
     SET_INDEX_SENT(routing_table->get_self_index(), sit1, sit2);
     std::size_t index_i;
     std::vector<std::string> select_xip2;
     for (index_i = 0; index_i < xip2_for_shuffle.size(); ++index_i) {
         if (index_map.find(xip2_for_shuffle[index_i]) != index_map.end()) {
             std::size_t node_index = index_map.at(xip2_for_shuffle[index_i]);
+            if (message.hop_num() == 0 && node_index >= current_round_size)
+                continue;  // should not select last round nodes at first round since there might not be able to spread this.
             if (IS_INDEX_SENT(node_index, sit1, sit2))
                 continue;
             SET_INDEX_SENT(node_index, sit1, sit2);
@@ -101,13 +105,22 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
     for (auto _xip2 : select_xip2) {
         // nodes might not be online
         if (nodes_map.at(_xip2) != nullptr) {
-            select_nodes.push_back(DispatchInfos(nodes_map.at(_xip2), sit1, sit2));
+            select_nodes.push_back(DispatchInfos(nodes_map.at(_xip2), sit1, sit2, index_map.at(_xip2) >= current_round_size));
         } else {
             xwarn("[GossipDispatcher::GenerateDispatchInfos] routing table still uncomplete , missing: %s", _xip2.c_str());
         }
     }
     if (select_nodes.empty())
         return;
+
+    std::size_t this_round_node_count = 0;
+    std::for_each(select_nodes.begin(), select_nodes.end(), [&select_nodes, &this_round_node_count](DispatchInfos const & info) {
+        if (!info.is_last_round_node)
+            this_round_node_count++;
+    });
+    std::sort(select_nodes.begin(), select_nodes.end(), [](DispatchInfos const & a, DispatchInfos const & b) -> bool { return a.is_last_round_node < b.is_last_round_node; });
+    if (this_round_node_count == 0)
+        this_round_node_count = select_nodes.size(); // all nodes are last round . special case.
 
     for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
         xdbg("[GossipDispatcher::GenerateDispatchInfos] before % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
@@ -120,7 +133,7 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
                 continue;
             static uint32_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             static std::mt19937 rng(seed);
-            std::size_t send_node_index = rng() % select_nodes.size();
+            std::size_t send_node_index = rng() % this_round_node_count;
             for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
                 if ((_index != send_node_index && (rng() % overlap))) {
                     SET_INDEX_SENT(node_index, select_nodes[_index].get_sit1(), select_nodes[_index].get_sit2());

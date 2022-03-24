@@ -111,6 +111,10 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
         return HandleCacheElectNodesRequest(message, packet);
     case kCacheElectNodesResponse:
         return HandleCacheElectNodesResponse(message, packet);
+    case kAddLastRoundElectNodesRequest:
+        return HandleAddLastRoundElectNodesRequest(message, packet);
+    case kAddLastRoundElectNodesResponse:
+        return HandleAddLastRoundElectNodesResponse(message, packet);
     default:
         TOP_WARN("invalid root message type[%d].", root_message.message_type());
         break;
@@ -260,6 +264,116 @@ void MultiRouting::HandleCacheElectNodesResponse(transport::protobuf::RoutingMes
     CallbackManager::Instance()->Callback(message.id(), message, packet);
 }
 
+
+void MultiRouting::SendAddLastRoundElectNodesRequest(kadmlia::ElectRoutingTablePtr elect_routing_table_ptr, base::ServiceType service_type){
+    xdbg("[MultiRouting::SendAddLastRoundElectNodesRequest] service_type:%s", service_type.info().c_str());
+    
+    transport::protobuf::RoutingMessage message;
+    message.set_hop_num(0);
+    message.set_priority(enum_xpacket_priority_type_routine);
+    message.set_is_root(true);
+    message.set_src_service_type(service_type.value());// todo !!!
+    message.set_des_service_type(kRoot);
+    message.set_type(kRootMessage);
+    message.set_id(CallbackManager::MessageId());
+    message.set_xid(global_xid->Get());
+
+    protobuf::RootMessage root_message;
+    root_message.set_message_type(kAddLastRoundElectNodesRequest);
+
+    // root_message.set_data(data);
+    std::string root_data;
+    if (!root_message.SerializeToString(&root_data)) {
+        xinfo("RootMessage SerializeToString failed!");
+        return;
+    }
+    message.set_data(root_data);
+
+    auto random_node = elect_routing_table_ptr->GetOneRandomNode();
+    if (random_node == nullptr)
+        return;
+
+    message.set_src_node_id(elect_routing_table_ptr->get_local_node_info()->kad_key());
+    message.set_des_node_id(random_node->node_id);
+
+    elect_routing_table_ptr->SendData(message, random_node);
+
+    auto cb = std::bind(&MultiRouting::OnAddLastRoundElectRoutingNodes, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    CallbackManager::Instance()->Add(message.id(), 3, cb, 1);
+    return;
+}
+
+void MultiRouting::HandleAddLastRoundElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet){
+    xdbg("[MultiRouting::HandleAddLastRoundElectNodesRequest]");
+    
+    base::ServiceType service_type{message.src_service_type()};
+
+    kadmlia::ElectRoutingTablePtr routing_table;
+    {
+        std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+        if (elect_routing_table_map_.find(service_type) == elect_routing_table_map_.end()) {
+            xdbg("[MultiRouting::HandleAddLastRoundElectNodesRequest] not this elect routing table: %s", service_type.info().c_str());
+            return;
+        }
+        assert(elect_routing_table_map_.find(service_type) != elect_routing_table_map_.end());
+        routing_table = elect_routing_table_map_[service_type];
+    }
+    std::vector<std::pair<std::string, NodeInfoPtr>> last_round_nodes;
+    routing_table->getLastRoundElectNodesInfo(last_round_nodes);
+    if (last_round_nodes.empty()) {
+        xdbg("[MultiRouting::HandleAddLastRoundElectNodesRequest] last round nodes empty %s", service_type.info().c_str());
+        return;
+    }
+    protobuf::RootCacheElectNodesResponse response_message;
+    for (auto const & _node_info : last_round_nodes) {
+        protobuf::NodeInfo * node_info = response_message.add_nodes();
+        node_info->set_id(_node_info.second->node_id);
+        node_info->set_public_ip(_node_info.second->public_ip);
+        node_info->set_public_port(_node_info.second->public_port);
+        xdbg("[MultiRouting::HandleAddLastRoundElectNodesRequest] get last round nodes info: [%s] [%s] [%s]",
+             node_info->id().c_str(),
+             _node_info.first.c_str(),
+             _node_info.second->public_ip.c_str());
+    }
+
+    std::string data;
+    if (!response_message.SerializeToString(&data)) {
+        TOP_WARN("[MultiRouting::HandleAddLastRoundElectNodesRequest] SerializeToString failed!");
+        return;
+    }
+    protobuf::RootMessage root_message;
+    root_message.set_message_type(kAddLastRoundElectNodesResponse);
+    root_message.set_data(data);
+    std::string root_data;
+    if (!root_message.SerializeToString(&root_data)) {
+        TOP_WARN("RootMessage SerializeToString failed!");
+        return;
+    }
+
+    transport::protobuf::RoutingMessage res_message;
+    res_message.set_hop_num(0);
+    res_message.set_xid(global_xid->Get());
+    res_message.set_priority(enum_xpacket_priority_type_routine);
+    res_message.set_is_root(true);
+    res_message.set_src_service_type(message.src_service_type());
+    res_message.set_des_service_type(kRoot);
+    res_message.set_src_node_id(message.des_node_id());
+    res_message.set_des_node_id(message.src_node_id());
+    res_message.set_type(kRootMessage);
+    res_message.set_id(message.id());
+
+    res_message.set_data(root_data);
+    routing_table->SendData(res_message, packet.get_from_ip_addr(), packet.get_from_ip_port());
+    return;
+}
+void MultiRouting::HandleAddLastRoundElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet){
+    xdbg("[MultiRouting::HandleAddLastRoundElectNodesResponse]");
+
+    CallbackManager::Instance()->Callback(message.id(), message, packet);// OnAddLastRoundElectRoutingNodes
+    return;
+}
+
+
 kadmlia::ElectRoutingTablePtr MultiRouting::GetLastRoundRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
     for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {
@@ -403,25 +517,25 @@ std::vector<kadmlia::NodeInfoPtr> MultiRouting::transform_node_vec(base::Service
         xdbg("from use blk_height to use version");  // V2(peer) -> V1(self)
         for (auto & _node_info : node_vec) {
             auto kad_key = base::GetKadmliaKey(_node_info->node_id);
-            xdbg("old node_id: %s",_node_info->node_id.c_str());
+            xdbg("old node_id: %s", _node_info->node_id.c_str());
             auto xip2 = kad_key->Xip();
             auto v1_version = routing_table_info_mgr.get_routing_table_info(xip2.group_xip2(), service_type.ver(), kad_key->version()).first;
             common::xip2_t new_xip2{xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.slot_id(), xip2.size(), v1_version};
             kad_key->SetXip(new_xip2);
             _node_info->node_id = kad_key->Get();
-            xdbg("new node_id: %s",_node_info->node_id.c_str());
+            xdbg("new node_id: %s", _node_info->node_id.c_str());
         }
     } else if (base::now_service_type_ver == base::service_type_height_use_blk_height && service_type.ver() == base::service_type_height_use_version) {
         xdbg("from use version to use blk_height");  // V1(peer) -> V2(self)
         for (auto & _node_info : node_vec) {
             auto kad_key = base::GetKadmliaKey(_node_info->node_id);
-            xdbg("old node_id: %s",_node_info->node_id.c_str());
+            xdbg("old node_id: %s", _node_info->node_id.c_str());
             auto xip2 = kad_key->Xip();
             auto v2_blk_height = routing_table_info_mgr.get_routing_table_info(xip2.group_xip2(), service_type.ver(), kad_key->version()).second;
             common::xip2_t new_xip2{xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.slot_id(), xip2.size(), v2_blk_height};
             kad_key->SetXip(new_xip2);
             _node_info->node_id = kad_key->Get();
-            xdbg("new node_id: %s",_node_info->node_id.c_str());
+            xdbg("new node_id: %s", _node_info->node_id.c_str());
         }
     } else {
         assert(false);
@@ -471,6 +585,9 @@ void MultiRouting::CompleteElectRoutingTable() {
                     }
                 }
             }
+            if (routing_table->lack_last_round_nodes()) {
+                SendAddLastRoundElectNodesRequest(routing_table, routing_table_pair.first);
+            }
             if (flag)
                 break;
         }
@@ -492,6 +609,55 @@ void MultiRouting::OnCompleteElectRoutingTable(base::ServiceType const service_t
         routing_table = elect_routing_table_map_[service_type];
     }
     routing_table->OnFindNodesFromRootRouting(election_xip2, node_info);
+}
+
+void MultiRouting::OnAddLastRoundElectRoutingNodes(int status,transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
+    if (status == kKadSuccess) {
+        base::ServiceType service_type{message.src_service_type()};
+
+        protobuf::RootMessage root_message;
+        if (!root_message.ParseFromString(message.data())) {
+            xwarn("message(%u) ParseFromString failed!", message.id());
+            return;
+        }
+        if (!root_message.has_data() && root_message.data().empty()) {
+            xwarn("root message(%u) has no data!", message.id());
+            return;
+        }
+        protobuf::RootCacheElectNodesResponse response_message;
+        if (!response_message.ParseFromString(root_message.data())) {
+            xwarn("root message(%u) ParseFromString failed!", message.id());
+            return;
+        }
+
+        std::vector<std::pair<std::string, NodeInfoPtr>> last_round_nodes;
+        for (int i = 0; i < response_message.nodes_size();++i) {
+            NodeInfoPtr node_ptr;
+            node_ptr.reset(new NodeInfo(response_message.nodes(i).id()));
+            node_ptr->public_ip = response_message.nodes(i).public_ip();
+            node_ptr->public_port = response_message.nodes(i).public_port();
+            node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
+            last_round_nodes.push_back({node_ptr->node_id, node_ptr});
+        }
+
+        root_message.ParseFromString(message.data());
+
+        xdbg("[MultiRouting::OnAddLastRoundElectRoutingNodes] %s size: %zu", service_type.info().c_str(), last_round_nodes.size());
+        kadmlia::ElectRoutingTablePtr routing_table;
+        {
+            std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+            if (elect_routing_table_map_.find(service_type) == elect_routing_table_map_.end()) {
+                return;
+            }
+            assert(elect_routing_table_map_.find(service_type) != elect_routing_table_map_.end());
+            routing_table = elect_routing_table_map_[service_type];
+        }
+        routing_table->OnAddLastRoundElectNodes(last_round_nodes);
+        routing_table->set_lack_last_round_nodes(false);
+
+    } else {
+        xdbg("message(%u) OnCacheElectNodesAsync timeout", message.id());
+    }
 }
 
 }  // namespace wrouter
