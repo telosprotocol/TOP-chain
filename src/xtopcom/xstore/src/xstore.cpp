@@ -54,7 +54,12 @@ bool xstore::open() const {
     }
     return m_db->open();
 }
-
+bool xstore::close() const {
+    if (m_db == nullptr) {
+        return false;
+    }
+    return m_db->close();
+}
 xaccount_ptr_t xstore::query_account(const std::string &address) const {
     base::xvaccount_t _vaddr(address);
     if (_vaddr.get_account().empty()) {

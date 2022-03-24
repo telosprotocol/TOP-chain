@@ -78,6 +78,17 @@ int DbPrune::db_init(const std::string datadir) {
     m_blockstore.attach(store::get_vblockstore());
     return 0;
 }
+int DbPrune::db_close() {
+/*    base::xvdbstore_t* m_xvdb_ptr = dynamic_cast<base::xvdbstore_t *>(m_store.get());
+    //m_xvblockdb_ptr = new store::xvblockdb_t(m_xvdb_ptr);
+
+    if (m_xvdb_ptr != nullptr) {
+        m_xvdb_ptr->close();
+        return 0;
+    }*/
+    m_store->close();
+    return 1;
+}
 int DbPrune::update_meta(base::xvaccount_t& _vaddr, const uint64_t& height) {
     std::string meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
     const std::string meta_content = m_store->get_value(meta_key);
@@ -94,11 +105,34 @@ int DbPrune::update_meta(base::xvaccount_t& _vaddr, const uint64_t& height) {
     delete meta_ptr;
     return 0;
 }
-int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
+int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, std::ostringstream& out_str) {
+    std::cout << "account: " << node_addr << std::endl;
     std::cout << "init db..." <<std::endl;
     db_init(datadir);
 
-    std::cout << "start prune db..." <<std::endl;
+    std::string value_str;
+    int ret = m_store->map_get(sys_contract_rec_registration_addr, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
+
+    if (ret == store::xstore_success && !value_str.empty()) {
+        data::system_contract::xreg_node_info node_info;
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
+
+        node_info.serialize_from(stream);
+
+        if (node_info.could_be_archive()) {
+            out_str << "can not prune database at archive node." << std::endl;
+            db_close();
+            return 1;
+        }
+        std::cout << "start prune db("<<to_string(node_info.miner_type())<<")..." <<std::endl;
+    } else {
+        xwarn("[register_node_callback] get node register info fail, node_addr: %s", node_addr.c_str());
+        std::cout << "not find account in sys_contract_rec_registration_addr." << std::endl;
+//        db_close();
+//        return 1;
+        std::cout << "start prune db..." <<std::endl;
+    }
+
     // init checkpoint
     data::xchain_checkpoint_t::load();
 
@@ -167,6 +201,7 @@ int DbPrune::db_prune(const std::string datadir, std::ostringstream& out_str) {
         update_meta(account_obj, checkpoint.height);
     }
     out_str << "prune database ok." << std::endl;
+    db_close();
     return 0;  
 }
 std::vector<std::string> DbPrune::get_db_unit_accounts() {
@@ -215,5 +250,6 @@ void DbPrune::compact_db(const std::string datadir, std::ostringstream& out_str)
     std::string end_key;
     m_store->compact_range(begin_key, end_key);
     out_str << "compact database ok." << std::endl;
+    db_close();
 }
 NS_END2

@@ -21,11 +21,12 @@ private:
     int update_meta(base::xvaccount_t& _vaddr, const uint64_t& height);
 
     int db_init(const std::string datadir);
+    int db_close();
     std::vector<std::string> get_db_unit_accounts();
     std::vector<std::string> get_table_accounts();
 public:
     static DbPrune & instance();
-    int db_prune(const std::string datadir, std::ostringstream & out_str);
+    int db_prune(const std::string& node_addr, const std::string datadir, std::ostringstream & out_str);
     void compact_db(const std::string datadir, std::ostringstream& out_str);
 };
 
