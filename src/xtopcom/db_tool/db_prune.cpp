@@ -22,10 +22,6 @@
 #include "xbase/xhash.h"
 #include "xdata/xcheckpoint.h"
 
-#include "xconfig/xconfig_register.h"
-#include "xdata/xrootblock.h"
-
-
 NS_BEG2(top, db_prune)
 
 DbPrune & DbPrune::instance() {
@@ -36,7 +32,6 @@ int DbPrune::db_init(const std::string datadir) {
     auto hash_plugin = new xtop_hash_t();
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
-    m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
 
     int db_path_num = 0;
     std::vector<db::xdb_path_t> db_data_paths;
@@ -80,7 +75,6 @@ int DbPrune::db_init(const std::string datadir) {
     }
     m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
-    base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
     return 0;
 }
@@ -181,7 +175,7 @@ std::vector<std::string> DbPrune::get_db_unit_accounts() {
     for (auto const table : tables) {
         auto latest_block = m_blockstore->get_latest_committed_block(table);
         if (latest_block == nullptr) {
-            std::cerr << table << " get_latest_committed_block null!" << std::endl;
+            std::cerr << table << " not exist." << std::endl;
             continue;
         }
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());

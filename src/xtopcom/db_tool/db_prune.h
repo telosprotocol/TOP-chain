@@ -4,12 +4,9 @@
 #include <iostream>
 #include <thread>
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xvstate.h"
 #include "xgrpcservice/xgrpc_service.h"
-#include "xmbus/xmessage_bus.h"
 #include "xstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvcnode.h"
@@ -18,7 +15,6 @@
 NS_BEG2(top, db_prune)
 class DbPrune {
 private:
-    xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
     xobject_ptr_t<base::xvtxstore_t> m_txstore;
