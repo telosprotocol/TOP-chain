@@ -62,7 +62,7 @@ public:
 public:
     void GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size);
     NodeInfoPtr GetOneRandomNode();
-    bool lack_last_round_nodes() {
+    bool lack_last_round_nodes() const {
         return m_lack_last_round_nodes;
     }
     void set_lack_last_round_nodes(bool value) {
