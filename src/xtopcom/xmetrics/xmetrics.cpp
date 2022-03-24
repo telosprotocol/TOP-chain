@@ -145,10 +145,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_packtx_confirmtx_succ);
         RETURN_METRICS_NAME(cons_packtx_fail_unit_check_state);
         RETURN_METRICS_NAME(cons_packtx_fail_fullunit_limit);
-        RETURN_METRICS_NAME(cons_packtx_fail_receiptid_contious);
+        RETURN_METRICS_NAME(cons_packtx_fail_receiptid_continuous);
+        RETURN_METRICS_NAME(cons_packtx_fail_rspid_continuous);
         RETURN_METRICS_NAME(cons_packtx_fail_total_unconfirm_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_table_unconfirm_limit);
-        RETURN_METRICS_NAME(cons_packtx_fail_nonce_contious);
+        RETURN_METRICS_NAME(cons_packtx_fail_nonce_continuous);
         RETURN_METRICS_NAME(cons_packtx_fail_transfer_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_load_origintx);
         RETURN_METRICS_NAME(cons_packtx_with_threshold);

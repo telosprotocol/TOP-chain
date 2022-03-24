@@ -84,6 +84,7 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
     // exec txs created by origin tx secondly, this tx must be a run contract transaction
     if (!create_txs.empty()) {
         for (auto & new_tx : create_txs) {
+            new_tx->set_not_need_confirm();
             ret = exec_one_tx(account_context, new_tx);
             if (ret != xsuccess && ret != xunit_contract_exec_no_property_change) {  // contract create tx send action may not change property, it's ok
                 xwarn("xtransaction_executor::exec_tx fail contract create tx. %s,%s error:%s",

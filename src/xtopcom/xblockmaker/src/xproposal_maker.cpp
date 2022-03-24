@@ -11,7 +11,6 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblockbuild.h"
-#include "xtxpool_v2/xtxpool_tool.h"
 #include "xmbus/xevent_behind.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 
@@ -254,7 +253,10 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     if (!ret) {
         xwarn("xproposal_maker_t::verify_proposal create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), commit_block->get_height());
     }
-    get_txpool()->update_table_state(property_prove_ptr, commit_tablestate);
+
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool commit_block_add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, commit_block->get_clock());
+    get_txpool()->update_table_state(property_prove_ptr, commit_tablestate, commit_block_add_rsp_id);
 
     // get tablestate related to latest cert block
     data::xtablestate_ptr_t tablestate = get_target_tablestate(proposal_prev_block.get());
@@ -364,6 +366,8 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         base::xreceiptid_pair_t self_pair;
         table_para.get_tablestate()->get_receiptid_state()->find_pair(peer_sid, self_pair);
         auto confirmid_max = self_pair.get_confirmid_max();
+        auto confirm_rsp_id_max = self_pair.get_confirm_rsp_id_max();
+        auto send_rsp_id_max = self_pair.get_send_rsp_id_max();
 
         base::xreceiptid_pair_t peer_pair;
         peer_receiptid_state->find_pair(self_sid, peer_pair);
@@ -375,30 +379,45 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
             return false;
         }
 
-        std::vector<uint64_t> need_confirm_receipt_ids;
-        auto ret = get_txpool()->get_sender_need_confirm_ids(get_account(), peer_sid, confirmid_max + 1, recvid_max, need_confirm_receipt_ids);
-        if (!ret || !need_confirm_receipt_ids.empty()) {
-            xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,ret:%d,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), ret, confirmid_max, recvid_max);
-            if (ret && !need_confirm_receipt_ids.empty()) {
-                for (auto & id : need_confirm_receipt_ids) {
-                    xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,id:%llu,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), id, ret, confirmid_max, recvid_max);
-                }
+        uint64_t send_id_after_add_rsp_id = 0;
+        bool result = get_txpool()->get_send_id_after_add_rsp_id(self_sid, peer_sid, send_id_after_add_rsp_id);
+        if (confirm_rsp_id_max > 0 || (result && confirmid_max >= send_id_after_add_rsp_id)) {
+            if (self_pair.get_send_rsp_id_max() != self_pair.get_confirm_rsp_id_max()) {
+                xwarn("xproposal_maker_t::verify_proposal_input fail-send rsp id:%llu not equal to confirm rsp id:%llu. proposal=%s",
+                    self_pair.get_send_rsp_id_max(),
+                    self_pair.get_confirm_rsp_id_max(),
+                    proposal_block->dump().c_str());
+                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
+                return false;
             }
-            XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_rise_confirm_id, 1);
-            return false;
+        } else {
+            std::vector<uint64_t> need_confirm_receipt_ids;
+            auto ret = get_txpool()->get_sender_need_confirm_ids(get_account(), peer_sid, confirmid_max + 1, recvid_max, need_confirm_receipt_ids);
+            if (!ret || !need_confirm_receipt_ids.empty()) {
+                xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,ret:%d,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), ret, confirmid_max, recvid_max);
+                if (ret && !need_confirm_receipt_ids.empty()) {
+                    for (auto & id : need_confirm_receipt_ids) {
+                        xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,id:%llu,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), id, ret, confirmid_max, recvid_max);
+                    }
+                }
+                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_rise_confirm_id, 1);
+                return false;
+            }
         }
 
         xinfo("xproposal_maker_t::verify_proposal_input proposal_block:%llu,receipt id prove:peer:%d,id:%llu:%llu", proposal_block->dump().c_str(), peer_sid, confirmid_max, recvid_max);
         receiptid_info_map[peer_sid] = xtxpool_v2::xreceiptid_state_and_prove(prove, peer_receiptid_state);
     }
 
-    for (auto & tx : origin_txs) {
-        if (tx->is_confirm_tx()) {
-            auto it = receiptid_info_map.find(tx->get_peer_tableid());
-            if (it != receiptid_info_map.end()) {
-                xerror("xproposal_maker_t::verify_proposal_input fail-tx changed same peer table confirm id with prove. proposal=%s", proposal_block->dump().c_str());
-                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
-                return false;
+    if (!receiptid_info_map.empty()) {
+        for (auto & tx : origin_txs) {
+            if (tx->is_confirm_tx()) {
+                auto it = receiptid_info_map.find(tx->get_peer_tableid());
+                if (it != receiptid_info_map.end()) {
+                    xerror("xproposal_maker_t::verify_proposal_input fail-tx changed same peer table confirm id with prove. proposal=%s", proposal_block->dump().c_str());
+                    XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
+                    return false;
+                }
             }
         }
     }
@@ -449,7 +468,9 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), proposal_para.get_latest_committed_block()->get_height());
         }
-        get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate());
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool commit_block_add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, proposal_para.get_latest_committed_block()->get_clock());
+        get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate(), commit_block_add_rsp_id);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
@@ -463,14 +484,10 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t confirm_txs_max_num = 30;
 
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.partly_remove_confirm, proposal_para.get_clock());
-    if (is_forked) {
-        auto & all_table_sids = get_txpool()->get_all_table_sids();
-        std::vector<base::xtable_shortid_t> all_table_sids_vec;
-        all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
-        peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
-    }
+    auto & all_table_sids = get_txpool()->get_all_table_sids();
+    std::vector<base::xtable_shortid_t> all_table_sids_vec;
+    all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
+    peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(
         proposal_para.get_table_account(), tablestate_highqc, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);

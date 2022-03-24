@@ -189,7 +189,6 @@ TEST_F(test_transfer, transfer_v1) {
     tx.source_confirm_action_exec();
     EXPECT_EQ(balance - asset_out.m_amount - m_trans->get_transaction()->get_deposit(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));
 }
-#endif
 
 // fork based on transaction version
 TEST_F(test_transfer, transfer_v1) {
@@ -231,4 +230,5 @@ TEST_F(test_transfer, transfer_v1) {
     tx.source_confirm_action_exec();
     EXPECT_EQ(balance - asset_out.m_amount - m_trans->get_transaction()->get_deposit(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));
 }
+#endif
 

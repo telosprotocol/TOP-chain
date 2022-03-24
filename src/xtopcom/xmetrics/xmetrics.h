@@ -161,10 +161,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_packtx_confirmtx_succ,
     cons_packtx_fail_unit_check_state,
     cons_packtx_fail_fullunit_limit,
-    cons_packtx_fail_receiptid_contious,
+    cons_packtx_fail_receiptid_continuous,
+    cons_packtx_fail_rspid_continuous,
     cons_packtx_fail_total_unconfirm_limit,
     cons_packtx_fail_table_unconfirm_limit,
-    cons_packtx_fail_nonce_contious,
+    cons_packtx_fail_nonce_continuous,
     cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
     cons_packtx_with_threshold,
