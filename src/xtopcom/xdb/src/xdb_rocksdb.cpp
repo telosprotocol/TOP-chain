@@ -902,8 +902,16 @@ bool xdb::xdb_impl::read_range(const std::string& prefix,xdb_iterator_callback c
 //note: begin_key and end_key must be at same CF while XDB configed by multiple CFs
 bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::string & end_key)
 {
-    rocksdb::Slice  begin_slice(begin_key);
-    rocksdb::Slice  end_slice(end_key);
+    bool ret = true;
+    rocksdb::Slice* begin_slice = nullptr;
+    rocksdb::Slice* end_slice = nullptr;
+
+    if (begin_key.empty() == false) {
+        begin_slice = new rocksdb::Slice(begin_key);
+    }
+    if (end_key.empty() == false) {
+        end_slice = new rocksdb::Slice(end_key);
+    }
     
     rocksdb::CompactRangeOptions cro = rocksdb::CompactRangeOptions();
     cro.bottommost_level_compaction = rocksdb::BottommostLevelCompaction::kForce;
@@ -913,26 +921,29 @@ bool xdb::xdb_impl::compact_range(const std::string & begin_key,const std::strin
         rocksdb::ColumnFamilyHandle* end_cf   = get_cf_handle(end_key);
         if (end_cf == begin_cf) {
             xinfo("xdb_impl::compact_range,one cf \n");
-            rocksdb::Status res = m_db->CompactRange(cro, begin_cf,&begin_slice,&end_slice);
+            rocksdb::Status res = m_db->CompactRange(cro, begin_cf, begin_slice, end_slice);
             if (!res.ok()) {
-                if (res.IsNotFound()) //possible case
-                    return true;
-                
-                handle_error(res);
-                return false;
+                if (res.IsNotFound()) { //possible case
+                    ret = true;
+                } else {
+                    handle_error(res);
+                    ret = false;
+                }
             }
-            return true;
+        }
+    } else {
+        xinfo("xdb_impl::compact_range,all cfs cro \n");
+        for(size_t i = 0; i < m_cf_handles.size(); ++i) {
+            rocksdb::ColumnFamilyHandle* cf_handle = m_cf_handles[i];
+            if(cf_handle != nullptr) { //try every CF
+                m_db->CompactRange(cro,cf_handle, begin_slice, end_slice);
+            }
         }
     }
-    
-    xinfo("xdb_impl::compact_range,all cfs cro \n");
-    for(size_t i = 0; i < m_cf_handles.size(); ++i) {
-        rocksdb::ColumnFamilyHandle* cf_handle = m_cf_handles[i];
-        if(cf_handle != nullptr) { //try every CF
-            m_db->CompactRange(cro,cf_handle,&begin_slice,&end_slice);
-        }
-    }
-    return true;
+
+    delete begin_slice;
+    delete end_slice;
+    return ret;
 }
 
 bool xdb::xdb_impl::get_estimate_num_keys(uint64_t & num) const
