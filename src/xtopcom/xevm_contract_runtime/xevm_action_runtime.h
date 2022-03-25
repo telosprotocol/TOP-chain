@@ -19,11 +19,6 @@ private:
 
     observer_ptr<evm_statestore::xevm_statestore_helper_t> evm_statestore_helper_;
 
-    // todo
-    // observer_ptr<state_store>
-    // state_cache.
-    // evm_contract_manager::instance
-
 public:
     // xtop_action_runtime() = default;
     xtop_action_runtime(xtop_action_runtime const &) = delete;
@@ -32,7 +27,6 @@ public:
     xtop_action_runtime & operator=(xtop_action_runtime &&) = default;
     ~xtop_action_runtime() = default;
 
-    // todo state store.?
     xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const & evm_contract_manager,
                         observer_ptr<evm_statestore::xevm_statestore_helper_t> const & statestore_helper) noexcept;
 

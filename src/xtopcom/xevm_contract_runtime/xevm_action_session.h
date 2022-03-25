@@ -20,8 +20,6 @@ private:
     // observer_ptr<contract_common::xcontract_state_t> m_contract_state;
     std::map<common::xaccount_address_t, state_accessor::xstate_accessor_t> m_state_accessor_cache;
 
-    // todo add observer state store ptr
-
 public:
     xtop_action_session(xtop_action_session const &) = delete;
     xtop_action_session & operator=(xtop_action_session const &) = delete;

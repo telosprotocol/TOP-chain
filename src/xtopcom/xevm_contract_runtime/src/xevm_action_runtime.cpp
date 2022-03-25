@@ -8,7 +8,6 @@
 
 NS_BEG2(top, contract_runtime)
 
-// todo state store.?
 xtop_action_runtime<data::xevm_consensus_action_t>::xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const & evm_contract_manager,
                                                                         observer_ptr<evm_statestore::xevm_statestore_helper_t> const & statestore_helper) noexcept
   : evm_contract_manager_{evm_contract_manager}, evm_statestore_helper_{statestore_helper} {
