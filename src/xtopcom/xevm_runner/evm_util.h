@@ -6,8 +6,26 @@ namespace top {
 namespace evm {
 
 using bytes = std::vector<uint8_t>;
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
 namespace utils {
 
