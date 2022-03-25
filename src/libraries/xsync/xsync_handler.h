@@ -287,7 +287,7 @@ private:
     int64_t get_time();
     void notify_deceit_node(const vnetwork::xvnode_address_t& address);
     void register_handler(xmessage_t::message_type msgid, xsync_handler_netmsg_callback cb);
-
+    int init_prune(const map_chain_info_t &chains, const mbus::xevent_ptr_t& e);
 private:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store{};

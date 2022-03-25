@@ -307,9 +307,10 @@ namespace top
                 } 
                 mod_prune_boundary->second[mod_id] = permit_prune_upper_boundary;
             } else {
-                std::map<chainbase::enum_xmodule_type, uint64_t> prune_boundary;
-                prune_boundary[mod_id] = permit_prune_upper_boundary;
-                m_prune_boundary[account_obj.get_account()] = prune_boundary;
+//                std::map<chainbase::enum_xmodule_type, uint64_t> prune_boundary;
+//                prune_boundary[mod_id] = permit_prune_upper_boundary;
+//                m_prune_boundary[account_obj.get_account()] = prune_boundary;
+                xinfo("xvblockprune_impl::refresh, unwatched m_prune_boundary, %s, %llx, %llu", account_obj.get_address().c_str(), mod_id, permit_prune_upper_boundary);
             }
             
             return true;
