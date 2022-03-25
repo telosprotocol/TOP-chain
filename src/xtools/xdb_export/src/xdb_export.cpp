@@ -1026,13 +1026,15 @@ json xdb_export_tools_t::set_txinfo_to_json(tx_ext_t const & txinfo) {
 }
 
 json xdb_export_tools_t::set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum) {
-    uint64_t delay_from_send_to_confirm = tx_ext_sum.confirm_block_info.timestamp - tx_ext_sum.send_block_info.timestamp;
-    uint64_t adjust_tx_fire_timestamp = tx_ext_sum.fire_timestamp < tx_ext_sum.send_block_info.timestamp ? tx_ext_sum.fire_timestamp : tx_ext_sum.send_block_info.timestamp;
-    uint64_t delay_from_fire_to_confirm = tx_ext_sum.confirm_block_info.timestamp - adjust_tx_fire_timestamp;
+    uint32_t confirm_time = tx_ext_sum.not_need_confirm ? tx_ext_sum.recv_block_info.timestamp : tx_ext_sum.confirm_block_info.timestamp;
+    uint32_t delay_from_send_to_confirm = confirm_time > tx_ext_sum.send_block_info.timestamp ? confirm_time - tx_ext_sum.send_block_info.timestamp : 0;
+    uint32_t adjust_tx_fire_timestamp = tx_ext_sum.fire_timestamp < tx_ext_sum.send_block_info.timestamp ? tx_ext_sum.fire_timestamp : tx_ext_sum.send_block_info.timestamp;
+    uint32_t delay_from_fire_to_confirm = confirm_time > adjust_tx_fire_timestamp ? confirm_time - adjust_tx_fire_timestamp : 0;
 
     json tx;
     tx["time cost"] = delay_from_send_to_confirm;
     tx["time cost from fire"] = delay_from_fire_to_confirm;
+    tx["fire time"] =  tx_ext_sum.fire_timestamp;
     tx["send time"] =  tx_ext_sum.send_block_info.timestamp;
     tx["recv time"] =  tx_ext_sum.recv_block_info.timestamp;
     tx["confirm time"] = tx_ext_sum.confirm_block_info.timestamp;
@@ -1042,8 +1044,8 @@ json xdb_export_tools_t::set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ex
     // tx["send unit height"] = tx_ext_sum.send_block_info.unit_height;
     // tx["recv unit height"] = tx_ext_sum.recv_block_info.unit_height;
     // tx["confirm unit height"] =tx_ext_sum.confirm_block_info.unit_height;
-    tx["source address"] = tx_ext_sum.src;
-    tx["target address"] = tx_ext_sum.target;
+    // tx["source address"] = tx_ext_sum.src;
+    // tx["target address"] = tx_ext_sum.target;
     tx["self table"] = tx_ext_sum.self_table;
     tx["peer table"] = tx_ext_sum.peer_table;
     return tx;
@@ -1061,23 +1063,21 @@ json xdb_export_tools_t::set_unconfirmed_txinfo_to_json(const tx_ext_sum_t & tx_
     // tx["send unit height"] = tx_ext_sum.send_block_info.unit_height;
     // tx["recv unit height"] = tx_ext_sum.recv_block_info.unit_height;
     // tx["confirm unit height"] =tx_ext_sum.confirm_block_info.unit_height;
-    tx["source address"] = tx_ext_sum.src;
-    tx["target address"] = tx_ext_sum.target;
+    // tx["source address"] = tx_ext_sum.src;
+    // tx["target address"] = tx_ext_sum.target;
     tx["self table"] = tx_ext_sum.self_table;
     tx["peer table"] = tx_ext_sum.peer_table;
     return tx;
 }
 
-void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const tx_ext_sum_t & tx_ext_sum) {    
+void xdb_export_tools_t::xdbtool_all_table_info_t::set_table_txdelay_time(const tx_ext_sum_t & tx_ext_sum) {
+    uint32_t confirm_time = tx_ext_sum.not_need_confirm ? tx_ext_sum.recv_block_info.timestamp : tx_ext_sum.confirm_block_info.timestamp;
     // the second level timestamp of confirm block may less than send block
-    uint64_t delay_from_send_to_confirm =
-        tx_ext_sum.confirm_block_info.timestamp > tx_ext_sum.send_block_info.timestamp ? (tx_ext_sum.confirm_block_info.timestamp - tx_ext_sum.send_block_info.timestamp) : 0;
+    uint32_t delay_from_send_to_confirm = confirm_time > tx_ext_sum.send_block_info.timestamp ? (confirm_time - tx_ext_sum.send_block_info.timestamp) : 0;
     // the timestamp of send block may less than the timestamp of tx fire_timestamp
-    uint64_t adjust_tx_fire_timestamp =
-        tx_ext_sum.fire_timestamp < tx_ext_sum.send_block_info.timestamp ? tx_ext_sum.fire_timestamp : tx_ext_sum.send_block_info.timestamp;
+    uint32_t adjust_tx_fire_timestamp = tx_ext_sum.fire_timestamp < tx_ext_sum.send_block_info.timestamp ? tx_ext_sum.fire_timestamp : tx_ext_sum.send_block_info.timestamp;
     // the second level timestamp of confirm block may less than send block
-    uint64_t delay_from_fire_to_confirm =
-        tx_ext_sum.confirm_block_info.timestamp > adjust_tx_fire_timestamp ? (tx_ext_sum.confirm_block_info.timestamp - adjust_tx_fire_timestamp) : 0;
+    uint32_t delay_from_fire_to_confirm = confirm_time > adjust_tx_fire_timestamp ? (confirm_time - adjust_tx_fire_timestamp) : 0;
 
     // total_confirm_time_from_send += delay_from_send_to_confirm;
     if (delay_from_send_to_confirm > max_confirm_time_from_send) {
