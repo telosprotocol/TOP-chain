@@ -187,7 +187,7 @@ int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, s
         auto vblock = m_blockstore->get_latest_committed_full_block(table_account);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr || block->get_height() < 8) {
-            std::cout << " table_account " << table_account << " get_latest_committed_full_block null" << std::endl;
+            std::cout << " table_account " << table_account << " not exist." << std::endl;
             continue;
         }
 
@@ -201,6 +201,7 @@ int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, s
         base::xvaccount_t account_obj{table_account};
         const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, checkpoint.height);
+        std::cout << "prune table" << table_account << checkpoint.height << std::endl;
         m_store->delete_range(begin_delete_key, end_delete_key);
         update_meta(account_obj, checkpoint.height);
     }
