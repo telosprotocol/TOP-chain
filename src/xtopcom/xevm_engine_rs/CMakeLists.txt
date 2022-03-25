@@ -20,4 +20,4 @@ add_custom_target(xevm_engine ALL
 
 set_target_properties(xevm_engine PROPERTIES LOCATION ${LIBRARY_OUTPUT_PATH})
 # mock:
-add_dependencies(xevm_engine xevm_runtime)
+add_dependencies(xevm_engine xevm_runner)

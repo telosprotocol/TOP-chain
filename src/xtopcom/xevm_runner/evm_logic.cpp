@@ -1,8 +1,8 @@
 
-#include "xevm_runtime/evm_logic.h"
+#include "xevm_runner/evm_logic.h"
 
-#include "xevm_runtime/evm_memory_tools.h"
-#include "xevm_runtime/evm_util.h"
+#include "xevm_runner/evm_memory_tools.h"
+#include "xevm_runner/evm_util.h"
 
 #include <climits>
 namespace top {
