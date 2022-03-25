@@ -1,9 +1,9 @@
-#include "xevm_runtime/evm_util.h"
+#include "xevm_runner/evm_util.h"
 
 #include "assert.h"
 #include "ripemd160.h"
 #include "sh256.h"
-#include "xevm_runtime/evm_engine_interface.h"
+#include "xevm_runner/evm_engine_interface.h"
 
 namespace top {
 namespace evm {

@@ -1,8 +1,8 @@
 #include "tests/xevm_test/evm_test_fixture/xmock_evm_storage.h"
-#include "xevm_runtime/evm_engine_interface.h"
-#include "xevm_runtime/evm_import_instance.h"
-#include "xevm_runtime/evm_logic.h"
-#include "xevm_runtime/evm_util.h"
+#include "xevm_runner/evm_engine_interface.h"
+#include "xevm_runner/evm_import_instance.h"
+#include "xevm_runner/evm_logic.h"
+#include "xevm_runner/evm_util.h"
 
 #include <gtest/gtest.h>
 

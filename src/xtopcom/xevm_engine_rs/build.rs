@@ -13,7 +13,7 @@ fn main() {
     // Command::new("cp")
     //     .arg("-f")
     //     .arg(&format!(
-    //         "{}/../../../../../lib/Linux/libxevm_runtime.a",
+    //         "{}/../../../../../lib/Linux/libxevm_runner.a",
     //         out_dir
     //     ))
     //     .arg(&format!("{}", out_dir))
@@ -26,7 +26,7 @@ fn main() {
     Command::new("cp")
         .arg("-f")
         .arg(&format!(
-            "{}/../../../../../../../lib/Linux/libxevm_runtime.a",
+            "{}/../../../../../../../lib/Linux/libxevm_runner.a",
             out_dir
         ))
         .arg(&format!("{}", out_dir))
@@ -34,7 +34,7 @@ fn main() {
         .unwrap();
 
     println!("cargo:rustc-link-search=native={}", out_dir);
-    println!("cargo:rustc-link-lib=static=xevm_runtime");
+    println!("cargo:rustc-link-lib=static=xevm_runner");
 }
 
 #[cfg(not(feature = "build_as_xtop_lib"))]
