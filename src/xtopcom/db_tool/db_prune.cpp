@@ -119,7 +119,7 @@ int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, s
 
         node_info.serialize_from(stream);
 
-        if (node_info.could_be_archive()) {
+        if (node_info.could_be_archive() || node_info.genesis()) {
             out_str << "can not prune database at archive node." << std::endl;
             db_close();
             return 1;
