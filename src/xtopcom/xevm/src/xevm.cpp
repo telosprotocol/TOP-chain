@@ -18,9 +18,12 @@ xtop_evm::xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> 
 }
 
 xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs, data::xblock_consensus_para_t const & cs_para) {
-    // only for single tx
+    // only for single tx present
     assert(txs.size() == 1);
-    auto const action = contract_runtime::xaction_generator_t::generate(txs.at(0));
+
+    const size_t result_size = txs.size();
+    const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);
+    const contract_common::xcontract_execution_param_t param(cs_para);
     xdbg("[xtop_evm::execute] param, clock: %" PRIu64 ", timestamp: %" PRIu64 ", table_account: %s, table_height: %" PRIu64 ", total_lock_tgas: %" PRIu64,
          param.clock,
          param.timestamp,
@@ -28,7 +31,44 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
          param.table_commit_height,
          param.total_lock_tgas_token);
     // execute_action();
-    return {};
+    auto action = contract_runtime::xaction_generator_t::generate(txs_for_actions.at(0));
+
+    xevm_execution_result_t result;
+    result.transaction_results.reserve(result_size);
+
+    try {
+        auto action_result = execute_action(std::move(action), param);
+        result.transaction_results.emplace_back(action_result);
+        if (!action_result.status.ec) {
+            xwarn(
+                "[xtop_evm::execute] tx failed, category: %s, msg: %s, abort all txs after!", action_result.status.ec.category().name(), action_result.status.ec.message().c_str());
+            result.status.ec = action_result.status.ec;
+        }
+    } catch (top::error::xtop_error_t & eh) {
+        xerror("xtop_evm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());
+    } catch (std::exception const & eh) {
+        xerror("xtop_evm: caught exception: %s", eh.what());
+    }
+
+    xevm_output_t output;
+    std::vector<data::xcons_transaction_ptr_t> output_txs(txs);
+    for (size_t i = 0; i < result.transaction_results.size(); i++) {
+        auto const & r = result.transaction_results[i];
+        auto & tx = output_txs[i];
+        if (r.status.ec) {
+            xwarn("[xtop_account_vm::pack] tx (%s) failed, category: %s, msg: %s, add to failed assemble", tx->get_tx_hash().c_str(), r.status.ec.category().name(), r.status.ec.message().c_str());
+            tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
+        } else {
+            if (!r.output.receipt_data.empty()) {
+                tx->set_receipt_data(r.output.receipt_data);
+            }
+            xdbg("[xtop_account_vm::pack] tx (%s) add to success assemble", tx->get_tx_hash().c_str());
+            tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
+        }
+    }
+
+    // TODO: need to add gas output
+    return output;
 }
 
 contract_runtime::xtransaction_execution_result_t xtop_evm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,

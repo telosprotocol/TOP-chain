@@ -15,25 +15,21 @@ NS_BEG2(top, evm)
 
 struct xtop_evm_execution_status {
     std::error_code ec{error::xerrc_t::ok};
-    std::string extra_msg{};
+    std::string extra_msg;
 };
 using xevm_execution_status_t = xtop_evm_execution_status;
 
 struct xtop_evm_execution_result {
     xevm_execution_status_t status;
-    std::string binlog;
-    std::string bincode;
     std::vector<contract_runtime::xtransaction_execution_result_t> transaction_results;
 };
 using xevm_execution_result_t = xtop_evm_execution_result;
 
 struct xtop_evm_output {
     xevm_execution_status_t status;
-    std::string binlog;
-    std::string bincode;
     std::vector<data::xcons_transaction_ptr_t> success_tx_assemble;
     std::vector<data::xcons_transaction_ptr_t> failed_tx_assemble;
-    std::vector<data::xcons_transaction_ptr_t> delay_tx_assemble;
+    uint64_t used_gas;
 };
 using xevm_output_t = xtop_evm_output;
 
