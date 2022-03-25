@@ -588,7 +588,7 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx) cons
     }
     // 3. tx duration expire check
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    ret = xverifier::xtx_verifier::verify_tx_duration_expiration(tx->get_transaction(), now);
+    ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now);
     if (ret) {
         return ret;
     }
