@@ -106,6 +106,10 @@ int DbPrune::update_meta(base::xvaccount_t& _vaddr, const uint64_t& height) {
     return 0;
 }
 int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, std::ostringstream& out_str) {
+    if (node_addr.empty()) {
+        out_str << "please set default account." << std::endl;
+        return 1;
+    }
     std::cout << "account: " << node_addr << std::endl;
     std::cout << "init db..." <<std::endl;
     db_init(datadir);
