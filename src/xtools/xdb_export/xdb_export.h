@@ -59,7 +59,7 @@ private:
         uint64_t timestamp{0};
         std::string src{};
         std::string target{};
-        uint64_t unit_height{0};
+        // uint64_t unit_height{0};
         uint8_t phase{0};
         uint64_t fire_timestamp{0}; // origin tx fire timestamp
         uint16_t self_table{0};
@@ -68,26 +68,26 @@ private:
     };
 
     struct block_info_t {
-        uint64_t height{0};
-        uint64_t timestamp{0};
-        uint64_t unit_height{0};
+        uint32_t height{0};
+        uint32_t timestamp{0};
+        // uint64_t unit_height{0};
         void copy(const tx_ext_t & tx_ext) {
-            height = tx_ext.height;
-            timestamp = tx_ext.timestamp;
-            unit_height = tx_ext.unit_height;
+            height = (uint32_t)tx_ext.height;
+            timestamp = (uint32_t)tx_ext.timestamp;
+            // unit_height = tx_ext.unit_height;
         }
     };
 
     struct tx_ext_sum_t {
-        std::string hash{};
-        std::string src{};
-        std::string target{};
+        // std::string src{};
+        // std::string target{};
         uint16_t self_table{0};
         uint16_t peer_table{0};
+        uint32_t fire_timestamp{0}; // origin tx fire timestamp
         block_info_t send_block_info{};
         block_info_t recv_block_info{};
         block_info_t confirm_block_info{};
-        uint64_t fire_timestamp{0}; // origin tx fire timestamp
+        std::string hash{};
         bool not_need_confirm{false};
 
         tx_ext_sum_t() {
@@ -103,15 +103,12 @@ private:
                 not_need_confirm = true;
             }
 
-            if (!tx_ext.src.empty() && src.empty()) {
-                src = tx_ext.src;
-                target = tx_ext.target;
+            if (subtype == enum_transaction_subtype_send) {
+                // src = tx_ext.src;
+                // target = tx_ext.target;
                 self_table = tx_ext.self_table;
                 peer_table = tx_ext.peer_table;
-                fire_timestamp = tx_ext.fire_timestamp;   
-            }
-
-            if (subtype == enum_transaction_subtype_send) {
+                fire_timestamp = (uint32_t)tx_ext.fire_timestamp;   
                 send_block_info.copy(tx_ext);
             } else if (subtype == enum_transaction_subtype_recv) {
                 recv_block_info.copy(tx_ext);
