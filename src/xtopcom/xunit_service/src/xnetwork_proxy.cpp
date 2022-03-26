@@ -87,7 +87,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
         xelection_cache_face::elect_set elect_set;
         m_elect_face->get_group_election(from_addr, group_id, &elect_set);
         if (!elect_set.empty()) {
-            auto to = elect_set[0].xip;
+            auto to = static_cast<xvip2_t>(elect_set.front().address.xip2());
             reset_node_id_to_xip2(to);
             set_node_id_to_xip2(to, 0x3FF);
             auto dest_to = xcons_utl::to_address(to, network->address().election_round());
