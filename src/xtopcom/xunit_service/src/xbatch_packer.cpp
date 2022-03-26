@@ -422,12 +422,12 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
 
 // get parent group xip
 xvip2_t xbatch_packer::get_parent_xip(const xvip2_t & local_xip) {
-    auto                            leader_election = m_para->get_resources()->get_election();
-    auto                            election_store = leader_election->get_election_cache_face();
+    auto leader_election = m_para->get_resources()->get_election();
+    auto election_store = leader_election->get_election_cache_face();
     xelection_cache_face::elect_set elect_set_;
-    auto                            ret = election_store->get_parent_election(local_xip, &elect_set_);
+    auto ret = election_store->get_parent_election(local_xip, &elect_set_);
     if (ret > 0) {
-        auto xip = elect_set_[0].xip;
+        auto xip = static_cast<xvip2_t>(elect_set_.front().address.xip2());
         reset_node_id_to_xip2(xip);
         set_node_id_to_xip2(xip, 0xFFF);
         return xip;
@@ -442,7 +442,7 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
     auto                            election_store = leader_election->get_election_cache_face();
     auto                            ret = election_store->get_group_election(local_xip, child_group_id, &elect_set_);
     if (ret > 0) {
-        auto xip = elect_set_[0].xip;
+        auto xip = static_cast<xvip2_t>(elect_set_.front().address.xip2());
         return xip;
     }
 #ifdef DEBUG

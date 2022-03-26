@@ -58,34 +58,36 @@ struct table_index_compare
     };
 };
 // system election face
+// xelection_cache_imp
 class xelection_cache_face {
 public:
-    struct xelect_data {
-        xvip2_t xip;
-        common::xelection_round_t joined_version;
-        uint64_t staking;
+    //struct xelect_data {
+    //    xvip2_t xip;
+    //    common::xelection_round_t joined_version;
+    //    uint64_t staking;
 
-        xelect_data& operator=(const xelect_data & data) {
-            if (this == &data) {
-                return *this;
-            } else {
-                xip = data.xip;
-                staking = data.staking;
-                return *this;
-            }
-        }
-    };
+    //    xelect_data& operator=(const xelect_data & data) {
+    //        if (this == &data) {
+    //            return *this;
+    //        } else {
+    //            xip = data.xip;
+    //            staking = data.staking;
+    //            return *this;
+    //        }
+    //    }
+    //};
 
-    using elect_set = std::vector<xelect_data>;
+    // using elect_set = std::vector<xelect_data>;
+    using elect_set = std::vector<data::xnode_info_t>;
 
 public:
     // load manager tables
     virtual int32_t get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables) = 0;
-    // load election data from db
+    // load current group election data.
     virtual int32_t get_election(const xvip2_t & xip, elect_set * elect_data, bool bself = true) = 0;
-    // load group election data
+    // load associated child group election data. child group is specified by the group id.
     virtual int32_t get_group_election(const xvip2_t & xip, int32_t groupid, elect_set * elect_data) = 0;
-    // load parent election data
+    // load associated parent group election data.
     virtual int32_t get_parent_election(const xvip2_t & xip, elect_set * elect_data) = 0;
     // add elect data
     virtual bool add(const xvip2_t & xip, const elect_set & elect_data, const std::vector<uint16_t> & tables, const elect_set & parent_elect_data = {}, std::map<int32_t, elect_set> children = {}) = 0;

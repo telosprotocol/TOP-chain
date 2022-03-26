@@ -244,19 +244,12 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
 bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & program_version,
                                                          data::system_contract::xreg_node_info const & node,
                                                          data::election::xstandby_result_store_t & standby_result_store) {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-#if defined(XENABLE_TESTS)
-    auto const fullnode_enabled = true;
-#else
-    auto const fullnode_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_election_fork_point, TIME());
-#endif
-
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
 
     auto consensus_public_key = node.consensus_public_key;
     uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0};
     bool const rec{node.can_be_rec()}, zec{node.can_be_zec()}, auditor{node.can_be_auditor()}, validator{node.can_be_validator()}, edge{node.can_be_edge()},
-        archive{fullnode_enabled ? node.can_be_archive() : node.legacy_can_be_archive()}, exchange{node.can_be_exchange()}, fullnode{node.can_be_fullnode()};
+        archive{node.can_be_archive()}, exchange{node.can_be_exchange()}, fullnode{node.can_be_fullnode()};
     if (rec) {
         rec_stake = node.rec_stake();
     }
@@ -338,7 +331,7 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
             new_node_info.stake_container[common::xnode_type_t::storage_exchange] = exchange_stake;
         }
 
-        if (fullnode_enabled && fullnode) {
+        if (fullnode) {
             new_node_info.stake_container[common::xnode_type_t::fullnode] = fullnode_stake;
         }
 
