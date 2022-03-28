@@ -30,7 +30,7 @@ public:
     xtop_action_session(observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> associated_runtime,
                         observer_ptr<evm_statestore::xevm_statestore_helper_t> const & statestore_helper) noexcept;
 
-    xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action);
+    xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action, contract_common::xcontract_execution_param_t const param);
 };
 
 NS_END2

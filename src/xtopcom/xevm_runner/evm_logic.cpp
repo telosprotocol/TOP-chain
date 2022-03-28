@@ -3,12 +3,13 @@
 
 #include "xevm_runner/evm_memory_tools.h"
 #include "xevm_runner/evm_util.h"
+#include "xutility/xhash.h"
 
 #include <climits>
 namespace top {
 namespace evm {
 
-xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, xevm_context_t const & context) : m_storage_ptr{storage_ptr}, m_context{context} {
+xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm::xevm_context_t> const & context) : m_storage_ptr{storage_ptr}, m_context{context} {
     m_registers.clear();
     m_return_data_value.clear();
 }
@@ -18,7 +19,7 @@ std::shared_ptr<xevm_storage_face_t> xtop_evm_logic::ext_ref() {
     return m_storage_ptr;
 }
 
-xevm_context_t & xtop_evm_logic::context_ref() {
+observer_ptr<xevm_context_t> xtop_evm_logic::context_ref() {
     return m_context;
 }
 
@@ -50,7 +51,9 @@ void xtop_evm_logic::read_register(uint64_t register_id, uint64_t ptr) {
 
 void xtop_evm_logic::predecessor_account_id(uint64_t register_id) {
     // printf("[debug][predecessor_account_id] request: %lu \n", register_id);
-    internal_write_register(register_id, m_context.m_predecessor_account_id);
+    
+    // TODO: need to implenment "sender()" of m_context
+    // internal_write_register(register_id, m_context->m_predecessor_account_id);
 }
 
 // void xtop_evm_logic::signer_account_id(uint64_t register_id) {
@@ -60,7 +63,7 @@ void xtop_evm_logic::predecessor_account_id(uint64_t register_id) {
 
 void xtop_evm_logic::input(uint64_t register_id) {
     // printf("[debug][input] request: %lu\n", register_id);
-    internal_write_register(register_id, m_context.m_input);
+    internal_write_register(register_id, m_context->input());
     return;
 }
 
@@ -147,7 +150,7 @@ void xtop_evm_logic::ripemd160(uint64_t value_len, uint64_t value_ptr, uint64_t 
 
 // MATH API
 void xtop_evm_logic::random_seed(uint64_t register_id) {
-    internal_write_register(register_id, m_context.m_random_seed);
+    internal_write_register(register_id, m_context->random_seed());
 }
 
 // LOG

@@ -1,4 +1,6 @@
 #pragma once
+#include "xbasic/xmemory.hpp"
+#include "xcontract_common/xcontract_execution_context.h"
 #include "xevm_runner/evm_context.h"
 #include "xevm_runner/evm_storage_face.h"
 #include "xevm_runner/evm_util.h"
@@ -11,7 +13,7 @@ namespace top {
 namespace evm {
 class xtop_evm_logic {
 public:
-    xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, xevm_context_t const & context);
+    xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm::xevm_context_t> const & context);
     xtop_evm_logic(xtop_evm_logic const &) = delete;
     xtop_evm_logic & operator=(xtop_evm_logic const &) = delete;
     xtop_evm_logic(xtop_evm_logic &&) = default;
@@ -20,14 +22,14 @@ public:
 
 private:
     std::shared_ptr<xevm_storage_face_t> m_storage_ptr;
-    xevm_context_t m_context;
+    observer_ptr<evm::xevm_context_t> m_context;
     std::map<uint64_t, bytes> m_registers;
     // uint128_t current_account_balance;
     bytes m_return_data_value;
 
 public:
     std::shared_ptr<xevm_storage_face_t> ext_ref();
-    xevm_context_t & context_ref();
+    observer_ptr<evm::xevm_context_t> context_ref();
     bytes return_value();
 
 public:

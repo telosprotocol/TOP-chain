@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbase/xlru_cache.h"
 #include "xbase/xns_macro.h"
 
 NS_BEG3(top, contract_runtime, evm)
@@ -27,9 +28,21 @@ public:
         return inst;
     }
 
+    xbytes_t code(common::xaccount_address_t const & account) {
+        xbytes_t code;
+        m_code_cache.get(account, code);
+        return code;
+    }
+
+    void set_code(common::xaccount_address_t const & account, xbytes_t const & code) {
+        m_code_cache.put(account, code);
+    }
+
 private:
-    // todo
-    // lrc code cache
+    enum {
+        enum_default_code_cache_max = 256,
+    };
+    base::xlru_cache<common::xaccount_address_t, xbytes_t> m_code_cache{enum_default_code_cache_max};
 };
 using xevm_contract_manager_t = xtop_evm_contract_manager;
 

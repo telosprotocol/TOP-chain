@@ -56,14 +56,16 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
         auto const & r = result.transaction_results[i];
         auto & tx = output_txs[i];
         if (r.status.ec) {
-            xwarn("[xtop_account_vm::pack] tx (%s) failed, category: %s, msg: %s, add to failed assemble", tx->get_tx_hash().c_str(), r.status.ec.category().name(), r.status.ec.message().c_str());
+            xwarn("[xtop_evm::execute] tx (%s) failed, category: %s, msg: %s, add to failed assemble", tx->get_tx_hash().c_str(), r.status.ec.category().name(), r.status.ec.message().c_str());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_fail);
+            output.failed_tx_assemble.emplace_back(tx);
         } else {
             if (!r.output.receipt_data.empty()) {
                 tx->set_receipt_data(r.output.receipt_data);
             }
-            xdbg("[xtop_account_vm::pack] tx (%s) add to success assemble", tx->get_tx_hash().c_str());
+            xdbg("[xtop_evm::execute] tx (%s) add to success assemble", tx->get_tx_hash().c_str());
             tx->set_current_exec_status(data::enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
+            output.success_tx_assemble.emplace_back(tx);
         }
     }
 
@@ -73,11 +75,9 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
 
 contract_runtime::xtransaction_execution_result_t xtop_evm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
                                                                            contract_common::xcontract_execution_param_t const & param
-                                                                           //  , state_accessor::xstate_accessor_t & ac
 ) {
     assert(action->type() == data::xtop_action_type_t::evm);
-    return evm_action_runtime_->new_session()->execute_action(std::move(action));
-    // return {};
+    return evm_action_runtime_->new_session()->execute_action(std::move(action), param);
 }
 
 NS_END2
