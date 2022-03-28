@@ -95,21 +95,21 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
 #else
-#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10206
+#    if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10206)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval,
                                       xinterval_t,
                                       normal,
                                       1555206, // time interval in logic clock unit, 30 days + 1 more logic time.
                                       1,
                                       std::numeric_limits<xinterval_t>::max());
-#else
+#    else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval,
                                       xinterval_t,
                                       normal,
                                       259201, // time interval in logic clock unit, 30 days + 1 more logic time.
                                       1,
                                       std::numeric_limits<xinterval_t>::max());
-#endif
+#    endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
                                       xinterval_t,
                                       normal,
@@ -142,6 +142,14 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio, std::uint16
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio, std::uint16_t, normal, 66, 1, 100); // means if the consensus_group_size < max_group_size &&
                                                                                                                    // effective_standby_size < 66% of current_group_size. Then
                                                                                                                    // needs to elects out
+
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+#endif
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_group_size, xgroup_size_t, normal, 6, 6, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_group_size, xgroup_size_t, normal, 128, 64, 512);
 
 #if defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);
@@ -231,7 +239,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 #endif
 
-#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_VERSION) >= 10206
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10206)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 12, 1, std::numeric_limits<xinterval_t>::max());

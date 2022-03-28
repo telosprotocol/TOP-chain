@@ -231,7 +231,7 @@ TEST_F(test_tablemaker, make_proposal_block_build_hash_count) {
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[1];
 
-    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::auditor);
+    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::consensus_auditor);
 
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {
@@ -551,7 +551,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     mock::xdatamock_table mocktable2(9, 2);
     std::string table_addr2 = mocktable2.get_account();
 
-    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::auditor);
+    resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::consensus_auditor);
 
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {

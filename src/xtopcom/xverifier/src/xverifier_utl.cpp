@@ -18,9 +18,12 @@ int32_t xtx_utl::address_is_valid(const std::string & addr, bool isTransaction) 
             res = false;
         } else {
             if (base::xstring_utl::split_string(addr, '@', parts) >= 2) {
-                top::utl::xkeyaddress_t keyaddr{parts[0]};
-                if (!keyaddr.is_valid()) {
-                    res = false;
+                if (top::base::xvaccount_t::get_addrtype_from_account(addr) != base::enum_vaccount_addr_type_native_contract) {
+                    top::utl::xkeyaddress_t keyaddr{parts[0]};
+                    if (!keyaddr.is_valid()) {
+                        xwarn("account %s is invalid", addr.c_str());
+                        res = false;
+                    }
                 }
             } else {
                 top::utl::xkeyaddress_t keyaddr{addr};
