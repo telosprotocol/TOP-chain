@@ -182,7 +182,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
     assert(!broadcast(cid));
     assert(!broadcast(gid));
 
-    assert(zid == common::xcommittee_zone_id || zid == common::xzec_zone_id || zid == common::xconsensus_zone_id);
+    assert(zid == common::xcommittee_zone_id || zid == common::xzec_zone_id || zid == common::xconsensus_zone_id || zid == common::xeth_zone_id);
 
     auto const log_prefix = "[elect consensus group contract] zone " + zid.to_string() + " cluster " + cid.to_string() + " group " + gid.to_string() + ":";
 
@@ -212,6 +212,12 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
             node_type = common::xnode_type_t::consensus_validator;
             role_type = common::xminer_type_t::validator;
         }
+        break;
+    }
+
+    case common::xnode_type_t::eth: {
+        node_type = common::xnode_type_t::eth;
+        role_type = common::xminer_type_t::validator;
         break;
     }
 
@@ -261,7 +267,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
         xwarn("%s xtop_error_t exception caught. category: %s msg: %s", log_prefix.c_str(), eh.code().category().name(), eh.what());
         throw;
     } catch (std::exception const & eh) {
-        xerror("%s std::exception exception caught: %s", log_prefix.c_str(), eh.what());
+        xwarn("%s std::exception exception caught: %s", log_prefix.c_str(), eh.what());
         throw;
     }
 

@@ -24,9 +24,9 @@ protected:
 void * sub_unsub_thread(void * arg) {
     xtxpool_t * xtxpool = (xtxpool_t *)arg;
     for (uint32_t i = 0; i < 1000; i++) {
-        xtxpool->unsubscribe_tables(2, 0, 0, common::xnode_type_t::auditor);
-        xtxpool->unsubscribe_tables(1, 0, 0, common::xnode_type_t::auditor);
-        xtxpool->unsubscribe_tables(0, 0, 0, common::xnode_type_t::auditor);
+        xtxpool->unsubscribe_tables(2, 0, 0, common::xnode_type_t::consensus_auditor);
+        xtxpool->unsubscribe_tables(1, 0, 0, common::xnode_type_t::consensus_auditor);
+        xtxpool->unsubscribe_tables(0, 0, 0, common::xnode_type_t::consensus_auditor);
     }
 
     return nullptr;
@@ -44,11 +44,11 @@ TEST_F(test_xtxpool, sub_unsub) {
     pthread_create(&tid, NULL, sub_unsub_thread, &xtxpool);
 
     for (uint32_t i = 0; i < 1000; i++) {
-        xtxpool.subscribe_tables(0, 0, 0, common::xnode_type_t::auditor);
+        xtxpool.subscribe_tables(0, 0, 0, common::xnode_type_t::consensus_auditor);
         xtxpool.need_sync_lacking_receipts(0, 0);
-        xtxpool.subscribe_tables(1, 0, 0, common::xnode_type_t::auditor);
+        xtxpool.subscribe_tables(1, 0, 0, common::xnode_type_t::consensus_auditor);
         xtxpool.need_sync_lacking_receipts(1, 0);
-        xtxpool.subscribe_tables(2, 0, 0, common::xnode_type_t::auditor);
+        xtxpool.subscribe_tables(2, 0, 0, common::xnode_type_t::consensus_auditor);
         xtxpool.need_sync_lacking_receipts(2, 0);
     }
 

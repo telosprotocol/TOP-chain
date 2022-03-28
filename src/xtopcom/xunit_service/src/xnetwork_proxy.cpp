@@ -56,7 +56,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
     assert(dst.raw_high_part() == to_addr.high_addr);
     assert(dst.raw_low_part() == to_addr.low_addr);
     // validator forward to auditor
-    if (common::has<common::xnode_type_t::validator>(network->type()) && common::broadcast(dst.slot_id())) {
+    if (common::has<common::xnode_type_t::consensus_validator>(network->type()) && common::broadcast(dst.slot_id())) {
         auto to = network->parent_group_address();
         bool forward = false;
         if (!common::broadcast(to.network_id()) && !common::broadcast(to.zone_id()) && !common::broadcast(to.cluster_id()) && !common::broadcast(to.group_id())) {
@@ -82,7 +82,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
     }
 
     // auditor forward to validator
-    if (common::has<common::xnode_type_t::auditor>(network->type()) && common::broadcast(dst.slot_id())) {
+    if (common::has<common::xnode_type_t::consensus_auditor>(network->type()) && common::broadcast(dst.slot_id())) {
         auto group_id = xcons_utl::get_groupid_by_account(from_addr, account);
         xelection_cache_face::elect_set elect_set;
         m_elect_face->get_group_election(from_addr, group_id, &elect_set);

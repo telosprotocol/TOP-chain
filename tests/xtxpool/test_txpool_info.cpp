@@ -19,7 +19,7 @@ protected:
 };
 
 TEST_F(test_xtxpool_info, txpool_info) {
-    xtxpool_role_info_t shard(0, 0, 15, common::xnode_type_t::auditor);
+    xtxpool_role_info_t shard(0, 0, 15, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, "table_test1");
     xtxpool_table_info_t table1("table_test1", &shard, &statistic, &table_state_cache);
