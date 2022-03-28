@@ -191,7 +191,7 @@ bool xbatch_packer::connect_to_checkpoint() {
 
     if (common::has<common::xnode_type_t::rec>(node_type)
      || common::has<common::xnode_type_t::zec>(node_type)
-     || common::has<common::xnode_type_t::auditor>(node_type)) {
+     || common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
         auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->update_get_latest_cp_connected_block_height(get_account());
         auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
         if (latest_cp_connect_height != latest_connect_height) {
@@ -259,7 +259,8 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto node_account = m_para->get_resources()->get_account();
 
     auto zone_id = get_zone_id_from_xip2(local_xip);
-    if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index) {
+    if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index &&
+        zone_id != base::enum_chain_zone_eth_index) {
         xerror("xbatch_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;

@@ -46,7 +46,7 @@ public:
                                                                  common::xlogic_epoch_t const & group_logic_epoch,
                                                                  std::error_code & ec) const override;
 
-    common::xnode_address_t parent_address(common::xsharding_address_t const & child_address,
+    common::xnode_address_t parent_address(common::xgroup_address_t const & child_address,
                                            common::xelection_round_t const & child_election_round,
                                            std::error_code & ec) const noexcept override;
 
@@ -65,7 +65,7 @@ public:
 
     common::xaccount_address_t account_address_from(common::xip2_t const & xip2, std::error_code & ec) const override;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address, common::xelection_round_t const & election_round, std::error_code & ec) const override;
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & sharding_address, common::xelection_round_t const & election_round, std::error_code & ec) const override;
     std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & group_address,
                                                     common::xlogic_epoch_t const & logic_epoch,
                                                     std::error_code & ec) const override;
@@ -74,11 +74,11 @@ public:
                                                               uint64_t const election_blk_height,
                                                               std::error_code & ec) const override;
 
-    std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xsharding_address_t const & sharding_address,
+    std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xgroup_address_t const & sharding_address,
                                                                   common::xlogic_time_t const logic_time,
                                                                   std::error_code & ec) const override;
 
-    std::shared_ptr<xgroup_element_t> parent_group_element(common::xsharding_address_t const & child_sharding_address,
+    std::shared_ptr<xgroup_element_t> parent_group_element(common::xgroup_address_t const & child_sharding_address,
                                                            common::xelection_round_t const & child_group_election_round,
                                                            std::error_code & ec) const override;
 
@@ -94,40 +94,45 @@ private:
                                                                                        std::uint64_t const associated_blk_height,
                                                                                        std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_committee_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_committee_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                                   data::election::xelection_result_store_t const & election_result_store,
                                                                                                   std::uint64_t const associated_blk_height,
                                                                                                   std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_consensus_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_consensus_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                                   data::election::xelection_result_store_t const & election_result_store,
                                                                                                   std::uint64_t const associated_blk_height,
                                                                                                   std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_edge_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_edge_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                              data::election::xelection_result_store_t const & election_result_store,
                                                                                              std::uint64_t const associated_blk_height,
                                                                                              std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_storage_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_storage_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                                 data::election::xelection_result_store_t const & election_result_store,
                                                                                                 std::uint64_t const associated_blk_height,
                                                                                                 std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_fullnode_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_fullnode_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                                  data::election::xelection_result_store_t const & election_result_store,
                                                                                                  std::uint64_t const associated_blk_height,
                                                                                                  std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_zec_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_zec_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                             data::election::xelection_result_store_t const & election_result_store,
                                                                                             std::uint64_t const associated_blk_height,
                                                                                             std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_frozen_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_frozen_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                                data::election::xelection_result_store_t const & election_result_store,
                                                                                                std::uint64_t const associated_blk_height,
                                                                                                std::error_code & ec);
+
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_eth_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+                                                                                         data::election::xelection_result_store_t const & election_result_store,
+                                                                                         std::uint64_t const associated_blk_height,
+                                                                                         std::error_code & ec);
 
     std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> update_cluster(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                           std::shared_ptr<xcluster_element_t> const & cluster_element,

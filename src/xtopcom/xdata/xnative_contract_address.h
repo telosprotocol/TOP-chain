@@ -32,6 +32,7 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_slash_info_addr{ "T200024uDhihoP
 XINLINE_CONSTEXPR char const * sys_contract_zec_elect_consensus_addr{ "T200024uHxGKRST3hk5tKFjVpuQbGNDihMJR6qeeQ@2" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_standby_pool_addr{ "T200024uCQ5Di2vZmPURNYVUuvWm5p7EaFQrRLs76@2" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_group_assoc_addr{ "T200024uN3e6AujFyvDXY4h5t6or3DgKpu5rTKELD@2" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_elect_eth_addr{"T2000200000000000000000000000000000000004@2"};
 
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
@@ -40,6 +41,7 @@ XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T2000
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
+XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr{"Ta0004"};
 
 extern common::xaccount_address_t const black_hole_system_address;
 extern common::xaccount_address_t const genesis_root_system_address;
@@ -49,6 +51,7 @@ extern common::xaccount_address_t const drand_system_address;
 extern common::xaccount_address_t const rec_registration_contract_address;
 extern common::xaccount_address_t const rec_elect_edge_contract_address;
 extern common::xaccount_address_t const rec_elect_archive_contract_address;
+extern common::xaccount_address_t const rec_elect_fullnode_contract_address;
 extern common::xaccount_address_t const rec_elect_rec_contract_address;
 extern common::xaccount_address_t const rec_elect_zec_contract_address;
 extern common::xaccount_address_t const rec_tcc_contract_address;
@@ -61,6 +64,7 @@ extern common::xaccount_address_t const zec_slash_info_contract_address;
 extern common::xaccount_address_t const zec_elect_consensus_contract_address;
 extern common::xaccount_address_t const zec_standby_pool_contract_address;
 extern common::xaccount_address_t const zec_group_assoc_contract_address;
+extern common::xaccount_address_t const zec_elect_eth_contract_address;
 
 extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
@@ -69,5 +73,6 @@ extern common::xaccount_address_t const sharding_statistic_info_contract_address
 extern common::xaccount_address_t const rec_table_address;
 extern common::xaccount_address_t const zec_table_address;
 extern common::xaccount_address_t const sharding_table_address;
+extern common::xaccount_address_t const eth_table_address;
 
 NS_END1

@@ -188,7 +188,7 @@ xunqualified_node_info_t test_table_slash_contract::process_statistic_data(top::
                 static_item.first
             };
             // process auditor group
-            if (top::common::has<top::common::xnode_type_t::auditor>(group_addr.type())) {
+            if (top::common::has<top::common::xnode_type_t::consensus_auditor>(group_addr.type())) {
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto account_addr = auditor_nodes[slotid]->get_account();
                     res_node_info.auditor_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
@@ -196,7 +196,7 @@ xunqualified_node_info_t test_table_slash_contract::process_statistic_data(top::
                     xdbg("[xzec_slash_info_contract][do_unqualified_node_slash] incremental auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
-            } else if (top::common::has<top::common::xnode_type_t::validator>(group_addr.type())) {// process validator group
+            } else if (top::common::has<top::common::xnode_type_t::consensus_validator>(group_addr.type())) {// process validator group
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto account_addr = validator_nodes[slotid]->get_account();
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;

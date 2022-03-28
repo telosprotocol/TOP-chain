@@ -10,6 +10,7 @@ common::xaccount_address_t const drand_system_address{sys_drand_addr};
 common::xaccount_address_t const rec_registration_contract_address{sys_contract_rec_registration_addr};
 common::xaccount_address_t const rec_elect_edge_contract_address{sys_contract_rec_elect_edge_addr};
 common::xaccount_address_t const rec_elect_archive_contract_address{sys_contract_rec_elect_archive_addr};
+common::xaccount_address_t const rec_elect_fullnode_contract_address{sys_contract_rec_elect_fullnode_addr};
 common::xaccount_address_t const rec_elect_rec_contract_address{sys_contract_rec_elect_rec_addr};
 common::xaccount_address_t const rec_elect_zec_contract_address{sys_contract_rec_elect_zec_addr};
 common::xaccount_address_t const rec_tcc_contract_address{sys_contract_rec_tcc_addr};
@@ -22,6 +23,7 @@ common::xaccount_address_t const zec_slash_info_contract_address{sys_contract_ze
 common::xaccount_address_t const zec_elect_consensus_contract_address{sys_contract_zec_elect_consensus_addr};
 common::xaccount_address_t const zec_standby_pool_contract_address{sys_contract_zec_standby_pool_addr};
 common::xaccount_address_t const zec_group_assoc_contract_address{sys_contract_zec_group_assoc_addr};
+common::xaccount_address_t const zec_elect_eth_contract_address{sys_contract_zec_elect_eth_addr};
 
 common::xaccount_address_t const sharding_vote_contract_address{sys_contract_sharding_vote_addr};
 common::xaccount_address_t const sharding_reward_claiming_contract_address{sys_contract_sharding_reward_claiming_addr};
@@ -30,5 +32,6 @@ common::xaccount_address_t const sharding_statistic_info_contract_address{sys_co
 common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
 common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};
 common::xaccount_address_t const sharding_table_address{sys_contract_sharding_table_block_addr};
+common::xaccount_address_t const eth_table_address{sys_contract_eth_table_block_addr};
 
 NS_END1
