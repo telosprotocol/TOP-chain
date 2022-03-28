@@ -16,6 +16,7 @@
 #include "xtxstore/xtxstore_face.h"
 #include "xrpc/eth_jsonrpc/Eth.h"
 #include "xrpc/eth_jsonrpc/ClientBase.h"
+#include "xrpc/xjson_proc.h"
 
 NS_BEG2(top, xrpc)
 #define CLEAN_TIME          60
@@ -75,20 +76,24 @@ void xevm_rpc_service<T>::reset_edge_method_mgr(shared_ptr<xrpc_edge_vhost> edge
 
 template <typename T>
 void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::string & content, const std::string & ip) {
-    /*    xpre_request_data_t pre_request_data;
+        xpre_request_data_t pre_request_data;
         try {
             do {
                 xinfo_rpc("evm rpc request:%s", content.c_str());
 
-                m_pre_request_handler_mgr_ptr->execute(pre_request_data, content);
-                if (pre_request_data.m_finish) {
-                    m_edge_method_mgr_ptr->write_response(conn, pre_request_data.get_response());
-                    break;
+                xJson::Reader reader;
+                top::xrpc::xjson_proc_t json_proc;
+                // reader.
+                if (!reader.parse(content, json_proc.m_request_json)) {
+                    xrpc_error_json error_json(0, "err", 0);
+                    xdbg("rpc request err");
+                    m_edge_method_mgr_ptr->write_response(conn, error_json.write());
+                    return;
                 }
+                pre_request_data.m_request_map.emplace(RPC_SEQUENCE_ID, json_proc.m_request_json["id"].asString());
+                json_proc.m_request_json["id"];
 
-                xjson_proc_t json_proc;
-                json_proc.parse_json(pre_request_data);
-                m_rule_mgr_ptr->filter(json_proc);
+                //m_rule_mgr_ptr->filter(json_proc);
                 // prase json
                 // account flow controll and blacklist
 
@@ -97,8 +102,9 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
         } catch(const xrpc_error& e) {
             xrpc_error_json error_json(e.code().value(), e.what(), pre_request_data.get_request_value(RPC_SEQUENCE_ID));
             m_edge_method_mgr_ptr->write_response(conn, error_json.write());
-        }*/
-    xinfo_rpc("rpc request:%s", content.c_str());        
+        }
+
+    /* xinfo_rpc("rpc request:%s", content.c_str());
     xJson::Reader reader;
     xJson::Value req;
     // reader.
@@ -134,6 +140,7 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
     } else {
         xdbg("rpc request jsonrpc version:%s not 2.0", jsonrpc_version.c_str());
     }
+    */
 }
 
 template<typename T>
