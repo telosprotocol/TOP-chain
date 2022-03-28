@@ -80,6 +80,8 @@ void xtop_rec_elect_fullnode_contract::elect_config_nodes(common::xlogic_time_t 
         new_election_info.consensus_public_key = nodes.pub_key;
         new_election_info.stake = nodes.stake;
         new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.genesis = false;
+        new_election_info.miner_type = common::xminer_type_t::advance;
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(nodes.node_id);
