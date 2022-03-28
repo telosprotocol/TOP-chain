@@ -28,7 +28,8 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
-
+#include "xrpc/eth_jsonrpc/Eth.h"
+#include "xrpc/eth_jsonrpc/ClientBase.h"
 #include <cinttypes>
 
 NS_BEG2(top, xrpc)
@@ -124,15 +125,46 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
     m_edge_handler_ptr->init();
     //EDGE_REGISTER_V1_ACTION(T, sendTransaction);
     m_edge_tx_method_map.emplace(                                                                                                                                                  \
-        pair<pair<string, string>, tx_method_handler>{pair<string, string>{"1.0", "sendTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
+        pair<pair<string, string>, tx_method_handler>{pair<string, string>{"2.0", "eth_sendRawTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
 
 }
 
 template <class T>
 void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip) {
     // set account
-    const string & version = json_proc.m_request_json["version"].asString();
+
+    std::string jsonrpc_version;
+    if (json_proc.m_request_json.isMember("jsonrpc")) {
+        jsonrpc_version = json_proc.m_request_json["jsonrpc"].asString();
+    }
+    xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
+
+    if (jsonrpc_version == "2.0") {
+        xinfo_rpc("rpc request eth");
+        std::string method = json_proc.m_request_json["method"].asString();
+        if (method != "eth_sendRawTransaction") {
+            xJson::Value eth_res;
+            dev::eth::ClientBase client;
+            dev::rpc::Eth eth(client);
+
+            eth.CallMethod(json_proc.m_request_json, eth_res);
+            xJson::Value res;
+            res["id"] = json_proc.m_request_json["id"].asString();  // base::xstring_utl::touint64(req["id"].asString());
+            res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
+            res["result"] = eth_res;
+
+            xJson::FastWriter j_writer;
+            std::string s_res = j_writer.write(res);
+            xdbg("rpc response:%s,i_id:%s", s_res.c_str(), json_proc.m_request_json["id"].asString().c_str());
+            write_response(response, s_res);
+            return;
+        }
+    } else {
+
+    }
+    const string & version = jsonrpc_version;
     const string & method = json_proc.m_request_json["method"].asString();
+    ;
     auto version_method = pair<string, string>(version, method);
     if (m_edge_local_method_ptr->do_local_method(version_method, json_proc)) {
         write_response(response, json_proc.get_response());
@@ -164,7 +196,8 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
 
 template <class T>
 void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip) {
-    auto & request = json_proc.m_request_json["params"];
+    auto & request = json_proc.m_request_json;
+    request["tx_structure_version"] = 3;
     json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
     auto & tx = json_proc.m_tx_ptr;
     tx->construct_from_json(request);
@@ -236,14 +269,15 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     }
 
     std::string tx_hash = data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
-    xinfo_rpc("send tx hash:%s", tx_hash.c_str());
+    xinfo_rpc("send v3 tx hash:%s", tx_hash.c_str());
     XMETRICS_PACKET_INFO("rpc_tx_ip",
                          "tx_hash", tx_hash,
                          "client_ip", ip);
     const auto & from = tx->get_source_addr();
     json_proc.m_account_set.emplace(from);
-    json_proc.m_response_json["tx_hash"] = tx_hash;
-    json_proc.m_response_json["tx_size"] = tx->get_tx_len();
+    json_proc.m_response_json["result"] = tx_hash;
+    json_proc.m_response_json["id"] = request["id"];
+    json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
 }
 
 template <class T>

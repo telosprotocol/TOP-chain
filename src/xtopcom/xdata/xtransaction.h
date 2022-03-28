@@ -34,8 +34,8 @@ enum enum_xtransaction_type {
 
 enum enum_xtransaction_version {
     xtransaction_version_1 = 0,
-    xtransaction_version_2 = 2
-};
+    xtransaction_version_2 = 2,
+    xtransaction_version_3 = 3 };
 
 enum enum_xunit_tx_exec_status : uint8_t {
     enum_xunit_tx_exec_status_success   = 1,
