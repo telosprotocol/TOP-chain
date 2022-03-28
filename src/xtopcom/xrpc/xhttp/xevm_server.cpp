@@ -25,7 +25,7 @@ xevm_server::xevm_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                            observer_ptr<base::xvblockstore_t> block_store,
                            observer_ptr<base::xvtxstore_t> txstore,
                            observer_ptr<elect::ElectMain> elect_main,
-                           observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
+                           observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
 #if defined XDISABLE_RATELIMIT
     m_enable_ratelimit = false;
     xinfo("m_enable_ratelimit is false");
