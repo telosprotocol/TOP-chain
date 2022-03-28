@@ -473,7 +473,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if (XENABLE_TESTS)
-    set(CMAKE_CXX_FLAGS "-no-pie")
+    # set(CMAKE_CXX_FLAGS "-no-pie")
     enable_testing()
     include_directories(.)
     add_subdirectory(tests)

@@ -21,12 +21,12 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
     // only for single tx
     assert(txs.size() == 1);
     auto const action = contract_runtime::xaction_generator_t::generate(txs.at(0));
-    xdbg("[xtop_evm::execute] param, clock: %" PRIu64 ", timestamp: %" PRIu64 ", table_account: %s, table_height: %" PRIu64 ", total_lock_tgas: %" PRIu64,
-         param.clock,
-         param.timestamp,
-         param.table_account.c_str(),
-         param.table_commit_height,
-         param.total_lock_tgas_token);
+    // xdbg("[xtop_evm::execute] param, clock: %" PRIu64 ", timestamp: %" PRIu64 ", table_account: %s, table_height: %" PRIu64 ", total_lock_tgas: %" PRIu64,
+    //      param.clock,
+    //      param.timestamp,
+    //      param.table_account.c_str(),
+    //      param.table_commit_height,
+    //      param.total_lock_tgas_token);
     // execute_action();
     return {};
 }
