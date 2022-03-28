@@ -236,6 +236,11 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
+                    } else if (ledger_id == enum_chain_zone_eth_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ETH_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
                     } else {
                         // invalid table addr
                         xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
@@ -258,6 +263,11 @@ namespace top
                     // sub beacon contracts addr judge subaddr size 
                     } else if (ledger_id == enum_chain_zone_zec_index) {
                         if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
+                    } else if (ledger_id == enum_chain_zone_eth_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ETH_TABLE_USED_NUM) {
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }

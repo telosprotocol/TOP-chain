@@ -137,7 +137,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         validator_auditor_neighbours.insert(neighbor.account_address());
     }
 
-    if(common::has<common::xnode_type_t::validator>(self_addr.type())) {
+    if(common::has<common::xnode_type_t::consensus_validator>(self_addr.type())) {
         std::vector<vnetwork::xvnode_address_t> parents = m_role_xips_mgr->get_rand_parents(self_addr, 0xffffffff);
         for (auto neighbor:parents) {
             validator_auditor_neighbours.insert(neighbor.account_address());
@@ -145,7 +145,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     for (auto object:objects) {
-        if (!object->empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
+        if (!object->empty() && !common::has<common::xnode_type_t::consensus_auditor>(self_addr.type())) {
             std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, random);
             xsync_info("push_newblock_to_archive, src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, object->size(),
                 push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
@@ -260,7 +260,7 @@ void xsync_pusher_t::on_timer() {
         validator_auditor_neighbours.insert(neighbor.account_address());
     }
 
-    if(common::has<common::xnode_type_t::validator>(self_addr.type())) {
+    if(common::has<common::xnode_type_t::consensus_validator>(self_addr.type())) {
         std::vector<vnetwork::xvnode_address_t> parents = m_role_xips_mgr->get_rand_parents(self_addr, 0xffffffff);
         for (auto neighbor:parents) {
             validator_auditor_neighbours.insert(neighbor.account_address());
@@ -270,7 +270,7 @@ void xsync_pusher_t::on_timer() {
         xsync_dbg("xsync_pusher_t, neighbours:%s", n.to_string().c_str());
 
     for (auto object:objects) {
-        if (!object->empty() && !common::has<common::xnode_type_t::auditor>(self_addr.type())) {
+        if (!object->empty() && !common::has<common::xnode_type_t::consensus_auditor>(self_addr.type())) {
             std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, 0);
             xsync_dbg("xsync_pusher_t, maybe send_query_archive_height src=%u dst=%u push_arcs=%u src %s", neighbor_number, object->size(),
                 push_arcs.size(), self_addr.to_string().c_str());
