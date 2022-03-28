@@ -194,6 +194,8 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
             new_election_info.stake = node.stake;
             new_election_info.comprehensive_stake = node.stake;
             new_election_info.consensus_public_key = node.pub_key;
+            new_election_info.genesis = false;
+            new_election_info.miner_type = common::xminer_type_t::advance;
 
             xelection_info_bundle_t election_info_bundle{};
             election_info_bundle.node_id(node.node_id);
@@ -225,6 +227,8 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
                 new_election_info.stake = node.stake;
                 new_election_info.comprehensive_stake = node.stake;
                 new_election_info.consensus_public_key = node.pub_key;
+                new_election_info.genesis = false;
+                new_election_info.miner_type = common::xminer_type_t::validator;
 
                 xelection_info_bundle_t election_info_bundle{};
                 election_info_bundle.node_id(node.node_id);
