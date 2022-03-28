@@ -593,9 +593,9 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
         stream << workload.first;
         auto const & cluster_id = std::string((const char *)stream.data(), stream.size());
         auto const & workload_info = workload.second;
-        if (common::has<common::xnode_type_t::auditor>(workload.first.type())) {
+        if (common::has<common::xnode_type_t::consensus_auditor>(workload.first.type())) {
             add_cluster_workload(true, cluster_id, workload_info.m_leader_count);
-        } else if (common::has<common::xnode_type_t::validator>(workload.first.type())) {
+        } else if (common::has<common::xnode_type_t::consensus_validator>(workload.first.type())) {
             add_cluster_workload(false, cluster_id, workload_info.m_leader_count);
         } else {
             // invalid group

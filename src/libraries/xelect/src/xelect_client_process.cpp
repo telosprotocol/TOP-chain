@@ -163,6 +163,8 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
                     m_update_handler2(election_result_store, common::xarchive_zone_id, block->get_height(), false);
                 } else if (common::has<common::xnode_type_t::fullnode>(node_type)) {
                     m_update_handler2(election_result_store, common::xfullnode_zone_id, block->get_height(), false);
+                } else if (common::has<common::xnode_type_t::eth>(node_type)) {
+                    m_update_handler2(election_result_store, common::xeth_zone_id, block->get_height(), false);
                 } else {
                     assert(false);
                 }
@@ -230,6 +232,13 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
     auto const update_consensus_interval = consensus_group_update_interval;  // for mainnet & bounty
 #endif
     process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }, current_time, update_consensus_interval);
+
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
+    auto const update_eth_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval) / update_divider;
+#else
+    auto const update_eth_interval = consensus_group_update_interval;
+#endif
+    process_election_contract(zec_elect_eth_contract_address, current_time, update_eth_interval);
 }
 
 NS_END2
