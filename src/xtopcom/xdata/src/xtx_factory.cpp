@@ -7,6 +7,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
 #include "xdata/xtx_factory.h"
 namespace top { namespace data {
 
@@ -16,7 +17,11 @@ xtransaction_ptr_t xtx_factory::create_tx(const enum_xtransaction_version tx_ver
     case xtransaction_version_1:
         return make_object_ptr<xtransaction_v1_t>();
         break;
-    
+    case xtransaction_version_2:
+        return make_object_ptr<xtransaction_v2_t>();
+        break;
+    case xtransaction_version_3:
+        return make_object_ptr<xtransaction_v3_t>();
     default:
         return make_object_ptr<xtransaction_v2_t>();
         break;

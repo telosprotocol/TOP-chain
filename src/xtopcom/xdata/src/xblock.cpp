@@ -13,6 +13,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
 #include "xdata/xblockbuild.h"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvpropertyprove.h"
@@ -166,6 +167,11 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     auto lambda_new_transactionv2 = [](const int type)->xobject_t*{
         return new xtransaction_v2_t();
     };      
+
+    auto lambda_new_transactionv3 = [](const int type) -> xobject_t * {
+        return new xtransaction_v3_t();
+    };
+
     auto lambda_new_property_prove = [](const int type)->xobject_t*{
         return new base::xvproperty_prove_t();
     };
@@ -179,6 +185,7 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xtx_receipt_t::get_object_type(),lambda_new_txreceipt);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v1_t::get_object_type(),lambda_new_transactionv1);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v2_t::get_object_type(),lambda_new_transactionv2);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v3_t::get_object_type(), lambda_new_transactionv3);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xvproperty_prove_t::get_object_type(),lambda_new_property_prove);
     xkinfo("xblock_t::register_object,finish");    
 }
