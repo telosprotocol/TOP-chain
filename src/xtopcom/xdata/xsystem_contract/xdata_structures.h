@@ -295,25 +295,13 @@ template <>
 bool could_be<common::xnode_type_t::consensus_auditor>(common::xminer_type_t const miner_type);
 
 template <>
-bool could_be<common::xnode_type_t::auditor>(common::xminer_type_t const miner_type);
-
-template <>
 bool could_be<common::xnode_type_t::consensus_validator>(common::xminer_type_t const miner_type);
-
-template <>
-bool could_be<common::xnode_type_t::validator>(common::xminer_type_t const miner_type);
 
 template <>
 bool could_be<common::xnode_type_t::storage_archive>(common::xminer_type_t const miner_type);
 
 template <>
-bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_type);
-
-template <>
 bool could_be<common::xnode_type_t::storage_exchange>(common::xminer_type_t const miner_type);
-
-template <>
-bool could_be<common::xnode_type_t::exchange>(common::xminer_type_t const miner_type);
 
 template <>
 bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type);
@@ -358,6 +346,9 @@ public:
     /// @brief Check to see if this account could be a fullnode node based on miner type.
     bool could_be_fullnode() const noexcept;
 
+    /// @brief Check to see if this account coule be an eth node based on miner type.
+    bool could_be_eth() const noexcept;
+
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
 
@@ -383,8 +374,10 @@ public:
     bool can_be_exchange() const noexcept;
 
     /// @brief Check to see if this account can be a fullnode based on miner type and other information (e.g. deposit, amount of received tickects).
-    /// @return 
     bool can_be_fullnode() const noexcept;
+
+    /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_eth() const noexcept;
 
     template <common::xminer_type_t MinerTypeV>
     bool has() const noexcept {
@@ -402,21 +395,13 @@ public:
         return m_registered_miner_type == common::xminer_type_t::invalid;
     }
 
-    /**
-     * @brief check if self is a genesis node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_genesis_node() const noexcept {
-        return m_genesis;
-    }
-
     bool genesis() const noexcept;
 
     void genesis(bool v) noexcept;
 
     uint64_t deposit() const noexcept;
+
+    bool has_enough_tickets() const noexcept;
 
     /**
      * @brief get rec stake
@@ -458,6 +443,8 @@ public:
     uint64_t exchange_stake() const noexcept;
 
     uint64_t fullnode_stake() const noexcept;
+
+    uint64_t eth_stake() const noexcept;
 
     /// @brief Get miner type.
     common::xminer_type_t miner_type() const noexcept;

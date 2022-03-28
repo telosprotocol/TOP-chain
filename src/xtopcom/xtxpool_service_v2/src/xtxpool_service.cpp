@@ -87,14 +87,18 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_zec_index;
         m_node_type = common::xnode_type_t::zec;
-    } else if (common::has<common::xnode_type_t::auditor>(type)) {
+    } else if (common::has<common::xnode_type_t::consensus_auditor>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_consensus_index;
-        m_node_type = common::xnode_type_t::auditor;
-    } else if (common::has<common::xnode_type_t::validator>(type)) {
+        m_node_type = common::xnode_type_t::consensus_auditor;
+    } else if (common::has<common::xnode_type_t::consensus_validator>(type)) {
         m_is_send_receipt_role = false;
         m_zone_index = base::enum_chain_zone_consensus_index;
-        m_node_type = common::xnode_type_t::validator;
+        m_node_type = common::xnode_type_t::consensus_validator;
+    } else if (common::has<common::xnode_type_t::eth>(type)) {
+        m_is_send_receipt_role = false;
+        m_zone_index = base::enum_chain_zone_eth_index;
+        m_node_type = common::xnode_type_t::eth;
     } else {
         xassert(0);
     }

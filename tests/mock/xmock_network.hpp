@@ -218,7 +218,7 @@ private:
 
         m_all_nodes.push_back(node_ptr);
 
-        if (common::has<common::xnode_type_t::archive>(addr.type()))
+        if (common::has<common::xnode_type_t::storage_archive>(addr.type()))
             m_archive_nodes.push_back(node_ptr);
     }
 

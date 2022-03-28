@@ -151,21 +151,23 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 }
 
 void xtop_beacon_chain_application::load_last_election_data() {
-    std::vector<std::string> sys_addr{sys_contract_rec_elect_rec_addr,
-                                      sys_contract_rec_elect_archive_addr,
-                                      sys_contract_rec_elect_fullnode_addr,
-                                      sys_contract_rec_elect_edge_addr,
-                                      sys_contract_rec_elect_zec_addr,
-                                      sys_contract_zec_elect_consensus_addr};
+    std::vector<common::xaccount_address_t> sys_addr{rec_elect_rec_contract_address,
+                                                     rec_elect_archive_contract_address,
+                                                     rec_elect_fullnode_contract_address,
+                                                     rec_elect_edge_contract_address,
+                                                     rec_elect_zec_contract_address,
+                                                     zec_elect_consensus_contract_address,
+                                                     zec_elect_eth_contract_address};
 
-    std::map<std::string, common::xzone_id_t> addr_to_zone_id{{sys_contract_rec_elect_rec_addr, common::xcommittee_zone_id},
-                                                              {sys_contract_rec_elect_zec_addr, common::xzec_zone_id},
-                                                              {sys_contract_rec_elect_archive_addr, common::xarchive_zone_id},
-                                                              {sys_contract_rec_elect_fullnode_addr, common::xfullnode_zone_id},
-                                                              {sys_contract_rec_elect_edge_addr, common::xedge_zone_id},
-                                                              {sys_contract_zec_elect_consensus_addr, common::xdefault_zone_id}};
+    std::map<common::xaccount_address_t, common::xzone_id_t> addr_to_zone_id{{rec_elect_rec_contract_address, common::xcommittee_zone_id},
+                                                                             {rec_elect_zec_contract_address, common::xzec_zone_id},
+                                                                             {rec_elect_archive_contract_address, common::xarchive_zone_id},
+                                                                             {rec_elect_fullnode_contract_address, common::xfullnode_zone_id},
+                                                                             {rec_elect_edge_contract_address, common::xedge_zone_id},
+                                                                             {zec_elect_consensus_contract_address, common::xdefault_zone_id},
+                                                                             {zec_elect_eth_contract_address, common::xeth_zone_id}};
     for (const auto & addr : sys_addr) {
-        for (auto const & property : data::election::get_property_name_by_addr(common::xaccount_address_t{ addr })) {
+        for (auto const & property : data::election::get_property_name_by_addr(addr)) {
             common::xzone_id_t zone_id = addr_to_zone_id[addr];
             using top::data::election::xelection_result_store_t;
             std::error_code ec;
@@ -176,7 +178,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
             } };
 
             // only use lightunit
-            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_application->blockstore().get(), addr);
+            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_application->blockstore().get(), addr.value());
             if (latest_vblock == nullptr) {
                 xerror("xtop_beacon_chain_application::load_last_election_data has no latest lightunit. addr=%s", addr.c_str());
                 continue;
@@ -185,7 +187,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
             uint64_t block_height = latest_vblock->get_height();
             xinfo("xbeacon_chain_application::load_last_election_data load block.addr=%s,height=%ld", addr.c_str(), block_height);
             auto const & last_election_result_store = load_election_data(m_application->blockstore(),
-                                                                         common::xaccount_address_t{ addr },
+                                                                         addr,
                                                                          block_height,
                                                                          property,
                                                                          block_height,
@@ -196,19 +198,19 @@ void xtop_beacon_chain_application::load_last_election_data() {
                 // continue;
             }
 
-            if ((addr == sys_contract_rec_elect_rec_addr || addr == sys_contract_rec_elect_zec_addr || addr == sys_contract_zec_elect_consensus_addr) && block_height != 0) {
+            if ((addr == rec_elect_rec_contract_address || addr == rec_elect_zec_contract_address || addr == zec_elect_consensus_contract_address ||
+                 addr == zec_elect_eth_contract_address) &&
+                block_height != 0) {
                 uint64_t prev_block_height = block_height - 1;
-                auto const & before_last_election_result_store = load_election_data(m_application->blockstore(),
-                                                                                   common::xaccount_address_t{ addr },
-                                                                                   prev_block_height,
-                                                                                   property,
-                                                                                   prev_block_height,
-                                                                                   ec);
+                auto const & before_last_election_result_store = load_election_data(m_application->blockstore(), addr, prev_block_height, property, prev_block_height, ec);
                 if (!ec) {
                     assert(block_height > prev_block_height);
                     on_election_data_updated(before_last_election_result_store, zone_id, prev_block_height);
                 } else {
-                    xwarn("xbeacon_chain_application::load_last_election_data fail to load prev election data. addr %s; property %s; from height %" PRIu64, addr.c_str(), property.c_str(), prev_block_height);
+                    xwarn("xbeacon_chain_application::load_last_election_data fail to load prev election data. addr %s; property %s; from height %" PRIu64,
+                          addr.c_str(),
+                          property.c_str(),
+                          prev_block_height);
                 }
             }
             on_election_data_updated(last_election_result_store, zone_id, block_height);

@@ -400,13 +400,21 @@ xzone_id_t const
 #endif
     xconsensus_zone_id{xconsensus_zone_id_value};
 
-XINLINE_CONSTEXPR xzone_id_t::value_type xfrozen_zone_id_value{3};
+XINLINE_CONSTEXPR xzone_id_t::value_type xfrozen_zone_id_value{base::enum_chain_zone_frozen_index};
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
 #endif
     xfrozen_zone_id{xfrozen_zone_id_value};
+
+XINLINE_CONSTEXPR xzone_id_t::value_type xeth_zone_id_value{base::enum_chain_zone_eth_index};
+#if defined XCXX14_OR_ABOVE
+XINLINE_CONSTEXPR xzone_id_t
+#else
+xzone_id_t const
+#endif
+    xeth_zone_id{xeth_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_fullnode_index};
 #if defined XCXX14_OR_ABOVE

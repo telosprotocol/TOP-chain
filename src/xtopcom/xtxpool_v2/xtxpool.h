@@ -17,7 +17,7 @@
 namespace top {
 namespace xtxpool_v2 {
 
-#define xtxpool_zone_type_max (3)
+#define xtxpool_zone_type_max (5)
 
 class xtxpool_t : public xtxpool_face_t {
 public:
