@@ -11,11 +11,11 @@ class xtop_evm_context {
 public:
     // TODO: delete
     bytes m_random_seed;
+    xbytes_t m_input;
     bytes m_predecessor_account_id;
 
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
     contract_common::xcontract_execution_param_t m_param;
-    bytes m_input;
 
 public:
     xtop_evm_context(bytes const & random_seed, bytes const & input, bytes const & predecessor_account_id)
