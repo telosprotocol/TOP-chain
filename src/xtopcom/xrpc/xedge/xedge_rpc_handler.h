@@ -33,7 +33,7 @@ public:
 class xedge_evm_http_handler : public xedge_handler_base<http_response_t> {
 public:
     explicit xedge_evm_http_handler(shared_ptr<xrpc_edge_vhost> edge_vhost, std::shared_ptr<asio::io_service> ioc,
-                                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
      :xedge_handler_base<http_response_t>(edge_vhost, ioc, election_cache_data_accessor) {}
     enum_xrpc_type type() override { return enum_xrpc_type::enum_xrpc_evm_http_type; }
 };

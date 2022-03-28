@@ -15,13 +15,14 @@
 #include "xedge_local_method.hpp"
 #include "xedge_rpc_handler.h"
 #include "xmetrics/xmetrics.h"
-#include "xrpc/xcluster/xcluster_query_manager.h"
+#include "xrpc/xrpc_query_manager.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
 #include "xstore/xstore_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xtxstore/xtransaction_prepare.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xverifier/xwhitelist_verifier.h"
@@ -51,7 +52,7 @@ public:
                       observer_ptr<base::xvblockstore_t> block_store = nullptr,
                       observer_ptr<base::xvtxstore_t> txstore = nullptr,
                       observer_ptr<elect::ElectMain> elect_main = nullptr,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
+                      observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor = nullptr);
     virtual ~xedge_evm_method_base() {
     }
     void do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip);
@@ -74,7 +75,7 @@ protected:
     unique_ptr<T> m_edge_handler_ptr;
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
-    std::shared_ptr<xcluster_query_manager> m_cluster_query_mgr;
+    std::shared_ptr<xrpc_query_manager> m_rpc_query_mgr;
     observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
@@ -91,7 +92,7 @@ public:
                       observer_ptr<base::xvblockstore_t> block_store,
                       observer_ptr<base::xvtxstore_t> txstore,
                       observer_ptr<elect::ElectMain> elect_main,
-                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                      observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
       : xedge_evm_method_base<xedge_evm_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
@@ -112,9 +113,9 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
                                         observer_ptr<base::xvblockstore_t> block_store,
                                         observer_ptr<base::xvtxstore_t> txstore,
                                         observer_ptr<elect::ElectMain> elect_main,
-                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                        observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, txstore, nullptr))
+  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
   , m_store(store)
   , m_txstore{txstore}
   , m_archive_flag(archive_flag)
@@ -144,9 +145,12 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     } else {
         if (m_archive_flag) {
             xdbg("local arc query method: %s", method.c_str());
-            m_cluster_query_mgr->call_method(json_proc);
-            json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
-            json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
+            json_proc.m_request_json["params"]["version"] = version;
+            string strErrorMsg = RPC_OK_MSG;
+            uint32_t nErrorCode = 0;
+            m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
+            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
+            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
             write_response(response, json_proc.get_response());
             return;
         } else {
@@ -177,19 +181,11 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     }
     tx->set_len();
 
-    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
-    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
-        xdbg_rpc("[sendTransaction_method] in blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
-
-        // filter out black list transaction
-        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
-            xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
-        }
-    } else {
-        xdbg_rpc("[sendTransaction_method] not up to blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
+    // filter out black list transaction
+    if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
+        xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
+        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
     }
 
     if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
