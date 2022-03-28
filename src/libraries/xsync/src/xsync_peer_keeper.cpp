@@ -168,6 +168,7 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
 }
 void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_addr, const map_chain_info_t &chains) {
     common::xminer_type_t miner_type = m_role_xips_mgr->miner_type();
+    xsync_info("xsync_peer_keeper walk_role, %s", to_string(miner_type).c_str());
     if (m_role_xips_mgr->genesis() || 
         common::has<common::xminer_type_t::archive>(miner_type) || 
         common::has<common::xminer_type_t::exchange>(miner_type))

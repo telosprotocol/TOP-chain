@@ -6,6 +6,8 @@
 #include <cinttypes>
 #include "xvblockpruner.h"
 #include "xdata/xnative_contract_address.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 
 namespace top
 {
@@ -132,8 +134,9 @@ namespace top
         
         bool  xvblockprune_impl::recycle_table(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
-            xinfo("xvblockprune_impl::recycle table, %s, %llu, %llu, %llu", account_obj.get_address().c_str(),
-                account_meta._highest_full_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height);
+            uint64_t reserve_num = XGET_CONFIG(prune_reserve_number);
+            xinfo("xvblockprune_impl::recycle table, %s, %llu, %llu, %llu, %llu", account_obj.get_address().c_str(),
+                account_meta._highest_full_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height, reserve_num);
             if(account_meta._highest_full_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
             uint64_t upper_bound_height = account_meta._highest_full_block_height - enum_reserved_blocks_count;
@@ -150,14 +153,14 @@ namespace top
             if (boundary < upper_bound_height) {
                 upper_bound_height = boundary;
             }
-            
             xdbg("xvblockprune_impl::recycle table %s, adjust upper %llu, lower %llu, connect_height %llu", account_obj.get_address().c_str(),
                 upper_bound_height, lower_bound_height, account_meta._highest_connect_block_height);
+
             if (lower_bound_height >= upper_bound_height) {
                 return false;
-            } else if((upper_bound_height - lower_bound_height) <= (enum_min_batch_recycle_blocks_count << 1))
+            } else if((upper_bound_height - lower_bound_height) <= reserve_num)
                 return false;//collect big range for each prune op as performance consideration
-            upper_bound_height = upper_bound_height - (enum_min_batch_recycle_blocks_count << 1);
+            upper_bound_height = upper_bound_height - reserve_num; //(enum_min_batch_recycle_blocks_count << 1);
             const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,lower_bound_height);
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
