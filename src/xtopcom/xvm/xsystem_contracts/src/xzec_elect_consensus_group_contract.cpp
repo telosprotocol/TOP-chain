@@ -520,7 +520,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
         }
     }
 
-    XCONTRACT_ENSURE(!associated_validator_group_ids.empty(), u8"associated validator group id empty");
+    XCONTRACT_ENSURE(!associated_validator_group_ids.empty(), "associated validator group id empty");
     assert(!associated_validator_group_ids.empty());
 
     // clean up the auditor standby pool by filtering out the nodes that are currently in the validator group.

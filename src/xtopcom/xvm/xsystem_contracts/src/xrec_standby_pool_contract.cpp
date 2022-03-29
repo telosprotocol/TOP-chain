@@ -147,6 +147,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     bool const archive = data::system_contract::could_be<common::xnode_type_t::storage_archive>(miner_type);
     bool const exchange = data::system_contract::could_be<common::xnode_type_t::storage_exchange>(miner_type);
     bool const fullnode = data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
+    bool const eth = data::system_contract::could_be<common::xnode_type_t::eth>(miner_type);
 
     std::string const role_type_string = common::to_string(miner_type);
     assert(role_type_string == common::XMINER_TYPE_EDGE      ||
@@ -228,6 +229,11 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
             new_node_info.stake_container[common::xnode_type_t::fullnode] = stake;
             new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
         }
+
+        if (eth) {
+            new_node_info.stake_container[common::xnode_type_t::eth] = stake;
+            new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
+        }
     }
 
     if (new_node) {
@@ -243,16 +249,19 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
     auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 #if defined(XENABLE_TESTS)
     auto const fullnode_enabled = true;
+    auto const eth_enabled = true;
 #else
     auto const fullnode_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_election_fork_point, TIME());
+    auto const eth_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, TIME());
 #endif
 
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
 
     auto consensus_public_key = node.consensus_public_key;
-    uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0};
+    uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, eth_stake{0};
     bool const rec{node.can_be_rec()}, zec{node.can_be_zec()}, auditor{node.can_be_auditor()}, validator{node.can_be_validator()}, edge{node.can_be_edge()},
-        archive{fullnode_enabled ? node.can_be_archive() : node.legacy_can_be_archive()}, exchange{node.can_be_exchange()}, fullnode{node.can_be_fullnode()};
+        archive{fullnode_enabled ? node.can_be_archive() : node.legacy_can_be_archive()}, exchange{node.can_be_exchange()}, fullnode{node.can_be_fullnode()},
+        eth{eth_enabled ? node.can_be_eth() : false};
     if (rec) {
         rec_stake = node.rec_stake();
     }
@@ -283,6 +292,10 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 
     if (fullnode) {
         fullnode_stake = node.fullnode_stake();
+    }
+
+    if (eth_enabled && eth) {
+        eth_stake = node.eth_stake();
     }
 
     auto const miner_type = node.miner_type();
@@ -338,6 +351,10 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
             new_node_info.stake_container[common::xnode_type_t::fullnode] = fullnode_stake;
         }
 
+        if (eth_enabled && eth) {
+            new_node_info.stake_container[common::xnode_type_t::eth] = eth_stake;
+        }
+
         if (!new_node) {
             new_node = standby_result_store.result_of(network_id).insert({node.m_account, new_node_info}).second;
         }
@@ -354,6 +371,8 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     auto const fullnode_enabled = chain_fork::xchain_fork_config_center_t::is_forked(
         fork_config.enable_fullnode_election_fork_point, 2 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval), current_logic_time);
 
+    auto const eth_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, current_logic_time);
+
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::rec, reg_node.rec_stake() });
@@ -366,7 +385,7 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     }
     if (fullnode_enabled) {
         // after fullnode enabled, archive node generates from genesis node. Normal advance miner won't be arhive node anymore.
-        if (reg_node.can_be_archive() || reg_node.is_genesis_node()) {
+        if (reg_node.can_be_archive() || reg_node.genesis()) {
             new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
         }
     } else {
@@ -386,6 +405,10 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (reg_node.can_be_exchange()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::storage_exchange, reg_node.exchange_stake() });
     }
+    if (eth_enabled && reg_node.can_be_eth()) {
+        new_node_info.stake_container.insert({common::xnode_type_t::eth, reg_node.eth_stake()});
+    }
+
     new_node_info.consensus_public_key = reg_node.consensus_public_key;
     new_node_info.program_version = standby_node_info.program_version;
     new_node_info.genesis = reg_node.genesis();

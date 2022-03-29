@@ -227,17 +227,7 @@ bool could_be<common::xnode_type_t::consensus_auditor>(common::xminer_type_t con
 }
 
 template <>
-bool could_be<common::xnode_type_t::auditor>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::advance>(miner_type);
-}
-
-template <>
 bool could_be<common::xnode_type_t::consensus_validator>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::validator>(miner_type) || common::has<common::xminer_type_t::advance>(miner_type);
-}
-
-template <>
-bool could_be<common::xnode_type_t::validator>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::validator>(miner_type) || common::has<common::xminer_type_t::advance>(miner_type);
 }
 
@@ -247,17 +237,7 @@ bool could_be<common::xnode_type_t::storage_archive>(common::xminer_type_t const
 }
 
 template <>
-bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::archive>(miner_type);
-}
-
-template <>
 bool could_be<common::xnode_type_t::storage_exchange>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::exchange>(miner_type);
-}
-
-template <>
-bool could_be<common::xnode_type_t::exchange>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::exchange>(miner_type);
 }
 
@@ -268,6 +248,11 @@ bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type
 
 template <>
 bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::eth>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
@@ -307,6 +292,10 @@ bool xreg_node_info::could_be_fullnode() const noexcept {
     return could_be<common::xnode_type_t::fullnode>(m_registered_miner_type);
 }
 
+bool xreg_node_info::could_be_eth() const noexcept {
+    return could_be<common::xnode_type_t::eth>(m_registered_miner_type);
+}
+
 bool xreg_node_info::can_be_rec() const noexcept {
     return could_be_rec();
 }
@@ -328,7 +317,7 @@ bool xreg_node_info::legacy_can_be_archive() const noexcept {
 }
 
 bool xreg_node_info::can_be_auditor() const noexcept {
-    return could_be_auditor() && m_vote_amount * TOP_UNIT >= deposit();
+    return could_be_auditor() && has_enough_tickets();
 }
 
 bool xreg_node_info::can_be_validator() const noexcept {
@@ -341,6 +330,14 @@ bool xreg_node_info::can_be_exchange() const noexcept {
 
 bool xreg_node_info::can_be_fullnode() const noexcept {
     return could_be_auditor();
+}
+
+bool xreg_node_info::can_be_eth() const noexcept {
+    return could_be_eth() && has_enough_tickets();
+}
+
+bool xreg_node_info::has_enough_tickets() const noexcept {
+    return m_vote_amount * TOP_UNIT >= deposit();
 }
 
 uint64_t xreg_node_info::deposit() const noexcept {
@@ -410,6 +407,10 @@ uint64_t xreg_node_info::exchange_stake() const noexcept {
 
 uint64_t xreg_node_info::fullnode_stake() const noexcept {
     return 0;
+}
+
+uint64_t xreg_node_info::eth_stake() const noexcept {
+    return auditor_stake();
 }
 
 common::xminer_type_t xreg_node_info::miner_type() const noexcept {
@@ -534,7 +535,7 @@ int32_t xslash_info::do_read(base::xstream_t & stream) {
 
 void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
     uint64_t slash_creditscore_numerator{0};
-    if (common::has<common::xnode_type_t::validator>(node_type)) {
+    if (common::has<common::xnode_type_t::consensus_validator>(node_type)) {
         slash_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_slash_creditscore);
         auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
 
@@ -550,7 +551,7 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
         }
 
 
-    } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
+    } else if (common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
         slash_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_slash_creditscore);
         auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
 
@@ -569,7 +570,7 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
 
 void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     uint64_t award_creditscore_numerator{0};
-    if (common::has<common::xnode_type_t::validator>(node_type)) {
+    if (common::has<common::xnode_type_t::consensus_validator>(node_type)) {
         award_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
         m_validator_credit_numerator += award_creditscore_numerator;
         if (m_validator_credit_numerator > m_validator_credit_denominator) {
@@ -578,7 +579,7 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
             return;
         }
 
-    } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
+    } else if (common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
         award_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
         m_auditor_credit_numerator += award_creditscore_numerator;
         if (m_auditor_credit_numerator > m_auditor_credit_denominator) {
