@@ -26,8 +26,6 @@ namespace top {
 
             xchain_fork_config_t  mainnet_chain_config{
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
@@ -37,8 +35,6 @@ namespace top {
             // !!!change!!! fork time for galileo
             xchain_fork_config_t  testnet_chain_config{
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
@@ -47,8 +43,6 @@ namespace top {
 
             xchain_fork_config_t default_chain_config {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "block fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "blacklist function fork point"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "node_initial_credit_fork_point"},
                 xfork_point_t{xfork_point_type_t::logic_time, BLOCK_FORK_POINT, "v3 block fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
@@ -57,8 +51,6 @@ namespace top {
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
@@ -68,8 +60,6 @@ namespace top {
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
@@ -79,8 +69,6 @@ namespace top {
         // !!!change!!! fork time for local develop net
         xchain_fork_config_t default_chain_config {
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "blacklist function fork point"},
-            xfork_point_t{xfork_point_type_t::logic_time, 6859080, "node_initial_credit_fork_point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},//2022-2-21 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
