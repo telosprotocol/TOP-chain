@@ -63,6 +63,7 @@ v1::xstandby_node_info_t xtop_standby_node_info::v1() const {
     r.consensus_public_key = consensus_public_key;
     r.program_version = program_version;
     r.genesis = genesis;
+    r.miner_type = miner_type;
 
     return r;
 }
