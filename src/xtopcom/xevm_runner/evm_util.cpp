@@ -96,8 +96,10 @@ std::string uint8_vector_to_hex_string(std::vector<uint8_t> const & v) {
     return result;
 }
 
+// todo 
 std::vector<uint8_t> get_sha256(std::vector<uint8_t> const & input) {
-    BYTE _input[input.size()];
+    // BYTE _input[input.size()];
+    BYTE * _input = new BYTE[input.size()];
     for (std::size_t index = 0; index < input.size(); ++index) {
         _input[index] = input[index];
     }
@@ -114,6 +116,7 @@ std::vector<uint8_t> get_sha256(std::vector<uint8_t> const & input) {
     for (std::size_t index = 0; index < SHA256_BLOCK_SIZE; ++index) {
         res[index] = _res[index];
     }
+    delete[] _input;
     return res;
 }
 

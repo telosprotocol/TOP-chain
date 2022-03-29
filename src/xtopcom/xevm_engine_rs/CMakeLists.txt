@@ -1,3 +1,7 @@
+cmake_minimum_required(VERSION 3.8)
+
+add_compile_options(-Wpedantic)
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CARGO_CMD cargo build --features=build_as_xtop_lib)
     set(TARGET_DIR "debug")

@@ -3,7 +3,6 @@
 
 #include "xevm_runner/evm_memory_tools.h"
 #include "xevm_runner/evm_util.h"
-#include "xutility/xhash.h"
 
 #include <climits>
 namespace top {
@@ -53,7 +52,7 @@ void xtop_evm_logic::predecessor_account_id(uint64_t register_id) {
     // printf("[debug][predecessor_account_id] request: %lu \n", register_id);
     
     // TODO: need to implenment "sender()" of m_context
-    // internal_write_register(register_id, m_context->m_predecessor_account_id);
+    internal_write_register(register_id, m_context->m_predecessor_account_id);
 }
 
 // void xtop_evm_logic::signer_account_id(uint64_t register_id) {
