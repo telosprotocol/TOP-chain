@@ -101,4 +101,6 @@ class xrotate_leader_election : public xleader_election_face {
      observer_ptr<base::xvblockstore_t> m_blockstore;
     std::shared_ptr<xelection_cache_face> m_elector;
 };
+
+xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xelection_round_t& version, uint64_t factor);
 NS_END2
