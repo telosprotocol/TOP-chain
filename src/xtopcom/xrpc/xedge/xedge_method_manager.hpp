@@ -202,19 +202,11 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
     tx->set_len();
 
-    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
-    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
-        xdbg_rpc("[sendTransaction_method] in blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
-
-        // filter out black list transaction
-        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
-            xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
-        }
-    } else {
-        xdbg_rpc("[sendTransaction_method] not up to blacklist fork point time, logic clock height: %" PRIu64, logic_clock);
+    // filter out black list transaction
+    if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
+        xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
+        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
     }
 
     if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {

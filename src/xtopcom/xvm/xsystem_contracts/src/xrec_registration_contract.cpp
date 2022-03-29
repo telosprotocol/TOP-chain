@@ -287,9 +287,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
         node_info.m_network_ids = network_ids;
     }
 
-    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool isforked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.node_initial_credit_fork_point, TIME());
-    init_node_credit(node_info, isforked);
+    init_node_credit(node_info, true);
 
     uint64_t const min_deposit = node_info.get_required_min_deposit();
     xdbg("[xrec_registration_contract::registerNode2] call xregistration_contract registerNode() pid:%d, transaction_type:%d, source action type: %d, m_deposit: %" PRIu64
@@ -404,9 +402,7 @@ void xrec_registration_contract::updateNodeInfo(const std::string & nickname, co
         node_info.m_last_update_time = cur_time;
     }
     node_info.consensus_public_key = xpublic_key_t{node_sign_key};
-    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool isforked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.node_initial_credit_fork_point, TIME());
-    init_node_credit(node_info, isforked);
+    init_node_credit(node_info, true);
 
     update_node_info(node_info);
     XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "updateNodeInfo_Executed", 1);
@@ -870,9 +866,7 @@ void xrec_registration_contract::updateNodeType(const std::string & node_types) 
         min_deposit, account.c_str(), node_info.m_account_mortgage);
     XCONTRACT_ENSURE(node_info.m_account_mortgage >= min_deposit, "xrec_registration_contract::updateNodeType: deposit not enough");
 
-    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool isforked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.node_initial_credit_fork_point, TIME());
-    init_node_credit(node_info, isforked);
+    init_node_credit(node_info, true);
     update_node_info(node_info);
     check_and_set_genesis_stage();
 
