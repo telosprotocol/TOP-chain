@@ -973,12 +973,22 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
         }*/
     for (uint32_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
         std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_zec_table_block_addr, uint16_t(i)).value();
+        std::set<enum_height_type> types;
+        types.insert(mutable_checkpoint_height);
+        types.insert(latest_state_height);
+        xsync_prune_sigleton_t::instance().add(_vaddr, types);
+
         store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
         store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
         xsync_kinfo("xsync_handler add_role_phase1 add %s", _vaddr.c_str());
     }
     for (uint32_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
         std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_beacon_table_block_addr, uint16_t(i)).value();
+        std::set<enum_height_type> types;
+        types.insert(mutable_checkpoint_height);
+        types.insert(latest_state_height);
+        xsync_prune_sigleton_t::instance().add(_vaddr, types);
+
         store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
         store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
         xsync_kinfo("xsync_handler add_role_phase1 add %s", _vaddr.c_str());
