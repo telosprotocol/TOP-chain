@@ -1,26 +1,27 @@
 #include "db_prune.h"
 
-#include "xbasic/xasio_io_context_wrapper.h"
+#include "xbase/xhash.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xcheckpoint.h"
+#include "xdata/xcheckpoint.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
+#include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xrpc/xgetblock/get_block.h"
+#include "xstore/xstore_error.h"
+#include "xvledger/xvaccount.h"
+#include "xvledger/xvdbkey.h"
 #include "xvledger/xvdbkey.h"
 #include "xvledger/xvledger.h"
-#include "xvledger/xvdbkey.h"
-#include "xdb/xdb_factory.h"
-#include "xvledger/xvaccount.h"
-#include "xbase/xhash.h"
-#include "xdata/xcheckpoint.h"
 
 NS_BEG2(top, db_prune)
 
@@ -193,7 +194,7 @@ int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, s
 
         common::xaccount_address_t _vaddress(table_account);
         std::error_code err;
-        auto checkpoint = xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
+        auto checkpoint = data::xchain_checkpoint_t::get_latest_checkpoint(_vaddress, err);
         if (err) {
             std::cout << "Error: table_account " << table_account << " get_latest_checkpoint " << err << std::endl;
             continue;
@@ -223,7 +224,7 @@ std::vector<std::string> DbPrune::get_db_unit_accounts() {
             std::cerr << table << " get_block_state null!" << std::endl;
             continue;
         }
-        auto table_state = std::make_shared<xtable_bstate_t>(bstate.get());
+        auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
         auto const & units = table_state->get_all_accounts();
         accounts.insert(units.cbegin(), units.cend());
     }
@@ -243,7 +244,7 @@ std::vector<std::string> DbPrune::get_table_accounts() {
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
-            v.emplace_back(make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
+            v.emplace_back(data::make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
         }
     }
     return v;

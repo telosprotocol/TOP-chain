@@ -64,14 +64,14 @@ protected:
 protected:
     xvip2_t get_parent_xip(const xvip2_t & local_xip);
     xvip2_t get_child_xip(const xvip2_t & local_xip, const std::string & account);
-    void    set_xip(xblock_consensus_para_t & blockpara, const xvip2_t & leader);
+    void set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader);
     void    invoke_sync(const std::string & account, const std::string & reason);
 
 private:
     bool    connect_to_checkpoint();
     bool    start_proposal(base::xblock_mptrs& latest_blocks, uint32_t min_tx_num);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
-    void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
+    void make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
     uint32_t calculate_min_tx_num(bool first_packing);
 
 private:

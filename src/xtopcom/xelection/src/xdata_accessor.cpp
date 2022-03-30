@@ -594,7 +594,7 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
 
     assert(common::node_type_from(zone_element->zone_id()) == common::xnode_type_t::storage);
-    std::array<common::xnode_type_t, 2> node_types{ {common::xnode_type_t::storage_archive, common::xnode_type_t::storage_exchange} };
+    std::array<common::xnode_type_t, 2> const node_types{ {common::xnode_type_t::storage_archive, common::xnode_type_t::storage_exchange} };
 
     if (election_result_store.empty()) {
         ec = xdata_accessor_errc_t::election_data_empty;
@@ -697,10 +697,10 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_cluster(std::shared_ptr<xzone_element_t> const & zone_element,
-                                                                                                           std::shared_ptr<xcluster_element_t> const & cluster_element,
-                                                                                                           data::election::xelection_cluster_result_t const & cluster_result,
-                                                                                                           std::uint64_t const associated_blk_height,
-                                                                                                           std::error_code & ec) {
+                                                                                                        std::shared_ptr<xcluster_element_t> const & cluster_element,
+                                                                                                        data::election::xelection_cluster_result_t const & cluster_result,
+                                                                                                        std::uint64_t const associated_blk_height,
+                                                                                                        std::error_code & ec) {
     assert(!ec);
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
     std::error_code ec1{xdata_accessor_errc_t::success};

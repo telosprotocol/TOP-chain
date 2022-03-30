@@ -36,12 +36,29 @@
 #include "xstore/xstore_error.h"
 
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 
 using namespace top::base;
 using namespace top::data;
 
 namespace top {
 namespace store {
+
+data::system_contract::xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr) {
+    std::string value_str;
+    int ret = store->map_get(top::sys_contract_rec_registration_addr, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+
+    if (ret != store::xstore_success || value_str.empty()) {
+        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
+        return data::system_contract::xreg_node_info{};
+    }
+
+    data::system_contract::xreg_node_info node_info;
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
+
+    node_info.serialize_from(stream);
+    return node_info;
+}
 
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xstore, store::xstore_error_to_string, store::xstore_error_base + 1, store::xstore_error_max);
 

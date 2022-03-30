@@ -11,15 +11,15 @@ NS_BEG2(top, blockmaker)
 
 bool xblock_rules::check_rule_txs_one_type(const std::vector<xcons_transaction_ptr_t> & txs) const {
     xassert(!txs.empty());
-    enum_transaction_subtype first_tx_subtype = txs[0]->get_tx_subtype();
-    if (first_tx_subtype == enum_transaction_subtype_self) {
-        first_tx_subtype = enum_transaction_subtype_send;
+    data::enum_transaction_subtype first_tx_subtype = txs[0]->get_tx_subtype();
+    if (first_tx_subtype == data::enum_transaction_subtype_self) {
+        first_tx_subtype = data::enum_transaction_subtype_send;
     }
 
     for (auto & tx : txs) {
         uint8_t subtype = tx->get_tx_subtype();
-        if (subtype == enum_transaction_subtype_self) {
-            subtype = enum_transaction_subtype_send;
+        if (subtype == data::enum_transaction_subtype_self) {
+            subtype = data::enum_transaction_subtype_send;
         }
         if (subtype != first_tx_subtype) {
             xerror("xblock_rules::check_rule_txs_one_type fail.subtype=%d,tx=%s", subtype, tx->dump().c_str());
@@ -74,7 +74,7 @@ void xblock_rules::check_rule_batch_txs(const std::vector<xcons_transaction_ptr_
     // TODO(jimmy) now, transfer txs and confirm txs can batch
     bool can_batch = true;
     for (auto & tx : txs) {
-        if ( (tx->get_transaction()->get_tx_type() != xtransaction_type_transfer) && (!tx->is_confirm_tx()) ) {
+        if ((tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) && (!tx->is_confirm_tx())) {
             can_batch = false;
             break;
         }

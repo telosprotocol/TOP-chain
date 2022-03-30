@@ -589,22 +589,6 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     }
 }
 
-xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr) {
-    std::string value_str;
-    int ret = store->map_get(top::sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
-
-    if (ret != store::xstore_success || value_str.empty()) {
-        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
-        return xreg_node_info{};
-    }
-
-    xreg_node_info node_info;
-    base::xstream_t        stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
-
-    node_info.serialize_from(stream);
-    return node_info;
-}
-
 std::string xissue_detail::to_string() const {
     base::xstream_t stream(base::xcontext_t::instance());
     serialize_to(stream);

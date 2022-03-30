@@ -114,11 +114,11 @@ void xtop_rec_elect_archive_contract::elect_config_nodes(common::xlogic_time_t c
 #endif
 
 void xtop_rec_elect_archive_contract::setup() {
-    election::legacy::xelection_result_store_t election_result_store;
+    data::election::legacy::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 }
 
@@ -183,7 +183,7 @@ void xtop_rec_elect_archive_contract::on_timer(const uint64_t current_time) {
                 xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
                     *this, data::election::get_property_by_group_id(archive_gid), election_result_store);
             } else {
-                xvm::serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+                xvm::serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
                     *this, data::election::get_property_by_group_id(archive_gid), election_result_store.legacy());
             }
         }

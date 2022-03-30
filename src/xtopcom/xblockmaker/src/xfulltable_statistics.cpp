@@ -13,13 +13,13 @@ namespace blockmaker {
 using top::auth::xmutisigdata_t;
 using top::auth::xnodebitset;
 
-static void calc_workload_data(const xvip2_t leader_xip, const uint32_t txs_count, xstatistics_data_t & data){
+static void calc_workload_data(const xvip2_t leader_xip, const uint32_t txs_count, data::xstatistics_data_t & data) {
     // height
     uint64_t block_height = get_network_height_from_xip2(leader_xip);
     auto it_height = data.detail.find(block_height);
     if (it_height == data.detail.end()) {
-        xelection_related_statistics_data_t election_related_data;
-        std::pair<std::map<uint64_t, xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
+        data::xelection_related_statistics_data_t election_related_data;
+        std::pair<std::map<uint64_t, data::xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
         it_height = ret.first;
     }
     // gid
@@ -27,7 +27,7 @@ static void calc_workload_data(const xvip2_t leader_xip, const uint32_t txs_coun
     // common::xgroup_id_t group_id = common::xgroup_id_t{group_idx};
     auto it_group = it_height->second.group_statistics_data.find(group_addr);
     if (it_group == it_height->second.group_statistics_data.end()) {
-        xgroup_related_statistics_data_t group_related_data;
+        data::xgroup_related_statistics_data_t group_related_data;
         auto ret = it_height->second.group_statistics_data.insert(std::make_pair(group_addr, group_related_data));
         it_group = ret.first;
     }
@@ -45,13 +45,13 @@ static void calc_workload_data(const xvip2_t leader_xip, const uint32_t txs_coun
 static void calc_consensus_vote_data(xvip2_t const & vote_xip,
                                      xobject_ptr_t<data::xblock_t> const & block,
                                      std::string const & aggregated_signatures_bin,
-                                     xstatistics_data_t & data) {
+                                     data::xstatistics_data_t & data) {
     // height
     uint64_t block_height = get_network_height_from_xip2(vote_xip);
     auto it_height = data.detail.find(block_height);
     if (it_height == data.detail.end()) {
-        xelection_related_statistics_data_t election_related_data;
-        std::pair<std::map<uint64_t, xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
+        data::xelection_related_statistics_data_t election_related_data;
+        std::pair<std::map<uint64_t, data::xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
         it_height = ret.first;
     }
 
@@ -60,7 +60,7 @@ static void calc_consensus_vote_data(xvip2_t const & vote_xip,
     // common::xgroup_id_t group_id = common::xgroup_id_t{group_idx};
     auto it_group = it_height->second.group_statistics_data.find(group_addr);
     if (it_group == it_height->second.group_statistics_data.end()) {
-        xgroup_related_statistics_data_t group_related_data;
+        data::xgroup_related_statistics_data_t group_related_data;
         auto ret = it_height->second.group_statistics_data.insert(std::make_pair(group_addr, group_related_data));
         it_group = ret.first;
     }
@@ -82,7 +82,7 @@ static void calc_consensus_vote_data(xvip2_t const & vote_xip,
     }
 }
 
-static void process_vote_info(xobject_ptr_t<data::xblock_t> const & block, xstatistics_data_t & data) {
+static void process_vote_info(xobject_ptr_t<data::xblock_t> const & block, data::xstatistics_data_t & data) {
     auto auditor_xip = block->get_cert()->get_auditor();
     auto validator_xip = block->get_cert()->get_validator();
 
@@ -95,8 +95,8 @@ static void process_vote_info(xobject_ptr_t<data::xblock_t> const & block, xstat
     }
 }
 
-xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_t>> const & blks) {
-    xstatistics_data_t data;
+data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_t>> const & blks) {
+    data::xstatistics_data_t data;
     xdbg("[tableblock_statistics] blks size: %u", blks.size());
     for (size_t i = 0; i < blks.size(); i++) {
         if (nullptr == blks[i]) {

@@ -36,7 +36,7 @@ using data::election::xstandby_result_store_t;
 xtop_rec_elect_rec_contract::xtop_rec_elect_rec_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 void xtop_rec_elect_rec_contract::setup() {
-    election::legacy::xelection_result_store_t election_result_store;
+    data::election::legacy::xelection_result_store_t election_result_store;
     common::xelection_round_t group_version{0};
 
     auto & current_group_nodes =
@@ -48,18 +48,18 @@ void xtop_rec_elect_rec_contract::setup() {
 
     auto const max_election_committee_size = config::xmax_election_committee_size_onchain_goverance_parameter_t::value;
 
-    const std::vector<node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
+    const std::vector<data::node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
     for (auto i = 0u; i < seeds.size() && i < max_election_committee_size; ++i) {
         auto const & item = seeds[i];
 
         common::xnode_id_t node_id{item.m_account};
 
-        election::legacy::xelection_info_t election_info{};
+        data::election::legacy::xelection_info_t election_info{};
         election_info.joined_version = group_version;
         election_info.stake = 0;
         election_info.consensus_public_key = xpublic_key_t{item.m_publickey};
 
-        election::legacy::xelection_info_bundle_t election_info_bundle{};
+        data::election::legacy::xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(node_id);
         election_info_bundle.election_info(std::move(election_info));
 
@@ -67,7 +67,7 @@ void xtop_rec_elect_rec_contract::setup() {
     }
 
     STRING_CREATE(data::election::get_property_by_group_id(common::xcommittee_group_id));
-    serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+    serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
         *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
 }
 
@@ -117,7 +117,7 @@ void xtop_rec_elect_rec_contract::on_timer(common::xlogic_time_t const current_t
             serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
                 *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
         } else {
-            serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(
+            serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
                 *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store.legacy());
         }
     }

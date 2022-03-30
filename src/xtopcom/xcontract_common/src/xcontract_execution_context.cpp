@@ -51,11 +51,11 @@ std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_conte
     return m_execution_result.output.followup_transaction_data;
 }
 
-void xtop_contract_execution_context::input_receipt_data(xreceipt_data_store_t const& receipt_data) {
+void xtop_contract_execution_context::input_receipt_data(data::xreceipt_data_store_t const& receipt_data) {
     m_receipt_data = receipt_data;
 }
 
-xreceipt_data_store_t& xtop_contract_execution_context::output_receipt_data() noexcept {
+data::xreceipt_data_store_t& xtop_contract_execution_context::output_receipt_data() noexcept {
     return m_execution_result.output.receipt_data;
 }
 

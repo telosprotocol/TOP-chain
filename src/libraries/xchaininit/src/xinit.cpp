@@ -66,12 +66,12 @@ static bool create_rootblock(const std::string & config_file) {
     auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>(config_file);
     // config::xconfig_register_t::get_instance().add_loader(genesis_loader);
     // config::xconfig_register_t::get_instance().load();
-    xrootblock_para_t rootblock_para;
+    data::xrootblock_para_t rootblock_para;
     if (false == genesis_loader->extract_genesis_para(rootblock_para)) {
         xerror("create_rootblock extract genesis para fail");
         return false;
     }
-    if (false == xrootblock_t::init(rootblock_para)) {
+    if (false == data::xrootblock_t::init(rootblock_para)) {
         xerror("create_rootblock rootblock init fail");
         return false;
     }

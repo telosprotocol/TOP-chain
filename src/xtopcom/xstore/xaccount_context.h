@@ -31,19 +31,23 @@ const uint64_t EXP_BASE = 104 * 1e4;
 
 class xaccount_context_t {
  public:
-    xaccount_context_t(const xaccount_ptr_t & unitstate);
-    xaccount_context_t(const xaccount_ptr_t & unitstate, xstore_face_t* store);
+    xaccount_context_t(const data::xaccount_ptr_t & unitstate);
+    xaccount_context_t(const data::xaccount_ptr_t & unitstate, xstore_face_t * store);
     virtual ~xaccount_context_t();
 
-    const xaccount_ptr_t & get_blockchain() const {return m_account; }
+    const data::xaccount_ptr_t & get_blockchain() const {
+        return m_account;
+    }
     std::string const & get_address() const noexcept {return m_account->get_account();}
     bool    get_transaction_result(xtransaction_result_t& result);
-    bool    finish_exec_all_txs(const std::vector<xcons_transaction_ptr_t> & txs);
+    bool finish_exec_all_txs(const std::vector<data::xcons_transaction_ptr_t> & txs);
     size_t  get_op_records_size() const;
-    const std::vector<xcons_transaction_ptr_t> & get_create_txs() const {return m_contract_txs;}
+    const std::vector<data::xcons_transaction_ptr_t> & get_create_txs() const {
+        return m_contract_txs;
+    }
 
 
-    bool    add_transaction(const xcons_transaction_ptr_t& trans);
+    bool add_transaction(const data::xcons_transaction_ptr_t & trans);
     void    set_context_para(uint64_t clock, const std::string & random_seed, uint64_t timestamp, uint64_t sys_total_lock_tgas_token);
     void    set_context_pare_current_table(const std::string & table_addr, uint64_t table_committed_height);
     const std::string & get_random_seed() const {return m_random_seed;}
@@ -83,13 +87,13 @@ class xaccount_context_t {
     int32_t other_balance_to_available_balance(const std::string & property_name, base::vtoken_t token);
     int32_t available_balance_to_other_balance(const std::string & property_name, base::vtoken_t token);
 
-    int32_t update_pledge_vote_property(xaction_pledge_token_vote& action);
+    int32_t update_pledge_vote_property(data::xaction_pledge_token_vote & action);
     static std::string serilize_vote_map_field(uint16_t duration, uint64_t lock_time);
     static std::string serilize_vote_map_value(uint64_t vote_num);
     static void deserilize_vote_map_field(const std::string& str, uint16_t& duration, uint64_t& lock_time);
     static void deserilize_vote_map_value(const std::string& str, uint64_t& vote_num);
     int32_t merge_pledge_vote_property();
-    int32_t insert_pledge_vote_property(xaction_pledge_token_vote& action);
+    int32_t insert_pledge_vote_property(data::xaction_pledge_token_vote & action);
     int32_t redeem_pledge_vote_property(uint64_t num);
     static uint64_t get_top_by_vote(uint64_t vote_num, uint16_t duration);
 
@@ -167,7 +171,7 @@ class xaccount_context_t {
     void    set_tx_info_latest_sendtx_hash(const std::string & hash);
     void    set_tx_info_recvtx_num(uint64_t num);
     void    get_latest_create_nonce_hash(uint64_t & nonce, uint256_t & hash);
-    void    update_latest_create_nonce_hash(const xcons_transaction_ptr_t & tx);
+    void update_latest_create_nonce_hash(const data::xcons_transaction_ptr_t & tx);
     void    set_account_create_time();
 
  public:
@@ -178,19 +182,19 @@ class xaccount_context_t {
 
  private:
     xstore_face_t*      m_store;
-    xaccount_ptr_t      m_account{nullptr};
+    data::xaccount_ptr_t m_account{nullptr};
     uint64_t            m_latest_exec_sendtx_nonce{0};  // for exec tx
     uint256_t           m_latest_exec_sendtx_hash;
     uint64_t            m_latest_create_sendtx_nonce{0};  // for contract create tx
     uint256_t           m_latest_create_sendtx_hash;
 
     xobject_ptr_t<base::xvcanvas_t>     m_canvas{nullptr};
-    xcons_transaction_ptr_t             m_currect_transaction{nullptr};
-    std::vector<xcons_transaction_ptr_t> m_contract_txs;
+    data::xcons_transaction_ptr_t m_currect_transaction{nullptr};
+    std::vector<data::xcons_transaction_ptr_t> m_contract_txs;
 
     std::string         m_origin_state_bin;
     std::string         m_succ_property_binlog;
-    std::vector<xcons_transaction_ptr_t> m_succ_contract_txs;
+    std::vector<data::xcons_transaction_ptr_t> m_succ_contract_txs;
 
     data::xaction_asset_out m_source_pay_info;
     uint64_t            m_timestamp{0};

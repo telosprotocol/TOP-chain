@@ -18,7 +18,7 @@ using top::store::xaccount_context_t;
 
 class xtransaction_fee_t{
 public:
-    xtransaction_fee_t(xaccount_context_t* account_ctx, const xcons_transaction_ptr_t & trans)
+    xtransaction_fee_t(xaccount_context_t * account_ctx, const data::xcons_transaction_ptr_t & trans)
     : m_account_ctx(account_ctx), m_trans(trans), m_used_deposit(0), m_service_fee(0) {
     }
 
@@ -78,7 +78,7 @@ public:
 
 private:
     xaccount_context_t*     m_account_ctx;
-    xcons_transaction_ptr_t m_trans;
+    data::xcons_transaction_ptr_t m_trans;
     uint64_t                m_used_deposit;
     uint64_t                m_service_fee;
 };

@@ -52,7 +52,7 @@ bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block) {
             get_account().c_str(), latest_block->get_height(), latest_block->get_viewid());
         return false;
     }
-    xaccount_ptr_t target_state = std::make_shared<xunit_bstate_t>(bstate.get());
+    xaccount_ptr_t target_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
     m_latest_bstate = target_state;
     xassert(m_latest_bstate->get_block_height() == latest_block->get_height() && m_latest_bstate->get_block_viewid() == latest_block->get_viewid());
     xdbg("xblock_maker_t::update_account_state succ cache new state. account=%s,height=%ld,viewid=%ld",
@@ -109,7 +109,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
                 return false;
             }
-            prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+            prev_block = data::xblock_t::raw_vblock_to_object_ptr(_block.get());
             set_latest_block(prev_block);
         }
         current_block = prev_block;
@@ -141,7 +141,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
                 lacked_height_to = current_block->get_height() - 1;
                 return false;
             }
-            prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+            prev_block = data::xblock_t::raw_vblock_to_object_ptr(_block.get());
             set_latest_block(prev_block);
         }
         current_block = prev_block;

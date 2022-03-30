@@ -432,7 +432,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
 
     int64_t tgas_balance_change = 0;
     std::vector<xblock_ptr_t> batch_units;
-    std::vector<xlightunit_tx_info_ptr_t> txs_info;
+    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
     uint32_t unchange_tx_only_unit_num = 0;
     // try to make unit for unitmakers
     for (auto & v : unitmakers) {
