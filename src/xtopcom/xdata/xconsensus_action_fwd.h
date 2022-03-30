@@ -16,5 +16,6 @@ using xconsensus_action_t = xtop_consensus_action<ActionTypeV>;
 
 using xsystem_consensus_action_t = xconsensus_action_t<xtop_action_type_t::system>;
 using xuser_consensus_action_t = xconsensus_action_t<xtop_action_type_t::user>;
+using xevm_consensus_action_t = xconsensus_action_t<xtop_action_type_t::evm>;
 
 NS_END2
