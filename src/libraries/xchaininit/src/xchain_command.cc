@@ -1003,6 +1003,11 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     cmd_db_compact->callback([&]() {
         db_prune::DbPrune::instance().compact_db(config_extra_json["datadir"].get<std::string>(), out_str);
     });
+    auto cmd_db_convert = db->add_subcommand("convert", "convert database.");
+    cmd_db_convert->callback([&]() {
+        db_prune::DbPrune::instance().db_convert(std::ref(miner_type), config_extra_json["datadir"].get<std::string>(), out_str);
+    });
+    cmd_db_convert->add_option("miner_type", miner_type, "Miner type.")->required();    
     /*
      * debug
      */

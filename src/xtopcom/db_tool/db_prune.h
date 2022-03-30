@@ -24,9 +24,12 @@ private:
     int db_close();
     std::vector<std::string> get_db_unit_accounts();
     std::vector<std::string> get_table_accounts();
+    int do_db_prune(const std::string& node_addr, const std::string& datadir, std::ostringstream & out_str);
+    int db_check(const std::string& node_addr, const std::string& datadir, std::ostringstream & out_str);
 public:
     static DbPrune & instance();
-    int db_prune(const std::string& node_addr, const std::string datadir, std::ostringstream & out_str);
+    int db_prune(const std::string& node_addr, const std::string& datadir, std::ostringstream & out_str);
+    int db_convert(const std::string& miner_type, const std::string& datadir, std::ostringstream & out_str);
     void compact_db(const std::string datadir, std::ostringstream& out_str);
 };
 
