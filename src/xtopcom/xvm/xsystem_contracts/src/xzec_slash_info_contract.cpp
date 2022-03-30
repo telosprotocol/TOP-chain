@@ -172,9 +172,9 @@ void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t c
     XCONTRACT_ENSURE(source_addr == account.value() && source_addr == top::sys_contract_zec_slash_info_addr, "invalid source addr's call!");
 
     xinfo("[xzec_slash_info_contract][do_unqualified_node_slash] do unqualified node slash info, time round: %" PRIu64 ": SOURCE_ADDRESS: %s, pid:%d",
-         timestamp,
-         SOURCE_ADDRESS().c_str(),
-         getpid());
+          timestamp,
+          SOURCE_ADDRESS().c_str(),
+          getpid());
 
     /**
      *
@@ -185,12 +185,11 @@ void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t c
     uint32_t present_tableblock_count = 0;
     pre_condition_process(present_summarize_info, present_tableblock_count);
 
-    #ifdef DEBUG
-        print_table_height_info();
-        print_summarize_info(present_summarize_info);
-        xdbg_info("[xzec_slash_info_contract][do_unqualified_node_slash] present tableblock num is %u", present_tableblock_count);
-    #endif
-
+#ifdef DEBUG
+    print_table_height_info();
+    print_summarize_info(present_summarize_info);
+    xdbg_info("[xzec_slash_info_contract][do_unqualified_node_slash] present tableblock num is %u", present_tableblock_count);
+#endif
 
     xunqualified_node_info_t summarize_info = present_summarize_info;
     uint32_t summarize_tableblock_count = present_tableblock_count;
@@ -216,12 +215,19 @@ void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t c
     auto award_vote_threshold = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_awardcredit_threshold_value);
     auto award_persent_threshold = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_awardcredit_threshold_value);
 
-
     // do slash
     std::vector<xaction_node_info_t> node_to_action;
-    if(do_unqualified_node_slash_internal(last_slash_time_str, summarize_tableblock_count, slash_interval_table_block_param, slash_interval_time_block_param, timestamp,
-                                           summarize_info, slash_vote_threshold, slash_persent_threshold, award_vote_threshold, award_persent_threshold, node_to_action)) {
-
+    if (do_unqualified_node_slash_internal(last_slash_time_str,
+                                           summarize_tableblock_count,
+                                           slash_interval_table_block_param,
+                                           slash_interval_time_block_param,
+                                           timestamp,
+                                           summarize_info,
+                                           slash_vote_threshold,
+                                           slash_persent_threshold,
+                                           award_vote_threshold,
+                                           award_persent_threshold,
+                                           node_to_action)) {
         {
             XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_extended_function_key");
             MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, SLASH_DELETE_PROPERTY, "true");
@@ -242,31 +248,34 @@ void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t c
     } else {
         xdbg("[xzec_slash_info_contract][do_unqualified_node_slash] condition not satisfied! time round %" PRIu64, timestamp);
     }
-
 }
 
 
-bool xzec_slash_info_contract::do_unqualified_node_slash_internal(std::string const& last_slash_time_str, uint32_t summarize_tableblock_count, uint32_t slash_interval_table_block_param, uint32_t slash_interval_time_block_param , common::xlogic_time_t const timestamp,
-                                                                  xunqualified_node_info_t const & summarize_info, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold, std::vector<xaction_node_info_t>& node_to_action) {
-
+bool xzec_slash_info_contract::do_unqualified_node_slash_internal(std::string const & last_slash_time_str,
+                                                                  uint32_t summarize_tableblock_count,
+                                                                  uint32_t slash_interval_table_block_param,
+                                                                  uint32_t slash_interval_time_block_param,
+                                                                  common::xlogic_time_t const timestamp,
+                                                                  xunqualified_node_info_t const & summarize_info,
+                                                                  uint32_t slash_vote_threshold,
+                                                                  uint32_t slash_persent_threshold,
+                                                                  uint32_t award_vote_threshold,
+                                                                  uint32_t award_persent_threshold,
+                                                                  std::vector<xaction_node_info_t> & node_to_action) {
     // check slash interval time
-    auto result = slash_condition_check(last_slash_time_str, summarize_tableblock_count, slash_interval_table_block_param,
-                                        slash_interval_time_block_param , timestamp);
+    auto result = slash_condition_check(last_slash_time_str, summarize_tableblock_count, slash_interval_table_block_param, slash_interval_time_block_param, timestamp);
     if (!result) {
-        xinfo("[xzec_slash_info_contract][do_unqualified_node_slash_internal] slash condition not statisfied, time round: %" PRIu64 ": pid:%d",
-            timestamp, getpid());
+        xinfo("[xzec_slash_info_contract][do_unqualified_node_slash_internal] slash condition not statisfied, time round: %" PRIu64 ": pid:%d", timestamp, getpid());
         return false;
     }
 
     node_to_action = filter_nodes(summarize_info, slash_vote_threshold, slash_persent_threshold, award_vote_threshold, award_persent_threshold);
     if (node_to_action.empty()) {
-        xinfo("[xzec_slash_info_contract][do_unqualified_node_slash_internal] filter nodes empty, time round: %" PRIu64 ": pid:%d",
-            timestamp, getpid());
+        xinfo("[xzec_slash_info_contract][do_unqualified_node_slash_internal] filter nodes empty, time round: %" PRIu64 ": pid:%d", timestamp, getpid());
         return false;
     }
 
     return true;
-
 }
 
 void xzec_slash_info_contract::pre_condition_process(xunqualified_node_info_t& summarize_info, uint32_t& tableblock_count) {

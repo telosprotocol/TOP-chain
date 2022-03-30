@@ -487,6 +487,7 @@ XDECLARE_CONFIGURATION(prune_reserve_number, std::uint64_t, 1024);
 #else
 XDECLARE_CONFIGURATION(prune_reserve_number, std::uint64_t, 10000);
 #endif
+XDECLARE_CONFIGURATION(evm_json_rpc_port, uint16_t, 19086);
 
 /* end of development parameters */
 
