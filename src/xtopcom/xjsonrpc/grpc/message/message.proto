@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message;
+
+option go_package ="../message";
+
+message req_balance { string address = 1; }
+message res_balance { uint64 balance = 1; }
+
+
+service Greeter {
+    rpc GetBalance(req_balance)returns(res_balance){}
+}
