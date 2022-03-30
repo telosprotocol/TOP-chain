@@ -1,3 +1,4 @@
+#include <sstream>
 #define private public
 
 #include "nlohmann/json.hpp"

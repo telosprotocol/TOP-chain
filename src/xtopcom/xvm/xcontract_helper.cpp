@@ -193,7 +193,7 @@ vector<string> xcontract_helper::list_get_all(const string& key, const string& a
         std::error_code ec{ enum_xvm_error_code::enum_vm_exception };
         top::error::throw_error(ec, "LIST_GET_ALL " + key + " error");
     }
-    return std::move(value_list);
+    return value_list;
 }
 
 bool xcontract_helper::list_exist(const string& key) {

@@ -61,7 +61,8 @@ void xhttp_server::start(uint16_t nPort, uint32_t nThreadNum) {
         xkinfo_rpc("on_error:%s,%d", ec.message().c_str(), ec.value());
     };
     m_server.io_service = m_rpc_service->m_io_service;
-    m_server_thread = std::thread([self = shared_from_this()]() {
+    auto self = shared_from_this();
+    m_server_thread = std::thread([self]() {
         // Start server
         self->m_server.start();
     });
@@ -75,7 +76,8 @@ void xhttp_server::start(uint16_t nPort, uint32_t nThreadNum) {
         m_config.SetAllowBorrowSize(0);
         m_config.SetRequestToken(1000);
         m_ratelimit = top::make_unique<RatelimitServer>(m_config);
-        m_ratelimit->RegistRequestOut([self = shared_from_this()](RatelimitData * data) {
+        auto self = shared_from_this();
+        m_ratelimit->RegistRequestOut([self](RatelimitData * data) {
             if (data == nullptr) {
                 xdbg("rpc_service http_server null request");
                 return;
@@ -86,7 +88,7 @@ void xhttp_server::start(uint16_t nPort, uint32_t nThreadNum) {
             m_rpc_service->execute(dynamic_cast<RatelimitDataHttp *>(data)->response_, dynamic_cast<RatelimitDataHttp *>(data)->content_, ip_s);
             delete data;
         });
-        m_ratelimit->RegistResponseOut([self = shared_from_this()](RatelimitData * data) {
+        m_ratelimit->RegistResponseOut([self](RatelimitData * data) {
             if (data == nullptr) {
                 xdbg("rpc_service http_server null response");
                 return;

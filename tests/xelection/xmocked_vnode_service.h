@@ -5,6 +5,7 @@
 #pragma once
 
 #ifndef private
+#include <sstream>
 #define private protected
 #endif
 
