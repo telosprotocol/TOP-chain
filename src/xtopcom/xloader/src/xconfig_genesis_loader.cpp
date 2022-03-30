@@ -191,7 +191,7 @@ bool xconfig_genesis_loader_t::extract_genesis_para(data::xrootblock_para_t & pa
         }
 
         return true;
-    }catch(xJson::LogicError) {
+    }catch(xJson::LogicError const &) {
         xerror("xconfig_genesis_loader_t::extract_genesis_para json logic error");
         return false;
     }catch(const std::exception& e) {
