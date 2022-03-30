@@ -56,6 +56,7 @@ namespace top
             enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
             enum_vaccount_addr_type_native_contract             = '2',  //secp256k1 generated key->account
             enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
+            enum_vaccount_addr_type_secp256k1_evm_user_account  = '6',
             enum_vaccount_addr_type_secp256k1_eth_user_account  = '8',
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
         };
@@ -67,7 +68,7 @@ namespace top
             enum_chain_zone_beacon_index      = 1,  //for beacon
             enum_chain_zone_zec_index         = 2,  //for election
             enum_chain_zone_frozen_index      = 3,  // for sync
-            enum_chain_zone_eth_index         = 4,  // for eth
+            enum_chain_zone_evm_index         = 4,  // for eth
 
             enum_chain_zone_fullnode_index    = 13,
             enum_chain_zone_archive_index     = 14, //for archive nodes
@@ -106,7 +107,7 @@ namespace top
             xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
                 m_zone_index = zone_index;
                 m_subaddr = subaddr;
-                xassert(m_zone_index <= enum_chain_zone_zec_index || m_zone_index == enum_chain_zone_eth_index);
+                xassert(m_zone_index <= enum_chain_zone_zec_index || m_zone_index == enum_chain_zone_evm_index);
                 xassert(m_subaddr < enum_vbucket_has_tables_count);
             }
         public:
