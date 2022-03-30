@@ -70,6 +70,11 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 #endif
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
+
+        if (m_ledger_id.zone_id() != common::xconsensus_zone_id) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+        }
+
         m_account_type = t;
 
         break;
@@ -94,6 +99,19 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 
         break;
 
+    case base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_evm_user_account:
+        if (base_address.length() != USER_ACCOUNT_LENGTH) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+        }
+
+        if (m_ledger_id.zone_id() != common::xevm_zone_id) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+        }
+
+        m_account_type = t;
+
+        break;
+
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account:
         if (base_address.length() != USER_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)
@@ -101,6 +119,11 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 #endif
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
+
+        if (m_ledger_id.zone_id() != common::xconsensus_zone_id) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+        }
+
         m_account_type = t;
 
         break;
