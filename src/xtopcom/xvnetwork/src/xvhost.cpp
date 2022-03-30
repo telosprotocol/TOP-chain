@@ -90,7 +90,8 @@ void xtop_vhost::start() {
     running(true);
     assert(running());
 
-    threading::xbackend_thread::spawn([this, self = shared_from_this()] {
+    auto self = shared_from_this();
+    threading::xbackend_thread::spawn([this, self] {
 #if defined DEBUG
         m_vhost_thread_id = std::this_thread::get_id();
 #endif
@@ -461,7 +462,8 @@ void xtop_vhost::do_handle_network_data() {
     assert(m_vhost_thread_id == std::this_thread::get_id());
 
 #if defined DEBUG
-    xscope_executer_t do_handle_network_data_exit_verifier{[this, self = shared_from_this()] { assert(!running()); }};
+    auto self = shared_from_this();
+    xscope_executer_t do_handle_network_data_exit_verifier{[this, self] { assert(!running()); }};
 #endif
     while (running()) {
         try {
@@ -620,7 +622,7 @@ void xtop_vhost::do_handle_network_data() {
                                      top::get<common::xnode_address_t const>(callback_info).to_string().c_str());
 #ifdef ENABLE_METRICS
                                 char msg_info[30] = {0};
-                                snprintf(msg_info, 29, "%x|%" PRIx64, vnetwork_message.message().id(), message.hash());
+                                snprintf(msg_info, 29, "%x|%" PRIx64, static_cast<uint32_t>(vnetwork_message.message().id()), message.hash());
                                 XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", msg_info, uint32_t(100000));
 #endif
                                 XMETRICS_GAUGE(metrics::vhost_recv_callback, 1);

@@ -1,6 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#include <sstream>
 #define private public
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer.h"

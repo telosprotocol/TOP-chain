@@ -1,6 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#include <sstream>
 #define private public
 #include "tests/xsystem_contract/xrec_standby_algorithm/xtest_rec_standby_contract_fixture.h"
 

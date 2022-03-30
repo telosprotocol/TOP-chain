@@ -1,4 +1,5 @@
 #ifndef private
+#include <sstream>
 #define private public
 #endif
 #include "xbase/xobject_ptr.h"
