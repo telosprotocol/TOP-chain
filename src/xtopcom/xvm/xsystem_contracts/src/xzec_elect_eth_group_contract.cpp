@@ -157,7 +157,7 @@ void xtop_zec_elect_eth_contract::on_timer(common::xlogic_time_t const current_t
             start_time += eth_election_interval / 2;
         }
 
-        auto const successful = elect_group(common::xeth_zone_id,
+        auto const successful = elect_group(common::xevm_zone_id,
                                             common::xdefault_cluster_id,
                                             common::xdefault_group_id,
                                             current_time,

@@ -166,7 +166,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
                                                                              {rec_elect_fullnode_contract_address, common::xfullnode_zone_id},
                                                                              {rec_elect_edge_contract_address, common::xedge_zone_id},
                                                                              {zec_elect_consensus_contract_address, common::xdefault_zone_id},
-                                                                             {zec_elect_eth_contract_address, common::xeth_zone_id}};
+                                                                             {zec_elect_eth_contract_address, common::xevm_zone_id}};
     for (const auto & addr : sys_addr) {
         for (auto const & property : data::election::get_property_name_by_addr(addr)) {
             common::xzone_id_t zone_id = addr_to_zone_id[addr];
