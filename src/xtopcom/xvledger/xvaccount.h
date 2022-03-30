@@ -567,13 +567,13 @@ namespace top
             const uint16_t  get_meta_process_id() const {return _meta_process_id;}
             const uint8_t   get_meta_spec_version()const{return _meta_process_id;}
             const uint64_t  get_highest_saved_block_height() const {return _highest_saved_block_height;}
+            bool    set_latest_deleted_block(const uint64_t height);
         protected: //APIs only open for  xvaccountobj_t object
             bool    set_block_meta(const xblockmeta_t & new_meta);
             bool    set_state_meta(const xstatemeta_t & new_meta);
             bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
             bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
-            bool    set_latest_deleted_block(const uint64_t height);
                   
             xblockmeta_t &  get_block_meta();
             xstatemeta_t &  get_state_meta();
