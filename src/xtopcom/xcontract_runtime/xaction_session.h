@@ -15,6 +15,7 @@
 #include "xdata/xconsensus_action_fwd.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xreceipt_data_store.h"
+#include "xdata/xtop_action_fwd.h"
 
 #include <cinttypes>
 
