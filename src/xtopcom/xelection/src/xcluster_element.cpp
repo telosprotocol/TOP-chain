@@ -582,7 +582,7 @@ xgroup_update_result_t xtop_cluster_element::add_group_element_with_lock_hold_ou
     }
 
     case common::xnode_type_t::eth: {
-        assert(zone_id() == common::xeth_zone_id);
+        assert(zone_id() == common::xevm_zone_id);
         group_element = std::make_shared<xgroup_element_t>(election_round, group_id, sharding_size, associated_election_blk_height, shared_from_this());
         break;
     }
