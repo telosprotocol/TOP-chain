@@ -16,12 +16,13 @@
 #include "xmbus/xevent_reg_holder.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter.h"
+#include "xrpc/xevm/xevm_rpc.h"
 #include "xrpc/xrpc_init.h"
 #include "xstore/xstore_face.h"
-#include "xtxstore/xtxstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xbasic_vnode.h"
@@ -51,6 +52,7 @@ private:
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
     std::shared_ptr<xrpc::xrpc_init> m_rpc_services;
+    std::unique_ptr<rpc::evm::xevm_rpc_t> m_evm_rpc;
 
     // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;

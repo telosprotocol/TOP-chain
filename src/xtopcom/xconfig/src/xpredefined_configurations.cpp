@@ -204,6 +204,7 @@ XDEFINE_CONFIGURATION(log_level);
 XDEFINE_CONFIGURATION(log_path);
 XDEFINE_CONFIGURATION(db_path);
 XDEFINE_CONFIGURATION(ip);
+XDEFINE_CONFIGURATION(evm_json_rpc_port);
 /* end of development parameters */
 
 /* end of offchain parameters */
