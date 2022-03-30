@@ -401,6 +401,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/release)
         link_directories(src/xtopcom/xdepends/libs/linux)
     ENDIF()
+    
+    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
@@ -462,6 +464,14 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if (XENABLE_TESTS)
+    file(STRINGS /etc/os-release distro REGEX "^NAME=")
+    string(REGEX REPLACE "NAME=\"(.*)\"" "\\1" distro "${distro}")
+    message("found ${distro}")
+    if (${distro} STREQUAL "Ubuntu")
+        message("set no pie on ${distro} for test")
+        # todo update libgtest to avoid this
+        set(CMAKE_CXX_FLAGS "-no-pie")
+    endif()
     enable_testing()
     include_directories(.)
     add_subdirectory(tests)
