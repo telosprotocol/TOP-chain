@@ -82,7 +82,7 @@ public:
     // uninit reference data
     virtual bool unreg(const xvip2_t & xip) = 0;
     virtual bool fade(const xvip2_t & xip) = 0;
-    virtual xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const = 0;
+    virtual data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const = 0;
     virtual void start() = 0;
     virtual void stop() = 0;
 };

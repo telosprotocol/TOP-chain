@@ -32,7 +32,7 @@ xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_fa
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter)] = std::make_shared<config::xconfig_delete_parameter_action_t>();
 
     // set initial onchain param
-    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    data::xtcc_transaction_ptr_t tcc_genesis = std::make_shared<data::xtcc_transaction_t>();
     m_last_param_map = tcc_genesis->m_initial_values;
 }
 

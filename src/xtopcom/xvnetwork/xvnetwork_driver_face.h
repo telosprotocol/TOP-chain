@@ -153,6 +153,9 @@ public:
      */
     virtual std::vector<common::xnode_address_t> archive_addresses(common::xnode_type_t node_type) const = 0;
 
+    // virtual std::vector<common::xnode_address_t> archive_addresses(std::error_code & ec) const = 0;
+    // virtual std::vector<common::xnode_address_t> exchange_addresses(std::error_code & ec) const = 0;
+
     /// @brief Get the fullnodes' addresses
     /// @param ec Store the error code when getting the data.
     /// @return The fullnodes' addresses.

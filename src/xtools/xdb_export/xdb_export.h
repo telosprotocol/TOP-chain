@@ -103,14 +103,14 @@ private:
                 not_need_confirm = true;
             }
 
-            if (subtype == enum_transaction_subtype_send) {
+            if (subtype == data::enum_transaction_subtype_send) {
                 // src = tx_ext.src;
                 // target = tx_ext.target;
                 self_table = tx_ext.self_table;
                 peer_table = tx_ext.peer_table;
                 fire_timestamp = (uint32_t)tx_ext.fire_timestamp;   
                 send_block_info.copy(tx_ext);
-            } else if (subtype == enum_transaction_subtype_recv) {
+            } else if (subtype == data::enum_transaction_subtype_recv) {
                 recv_block_info.copy(tx_ext);
             } else {
                 confirm_block_info.copy(tx_ext);

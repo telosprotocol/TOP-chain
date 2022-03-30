@@ -494,9 +494,9 @@ TEST_F(test_genesis, test_create_genesis_block_before_init) {
         EXPECT_EQ(m_blockstore->get_latest_executed_block_height(account), 0);
         auto vblock = m_blockstore->get_genesis_block(account);
         auto bstate = m_statestore->get_block_state(vblock.get());
-        EXPECT_EQ(bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 500600000);
-        EXPECT_EQ(bstate->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance(), 800000000);
-        EXPECT_EQ(bstate->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->get(), 1609387590);
+        EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 500600000);
+        EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), 800000000);
+        EXPECT_EQ(bstate->load_uint64_var(data::XPROPERTY_ACCOUNT_CREATE_TIME)->get(), 1609387590);
     }
     // contract
     {
@@ -591,7 +591,7 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
         auto vblock = m_blockstore->get_genesis_block(datauser);
         auto bstate = m_statestore->get_block_state(vblock.get());
         auto property_set = bstate->get_all_property_names();
-        EXPECT_EQ(property_set.count(XPROPERTY_BALANCE_AVAILABLE), true);
+        EXPECT_EQ(property_set.count(data::XPROPERTY_BALANCE_AVAILABLE), true);
     }
     // common account
     {

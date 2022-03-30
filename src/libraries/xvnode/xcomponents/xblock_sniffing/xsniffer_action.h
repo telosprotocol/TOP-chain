@@ -27,7 +27,7 @@ public:
                      std::string const & action_name,
                      std::string const & action_params,
                      uint64_t timestamp);
-    static void broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, xblock_ptr_t const & block_ptr, common::xnode_type_t types);
+    static void broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, data::xblock_ptr_t const & block_ptr, common::xnode_type_t types);
 };
 
 using xsniffer_action_t = xtop_sniffer_action;

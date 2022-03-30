@@ -40,7 +40,7 @@ protected:
     }
 
 
-    void  transaction_set_signature(xtransaction_ptr_t const& trx_ptr, xecdsasig_t sig) {
+    void transaction_set_signature(data::xtransaction_ptr_t const & trx_ptr, xecdsasig_t sig) {
         trx_ptr->set_authorization(std::string(reinterpret_cast<char*>(sig.get_compact_signature()), sig.get_compact_signature_size()));
     }
 
@@ -153,7 +153,7 @@ TEST_F(test_xverifier, generate_address) {
     ASSERT_EQ(address_is_valid(custom_sc_addr), true);
 }
 
-xtransaction_ptr_t make_a_normal_transfer_tx() {
+data::xtransaction_ptr_t make_a_normal_transfer_tx() {
     uint8_t addr_type = base::enum_vaccount_addr_type_secp256k1_user_account;
     uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
     auto src_addr = xcrypto_util::make_address_by_random_key(addr_type, ledger_id);
@@ -161,30 +161,30 @@ xtransaction_ptr_t make_a_normal_transfer_tx() {
 
     uint256_t last_hash;
     uint64_t last_nonce = 0;
-    xtransaction_ptr_t trx_ptr = xtransaction_maker::make_transfer_tx(src_addr, last_hash, last_nonce, target_addr, 100, 0, 0, 0);
+    data::xtransaction_ptr_t trx_ptr = data::xtransaction_maker::make_transfer_tx(src_addr, last_hash, last_nonce, target_addr, 100, 0, 0, 0);
     return trx_ptr;
 }
 
 TEST_F(test_xverifier, trx_verifier_validation_normal) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 
 TEST_F(test_xverifier, trx_verifier_validation_1_local_tx) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     trx_ptr->set_same_source_target_address(sys_contract_rec_elect_edge_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_same_source_target_address(sys_contract_rec_elect_edge_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 
 TEST_F(test_xverifier, trx_verifier_validation_2_burn_tx) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string source_addr = trx_ptr->get_source_addr();
 
     trx_ptr->set_same_source_target_address(black_hole_addr);
@@ -192,23 +192,23 @@ TEST_F(test_xverifier, trx_verifier_validation_2_burn_tx) {
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(sys_contract_rec_elect_edge_addr, black_hole_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(sys_contract_rec_elect_edge_addr, black_hole_addr);
-    trx_ptr->set_tx_type(xtransaction_type_transfer);
+    trx_ptr->set_tx_type(data::xtransaction_type_transfer);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(source_addr, black_hole_addr);
-    trx_ptr->set_tx_type(xtransaction_type_transfer);
+    trx_ptr->set_tx_type(data::xtransaction_type_transfer);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
 
@@ -218,7 +218,7 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(src_addr, bad_src_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
@@ -228,13 +228,13 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     // trx_ptr->set_len();
     // ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_rec_elect_edge_addr);
-    trx_ptr->set_tx_type(xtransaction_type_transfer);
+    trx_ptr->set_tx_type(data::xtransaction_type_transfer);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, trx_verifier_validation_4_len) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     trx_ptr->set_tx_len(10000);
@@ -247,25 +247,25 @@ TEST_F(test_xverifier, trx_verifier_validation_4_len) {
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, trx_verifier_validation_5_system_contract_call_limit) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_zec_workload_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_rec_registration_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, trx_verifier_validation_6_unuse_member) {
-    xtransaction_ptr_t trx_base_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_base_ptr = make_a_normal_transfer_tx();
     trx_base_ptr->add_ref();
-    xtransaction_v1_ptr_t trx_ptr;
-    trx_ptr.attach(dynamic_cast<xtransaction_v1_t*>(trx_base_ptr.get()));
+    data::xtransaction_v1_ptr_t trx_ptr;
+    trx_ptr.attach(dynamic_cast<data::xtransaction_v1_t *>(trx_base_ptr.get()));
     trx_ptr->set_tx_version(1);
     trx_ptr->set_digest();
     trx_ptr->set_len();
@@ -328,19 +328,19 @@ TEST_F(test_xverifier, trx_verifier_validation_6_unuse_member) {
 }
 
 TEST_F(test_xverifier, trx_verifier_validation_7_tx_type) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     trx_ptr->set_tx_type(100);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 
 TEST_F(test_xverifier, trx_verifier_validation_8_shard_contract_addr) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     base::xvaccount_t _src_vaddr(src_addr);
 
@@ -363,7 +363,7 @@ TEST_F(test_xverifier, trx_verifier_validation_8_shard_contract_addr) {
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
@@ -374,7 +374,7 @@ TEST_F(test_xverifier, trx_verifier_validation_8_shard_contract_addr) {
 
 
 TEST_F(test_xverifier, trx_verifier_source_1) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
@@ -384,14 +384,14 @@ TEST_F(test_xverifier, trx_verifier_source_1) {
 }
 
 TEST_F(test_xverifier, trx_verifier_source_2) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     ASSERT_NE(xtx_verifier::verify_send_tx_source(trx_ptr.get(), true), xverifier_error::xverifier_success);
     trx_ptr->set_same_source_target_address(sys_contract_sharding_vote_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_source(trx_ptr.get(), true), xverifier_error::xverifier_success);
     trx_ptr->set_same_source_target_address(sys_contract_sharding_vote_addr);
-    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_tx_type(data::xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_source(trx_ptr.get(), true), xverifier_error::xverifier_success);
@@ -399,7 +399,7 @@ TEST_F(test_xverifier, trx_verifier_source_2) {
 
 
 TEST_F(test_xverifier, trx_verifier_signature_1) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
@@ -423,7 +423,7 @@ TEST_F(test_xverifier, trx_verifier_signature_1) {
 }
 
 TEST_F(test_xverifier, trx_verifier_legitimac_1) {
-    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty

@@ -83,7 +83,7 @@ void xtop_zec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
     }
     xinfo("[xzec_standby_pool_contract_t] next_read_height: %" PRIu64, next_read_height);
 
-    base::xauto_ptr<xblock_t> block_ptr = get_block_by_height(sys_contract_rec_standby_pool_addr, next_read_height);
+    base::xauto_ptr<data::xblock_t> block_ptr = get_block_by_height(sys_contract_rec_standby_pool_addr, next_read_height);
     std::string result;
     if (block_ptr == nullptr) {
         xwarn("[xzec_standby_pool_contract_t] fail to get the rec_standby_pool data. next_read_block height:%" PRIu64, next_read_height);

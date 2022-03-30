@@ -72,7 +72,7 @@ base::xtable_index_t xbatch_packer::get_tableid() {
     return m_tableid;
 }
 
-void xbatch_packer::set_xip(xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
+void xbatch_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
     auto zone_id = get_zone_id_from_xip2(leader);
     // if consensus zone
     if (zone_id == base::enum_chain_zone_consensus_index) {
@@ -126,7 +126,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
 
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     uint64_t gmtime = base::xtime_utl::gettimeofday();
-    xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, gmtime);
+    data::xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, gmtime);
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
@@ -159,7 +159,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
     set_xip(proposal_para, local_xip);  // set leader xip
 
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
-    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num);
+    data::xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num);
     if (proposal_block == nullptr) {
         xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
@@ -528,7 +528,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                     m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_proposal_finish);
                 if (commit_block != nullptr) {
                     m_para->get_resources()->get_vblockstore()->load_block_input(*this, commit_block.get());
-                    make_receipts_and_send(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(vblock));
+                    make_receipts_and_send(dynamic_cast<data::xblock_t *>(commit_block.get()), dynamic_cast<data::xblock_t *>(vblock));
                 }
             }
         } else {
@@ -564,7 +564,7 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
 
-void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
+void xbatch_packer::make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block) {
     // broadcast receipt id state to all shards
     if (commit_block->get_block_class() == base::enum_xvblock_class_full || commit_block->get_block_class() == base::enum_xvblock_class_nil) {
         return;

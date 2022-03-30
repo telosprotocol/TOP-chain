@@ -2,8 +2,10 @@
 
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xproperty.h"
 #include "xdata/xslash.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xunit_bstate.h"
 #include "xvledger/xvledger.h"
 
 #include <fstream>
@@ -66,15 +68,15 @@ void xdb_reset_t::generate_reset_check_file(std::vector<std::string> const & sys
 
 void xdb_reset_t::verify(json const & contract, json const & user) {
     std::vector<std::pair<uint32_t, std::string>> balance_property = {
-        std::make_pair(0, XPROPERTY_BALANCE_AVAILABLE),
-        std::make_pair(1, XPROPERTY_BALANCE_BURN),
-        std::make_pair(2, XPROPERTY_BALANCE_LOCK),
-        std::make_pair(3, XPROPERTY_BALANCE_PLEDGE_TGAS),
-        std::make_pair(4, XPROPERTY_BALANCE_PLEDGE_VOTE),
-        std::make_pair(5, XPROPERTY_LOCK_TGAS),
-        std::make_pair(6, XPROPERTY_EXPIRE_VOTE_TOKEN_KEY),
-        std::make_pair(7, XPROPERTY_UNVOTE_NUM),
-        std::make_pair(8, XPROPERTY_LOCK_TOKEN_KEY),
+        std::make_pair(0, data::XPROPERTY_BALANCE_AVAILABLE),
+        std::make_pair(1, data::XPROPERTY_BALANCE_BURN),
+        std::make_pair(2, data::XPROPERTY_BALANCE_LOCK),
+        std::make_pair(3, data::XPROPERTY_BALANCE_PLEDGE_TGAS),
+        std::make_pair(4, data::XPROPERTY_BALANCE_PLEDGE_VOTE),
+        std::make_pair(5, data::XPROPERTY_LOCK_TGAS),
+        std::make_pair(6, data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY),
+        std::make_pair(7, data::XPROPERTY_UNVOTE_NUM),
+        std::make_pair(8, data::XPROPERTY_LOCK_TOKEN_KEY),
     };
     std::vector<std::string> reward_property = {
         XPORPERTY_CONTRACT_NODE_REWARD_KEY,
@@ -214,7 +216,7 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
             std::cout << account << " height " << 0 << " bstate null!" << std::endl;
             continue;
         }
-        xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
         if (unitstate == nullptr) {
             std::cout << account << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -230,27 +232,28 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
             continue;
         }
         // $0
-        auto balance = unitstate->token_get(XPROPERTY_BALANCE_AVAILABLE);
+        auto balance = unitstate->token_get(data::XPROPERTY_BALANCE_AVAILABLE);
         if (!is_account_address(account_address)) {
-            if (!accounts_json["contract_account_parse"].count(account) && unitstate->token_get(XPROPERTY_BALANCE_AVAILABLE) == 0) {
+            if (!accounts_json["contract_account_parse"].count(account) && unitstate->token_get(data::XPROPERTY_BALANCE_AVAILABLE) == 0) {
                 // std::cout << account << " check fail2" << std::endl;
                 continue;
             }
         }
         // std::cout << account << " check ok" << std::endl;
-        accounts_json[key_j][account][XPROPERTY_BALANCE_AVAILABLE] = unitstate->token_get(XPROPERTY_BALANCE_AVAILABLE) + unitstate->token_get(XPROPERTY_BALANCE_LOCK);
+        accounts_json[key_j][account][data::XPROPERTY_BALANCE_AVAILABLE] =
+            unitstate->token_get(data::XPROPERTY_BALANCE_AVAILABLE) + unitstate->token_get(data::XPROPERTY_BALANCE_LOCK);
         // $a
-        accounts_json[key_j][account][XPROPERTY_BALANCE_BURN] = unitstate->token_get(XPROPERTY_BALANCE_BURN);
+        accounts_json[key_j][account][data::XPROPERTY_BALANCE_BURN] = unitstate->token_get(data::XPROPERTY_BALANCE_BURN);
         // $c
-        accounts_json[key_j][account][XPROPERTY_BALANCE_PLEDGE_TGAS] = unitstate->token_get(XPROPERTY_BALANCE_PLEDGE_TGAS);
+        accounts_json[key_j][account][data::XPROPERTY_BALANCE_PLEDGE_TGAS] = unitstate->token_get(data::XPROPERTY_BALANCE_PLEDGE_TGAS);
         // $d
-        accounts_json[key_j][account][XPROPERTY_BALANCE_PLEDGE_VOTE] = unitstate->token_get(XPROPERTY_BALANCE_PLEDGE_VOTE);
+        accounts_json[key_j][account][data::XPROPERTY_BALANCE_PLEDGE_VOTE] = unitstate->token_get(data::XPROPERTY_BALANCE_PLEDGE_VOTE);
         // $00
-        accounts_json[key_j][account][XPROPERTY_LOCK_TGAS] = unitstate->uint64_property_get(XPROPERTY_LOCK_TGAS);
+        accounts_json[key_j][account][data::XPROPERTY_LOCK_TGAS] = unitstate->uint64_property_get(data::XPROPERTY_LOCK_TGAS);
         // $03
         std::map<std::string, std::string> pledge_votes;
         json j;
-        if (unitstate->map_get(XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes)) {
+        if (unitstate->map_get(data::XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes)) {
             int cnt{0};
             for (auto & v : pledge_votes) {
                 uint64_t vote_num{0};
@@ -268,21 +271,21 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
                 j[base::xstring_utl::tostring(++cnt)] = jv;
             }
         }
-        accounts_json[key_j][account][XPROPERTY_PLEDGE_VOTE_KEY] = j;
+        accounts_json[key_j][account][data::XPROPERTY_PLEDGE_VOTE_KEY] = j;
         // $04
         std::string expire_votes;
         json j2 = 0;
-        if (unitstate->string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, expire_votes)) {
+        if (unitstate->string_get(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, expire_votes)) {
             if (expire_votes.empty()) {
                 j2 = base::xstring_utl::touint64(expire_votes);
             }
         }
-        accounts_json[key_j][account][XPROPERTY_EXPIRE_VOTE_TOKEN_KEY] = j2;
+        accounts_json[key_j][account][data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY] = j2;
         // $05
-        accounts_json[key_j][account][XPROPERTY_UNVOTE_NUM] = unitstate->uint64_property_get(XPROPERTY_UNVOTE_NUM);
+        accounts_json[key_j][account][data::XPROPERTY_UNVOTE_NUM] = unitstate->uint64_property_get(data::XPROPERTY_UNVOTE_NUM);
         // $07
         if (is_account_address(account_address)) {
-            accounts_json[key_j][account][XPROPERTY_ACCOUNT_CREATE_TIME] = unitstate->uint64_property_get(XPROPERTY_ACCOUNT_CREATE_TIME);
+            accounts_json[key_j][account][data::XPROPERTY_ACCOUNT_CREATE_TIME] = unitstate->uint64_property_get(data::XPROPERTY_ACCOUNT_CREATE_TIME);
         }
     }
 }
@@ -307,7 +310,7 @@ void xdb_reset_t::get_contract_stake_property_string(json & stake_json) {
             std::cout << addr << " height " << 0 << " bstate null!" << std::endl;
             continue;
         }
-        xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
         if (unitstate == nullptr) {
             std::cout << addr << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -361,7 +364,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
             std::cout << addr << " height " << 0 << " bstate null!" << std::endl;
             continue;
         }
-        xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
         if (unitstate == nullptr) {
             std::cout << addr << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -558,7 +561,7 @@ void xdb_reset_t::get_contract_table_stake_property_map_string_string(json & sta
                 std::cout << table_addr << " height " << 0 << " bstate null!" << std::endl;
                 continue;
             }
-            xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+            data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
             if (unitstate == nullptr) {
                 std::cout << table_addr << " height " << 0 << " unitstate null!" << std::endl;
                 continue;

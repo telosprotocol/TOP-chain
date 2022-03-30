@@ -80,17 +80,18 @@ void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg, xjson_
     });
     switch (edge_msg.m_tx_type) {
     case enum_xrpc_tx_type::enum_xrpc_tx_type: {
-        auto ret = xtransaction_t::set_tx_by_serialized_data(json_proc.m_tx_ptr, edge_msg.m_message_body);
+        auto ret = data::xtransaction_t::set_tx_by_serialized_data(json_proc.m_tx_ptr, edge_msg.m_message_body);
         assert(ret == true);
         // json_proc.m_tx_ptr->m_from = edge_msg.m_advance_address;
         xdbg_rpc("deal tx hash: %s, version: %d, advance addr: %s",
-                 uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size()).c_str(), json_proc.m_tx_ptr->get_tx_version(),
+                 data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size()).c_str(),
+                 json_proc.m_tx_ptr->get_tx_version(),
                  edge_msg.m_advance_address.to_string().c_str());
 
         /*consensus_service::xunit_service_face* unit_src =
             static_cast<consensus_service::xunit_service_face*>(xcontext_t::instance().get_global_object(enum_xtop_global_object_unit_service));
         unit_src->request_transaction_consensus(json_proc.m_tx_ptr);*/
-        std::string tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
+        std::string tx_hash = data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
         xkinfo("[global_trace][shard_rpc][push unit_service]%s,%s", tx_hash.c_str(), json_proc.m_tx_ptr->get_source_addr().c_str());
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
         uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);

@@ -131,7 +131,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         if (latest_end_block_height >= peer_end_height) {
             if (sync_policy == enum_chain_sync_policy_fast) {
                 auto latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
-                xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+                data::xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
                 if (block->is_full_state_block()) {
                     return;
                 }

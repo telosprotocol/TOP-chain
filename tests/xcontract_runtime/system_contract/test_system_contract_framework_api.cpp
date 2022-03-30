@@ -76,7 +76,7 @@ TEST_F(test_contract_framework_api, test_asset_out) {
 
 
     observer_ptr<xcontract_execution_context_t> ctx{new xcontract_execution_context_t};
-    xreceipt_data_store_t receip_data;
+    data::xreceipt_data_store_t receip_data;
     receip_data.receipt_data(for_receipt_data);
     ctx->input_receipt_data(receip_data);
     contract_handle.contract_execution_context(ctx);
