@@ -312,6 +312,10 @@ if (BUILD_RUSTVM)
     add_definitions(-DBUILD_RUSTVM)
 endif()
 
+if (BUILD_EVM)
+    add_definitions(-DBUILD_EVM)
+endif()
+
 if (LEAK_TRACER)
     add_definitions(-DLEAK_TRACER)
 endif()
