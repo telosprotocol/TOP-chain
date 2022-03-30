@@ -482,6 +482,7 @@ XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
 XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
 XDECLARE_CONFIGURATION(auto_prune_data, const char *, "off");
+XDECLARE_CONFIGURATION(evm_json_rpc_port, uint16_t, 19086);
 
 /* end of development parameters */
 
