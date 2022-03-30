@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"jsonrpcdemo/jsonrpc/client"
 	"jsonrpcdemo/jsonrpc/util"
-
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
