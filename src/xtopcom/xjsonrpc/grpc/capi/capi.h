@@ -1,0 +1,1 @@
+int c_getBalance(void *obj,char *address);
