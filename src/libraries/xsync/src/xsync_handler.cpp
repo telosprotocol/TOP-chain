@@ -980,6 +980,8 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
 
         store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
         store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
+        store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
+        store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
         xsync_kinfo("xsync_handler add_role_phase1 add %s", _vaddr.c_str());
     }
     for (uint32_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
@@ -991,6 +993,8 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
 
         store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
         store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
+        store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
+        store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
         xsync_kinfo("xsync_handler add_role_phase1 add %s", _vaddr.c_str());
     }
     //}
