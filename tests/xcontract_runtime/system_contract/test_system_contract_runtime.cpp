@@ -1,4 +1,4 @@
-
+#include <sstream>
 #define private public
 #define protected public
 #include "tests/mock/xvchain_creator.hpp"
