@@ -136,7 +136,8 @@ void xtop_base_timer_driver::do_reap() {
         return;
     }
 
-    m_timers.push_back(top::make_unique<top::xbase_timer_t>(m_io_object, m_reap_interval, [this, self = shared_from_this()](std::chrono::milliseconds) -> bool {
+    auto self = shared_from_this();
+    m_timers.push_back(top::make_unique<top::xbase_timer_t>(m_io_object, m_reap_interval, [this, self](std::chrono::milliseconds) -> bool {
         if (!running()) {
             xwarn("[xbase timer driver] timer driver not run");
             return false;
