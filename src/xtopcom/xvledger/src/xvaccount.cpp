@@ -236,7 +236,7 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
-                    } else if (ledger_id == enum_chain_zone_eth_index) {
+                    } else if (ledger_id == enum_chain_zone_evm_index) {
                         if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ETH_TABLE_USED_NUM) {
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
@@ -266,7 +266,7 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
-                    } else if (ledger_id == enum_chain_zone_eth_index) {
+                    } else if (ledger_id == enum_chain_zone_evm_index) {
                         if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ETH_TABLE_USED_NUM) {
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
