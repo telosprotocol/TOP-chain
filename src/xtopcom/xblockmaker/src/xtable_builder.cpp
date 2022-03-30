@@ -22,6 +22,7 @@ void make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::str
         XMETRICS_GAUGE(metrics::cpu_hash_256_receiptid_bin_calc, 1);
         std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
         property_hashs[data::xtable_bstate_t::get_receiptid_property_name()] = prophash;
+        xinfo("make_table_prove_property_hashs hash1=%s", base::xstring_utl::to_hex(prophash).c_str());
     }
 }
 

@@ -43,7 +43,7 @@ std::vector<standby_node_info> xstatic_election_center::get_standby_config() {
 }
 
 std::vector<node_info> xstatic_election_center::get_static_election_nodes(std::string const & key) {
-    assert(key == "zec_start_nodes" || key == "archive_start_nodes" || key == "edge_start_nodes" || key == "exchange_start_nodes");
+    assert(key == "zec_start_nodes" || key == "archive_start_nodes" || key == "edge_start_nodes" || key == "exchange_start_nodes" || key == "fullnode_start_nodes");
     std::vector<node_info> res;
 
     auto & config_register = top::config::xconfig_register_t::get_instance();

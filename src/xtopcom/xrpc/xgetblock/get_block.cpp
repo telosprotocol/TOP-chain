@@ -1113,8 +1113,7 @@ void get_block_handle::getProperty() {
 }
 
 void get_block_handle::set_redeem_token_num(xaccount_ptr_t ac, xJson::Value & value) {
-    std::map<std::string, std::string> lock_txs;
-    ac->map_get(XPROPERTY_LOCK_TOKEN_KEY, lock_txs);
+    std::map<std::string, std::string> lock_txs = ac->map_get(XPROPERTY_LOCK_TOKEN_KEY);
 
     uint64_t tgas_redeem_num(0);
     uint64_t disk_redeem_num(0);
@@ -1468,7 +1467,8 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
         jv["round_no"] = static_cast<xJson::UInt64>(bp->get_height());
         jv["zone_id"] = common::xdefault_zone_id_value;
         for (auto const & property : property_names) {
-            if (false == state.string_get(property, elect_data) || elect_data.empty()) {
+            elect_data = state.string_get(property);
+            if (elect_data.empty()) {
                 continue;
             }
             auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(elect_data), std::end(elect_data)});

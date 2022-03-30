@@ -85,7 +85,7 @@ class xreceiptid_state_t {
 
  public:
     void        add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
-    bool        find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    bool        find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     void        update_unconfirm_tx_num();
     void        set_tableid_and_height(xtable_shortid_t tableid, uint64_t height);
 
@@ -96,7 +96,7 @@ class xreceiptid_state_t {
 
  public: // just for block build
     void        clear_pair_modified();
-    bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     const xreceiptid_pairs_ptr_t & get_all_receiptid_pairs() const {return m_binlog;}
 

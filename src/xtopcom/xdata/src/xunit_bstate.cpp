@@ -20,16 +20,13 @@
 namespace top {
 namespace data {
 
-xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate) {
+xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate, bool readonly)
+: xbstate_ctx_t(bstate, readonly) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_unit_state, 1);
-    bstate->add_ref();
-    m_bstate.attach(bstate);
 }
 
 xunit_bstate_t::~xunit_bstate_t() {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_unit_state, -1);
-    m_bstate->close();  // must do close firstly
-    m_bstate = nullptr;
 }
 
 uint64_t xunit_bstate_t::get_free_tgas() const {
@@ -102,86 +99,6 @@ uint64_t xunit_bstate_t::get_available_tgas(uint64_t timer_height, uint32_t toke
     return available_tgas;
 }
 
-bool xunit_bstate_t::string_get(const std::string& prop, std::string& value) const {
-    if (false == get_bstate()->find_property(prop)) {
-        xwarn("xunit_bstate_t::string_get fail-find property.account=%s,height=%ld,propname=%s", get_account().c_str(), get_block_height(), prop.c_str());
-        return false;
-    }
-    auto propobj = get_bstate()->load_string_var(prop);
-    if (nullptr == propobj) {
-        xerror("xunit_bstate_t::string_get fail-find load string var.account=%s,propname=%s", get_account().c_str(), prop.c_str());
-        return false;
-    }
-    value = propobj->query();
-    return true;
-}
-
-bool xunit_bstate_t::deque_get(const std::string& prop, std::deque<std::string> & deque) const {
-    if (false == get_bstate()->find_property(prop)) {
-        xwarn("xunit_bstate_t::deque_get fail-find property.account=%s,propname=%s", get_account().c_str(), prop.c_str());
-        return false;
-    }
-    auto propobj = get_bstate()->load_string_deque_var(prop);
-    if (nullptr == propobj) {
-        xerror("xunit_bstate_t::deque_get fail-find load deque var.account=%s,propname=%s", get_account().c_str(), prop.c_str());
-        return false;
-    }
-    deque = propobj->query();
-    return true;
-}
-
-bool xunit_bstate_t::map_get(const std::string& prop, std::map<std::string, std::string> & map) const {
-    if (false == get_bstate()->find_property(prop)) {
-        xwarn("xunit_bstate_t::map_get fail-find property.account=%s,propname=%s", get_account().c_str(), prop.c_str());
-        return false;
-    }
-    auto propobj = get_bstate()->load_string_map_var(prop);
-    if (nullptr == propobj) {
-        xerror("xunit_bstate_t::map_get fail-find load map var.account=%s,propname=%s", get_account().c_str(), prop.c_str());
-        return false;
-    }
-    map = propobj->query();
-    return true;
-}
-
-uint64_t xunit_bstate_t::token_get(const std::string& prop) const {
-    if (false == get_bstate()->find_property(prop)) {
-        return 0;
-    }
-    auto propobj = get_bstate()->load_token_var(prop);
-    base::vtoken_t balance = propobj->get_balance();
-    if (balance < 0) {
-        xerror("xunit_bstate_t::token_get fail-should not appear. balance=%ld", balance);
-        return 0;
-    }
-    return (uint64_t)balance;
-}
-
-uint64_t xunit_bstate_t::uint64_property_get(const std::string& prop) const {
-    if (false == get_bstate()->find_property(prop)) {
-        return 0;
-    }
-    auto propobj = get_bstate()->load_uint64_var(prop);
-    uint64_t value = propobj->get();
-    return value;
-}
-
-std::string xunit_bstate_t::native_map_get(const std::string & prop, const std::string & field) const {
-    if (false == get_bstate()->find_property(prop)) {
-        return {};
-    }
-    auto propobj = get_bstate()->load_string_map_var(prop);
-    return propobj->query(field);
-}
-
-std::string xunit_bstate_t::native_string_get(const std::string & prop) const {
-    if (false == get_bstate()->find_property(prop)) {
-        return {};
-    }
-    auto propobj = get_bstate()->load_string_var(prop);
-    return propobj->query();
-}
-
 uint64_t xunit_bstate_t::get_account_create_time() const {
     uint64_t create_time = uint64_property_get(XPROPERTY_ACCOUNT_CREATE_TIME);
     if (create_time < base::TOP_BEGIN_GMTIME) {
@@ -193,14 +110,14 @@ uint64_t xunit_bstate_t::get_account_create_time() const {
 }
 
 uint32_t xunit_bstate_t::get_unconfirm_sendtx_num() const {
-    std::string value = native_map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
+    std::string value = map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
     if (value.empty()) {
         return 0;
     }
     return base::xstring_utl::touint32(value);
 }
 uint64_t xunit_bstate_t::get_latest_send_trans_number() const {
-    std::string value = native_map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
+    std::string value = map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
     if (value.empty()) {
         return 0;
     }
@@ -208,7 +125,7 @@ uint64_t xunit_bstate_t::get_latest_send_trans_number() const {
 }
 
 uint64_t xunit_bstate_t::account_recv_trans_number() const {
-    std::string value = native_map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_RECVTX_NUM);
+    std::string value = map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_RECVTX_NUM);
     if (value.empty()) {
         return 0;
     }
@@ -216,7 +133,7 @@ uint64_t xunit_bstate_t::account_recv_trans_number() const {
 }
 
 uint256_t xunit_bstate_t::account_send_trans_hash() const {
-    std::string value = native_map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
+    std::string value = map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
     if (value.empty()) {
         uint256_t default_value;
         return default_value;
@@ -226,6 +143,29 @@ uint256_t xunit_bstate_t::account_send_trans_hash() const {
 uint64_t xunit_bstate_t::account_send_trans_number() const {
     return get_latest_send_trans_number();
 }
+
+
+//========= set apis ===========
+int32_t xunit_bstate_t::set_account_create_time(uint64_t clock) {
+    if (false == get_bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {        
+        uint64_t create_time = clock == 0 ? base::TOP_BEGIN_GMTIME : clock;
+        return uint64_set(XPROPERTY_ACCOUNT_CREATE_TIME, create_time);
+    }
+    return xsuccess;
+}
+
+int32_t xunit_bstate_t::set_tx_info_latest_sendtx_num(uint64_t num) {
+    std::string value = base::xstring_utl::tostring(num);
+    return map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, value);
+}
+int32_t xunit_bstate_t::set_tx_info_latest_sendtx_hash(const std::string & hash) {
+    return map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, hash);
+}
+int32_t xunit_bstate_t::set_tx_info_recvtx_num(uint64_t num) {
+    std::string value = base::xstring_utl::tostring(num);
+    return map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_RECVTX_NUM, value);
+}
+
 
 }  // namespace data
 }  // namespace top

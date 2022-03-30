@@ -251,9 +251,9 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
         // $00
         accounts_json[key_j][account][data::XPROPERTY_LOCK_TGAS] = unitstate->uint64_property_get(data::XPROPERTY_LOCK_TGAS);
         // $03
-        std::map<std::string, std::string> pledge_votes;
+        std::map<std::string, std::string> pledge_votes = unitstate->map_get(XPROPERTY_PLEDGE_VOTE_KEY);
         json j;
-        if (unitstate->map_get(data::XPROPERTY_PLEDGE_VOTE_KEY, pledge_votes)) {
+        if (!pledge_votes.empty()) {
             int cnt{0};
             for (auto & v : pledge_votes) {
                 uint64_t vote_num{0};
@@ -273,12 +273,10 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
         }
         accounts_json[key_j][account][data::XPROPERTY_PLEDGE_VOTE_KEY] = j;
         // $04
-        std::string expire_votes;
+        std::string expire_votes = unitstate->string_get(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY);
         json j2 = 0;
-        if (unitstate->string_get(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, expire_votes)) {
-            if (expire_votes.empty()) {
-                j2 = base::xstring_utl::touint64(expire_votes);
-            }
+        if (!expire_votes.empty()) {
+            j2 = base::xstring_utl::touint64(expire_votes);
         }
         accounts_json[key_j][account][data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY] = j2;
         // $05
@@ -317,7 +315,7 @@ void xdb_reset_t::get_contract_stake_property_string(json & stake_json) {
         }
 
         std::string value;
-        if (!unitstate->string_get(property_key, value)) {
+        if (xsuccess != unitstate->string_get(property_key, value)) {
             printf("[get_genesis_stage] contract_address: %s, property_name: %s, error", addr.c_str(), property_key.c_str());
             continue;
         }
@@ -370,8 +368,8 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
             continue;
         }
 
-        std::map<std::string, std::string> value;
-        if (!unitstate->map_get(property_key, value)) {
+        std::map<std::string, std::string> value = unitstate->map_get(property_key);
+        if (value.empty()) {
             printf("[get_genesis_stage] contract_address: %s, property_name: %s, error", addr.c_str(), property_key.c_str());
             continue;
         }
@@ -567,8 +565,8 @@ void xdb_reset_t::get_contract_table_stake_property_map_string_string(json & sta
                 continue;
             }
 
-            std::map<std::string, std::string> value;
-            if (!unitstate->map_get(property_key, value)) {
+            std::map<std::string, std::string> value = unitstate->map_get(property_key);
+            if (value.empty()) {
                 printf("[get_genesis_stage] contract_address: %s, property_name: %s, error", addr.c_str(), property_key.c_str());
                 continue;
             }

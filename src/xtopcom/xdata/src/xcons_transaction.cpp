@@ -21,6 +21,14 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     update_transation();
 }
 
+xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt) {
+    tx->add_ref();
+    m_tx.attach(tx);
+    m_receipt = receipt;
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_cons_transaction, 1);
+    update_transation();
+}
+
 xcons_transaction_t::xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt) {
     if (!full_txreceipt.get_tx_org_bin().empty()) {
         xtransaction_t::set_tx_by_serialized_data(m_tx, full_txreceipt.get_tx_org_bin());
@@ -50,6 +58,10 @@ bool xcons_transaction_t::set_raw_tx(xtransaction_t* raw_tx) {
     raw_tx->add_ref();
     m_tx.attach(raw_tx);
     return true;
+}
+
+void xcons_transaction_t::clear_modified_state() {
+    m_execute_state.clear();
 }
 
 xobject_ptr_t<base::xvqcert_t> xcons_transaction_t::get_receipt_prove_cert_and_account(std::string & account) const {
@@ -87,6 +99,16 @@ void xcons_transaction_t::set_not_need_confirm() {
             m_execute_state.set_not_need_confirm(true);
         }
     }
+}
+
+void xcons_transaction_t::set_inner_table_flag() {
+    if (is_inner_table_send_tx() && get_tx_type() == xtransaction_type_transfer) {// TODO(jimmy) only support transfer now
+        xdbg("xcons_transaction_t::set_inner_table_flag tx:%s true", dump().c_str());
+        m_execute_state.set_inner_table_flag(true);
+    }
+}
+bool xcons_transaction_t::get_inner_table_flag() const {
+    return m_execute_state.get_inner_table_flag();
 }
 
 void xcons_transaction_t::set_tx_subtype(enum_transaction_subtype _subtype) {
@@ -192,6 +214,13 @@ uint64_t xcons_transaction_t::get_dump_rsp_id() const {
     } else {
         return get_last_action_rsp_id();
     }
+}
+bool xcons_transaction_t::is_inner_table_send_tx() const {
+    // XTDODO
+    if (is_send_tx()) {
+        return get_self_tableid() == get_peer_tableid();
+    }
+    return false;
 }
 
 std::string xcons_transaction_t::dump(bool detail) const {

@@ -21,6 +21,7 @@ class xblockpara_base_t {
     xblockpara_base_t(const std::map<std::string, std::string> & values);
     virtual std::string dump() const;
     const std::map<std::string, std::string> & get_map_para() const {return m_values;}
+    void    clear();
 
     virtual int32_t do_write(base::xstream_t & stream);
     virtual int32_t do_read(base::xstream_t & stream);

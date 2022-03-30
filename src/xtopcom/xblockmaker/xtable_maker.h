@@ -53,6 +53,7 @@ class xtable_maker_t : public xblock_maker_t {
     bool                    create_non_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers);
     void                    get_unit_accounts(const xblock_ptr_t & block, std::set<std::string> & accounts) const;
     xblock_ptr_t            make_light_table(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
+    xblock_ptr_t            make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
     bool                    create_other_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers);
     void                    clear_all_pending_txs();
     void                    refresh_cache_unit_makers();

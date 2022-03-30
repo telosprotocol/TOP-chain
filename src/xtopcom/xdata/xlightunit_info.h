@@ -18,7 +18,8 @@
 
 namespace top { namespace data {
 
-#define XTX_NOT_NEED_CONFIRM_FLAG_MASK (0x1)
+#define XTX_NOT_NEED_CONFIRM_FLAG_MASK (0x1)  // BIT#0
+#define XTX_INNER_TABLE_FLAG_MASK (0x1 << 1)  // BIT#1
 
 // the transaction state change after execute
 class xtransaction_exec_state_t : public xblockpara_base_t {
@@ -53,6 +54,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_receipt_data(xreceipt_data_t data);
     void        set_not_need_confirm(bool not_need_confirm);
     void        set_rsp_id(uint64_t rspid);
+    void        set_inner_table_flag(bool inner_table);
 
  public:
     uint32_t    get_used_disk()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DISK);}
@@ -65,7 +67,8 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     base::xtable_shortid_t    get_receipt_id_self_tableid()const {return get_value_uint16(XTX_RECEIPT_ID_SELF_TABLE_ID);}
     base::xtable_shortid_t    get_receipt_id_peer_tableid()const {return get_value_uint16(XTX_RECEIPT_ID_PEER_TABLE_ID);}
     bool                      get_not_need_confirm() const;
-    uint64_t    get_rsp_id()const {return get_value_uint64(XTX_RSP_ID);}
+    uint64_t                  get_rsp_id()const {return get_value_uint64(XTX_RSP_ID);}
+    bool                      get_inner_table_flag() const;
 };
 
 class xlightunit_tx_info_t : public xlightunit_action_t {

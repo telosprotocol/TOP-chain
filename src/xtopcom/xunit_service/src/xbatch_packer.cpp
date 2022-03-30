@@ -577,30 +577,13 @@ void xbatch_packer::make_receipts_and_send(data::xblock_t * commit_block, data::
         return;
     }
 
-    std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
-    std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
-    if (all_receipts.empty()) {
-        xunit_info("xbatch_packer::make_receipts_and_send no receipt created,commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    std::vector<data::xcons_transaction_ptr_t> all_cons_txs = data::xblocktool_t::create_all_txreceipts(commit_block, cert_block);
+    if (all_cons_txs.empty()) {
+        xunit_info("xbatch_packer::make_receipts_and_send no receipt created,commit_block:%s", commit_block->dump().c_str());
         return;
     }
 
-    for (auto & receipt : all_receipts) {
-        data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-        if (constx->is_confirm_tx() && constx->get_last_not_need_confirm()) {
-            continue;
-        }
-
-        all_cons_txs.push_back(constx);
-        xassert(constx->is_recv_tx() || constx->is_confirm_tx());
-        if (constx->is_recv_tx()) {
-            xassert(constx->get_transaction() != nullptr);  // recvtx has no origin tx
-        }
-        if (constx->is_confirm_tx()) {
-            xassert(constx->get_transaction() == nullptr);  // confirmtx has no origin tx
-        }
-    }
-
-    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s,txreceipts_size=%zu", commit_block->dump().c_str(), cert_block->dump().c_str(), all_cons_txs.size());
     std::vector<data::xcons_transaction_ptr_t> non_shard_cross_receipts;
     network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts);
 

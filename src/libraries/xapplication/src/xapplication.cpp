@@ -398,7 +398,8 @@ bool xtop_application::is_beacon_account() const noexcept {
         auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         for (auto const & property : property_names) {
-            if (false == unitstate.string_get(property, result) || result.empty()) {
+            result = unitstate.string_get(property);
+            if (result.empty()) {
                 xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
                 continue;
             }

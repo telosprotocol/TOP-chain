@@ -880,6 +880,15 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     // full-table 16 height
     auto tableblocks = mocktable.get_history_tables();
     auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[10].get());
+{
+    base::xvbstate_t* tablestate2 = static_cast<base::xvbstate_t*>(tablestate->clone());
+    xassert(tablestate2 != nullptr);
+
+    xvproperty_prove_ptr_t propreceipt2 = xblocktool_t::create_receiptid_property_prove(tableblocks[10].get(), tableblocks[12].get(), tablestate2);
+    xassert(propreceipt2 != nullptr);
+    xassert(propreceipt2->is_valid());
+}
+
     xvproperty_prove_ptr_t propreceipt = xblocktool_t::create_receiptid_property_prove(tableblocks[10].get(), tableblocks[12].get(), tablestate.get());
     xassert(propreceipt != nullptr);
     xassert(propreceipt->is_valid());
@@ -905,7 +914,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     }
 
 }
-
+#if 0
 TEST_F(test_tablemaker, version_1) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
@@ -1018,7 +1027,7 @@ TEST_F(test_tablemaker, version_1) {
         }
     }
 }
-
+#endif
 TEST_F(test_tablemaker, version_2) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 

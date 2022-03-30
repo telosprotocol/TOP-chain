@@ -22,8 +22,8 @@ namespace top
             friend class xtxreceipt_build_t;
         public:
             xtx_receipt_t();
-        protected:
-            xtx_receipt_t(const base::xvaction_t & txaction, base::xvqcert_t* prove_cert, const std::string & path, enum_xprove_cert_type type);
+            xtx_receipt_t(const base::xvaction_t & txaction);  // XTODO(jimmy) no prove receipt for local usage
+            xtx_receipt_t(const base::xvaction_t & txaction, base::xvqcert_t* prove_cert, const std::string & path, enum_xprove_cert_type type);            
             virtual ~xtx_receipt_t();
         private:
             xtx_receipt_t(const xtx_receipt_t &);
@@ -68,9 +68,9 @@ namespace top
 
         class xtxreceipt_build_t {
         public:
-            static std::vector<xfull_txreceipt_t>    create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block);
-            static std::vector<xfull_txreceipt_t>    create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block, const std::vector<xvaction_t> & actions);
-            static xfull_txreceipt_ptr_t             create_one_txreceipt(xvblock_t* commit_block, xvblock_t* cert_block, const std::string & txhash);
+            // static std::vector<xfull_txreceipt_t>    create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block);
+            // static std::vector<xfull_txreceipt_t>    create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block, const std::vector<xvaction_t> & actions);
+            // static xfull_txreceipt_ptr_t             create_one_txreceipt(xvblock_t* commit_block, xvblock_t* cert_block, const std::string & txhash);
 
             static xtx_receipt_ptr_t                 create_table_input_primary_action_receipt(xvblock_t* commit_block, xvblock_t* cert_block);
         };

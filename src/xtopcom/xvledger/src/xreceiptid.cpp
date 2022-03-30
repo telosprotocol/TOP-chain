@@ -231,7 +231,7 @@ void xreceiptid_state_t::add_pair(xtable_shortid_t sid, const xreceiptid_pair_t 
     m_binlog->add_pair(sid, pair);
 }
 
-bool xreceiptid_state_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
+bool xreceiptid_state_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const {
     return m_binlog->find_pair(sid, pair);
 }
 
@@ -260,7 +260,7 @@ void xreceiptid_state_t::set_tableid_and_height(xtable_shortid_t tableid, uint64
     m_height = height;
 }
 
-bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
+bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) const {
     // firstly find in binlog, secondly find in last full
     bool ret = m_modified_binlog->find_pair(sid, pair);
     if (ret) {
