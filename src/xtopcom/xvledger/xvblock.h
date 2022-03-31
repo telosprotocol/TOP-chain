@@ -697,6 +697,7 @@ namespace top
             xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
             virtual std::vector<base::xvaction_t> get_tx_actions() const {return std::vector<base::xvaction_t>{};}
+            virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const {return std::vector<base::xvaction_t>{};}
             virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const {return std::vector<xvheader_ptr_t>{};}
 
             const std::string           get_fullstate_hash();

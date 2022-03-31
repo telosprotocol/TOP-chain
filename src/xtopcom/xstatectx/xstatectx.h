@@ -36,13 +36,15 @@ class xstatectx_t : public xstatectx_face_t {
 
  private:
     xunitstate_ctx_ptr_t    load_unit_ctx(const base::xvaccount_t & addr);
-    xunitstate_ctx_ptr_t    find_unit_ctx(const std::string & addr);
+    xunitstate_ctx_ptr_t    find_unit_ctx(const std::string & addr, bool is_same_table);
+    void                    add_unit_ctx(const std::string & addr, bool is_same_table, const xunitstate_ctx_ptr_t & unit_ctx);
     bool                    is_same_table(const base::xvaccount_t & addr) const;
  private:
     xstatectx_base_t        m_statectx_base;
     xstatectx_para_t        m_statectx_para;
     xtablestate_ctx_ptr_t   m_table_ctx{nullptr};
     std::map<std::string, xunitstate_ctx_ptr_t>   m_unit_ctxs;
+    std::map<std::string, xunitstate_ctx_ptr_t>   m_other_table_unit_ctxs;
 };
 using xstatectx_ptr_t = std::shared_ptr<xstatectx_t>;
 

@@ -29,40 +29,55 @@ bool xstatectx_t::is_same_table(const base::xvaccount_t & addr) const {
     return get_tableid() == addr.get_short_table_id();
 }
 
-xunitstate_ctx_ptr_t xstatectx_t::find_unit_ctx(const std::string & addr) {
-    auto iter = m_unit_ctxs.find(addr);
-    if (iter != m_unit_ctxs.end()) {
-        return iter->second;
+xunitstate_ctx_ptr_t xstatectx_t::find_unit_ctx(const std::string & addr, bool is_same_table) {
+    if (is_same_table) {
+        auto iter = m_unit_ctxs.find(addr);
+        if (iter != m_unit_ctxs.end()) {
+            return iter->second;
+        }
+    } else {
+        auto iter = m_other_table_unit_ctxs.find(addr);
+        if (iter != m_other_table_unit_ctxs.end()) {
+            return iter->second;
+        }
     }
     return nullptr;
 }
 
+void xstatectx_t::add_unit_ctx(const std::string & addr, bool is_same_table, const xunitstate_ctx_ptr_t & unit_ctx) {
+    if (is_same_table) {
+        m_unit_ctxs[addr] = unit_ctx;
+    } else {
+        m_other_table_unit_ctxs[addr] = unit_ctx;
+    }
+}
+
 xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) {
-    xunitstate_ctx_ptr_t unit_ctx = find_unit_ctx(addr.get_address());
+    xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
+    data::xblock_ptr_t unitblock = nullptr;
+    bool is_same = is_same_table(addr);
+    xunitstate_ctx_ptr_t unit_ctx = find_unit_ctx(addr.get_address(), is_same);
     if (nullptr != unit_ctx) {
         return unit_ctx;
     }
-
-    xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
-    data::xblock_ptr_t unitblock = nullptr;
-    if (is_same_table(addr)) {
+    if (is_same) {
         unitblock = m_statectx_base.load_inner_table_unit_block(addr);
         if (nullptr != unitblock) {
             bstate = m_statectx_base.load_proposal_block_state(unitblock.get());
+            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
+            unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
         }
     } else { // different table unit state is readonly
         bstate = m_statectx_base.load_different_table_unit_state(addr);
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), true);  // readonly-state
+        unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate);
     }
 
-    if (nullptr == bstate) {
-        xwarn("xstatectx_t::load_unit_state fail-load state.addr=%s", addr.get_address().c_str());
-        return nullptr;
+    if (nullptr != unit_ctx) {
+        add_unit_ctx(addr.get_address(), is_same, unit_ctx);
+    } else {
+        xwarn("xstatectx_t::load_unit_ctx fail-load state.addr=%s,is_same=%d", addr.get_address().c_str(), is_same);
     }
-
-    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
-    unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
-    // add to cache
-    m_unit_ctxs[addr.get_address()] = unit_ctx;
     return unit_ctx;
 }
 

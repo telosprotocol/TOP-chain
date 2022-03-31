@@ -3,14 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include "xblockmaker/xunitmaker.h"
+#include "xblockmaker/xblock_builder.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xblockbuild.h"
 
 NS_BEG2(top, blockmaker)
 
-bool xunitmaker_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
+bool xunitbuilder_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
     uint64_t current_height = prev_block->get_height() + 1;
     uint64_t current_fullunit_height = prev_block->get_block_class() == base::enum_xvblock_class_full ? prev_block->get_height() : prev_block->get_last_full_block_height();
     uint64_t current_lightunit_count = current_height - current_fullunit_height;
@@ -22,7 +22,7 @@ bool xunitmaker_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
     return false;
 }
 
-data::xblock_ptr_t  xunitmaker_t::make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para){
+data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para){
     std::string binlog = unitstate->take_binlog();
     std::string snapshot = unitstate->take_snapshot();
     if (binlog.empty() || snapshot.empty()) {
@@ -34,14 +34,14 @@ data::xblock_ptr_t  xunitmaker_t::make_block(const data::xblock_ptr_t & prev_blo
     bodypara.set_fullstate_bin(snapshot);
 
     std::shared_ptr<base::xvblockmaker_t> vblockmaker;
-    if (xunitmaker_t::can_make_full_unit(prev_block)) {
+    if (xunitbuilder_t::can_make_full_unit(prev_block)) {
         vblockmaker = std::make_shared<data::xfullunit_build_t>(prev_block.get(), bodypara, cs_para);
     } else {
         vblockmaker = std::make_shared<data::xlightunit_build_t>(prev_block.get(), bodypara, cs_para);
     }
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
-    xinfo("xunitmaker_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
+    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
         proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size());
     return proposal_block;
 }

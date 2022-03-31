@@ -17,6 +17,7 @@
 #include "xdata/xtableblock.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
+#include "xrpc/xgetblock/xrpc_loader.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
 #include "xtxexecutor/xtransaction_fee.h"
@@ -559,37 +560,70 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
     }
 }
 
-//xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & tx_version) {
+// int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version, xJson::Value& result_json) {
+//     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
+//     base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
+//     xJson::Value cons;
+//     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
+//         xtransaction_ptr_t tx_ptr;
+//         auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
+//         tx->add_ref();
+//         tx_ptr.attach(tx);
+
+//         const xtx_exec_json_key jk(rpc_version);
+//         xlightunit_tx_info_ptr_t send_txinfo = nullptr;
+//         xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
+//         auto send_height = tx_store_ptr->get_send_block_height();
+//         // burn tx & self tx only 1 consensus
+//         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
+//             cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
+//             auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
+//             cons[jk.m_send]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
+//             cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
+//         }
+//         cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, true, send_height);
+//         result_json["tx_consensus_state"] = cons;
+
+//         update_tx_state(result_json, cons, rpc_version);
+
+//         auto ori_tx_info = parse_tx(tx_ptr.get(), rpc_version);
+//         result_json["original_tx_info"] = ori_tx_info;
+
+//         return 0;
+//     } else {
+//         if (cons_tx_ptr == nullptr) {
+//             //throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
+//             return 1;
+//         } else {
+//             auto ori_tx_info = parse_tx(cons_tx_ptr, rpc_version);
+//             result_json["original_tx_info"] = ori_tx_info;
+//             result_json["tx_consensus_state"] = cons;
+//             result_json["tx_state"] = "queue";
+//             return 0;
+//         }
+//     }
+// }
 int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version, xJson::Value& result_json) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
-    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
+    xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
     xJson::Value cons;
-    if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
-        xtransaction_ptr_t tx_ptr;
-        auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
-        tx->add_ref();
-        tx_ptr.attach(tx);
-
-        const xtx_exec_json_key jk(rpc_version);
-        xlightunit_tx_info_ptr_t send_txinfo = nullptr;
-        xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
-        auto send_height = tx_store_ptr->get_send_block_height();
-        // burn tx & self tx only 1 consensus
-        if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
-            cons[jk.m_send] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_send_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
-            auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
-            cons[jk.m_send]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
-            cons[jk.m_recv] = get_tx_exec_result(tx_store_ptr->get_recv_addr(), tx_store_ptr->get_recv_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, false, send_height);
-        }
-        cons[jk.m_confirm] = get_tx_exec_result(tx_store_ptr->get_send_addr(), tx_store_ptr->get_confirm_block_height(), tx_ptr, send_txinfo, recv_txinfo, rpc_version, true, send_height);
-        result_json["tx_consensus_state"] = cons;
-
-        update_tx_state(result_json, cons, rpc_version);
-
-        auto ori_tx_info = parse_tx(tx_ptr.get(), rpc_version);
+    bool is_missing_index = false;
+    if (sendindex != nullptr) {
+        auto ori_tx_info = parse_tx(sendindex->get_raw_tx().get(), rpc_version);
         result_json["original_tx_info"] = ori_tx_info;
 
-        return 0;
+        const xtx_exec_json_key jk(rpc_version);
+        xJson::Value sendjson = xrpc_loader_t::parse_send_tx(sendindex);
+        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->get_target_addr() == black_hole_addr;
+        if (is_self_tx) {
+            cons[jk.m_confirm] = sendjson;
+        } else {
+            cons[jk.m_send] = sendjson;
+            cons[jk.m_recv] = xrpc_loader_t::load_and_parse_recv_tx(tx_hash_str, sendindex, is_missing_index);
+            cons[jk.m_confirm] = xrpc_loader_t::load_and_parse_confirm_tx(tx_hash_str, sendindex, cons[jk.m_recv], is_missing_index);
+        }
+        result_json["tx_consensus_state"] = cons;
+        result_json["tx_state"] = xrpc_loader_t::parse_tx_state(is_missing_index, cons[jk.m_send], cons[jk.m_recv], cons[jk.m_confirm]);
     } else {
         if (cons_tx_ptr == nullptr) {
             //throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address or transaction hash error/does not exist"};
@@ -598,10 +632,10 @@ int get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_
             auto ori_tx_info = parse_tx(cons_tx_ptr, rpc_version);
             result_json["original_tx_info"] = ori_tx_info;
             result_json["tx_consensus_state"] = cons;
-            result_json["tx_state"] = "queue";
-            return 0;
+            result_json["tx_state"] = "queue";  // queue in txpool
         }
     }
+    return 0;
 }
 
 void get_block_handle::parse_asset_out(xJson::Value & j, const xaction_t & action) {

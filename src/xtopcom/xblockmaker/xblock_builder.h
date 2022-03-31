@@ -12,7 +12,7 @@
 
 NS_BEG2(top, blockmaker)
 
-class xunitmaker_t {
+class xunitbuilder_t {
  public:
     static bool    can_make_full_unit(const data::xblock_ptr_t & prev_block);
     static data::xblock_ptr_t  make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & proposal_state, const data::xblock_consensus_para_t & cs_para);

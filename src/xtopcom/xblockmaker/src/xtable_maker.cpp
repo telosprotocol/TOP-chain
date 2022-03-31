@@ -7,7 +7,7 @@
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xtable_maker.h"
 #include "xblockmaker/xtable_builder.h"
-#include "xblockmaker/xunitmaker.h"
+#include "xblockmaker/xblock_builder.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -637,7 +637,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     }
     std::vector<xblock_ptr_t> batch_units;
     for (auto & unitctx : unitctxs) {
-        data::xblock_ptr_t unitblock = xunitmaker_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), cs_para);
+        data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), cs_para);
         if (nullptr == unitblock) {
             // should not fail
             xerror("xtable_maker_t::make_light_table_v2 fail-invalid unitstate.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());

@@ -136,6 +136,27 @@ std::vector<base::xvaction_t> xtable_block_t::get_tx_actions() const {
     }
 }
 
+std::vector<base::xvaction_t> xtable_block_t::get_one_tx_action(const std::string & txhash) const {
+    std::vector<base::xvaction_t> txactions;
+    auto & all_entitys = get_input()->get_entitys();
+    for (auto & entity : all_entitys) {
+        // it must be xinentitys
+        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
+        if (_inentity == nullptr) {
+            xassert(false);
+            return {};
+        }
+        auto & all_actions = _inentity->get_actions();
+        for (auto & action : all_actions) {
+            if (action.get_org_tx_hash() == txhash) {
+                txactions.push_back(action);
+                return txactions; 
+            }
+        }
+    }
+    return txactions;
+}
+
 std::vector<xvheader_ptr_t> xtable_block_t::get_sub_block_headers() const {
     std::vector<xvheader_ptr_t> unit_headers;
     const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
