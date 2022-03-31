@@ -5,14 +5,15 @@
 #include "xevm/xevm.h"
 
 #include "assert.h"
-#include "xcontract_runtime/xtop_action_generator.h"
+#include "xdata/xconsensus_action.h"
 #include "xdata/xtop_action.h"
+#include "xdata/xtop_action_generator.h"
 #include "xevm_contract_runtime/xevm_action_session.h"
 
 NS_BEG2(top, evm)
 
-xtop_evm::xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const & evm_contract_manager,
-                   observer_ptr<evm_statestore::xevm_statestore_helper_t> const & evm_statestore_helper)
+xtop_evm::xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager,
+                   observer_ptr<vm_statestore::xvm_statestore_helper_t> const evm_statestore_helper)
   : evm_statestore_helper_{evm_statestore_helper}
   , evm_action_runtime_{top::make_unique<contract_runtime::evm::xevm_action_runtime_t>(evm_contract_manager, evm_statestore_helper)} {
 }
@@ -23,21 +24,20 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
 
     const size_t result_size = txs.size();
     const std::vector<data::xcons_transaction_ptr_t> txs_for_actions(txs);
-    const contract_common::xcontract_execution_param_t param(cs_para);
+    const evm_runtime::xevm_param_t param(cs_para);
     xdbg("[xtop_evm::execute] param, clock: %" PRIu64 ", timestamp: %" PRIu64 ", table_account: %s, table_height: %" PRIu64 ", total_lock_tgas: %" PRIu64,
          param.clock,
          param.timestamp,
          param.table_account.c_str(),
          param.table_commit_height,
          param.total_lock_tgas_token);
-    // execute_action();
     auto action = contract_runtime::xaction_generator_t::generate(txs_for_actions.at(0));
 
     xevm_execution_result_t result;
     result.transaction_results.reserve(result_size);
 
     try {
-        auto action_result = execute_action(std::move(action), param);
+        auto action_result = execute_action(std::move(action), param, evm_statestore_helper_);
         result.transaction_results.emplace_back(action_result);
         if (!action_result.status.ec) {
             xwarn(
@@ -74,10 +74,12 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
 }
 
 contract_runtime::xtransaction_execution_result_t xtop_evm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action,
-                                                                           contract_common::xcontract_execution_param_t const & param
-) {
+                                                                           evm_runtime::xevm_param_t const & param,
+                                                                           observer_ptr<vm_statestore::xvm_statestore_helper_t> const statestore) {
     assert(action->type() == data::xtop_action_type_t::evm);
-    return evm_action_runtime_->new_session()->execute_action(std::move(action), param);
+    auto const * cons_action = static_cast<data::xevm_consensus_action_t const *>(action.get());
+    evm_runtime::xevm_state_t evm_state{cons_action->contract_address(), statestore, param};
+    return evm_action_runtime_->new_session(make_observer(std::addressof(evm_state)))->execute_action(std::move(action));
 }
 
 NS_END2
