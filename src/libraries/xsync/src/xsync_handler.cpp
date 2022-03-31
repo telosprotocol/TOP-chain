@@ -883,8 +883,13 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
                 xsync_prune_sigleton_t::instance().del(it.second.address, types);
                 if (xsync_prune_sigleton_t::instance().empty(it.second.address)){
                     base::xvaccount_t _vaddr(it.second.address);
-                    xsync_kinfo("xsync_handler remove_role_phase1 unwatch %s", it.second.address.c_str());
+                    xsync_kinfo("xsync_handler remove_role_phase1 unwatch sync %s", it.second.address.c_str());
                     store::unwatch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
+                }
+                if (common::has<common::xnode_type_t::consensus>(vnetwork_driver->type())) {
+                    base::xvaccount_t _vaddr(it.second.address);
+                    xsync_kinfo("xsync_handler remove_role_phase1 unwatch xtxpool %s", it.second.address.c_str());
+                    store::unwatch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
                 }
             }
 
@@ -904,6 +909,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
 }
 int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xevent_ptr_t& e) {
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_add_t>(e);
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
     common::xminer_type_t miner_type = bme->m_miner_type;
     bool genesis = bme->m_genesis;
 
@@ -960,8 +966,10 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
             store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
             store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
 
-            store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
-            store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
+            if (common::has<common::xnode_type_t::consensus>(vnetwork_driver->type())) {
+                store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
+                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
+            }
         } 
     }
     //if (common::has<common::xminer_type_t::edge>(miner_type)) {
