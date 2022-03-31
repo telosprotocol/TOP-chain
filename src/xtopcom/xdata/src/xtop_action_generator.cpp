@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xcontract_runtime/xtop_action_generator.h"
+#include "xdata/xtop_action_generator.h"
 
 #include "xbasic/xmemory.hpp"
 #include "xdata/xconsensus_action.h"
@@ -14,12 +14,26 @@ NS_BEG2(top, contract_runtime)
 
 std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate(xobject_ptr_t<data::xcons_transaction_t> const & tx) {
     common::xaccount_address_t const target_address{ tx->get_transaction()->get_target_addr() };
+    
+    // eth deploy code
+    if (target_address.empty()) {
+        common::xaccount_address_t const source_address{ tx->get_transaction()->get_source_addr() };
+        if (source_address.type() != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+            assert(false);
+            return nullptr;
+        }
+        return top::make_unique<data::xevm_consensus_action_t>(tx);
+    } 
+
     switch (target_address.type()) {
     case base::enum_vaccount_addr_type_native_contract:
     // just for followup transfer tx
     case base::enum_vaccount_addr_type_secp256k1_user_account:
     case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
         return top::make_unique<data::xsystem_consensus_action_t>(tx);
+    
+    case base::enum_vaccount_addr_type_secp256k1_evm_user_account:
+        return top::make_unique<data::xevm_consensus_action_t>(tx);
 
     case base::enum_vaccount_addr_type_custom_contract:
         return top::make_unique<data::xuser_consensus_action_t>(tx);
