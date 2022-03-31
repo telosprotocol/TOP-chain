@@ -12,6 +12,7 @@
 #include "xcontract_common/xproperties/xbasic_property.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtransaction.h"
+#include "xevm_statestore_helper/xstatestore_helper.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xstate_accessor.h"
 #include "xstate_accessor/xtoken.h"
@@ -53,6 +54,7 @@ private:
     common::xaccount_address_t m_action_account_address;
     std::unique_ptr<state_accessor::xstate_accessor_t> m_state_accessor_owned{nullptr};
     observer_ptr<state_accessor::xstate_accessor_t> m_state_accessor;
+    observer_ptr<vm_statestore::xvm_statestore_helper_t> m_state_store;
     xcontract_execution_param_t const m_param{};
 
 public:
@@ -63,9 +65,13 @@ public:
     xtop_contract_state & operator=(xtop_contract_state &&) = default;
     ~xtop_contract_state() = default;
 
-    explicit xtop_contract_state(common::xaccount_address_t action_account_addr,
-                                 observer_ptr<state_accessor::xstate_accessor_t> sa,
-                                 xcontract_execution_param_t const & execution_param);
+    xtop_contract_state(common::xaccount_address_t const & action_account_addr,
+                        observer_ptr<state_accessor::xstate_accessor_t> const sa,
+                        xcontract_execution_param_t const & execution_param);
+
+    xtop_contract_state(common::xaccount_address_t const & action_account_addr,
+                        observer_ptr<vm_statestore::xvm_statestore_helper_t> const st,
+                        xcontract_execution_param_t const & execution_param);
 
 private:
     explicit xtop_contract_state(common::xaccount_address_t const & account_address);
