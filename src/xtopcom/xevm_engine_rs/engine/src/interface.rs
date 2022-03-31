@@ -32,7 +32,7 @@ mod interface {
         Engine::deploy_code_with_input(&mut engine, input)
             .map(|res| {
                 println!("res: {:?}", res);
-                res.try_to_vec().sdk_expect("ERR_SERIALIZE")
+                bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process();
         // TODO: charge for storage
@@ -52,7 +52,7 @@ mod interface {
         //     input,
         // });
         let bytes = io.read_input().to_vec();
-        let args = CallArgs::deserialize(&bytes).sdk_expect("ERR_BORSH_DESERIALIZE");
+        let args = bincode::deserialize::<CallArgs>(&bytes).sdk_expect("ERR_DESERIALIZE");
         // let mut ser: Vec<u8> = Vec::new();
         // args.serialize(&mut ser).unwrap();
         // println!("args: {:?}", ser);
@@ -66,7 +66,7 @@ mod interface {
         Engine::call_with_args(&mut engine, args)
             .map(|res| {
                 println!("res: {:?}", res);
-                res.try_to_vec().sdk_expect("ERR_SERIALIZE")
+                bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process();
     }
@@ -97,8 +97,8 @@ mod interface {
             value: Wei::new(value.into()).to_bytes(),
             input: params,
         });
-        let mut ser: Vec<u8> = Vec::new();
-        args.serialize(&mut ser).unwrap();
+        let ser = bincode::serialize(&args).unwrap();
+        // args.serialize(&mut ser).unwrap();
 
         if (ser.len() <= max_output_len as usize) {
             unsafe {

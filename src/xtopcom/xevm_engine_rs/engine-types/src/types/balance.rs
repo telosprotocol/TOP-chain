@@ -1,10 +1,8 @@
 use crate::fmt::Formatter;
 use crate::Display;
-use borsh::{BorshDeserialize, BorshSerialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    Default, Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, BorshSerialize, BorshDeserialize,
-)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 
 pub struct Balance(u128);
 
