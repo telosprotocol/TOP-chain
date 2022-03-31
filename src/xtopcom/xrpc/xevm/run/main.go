@@ -1,5 +1,15 @@
 package main
 
+/*
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+	void* RunJsonRpc();
+	void  StopJsonRpc(void *srv);
+	#ifdef __cplusplus
+	}
+	#endif
+*/
 import "C"
 
 import (
