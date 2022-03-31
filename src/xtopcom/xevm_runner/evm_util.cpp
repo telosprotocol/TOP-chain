@@ -33,14 +33,6 @@ std::vector<uint8_t> serialize_function_input(std::string const & contract_addre
     return res;
 }
 
-std::vector<uint8_t> to_le_bytes(uint128_t value) {
-    std::vector<uint8_t> ret(16);
-    for (auto i = 0; i < 16; i++) {
-        ret[0] = (value >> i * 8) & 0xff;
-    }
-    return ret;
-}
-
 #define CON(x) (std::isdigit((x)) ? ((x) - '0') : (std::tolower((x)) - 'W'))
 
 void hex_string_bytes_char(std::string const & input, unsigned char * output) {

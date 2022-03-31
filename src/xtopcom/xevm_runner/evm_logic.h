@@ -23,7 +23,6 @@ private:
     std::shared_ptr<xevm_storage_face_t> m_storage_ptr;
     observer_ptr<evm::xevm_context_t> m_context;
     std::map<uint64_t, bytes> m_registers;
-    // uint128_t current_account_balance;
     bytes m_return_data_value;
 
 public:
@@ -43,7 +42,6 @@ public:
     // void signer_account_id(uint64_t register_id);
     void predecessor_account_id(uint64_t register_id);
     void input(uint64_t register_id);
-    void account_balance(uint64_t balance_ptr);
 
     // math:
     void random_seed(uint64_t register_id);
