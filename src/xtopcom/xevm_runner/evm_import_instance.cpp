@@ -43,10 +43,7 @@ void evm_import_instance::input(uint64_t register_id) {
     m_vm_logic.input(register_id);
     return;
 }
-// void evm_import_instance::account_balance(uint64_t balance_ptr) {
-//     m_vm_logic.account_balance(balance_ptr);
-//     return;
-// }
+
 // math:
 void evm_import_instance::random_seed(uint64_t register_id) {
     m_vm_logic.random_seed(register_id);
@@ -111,12 +108,6 @@ void evm_input(uint64_t register_id) {
     evm_import_instance::instance()->input(register_id);
     return;
 }
-
-// // # Economics API #
-// evm_void account_balance(uint64_t balance_ptr) {
-//     evm_import_instance::instance()->account_balance(balance_ptr);
-//     return;
-// }
 
 // ############
 // # Math API #
