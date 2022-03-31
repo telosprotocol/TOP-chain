@@ -92,7 +92,7 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     case common::xnode_type_t::frozen:
         return update_frozen_zone(zone_element, election_result_store, associated_blk_height, ec);
 
-    case common::xnode_type_t::eth:
+    case common::xnode_type_t::evm:
         return update_eth_zone(zone_element, election_result_store, associated_blk_height, ec);
 
     default:

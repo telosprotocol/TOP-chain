@@ -58,8 +58,8 @@ to_string(xnode_type_t const type) {
         string += "fullnode.";
     }
 
-    if (has<xnode_type_t::eth>(type)) {
-        string += "eth.";
+    if (has<xnode_type_t::evm>(type)) {
+        string += "evm.";
     }
 
     if (has<xnode_type_t::group>(type)) {
