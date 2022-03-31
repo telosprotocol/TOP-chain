@@ -1,9 +1,7 @@
 use crate::{fmt, str, str::FromStr, Box, String, Vec};
-use borsh::{BorshDeserialize, BorshSerialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    Debug, Default, Hash, Clone, BorshSerialize, BorshDeserialize, PartialEq, Eq, PartialOrd, Ord,
-)]
+#[derive(Debug, Default, Hash, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AccountId(Box<str>);
 
 impl AccountId {
