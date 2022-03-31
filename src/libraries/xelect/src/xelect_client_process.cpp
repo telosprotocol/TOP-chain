@@ -162,7 +162,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
                     m_update_handler2(election_result_store, common::xarchive_zone_id, block->get_height(), false);
                 } else if (common::has<common::xnode_type_t::fullnode>(node_type)) {
                     m_update_handler2(election_result_store, common::xfullnode_zone_id, block->get_height(), false);
-                } else if (common::has<common::xnode_type_t::eth>(node_type)) {
+                } else if (common::has<common::xnode_type_t::evm>(node_type)) {
                     m_update_handler2(election_result_store, common::xevm_zone_id, block->get_height(), false);
                 } else {
                     assert(false);

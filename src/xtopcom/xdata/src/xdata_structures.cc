@@ -252,7 +252,7 @@ bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_
 }
 
 template <>
-bool could_be<common::xnode_type_t::eth>(common::xminer_type_t const miner_type) {
+bool could_be<common::xnode_type_t::evm>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
@@ -293,7 +293,7 @@ bool xreg_node_info::could_be_fullnode() const noexcept {
 }
 
 bool xreg_node_info::could_be_eth() const noexcept {
-    return could_be<common::xnode_type_t::eth>(m_registered_miner_type);
+    return could_be<common::xnode_type_t::evm>(m_registered_miner_type);
 }
 
 bool xreg_node_info::can_be_rec() const noexcept {
