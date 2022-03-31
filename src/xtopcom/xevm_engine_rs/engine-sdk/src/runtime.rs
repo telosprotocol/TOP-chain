@@ -1,5 +1,5 @@
 use crate::io::StorageIntermediate;
-use engine_types::account_id::AccountId;
+use engine_types::types::Address;
 use engine_types::H256;
 pub struct RegisterIndex(u64);
 
@@ -37,10 +37,10 @@ impl Runtime {
     const ENV_REGISTER_ID: RegisterIndex = RegisterIndex(4);
     // const PROMISE_REGISTER_ID: RegisterIndex = RegisterIndex(5);
 
-    fn read_account_id() -> AccountId {
+    fn read_address() -> Address {
         let bytes = Self::ENV_REGISTER_ID.to_vec();
-        match AccountId::try_from(bytes) {
-            Ok(account_id) => account_id,
+        match Address::try_from(bytes.as_slice()) {
+            Ok(address) => address,
             // the environment must give us a valid Account ID.
             Err(_) => unreachable!(),
         }
@@ -152,11 +152,11 @@ impl crate::env::Env for Runtime {
     //     Self::read_account_id()
     // }
 
-    fn predecessor_account_id(&self) -> engine_types::account_id::AccountId {
+    fn sender_address(&self) -> engine_types::types::Address {
         unsafe {
             exports::evm_predecessor_account_id(Self::ENV_REGISTER_ID.0);
         }
-        Self::read_account_id()
+        Self::read_address()
     }
 
     fn block_height(&self) -> u64 {

@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod account_id;
 pub mod storage;
 pub mod types;
 
