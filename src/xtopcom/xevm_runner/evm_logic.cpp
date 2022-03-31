@@ -121,12 +121,6 @@ void xtop_evm_logic::value_return(uint64_t key_len, uint64_t key_ptr) {
     printf("\n");
 }
 
-// void xtop_evm_logic::account_balance(uint64_t balance_ptr) {
-//     printf("[debug][account_balance]\n");
-
-//     memory_tools::write_memory(balance_ptr, to_le_bytes(current_account_balance));
-// }
-
 void xtop_evm_logic::sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) {
     auto value = get_vec_from_memory_or_register(value_ptr, value_len);
 
