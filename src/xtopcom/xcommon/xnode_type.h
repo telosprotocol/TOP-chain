@@ -138,7 +138,7 @@ enum class xenum_node_type : std::uint32_t {
     fullnode = 0x00010000,
 
     /// @brief eth node zone type
-    eth = 0x00020000,
+    evm = 0x00020000,
 
     consensus_auditor = consensus | 0x1,
     consensus_validator = consensus | 0x2,
