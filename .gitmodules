@@ -1,3 +1,6 @@
 [submodule "src/xtopcom/xbase"]
 	path = src/xtopcom/xbase
 	url = git@github.com:telosprotocol/xbase.git
+[submodule "src/xtopcom/xdepends/uint128_t"]
+	path = src/xtopcom/xdepends/uint128_t
+	url = git@github.com:calccrypto/uint128_t.git
