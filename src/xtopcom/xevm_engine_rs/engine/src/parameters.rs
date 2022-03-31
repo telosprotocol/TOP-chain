@@ -1,8 +1,7 @@
 use crate::prelude::*;
 use evm::backend::Log;
 
-/// Borsh-encoded log for use in a `SubmitResult`.
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ResultLog {
     pub address: Address,
     pub topics: Vec<RawU256>,
@@ -25,7 +24,7 @@ impl From<Log> for ResultLog {
 }
 
 /// The status of a transaction.
-#[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TransactionStatus {
     Succeed(Vec<u8>),
     Revert(Vec<u8>),
@@ -62,9 +61,9 @@ impl AsRef<[u8]> for TransactionStatus {
     }
 }
 
-/// Borsh-encoded parameters for the `call`, `call_with_args`, `deploy_code`,
+/// encoded parameters for the `call`, `call_with_args`, `deploy_code`,
 /// and `deploy_with_input` methods.
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SubmitResult {
     version: u8,
     pub status: TransactionStatus,
@@ -90,11 +89,11 @@ impl SubmitResult {
     }
 }
 
-/// Borsh-encoded parameters for the engine `call` function.
-#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
+/// encoded parameters for the engine `call` function.
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct FunctionCallArgsV2 {
     pub contract: Address,
-    /// Wei compatible Borsh-encoded value field to attach an ETH balance to the transaction
+    /// Wei compatible encoded value field to attach an ETH balance to the transaction
     pub value: WeiU256,
     pub input: Vec<u8>,
 }
@@ -108,41 +107,8 @@ pub struct FunctionCallArgsV2 {
 //         }
 //     }
 // }
-#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub enum CallArgs {
     V2(FunctionCallArgsV2),
     // V1(FunctionCallArgsV1),
-}
-
-impl CallArgs {
-    pub fn deserialize(bytes: &[u8]) -> Option<Self> {
-        // For handling new input format (wrapped into call args enum) - for data structures with new arguments,
-        // made for flexibility and extensibility.
-        if let Ok(value) = Self::try_from_slice(bytes) {
-            Some(value)
-            // Fallback, for handling old input format,
-            // i.e. input, formed as a raw (not wrapped into call args enum) data structure with legacy arguments,
-            // made for backward compatibility.
-            // } else if let Ok(value) = FunctionCallArgsV1::try_from_slice(bytes) {
-            //     Some(Self::V1(value))
-            // Dealing with unrecognized input should be handled and result as an exception in a call site.
-        } else {
-            None
-        }
-    }
-}
-/// Borsh-encoded parameters for the `view` function.
-#[derive(BorshSerialize, BorshDeserialize, Debug, Eq, PartialEq)]
-pub struct ViewCallArgs {
-    pub sender: Address,
-    pub address: Address,
-    pub amount: RawU256,
-    pub input: Vec<u8>,
-}
-
-/// Borsh-encoded parameters for the `get_storage_at` function.
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct GetStorageAtArgs {
-    pub address: Address,
-    pub key: RawH256,
 }
