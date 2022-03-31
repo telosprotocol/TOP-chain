@@ -11,9 +11,9 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_runtime/xaction_session.h"
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xcontract_runtime/xtop_action_generator.h"
 #include "xcontract_vm/xerror/xerror.h"
 #include "xdata/xconsensus_action.h"
+#include "xdata/xtop_action_generator.h"
 
 #include <cinttypes>
 #include <memory>

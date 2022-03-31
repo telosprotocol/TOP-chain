@@ -1,5 +1,8 @@
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_storage.h"
 #include "xbasic/xmemory.hpp"
+#include "xdata/xtop_action_generator.h"
+#include "xdata/xtransaction_v2.h"
+#include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/evm_logic.h"
@@ -32,23 +35,34 @@ TEST(test_demo, test_add_contract) {
         }
     }
     ******************************************************/
-    bytes random_seed = utils::hex_string_to_bytes("0x1234567890");
     bytes input = utils::hex_string_to_bytes(
-        "0x608060405234801561001057600080fd5b50610304806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80632fb3c740146100515780636e2c732d146100"
-        "5b578063a05f9906146100a7578063fad772db146100d9575b600080fd5b610059610111565b005b6100a56004803603604081101561007157600080fd5b81019080803567ffffffffffffffff1690602001909291"
-        "90803567ffffffffffffffff1690602001909291905050506101b3565b005b6100af610242565b604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390f35b61010f60"
-        "0480360360208110156100ef57600080fd5b81019080803567ffffffffffffffff16906020019092919050505061025b565b005b60016000809054906101000a900467ffffffffffffffff16016000806101000a81"
-        "548167ffffffffffffffff021916908367ffffffffffffffff1602179055507f4558e87569f3778927a0c0ab7e6c04d9cc3a08694412ac6b8b8bbd8276c8fb3d6000809054906101000a900467ffffffffffffffff"
-        "16604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390a1565b600081830190507fba81e10edd752f92a850d20e6ca5897bc0ff54393985bc25b2c2bdc92521864983"
-        "8383604051808467ffffffffffffffff1667ffffffffffffffff1681526020018367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff16815260200193"
-        "5050505060405180910390a1505050565b6000809054906101000a900467ffffffffffffffff1681565b60006001820190507f76b87589c0efe817c6ec312c8fa2ab35ac24bbbd1e5fb8d3e3c3b4b789fdc7d48282"
-        "604051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220aa046f"
-        "634f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033");
-    bytes predecessor_account_id = utils::hex_string_to_bytes("T60000011111222223333344444555556666677777");
+        "608060405234801561001057600080fd5b50610304806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80632fb3c740146100515780636e2c732d1461005b"
+        "578063a05f9906146100a7578063fad772db146100d9575b600080fd5b610059610111565b005b6100a56004803603604081101561007157600080fd5b81019080803567ffffffffffffffff169060200190929190"
+        "803567ffffffffffffffff1690602001909291905050506101b3565b005b6100af610242565b604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390f35b61010f6004"
+        "80360360208110156100ef57600080fd5b81019080803567ffffffffffffffff16906020019092919050505061025b565b005b60016000809054906101000a900467ffffffffffffffff16016000806101000a8154"
+        "8167ffffffffffffffff021916908367ffffffffffffffff1602179055507f4558e87569f3778927a0c0ab7e6c04d9cc3a08694412ac6b8b8bbd8276c8fb3d6000809054906101000a900467ffffffffffffffff16"
+        "604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390a1565b600081830190507fba81e10edd752f92a850d20e6ca5897bc0ff54393985bc25b2c2bdc9252186498383"
+        "83604051808467ffffffffffffffff1667ffffffffffffffff1681526020018367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019350"
+        "50505060405180910390a1505050565b6000809054906101000a900467ffffffffffffffff1681565b60006001820190507f76b87589c0efe817c6ec312c8fa2ab35ac24bbbd1e5fb8d3e3c3b4b789fdc7d4828260"
+        "4051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220aa046f63"
+        "4f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033");
+    // bytes predecessor_account_id = utils::hex_string_to_bytes("T60000011111222223333344444555556666677777");
 
-    xevm_context_t context{random_seed, input, predecessor_account_id};
+    // param
+    top::evm_runtime::xevm_param_t param;
+    param.random_seed = "1234567890";
+    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
+    tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
+    tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
+    auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+    top::vm_statestore::xvm_statestore_helper_t statestore;
+    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
+    auto observed_exectx{top::make_observer(exectx.get())};
+
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
-    xevm_logic_t n_logic{storage_ptr, top::make_observer<xevm_context_t>(&context)};
+    xevm_logic_t n_logic{storage_ptr, observed_exectx};
     evm_import_instance::instance()->set_evm_logic(n_logic);
     auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
 
@@ -58,25 +72,24 @@ TEST(test_demo, test_add_contract) {
 
     // add(123, 321) => (123,321,444)
     std::string contract_params = "0x6e2c732d000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000000000000000000000000000000000000000000141";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 
     // addOne(12345) => (12346)
     contract_params = "0xfad772db0000000000000000000000000000000000000000000000000000000000003039";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 
     // addGlobal => (1)
     contract_params = "0x2fb3c740";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 }
 
 TEST(test_demo, erc20) {
     // ./solidity_contracts/erc20.sol
-    bytes random_seed = utils::hex_string_to_bytes("0x1234567890");
     bytes input = utils::hex_string_to_bytes(
-        "0x60806040526040518060400160405280600781526020017f4d794572633230000000000000000000000000000000000000000000000000008152506003908051906020019061004f92919061016a565b50604051"
+        "60806040526040518060400160405280600781526020017f4d794572633230000000000000000000000000000000000000000000000000008152506003908051906020019061004f92919061016a565b50604051"
         "8060400160405280600381526020017f53594d00000000000000000000000000000000000000000000000000000000008152506004908051906020019061009b92919061016a565b506012600560006101000a8154"
         "8160ff021916908360ff1602179055503480156100c457600080fd5b50620186a0600081905550600054600160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffff"
         "ffffffffff168152602001908152602001600020819055503373ffffffffffffffffffffffffffffffffffffffff167f60226e015dfa2f4684230d052fa02b7297d54471129f02a9585f4f4a81e9e0d26000546040"
@@ -114,11 +127,22 @@ TEST(test_demo, erc20) {
         "2001600020600082825401925050819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f1"
         "63c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a36001905092915050565b600260205281600052604060002060205280600052604060002060009150915050548156fea2646970"
         "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033");
-    bytes predecessor_account_id = utils::hex_string_to_bytes("T60000011111222223333344444555556666677777");
 
-    xevm_context_t context{random_seed, input, predecessor_account_id};
+    // param
+    top::evm_runtime::xevm_param_t param;
+    param.random_seed = "1234567890";
+    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
+    tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
+    tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
+    auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+    top::vm_statestore::xvm_statestore_helper_t statestore;
+    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
+    auto observed_exectx{top::make_observer(exectx.get())};
+
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
-    xevm_logic_t n_logic{storage_ptr, top::make_observer<xevm_context_t>(&context)};
+    xevm_logic_t n_logic{storage_ptr, observed_exectx};
     evm_import_instance::instance()->set_evm_logic(n_logic);
     auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
 
@@ -129,22 +153,22 @@ TEST(test_demo, erc20) {
 
     // erc.totalSupply.getData()
     std::string contract_params = "0x18160ddd";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     contract_params = "0x70a08231000000000000000000000000000000000000000000000000000000000000007b";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 
     // erc.transfer.getData("0000000000000000000000000000000000000123",123)
     contract_params = "0xa9059cbb000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000007b";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     contract_params = "0x70a08231000000000000000000000000000000000000000000000000000000000000007b";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
     storage_ptr->debug();
 }
@@ -152,7 +176,6 @@ TEST(test_demo, erc20) {
 TEST(test_demo, balance) {
     // ./solidity_contracts/test_balance.sol
 
-    bytes random_seed = utils::hex_string_to_bytes("0x1234567890");
     bytes input = utils::hex_string_to_bytes(
         "0x608060405234801561001057600080fd5b5061024e806100206000396000f3fe60806040526004361061002d5760003560e01c80632565b1b8146100b3578063ad7a672f146100ee576100ae565b366100ae5734"
         "60008082825401925050819055507fe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffff"
@@ -162,14 +185,24 @@ TEST(test_demo, balance) {
         "610191565b606091505b5050809150507f171a466754afbbdce4dc1ab85f822d6767825c31a83b1113cc18bc97ddbfed2281338460405180841515151581526020018373ffffffffffffffffffffffffffffffffff"
         "ffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060405180910390a15050565b6000548156fea26469706673582212201285a1a792cec99fd557c4fb8b1f92"
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033");
-    bytes predecessor_account_id = utils::hex_string_to_bytes("T60000011111222223333344444555556666677777");
 
-    xevm_context_t context{random_seed, input, predecessor_account_id};
+    // param
+    top::evm_runtime::xevm_param_t param;
+    param.random_seed = "1234567890";
+    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
+    tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
+    tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
+    auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
+    top::vm_statestore::xvm_statestore_helper_t statestore;
+    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
+    auto observed_exectx{top::make_observer(exectx.get())};
+
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
-    xevm_logic_t n_logic{storage_ptr, top::make_observer<xevm_context_t>(&context)};
+    xevm_logic_t n_logic{storage_ptr, observed_exectx};
     evm_import_instance::instance()->set_evm_logic(n_logic);
     auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
-    // auto storage = logic.ext_ref();
 
     storage_ptr->debug();
     mock_add_balance();
@@ -179,8 +212,8 @@ TEST(test_demo, balance) {
     mock_add_balance();
     mock_add_balance();
     storage_ptr->debug(storage_key_type::Balance);
-    logic.context_ref()->set_input(utils::hex_string_to_bytes(
-        "0x608060405234801561001057600080fd5b5061024e806100206000396000f3fe60806040526004361061002d5760003560e01c80632565b1b8146100b3578063ad7a672f146100ee576100ae565b366100ae5734"
+    logic.context_ref()->input_data(utils::hex_string_to_bytes(
+        "608060405234801561001057600080fd5b5061024e806100206000396000f3fe60806040526004361061002d5760003560e01c80632565b1b8146100b3578063ad7a672f146100ee576100ae565b366100ae5734"
         "60008082825401925050819055507fe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffff"
         "ffffffffffffffffffffffff1681526020018281526020019250505060405180910390a1005b600080fd5b3480156100bf57600080fd5b506100ec600480360360208110156100d657600080fd5b81019080803590"
         "60200190929190505050610119565b005b3480156100fa57600080fd5b50610103610212565b6040518082815260200191505060405180910390f35b80600080828254039250508190555060003373ffffffffffff"
@@ -196,24 +229,24 @@ TEST(test_demo, balance) {
 
     // deposit
     std::string contract_params = "0x";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params, 3000000));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params, 3000000));
     call_contract();
     storage_ptr->debug(storage_key_type::Balance);
 
     // tes.totalBalance.getData()
     contract_params = "0xad7a672f";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
 
     // tes.withdraw_balance.getData(666)
     contract_params = "0x2565b1b8000000000000000000000000000000000000000000000000000000000000029a";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
     storage_ptr->debug(storage_key_type::Balance);
 
     // tes.totalBalance.getData()
     contract_params = "0xad7a672f";
-    logic.context_ref()->set_input(utils::serialize_function_input(contract_address, contract_params));
+    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
     call_contract();
     storage_ptr->debug();
 }
