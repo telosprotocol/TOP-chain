@@ -762,7 +762,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id) {
     }
 
     if (zone_id == xevm_zone_id) {
-        return xnode_type_t::eth;
+        return xnode_type_t::evm;
     }
 
     return xnode_type_t::invalid;

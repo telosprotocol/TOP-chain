@@ -95,10 +95,10 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
         m_is_send_receipt_role = false;
         m_zone_index = base::enum_chain_zone_consensus_index;
         m_node_type = common::xnode_type_t::consensus_validator;
-    } else if (common::has<common::xnode_type_t::eth>(type)) {
+    } else if (common::has<common::xnode_type_t::evm>(type)) {
         m_is_send_receipt_role = false;
         m_zone_index = base::enum_chain_zone_evm_index;
-        m_node_type = common::xnode_type_t::eth;
+        m_node_type = common::xnode_type_t::evm;
     } else {
         xassert(0);
     }
