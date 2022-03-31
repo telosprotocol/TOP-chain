@@ -7,7 +7,6 @@
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xtxpool_v2/xtxpool_tool.h"
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
 
@@ -109,43 +108,6 @@ void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shor
     m_new_receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, table_sid, receiptid);
 }
 
-ready_accounts_t xtxmgr_table_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
-    auto ready_txs = get_ready_txs(pack_para);
-    return xordered_ready_txs_t::ready_txs_to_ready_accounts(ready_txs);
-}
-
-std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
-    // do not care about receipt id continuity of receipts in receipts queue, unit service should assure the continuity,
-    // so that receipts in txpool could always be get from txpool to unit service without continuous constraint.
-    // receipts not pop from queue to pending, but get from queue to unit service directly,
-    // because there is no need for queue and pending to maintain same data structure for manage receipts.
-    uint32_t confirm_tx_num = 0;
-    uint32_t recv_tx_num = 0;
-    std::vector<xcons_transaction_ptr_t> ready_txs = m_new_receipt_queue.get_txs(
-        pack_para.get_confirm_and_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_table_state_highqc()->get_receiptid_state(), confirm_tx_num);
-    recv_tx_num = ready_txs.size() - confirm_tx_num;
-
-    auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_table_state_highqc());
-    uint32_t send_tx_num = send_txs.size();
-    ready_txs.insert(ready_txs.end(), send_txs.begin(), send_txs.end());
-
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_sendtx_count, send_tx_num);
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
-
-    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u",
-                 m_xtable_info->get_table_addr().c_str(),
-                 ready_txs.size(),
-                 send_tx_num,
-                 recv_tx_num,
-                 confirm_tx_num);
-    for (auto & tx : ready_txs) {
-        xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
-    }
-
-    return ready_txs;
-}
-
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para, const xunconfirm_id_height & unconfirm_id_height) {
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
@@ -164,12 +126,26 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
 
-    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u",
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u",
                  m_xtable_info->get_table_addr().c_str(),
                  ready_txs.size(),
                  send_tx_num,
                  recv_tx_num,
-                 confirm_tx_num);
+                 confirm_tx_num,
+                 m_send_tx_queue.size(),
+                 m_xtable_info->get_recv_tx_count(),
+                 m_xtable_info->get_conf_tx_count());
+    if (ready_txs.size() > pack_para.get_all_txs_max_num()) {
+        xtxpool_error("xtxmgr_table_t::get_ready_txs-txs num too much table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u",
+                 m_xtable_info->get_table_addr().c_str(),
+                 ready_txs.size(),
+                 send_tx_num,
+                 recv_tx_num,
+                 confirm_tx_num,
+                 m_send_tx_queue.size(),
+                 m_xtable_info->get_recv_tx_count(),
+                 m_xtable_info->get_conf_tx_count());
+    }
     for (auto & tx : ready_txs) {
         xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
     }

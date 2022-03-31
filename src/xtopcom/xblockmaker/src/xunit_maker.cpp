@@ -185,14 +185,14 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_confirm_tx()) {
         auto latest_nonce = get_latest_bstate()->get_latest_send_trans_number();
         if (tx->get_transaction()->get_tx_nonce() > latest_nonce) {
-            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_continuous, 1);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for nonce is overstepped. %s latest_nonce=%llu, tx=%s",
                 cs_para.dump().c_str(), latest_nonce, tx->dump(true).c_str());
             return false;
         }
     }
 
-    // send tx contious nonce rules
+    // send tx continuous nonce rules
     if (tx->is_send_tx() || tx->is_self_tx()) {
         uint64_t latest_nonce;
         uint256_t latest_hash;
@@ -204,7 +204,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
             //     uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();
             //     get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce);
             // }
-            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_continuous, 1);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,bstate=%s,latest_nonce=%ld,tx=%s",
                 cs_para.dump().c_str(), get_latest_bstate()->get_bstate()->dump().c_str(), latest_nonce, tx->dump().c_str());
             return false;
@@ -472,7 +472,7 @@ bool xunit_maker_t::must_make_next_full_block() const {
 }
 
 bool xunit_maker_t::can_make_next_full_block(bool is_forked_unit_opt) const {
-    // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
+    // TODO(jimmy) non continuous block make mode. condition:non-empty block is committed status
     xwarn("xunit_maker_t::can_make_next_full_block lightunit.account=%s,current_height=%ld,pending_txs=%zu,locked=%d,forked%d",
         get_account().c_str(), get_latest_bstate()->get_block_height(), m_pending_txs.size(), is_account_locked(), is_forked_unit_opt);
     if (is_forked_unit_opt) {

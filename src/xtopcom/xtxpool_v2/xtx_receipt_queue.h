@@ -77,7 +77,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_receipt_id(uint64_t latest_receipt_id);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t lower_receipt_id, uint64_t upper_receipt_id, uint32_t max_num) const;
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t lower_receipt_id, uint64_t upper_receipt_id, bool continuous) const;
     void erase(uint64_t receipt_id);
     bool empty() const {
         return m_txs.empty();
@@ -104,10 +104,6 @@ public:
     xreceipt_queue_new_t(xtxpool_table_info_t * xtable_info, xtxpool_resources_face * para) : m_receipt_queue_internal(xtable_info), m_para(para) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t confirm_and_recv_txs_max_num,
-                                                       uint32_t confirm_txs_max_num,
-                                                       const base::xreceiptid_state_ptr_t & receiptid_state,
-                                                       uint32_t & confirm_txs_num) const;
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t confirm_and_recv_txs_max_num,
                                                        uint32_t confirm_txs_max_num,
                                                        const base::xreceiptid_state_ptr_t & receiptid_state,
