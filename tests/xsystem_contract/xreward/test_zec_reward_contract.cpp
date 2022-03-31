@@ -5,10 +5,10 @@
 #define private public
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xcontract_runtime/xtop_action_generator.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xtop_action_generator.h"
 #include "xdata/xtransaction_v2.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"

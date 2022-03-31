@@ -13,7 +13,7 @@ namespace evm {
 
 class xtop_evm_storage : public top::evm::xevm_storage_base_t {
 public:
-    explicit xtop_evm_storage(observer_ptr<evm_statestore::xevm_statestore_helper_t> const & statestore) : m_statestore{statestore} {
+    explicit xtop_evm_storage(observer_ptr<vm_statestore::xvm_statestore_helper_t> const statestore) : m_statestore{statestore} {
     }
     xtop_evm_storage(xtop_evm_storage const &) = delete;
     xtop_evm_storage & operator=(xtop_evm_storage const &) = delete;
@@ -45,7 +45,7 @@ public:
     }
 
 private:
-    observer_ptr<evm_statestore::xevm_statestore_helper_t> m_statestore;
+    observer_ptr<vm_statestore::xvm_statestore_helper_t> m_statestore;
 
     xbytes_t encode_key(state_accessor::properties::xtypeless_property_identifier_t const & prop, common::xaccount_address_t const & account, xbytes_t const & extra) {
         return {};

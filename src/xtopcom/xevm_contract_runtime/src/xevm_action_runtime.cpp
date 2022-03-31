@@ -4,30 +4,32 @@
 
 #include "xevm_contract_runtime/xevm_action_runtime.h"
 
+
 #include "xevm_contract_runtime/xevm_action_session.h"
 #include "xevm_contract_runtime/xevm_storage.h"
+#include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/evm_logic.h"
-
 NS_BEG2(top, contract_runtime)
 
-xtop_action_runtime<data::xevm_consensus_action_t>::xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const & evm_contract_manager,
-                                                                        observer_ptr<evm_statestore::xevm_statestore_helper_t> const & statestore_helper) noexcept
+xtop_action_runtime<data::xevm_consensus_action_t>::xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const evm_contract_manager,
+                                                                        observer_ptr<vm_statestore::xvm_statestore_helper_t> const statestore_helper) noexcept
   : evm_contract_manager_{evm_contract_manager}, evm_statestore_helper_{statestore_helper} {
 }
 
 // todo this state? should be user's or contract's. User's account state
-std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> xtop_action_runtime<data::xevm_consensus_action_t>::new_session() {
-    return top::make_unique<xaction_session_t<data::xevm_consensus_action_t>>(top::make_observer(this), evm_statestore_helper_);
+std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> xtop_action_runtime<data::xevm_consensus_action_t>::new_session(observer_ptr<evm_runtime::xevm_state_t> evm_state) {
+    return top::make_unique<xaction_session_t<data::xevm_consensus_action_t>>(top::make_observer(this), evm_state);
 }
 
-xtransaction_execution_result_t xtop_action_runtime<data::xevm_consensus_action_t>::execute(observer_ptr<top::evm::xevm_context_t> tx_ctx) {
+xtransaction_execution_result_t xtop_action_runtime<data::xevm_consensus_action_t>::execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx) {
     xtransaction_execution_result_t result;
 
     try {
         // mock:
         auto storage = std::make_shared<evm::xevm_storage>(evm_statestore_helper_);
+        // auto tx_type = tx_ctx->type();
         // 1. get action type: deploy/call/transfer
         // 2. if deploy, get code and src from action, set_evm_logic, call 'deploy_code()'
         if (0) {
@@ -49,8 +51,8 @@ xtransaction_execution_result_t xtop_action_runtime<data::xevm_consensus_action_
         // 4. if transfer, ?
         else if (0) {
 
-        } else {
-            xassert(false);
+        // } else {
+        //     xassert(false);
         }
     } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
