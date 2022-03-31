@@ -17,13 +17,14 @@ build = "../build.rs"
 crate_type = ["rlib", "staticlib"]
 
 [dependencies]
+bincode = "1.3.3"
 engine-precompiles = { path = "../engine-precompiles", default-features = false }
 engine-sdk = { path = "../engine-sdk", default-features = false }
 engine-transactions = { path = "../engine-transactions", default-features = false }
 engine-types = { path = "../engine-types", default-features = false }
-borsh = { version = "0.8.2", default-features = false }
 evm = { git = "https://github.com/rust-blockchain/evm.git", rev = "07ae4451bb1d8d1cc81e5e07685691e68220a7d2", default-features = false }
 hex = { version = "0.4", default-features = false }
+serde = { version = "1.0.136", features = ["derive"] }
 
 [features]
 default = ["std"]

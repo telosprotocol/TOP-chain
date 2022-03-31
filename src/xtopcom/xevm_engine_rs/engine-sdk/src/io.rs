@@ -1,5 +1,4 @@
 use crate::error;
-use borsh::{BorshDeserialize, BorshSerialize};
 use engine_types::U256;
 
 /// The purpose of this trait is to represent a reference to a value that
@@ -14,11 +13,6 @@ pub trait StorageIntermediate: Sized {
         let mut buf = vec![0u8; size];
         self.copy_to_slice(&mut buf);
         buf
-    }
-
-    fn to_value<T: BorshDeserialize>(&self) -> Result<T, error::BorshDeserializeError> {
-        let bytes = self.to_vec();
-        T::try_from_slice(&bytes).map_err(|_| error::BorshDeserializeError)
     }
 }
 
@@ -63,31 +57,6 @@ pub trait IO {
         self.read_storage(key).map(|s| s.len())
     }
 
-    /// Convenience function to read the input and deserialize the bytes using borsh.
-    fn read_input_borsh<U: BorshDeserialize>(&self) -> Result<U, error::BorshDeserializeError> {
-        self.read_input().to_value()
-    }
-
-    // /// Convenience function to read the input into a 20-byte array.
-    // fn read_input_arr20(&self) -> Result<[u8; 20], error::IncorrectInputLength> {
-    //     let value = self.read_input();
-
-    //     if value.len() != 20 {
-    //         return Err(error::IncorrectInputLength);
-    //     }
-
-    //     let mut buf = [0u8; 20];
-    //     value.copy_to_slice(&mut buf);
-    //     Ok(buf)
-    // }
-
-    // /// Convenience function to store the input directly in storage under the
-    // /// given key (without ever loading it into memory).
-    // fn read_input_and_store(&mut self, key: &[u8]) {
-    //     let value = self.read_input();
-    //     self.write_storage_direct(key, value);
-    // }
-
     /// Convenience function to read a 64-bit unsigned integer from storage
     /// (assumes little-endian encoding).
     fn read_u64(&self, key: &[u8]) -> Result<u64, error::ReadU64Error> {
@@ -120,12 +89,4 @@ pub trait IO {
         Ok(U256::from_big_endian(&result))
     }
 
-    // fn write_borsh<T: BorshSerialize>(
-    //     &mut self,
-    //     key: &[u8],
-    //     value: &T,
-    // ) -> Option<Self::StorageValue> {
-    //     let bytes = value.try_to_vec().ok()?;
-    //     self.write_storage(key, &bytes)
-    // }
 }

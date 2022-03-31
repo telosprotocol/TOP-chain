@@ -1,7 +1,6 @@
 use crate::{format, String, H160};
-use borsh::maybestd::io;
-use borsh::{BorshDeserialize, BorshSerialize};
-
+use serde::de::Visitor;
+use serde::{Deserialize, Serialize};
 /// Base Eth Address type
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Address(H160);
@@ -60,24 +59,46 @@ impl TryFrom<&[u8]> for Address {
     }
 }
 
-impl BorshSerialize for Address {
-    fn serialize<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
-        writer.write_all(self.0.as_bytes())
+impl Serialize for Address {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.0.as_bytes())
     }
 }
 
-impl BorshDeserialize for Address {
-    fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
-        if buf.len() < 20 {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("{}", error::AddressError::IncorrectLength),
-            ));
+impl<'de> Deserialize<'de> for Address {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct H160Visitor;
+
+        impl<'de> Visitor<'de> for H160Visitor {
+            type Value = Address;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_fmt(format_args!("expected a valid Address"))
+            }
+
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                if v.len() != 20 {
+                    return Err(serde::de::Error::custom(format!(
+                        "{}, len: {}",
+                        error::AddressError::IncorrectLength,
+                        v.len()
+                    )));
+                }
+                let address = Address(H160::from_slice(&v));
+                Ok(address)
+            }
         }
-        // Guaranty no panics. The length checked early
-        let address = Self(H160::from_slice(&buf[..20]));
-        *buf = &buf[20..];
-        Ok(address)
+
+        deserializer.deserialize_bytes(H160Visitor)
     }
 }
 
@@ -94,18 +115,17 @@ mod tests {
     #[test]
     fn test_address_serializer() {
         let eth_address = "096DE9C2B8A5B8c22cEe3289B101f6960d68E51E";
-        // borsh serialize
-        let serialized_addr =
-            Address::new(H160::from_slice(&hex::decode(eth_address).unwrap()[..]))
-                .try_to_vec()
-                .unwrap();
-        assert_eq!(serialized_addr.len(), 20);
+        let address = Address::new(H160::from_slice(&hex::decode(eth_address).unwrap()[..]));
+        let serialized_addr = bincode::serialize(&address).unwrap();
 
-        let addr = Address::try_from_slice(&serialized_addr).unwrap();
-        assert_eq!(
-            addr.encode(),
-            "096DE9C2B8A5B8c22cEe3289B101f6960d68E51E".to_lowercase()
-        );
+        assert_eq!(serialized_addr.len(), 28); // size(20) 0 0 0 0 0 0 0 + addr(*20)
+
+        let de_addr = bincode::deserialize::<Address>(serialized_addr.as_slice()).unwrap();
+        assert_eq!(de_addr, address);
+
+        // let addr = Address::try_from_slice(&serialized_addr).unwrap();
+        let addr = Address::try_from_slice(&serialized_addr[8..]).unwrap();
+        assert_eq!(addr.encode(), eth_address.to_lowercase());
     }
 
     #[test]
