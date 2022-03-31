@@ -799,7 +799,8 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
 
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
-        if (genesis || common::has<common::xminer_type_t::archive>(miner_type) || common::has<common::xminer_type_t::exchange>(miner_type)) {
+        if (genesis || common::has<common::xminer_type_t::archive>(miner_type) ||
+            common::has<common::xminer_type_t::exchange>(miner_type) || common::has<common::xminer_type_t::invalid>(miner_type)) {
             // detect it is archive node
             if (store::enable_block_recycler(false))
                 xinfo("disable_block_recycler ok.");
