@@ -1,7 +1,7 @@
 package jsonrpcserver
 
 import (
-	"jsonrpcdemo/jsonrpc/client"
+	"xevm/client"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

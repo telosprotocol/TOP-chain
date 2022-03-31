@@ -3,9 +3,9 @@ package jsonrpcserver
 import (
 	"encoding/binary"
 	"encoding/json"
-	"jsonrpcdemo/jsonrpc/client"
-	"jsonrpcdemo/jsonrpc/util"
 	"strconv"
+	"xevm/client"
+	"xevm/util"
 
 	"fmt"
 	"io/ioutil"
