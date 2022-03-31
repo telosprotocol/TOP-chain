@@ -9,7 +9,6 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
@@ -97,11 +96,11 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
 #endif
 
 void xtop_zec_elect_eth_contract::setup() {
-    election::legacy::xelection_result_store_t election_result_store;
+    data::election::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<data::election::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 }
 
