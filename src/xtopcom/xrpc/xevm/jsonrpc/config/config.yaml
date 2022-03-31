@@ -1,7 +1,0 @@
-chainId: "0x205d"
-netWorkId: "0x205d"
-jsonrpcPort: "0.0.0.0:37389"
-archivePoint: "0.0.0.0:37399"
-clinetVersion: "Mist/v0.9.3/linux/amd64/go1.17.8"
-
-grpcPort: "0.0.0.0:37399"
