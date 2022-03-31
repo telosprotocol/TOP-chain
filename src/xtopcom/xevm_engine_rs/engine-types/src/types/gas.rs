@@ -1,10 +1,7 @@
 use crate::fmt::Formatter;
 use crate::{Add, Display, Div, Mul, Sub};
-use borsh::{BorshDeserialize, BorshSerialize};
-
-#[derive(
-    Default, BorshSerialize, BorshDeserialize, Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd,
-)]
+use serde::{Deserialize, Serialize};
+#[derive(Default, Serialize, Deserialize, Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TopGas(u64);
 
 impl Display for TopGas {

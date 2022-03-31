@@ -12,9 +12,9 @@ mod interface {
         runtime::Runtime,
     };
 
-    fn predecessor_address(predecessor_account_id: &AccountId) -> Address {
-        top_account_to_evm_address(predecessor_account_id.as_bytes())
-    }
+    // fn predecessor_address(predecessor_account_id: &AccountId) -> Address {
+    //     top_account_to_evm_address(predecessor_account_id.as_bytes())
+    // }
 
     #[no_mangle]
     pub extern "C" fn deploy_code() {
@@ -23,7 +23,7 @@ mod interface {
         let input = io.read_input().to_vec();
         // let current_account_id = io.current_account_id();
         let mut engine = Engine::new(
-            predecessor_address(&io.predecessor_account_id()),
+            io.sender_address(),
             // current_account_id,
             io,
             &io,
@@ -32,7 +32,7 @@ mod interface {
         Engine::deploy_code_with_input(&mut engine, input)
             .map(|res| {
                 println!("res: {:?}", res);
-                res.try_to_vec().sdk_expect("ERR_SERIALIZE")
+                bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process();
         // TODO: charge for storage
@@ -52,12 +52,12 @@ mod interface {
         //     input,
         // });
         let bytes = io.read_input().to_vec();
-        let args = CallArgs::deserialize(&bytes).sdk_expect("ERR_BORSH_DESERIALIZE");
+        let args = bincode::deserialize::<CallArgs>(&bytes).sdk_expect("ERR_DESERIALIZE");
         // let mut ser: Vec<u8> = Vec::new();
         // args.serialize(&mut ser).unwrap();
         // println!("args: {:?}", ser);
         let mut engine = Engine::new(
-            predecessor_address(&io.predecessor_account_id()),
+            io.sender_address(),
             // current_account_id,
             io,
             &io,
@@ -66,7 +66,7 @@ mod interface {
         Engine::call_with_args(&mut engine, args)
             .map(|res| {
                 println!("res: {:?}", res);
-                res.try_to_vec().sdk_expect("ERR_SERIALIZE")
+                bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process();
     }
@@ -97,8 +97,8 @@ mod interface {
             value: Wei::new(value.into()).to_bytes(),
             input: params,
         });
-        let mut ser: Vec<u8> = Vec::new();
-        args.serialize(&mut ser).unwrap();
+        let ser = bincode::serialize(&args).unwrap();
+        // args.serialize(&mut ser).unwrap();
 
         if (ser.len() <= max_output_len as usize) {
             unsafe {
@@ -118,13 +118,13 @@ mod interface {
         println!("========= set_balance =========");
         let mut io = Runtime;
         let mut engine = Engine::new(
-            predecessor_address(&io.predecessor_account_id()),
+            io.sender_address(),
             // current_account_id,
             io,
             &io,
         )
         .sdk_unwrap();
-        let origin = predecessor_address(&io.predecessor_account_id());
+        let origin = io.sender_address();
         let origin_value = get_balance(&mut io, &origin);
         set_balance(&mut io, &origin, &Wei::new(origin_value.raw() + 10000000));
     }

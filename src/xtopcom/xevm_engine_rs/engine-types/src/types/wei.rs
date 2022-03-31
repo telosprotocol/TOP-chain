@@ -2,7 +2,7 @@ use crate::fmt::Formatter;
 use crate::types::balance::error;
 use crate::{Add, Display, Sub, U256};
 
-/// Wei compatible Borsh-encoded raw value to attach an ETH balance to the transaction
+/// Wei compatible encoded raw value to attach an ETH balance to the transaction
 pub type WeiU256 = [u8; 32];
 
 /// Newtype to distinguish balances (denominated in Wei) from other U256 types.
@@ -82,7 +82,6 @@ impl Sub<Self> for Wei {
     }
 }
 
-/// Type casting from Wei compatible Borsh-encoded raw value into the Wei value, to attach an ETH balance to the transaction
 impl From<WeiU256> for Wei {
     fn from(value: WeiU256) -> Self {
         Wei(U256::from_big_endian(&value))

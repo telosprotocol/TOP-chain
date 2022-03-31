@@ -1,6 +1,6 @@
 use crate::error;
 use crate::prelude::H256;
-use engine_types::account_id::AccountId;
+use engine_types::types::Address;
 
 /// Timestamp represented by the number of nanoseconds since the Unix Epoch.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
@@ -27,7 +27,7 @@ impl Timestamp {
 pub trait Env {
     // fn signer_account_id(&self) -> AccountId;
     // fn current_account_id(&self) -> AccountId;
-    fn predecessor_account_id(&self) -> AccountId;
+    fn sender_address(&self) -> Address;
 
     fn block_height(&self) -> u64;
     fn block_timestamp(&self) -> Timestamp;
