@@ -63,7 +63,7 @@ impl ExitIntoResult for ExitReason {
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct EngineState {
     /// Chain id, according to the EIP-155 / ethereum-lists spec.
     pub chain_id: [u8; 32],
