@@ -20,7 +20,7 @@ use crate::identity::Identity;
 use crate::modexp::ModExp;
 // use crate::random::RandomSeed;
 use crate::secp256k1::ECRecover;
-use engine_types::{account_id::AccountId, types::Address, vec, BTreeMap, Box, Vec, H160, H256, types::EthGas};
+use engine_types::{types::Address, vec, BTreeMap, Box, Vec, H160, H256, types::EthGas};
 use evm::{executor, Context, ExitError, ExitSucceed, backend::Log};
 
 #[derive(Debug, Default)]
