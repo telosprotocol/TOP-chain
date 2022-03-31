@@ -31,7 +31,7 @@ public:
     void signer_account_id(uint64_t register_id);
     void predecessor_account_id(uint64_t register_id);
     void input(uint64_t register_id);
-    void account_balance(uint64_t balance_ptr);
+
     // math:
     void random_seed(uint64_t register_id);
     void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
