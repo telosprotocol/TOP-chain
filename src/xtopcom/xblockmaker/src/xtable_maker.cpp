@@ -599,21 +599,17 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     }
 
     // save txs need packed
-    std::vector<txexecutor::xatomictx_output_t> packtxs_outputs;
     std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
     int64_t tgas_balance_change = 0;
     for (auto & txout : txs_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
             is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
         if (txout.m_is_pack) {
+            table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
             txs_info.push_back(build_tx_info(txout.m_tx));
-            packtxs_outputs.push_back(txout);
             tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
-            table_para.push_tx_to_proposal(txout.m_tx);  // save tx to proposal
-            if (txout.m_vm_output.m_contract_create_txs.size() > 0) {
-                for (auto & v : txout.m_vm_output.m_contract_create_txs) {
-                    table_para.push_tx_to_proposal(v);  // save tx to proposal
-                }
+            for (auto & v : txout.m_vm_output.m_contract_create_txs) {
+                txs_info.push_back(build_tx_info(v));
             }
         } else {
             if (txout.m_tx->is_send_or_self_tx()) {
@@ -624,7 +620,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         }
     }
 
-    if (packtxs_outputs.empty()) {
+    if (txs_info.empty()) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
         xwarn("xtable_maker_t::make_light_table_v2 fail-no pack txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
         return nullptr;
