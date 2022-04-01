@@ -1,18 +1,11 @@
 package jsonrpcserver
 
-/*
-#cgo CFLAGS: -I../../bin/include
-#cgo LDFLAGS: -L../../bin/lib -lwrap
-#include <wrap.h>
-*/
-import "C"
-
 import (
 	"errors"
 	"fmt"
-	"jsonrpcdemo/jsonrpc/client"
-	"jsonrpcdemo/jsonrpc/util"
 	"log"
+	"xevm/client"
+	"xevm/util"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -103,9 +96,9 @@ func (s *Server) Eth_sendRawTransaction(rawTx string) (string, error) {
 	}
 
 	//convert eth tx to Top tx
-	if C.wrapEthTx(C.CString(rawTx)) != 0 {
-		return "", errors.New("sendRawTransaction failed!")
-	}
+	// if C.wrapEthTx(C.CString(rawTx)) != 0 {
+	// 	return "", errors.New("sendRawTransaction failed!")
+	// }
 
 	return etx.Hash().Hex(), nil
 }

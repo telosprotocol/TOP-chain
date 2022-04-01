@@ -13,6 +13,10 @@ aux_source_directory(./xhttp xhttp)
 aux_source_directory(./xws xws)
 aux_source_directory(./xratelimit xratelimit)
 
+if (BUILD_EVM)
+    aux_source_directory(./xevm xevmrpc)
+endif()
+
 add_library(xrpc STATIC ${src} ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${arc} ${xrpc} ${xhttp} ${xws} ${xratelimit})
 
 add_dependencies(xrpc xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xverifier xxbase xxg)
@@ -22,6 +26,10 @@ target_link_libraries(xrpc PRIVATE xelect_net xtxexecutor xtxstore xconfig msgpa
 if (BUILD_METRICS)
     #add_dependencies(xrpc xmetrics)
     target_link_libraries(xrpc PRIVATE xmetrics)
+endif()
+
+if (BUILD_EVM)
+    target_link_libraries(xrpc PRIVATE jsonrpc)
 endif()
 
 

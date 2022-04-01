@@ -38,3 +38,7 @@ src/xtopcom/xvledger/test/xvledger-test.xcodeproj
 macos
 
 src/xtopcom/xevm_engine_rs/target
+pkg/
+xevm_b
+go.mod
+go.sum

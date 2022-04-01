@@ -19,6 +19,18 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
+#line 3 "main.go"
+
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+	void* RunJsonRpc();
+	void  StopJsonRpc(void *srv);
+	#ifdef __cplusplus
+	}
+	#endif
+
+#line 1 "cgo-generated-wrapper"
 
 
 /* End of preamble from import "C" comments.  */
@@ -68,7 +80,8 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern void RunJsonRpc();
+extern void* RunJsonRpc();
+extern void StopJsonRpc(void* srv);
 
 #ifdef __cplusplus
 }
