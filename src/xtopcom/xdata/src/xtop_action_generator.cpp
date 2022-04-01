@@ -5,20 +5,29 @@
 #include "xdata/xtop_action_generator.h"
 
 #include "xbasic/xmemory.hpp"
-#include "xdata/xconsensus_action.h"
 #include "xcommon/xaddress.h"
+#include "xdata/xconsensus_action.h"
+#include "xdata/xerror/xerror.h"
 
 #include <cassert>
 
 NS_BEG2(top, contract_runtime)
 
 std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate(xobject_ptr_t<data::xcons_transaction_t> const & tx) {
+    std::error_code ec;
+    auto r = generate(tx, ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate(xobject_ptr_t<data::xcons_transaction_t> const & tx, std::error_code & ec) {
     common::xaccount_address_t const target_address{ tx->get_transaction()->get_target_addr() };
     
     // eth deploy code
     if (target_address.empty()) {
         common::xaccount_address_t const source_address{ tx->get_transaction()->get_source_addr() };
         if (source_address.type() != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+            ec = data::error::xenum_errc::action_address_type_error;
             assert(false);
             return nullptr;
         }
@@ -39,17 +48,30 @@ std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate
         return top::make_unique<data::xuser_consensus_action_t>(tx);
 
     default:
+        ec = data::error::xenum_errc::action_address_type_error;
         assert(false);
         return nullptr;
-    }
+    }  
 }
 
 std::vector<std::unique_ptr<data::xbasic_top_action_t const>> xtop_action_generator::generate(std::vector<xobject_ptr_t<data::xcons_transaction_t>> const & txs) {
+    std::error_code ec;
+    auto r = generate(txs, ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+std::vector<std::unique_ptr<data::xbasic_top_action_t const>> xtop_action_generator::generate(std::vector<xobject_ptr_t<data::xcons_transaction_t>> const & txs,
+                                                                                              std::error_code & ec) {
     std::vector<std::unique_ptr<data::xbasic_top_action_t const>> r;
     r.reserve(txs.size());
 
     for (auto const & tx : txs) {
-        r.push_back(generate(tx));
+        auto action = generate(tx, ec);
+        if (ec) {
+            return r;
+        }
+        r.push_back(std::move(action));
     }
     return r;
 }
