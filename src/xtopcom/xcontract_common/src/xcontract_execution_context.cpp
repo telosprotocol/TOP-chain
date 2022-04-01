@@ -55,7 +55,7 @@ void xtop_contract_execution_context::input_data(xbytes_t const & data) {
     m_input_data = data;
 }
 
-xbytes_t xtop_contract_execution_context::input_data() {
+xbytes_t const & xtop_contract_execution_context::input_data() const {
     return m_input_data;
 }
 

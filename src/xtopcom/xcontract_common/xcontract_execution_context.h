@@ -58,7 +58,7 @@ public:
     void input_receipt_data(data::xreceipt_data_store_t const& receipt_data);
     data::xreceipt_data_store_t& output_receipt_data() noexcept;
     void input_data(xbytes_t const & data);
-    xbytes_t input_data();
+    xbytes_t const & input_data() const;
 
     xbyte_buffer_t input_receipt_data(std::string const & key) const;
     void remove_input_receipt_data(std::string const & key);

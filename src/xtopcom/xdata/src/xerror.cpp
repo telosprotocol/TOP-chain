@@ -44,6 +44,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::checkpoint_not_found:
         return "checkpoint not found";
 
+    case xerrc_t::action_address_type_error:
+        return "action address type error";
+
     default:
         return "unknown data module error";
     }

@@ -13,7 +13,7 @@
 
 NS_BEG2(top, contract_common)
 
-xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & action_account_addr,
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr,
                                          observer_ptr<state_accessor::xstate_accessor_t> const sa,
                                          xcontract_execution_param_t const & execution_param)
   : m_action_account_address{std::move(action_account_addr)}, m_state_accessor{sa}, m_param{execution_param} {
@@ -21,7 +21,7 @@ xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & acti
     m_latest_followup_tx_nonce = latest_sendtx_nonce();
 }
 
-xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & action_account_addr,
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr,
                                          observer_ptr<vm_statestore::xvm_statestore_helper_t> const st,
                                          xcontract_execution_param_t const & execution_param)
   : m_action_account_address{std::move(action_account_addr)}, m_state_store{st}, m_param{execution_param} {

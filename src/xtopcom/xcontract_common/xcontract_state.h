@@ -65,11 +65,11 @@ public:
     xtop_contract_state & operator=(xtop_contract_state &&) = default;
     ~xtop_contract_state() = default;
 
-    xtop_contract_state(common::xaccount_address_t const & action_account_addr,
+    xtop_contract_state(common::xaccount_address_t action_account_addr,
                         observer_ptr<state_accessor::xstate_accessor_t> const sa,
                         xcontract_execution_param_t const & execution_param);
 
-    xtop_contract_state(common::xaccount_address_t const & action_account_addr,
+    xtop_contract_state(common::xaccount_address_t action_account_addr,
                         observer_ptr<vm_statestore::xvm_statestore_helper_t> const st,
                         xcontract_execution_param_t const & execution_param);
 
