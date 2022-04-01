@@ -27,6 +27,8 @@ enum class xenum_errc {
     election_data_start_time_invalid,
 
     checkpoint_not_found,
+
+    action_address_type_error,
 };
 using xerrc_t = xenum_errc;
 
