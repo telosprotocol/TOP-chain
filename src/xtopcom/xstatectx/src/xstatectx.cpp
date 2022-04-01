@@ -17,8 +17,8 @@
 
 NS_BEG2(top, statectx)
 
-xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const xstatectx_para_t & para)
-: m_statectx_base(prev_table_state, para.m_clock), m_statectx_para(para) {
+xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para)
+: m_statectx_base(prev_table_state, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_bstate().get(), para.m_clock);
     data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
@@ -93,20 +93,7 @@ const data::xtablestate_ptr_t &  xstatectx_t::get_table_state() const {
     return m_table_ctx->get_table_state();
 }
 
-// bool xstatectx_t::add_succ_tx(const xcons_transaction_ptr_t & tx) {
-//     if (tx->is_send_or_self()) {
-//         const std::string & src_addr = tx->get_source_addr();
-//         xunitstate_ctx_ptr_t unit_ctx = find_unit_ctx(addr.get_address());
-//         if (nullptr == unit_ctx) {
-//             xassert(false);
-//             return false;
-//         }
-//         unit_ctx->add_succ_tx(tx);
-//     }
-//     return m_table_ctx->add_succ_tx(tx);
-// }
-
-bool xstatectx_t::do_rollback() {  // TODO(jimmy) optimize performance
+bool xstatectx_t::do_rollback() {
     bool ret = false;
     ret = get_table_state()->do_rollback();
     if (!ret) {

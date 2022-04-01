@@ -12,7 +12,7 @@
 
 NS_BEG2(top, statectx)
 
-// TODO(jimmy) unit state context is a wrap unitstate 
+// unit state context is a wrap unitstate 
 class xunitstate_ctx_t {
  public:
     xunitstate_ctx_t(const data::xunitstate_ptr_t & unitstate);
@@ -25,7 +25,7 @@ class xunitstate_ctx_t {
 
  private:
     data::xunitstate_ptr_t              m_cur_unitstate{nullptr};
-    data::xblock_ptr_t                  m_prev_block{nullptr};  // TODO(jimmy) for create next block
+    data::xblock_ptr_t                  m_prev_block{nullptr};
 };
 using xunitstate_ctx_ptr_t = std::shared_ptr<xunitstate_ctx_t>;
 

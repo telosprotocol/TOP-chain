@@ -13,7 +13,6 @@
 
 NS_BEG2(top, txexecutor)
 
-// TODO(jimmy) should refactor account vm future
 class xaccount_vm_t {
  public:
     xaccount_vm_t(const data::xunitstate_ptr_t & unitstate, const xobject_ptr_t<base::xvcanvas_t> & canvas);

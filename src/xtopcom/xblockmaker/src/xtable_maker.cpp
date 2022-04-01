@@ -559,7 +559,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
 
     // create statectx
     statectx::xstatectx_para_t statectx_para(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
-    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), statectx_para);
+    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
     // create batch executor
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
     txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
@@ -684,7 +684,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
 
 xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     XMETRICS_TIMER(metrics::cons_make_lighttable_tick);
-    bool is_forked = true; // TODO(jimmy)
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.inner_table_tx, cs_para.get_clock());    
     if (is_forked) {
         return make_light_table_v2(true, table_para, cs_para, table_result);
     }
@@ -693,7 +694,8 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & 
 
 xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     XMETRICS_TIMER(metrics::cons_verify_lighttable_tick);
-    bool is_forked = true; // TODO(jimmy)
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.inner_table_tx, cs_para.get_clock());    
     if (is_forked) {
         return make_light_table_v2(false, table_para, cs_para, table_result);
     }    

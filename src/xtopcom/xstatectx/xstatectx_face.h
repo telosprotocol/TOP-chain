@@ -15,7 +15,7 @@
 
 NS_BEG2(top, statectx)
 
-class xstatectx_para_t {  // TODO(jimmy)
+class xstatectx_para_t {
  public:
     xstatectx_para_t(const xstatectx_para_t & r)
     : m_clock(r.m_clock), m_random_seed(r.m_random_seed), m_total_lock_tgas_token(r.m_total_lock_tgas_token) {

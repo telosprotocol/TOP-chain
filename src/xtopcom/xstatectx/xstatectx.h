@@ -22,7 +22,7 @@ NS_BEG2(top, statectx)
 // the table world state context
 class xstatectx_t : public xstatectx_face_t {
  public:
-    xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const xstatectx_para_t & para);
+    xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para);
  public:// APIs for vm & tx executor
     const data::xtablestate_ptr_t &     get_table_state() const override;
     data::xunitstate_ptr_t              load_unit_state(const base::xvaccount_t & addr) override;

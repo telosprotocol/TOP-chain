@@ -137,7 +137,14 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
         }
 
         if (tx->is_confirm_tx()) {
-            // TODO(jimmy) add rsp id check  check confirmid update confirmid and rspid
+            uint64_t tx_rsp_id = tx->get_last_action_rsp_id();
+            uint64_t last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
+            if (last_rsp_id != 0) {  // enable rsp id feature
+                if (tx_rsp_id != last_rsp_id + 1) {
+                    xerror("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
+                    return false;
+                }
+            }
         }
 
     }
@@ -197,7 +204,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     } else {
         if (tx->is_recv_or_confirm_tx()) {  // recv or confirm tx should always be packed
             is_pack_tx = true;
-        } else if (tx->is_evm_tx()) {  // TODO(jimmy) evm tx should always be packed
+        } else if (tx->is_evm_tx()) {
             is_pack_tx = true;
         }
     }

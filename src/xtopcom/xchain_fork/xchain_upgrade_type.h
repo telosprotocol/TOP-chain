@@ -56,6 +56,7 @@ struct xtop_chain_fork_config {
     top::optional<xfork_point_t> election_contract_stores_miner_type_and_genesis_fork_point;
     top::optional<xfork_point_t> partly_remove_confirm;
     top::optional<xfork_point_t> add_rsp_id;
+    top::optional<xfork_point_t> inner_table_tx;
 };
 using xchain_fork_config_t = xtop_chain_fork_config;
 
