@@ -52,7 +52,8 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
 
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_info_collection_contract][on_collect_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(source_addr == account.value() && base_addr == top::sys_contract_sharding_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     // check if the block processed
     uint64_t cur_statistic_height = 0;
@@ -233,7 +234,8 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
 
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(source_addr == account.value() && base_addr == top::sys_contract_sharding_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     uint32_t summarize_fulltableblock_num = 0;
     std::string value_str;

@@ -471,6 +471,17 @@ void xreg_node_info::genesis(bool v) noexcept {
     }
 }
 
+cluster_workload_t & cluster_workload_t::operator+=(cluster_workload_t const & rhs) {
+    if (cluster_id != rhs.cluster_id) {
+        return *this;
+    }
+    for (auto const & count : rhs.m_leader_count) {
+        m_leader_count[count.first] += count.second;
+        cluster_total_workload += count.second;
+    }
+    return *this;
+}
+
 std::int32_t cluster_workload_t::do_write(base::xstream_t & stream) const {
     auto const begin = stream.size();
     stream << cluster_id;
@@ -623,10 +634,14 @@ int32_t xissue_detail::do_write(base::xstream_t & stream) const {
     stream << m_archive_reward_ratio;
     stream << m_validator_reward_ratio;
     stream << m_auditor_reward_ratio;
+    // TODO: add eth fork
+    stream << m_eth_reward_ratio;
     stream << m_vote_reward_ratio;
     stream << m_governance_reward_ratio;
     stream << m_auditor_group_count;
     stream << m_validator_group_count;
+    // TODO: add eth fork
+    stream << m_eth_group_count;
     MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
@@ -642,10 +657,14 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     stream >> m_archive_reward_ratio;
     stream >> m_validator_reward_ratio;
     stream >> m_auditor_reward_ratio;
+    // TODO: add eth fork
+    stream >> m_eth_reward_ratio;
     stream >> m_vote_reward_ratio;
     stream >> m_governance_reward_ratio;
     stream >> m_auditor_group_count;
     stream >> m_validator_group_count;
+    // TODO: add eth fork
+    stream >> m_eth_group_count;
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
