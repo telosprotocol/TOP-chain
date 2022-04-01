@@ -162,19 +162,31 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
             if (common::has<common::xnode_type_t::consensus>(node_datum.address.type()) && node_datum.election_info.raw_credit_score != 0 &&
                 node_datum.election_info.raw_credit_score <= min_creditscore) {
                 candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
-                xdbg("account %s is moved to low priority leader election candidate pool", node_datum.address.to_string().c_str());
+                xdbg("account %s is moved to low priority leader election candidate pool. account credit score %" PRIu64 " min credit score %" PRIu64,
+                     node_datum.address.to_string().c_str(),
+                     node_datum.election_info.raw_credit_score,
+                     min_creditscore);
                 continue;
             }
 
-            xdbg("account %s is moved to high priority leader election candidate pool", node_datum.address.to_string().c_str());
+            xdbg("account %s is moved to high priority leader election candidate pool. account credit score %" PRIu64 " min credit score %" PRIu64,
+                 node_datum.address.to_string().c_str(),
+                 node_datum.election_info.raw_credit_score,
+                 min_creditscore);
             reliable_candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
         } else {
             // <version, joined_version> = <0, 0>, <1, 0>, <N, N-1>, <N, N>
             if (node_datum.election_info.joined_version.value() == 0) {
-                xdbg("account is moved to high priority leader election candidate pool %s", node_datum.address.to_string().c_str());
+                xdbg("account is moved to high priority leader election candidate pool %s. account credit score %" PRIu64 " min credit score %" PRIu64,
+                     node_datum.address.to_string().c_str(),
+                     node_datum.election_info.raw_credit_score,
+                     min_creditscore);
                 reliable_candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
             } else {
-                xdbg("account is moved to low priority leader election candidate pool %s", node_datum.address.to_string().c_str());
+                xdbg("account is moved to low priority leader election candidate pool %s. account credit score %" PRIu64 " min credit score %" PRIu64,
+                     node_datum.address.to_string().c_str(),
+                     node_datum.election_info.raw_credit_score,
+                     min_creditscore);
                 candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
             }
         }
