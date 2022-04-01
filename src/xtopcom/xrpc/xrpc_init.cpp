@@ -25,6 +25,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     assert(nullptr != router_ptr);
     switch (node_type) {
     case common::xnode_type_t::consensus_validator:
+    case common::xnode_type_t::eth:
         assert(nullptr != txpool_service);
         assert(nullptr != store);
         init_rpc_cb_thread();
