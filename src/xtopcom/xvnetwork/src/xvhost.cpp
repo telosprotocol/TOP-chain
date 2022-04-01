@@ -250,6 +250,8 @@ void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_addr
     auto bytes = codec::msgpack_encode(vmsg);
     // m_network_driver->send_to(dst.account_address(), bytes, {});
 
+    on_network_data_ready(host_node_id(), bytes);
+
     // auto message_type = vmsg.message_id();
     // if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
     //     src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
