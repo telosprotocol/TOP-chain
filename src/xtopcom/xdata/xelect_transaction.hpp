@@ -195,6 +195,9 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_group_size);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_group_size);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();

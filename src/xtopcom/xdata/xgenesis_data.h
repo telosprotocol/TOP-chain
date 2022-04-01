@@ -25,6 +25,7 @@ bool is_contract_address(common::xaccount_address_t const & addr);
 bool is_beacon_contract_address(common::xaccount_address_t const & addr);
 bool is_zec_contract_address(common::xaccount_address_t const & addr);
 bool is_sys_sharding_contract_address(common::xaccount_address_t const & addr);
+bool is_sys_evm_table_contract_address(common::xaccount_address_t const & addr);
 bool is_block_contract_address(common::xaccount_address_t const & addr);
 bool has_contract_suffix(const std::string& addr);
 base::xtable_index_t account_map_to_table_id(common::xaccount_address_t const & addr);

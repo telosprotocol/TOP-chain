@@ -88,27 +88,11 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
 }
 
 #undef XREGISTER_CONTRACT
-
-void xtop_contract_manager::setup_blockchains(xvblockstore_t * blockstore) {
-    // setup all contracts' accounts, then no need
-    // sync generation block at all
-    for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
-        if (data::is_sys_sharding_contract_address(pair.first)) {
-            for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-                auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
-                register_contract_cluster_address(pair.first, addr);
-                setup_chain(addr, blockstore);
-            }
-        } else {
-            register_contract_cluster_address(pair.first, pair.first);
-            setup_chain(pair.first, blockstore);
-        }
-    }
-}
 
 void xtop_contract_manager::register_address() {
     for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
@@ -117,6 +101,9 @@ void xtop_contract_manager::register_address() {
                 auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
                 register_contract_cluster_address(pair.first, addr);
             }
+        } else if (data::is_sys_evm_table_contract_address(pair.first)) {
+            auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), 0);
+            register_contract_cluster_address(pair.first, pair.first);
         } else {
             register_contract_cluster_address(pair.first, pair.first);
         }
