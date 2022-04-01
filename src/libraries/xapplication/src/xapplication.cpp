@@ -41,6 +41,7 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 
 #include <stdexcept>
+#include "xapplication/xcons_mgr_builder.h"
 
 NS_BEG2(top, application)
 

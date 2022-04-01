@@ -193,7 +193,8 @@ namespace top
             uint16_t ledger_id;
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
             if (ret) {
-                if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account ||
+                    addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account)
                     return is_eth_valid();                
                 if (addr_type == base::enum_vaccount_addr_type_block_contract)
                     return true;
@@ -233,8 +234,10 @@ namespace top
         {
             uint8_t  addr_type = 0;
             uint16_t net_id = 0;
-            if(false == get_type_and_netid(addr_type,net_id))
+            if (false == get_type_and_netid(addr_type, net_id)) {
+                xwarn("xkeyaddress_t::verify_signature get type and netid fail,m_account_address:%s", m_account_address.c_str());
                 return false;
+            }
 
             uint8_t out_publickey_data[65] = {0};
             if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
@@ -388,7 +391,7 @@ namespace top
 
         std::string       xecpubkey_t::to_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
-            if(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            if(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account)
                 return to_eth_address(publickey,addr_type,ledger_id);
                 
             char address[128] = {0};
@@ -401,7 +404,7 @@ namespace top
 
         std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
-            xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
+            xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
             
             const uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);//remove frist byte of type from public key
             const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);//drop first 12 bytes of total 32,as Ethereum just use the last 20 bytes of hash(keccak256)

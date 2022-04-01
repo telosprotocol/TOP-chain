@@ -350,8 +350,10 @@ bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::string & address) const {
-    auto xid = base::xvaccount_t::get_xid_from_account(address);
-    return get_txpool_table(get_vledger_zone_index(xid), get_vledger_subaddr(xid));
+    base::xvaccount_t _vaddr(address);
+    //auto xid = base::xvaccount_t::get_xid_from_account(address);
+    //return get_txpool_table(get_vledger_zone_index(xid), get_vledger_subaddr(xid));
+    return get_txpool_table(_vaddr.get_zone_index(), _vaddr.get_ledger_subaddr());
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const {
@@ -360,6 +362,9 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table(uint8_t zone, uint16_t subaddr) const {
+//    if (zone == base::enum_chain_zone_evm_index)
+//        subaddr = 0;
+    xdbg("get_txpool_table: %d,%d", zone, subaddr);
     if (!table_zone_subaddr_check(zone, subaddr)) {
         return nullptr;
     }
