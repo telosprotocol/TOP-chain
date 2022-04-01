@@ -32,6 +32,8 @@ common::xsharding_address_t xtop_router::sharding_address_from_tableindex(base::
         return common::build_committee_sharding_address(nid);
     case base::enum_chain_zone_zec_index:
         return common::build_zec_sharding_address(nid);
+    case base::enum_chain_zone_evm_index:
+        return common::build_evm_group_address(nid);
     case base::enum_chain_zone_consensus_index:
         return address_of_table_id(target_tableindex.get_subaddr(), type, nid);
     default:
