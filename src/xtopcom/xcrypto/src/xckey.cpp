@@ -193,7 +193,8 @@ namespace top
             uint16_t ledger_id;
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
             if (ret) {
-                if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account ||
+                    addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account)
                     return is_eth_valid();                
                 if (addr_type == base::enum_vaccount_addr_type_block_contract)
                     return true;
