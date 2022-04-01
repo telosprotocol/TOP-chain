@@ -1,6 +1,6 @@
 # Go cmake configuration
 cmake_minimum_required(VERSION 3.8)
-project(jsonrpc_go)
+#project(jsonrpc_go)
 
 set(TARGET jsonrpc_go)
 
