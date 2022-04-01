@@ -13,7 +13,9 @@ aux_source_directory(./xhttp xhttp)
 aux_source_directory(./xws xws)
 aux_source_directory(./xratelimit xratelimit)
 
-add_subdirectory(./xevm/run)
+if (BUILD_EVM)
+    add_subdirectory(./xevm/run)
+endif()
 
 add_library(xrpc STATIC ${src} ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${arc} ${xrpc} ${xhttp} ${xws} ${xratelimit})
 
