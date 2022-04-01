@@ -14,7 +14,7 @@ aux_source_directory(./xws xws)
 aux_source_directory(./xratelimit xratelimit)
 
 if (BUILD_EVM)
-    aux_source_directory(./xevm xevmrpc)
+    aux_source_directory(./xevm xevmrpcs)
 endif()
 
 add_library(xrpc STATIC ${src} ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${arc} ${xrpc} ${xhttp} ${xws} ${xratelimit})
