@@ -163,6 +163,7 @@ namespace top
                 case enum_vaccount_addr_type_drand:
                 case enum_vaccount_addr_type_secp256k1_user_account:
                 case enum_vaccount_addr_type_secp256k1_eth_user_account:
+                case enum_vaccount_addr_type_secp256k1_evm_user_account:
                     if (parts_num != 1) {
                         xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. type=%d,parts_num=%d", addr_type, parts_num);
                         return false;
@@ -280,7 +281,8 @@ namespace top
             }
 
             // check T8 eth address
-            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account ||
+                addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account) {
                 std::string addrtemp = account_addr.substr(enum_vaccount_address_prefix_size);
                 // check if all lower char
                 std::string addrtemp2 = addrtemp;
@@ -308,19 +310,26 @@ namespace top
                     }
                 }
                 uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
-                if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
-                    xwarn("xvaccount_t::check_address T8 eth address ledger id error");
-                    return false;
+                if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+                    if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
+                        xwarn("xvaccount_t::check_address T8 eth address ledger id error");
+                        return false;
+                    }
+                } else {
+                    if (ledger_id != enum_chain_zone_evm_index) {
+                        xwarn("xvaccount_t::check_address T6 eth address ledger id error");
+                        return false;
+                    }
                 }
             }
-
             return true;
         }
     
         bool  xvaccount_t::is_unit_address() const
         {
-            if(   (get_addr_type() == enum_vaccount_addr_type_secp256k1_eth_user_account)
-               || (get_addr_type() == enum_vaccount_addr_type_secp256k1_user_account) )
+            if( get_addr_type() == enum_vaccount_addr_type_secp256k1_eth_user_account
+               || get_addr_type() == enum_vaccount_addr_type_secp256k1_user_account 
+               || get_addr_type() == enum_vaccount_addr_type_secp256k1_evm_user_account)
             {
                 return true;
             }

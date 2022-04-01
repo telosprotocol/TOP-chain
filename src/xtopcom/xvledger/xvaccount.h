@@ -113,7 +113,12 @@ namespace top
         public:
             xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
-            uint8_t                 get_subaddr() const {return m_subaddr;}
+            uint8_t                 get_subaddr() const {
+                if (get_zone_index() == enum_chain_zone_evm_index)
+                    return 0;
+                else
+                    return m_subaddr;
+            }
             uint8_t                 to_total_table_index() const {
                 if (m_zone_index == enum_chain_zone_consensus_index) {
                     return m_subaddr;
@@ -121,6 +126,8 @@ namespace top
                     return enum_vbucket_has_tables_count + m_subaddr - 1;
                 } else if (m_zone_index == enum_chain_zone_zec_index) {
                     return enum_vbucket_has_tables_count + MAIN_CHAIN_REC_TABLE_USED_NUM + m_subaddr - 1;
+                } else if (m_zone_index == enum_chain_zone_evm_index) {
+                    return 0;
                 }
                 xassert(false);
                 return 255;
@@ -424,7 +431,12 @@ namespace top
             //full-ledger = /chainid/get_short_table_id
             inline const std::string&   get_storage_key() const {return m_account_store_key;}
             
-            inline const int            get_ledger_subaddr() const {return get_vledger_subaddr(m_account_xid);}
+            inline const int            get_ledger_subaddr() const {
+                if (get_zone_index() == enum_chain_zone_evm_index)
+                    return 0;
+                else 
+                    return get_vledger_subaddr(m_account_xid);
+            }
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
             inline const int            get_table_index()    const {return get_vledger_table_index(m_account_xid);}
             
