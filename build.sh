@@ -20,6 +20,26 @@ echo "osname: $osname"
 
 options="$@"
 
+gopath="./src/xtopcom/xrpc/xevm"
+modname="xevm"
+modfile="$gopath/go.mod"
+sumfile="$gopath/go.sum"
+
+if [ ! -f "$modfile" ]; then
+    cd $gopath
+    go env -w GO111MODULE="on"
+    go mod init $modname
+    go mod tidy
+    cd ../../../../
+fi
+
+if [ ! -f "$sumfile" ]; then
+    cd $gopath
+    go env -w GO111MODULE="on"
+    go mod tidy
+    cd ../../../../
+fi
+
 command_line_option_include_item "$options" "pack"
 if [ $? -eq 0 ]; then
     # make install package
