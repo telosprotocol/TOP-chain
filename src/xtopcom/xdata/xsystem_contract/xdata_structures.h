@@ -567,6 +567,8 @@ struct cluster_workload_t final : public xserializable_based_on<void> {
     uint32_t cluster_total_workload{0};
     std::map<std::string, uint32_t> m_leader_count;
 
+    cluster_workload_t & operator+=(const cluster_workload_t & adder);
+
 private:
     /**
      * @brief write to stream
@@ -650,6 +652,7 @@ struct reward_detail final : public xserializable_based_on<void> {
     ::uint128_t m_archive_reward{0};
     ::uint128_t m_validator_reward{0};
     ::uint128_t m_auditor_reward{0};
+    ::uint128_t m_eth_reward{0};
     ::uint128_t m_vote_reward{0};
     ::uint128_t m_self_reward{0};
 
@@ -660,6 +663,8 @@ private:
         stream << m_archive_reward;
         stream << m_validator_reward;
         stream << m_auditor_reward;
+        // TODO: add eth fork
+        stream << m_self_reward;
         stream << m_vote_reward;
         stream << m_self_reward;
         const int32_t end_pos = stream.size();
@@ -678,6 +683,8 @@ private:
         stream >> m_archive_reward;
         stream >> m_validator_reward;
         stream >> m_auditor_reward;
+        // TODO: add eth fork
+        stream >> m_eth_reward;
         stream >> m_vote_reward;
         if (stream.size() > 0) {
             stream >> m_self_reward;
@@ -697,10 +704,12 @@ public:
     uint16_t m_archive_reward_ratio{0};
     uint16_t m_validator_reward_ratio{0};
     uint16_t m_auditor_reward_ratio{0};
+    uint16_t m_eth_reward_ratio{0};
     uint16_t m_vote_reward_ratio{0};
     uint16_t m_governance_reward_ratio{0};
     uint64_t m_auditor_group_count{0};
     uint64_t m_validator_group_count{0};
+    uint64_t m_eth_group_count{0};
     std::map<std::string, reward_detail> m_node_rewards;
 
 public:
