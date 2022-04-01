@@ -96,11 +96,11 @@ namespace top
         bool  xvblockprune_impl::recycle_contract(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)
         {
             xinfo("xvblockprune_impl::recycle contract, %s, %llu, %llu, %llu", account_obj.get_address().c_str(), account_meta._highest_full_block_height, account_meta._lowest_vkey2_block_height, account_meta._highest_deleted_block_height);
-/*            if (m_prune_contract.find(account_obj.get_address()) == m_prune_contract.end())
+            if (m_prune_contract.find(account_obj.get_address()) == m_prune_contract.end())
                 return false;
             if (m_prune_contract[account_obj.get_address()] == enum_prune_none)
                 return false;
-*/
+
             if(account_meta._highest_full_block_height <= enum_reserved_blocks_count) //start prune at least > 8
                 return false;
              
