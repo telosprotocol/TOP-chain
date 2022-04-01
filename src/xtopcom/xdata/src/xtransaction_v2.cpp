@@ -321,14 +321,14 @@ bool xtransaction_v2_t::sign_check() const {
     }
 
     utl::xkeyaddress_t key_address(addr_prefix);
-    uint8_t     addr_type{255};
-    uint16_t    network_id{65535};
-    //get param from config
-    uint16_t config_network_id = 0;//xchain_param.network_id
-    if (!key_address.get_type_and_netid(addr_type, network_id) || config_network_id != network_id) {
-        xwarn("network_id error:%d,%d", config_network_id, network_id);
-        return false;
-    }
+    // uint8_t     addr_type{255};
+    // uint16_t    network_id{65535};
+    // //get param from config
+    // uint16_t config_network_id = 0;//xchain_param.network_id
+    // if (!key_address.get_type_and_netid(addr_type, network_id) || config_network_id != network_id) {
+    //     xwarn("network_id error:%d,%d", config_network_id, network_id);
+    //     return false;
+    // }
 
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.c_str());
     return key_address.verify_signature(signature_obj, m_transaction_hash);
