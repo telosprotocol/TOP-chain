@@ -287,7 +287,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
         node_info.m_network_ids = network_ids;
     }
 
-    init_node_credit(node_info, true);
+    init_node_credit(node_info);
 
     uint64_t const min_deposit = node_info.get_required_min_deposit();
     xdbg("[xrec_registration_contract::registerNode2] call xregistration_contract registerNode() pid:%d, transaction_type:%d, source action type: %d, m_deposit: %" PRIu64
@@ -402,7 +402,7 @@ void xrec_registration_contract::updateNodeInfo(const std::string & nickname, co
         node_info.m_last_update_time = cur_time;
     }
     node_info.consensus_public_key = xpublic_key_t{node_sign_key};
-    init_node_credit(node_info, true);
+    init_node_credit(node_info);
 
     update_node_info(node_info);
     XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "updateNodeInfo_Executed", 1);
@@ -866,7 +866,7 @@ void xrec_registration_contract::updateNodeType(const std::string & node_types) 
         min_deposit, account.c_str(), node_info.m_account_mortgage);
     XCONTRACT_ENSURE(node_info.m_account_mortgage >= min_deposit, "xrec_registration_contract::updateNodeType: deposit not enough");
 
-    init_node_credit(node_info, true);
+    init_node_credit(node_info);
     update_node_info(node_info);
     check_and_set_genesis_stage();
 
@@ -1016,23 +1016,17 @@ bool xrec_registration_contract::is_valid_name(const std::string & nickname) con
     return std::find_if(nickname.begin(), nickname.end(), [](unsigned char c) { return !std::isalnum(c) && c != '_'; }) == nickname.end();
 };
 
-void xrec_registration_contract::init_node_credit(data::system_contract::xreg_node_info & node_info, bool isforked) {
+void xrec_registration_contract::init_node_credit(data::system_contract::xreg_node_info & node_info) {
     if (node_info.could_be_validator()) {
         if (node_info.m_validator_credit_numerator == 0 ) {
-            if (isforked) {
-                node_info.m_validator_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
-            } else {
-                node_info.m_validator_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
-            }
+            node_info.m_validator_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
+            xdbg("validator account %s credit score %" PRIu64, node_info.m_account.c_str(), node_info.m_validator_credit_numerator);
         }
     }
     if (node_info.could_be_auditor()) {
         if (node_info.m_auditor_credit_numerator == 0) {
-            if (isforked) {
-                node_info.m_auditor_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
-            } else {
-                node_info.m_auditor_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
-            }
+            node_info.m_auditor_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
+            xdbg("auditor account %s credit score %" PRIu64, node_info.m_account.c_str(), node_info.m_auditor_credit_numerator);
         }
     }
 

@@ -370,15 +370,24 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
 
 #if defined DEBUG
 
-    //std::string log;
-    //for (auto const & standby_result : standby_network_result.results()) {
-    //    log += " " + common::to_string(standby_result.first) + ": ";
-    //    for (auto const & result : standby_result.second.results()) {
-    //        log += result.first.to_string() + "|";
-    //    }
-    //}
+    std::string log;
+    for (auto const & standby_result : standby_network_result.results()) {
+        // log += " " + common::to_string(standby_result.first) + ": ";
+        for (auto const & result : standby_result.second.results()) {
+            log += result.first.to_string() + ":";
+            for (auto const & raw_credit_scores : result.second.raw_credit_scores) {
+                if (common::has<common::xnode_type_t::consensus_auditor>(raw_credit_scores.first)) {
+                    log += "|auditor:" + std::to_string(raw_credit_scores.second);
+                }
+                if (common::has<common::xnode_type_t::consensus_validator>(raw_credit_scores.first)) {
+                    log += "|validator:" + std::to_string(raw_credit_scores.second);
+                }
+            }
+            log += "-";
+        }
+    }
 
-    //xdbg("[zec contract][elect_non_genesis] elect sees standbys %s", log.c_str());
+    xdbg("[zec contract][elect_non_genesis] elect sees standbys %s", log.c_str());
 
 #endif
 
@@ -513,7 +522,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                                       data::election::xelection_association_result_store_t const & association_result_store,
                                                                       data::election::xstandby_network_result_t const & standby_network_result,
                                                                       std::unordered_map<common::xgroup_id_t, data::election::xelection_result_store_t> & all_cluster_election_result_store) {
-    std::string log_prefix = "[zec contract][elect_auditor_validator] zone " + zone_id.to_string() + u8" cluster " + cluster_id.to_string() + " group " + auditor_group_id.to_string();
+    std::string log_prefix = "[zec contract][elect_auditor_validator] zone " + zone_id.to_string() + " cluster " + cluster_id.to_string() + " group " + auditor_group_id.to_string();
     bool election_success{false};
     std::string election_result_log;
 
@@ -527,7 +536,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
         }
     }
 
-    XCONTRACT_ENSURE(!associated_validator_group_ids.empty(), u8"associated validator group id empty");
+    XCONTRACT_ENSURE(!associated_validator_group_ids.empty(), "associated validator group id empty");
     assert(!associated_validator_group_ids.empty());
 
     // clean up the auditor standby pool by filtering out the nodes that are currently in the validator group.

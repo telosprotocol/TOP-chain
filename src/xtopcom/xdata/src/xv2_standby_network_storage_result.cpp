@@ -6,6 +6,9 @@
 
 #include "xbasic/xutility.h"
 
+#if defined(DEBUG)
+#   include <cinttypes>
+#endif
 #include <functional>
 #include <iterator>
 
@@ -36,6 +39,11 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result() 
     for (auto const & p : m_results) {
         auto const & node_id = get<common::xnode_id_t const>(p);
         auto const & standby_node_info = get<election::v2::xstandby_node_info_t>(p);
+#if defined(DEBUG)        
+        for (auto const & credit : standby_node_info.raw_credit_scores) {
+            xdbg("xstandby_network_storage_result_t::network_result account %s type %s credit score %" PRIu64, node_id.to_string().c_str(), common::to_string(credit.first).c_str(), credit.second);
+        }
+#endif        
         if (m_mainnet_activated || standby_node_info.genesis) {
             for (auto const & stake : standby_node_info.stake_container) {
                 auto const & node_type = get<common::xnode_type_t const>(stake);

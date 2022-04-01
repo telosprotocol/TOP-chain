@@ -264,7 +264,7 @@ private:
      *
      * @param node_info
      */
-    void init_node_credit(data::system_contract::xreg_node_info & node_info, bool isforked);
+    void init_node_credit(data::system_contract::xreg_node_info & node_info);
 };
 
 

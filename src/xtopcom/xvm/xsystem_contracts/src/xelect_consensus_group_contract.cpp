@@ -62,16 +62,24 @@ xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & 
                                                      uint64_t const comprehensive_stake,
                                                      xpublic_key_t const & public_key,
                                                      common::xminer_type_t miner_type,
-                                                     bool genesis)
-  : m_account{account}, m_stake{stake}, m_comprehensive_stake{comprehensive_stake}, m_public_key{public_key}, m_miner_type{miner_type}, m_genesis{genesis} {
+                                                     bool genesis,
+                                                     std::map<common::xnode_type_t, uint64_t> raw_credit_scores)
+  : m_account{account}
+  , m_stake{stake}
+  , m_comprehensive_stake{comprehensive_stake}
+  , m_public_key{public_key}
+  , m_miner_type{miner_type}
+  , m_genesis{genesis}
+  , m_raw_credit_scores{std::move(raw_credit_scores)} {
 }
 
 xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & account,
                                                      uint64_t const stake,
                                                      xpublic_key_t const & public_key,
                                                      common::xminer_type_t miner_type,
-                                                     bool genesis)
-  : xtop_election_awared_data{account, stake, 0, public_key, miner_type, genesis} {
+                                                     bool genesis,
+                                                     std::map<common::xnode_type_t, uint64_t> raw_credit_scores)
+  : xtop_election_awared_data{account, stake, 0, public_key, miner_type, genesis, std::move(raw_credit_scores)} {
 }
 
 bool xtop_election_awared_data::operator<(xtop_election_awared_data const & other) const noexcept {
@@ -87,12 +95,13 @@ bool xtop_election_awared_data::operator<(xtop_election_awared_data const & othe
 }
 
 bool xtop_election_awared_data::operator==(xtop_election_awared_data const & other) const noexcept {
-    return m_account == other.m_account                         &&
-           m_stake == other.m_stake                             &&
+    return m_account             == other.m_account             &&
+           m_stake               == other.m_stake               &&
            m_comprehensive_stake == other.m_comprehensive_stake &&
-           m_public_key == other.m_public_key                   &&
-           m_miner_type == other.m_miner_type                   &&
-           m_genesis == other.m_genesis;
+           m_public_key          == other.m_public_key          &&
+           m_miner_type          == other.m_miner_type          &&
+           m_genesis             == other.m_genesis             &&
+           m_raw_credit_scores   == other.m_raw_credit_scores;
 }
 
 bool xtop_election_awared_data::operator>(xtop_election_awared_data const & other) const noexcept {
@@ -127,8 +136,17 @@ common::xminer_type_t xtop_election_awared_data::miner_type() const noexcept {
     return m_miner_type;
 }
 
-uint64_t xtop_election_awared_data::raw_credit_score() const noexcept {
-    return m_raw_credit_score;
+std::map<common::xnode_type_t, uint64_t> const & xtop_election_awared_data::raw_credit_scores() const noexcept {
+    return m_raw_credit_scores;
+}
+
+uint64_t xtop_election_awared_data::raw_credit_score(common::xnode_type_t node_type) const {
+    auto const it = m_raw_credit_scores.find(node_type);
+    if (it != std::end(m_raw_credit_scores)) {
+        return top::get<uint64_t>(*it);
+    }
+
+    return 0;
 }
 
 xtop_elect_consensus_group_contract::xtop_elect_consensus_group_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
@@ -330,12 +348,13 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         });
         assert(elect_in_pos != std::end(effective_standby_data));
 
-        xwarn("%s see elected in %s node %s with stake %" PRIu64 " comprehensive stake %" PRIu64,
-              log_prefix.c_str(),
-              common::to_string(node_type).c_str(),
-              node_id.value().c_str(),
-              elect_in_pos->stake(),
-              elect_in_pos->comprehensive_stake());
+        xkinfo("%s see elected in %s node %s with stake %" PRIu64 " comprehensive stake %" PRIu64 " credit score %" PRIu64,
+               log_prefix.c_str(),
+               common::to_string(node_type).c_str(),
+               node_id.value().c_str(),
+               elect_in_pos->stake(),
+               elect_in_pos->comprehensive_stake(),
+               elect_in_pos->raw_credit_score(node_type));
 
         auto const find_result = election_group_result.find(node_id);
         if (top::get<bool>(find_result)) {
@@ -350,7 +369,7 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         new_election_info.consensus_public_key = elect_in_pos->public_key();
         new_election_info.miner_type = elect_in_pos->miner_type();
         new_election_info.genesis = elect_in_pos->genesis();
-        new_election_info.raw_credit_score = elect_in_pos->raw_credit_score();
+        new_election_info.raw_credit_score = elect_in_pos->raw_credit_score(node_type);
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(node_id);
@@ -393,7 +412,8 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
                                               minimum_comprehensive_stake,
                                               top::get<xstandby_node_info_t>(standby_info).consensus_public_key,
                                               top::get<xstandby_node_info_t>(standby_info).miner_type,
-                                              top::get<xstandby_node_info_t>(standby_info).genesis);
+                                              top::get<xstandby_node_info_t>(standby_info).genesis,
+                                              top::get<xstandby_node_info_t>(standby_info).raw_credit_scores);
     }
 
     normalize_stake(role_type, effective_standby_result);

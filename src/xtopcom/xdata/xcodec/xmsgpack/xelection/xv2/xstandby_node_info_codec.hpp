@@ -11,6 +11,9 @@
 
 #include <msgpack.hpp>
 
+#if defined(DEBUG)
+#   include <cinttypes>
+#endif
 #include <cstdint>
 
 NS_BEG1(msgpack)
@@ -43,6 +46,11 @@ struct convert<top::data::election::v2::xstandby_node_info_t> final {
 
         case xv2_standby_node_info_credit_scores_index: {
             node_info.raw_credit_scores = o.via.array.ptr[xv2_standby_node_info_credit_scores_index].as<std::map<top::common::xnode_type_t, uint64_t>>();
+#if defined(DEBUG)            
+            for (auto const & raw_credit_score_info : node_info.raw_credit_scores) {
+                xdbg("standby_node_info_codec unpack: %s:%" PRIu64, top::common::to_string(raw_credit_score_info.first).c_str(), raw_credit_score_info.second);
+            }
+#endif            
             XATTRIBUTE_FALLTHROUGH;
         }
 
@@ -88,6 +96,12 @@ struct pack<::top::data::election::v2::xstandby_node_info_t> {
         o.pack(node_info.genesis);
         o.pack(node_info.miner_type);
         o.pack(node_info.raw_credit_scores);
+
+#if defined(DEBUG)
+        for (auto const & raw_credit_score_info : node_info.raw_credit_scores) {
+            xdbg("standby_node_info_codec pack: %s:%" PRIu64, top::common::to_string(raw_credit_score_info.first).c_str(), raw_credit_score_info.second);
+        }
+#endif
 
         return o;
     }
