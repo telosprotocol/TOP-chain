@@ -51,6 +51,14 @@ std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_conte
     return m_execution_result.output.followup_transaction_data;
 }
 
+void xtop_contract_execution_context::input_data(xbytes_t const & data) {
+    m_input_data = data;
+}
+
+xbytes_t const & xtop_contract_execution_context::input_data() const {
+    return m_input_data;
+}
+
 void xtop_contract_execution_context::input_receipt_data(data::xreceipt_data_store_t const& receipt_data) {
     m_receipt_data = receipt_data;
 }
@@ -95,6 +103,7 @@ common::xaccount_address_t xtop_contract_execution_context::sender() const {
     common::xaccount_address_t ret;
     switch (m_action->type()) {
     case data::xtop_action_type_t::system:
+    case data::xtop_action_type_t::evm:
         ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->sender();
         break;
     default:
