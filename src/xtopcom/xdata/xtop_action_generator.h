@@ -16,7 +16,9 @@ NS_BEG2(top, contract_runtime)
 class xtop_action_generator {
 public:
     static std::unique_ptr<data::xbasic_top_action_t const> generate(xobject_ptr_t<data::xcons_transaction_t> const & tx);
+    static std::unique_ptr<data::xbasic_top_action_t const> generate(xobject_ptr_t<data::xcons_transaction_t> const & tx, std::error_code & ec);
     static std::vector<std::unique_ptr<data::xbasic_top_action_t const>> generate(std::vector<xobject_ptr_t<data::xcons_transaction_t>> const & txs);
+    static std::vector<std::unique_ptr<data::xbasic_top_action_t const>> generate(std::vector<xobject_ptr_t<data::xcons_transaction_t>> const & txs, std::error_code & ec);
 };
 using xaction_generator_t = xtop_action_generator;
 
