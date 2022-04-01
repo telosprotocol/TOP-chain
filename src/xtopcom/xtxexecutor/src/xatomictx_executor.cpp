@@ -25,7 +25,7 @@ xatomictx_executor_t::xatomictx_executor_t(const statectx::xstatectx_face_ptr_t 
 
 }
 
-bool xatomictx_executor_t::set_tx_related_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
     // update account create time propertys
     if (unitstate->get_block_height() < 2) {
         unitstate->set_account_create_time(m_para.get_clock());
@@ -36,13 +36,13 @@ bool xatomictx_executor_t::set_tx_related_account_state(const data::xunitstate_p
         uint256_t tx_hash = tx->get_tx_hash_256();
         uint64_t account_nonce = unitstate->get_latest_send_trans_number();
         if (account_nonce + 1 != tx_nonce) {
-            xerror("xatomictx_executor_t::set_tx_related_account_state fail-set nonce.tx=%s,account_nonce=%ld,nonce=%ld", tx->dump().c_str(), account_nonce, tx_nonce);
+            xerror("xatomictx_executor_t::set_tx_account_state fail-set nonce.tx=%s,account_nonce=%ld,nonce=%ld", tx->dump().c_str(), account_nonce, tx_nonce);
             return false;
         }
         unitstate->set_tx_info_latest_sendtx_num(tx_nonce);
         std::string transaction_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
         unitstate->set_tx_info_latest_sendtx_hash(transaction_hash_str); // XTODO(jimmy)?
-        xdbg("xatomictx_executor_t::set_tx_related_account_state set nonce.tx=%s,nonce=%ld", tx->dump().c_str(), tx_nonce);
+        xdbg("xatomictx_executor_t::set_tx_account_state set nonce.tx=%s,nonce=%ld", tx->dump().c_str(), tx_nonce);
     }
 
     // TODO(jimmy) recvtx num has no value but will cause to state change
@@ -53,9 +53,9 @@ bool xatomictx_executor_t::set_tx_related_account_state(const data::xunitstate_p
     return true;
 }
 
-bool xatomictx_executor_t::set_tx_related_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx) {
+bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx) {
     if (tx->is_self_tx() || tx->is_inner_table_send_tx()) {
-        xdbg("xatomictx_executor_t::set_tx_related_table_state not need.tx=%s", tx->dump().c_str());
+        xdbg("xatomictx_executor_t::set_tx_table_state not need.tx=%s", tx->dump().c_str());
         return true;
     }
 
@@ -66,32 +66,32 @@ bool xatomictx_executor_t::set_tx_related_table_state(const data::xtablestate_pt
     bool alloc_rspid = true;
     if (data::xblocktool_t::alloc_transaction_receiptid(tx, alloc_rspid, receiptid_pair)) {
         tablestate->set_receiptid_pair(peer_tableid, receiptid_pair);  // save to modified pairs
-        xinfo("xatomictx_executor_t::set_tx_related_table_state succ-set table receiptid.tx=%s,receiptid_pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
+        xinfo("xatomictx_executor_t::set_tx_table_state succ.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
     } else {
-        xerror("xatomictx_executor_t::set_tx_related_table_state fail-set table receiptid.tx=%s,receiptid_pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
+        xerror("xatomictx_executor_t::set_tx_table_state fail.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
     }
     return true;
 }
 
 bool xatomictx_executor_t::update_tx_related_state(const data::xunitstate_ptr_t & tx_unitstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput) {
     bool ret = false;
-    ret = set_tx_related_account_state(tx_unitstate, tx);
+    ret = set_tx_account_state(tx_unitstate, tx);
     if (!ret) {
         return ret;
     }
     for (auto & subtx : vmoutput.m_contract_create_txs) {
-        ret = set_tx_related_account_state(tx_unitstate, subtx);
+        ret = set_tx_account_state(tx_unitstate, subtx);
         if (!ret) {
             return ret;
         }
     }
 
-    ret = set_tx_related_table_state(m_statectx->get_table_state(), tx);
+    ret = set_tx_table_state(m_statectx->get_table_state(), tx);
     if (!ret) {
         return ret;
     }
     for (auto & subtx : vmoutput.m_contract_create_txs) {
-        ret = set_tx_related_table_state(m_statectx->get_table_state(), subtx);
+        ret = set_tx_table_state(m_statectx->get_table_state(), subtx);
         if (!ret) {
             return ret;
         }

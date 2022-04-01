@@ -108,7 +108,7 @@ void xreceiptid_pair_t::set_confirm_rsp_id_max(uint64_t value) {
 
 std::string xreceiptid_pair_t::dump() const {
     char local_param_buf[64];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{sendid=%" PRIu64 ",unconfirm_num=%u,recvid=%" PRIu64 ",sendrspid=%" PRIu64 ",unconfirm_rspnum=%u}",
+    xprintf(local_param_buf,sizeof(local_param_buf),"{sendid=%" PRIu64 ",unconfirm=%u,recvid=%" PRIu64 ",rspid=%" PRIu64 ",unrspnum=%u}",
         m_send_id_max, m_unconfirm_num, m_recv_id_max, m_send_rsp_id_max, m_unconfirm_rsp_num);
     return std::string(local_param_buf);
 }

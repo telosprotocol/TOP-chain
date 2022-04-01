@@ -104,6 +104,20 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
         ju["tx_consensus_phase"] = txaction.get_tx_subtype_str();
         ju["tx_hash"] = "0x" + to_hex_str(action.get_org_tx_hash());
         jv["txs"].append(ju);
+        // inner table show recvtx and confirm phase for compatibility
+        if (txaction.get_inner_table_flag()) {
+            xassert(txaction.is_send_tx());
+            xJson::Value ju2;
+            ju2["tx_consensus_phase"] = base::xvtxkey_t::transaction_subtype_to_string(base::enum_transaction_subtype_recv);
+            ju2["tx_hash"] = "0x" + to_hex_str(action.get_org_tx_hash());
+            jv["txs"].append(ju2);
+            if (!txaction.get_not_need_confirm()) {
+                xJson::Value ju3;
+                ju3["tx_consensus_phase"] = base::xvtxkey_t::transaction_subtype_to_string(base::enum_transaction_subtype_confirm);
+                ju3["tx_hash"] = "0x" + to_hex_str(action.get_org_tx_hash());
+                jv["txs"].append(ju3);
+            }
+        }
     }
 
     auto headers = get_sub_block_headers();

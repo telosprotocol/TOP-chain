@@ -40,7 +40,7 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
         xdbg("xtvm_t::execute succ vm execute.tx=%s", tx->dump().c_str());
     }
     // execute the second inner table tx
-    if (tx->get_inner_table_flag()) {  // TODO(jimmy) only transfer now
+    if (tx->is_send_tx() && tx->get_inner_table_flag()) {  // TODO(jimmy) only transfer now
         std::string address = tx->get_target_addr();
         base::xvaccount_t vaddr(address);
         data::xunitstate_ptr_t unitstate = input.get_statectx()->load_unit_state(vaddr);

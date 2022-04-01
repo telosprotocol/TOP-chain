@@ -33,8 +33,8 @@ class xatomictx_executor_t {
  private:
     enum_execute_result_type vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output); 
     enum_execute_result_type vm_execute_before_process(const xcons_transaction_ptr_t & tx);
-    bool    set_tx_related_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx);
-    bool    set_tx_related_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx);
+    bool    set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx);
+    bool    set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx);
     bool    update_tx_related_state(const data::xunitstate_ptr_t & tx_unitstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput);
     void    vm_execute_after_process(const data::xunitstate_ptr_t & tx_unitstate,
                                     const xcons_transaction_ptr_t & tx,

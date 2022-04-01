@@ -58,7 +58,6 @@ size_t xbstate_ctx_t::do_snapshot() {
 }
 
 bool xbstate_ctx_t::do_rollback() {
-    assert(m_snapshot_canvas_height <= m_canvas->get_op_records_size());
     if (m_snapshot_canvas_height < m_canvas->get_op_records_size()) {
         m_canvas->rollback(m_snapshot_canvas_height);
         std::deque<base::xvmethod_t> records = m_canvas->clone();

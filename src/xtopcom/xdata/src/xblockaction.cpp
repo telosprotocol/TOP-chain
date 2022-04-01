@@ -101,7 +101,7 @@ uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
 bool xlightunit_action_t::get_not_need_confirm() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_FLAGS);
     if (!value.empty()) {
-        auto flags = (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        auto flags = base::xstring_utl::touint32(value);
         return flags & XTX_NOT_NEED_CONFIRM_FLAG_MASK;
     }
     return false;
@@ -110,7 +110,7 @@ bool xlightunit_action_t::get_not_need_confirm() const {
 bool xlightunit_action_t::get_inner_table_flag() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_FLAGS);
     if (!value.empty()) {
-        auto flags = (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        auto flags = base::xstring_utl::touint32(value);
         return flags & XTX_INNER_TABLE_FLAG_MASK;
     }
     return false;
