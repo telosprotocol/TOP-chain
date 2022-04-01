@@ -23,32 +23,17 @@ options="$@"
 gopath="./src/xtopcom/xrpc/xevm"
 modname="xevm"
 modfile="$gopath/go.mod"
-sumfile="$gopath/go.sum"
 
 which go
 if [ "$?" -eq 0 ]; then
     go env -w GO111MODULE="on"
-fi
-
-if [ ! -f "$modfile" ]; then
     cd $gopath
-    go mod init $modname
+    if [ ! -f "$modfile" ]; then        
+        go mod init $modname      
+    fi
     go mod tidy
-    cd ../../../../
+    cd ../../../../    
 fi
-
-if [ ! -f "$sumfile" ]; then
-    cd $gopath    
-    go mod tidy
-    cd ../../../../
-else 
-    cd $gopath
-    go mod tidy
-    cd ../../../../
-    echo "go mod tidy============"
-fi
-
-
 
 command_line_option_include_item "$options" "pack"
 if [ $? -eq 0 ]; then
