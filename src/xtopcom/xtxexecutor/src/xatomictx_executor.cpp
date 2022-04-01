@@ -54,7 +54,7 @@ bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & u
 }
 
 bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx) {
-    if (tx->is_self_tx() || tx->is_inner_table_send_tx()) {
+    if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         xdbg("xatomictx_executor_t::set_tx_table_state not need.tx=%s", tx->dump().c_str());
         return true;
     }

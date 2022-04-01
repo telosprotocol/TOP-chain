@@ -64,13 +64,17 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
         unitblock = m_statectx_base.load_inner_table_unit_block(addr);
         if (nullptr != unitblock) {
             bstate = m_statectx_base.load_proposal_block_state(unitblock.get());
-            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
-            unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
+            if (nullptr != bstate) {
+                data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
+                unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
+            }
         }
     } else { // different table unit state is readonly
         bstate = m_statectx_base.load_different_table_unit_state(addr);
-        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), true);  // readonly-state
-        unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate);
+        if (nullptr != bstate) {
+            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), true);  // readonly-state
+            unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate);
+        }
     }
 
     if (nullptr != unit_ctx) {

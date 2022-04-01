@@ -102,7 +102,9 @@ void xcons_transaction_t::set_not_need_confirm() {
 }
 
 void xcons_transaction_t::set_inner_table_flag() {
-    if (is_inner_table_send_tx() && get_tx_type() == xtransaction_type_transfer) {// TODO(jimmy) only support transfer now
+    if (is_send_tx()
+        && (get_self_tableid() == get_peer_tableid())
+        && get_tx_type() == xtransaction_type_transfer) {// TODO(jimmy) only support transfer now
         xdbg("xcons_transaction_t::set_inner_table_flag tx:%s true", dump().c_str());
         m_execute_state.set_inner_table_flag(true);
     }
@@ -214,13 +216,6 @@ uint64_t xcons_transaction_t::get_dump_rsp_id() const {
     } else {
         return get_last_action_rsp_id();
     }
-}
-bool xcons_transaction_t::is_inner_table_send_tx() const {
-    // XTDODO
-    if (is_send_tx()) {
-        return get_self_tableid() == get_peer_tableid();
-    }
-    return false;
 }
 
 std::string xcons_transaction_t::dump(bool detail) const {
