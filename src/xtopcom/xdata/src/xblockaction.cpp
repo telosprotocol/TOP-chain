@@ -92,7 +92,7 @@ base::xtable_shortid_t xlightunit_action_t::get_receipt_id_peer_tableid()const {
 }
 
 base::xtable_shortid_t xlightunit_action_t::get_rawtx_source_tableid() const {
-    if (is_self_tx()) {
+    if (is_self_tx() || get_inner_table_flag()) {
         base::xvaccount_t _vaddr(get_caller());
         return _vaddr.get_short_table_id();
     } else if (is_send_tx() || is_confirm_tx()) {
