@@ -103,7 +103,7 @@ void xtop_contract_manager::register_address() {
             }
         } else if (data::is_sys_evm_table_contract_address(pair.first)) {
             auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), 0);
-            register_contract_cluster_address(pair.first, pair.first);
+            register_contract_cluster_address(pair.first, addr);
         } else {
             register_contract_cluster_address(pair.first, pair.first);
         }

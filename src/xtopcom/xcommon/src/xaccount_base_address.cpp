@@ -87,6 +87,13 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 #endif
                 top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
             }
+        } else if (m_ledger_id.zone_id() == common::xevm_zone_id) {
+            if (base_address.length() != LAGACY_SYS_TABLE_CONTRACT_ACCOUNT_LENGTH) {
+#if !defined(XENABLE_TESTS)
+                assert(false);
+#endif
+                top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+            }
         } else {
             if (base_address.length() != LAGACY_SYS_BEACON_CONTRACT_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)

@@ -102,16 +102,23 @@ std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) cons
 
     std::string elect_address{};
     if (zone_id == 0) {
-        if (cluster_id == 1) {
-            if (group_id>=1 && group_id<127)
-                elect_address = sys_contract_zec_elect_consensus_addr;
-        }
-    } else if (zone_id == 1) {
-        if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_rec_addr;
-    } else if (zone_id == 2) {
-        if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_zec_addr;
+        xassert(cluster_id == 1);
+        xassert(group_id >= 1 && group_id < 127);
+        elect_address = sys_contract_zec_elect_consensus_addr;
+    } else if (zone_id == common::xcommittee_zone_id_value) {
+        xassert(cluster_id == 0);
+        xassert(group_id == 0);
+        elect_address = sys_contract_rec_elect_rec_addr;
+    } else if (zone_id == common::xzec_zone_id_value) {
+        xassert(cluster_id == 0);
+        xassert(group_id == 0);
+        elect_address = sys_contract_rec_elect_zec_addr;
+    } else if (zone_id == common::xevm_zone_id_value) {
+        xassert(cluster_id == 1);
+        xassert(group_id == 1);
+        elect_address = sys_contract_zec_elect_eth_addr;
+    } else {
+        xassert(false);
     }
 
     return elect_address;
