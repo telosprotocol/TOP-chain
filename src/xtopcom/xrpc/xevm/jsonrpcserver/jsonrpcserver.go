@@ -107,12 +107,18 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 			REST = resp
 		}
 	case ETH_SENDRAWTRANSACTION:
-		para, err := util.GetRaw(reqData)
+		para, err := util.GetParam(reqData)
 		if err != nil {
-			log.Println("getRaw error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
+			log.Println("GetParam error:", err)
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
-			hash, err := s.Eth_sendRawTransaction(para[0].(string))
+			if len(para) != 1 {
+				REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, fmt.Sprintf("para number error:%v", len(para)))
+				break
+			}
+			rawTx := para[0].(string)
+			log.Println("eth_sendRawTransaction rawTx>>>", rawTx)
+			hash, err := s.Eth_sendRawTransaction(rawTx)
 			if err != nil {
 				log.Println("eth_sendRawTransaction error:", err)
 				REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
@@ -147,7 +153,6 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Println("eth_call Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				REST = resp
 			}
@@ -158,7 +163,6 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Println("eth_call Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				log.Println("return eth_call res length>>>", len(res))
 				REST = resp
@@ -168,14 +172,11 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		num, err := s.Eth_blockNumber()
 		if err != nil {
 			REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
-
 		} else {
-			//resNum := fmt.Sprintf("%X", num)
 			resp, err := json.Marshal(responseBody{JsonRPC: jsonrpc, Id: id, Result: num})
 			if err != nil {
 				log.Println("eth_blockNumber Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				log.Println("eth_blockNumber success res>>>", num)
 				REST = resp
@@ -183,29 +184,21 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		}
 	case ETH_GETBALANCE:
 		para, err := util.GetParam(reqData)
-		if err != nil || len(para) == 0 {
+		if err != nil {
 			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
-
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
 			from := para[0].(string)
+			log.Println("eth_getBalance address>>>", from)
 			blc, err := s.Eth_getBalance(from)
 			if err != nil {
 				log.Println("eth_getBalance error:", err)
 				REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
-
 			} else {
-				//metamask's decimal is 18,kto is 11,we need do blc*Pow10(7).
-				// bigB := new(big.Int).SetUint64(blc)
-				// bl := bigB.Mul(bigB, big.NewInt(ETHKTODIC))
-
-				// resBalance := fmt.Sprintf("%X", bl)
-
 				resp, err := json.Marshal(responseBody{JsonRPC: jsonrpc, Id: id, Result: blc})
 				if err != nil {
 					log.Println("eth_getBalance Marshal error:", err)
 					REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 				} else {
 					log.Println("eth_getBalance success res>>>", from, util.StringToHex(blc))
 					REST = resp
@@ -216,13 +209,12 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		price, err := s.Eth_gasPrice()
 		if err != nil {
 			REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
+			break
 		}
 		resp, err := json.Marshal(responseBody{JsonRPC: jsonrpc, Id: id, Result: price})
 		if err != nil {
 			log.Println("eth_gasPrice Marshal error:", err)
 			REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 		} else {
 			REST = resp
 		}
@@ -230,20 +222,20 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		para, err := util.GetParam(reqData)
 		if err != nil || len(para) == 0 {
 			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
-
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
-			code, err := s.Eth_getCode(para[0].(string))
+			addr := para[0].(string)
+			log.Println("eth_getCode address>>>", addr)
+			code, err := s.Eth_getCode(addr)
 			if err != nil {
 				log.Println("eth_getCode error:", err)
-				code = "0x"
+				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
+				break
 			}
-
 			resp, err := json.Marshal(responseBody{JsonRPC: jsonrpc, Id: id, Result: code})
 			if err != nil {
 				log.Println("eth_getCode Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				log.Println("eth_getCode success res>>>", code)
 				REST = resp
@@ -251,24 +243,21 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		}
 	case ETH_GETTRANSACTIONCOUNT:
 		para, err := util.GetParam(reqData)
-		if err != nil || len(para) == 0 {
+		if err != nil {
 			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
-
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
 			addr := para[0].(string)
+			log.Println("eth_getTransactionCount address>>>", addr)
 			count, err := s.Eth_getTransactionCount(addr)
 			if err != nil {
 				log.Println("eth_getTransactionCount error:", err)
 				REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
-
 			} else {
-				//hexCount := fmt.Sprintf("%X", count)
 				resp, err := json.Marshal(responseBody{JsonRPC: jsonrpc, Id: id, Result: count})
 				if err != nil {
 					log.Println("eth_getTransactionCount Marshal error:", err)
 					REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 				} else {
 					log.Println("eth_getTransactionCount success res>>>", "addr:", addr, "nonce", count)
 					REST = resp
@@ -279,7 +268,7 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		ret, err := s.Eth_estimateGas(reqData)
 		if err != nil {
 			var RetErr util.ErrorBody
-			RetErr.Code = -4677
+			RetErr.Code = ESTIMATEGASERR
 			RetErr.Message = err.Error()
 			if len(ret) > 0 {
 				btret := common.Hex2Bytes(ret)
@@ -289,12 +278,10 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 				RetErr.Message = RetErr.Message + ": " + errMsg
 				RetErr.Data = util.StringToHex(ret)
 			}
-
 			resp, err := json.Marshal(util.ResponseErr{JsonRPC: jsonrpc, Id: id, Error: &RetErr})
 			if err != nil {
 				log.Println("eth_estimateGas Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				log.Println("eth_estimateGas success ret>>>", ret)
 				REST = resp
@@ -306,7 +293,6 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Println("eth_estimateGas Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				log.Println("eth_estimateGas success res>>>", res)
 				REST = resp
@@ -314,11 +300,14 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		}
 	case ETH_GETBLOCKBYHASH:
 		para, err := util.GetParam(reqData)
-		if err != nil || len(para) == 0 {
-			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
+		if err != nil || len(para) != 2 {
+			log.Println("util.GetParam error:", err, "para number:", len(para))
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
-			blk, err := s.Eth_getBlockByHash(para[0].(string), para[1].(bool))
+			hash := para[0].(string)
+			option := para[1].(bool)
+			log.Printf("eth_getBlockByHash hash:%v,option:%v\n", hash, option)
+			blk, err := s.Eth_getBlockByHash(hash, option)
 			if err != nil {
 				log.Println("eth_getBlockByHash error:", err)
 				REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
@@ -336,55 +325,23 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 	case ETH_GETBLOCKBYNUMBER:
 		para, err := util.GetParam(reqData)
 		if err != nil || len(para) != 2 {
-			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
+			log.Println("util.GetParam error:", err, "para number:", len(para))
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
 			strNum := para[0].(string)
-			var num uint64
-			if strNum == "latest" {
-				n, err := s.client.GetMaxBlockNumber()
-				if err != nil {
-					REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
-					break
-				}
-				num = n
-			} else {
-				n, err := util.HexToUint64(strNum)
-				if err != nil {
-					log.Println("hexToUint64 error:", err)
-					REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
-					break
-				}
-				num = n
-			}
-
-			if num <= 0 {
-				num = 1
-			}
-			blk, err := s.Eth_getBlockByNumber(num, para[1].(bool))
+			option := para[1].(bool)
+			log.Printf("eth_getBlockByNumber number:%v,option:%v\n", strNum, option)
+			blk, err := s.Eth_getBlockByNumber(strNum, option)
 			if err != nil {
 				log.Println("eth_getBlockByNumber error:", err)
-				resE, err := json.Marshal(responseBlock{JsonRPC: jsonrpc, Id: id, Result: nil})
-				if err != nil {
-					log.Println("eth_getBlockByHash Marshal error:", err)
-					REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-					break
-				}
-				REST = resE
+				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
 			} else {
 				resp, err := json.Marshal(responseBlock{JsonRPC: jsonrpc, Id: id, Result: blk})
 				if err != nil {
 					log.Println("eth_getBlockByNumber Marshal error:", err)
-					//REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-					resE, err := json.Marshal(responseBlock{JsonRPC: jsonrpc, Id: id, Result: nil})
-					if err != nil {
-						log.Println("eth_getBlockByHash Marshal error:", err)
-						REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-						break
-					}
-					REST = resE
+					REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
 				} else {
-					log.Println("eth_getBlockByNumber success res>>>", num)
+					log.Println("eth_getBlockByNumber success res>>>")
 					REST = resp
 				}
 			}
@@ -393,9 +350,10 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		para, err := util.GetParam(reqData)
 		if err != nil || len(para) == 0 {
 			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
 			hash := para[0].(string)
+			log.Println("eth_getTransactionByHash:", hash)
 			tx, err := s.Eth_getTransactionByHash(hash)
 			if err != nil {
 				log.Println("eth_getTransactionByHash error:", err)
@@ -415,9 +373,11 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 		para, err := util.GetParam(reqData)
 		if err != nil || len(para) == 0 {
 			log.Println("util.GetParam error:", err)
-			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
+			REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error()+fmt.Sprintf("para number:%v", len(para)))
 		} else {
-			tc, err := s.Eth_getTransactionReceipt(para[0].(string))
+			hash := para[0].(string)
+			log.Println("eth_getTransactionReceipt:", hash)
+			tc, err := s.Eth_getTransactionReceipt(hash)
 			if err != nil {
 				REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, err.Error())
 			} else {
@@ -425,7 +385,7 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 				if err != nil {
 					REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
 				} else {
-					log.Println("eth_getTransactionReceipt success res>>>", para[0].(string))
+					log.Println("eth_getTransactionReceipt success res>>>", hash)
 					REST = resp
 				}
 			}
@@ -455,7 +415,6 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Println("eth_getStorageAt Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				fmt.Println("eth_getStorageAt success res>>>", res)
 				REST = resp
@@ -471,13 +430,11 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Println("Web3_sha3 Marshal error:", err)
 				REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
-
 			} else {
 				fmt.Println("Web3_sha3 success res>>>", res)
 				REST = resp
 			}
 		}
-
 	default:
 		log.Printf("Error unsupport method:%v\n", method)
 		REST = util.ResponseErrFunc(UnkonwnErr, jsonrpc, id, fmt.Errorf("Unsupport method:%v", method).Error())
