@@ -1,15 +1,5 @@
 package main
 
-/*
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
-	void* RunJsonRpc();
-	void  StopJsonRpc(void *srv);
-	#ifdef __cplusplus
-	}
-	#endif
-*/
 import "C"
 
 import (
@@ -19,6 +9,7 @@ import (
 	"time"
 	"unsafe"
 	"xevm/jsonrpcserver"
+	"xevm/util"
 
 	"github.com/mattn/go-pointer"
 )
@@ -27,12 +18,18 @@ import (
 func RunJsonRpc(chainId, netWorkId, archivePoint, clinetVersion, jsonrpcPort string) unsafe.Pointer {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	srv := &http.Server{Addr: jsonrpcPort}
-	s := jsonrpcserver.NewJsonRpcServer(chainId, netWorkId, archivePoint, clinetVersion)
+	chid := util.MakeString(chainId)
+	netid := util.MakeString(netWorkId)
+	archivep := util.MakeString(archivePoint)
+	cltv := util.MakeString(clinetVersion)
+	jsonp := util.MakeString(jsonrpcPort)
+
+	srv := &http.Server{Addr: jsonp}
+	s := jsonrpcserver.NewJsonRpcServer(chid, netid, archivep, cltv)
 	http.HandleFunc("/", s.HandRequest)
 
 	go func() {
-		log.Println("running jsonrpc server:", jsonrpcPort)
+		log.Println("running jsonrpc server:", jsonp)
 		err := srv.ListenAndServe()
 		if err != nil {
 			log.Fatalf("%v\n", err)
