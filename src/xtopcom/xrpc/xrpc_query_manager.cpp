@@ -1124,7 +1124,7 @@ void xrpc_query_manager::getBlocksByHeight(xJson::Value & js_req, xJson::Value &
     std::string type = js_req["type"].asString();
     std::string owner = js_req["account_addr"].asString();
     std::string strHeight; 
-    uint64_t height;
+    uint64_t height = 0;
     if (js_req["height"].isString()) {
         strHeight = js_req["height"].asString();
     } else {
@@ -1166,7 +1166,7 @@ void xrpc_query_manager::getBlock(xJson::Value & js_req, xJson::Value & js_rsp, 
     std::string type = js_req["type"].asString();
     std::string owner = js_req["account_addr"].asString();
     std::string strHeight;
-    uint64_t height;
+    uint64_t height = 0;
     if (js_req["height"].isString()) {
         strHeight = js_req["height"].asString();
     } else {
