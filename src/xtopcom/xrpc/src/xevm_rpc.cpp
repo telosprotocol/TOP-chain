@@ -9,12 +9,17 @@
 NS_BEG3(top, rpc, evm)
 
 void xtop_evm_rpc::start() {
-    // RunJsonRpc();
+    m_evm_json_rpc_object = RunJsonRpc({"0x538", 5}, {"0x538", 5}, {"127.0.0.1:37399", 15}, {"x", 1}, {"192.168.30.22:37389", 19});
+    // assert(false);
     running(true);
 }
 
 void xtop_evm_rpc::stop() {
     running(false);
+    auto r = StopJsonRpc(m_evm_json_rpc_object);
+    if (r) {
+        assert(false);
+    }
 }
 
 NS_END3

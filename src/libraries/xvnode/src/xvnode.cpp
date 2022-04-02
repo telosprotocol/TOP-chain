@@ -258,6 +258,9 @@ void xtop_vnode::update_rpc_service() {
                                                            m_txstore,
                                                            m_elect_main,
                                                            m_election_cache_data_accessor);
+    }
+
+    if (common::has<common::xnode_type_t::edge>(type())) {
         assert(m_evm_rpc != nullptr);
         m_evm_rpc->start();
     }

@@ -59,9 +59,9 @@ TEST(test_demo, test_add_contract) {
     top::vm_statestore::xvm_statestore_helper_t statestore;
     top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
-    auto observed_exectx{top::make_observer(exectx.get())};
+    auto observed_exectx = top::make_observer(exectx.get());
 
-    std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
+    std::shared_ptr<xevm_storage_face_t> storage_ptr = std::make_shared<xmock_evm_storage>();
     xevm_logic_t n_logic{storage_ptr, observed_exectx};
     evm_import_instance::instance()->set_evm_logic(n_logic);
     auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
@@ -139,7 +139,7 @@ TEST(test_demo, erc20) {
     top::vm_statestore::xvm_statestore_helper_t statestore;
     top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
-    auto observed_exectx{top::make_observer(exectx.get())};
+    auto observed_exectx = top::make_observer(exectx.get());
 
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
     xevm_logic_t n_logic{storage_ptr, observed_exectx};
@@ -197,7 +197,7 @@ TEST(test_demo, balance) {
     top::vm_statestore::xvm_statestore_helper_t statestore;
     top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
-    auto observed_exectx{top::make_observer(exectx.get())};
+    auto observed_exectx = top::make_observer(exectx.get());
 
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
     xevm_logic_t n_logic{storage_ptr, observed_exectx};
