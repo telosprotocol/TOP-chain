@@ -58,13 +58,6 @@ public:
               xobject_ptr_t<store::xsyncvstore_t> const & syncstore);
 
     /**
-     * @brief Set up blockchains
-     *
-     * @param store
-     */
-    void setup_blockchains(xvblockstore_t * blockstore);
-
-    /**
      * @brief register_address
      */
     void register_address();

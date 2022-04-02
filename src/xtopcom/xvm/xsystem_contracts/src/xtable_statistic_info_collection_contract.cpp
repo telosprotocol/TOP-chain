@@ -52,7 +52,8 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
 
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_info_collection_contract][on_collect_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(source_addr == account.value() && base_addr == top::sys_contract_sharding_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     // check if the block processed
     uint64_t cur_statistic_height = 0;
@@ -233,7 +234,8 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
 
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(source_addr == account.value() && base_addr == top::sys_contract_sharding_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     uint32_t summarize_fulltableblock_num = 0;
     std::string value_str;
@@ -406,7 +408,7 @@ xgroup_workload_t xtable_statistic_info_collection_contract::get_workload(common
         std::string value_str;
         if (MAP_GET2(XPORPERTY_CONTRACT_WORKLOAD_KEY, group_address_str, value_str)) {
         xdbg("[xtable_statistic_info_collection_contract::update_workload] group not exist: %s", group_address.to_string().c_str());
-            total_workload.cluster_id = group_address_str;
+            total_workload.group_address_str = group_address_str;
         } else {
             xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
             total_workload.serialize_from(stream);
@@ -438,13 +440,13 @@ void xtable_statistic_info_collection_contract::update_workload(std::map<common:
             auto const & leader = leader_workload.first;
             auto const & count = leader_workload.second;
             total_workload.m_leader_count[leader] += count;
-            total_workload.cluster_total_workload += count;
+            total_workload.group_total_workload += count;
             xdbg("[xtable_statistic_info_collection_contract::update_workload] group: %u, leader: %s, count: %d, total_count: %d, total_workload: %d",
                  group_address.group_id().value(),
                  leader.c_str(),
                  count,
                  total_workload.m_leader_count[leader],
-                 total_workload.cluster_total_workload);
+                 total_workload.group_total_workload);
         }
         // set
         set_workload(group_address, total_workload);
@@ -517,7 +519,8 @@ void xtable_statistic_info_collection_contract::upload_workload() {
             stream << tgas;
             stream << height;
             group_workload_upload_str = std::string((char *)stream.data(), stream.size());
-            xinfo("[xtable_statistic_info_collection_contract::upload_workload] upload workload to zec reward, group_workload_upload size: %d, tgas: %ld, height: %lu",
+            xinfo("[xtable_statistic_info_collection_contract::upload_workload] %s upload workload to zec reward, group_workload_upload size: %d, tgas: %ld, height: %lu",
+                  SOURCE_ADDRESS().c_str(),
                   group_workload_upload.size(),
                   tgas,
                   height);

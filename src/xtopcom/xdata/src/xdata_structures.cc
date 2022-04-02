@@ -481,19 +481,30 @@ void xreg_node_info::genesis(bool v) noexcept {
     }
 }
 
-std::int32_t cluster_workload_t::do_write(base::xstream_t & stream) const {
+xgroup_workload_t & xgroup_workload_t::operator+=(xgroup_workload_t const & rhs) {
+    if (group_address_str != rhs.group_address_str) {
+        return *this;
+    }
+    for (auto const & count : rhs.m_leader_count) {
+        m_leader_count[count.first] += count.second;
+        group_total_workload += count.second;
+    }
+    return *this;
+}
+
+std::int32_t xgroup_workload_t::do_write(base::xstream_t & stream) const {
     auto const begin = stream.size();
-    stream << cluster_id;
-    stream << cluster_total_workload;
+    stream << group_address_str;
+    stream << group_total_workload;
     MAP_SERIALIZE_SIMPLE(stream, m_leader_count);
     auto const end = stream.size();
     return end - begin;
 }
 
-std::int32_t cluster_workload_t::do_read(base::xstream_t & stream) {
+std::int32_t xgroup_workload_t::do_read(base::xstream_t & stream) {
     auto const begin = stream.size();
-    stream >> cluster_id;
-    stream >> cluster_total_workload;
+    stream >> group_address_str;
+    stream >> group_total_workload;
     MAP_DESERIALIZE_SIMPLE(stream, m_leader_count);
     auto const end = stream.size();
     return begin - end;
@@ -625,6 +636,9 @@ int32_t xissue_detail::do_write(base::xstream_t & stream) const {
     stream << m_auditor_group_count;
     stream << m_validator_group_count;
     MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
+    // TODO: add eth fork
+    stream << m_eth_reward_ratio;
+    stream << m_eth_group_count;
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
@@ -644,6 +658,13 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     stream >> m_auditor_group_count;
     stream >> m_validator_group_count;
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
+    // TODO: add eth fork
+    if (stream.size() > 0) {
+        stream >> m_eth_reward_ratio;
+    }
+    if (stream.size() > 0) {
+        stream >> m_eth_group_count;
+    }
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
 }
