@@ -292,18 +292,18 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
         for (auto m : workloads) {
             auto detail = m.second;
             base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             workload.serialize_from(stream);
             xJson::Value jn;
-            jn["cluster_total_workload"] = workload.cluster_total_workload;
-            auto const & key_str = workload.cluster_id;
-            common::xcluster_address_t cluster;
+            jn["cluster_total_workload"] = workload.group_total_workload;
+            auto const & key_str = m.first;
+            common::xgroup_address_t group_address;
             base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-            key_stream >> cluster;
+            key_stream >> group_address;
             for (auto node : workload.m_leader_count) {
                 jn[node.first] = node.second;
             }
-            jm[cluster.group_id().to_string()] = jn;
+            jm[group_address.group_id().to_string()] = jn;
         }
         json[property_name] = jm;
     };

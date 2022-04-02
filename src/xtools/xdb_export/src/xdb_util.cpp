@@ -389,20 +389,20 @@ static void parse_reg_node_map(std::map<std::string, std::string> const & map, j
 
 static void parse_zec_workload_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
-        auto const & group_id = m.first;
+        auto const & group_address_str = m.first;
         auto const & detail = m.second;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
         json jn;
-        jn["cluster_total_workload"] = workload.cluster_total_workload;
-        common::xcluster_address_t cluster;
-        base::xstream_t key_stream(base::xcontext_t::instance(), (uint8_t *)group_id.data(), group_id.size());
-        key_stream >> cluster;
+        jn["cluster_total_workload"] = workload.group_total_workload;
+        common::xgroup_address_t group_address;
+        base::xstream_t key_stream(base::xcontext_t::instance(), (uint8_t *)group_address_str.data(), group_address_str.size());
+        key_stream >> group_address;
         for (auto node : workload.m_leader_count) {
             jn[node.first] = node.second;
         }
-        j[cluster.group_id().to_string()] = jn;
+        j[group_address.group_id().to_string()] = jn;
     }
 }
 
