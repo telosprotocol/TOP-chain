@@ -42,6 +42,9 @@ TEST(compatibility, election_info_v0_v1) {
         ASSERT_EQ(from.stake, from_again.stake);
         ASSERT_FALSE(from_again.genesis);
         ASSERT_EQ(common::xminer_type_t::invalid, from_again.miner_type);
+
+        auto const from_from = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::decode(from_bytes);
+        ASSERT_EQ(from, from_from);
     }
 
     {
@@ -100,6 +103,9 @@ TEST(compatibility, election_info_v1_v2) {
         ASSERT_EQ(from.genesis, from_again.genesis);
         ASSERT_EQ(from.miner_type, from_again.miner_type);
         ASSERT_EQ(0, from_again.raw_credit_score);
+
+        auto const from_from = codec::xmsgpack_codec_t<data::election::v2::xelection_info_t>::decode(from_bytes);
+        ASSERT_EQ(from, from_from);
     }
 
     {

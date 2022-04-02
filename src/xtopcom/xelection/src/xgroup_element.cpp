@@ -147,7 +147,7 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
         }
 
         xdbg("adding %s %s", node_id.c_str(), common::to_string(node_type_from(zone_id())).c_str());
-        m_node_elements.insert({slot_id, std::make_shared<xnode_element_t>(node_id, slot_id, election_info, shared_from_this())});
+        m_node_elements[slot_id] = std::make_shared<xnode_element_t>(account_address, slot_id, election_info, shared_from_this());
     }
     assert(group_size() == m_node_elements.size());
 }

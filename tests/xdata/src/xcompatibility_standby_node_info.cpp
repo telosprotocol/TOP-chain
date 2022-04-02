@@ -48,6 +48,9 @@ TEST(compatibility, standby_node_info_v0_v1) {
 #endif
         ASSERT_EQ(from.program_version, from_again.program_version);
         ASSERT_EQ(from.stake_container, from_again.stake_container);
+
+        auto const from_from = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::decode(from_bytes);
+        ASSERT_EQ(from, from_from);
     }
 
     {
@@ -116,6 +119,9 @@ TEST(compatibility, standby_node_info_v1_v2) {
         ASSERT_EQ(from.program_version, from_again.program_version);
         ASSERT_EQ(from.stake_container, from_again.stake_container);
         ASSERT_TRUE(from_again.raw_credit_scores.empty());
+
+        auto const from_from = codec::xmsgpack_codec_t<data::election::v2::xstandby_node_info_t>::decode(from_bytes);
+        ASSERT_EQ(from, from_from);
     }
 
     {

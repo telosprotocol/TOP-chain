@@ -19,13 +19,14 @@ NS_BEG1(msgpack)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 NS_BEG1(adaptor)
 
-XINLINE_CONSTEXPR std::size_t xelection_info_field_count{6};
+XINLINE_CONSTEXPR std::size_t xelection_info_field_count{7};
 XINLINE_CONSTEXPR std::size_t xelection_info_joined_version_index{0};
 XINLINE_CONSTEXPR std::size_t xelection_info_stake_index{1};
 XINLINE_CONSTEXPR std::size_t xelection_info_comprehensive_stake_index{2};
 XINLINE_CONSTEXPR std::size_t xelection_info_consensus_public_key_index{3};
 XINLINE_CONSTEXPR std::size_t xelection_info_miner_type_index{4};
 XINLINE_CONSTEXPR std::size_t xelection_info_genesis_index{5};
+XINLINE_CONSTEXPR std::size_t xelection_info_raw_credit_score_index{6};
 
 template <>
 struct convert<top::data::election::v2::xelection_info_t> final {
@@ -40,6 +41,11 @@ struct convert<top::data::election::v2::xelection_info_t> final {
 
         switch (o.via.array.size - 1) {
         default: {
+            XATTRIBUTE_FALLTHROUGH;
+        }
+
+        case xelection_info_raw_credit_score_index: {
+            election_info.raw_credit_score = o.via.array.ptr[xelection_info_raw_credit_score_index].as<uint64_t>();
             XATTRIBUTE_FALLTHROUGH;
         }
 
@@ -88,6 +94,7 @@ struct pack<::top::data::election::v2::xelection_info_t> {
         o.pack(election_info.consensus_public_key);
         o.pack(election_info.miner_type);
         o.pack(election_info.genesis);
+        o.pack(election_info.raw_credit_score);
 
         return o;
     }
@@ -105,6 +112,7 @@ struct object_with_zone<::top::data::election::v2::xelection_info_t> {
         o.via.array.ptr[xelection_info_consensus_public_key_index] = msgpack::object{election_info.consensus_public_key, o.zone};
         o.via.array.ptr[xelection_info_miner_type_index] = msgpack::object{election_info.miner_type, o.zone};
         o.via.array.ptr[xelection_info_genesis_index] = msgpack::object{election_info.genesis, o.zone};
+        o.via.array.ptr[xelection_info_raw_credit_score_index] = msgpack::object{election_info.raw_credit_score, o.zone};
     }
 };
 
