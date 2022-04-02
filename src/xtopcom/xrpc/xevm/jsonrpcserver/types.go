@@ -150,6 +150,7 @@ var (
 	IoutilErr        int = -4004
 	UnkonwnErr       int = -4005
 	CALLERR          int = -4006
+	ESTIMATEGASERR   int = -4007
 )
 
 const (

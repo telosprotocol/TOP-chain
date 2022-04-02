@@ -42,3 +42,4 @@ pkg/
 xevm_b
 go.mod
 go.sum
+cover.out

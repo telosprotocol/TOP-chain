@@ -184,12 +184,32 @@ func (s *Server) Eth_getBlockByHash(hash string, bl bool) (*Block, error) {
 }
 
 //Returns information about a block by block number.
-func (s *Server) Eth_getBlockByNumber(num uint64, bl bool) (*Block, error) {
+func (s *Server) Eth_getBlockByNumber(strNum string, bl bool) (*Block, error) {
+	if strNum == "earliest" || strNum == "pending" {
+		return nil, fmt.Errorf("param %v not supported", strNum)
+	}
+	var num uint64
+	if strNum == "latest" {
+		n, err := s.client.GetMaxBlockNumber()
+		if err != nil {
+			return nil, err
+		}
+		num = n
+
+	} else {
+		n, err := util.HexToUint64(strNum)
+		if err != nil {
+			log.Println("hexToUint64 error:", err)
+			return nil, err
+		}
+		num = n
+	}
+
 	tb, err := s.client.GetBlockByNumber(num)
 	if err != nil {
 		return nil, err
 	}
-	return s.TopBlockToEthBlock(tb, false)
+	return s.TopBlockToEthBlock(tb, bl)
 }
 
 //convert top tx to eth tx
@@ -325,11 +345,10 @@ func (s *Server) Eth_getLogs(mp map[string]interface{}) ([]*types.Log, error) {
 }
 
 func (s *Server) Web3_sha3(mp map[string]interface{}) (string, error) {
-	para, err := util.GetRaw(mp)
+	para, err := util.GetParam(mp)
 	if err != nil {
 		log.Println("Web3_sha3 GetParam error:", err)
 		return "", err
-		//REST = util.ResponseErrFunc(ParameterErr, jsonrpc, id, err.Error())
 	}
 	if len(para) != 1 {
 		return "", errors.New(fmt.Sprintf("wrong sha3 param: %v", para))
