@@ -36,11 +36,17 @@ namespace top
             m_prune_contract[sys_contract_zec_standby_pool_addr] = enum_prune_none;
             m_prune_contract[sys_contract_zec_group_assoc_addr] = enum_prune_none;
 
-            m_prune_contract[sys_contract_sharding_vote_addr] = enum_prune_fullunit;
-            m_prune_contract[sys_contract_sharding_reward_claiming_addr] = enum_prune_fullunit;
-            m_prune_contract[sys_contract_sharding_statistic_info_addr] = enum_prune_fullunit;
+            for (auto index = 0; index < enum_vledger_const::enum_vbucket_has_tables_count; ++index) {
+                std::string addr;
+                addr = std::string(sys_contract_sharding_vote_addr) + "@" + std::to_string(index);
+                m_prune_contract[addr] = enum_prune_fullunit;
+                addr = std::string(sys_contract_sharding_reward_claiming_addr) + "@" + std::to_string(index);
+                m_prune_contract[addr] = enum_prune_fullunit;
+                addr = std::string(sys_contract_sharding_statistic_info_addr) + "@" + std::to_string(index);
+                m_prune_contract[addr] = enum_prune_fullunit;
+            }
         }
-    
+
         xvblockprune_impl::~xvblockprune_impl()
         {
             xwarn("~xvblockprune_impl");
