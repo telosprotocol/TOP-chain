@@ -242,14 +242,14 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
             for (auto m : workloads) {
                 auto detail = m.second;
                 base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-                data::system_contract::cluster_workload_t workload;
+                data::system_contract::xgroup_workload_t workload;
                 workload.serialize_from(stream);
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
+                jn["cluster_total_workload"] = workload.group_total_workload;
                 auto const & key_str = m.first;
-                common::xcluster_address_t cluster;
+                common::xgroup_address_t group_address;
                 base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-                key_stream >> cluster;
+                key_stream >> group_address;
                 if (version == RPC_VERSION_V3) {
                     xJson::Value array;
                     for (auto node : workload.m_leader_count) {
@@ -259,13 +259,13 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                         array.append(n);
                     }
                     jn["miner_workload"] = array;
-                    jn["cluster_name"] = cluster.group_id().to_string();
+                    jn["cluster_name"] = group_address.group_id().to_string();
                     jm.append(jn);
                 } else {
                     for (auto node : workload.m_leader_count) {
                         jn[node.first] = node.second;
                     }
-                    jm[cluster.group_id().to_string()] = jn;
+                    jm[group_address.group_id().to_string()] = jn;
                 }
             }
             json[property_name] = jm;
