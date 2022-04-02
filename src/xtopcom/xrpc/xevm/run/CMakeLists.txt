@@ -4,12 +4,12 @@ cmake_minimum_required(VERSION 3.8)
 set(TARGET jsonrpc_go)
 
 set(SRCS main.go)
-set(LIB libjsonrpc.so)
+set(LIB libjsonrpc.a)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${LIB}
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  COMMAND env GOPATH=${GOPATH} go build -buildmode=c-shared
+  COMMAND env GOPATH=${GOPATH} go build -buildmode=c-archive
   -o "${CMAKE_CURRENT_BINARY_DIR}/${LIB}"
   ${CMAKE_GO_FLAGS} ./...
   COMMENT "Building Go library")
