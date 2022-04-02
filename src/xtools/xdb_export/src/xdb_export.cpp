@@ -1203,7 +1203,7 @@ void xdb_export_tools_t::get_txinfo_from_txaction(const data::xlightunit_action_
         tx_ext3.height = block->get_height();
         tx_ext3.timestamp = block->get_second_level_gmtime();  // here should use second level gmtime for statistic
         tx_ext3.hash = "0x" + txaction.get_tx_hex_hash();
-        tx_ext3.phase = base::enum_transaction_subtype_recv;
+        tx_ext3.phase = base::enum_transaction_subtype_confirm;
         batch_tx_exts.push_back(tx_ext3);
     }
 }

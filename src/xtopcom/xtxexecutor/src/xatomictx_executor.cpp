@@ -14,9 +14,9 @@ NS_BEG2(top, txexecutor)
 
 std::string xatomictx_output_t::dump() const {
     char local_param_buf[256];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{is_pack=%d,snapshot_height=%zu,is_state_dirty=%d,result=%d,vmexec_succ=%d,tgas_change=%ld,vmcode=%d,subtxs=%zu",
+    xprintf(local_param_buf,sizeof(local_param_buf),"{is_pack=%d,snapshot_height=%zu,is_state_dirty=%d,vm_error=%d,vmexec_succ=%d,tgas_change=%ld,vmcode=%d,subtxs=%zu",
         m_is_pack,m_snapshot_size,m_is_state_dirty,m_result,
-        m_vm_output.m_tx_exec_succ,m_vm_output.m_tgas_balance_change,m_vm_output.m_vm_code,m_vm_output.m_contract_create_txs.size());
+        m_vm_output.m_tx_exec_succ,m_vm_output.m_tgas_balance_change,m_vm_output.m_vm_error_code,m_vm_output.m_contract_create_txs.size());
     return std::string(local_param_buf);
 }
 
