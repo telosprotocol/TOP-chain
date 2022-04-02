@@ -36,7 +36,7 @@ namespace top
             m_prune_contract[sys_contract_zec_standby_pool_addr] = enum_prune_none;
             m_prune_contract[sys_contract_zec_group_assoc_addr] = enum_prune_none;
 
-            m_prune_contract[sys_contract_zec_group_assoc_addr] = enum_prune_fullunit;
+            m_prune_contract[sys_contract_sharding_vote_addr] = enum_prune_fullunit;
             m_prune_contract[sys_contract_sharding_reward_claiming_addr] = enum_prune_fullunit;
             m_prune_contract[sys_contract_sharding_statistic_info_addr] = enum_prune_fullunit;
         }
