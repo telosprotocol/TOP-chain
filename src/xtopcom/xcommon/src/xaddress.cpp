@@ -834,6 +834,16 @@ xgroup_address_t build_edge_archive_group_address(xnetwork_id_t const & network_
     };
 }
 
+xgroup_address_t
+build_evm_group_address(xnetwork_id_t const & network_id) {
+    return xgroup_address_t{
+        network_id,
+        xevm_zone_id,
+        xdefault_cluster_id,
+        xdefault_group_id
+    };
+}
+
 xgroup_address_t build_group_address(xnetwork_id_t const & network_id, xnode_type_t const node_type) {
     switch (node_type) {
     case xnode_type_t::rec:

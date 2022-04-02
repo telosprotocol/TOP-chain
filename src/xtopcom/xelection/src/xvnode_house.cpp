@@ -99,21 +99,26 @@ std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) cons
     uint8_t zone_id = get_zone_id_from_xip2(target_group);
     uint8_t cluster_id = get_cluster_id_from_xip2(target_group);
     uint8_t group_id = get_group_id_from_xip2(target_group);
-
     std::string elect_address{};
     if (zone_id == 0) {
-        if (cluster_id == 1) {
-            if (group_id>=1 && group_id<127)
-                elect_address = sys_contract_zec_elect_consensus_addr;
-        }
-    } else if (zone_id == 1) {
-        if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_rec_addr;
-    } else if (zone_id == 2) {
-        if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_zec_addr;
+        xassert(cluster_id == 1);
+        xassert(group_id >= 1 && group_id < 127);
+        elect_address = sys_contract_zec_elect_consensus_addr;
+    } else if (zone_id == common::xcommittee_zone_id_value) {
+        xassert(cluster_id == 0);
+        xassert(group_id == 0);
+        elect_address = sys_contract_rec_elect_rec_addr;
+    } else if (zone_id == common::xzec_zone_id_value) {
+        xassert(cluster_id == 0);
+        xassert(group_id == 0);
+        elect_address = sys_contract_rec_elect_zec_addr;
+    } else if (zone_id == common::xevm_zone_id_value) {
+        xassert(cluster_id == 1);
+        xassert(group_id == 1);
+        elect_address = sys_contract_zec_elect_eth_addr;
+    } else {
+        xassert(false);
     }
-
     return elect_address;
 }
 
@@ -155,8 +160,10 @@ xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_pure(const xvip2_t & target_g
     std::lock_guard<std::mutex> locker(m_lock);
     base::xvnodegroup_t* group = nullptr;
     bool ret = m_vgroups.get(group_key, group);
+    xinfo("xvnode_house_t::get_group_pure, %x, %d", group_key, ret);
     if (ret)
     {
+        xinfo("xvnode_house_t::get_group_pure height, %x, %x", group->get_network_height(), get_network_height_from_xip2(target_group));
         if (group->get_network_height() == get_network_height_from_xip2(target_group)) //double check exactly height
         {
             group->add_ref();
@@ -235,9 +242,9 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
 
                 zone_id = common::xzec_zone_id;
             } else if (common::has<common::xnode_type_t::committee>(node_type)) {
-
                 zone_id = common::xcommittee_zone_id;
-
+            } else if (common::has<common::xnode_type_t::eth>(node_type)) {
+                zone_id = common::xevm_zone_id;
             } else {
                 continue;
             }
