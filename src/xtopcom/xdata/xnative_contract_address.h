@@ -70,6 +70,7 @@ extern common::xaccount_address_t const zec_elect_eth_contract_address;
 extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
+extern common::xaccount_address_t const eth_statistic_info_contract_address;
 
 extern common::xaccount_address_t const rec_table_address;
 extern common::xaccount_address_t const zec_table_address;

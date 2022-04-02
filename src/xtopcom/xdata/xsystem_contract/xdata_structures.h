@@ -562,12 +562,12 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
-struct cluster_workload_t final : public xserializable_based_on<void> {
-    std::string cluster_id;
-    uint32_t cluster_total_workload{0};
+struct xgroup_workload_t final : public xserializable_based_on<void> {
+    std::string group_address_str;
+    uint32_t group_total_workload{0};
     std::map<std::string, uint32_t> m_leader_count;
 
-    cluster_workload_t & operator+=(const cluster_workload_t & adder);
+    xgroup_workload_t & operator+=(const xgroup_workload_t & adder);
 
 private:
     /**
@@ -585,7 +585,6 @@ private:
      */
     std::int32_t do_read(base::xstream_t & stream) override;
 };
-using xgroup_workload_t = cluster_workload_t;
 
 struct xactivation_record final : public xserializable_based_on<void> {
     int activated{0};
@@ -663,10 +662,10 @@ private:
         stream << m_archive_reward;
         stream << m_validator_reward;
         stream << m_auditor_reward;
-        // TODO: add eth fork
-        stream << m_self_reward;
         stream << m_vote_reward;
         stream << m_self_reward;
+        // TODO: add eth fork ?
+        stream << m_eth_reward;
         const int32_t end_pos = stream.size();
         return (end_pos - begin_pos);
     }
@@ -683,11 +682,11 @@ private:
         stream >> m_archive_reward;
         stream >> m_validator_reward;
         stream >> m_auditor_reward;
-        // TODO: add eth fork
-        stream >> m_eth_reward;
         stream >> m_vote_reward;
+        stream >> m_self_reward;
+        // TODO: add eth fork
         if (stream.size() > 0) {
-            stream >> m_self_reward;
+            stream >> m_eth_reward;
         }
         const int32_t end_pos = stream.size();
         return (begin_pos - end_pos);

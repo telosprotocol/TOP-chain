@@ -1069,7 +1069,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
         w1_total += j;
     }
     data::system_contract::xgroup_workload_t g1;
-    g1.cluster_total_workload = w1_total;
+    g1.group_total_workload = w1_total;
     g1.m_leader_count = w1;
     group_workload[m_group_addr1] = g1;
 
@@ -1105,12 +1105,12 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
     // verify
     {
         data::system_contract::xgroup_workload_t total_workload = map[m_group_addr1];
-        // EXPECT_EQ(total_workload.cluster_total_workload, );
+        // EXPECT_EQ(total_workload.group_total_workload, );
         EXPECT_EQ(total_workload.m_leader_count.size(), 10);
         for (auto i = 1; i <= 10; i++) {
             EXPECT_EQ(total_workload.m_leader_count[std::to_string(i)], i);
         }
-        EXPECT_EQ(total_workload.cluster_total_workload, 55);
+        EXPECT_EQ(total_workload.group_total_workload, 55);
     }
 }
 
@@ -1132,7 +1132,7 @@ TEST_F(xtest_workload_contract_t, upload_workload_internal) {
         w1_total += j;
     }
     data::system_contract::xgroup_workload_t g1;
-    g1.cluster_total_workload = w1_total;
+    g1.group_total_workload = w1_total;
     g1.m_leader_count = w1;
     m_workload_contract.set_workload(m_group_addr1, g1);
     
@@ -1206,7 +1206,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_multi_thread_time) {
                 w1_total += workload;
             }
             xgroup_workload_t g1;
-            g1.cluster_total_workload = w1_total;
+            g1.group_total_workload = w1_total;
             g1.m_leader_count = w1;
             group_workload[m_group_addr1] = g1;
         }
@@ -1219,7 +1219,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_multi_thread_time) {
                 w1_total += workload;
             }
             xgroup_workload_t g1;
-            g1.cluster_total_workload = w1_total;
+            g1.group_total_workload = w1_total;
             g1.m_leader_count = w1;
             group_workload[m_group_addr2] = g1;
         }
@@ -1319,7 +1319,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_time) {
             w1_total += workload;
         }
         xgroup_workload_t g1;
-        g1.cluster_total_workload = w1_total;
+        g1.group_total_workload = w1_total;
         g1.m_leader_count = w1;
         group_workload[m_group_addr1] = g1;
     }
@@ -1332,7 +1332,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_time) {
             w1_total += workload;
         }
         xgroup_workload_t g1;
-        g1.cluster_total_workload = w1_total;
+        g1.group_total_workload = w1_total;
         g1.m_leader_count = w1;
         group_workload[m_group_addr2] = g1;
     }
@@ -1425,7 +1425,7 @@ TEST_F(xtest_workload_contract_t, test_generate_on_receive_workload_string) {
             w1_total += workload;
         }
         xgroup_workload_t g1;
-        g1.cluster_total_workload = w1_total;
+        g1.group_total_workload = w1_total;
         g1.m_leader_count = w1;
 
         std::map<std::string, uint32_t> w2;
@@ -1436,7 +1436,7 @@ TEST_F(xtest_workload_contract_t, test_generate_on_receive_workload_string) {
             w2_total += workload;
         }
         xgroup_workload_t g2;
-        g2.cluster_total_workload = w2_total;
+        g2.group_total_workload = w2_total;
         g2.m_leader_count = w2;
         
         if (i == 0) {

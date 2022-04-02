@@ -380,7 +380,7 @@ private:
      * @param zero_workload_account record zero workload account
      * @return total zero workload reward
      */
-    ::uint128_t calc_zero_workload_reward(std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail,
+    ::uint128_t calc_zero_workload_reward(std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail,
                                           const uint32_t zero_workload,
                                           const ::uint128_t group_reward,
                                           std::vector<string> & zero_workload_account);
@@ -397,7 +397,7 @@ private:
     ::uint128_t calc_invalid_workload_group_reward(bool is_auditor,
                                                               std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
                                                               const ::uint128_t group_reward,
-                                                              std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail);
+                                                              std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail);
 
     /**
      * @brief calculate invalid workload group reward which roup nodes all invalid
@@ -449,7 +449,7 @@ private:
      */
     void calc_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
                                          std::vector<uint32_t> const & validator_num,
-                                         std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & validator_workloads_detail,
+                                         std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & validator_workloads_detail,
                                          const ::uint128_t validator_group_workload_rewards,
                                          ::uint128_t & reward_to_self);
 
@@ -464,7 +464,7 @@ private:
      */
     void calc_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
                                        std::vector<uint32_t> const & auditor_num,
-                                       std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & auditor_workloads_detail,
+                                       std::map<common::xcluster_address_t, data::system_contract::xgroup_workload_t> const & auditor_workloads_detail,
                                        const ::uint128_t auditor_group_workload_rewards,
                                        ::uint128_t & reward_to_self);
 
