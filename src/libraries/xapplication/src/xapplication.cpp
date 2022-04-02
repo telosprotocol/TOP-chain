@@ -5,6 +5,7 @@
 #include "xapplication/xapplication.h"
 
 #include "xapplication/xbeacon_chain_application.h"
+#include "xapplication/xcons_mgr_builder.h"
 #include "xapplication/xerror/xerror.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
@@ -38,6 +39,7 @@
 #include "xstore/xstore_error.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
+
 #include <stdexcept>
 
 NS_BEG2(top, application)

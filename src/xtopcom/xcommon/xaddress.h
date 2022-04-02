@@ -406,6 +406,9 @@ xgroup_address_t
 build_zec_sharding_address(xnetwork_id_t const & network_id);
 
 xgroup_address_t
+build_evm_group_address(xnetwork_id_t const & network_id);
+
+xgroup_address_t
 build_edge_sharding_address(xnetwork_id_t const & network_id);
 
 xgroup_address_t

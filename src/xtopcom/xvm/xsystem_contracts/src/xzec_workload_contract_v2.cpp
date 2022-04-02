@@ -61,7 +61,8 @@ void xzec_workload_contract_v2::on_receive_workload(std::string const & table_in
     auto const & source_address = SOURCE_ADDRESS();
     std::string base_addr;
     uint32_t table_id;
-    if (!data::xdatautil::extract_parts(source_address, base_addr, table_id) || sys_contract_sharding_statistic_info_addr != base_addr) {
+    XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_address, base_addr, table_id), "source address extract base_addr or table_id error!");
+    if (sys_contract_sharding_statistic_info_addr != base_addr || sys_contract_eth_table_statistic_info_addr != base_addr) {
         xwarn("[xzec_workload_contract_v2::on_receive_workload] invalid call from %s", source_address.c_str());
         return;
     }
