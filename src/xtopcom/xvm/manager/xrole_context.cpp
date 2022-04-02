@@ -199,8 +199,9 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     } else if ((m_contract_info->address == common::xaccount_address_t{sys_contract_eth_table_statistic_info_addr}) && valid_call(onchain_timer_round)) {
                         // TODO: add eth fork
                         // default size = 1
-                        auto clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
+                        auto clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);                        
                         if (onchain_timer_round % clock_interval == 0) {
+                            xinfo("xrole_context_t::on_block_timer table contract schedule, contract address %s, timer %" PRIu64 ", interval: %lu", m_contract_info->address.value().c_str(), onchain_timer_round, clock_interval);
                             call_contract(onchain_timer_round, info, block_timestamp, 0);
                         }
                     }
