@@ -131,7 +131,7 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
         if (tx->is_recv_tx()) {
             uint64_t last_receipt_id = receiptid_pair.get_recvid_max();
             if (tx_receipt_id != last_receipt_id + 1) {
-                xerror("xtxexecutor_top_vm_t::check_table_order fail-receiptid unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_receipt_id, last_receipt_id);
+                xwarn("xtxexecutor_top_vm_t::check_table_order fail-receiptid unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_receipt_id, last_receipt_id);
                 return false;
             }
         }
@@ -141,7 +141,7 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
             uint64_t last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
             if (last_rsp_id != 0) {  // enable rsp id feature
                 if (tx_rsp_id != last_rsp_id + 1) {
-                    xerror("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
+                    xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
                     return false;
                 }
             }
