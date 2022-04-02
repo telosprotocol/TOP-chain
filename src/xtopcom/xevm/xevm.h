@@ -28,8 +28,8 @@ public:
     ~xtop_evm() = default;
 
     // todo add bstate store observer ptr
-    xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const & evm_contract_manager,
-             observer_ptr<vm_statestore::xvm_statestore_helper_t> const & evm_statestore_helper);
+    xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager,
+             observer_ptr<vm_statestore::xvm_statestore_helper_t> const evm_statestore_helper);
 
 public:
     xevm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, data::xblock_consensus_para_t const & cs_para);
