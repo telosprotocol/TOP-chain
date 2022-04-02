@@ -151,3 +151,9 @@ func VerifyEthSignature(ethtx *types.Transaction) error {
 	}
 	return nil
 }
+
+func MakeString(src string) string {
+	tmpstr := make([]byte, len(src))
+	copy(tmpstr, src)
+	return string(tmpstr)
+}
