@@ -90,6 +90,18 @@ base::xtable_shortid_t xlightunit_action_t::get_receipt_id_peer_tableid()const {
     }
     return 0;
 }
+
+base::xtable_shortid_t xlightunit_action_t::get_rawtx_source_tableid() const {
+    if (is_self_tx()) {
+        base::xvaccount_t _vaddr(get_caller());
+        return _vaddr.get_short_table_id();
+    } else if (is_send_tx() || is_confirm_tx()) {
+        return get_receipt_id_self_tableid();
+    } else {
+        return get_receipt_id_peer_tableid();
+    }
+}
+
 uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_SENDER_CONFRIMED_RECEIPT_ID);
     if (!value.empty()) {

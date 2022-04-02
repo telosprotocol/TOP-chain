@@ -54,6 +54,7 @@ class xlightunit_action_t : public base::xvaction_t {
     uint64_t                    get_rsp_id() const;
     base::xtable_shortid_t      get_receipt_id_self_tableid()const;
     base::xtable_shortid_t      get_receipt_id_peer_tableid()const;
+    base::xtable_shortid_t      get_rawtx_source_tableid() const;
     uint64_t                    get_sender_confirmed_receipt_id() const;
     bool                        get_not_need_confirm() const;
     bool                        get_inner_table_flag() const;

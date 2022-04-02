@@ -1127,7 +1127,7 @@ void xdb_export_tools_t::print_all_table_txinfo_to_file() {
     uint32_t send_only_count = 0;
     uint32_t recv_only_count = 0;
     uint32_t confirm_only_count = 0;
-    for (uint32_t i = 0; i < 32; i++) {
+    for (uint32_t i = 0; i < TOTAL_TABLE_NUM; i++) {
         // confirmedtx_num += m_all_table_info[i].confirmedtx_num;
         if (max_confirm_time_from_send < m_all_table_info[i].max_confirm_time_from_send) {
             max_confirm_time_from_send = m_all_table_info[i].max_confirm_time_from_send;
@@ -1168,13 +1168,17 @@ void xdb_export_tools_t::print_all_table_txinfo_to_file() {
 }
 
 bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum) {
-    uint32_t r = (uint32_t)base::xhash64_t::digest(tx_ext.hash);
-    return m_all_table_info[r%32].all_table_set_txinfo(tx_ext, subtype, tx_ext_sum);
+    // uint32_t r = (uint32_t)base::xhash64_t::digest(tx_ext.hash);
+    base::xtable_index_t tableindex(tx_ext.sendtableid);
+    uint32_t r = tableindex.to_total_table_index();    
+    return m_all_table_info[r].all_table_set_txinfo(tx_ext, subtype, tx_ext_sum);
 }
 
 void xdb_export_tools_t::get_txinfo_from_txaction(const data::xlightunit_action_t & txaction, const data::xblock_t * block, const data::xtransaction_ptr_t & tx_ptr, std::vector<tx_ext_t> & batch_tx_exts) {
+    base::xtable_shortid_t tableid = txaction.get_rawtx_source_tableid();
     {
         tx_ext_t tx_ext;
+        tx_ext.sendtableid = tableid;
         if (tx_ptr != nullptr) {
             tx_ext.src = tx_ptr->get_source_addr();
             tx_ext.target = tx_ptr->get_target_addr();
@@ -1191,6 +1195,7 @@ void xdb_export_tools_t::get_txinfo_from_txaction(const data::xlightunit_action_
     }
     if (txaction.get_inner_table_flag()) {
         tx_ext_t tx_ext2;
+        tx_ext2.sendtableid = tableid;
         tx_ext2.not_need_confirm = txaction.get_not_need_confirm();
         tx_ext2.height = block->get_height();
         tx_ext2.timestamp = block->get_second_level_gmtime();  // here should use second level gmtime for statistic
@@ -1198,13 +1203,16 @@ void xdb_export_tools_t::get_txinfo_from_txaction(const data::xlightunit_action_
         tx_ext2.phase = base::enum_transaction_subtype_recv;
         batch_tx_exts.push_back(tx_ext2);
 
-        tx_ext_t tx_ext3;
-        tx_ext3.not_need_confirm = txaction.get_not_need_confirm();
-        tx_ext3.height = block->get_height();
-        tx_ext3.timestamp = block->get_second_level_gmtime();  // here should use second level gmtime for statistic
-        tx_ext3.hash = "0x" + txaction.get_tx_hex_hash();
-        tx_ext3.phase = base::enum_transaction_subtype_confirm;
-        batch_tx_exts.push_back(tx_ext3);
+        if (!txaction.get_not_need_confirm()) {
+            tx_ext_t tx_ext3;
+            tx_ext3.sendtableid = tableid;
+            tx_ext3.not_need_confirm = txaction.get_not_need_confirm();
+            tx_ext3.height = block->get_height();
+            tx_ext3.timestamp = block->get_second_level_gmtime();  // here should use second level gmtime for statistic
+            tx_ext3.hash = "0x" + txaction.get_tx_hex_hash();
+            tx_ext3.phase = base::enum_transaction_subtype_confirm;
+            batch_tx_exts.push_back(tx_ext3);
+        }
     }
 }
 

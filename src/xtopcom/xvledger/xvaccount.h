@@ -15,6 +15,7 @@ namespace top
 {
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
+    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+enum_vbucket_has_tables_count};
     namespace base
     {
         // account space is divided into netid#->zone#(aka bucket#)->book#->table#->account#
@@ -110,7 +111,17 @@ namespace top
             xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
             uint8_t                 get_subaddr() const {return m_subaddr;}
-            
+            uint8_t                 to_total_table_index() const {
+                if (m_zone_index == enum_chain_zone_consensus_index) {
+                    return m_subaddr;
+                } else if (m_zone_index == enum_chain_zone_beacon_index) {
+                    return enum_vbucket_has_tables_count + m_subaddr - 1;
+                } else if (m_zone_index == enum_chain_zone_zec_index) {
+                    return enum_vbucket_has_tables_count + MAIN_CHAIN_REC_TABLE_USED_NUM + m_subaddr - 1;
+                }
+                xassert(false);
+                return 255;
+            }
         private:
             enum_xchain_zone_index m_zone_index;
             uint8_t                m_subaddr;

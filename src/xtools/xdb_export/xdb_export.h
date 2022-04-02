@@ -54,6 +54,7 @@ public:
     std::string get_account_key_string(const std::string & key);
 private:
     struct tx_ext_t {
+        base::xtable_shortid_t  sendtableid;
         std::string hash{};
         uint64_t height{0};
         uint64_t timestamp{0};
@@ -319,7 +320,8 @@ private:
     xdbtool_dbsize_t m_dbsize_info;
     void vector_to_json(std::map<std::string, xdbtool_parse_info_t> &db_info, json &json_root);
 
-    xdbtool_all_table_info_t m_all_table_info[32];
+    // xdbtool_all_table_info_t m_all_table_info[32];
+    xdbtool_all_table_info_t m_all_table_info[TOTAL_TABLE_NUM];
 };
 
 NS_END2
