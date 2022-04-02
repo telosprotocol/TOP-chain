@@ -114,12 +114,7 @@ class xdatamock_table : public base::xvaccount_t {
         }
         xblock_ptr_t cert_block = m_history_tables[cert_height];
 
-        std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
-        std::vector<xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block.get(), cert_block.get());
-        for (auto & receipt : all_receipts) {
-            data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-            all_cons_txs.push_back(constx);
-        }
+        std::vector<data::xcons_transaction_ptr_t> all_cons_txs = data::xblocktool_t::create_all_txreceipts(commit_block.get(), cert_block.get());
         return all_cons_txs;
     }
 

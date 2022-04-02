@@ -108,7 +108,7 @@ void xreceiptid_pair_t::set_confirm_rsp_id_max(uint64_t value) {
 
 std::string xreceiptid_pair_t::dump() const {
     char local_param_buf[64];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{sendid=%" PRIu64 ",unconfirm_num=%u,recvid=%" PRIu64 ",sendrspid=%" PRIu64 ",unconfirm_rspnum=%u}",
+    xprintf(local_param_buf,sizeof(local_param_buf),"{sendid=%" PRIu64 ",unconfirm=%u,recvid=%" PRIu64 ",rspid=%" PRIu64 ",unrspnum=%u}",
         m_send_id_max, m_unconfirm_num, m_recv_id_max, m_send_rsp_id_max, m_unconfirm_rsp_num);
     return std::string(local_param_buf);
 }
@@ -231,7 +231,7 @@ void xreceiptid_state_t::add_pair(xtable_shortid_t sid, const xreceiptid_pair_t 
     m_binlog->add_pair(sid, pair);
 }
 
-bool xreceiptid_state_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
+bool xreceiptid_state_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const {
     return m_binlog->find_pair(sid, pair);
 }
 
@@ -260,7 +260,7 @@ void xreceiptid_state_t::set_tableid_and_height(xtable_shortid_t tableid, uint64
     m_height = height;
 }
 
-bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
+bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) const {
     // firstly find in binlog, secondly find in last full
     bool ret = m_modified_binlog->find_pair(sid, pair);
     if (ret) {

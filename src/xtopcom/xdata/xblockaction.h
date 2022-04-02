@@ -22,13 +22,16 @@ namespace top { namespace data {
 using xreceipt_data_t = xreceipt_data_store_t;
 // lightunit action is wrap for vaction, should not cache any members
 class xlightunit_action_t : public base::xvaction_t {
- protected:
-
  public:
     xlightunit_action_t(const base::xvaction_t & _action);
     xlightunit_action_t(const std::string & tx_hash, base::enum_transaction_subtype _subtype, const std::string & caller_addr,const std::string & target_uri,const std::string & method_name);
     ~xlightunit_action_t() = default;
 
+ public:
+    static  bool is_not_txaction(const base::xvaction_t & _action) {return _action.get_org_tx_hash().empty();}
+    static  base::enum_transaction_subtype get_txaction_subtype(const base::xvaction_t & _action) {return (base::enum_transaction_subtype)_action.get_org_tx_action_id();}
+
+ public:
     base::xvtxkey_t             get_tx_key() const {return base::xvtxkey_t(get_tx_hash(), get_tx_subtype());}
     const std::string &         get_tx_hash() const {return get_org_tx_hash();}
     bool                        is_self_tx() const {return get_tx_subtype() == base::enum_transaction_subtype_self;}
@@ -51,8 +54,12 @@ class xlightunit_action_t : public base::xvaction_t {
     uint64_t                    get_rsp_id() const;
     base::xtable_shortid_t      get_receipt_id_self_tableid()const;
     base::xtable_shortid_t      get_receipt_id_peer_tableid()const;
+    base::xtable_shortid_t      get_rawtx_source_tableid() const;
     uint64_t                    get_sender_confirmed_receipt_id() const;
     bool                        get_not_need_confirm() const;
+    bool                        get_inner_table_flag() const;
+    bool                        is_need_make_txreceipt() const;
+    bool                        is_txaction() const {return !get_tx_hash().empty();}
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;

@@ -31,8 +31,10 @@ const uint64_t EXP_BASE = 104 * 1e4;
 
 class xaccount_context_t {
  public:
+    xaccount_context_t(const data::xaccount_ptr_t & unitstate, const xobject_ptr_t<base::xvcanvas_t> & canvas);
     xaccount_context_t(const data::xaccount_ptr_t & unitstate);
-    xaccount_context_t(const data::xaccount_ptr_t & unitstate, xstore_face_t * store);
+    xaccount_context_t(const data::xaccount_ptr_t & unitstate, xstore_face_t* store);
+
     virtual ~xaccount_context_t();
 
     const data::xaccount_ptr_t & get_blockchain() const {
@@ -207,6 +209,8 @@ class xaccount_context_t {
     std::string         m_current_table_addr;
     uint64_t            m_current_table_commit_height{0};
 };
+
+using xaccount_context_ptr_t = std::shared_ptr<xaccount_context_t>;
 
 }  // namespace store
 }  // namespace top

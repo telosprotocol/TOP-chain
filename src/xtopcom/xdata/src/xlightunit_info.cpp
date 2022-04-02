@@ -63,6 +63,18 @@ void xtransaction_exec_state_t::set_not_need_confirm(bool not_need_confirm) {
     }
 }
 
+bool xtransaction_exec_state_t::get_inner_table_flag() const {
+    auto flags = get_value_uint32(XTX_FLAGS);
+    return (flags & XTX_INNER_TABLE_FLAG_MASK);
+}
+void xtransaction_exec_state_t::set_inner_table_flag(bool inner_table) {
+    if (inner_table) {
+        auto flags = get_value_uint32(XTX_FLAGS);
+        flags |= XTX_INNER_TABLE_FLAG_MASK;
+        set_value(XTX_FLAGS, (uint32_t)flags);
+    }
+}
+
 uint64_t xlightunit_tx_info_t::get_last_trans_nonce() const {
     if (is_self_tx() || is_send_tx()) {
         if (m_raw_tx != nullptr) {

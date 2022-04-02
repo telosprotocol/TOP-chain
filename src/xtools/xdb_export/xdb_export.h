@@ -54,6 +54,7 @@ public:
     std::string get_account_key_string(const std::string & key);
 private:
     struct tx_ext_t {
+        base::xtable_shortid_t  sendtableid;
         std::string hash{};
         uint64_t height{0};
         uint64_t timestamp{0};
@@ -272,6 +273,7 @@ private:
     // void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
 
     bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum);
+    void get_txinfo_from_txaction(const data::xlightunit_action_t & txaction, const data::xblock_t * block, const data::xtransaction_ptr_t & tx_ptr, std::vector<tx_ext_t> & batch_tx_exts);
     void print_all_table_txinfo_to_file();
 
     std::set<std::string> get_special_genesis_accounts();
@@ -318,7 +320,8 @@ private:
     xdbtool_dbsize_t m_dbsize_info;
     void vector_to_json(std::map<std::string, xdbtool_parse_info_t> &db_info, json &json_root);
 
-    xdbtool_all_table_info_t m_all_table_info[32];
+    // xdbtool_all_table_info_t m_all_table_info[32];
+    xdbtool_all_table_info_t m_all_table_info[TOTAL_TABLE_NUM];
 };
 
 NS_END2

@@ -45,6 +45,8 @@ namespace top
             
         public:
             bool       record(const xvmethod_t & op);//record instruction
+            bool       rollback(size_t height);
+            std::deque<xvmethod_t>  clone();
             
             const int  encode(xstream_t & output_bin,const int compile_options = xvcanvas_t::enum_compile_optimization_all);
             const int  encode(std::string & output_bin,const int compile_options = xvcanvas_t::enum_compile_optimization_all);
@@ -59,7 +61,7 @@ namespace top
         protected:
             const std::deque<xvmethod_t> & get_op_records() const {return m_records;}
         private:
-            std::recursive_mutex       m_lock;
+            std::recursive_mutex       m_lock;  // TODO(jimmy) no need lock?
             std::deque<xvmethod_t>     m_records;
         };
         

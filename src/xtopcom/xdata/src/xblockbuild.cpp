@@ -270,6 +270,16 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xlight
     set_header_extra(extra_data);
     build_block_body(bodypara);
 }
+xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
+    base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_txs);
+    build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
+                                  para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
+    init_header_qcert(build_para);
+    // std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);   new unit not include txhash
+    // set_header_extra(extra_data);
+    // #2 set output entitys and resources
+    build_block_body_v2(bodypara);
+}
 xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
 : base::xvblockmaker_t(header, input, output) {
 
@@ -307,6 +317,19 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
         set_input_entity(input_actions);
     }
 
+    // #2 set output entitys and resources
+    set_output_full_state(para.get_fullstate_bin());
+    set_output_binlog(para.get_property_binlog());
+    return true;
+}
+
+bool xlightunit_build_t::build_block_body_v2(const xunit_block_para_t & para) {
+    // #1 set input entitys and resources
+    std::vector<base::xvaction_t> input_actions;
+    xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
+    base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_LIGHT_UNIT);
+    input_actions.push_back(_action);
+    set_input_entity(input_actions);
     // #2 set output entitys and resources
     set_output_full_state(para.get_fullstate_bin());
     set_output_binlog(para.get_property_binlog());
@@ -377,13 +400,23 @@ xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfulluni
     set_header_extra(extra_data);
     build_block_body(bodypara);
 }
+xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
+    base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_full, base::enum_xvblock_type_general);
+    build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
+                                    para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
+    
+    init_header_qcert(build_para);
+    // std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);
+    // set_header_extra(extra_data);
+    build_block_body(bodypara);
+}
 
 xfullunit_build_t::xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
 : base::xvblockmaker_t(header, input, output) {
 
 }
 
-bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
+bool xfullunit_build_t::build_block_body(const xunit_block_para_t & para) {
     // #1 set input entitys and resources
     base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_FULL_UNIT);
     set_input_entity(_action);

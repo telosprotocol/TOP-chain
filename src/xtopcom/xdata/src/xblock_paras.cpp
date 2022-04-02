@@ -30,6 +30,10 @@ std::string xblockpara_base_t::dump() const {
     return ss.str();
 }
 
+void    xblockpara_base_t::clear() {
+    m_values.clear();
+}
+
 int32_t xblockpara_base_t::do_write(base::xstream_t & stream) {
     KEEP_SIZE();
     xassert(m_values.size() < 5000);

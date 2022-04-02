@@ -46,6 +46,9 @@ enum enum_xunit_service_error_type {
     xtransaction_pledge_redeem_vote_err,
 
     enum_xtxexecutor_error_tx_nonce_not_match,
+    enum_xtxexecutor_error_load_state_fail,
+    enum_xtxexecutor_error_execute_fail,
+    enum_xtxexecutor_error_tx_receiptid_not_match,
 
     xconsensus_service_error_max,
 };
@@ -86,6 +89,9 @@ inline std::string xunit_error_to_string(int32_t code) {
         XUNIT_TO_STR(xtransaction_pledge_redeem_vote_err),
 
         XUNIT_TO_STR(enum_xtxexecutor_error_tx_nonce_not_match),
+        XUNIT_TO_STR(enum_xtxexecutor_error_load_state_fail),
+        XUNIT_TO_STR(enum_xtxexecutor_error_execute_fail),
+        XUNIT_TO_STR(enum_xtxexecutor_error_tx_receiptid_not_match),
     };
     return names[code - xconsensus_service_error_base - 1];
 }

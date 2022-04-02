@@ -125,9 +125,10 @@ namespace top
                 xassert(false);
                 return nullptr;
             }
+            xassert(commit_block->get_height() == bstate->get_block_height());
             std::string prophash = txreceipt->get_tx_result_property(propname);
             if (prophash.empty()) {
-                // xassert(false);
+                xwarn("xpropertyprove_build_t::create_property_prove has no property");
                 return nullptr;                
             }
             auto _property = bstate->load_property(propname);
@@ -142,9 +143,13 @@ namespace top
             XMETRICS_GAUGE(metrics::cpu_hash_256_xvproperty_property_bin_calc, 1);
             std::string prophash2 = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
             if (prophash != prophash2) {
+                xerror("xpropertyprove_build_t::create_property_prove hash1=%s,hash2=%s",
+                    base::xstring_utl::to_hex(prophash).c_str(), base::xstring_utl::to_hex(prophash2).c_str());
                 xassert(false);
                 return nullptr;                
             }
+            xinfo("xpropertyprove_build_t::create_property_prove succ hash1=%s,hash2=%s",
+                base::xstring_utl::to_hex(prophash).c_str(), base::xstring_utl::to_hex(prophash2).c_str());            
             #endif
             xvproperty_prove_ptr_t _property_receipt = make_object_ptr<xvproperty_prove_t>(_property.get(), txreceipt);
             return _property_receipt;
