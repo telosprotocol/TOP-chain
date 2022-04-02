@@ -40,14 +40,16 @@ func RunJsonRpc(chainId, netWorkId, archivePoint, clinetVersion, jsonrpcPort str
 }
 
 //export StopJsonRpc
-func StopJsonRpc(srv unsafe.Pointer) {
+func StopJsonRpc(srv unsafe.Pointer) C.int {
 	s := pointer.Restore(srv).(*http.Server)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := s.Shutdown(ctx); err != nil {
-		log.Fatalf("StopJsonRpc failed:%v\n", err)
+		log.Printf("StopJsonRpc failed:%v\n", err)
+		return C.int(-1)
 	}
+	return C.int(0)
 }
 
 func main() {}

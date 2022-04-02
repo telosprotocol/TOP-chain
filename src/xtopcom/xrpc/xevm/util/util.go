@@ -42,18 +42,9 @@ func GetParam(mp map[string]interface{}) ([]interface{}, error) {
 	if _, ok := v.([]interface{}); !ok {
 		return nil, errors.New("params are wrong!")
 	}
-	return v.([]interface{}), nil
-}
-
-func GetRaw(mp map[string]interface{}) ([]interface{}, error) {
-	v, ok := mp["params"]
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("'%s' not exist", "params"))
+	if len(v.([]interface{})) == 0 {
+		return nil, errors.New(fmt.Sprintf("params are wrong:%v", v.([]interface{})))
 	}
-	if len(v.([]interface{})) != 1 {
-		return nil, fmt.Errorf("Wrong raw data:%v", v.([]interface{}))
-	}
-
 	return v.([]interface{}), nil
 }
 
