@@ -33,7 +33,6 @@ xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face
   , m_router_ptr(router_ptr)
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
-  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store,txstore, txpool_service))
   , m_thread(thread) {
 }
 
@@ -54,17 +53,7 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
                 self->cluster_process_request(msg, edge_sender, message);
                 XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
             } else {
-                auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-                auto clock = self->m_cluster_query_mgr->getTimerHeight();
-                auto forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, clock);
-                xdbg("xcluster_rpc_handler::on_message clock:%llu, forked:%d", clock, forked);
-                if (forked) {
-                    xwarn("xcluster_rpc_handler::on_message auditor tackle query:%" PRIx64, message.hash());
-                    return true;
-                } else {
-                    self->cluster_process_query_request(msg, edge_sender, message);
-                    XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
-                }
+                xwarn("xcluster_rpc_handler::on_message msgid is rpc_msg_query_request");
             }
         } else if (msgid == rpc_msg_response) {
             // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
@@ -172,48 +161,6 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
             }
         }
         ++count;
-    }
-}
-
-void xcluster_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
-    if (edge_msg.m_tx_type != enum_xrpc_tx_type::enum_xrpc_query_type) {
-        xerror("cluster error tx_type %d", edge_msg.m_tx_type);
-        return;
-    }
-    xinfo_rpc("process query msg %d, %s", edge_msg.m_tx_type, edge_msg.m_source_address.to_string().c_str());
-    shared_ptr<xrpc_msg_response_t> response_msg_ptr = std::make_shared<xrpc_msg_response_t>(edge_msg);
-    try {
-        xjson_proc_t json_proc;
-        json_proc.parse_json(edge_msg.m_message_body);
-        m_rule_mgr_ptr->filter(json_proc);
-
-        m_cluster_query_mgr->call_method(json_proc);
-        json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
-        json_proc.m_response_json[RPC_ERRMSG] = "Query to Auditors will be Disabled after 1.2.8 Fork, Please Update your Edger Version!!!";
-        json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
-        response_msg_ptr->m_message_body = json_proc.get_response();
-    } catch (const xrpc_error & e) {
-        xinfo_rpc("error %s", e.what());
-        xrpc_error_json error_json(e.code().value(), e.what(), edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    } catch (const std::exception & e) {
-        xinfo_rpc("error %s", e.what());
-        xrpc_error_json error_json(RPC_EXCEPTION_CODE, e.what(), edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    } catch (...) {
-        xinfo_rpc("error !!!!");
-        xrpc_error_json error_json(RPC_ERROR_CODE, RPC_ERROR_MSG, edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    }
-
-    response_msg_ptr->m_signature_address = m_cluster_vhost->address();
-    xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
-    xdbg_rpc("xcluster_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
-    std::error_code ec;
-    m_cluster_vhost->send_to(edge_sender, msg, ec);
-    if (ec) {
-        // todo ?
-        // assert(false);
     }
 }
 

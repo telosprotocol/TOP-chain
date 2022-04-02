@@ -15,8 +15,8 @@
 #include "xelection/xvnode_house.h"
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
-#include "xrpc/xgetblock/get_block.h"
 #include "xvledger/xvdbkey.h"
+#include "xrpc/xrpc_query_manager.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvledger/xvdbkey.h"
@@ -88,7 +88,8 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver.get())));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
-    m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
+    m_getblock =
+        std::make_shared<xrpc::xrpc_query_manager>(observer_ptr<store::xstore_face_t>(m_store.get()), observer_ptr<base::xvblockstore_t>(m_blockstore.get()), nullptr, nullptr);
     contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
     contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
 }
@@ -1388,7 +1389,7 @@ void xdb_export_tools_t::query_block_info(std::string const & account, const uin
         std::cout << "account: " << account << ", height: " << h << " load_block_input failed" << std::endl;
         return;
     }
-    root = dynamic_cast<chain_info::get_block_handle *>(m_getblock.get())->get_block_json(bp);
+    root = dynamic_cast<xrpc::xrpc_query_manager *>(m_getblock.get())->get_block_json(bp);
     root["real-flags"] = base::xstring_utl::tostring((int32_t)bp->get_block_flags());
 }
 

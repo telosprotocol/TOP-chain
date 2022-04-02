@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "xarc_rpc_handler.h"
+#include "xrpc_handler.h"
 
 #include "xbase/xcontext.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -22,21 +22,23 @@ using data::xtransaction_t;
 
 #define max_cluster_rpc_mailbox_num (10000)
 
-xarc_rpc_handler::xarc_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> arc_vhost,
-                                           observer_ptr<xrouter_face_t> router_ptr,
-                                           xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
-                                           observer_ptr<store::xstore_face_t> store,
-                                           observer_ptr<base::xvblockstore_t> block_store,
-                                           observer_ptr<top::base::xiothread_t> thread)
+xrpc_handler::xrpc_handler(std::shared_ptr<xvnetwork_driver_face_t>           arc_vhost,
+                           observer_ptr<xrouter_face_t>                       router_ptr,
+                           xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
+                           observer_ptr<store::xstore_face_t>                 store,
+                           observer_ptr<base::xvblockstore_t>                 block_store,
+                           observer_ptr<base::xvtxstore_t>                    txstore,
+                           observer_ptr<top::base::xiothread_t>               thread,
+                           bool                                               exchange_flag)
   : m_arc_vhost(arc_vhost)
   , m_router_ptr(router_ptr)
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
-  , m_arc_query_mgr(std::make_shared<xarc_query_manager>(store, block_store, txpool_service))
+  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, txpool_service, txstore, exchange_flag))
   , m_thread(thread) {
 }
 
-void xarc_rpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
+void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
     XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_cluster_rpc_handler");
     auto msgid = message.id();
 
@@ -77,7 +79,7 @@ void xarc_rpc_handler::on_message(const xvnode_address_t & edge_sender, const xm
     m_thread->send_call(asyn_call);
 }
 
-void xarc_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
+void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     std::string tx_hash;
     std::string account;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
@@ -144,7 +146,7 @@ void xarc_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_m
     }
 }
 
-void xarc_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
+void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     if (edge_msg.m_tx_type != enum_xrpc_tx_type::enum_xrpc_query_type) {
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;
@@ -155,10 +157,14 @@ void xarc_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & 
         xjson_proc_t json_proc;
         json_proc.parse_json(edge_msg.m_message_body);
         m_rule_mgr_ptr->filter(json_proc);
-
-        m_arc_query_mgr->call_method(json_proc);
-        json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
-        json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
+        string strMethod = json_proc.m_request_json["method"].asString();
+        const string & version = json_proc.m_request_json["version"].asString();
+        json_proc.m_request_json["params"]["version"] = version;
+        string strErrorMsg = RPC_OK_MSG;
+        uint32_t nErrorCode = 0;
+        m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
+        json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
+        json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
         json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
         response_msg_ptr->m_message_body = json_proc.get_response();
     } catch (const xrpc_error & e) {
@@ -183,7 +189,7 @@ void xarc_rpc_handler::cluster_process_query_request(const xrpc_msg_request_t & 
 
 }
 
-void xarc_rpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode_address_t & edge_sender) {
+void xrpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode_address_t & edge_sender) {
     xrpc_msg_response_t shard_msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(msg.payload());
     try {
         xkinfo("m_arc_vhost response:%" PRIx64, msg.hash());
@@ -197,11 +203,11 @@ void xarc_rpc_handler::cluster_process_response(const xmessage_t & msg, const xv
     }
 }
 
-void xarc_rpc_handler::start() {
-    m_arc_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xarc_rpc_handler::on_message, shared_from_this(), _1, _2));
+void xrpc_handler::start() {
+    m_arc_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xrpc_handler::on_message, shared_from_this(), _1, _2));
 }
 
-void xarc_rpc_handler::stop() {
+void xrpc_handler::stop() {
     m_arc_vhost->unregister_message_ready_notify(xmessage_category_rpc);
 }
 NS_END2

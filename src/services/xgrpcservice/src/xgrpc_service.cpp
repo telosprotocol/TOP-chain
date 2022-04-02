@@ -5,7 +5,6 @@
 #include "xgrpcservice/xgrpc_service.h"
 
 #include "xdata/xtransaction.h"
-
 #include <grpcpp/grpcpp.h>
 
 #include <atomic>
@@ -40,9 +39,17 @@ void xrpc_serviceimpl::register_handle(const std::shared_ptr<xrpc_handle_face_t>
 Status xrpc_serviceimpl::call(ServerContext * context, const xrpc_request * request, xrpc_reply * reply) {
     std::lock_guard<std::mutex> lock(m_call_mtx);
     string req = request->body();
-    m_handle->handle(req);
-    string rsp = m_handle->get_response();
-    reply->set_body(rsp);
+    xJson::Value js_req;
+    xJson::Value js_rsp;
+    xJson::Reader reader;
+    if (!reader.parse(req, js_req)) {
+        xdbg("grpc call: %s json parse error", req.c_str());
+        return Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid request argument: json parse error.");
+    }
+    string strResult = "ok";
+    uint32_t nErrorCode = 0;
+    m_handle->handle(req, js_req, js_rsp, strResult, nErrorCode);
+    reply->set_body(js_rsp.toStyledString());
     return Status::OK;
 }
 

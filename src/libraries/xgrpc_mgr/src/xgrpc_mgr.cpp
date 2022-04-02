@@ -6,7 +6,7 @@
 
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xevent_store.h"
-#include "xrpc/xgetblock/get_block.h"
+#include "xrpc/xrpc_query_manager.h"
 
 NS_BEG2(top, grpcmgr)
 
@@ -79,7 +79,7 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
         return;
     }
 
-    top::chain_info::get_block_handle bh(nullptr, nullptr, nullptr);
+    top::xrpc::xrpc_query_manager bh(nullptr, nullptr, nullptr, nullptr);
     auto bp = block.get();
     xJson::Value j;
     if (rpc::rpc_version == rpc::xrpc_version_2) {
@@ -128,13 +128,14 @@ void handler_mgr::add_handler(std::shared_ptr<xrpc_handle_face_t> handle) {
     m_handles.push_back(handle);
 }
 
-bool handler_mgr::handle(std::string request) {
+bool handler_mgr::handle(std::string & request, xJson::Value& js_req, xJson::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     for (auto v : m_handles) {
-        auto ret = v->handle(request);
-        m_response = v->get_response();
+        auto ret = v->handle(request, js_req, js_rsp, strResult, nErrorCode);
+        js_rsp["result"] = strResult;
+        std::string response = js_rsp.toStyledString();
 #ifdef DEBUG
         std::cout << "======================== request " << request << std::endl;
-        std::cout << "======================== response " << m_response << std::endl;
+        std::cout << "======================== response " << response << std::endl;
 #endif
         if (ret) {
             xdbg("grpc request:%s success", request.c_str());
@@ -153,7 +154,8 @@ int grpc_init(store::xstore_face_t * store, base::xvblockstore_t * block_store, 
     static std::unique_ptr<xgrpc_service> grpc_srv = top::make_unique<xgrpc_service>("0.0.0.0", grpc_port);
 
     static std::shared_ptr<handler_mgr> handle_mgr = std::make_shared<handler_mgr>();
-    static std::shared_ptr<xrpc_handle_face_t> handle_store = std::make_shared<top::chain_info::get_block_handle>(store, block_store, sync);
+    static std::shared_ptr<xrpc_handle_face_t> handle_store =
+        std::make_shared<top::xrpc::xrpc_query_manager>(observer_ptr<store::xstore_face_t>(store), observer_ptr<base::xvblockstore_t>(block_store), sync, nullptr);
     handle_mgr->add_handler(handle_store);
 
     grpc_srv->register_handle(handle_mgr);
