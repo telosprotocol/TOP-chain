@@ -90,13 +90,13 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, test_validator_genesis) {
             std::size_t actual_in_num{0};                                                                                                                                          \
             std::size_t actual_out_num{0};                                                                                                                                         \
             for (auto node_info : election_result_backup) {                                                                                                                        \
-                auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();                                                                                             \
+                auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();                                                                                     \
                 if (!election_result.find(node_id).second) {                                                                                                                       \
                     ++actual_out_num;                                                                                                                                              \
                 }                                                                                                                                                                  \
             }                                                                                                                                                                      \
             for (auto node_info : election_result) {                                                                                                                               \
-                auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();                                                                                             \
+                auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();                                                                                     \
                 if (!election_result_backup.find(node_id).second) {                                                                                                                \
                     ++actual_in_num;                                                                                                                                               \
                 }                                                                                                                                                                  \
@@ -220,13 +220,13 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, example) {
         std::size_t actual_in_num{0};
         std::size_t actual_out_num{0};
         for (auto node_info : election_result_backup) {
-            auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+            auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
             if (!election_result.find(node_id).second) {
                 ++actual_out_num;
             }
         }
         for (auto node_info : election_result) {
-            auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+            auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
             if (!election_result_backup.find(node_id).second) {
                 ++actual_in_num;
             }
@@ -283,13 +283,13 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, testSP1) {
             std::size_t actual_in_num{0};                                                                                                                                          \
             std::size_t actual_out_num{0};                                                                                                                                         \
             for (auto node_info : election_result_backup) {                                                                                                                        \
-                auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();                                                                                             \
+                auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();                                                                                     \
                 if (!election_result.find(node_id).second) {                                                                                                                       \
                     ++actual_out_num;                                                                                                                                              \
                 }                                                                                                                                                                  \
             }                                                                                                                                                                      \
             for (auto node_info : election_result) {                                                                                                                               \
-                auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();                                                                                             \
+                auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();                                                                                     \
                 if (!election_result_backup.find(node_id).second) {                                                                                                                \
                     ++actual_in_num;                                                                                                                                               \
                 }                                                                                                                                                                  \

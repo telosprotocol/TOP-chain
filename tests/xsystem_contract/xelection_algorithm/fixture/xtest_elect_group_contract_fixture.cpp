@@ -67,7 +67,7 @@ void xtop_test_elect_group_contract_fixture::calc_election_result(common::xnode_
 
     for (auto & election_result : election_group_result) {
         auto & election_info = top::get<xelection_info_bundle_t>(election_result);
-        auto node_id_string = election_info.node_id().to_string().substr(strlen(TEST_NODE_ID_PREFIX), 3);
+        auto node_id_string = election_info.account_address().to_string().substr(strlen(TEST_NODE_ID_PREFIX), 3);
         node_ids.push_back(atoi(node_id_string.c_str()));
     }
 

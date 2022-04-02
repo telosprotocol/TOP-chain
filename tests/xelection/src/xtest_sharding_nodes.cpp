@@ -56,7 +56,7 @@ TEST(xtest_committee_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(build_account_address(i));
+        election_info_bundle.account_address(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         auto r = group_result.insert(std::move(election_info_bundle));
@@ -123,7 +123,7 @@ TEST(xtest_zec_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(build_account_address(i));
+        election_info_bundle.account_address(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -188,7 +188,7 @@ TEST(xtest_edge_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(build_account_address(i));
+        election_info_bundle.account_address(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -253,7 +253,7 @@ TEST(xtest_archive_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(build_account_address(i));
+        election_info_bundle.account_address(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -328,7 +328,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(build_account_address(i));
+        election_info_bundle.account_address(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         auditor_group_result.insert(std::move(election_info_bundle));
@@ -348,7 +348,7 @@ TEST(xtest_consensus_sharding_nodes, _) {
         new_election_info.joined_version = top::common::xelection_round_t{ 0 };
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(build_account_address(i + node_count));
+        election_info_bundle.account_address(build_account_address(i + node_count));
         election_info_bundle.election_info(std::move(new_election_info));
 
         validator_group_result.insert(std::move(election_info_bundle));

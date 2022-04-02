@@ -71,7 +71,7 @@ bool xtop_elect_nonconsensus_group_contract::elect_group(common::xzone_id_t cons
         new_election_info.genesis = node_standby_info.genesis;
 
         xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.node_id(node_id);
+        election_info_bundle.account_address(node_id);
         election_info_bundle.election_info(std::move(new_election_info));
 
         if (elect_node_size++ >= max_elect_group_size) {
@@ -84,13 +84,13 @@ bool xtop_elect_nonconsensus_group_contract::elect_group(common::xzone_id_t cons
     node_change = (new_group_result != current_group);
     if (node_change) {
         for (auto & node_info : new_group_result) {
-            auto const node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+            auto const node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
             XMETRICS_PACKET_INFO(
                 XNONCONSENSUS_ELECTION "elect_in", "zone_id", zid.to_string(), "cluster_id", cid.to_string(), "group_id", gid.to_string(), "node_id", node_id.value());
         }
 #if defined(DEBUG)
         for (auto const & node_info : new_group_result) {
-            xdbg("%s elected in %s", log_prefix.c_str(), top::get<xelection_info_bundle_t>(node_info).node_id().c_str());
+            xdbg("%s elected in %s", log_prefix.c_str(), top::get<xelection_info_bundle_t>(node_info).account_address().c_str());
         }
 #endif
         new_group_result.election_committee_version(common::xelection_round_t{0});

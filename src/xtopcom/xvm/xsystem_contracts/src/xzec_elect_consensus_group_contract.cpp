@@ -549,7 +549,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                                           .result_of(cluster_id)
                                                                           .result_of(assoc_validator_group_id);
         for (auto const & validator_node_info : assoc_validator_group_nodes) {
-            auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).node_id();
+            auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).account_address();
 
             auto it = effective_auditor_standbys.find(validator_node_id);
             if (it != std::end(effective_auditor_standbys)) {
@@ -577,7 +577,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                                                           .result_of(cluster_id)
                                                                                           .result_of(other_auditor_group_id);
         for (auto const & auditor_node_info : other_auditor_group_nodes) {
-            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).node_id();
+            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).account_address();
 
             auto it = effective_auditor_standbys.find(auditor_node_id);
             if (it != std::end(effective_auditor_standbys)) {
@@ -622,7 +622,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
         auto const & auditor_group_nodes = election_network_result.result_of(common::xnode_type_t::consensus_auditor).result_of(cluster_id).result_of(auditor_group_id);
 
         for (auto const & auditor_node_info : auditor_group_nodes) {
-            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).node_id();
+            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).account_address();
 
             auto it = effective_validator_standbys.find(auditor_node_id);
             if (it != std::end(effective_validator_standbys)) {
@@ -644,7 +644,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                          .result_of(cluster_id)
                                                          .result_of(other_validator_group_id);
             for (auto const & validator_node_info : other_auditor_group_nodes) {
-                auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).node_id();
+                auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).account_address();
 
                 auto it = effective_validator_standbys.find(validator_node_id);
                 if (it != std::end(effective_validator_standbys)) {

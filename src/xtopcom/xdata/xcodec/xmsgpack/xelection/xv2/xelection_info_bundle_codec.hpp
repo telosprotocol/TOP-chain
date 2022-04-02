@@ -39,7 +39,7 @@ struct convert<top::data::election::v2::xelection_info_bundle_t> final {
             }
 
             case xelection_info_bundle_node_id_index: {
-                info_bundle.node_id(o.via.array.ptr[xelection_info_bundle_node_id_index].as<top::common::xnode_id_t>());
+                info_bundle.account_address(o.via.array.ptr[xelection_info_bundle_node_id_index].as<top::common::xnode_id_t>());
                 XATTRIBUTE_FALLTHROUGH;
             }
         }
@@ -53,7 +53,7 @@ struct pack<::top::data::election::v2::xelection_info_bundle_t> {
     template <typename StreamT>
     msgpack::packer<StreamT> & operator()(msgpack::packer<StreamT> & o, top::data::election::v2::xelection_info_bundle_t const & info_bundle) const {
         o.pack_array(xelection_info_bundle_field_count);
-        o.pack(info_bundle.node_id());
+        o.pack(info_bundle.account_address());
         o.pack(info_bundle.election_info());
 
         return o;
@@ -66,7 +66,7 @@ struct object_with_zone<::top::data::election::v2::xelection_info_bundle_t> {
         o.type = msgpack::type::ARRAY;
         o.via.array.size = xelection_info_bundle_field_count;
         o.via.array.ptr = static_cast<msgpack::object *>(o.zone.allocate_align(sizeof(::msgpack::object) * o.via.array.size));
-        o.via.array.ptr[xelection_info_bundle_node_id_index]       = msgpack::object{ info_bundle.node_id(),       o.zone };
+        o.via.array.ptr[xelection_info_bundle_node_id_index] = msgpack::object{info_bundle.account_address(), o.zone};
         o.via.array.ptr[xelection_info_bundle_election_info_index] = msgpack::object{ info_bundle.election_info(), o.zone };
     }
 };

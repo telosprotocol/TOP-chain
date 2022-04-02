@@ -135,7 +135,7 @@ std::pair<xtop_election_group_result::iterator, bool> xtop_election_group_result
     // if the node already exists, do nothing.
     // if the node not in the result group yet, choose the first empty slot.
 
-    auto find_result = find(value.node_id());
+    auto find_result = find(value.account_address());
     if (top::get<bool>(find_result)) {
         return {m_nodes.find(top::get<common::xslot_id_t>(find_result)), false};
     }
@@ -145,7 +145,7 @@ std::pair<xtop_election_group_result::iterator, bool> xtop_election_group_result
 }
 
 std::pair<xtop_election_group_result::iterator, bool> xtop_election_group_result::insert(xelection_info_bundle_t && value) {
-    auto find_result = find(value.node_id());
+    auto find_result = find(value.account_address());
     if (top::get<bool>(find_result)) {
         return {m_nodes.find(top::get<common::xslot_id_t>(find_result)), false};
     }
@@ -157,7 +157,7 @@ std::pair<xtop_election_group_result::iterator, bool> xtop_election_group_result
 bool xtop_election_group_result::empty() const noexcept {
     for (auto const & node_info : m_nodes) {
         auto const & election_info_bundle = top::get<xelection_info_bundle_t>(node_info);
-        if (!election_info_bundle.node_id().empty()) {
+        if (!election_info_bundle.account_address().empty()) {
             return false;
         }
     }
@@ -187,7 +187,7 @@ xelection_info_t & xtop_election_group_result::result_of(common::xnode_id_t cons
 
     auto & node_info = m_nodes[top::get<common::xslot_id_t>(find_result)];
     if (node_info.empty()) {
-        node_info.node_id(node_id);
+        node_info.account_address(node_id);
     }
 
     return node_info.election_info();
@@ -257,7 +257,7 @@ std::pair<common::xslot_id_t, bool> xtop_election_group_result::find(common::xno
             if (broadcast(reclaimed_slot_id)) {
                 reclaimed_slot_id = slot_id;
             }
-        } else if (election_info_bundle.node_id() == nid) {
+        } else if (election_info_bundle.account_address() == nid) {
             return {slot_id, true};
         }
     }

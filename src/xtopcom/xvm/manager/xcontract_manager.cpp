@@ -470,7 +470,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                             auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                             for (auto const & node_info : election_group_result) {
-                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                                 if (node_id.empty()) {
                                     continue;
                                 }
@@ -540,7 +540,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                         auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                         for (auto const & node_info : election_group_result) {
-                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                             if (node_id.empty()) {
                                 continue;
                             }
@@ -623,7 +623,7 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                         auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                         for (auto const & node_info : election_group_result) {
-                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                             if (node_id.empty()) {
                                 continue;
                             }

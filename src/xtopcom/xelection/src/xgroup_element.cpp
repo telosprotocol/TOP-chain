@@ -140,13 +140,13 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
         auto const & slot_id = top::get<common::xslot_id_t const>(node_data);
         auto const & election_info_bundle = top::get<data::election::xelection_info_bundle_t>(node_data);
         auto const & election_info = election_info_bundle.election_info();
-        auto const & node_id = election_info_bundle.node_id();
+        auto const & account_address = election_info_bundle.account_address();
 
         if (common::broadcast(slot_id) || election_info_bundle.empty()) {
             continue;
         }
 
-        xdbg("adding %s %s", node_id.c_str(), common::to_string(node_type_from(zone_id())).c_str());
+        xdbg("adding %s %s", account_address.c_str(), common::to_string(node_type_from(zone_id())).c_str());
         m_node_elements[slot_id] = std::make_shared<xnode_element_t>(account_address, slot_id, election_info, shared_from_this());
     }
     assert(group_size() == m_node_elements.size());

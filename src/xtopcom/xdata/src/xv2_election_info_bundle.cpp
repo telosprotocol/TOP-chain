@@ -16,26 +16,6 @@ xtop_election_info_bundle::operator!=(xtop_election_info_bundle const & other) c
     return !(*this == other);
 }
 
-common::xnode_id_t const &
-xtop_election_info_bundle::node_id() const noexcept {
-    return m_node_id;
-}
-
-common::xnode_id_t &
-xtop_election_info_bundle::node_id() noexcept {
-    return m_node_id;
-}
-
-void
-xtop_election_info_bundle::node_id(common::xnode_id_t && nid) noexcept {
-    m_node_id = std::move(nid);
-}
-
-void
-xtop_election_info_bundle::node_id(common::xnode_id_t const & nid) {
-    m_node_id = nid;
-}
-
 common::xaccount_address_t const & xtop_election_info_bundle::account_address() const noexcept {
     return m_node_id;
 }

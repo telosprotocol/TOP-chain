@@ -22,18 +22,6 @@ public:
     bool 
     operator!=(xtop_election_info_bundle const & other) const noexcept;
 
-    common::xnode_id_t const &
-    node_id() const noexcept;
-
-    common::xnode_id_t &
-    node_id() noexcept;
-
-    void
-    node_id(common::xnode_id_t && nid) noexcept;
-
-    void
-    node_id(common::xnode_id_t const & nid);
-
     common::xaccount_address_t const & account_address() const noexcept;
     common::xaccount_address_t & account_address() noexcept;
     void account_address(common::xaccount_address_t && addr) noexcept;

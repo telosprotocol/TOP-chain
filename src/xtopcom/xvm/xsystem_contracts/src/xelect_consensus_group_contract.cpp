@@ -4,6 +4,7 @@
 
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"
 
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xfts.h"
 #include "xconfig/xconfig_register.h"
@@ -63,14 +64,14 @@ xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & 
                                                      xpublic_key_t const & public_key,
                                                      common::xminer_type_t miner_type,
                                                      bool genesis,
-                                                     std::map<common::xnode_type_t, uint64_t> raw_credit_scores)
+                                                     uint64_t raw_credit_score)
   : m_account{account}
   , m_stake{stake}
   , m_comprehensive_stake{comprehensive_stake}
   , m_public_key{public_key}
   , m_miner_type{miner_type}
   , m_genesis{genesis}
-  , m_raw_credit_scores{std::move(raw_credit_scores)} {
+  , m_raw_credit_score{raw_credit_score} {
 }
 
 xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & account,
@@ -78,8 +79,8 @@ xtop_election_awared_data::xtop_election_awared_data(common::xnode_id_t const & 
                                                      xpublic_key_t const & public_key,
                                                      common::xminer_type_t miner_type,
                                                      bool genesis,
-                                                     std::map<common::xnode_type_t, uint64_t> raw_credit_scores)
-  : xtop_election_awared_data{account, stake, 0, public_key, miner_type, genesis, std::move(raw_credit_scores)} {
+                                                     uint64_t raw_credit_score)
+  : xtop_election_awared_data{account, stake, 0, public_key, miner_type, genesis, raw_credit_score} {
 }
 
 bool xtop_election_awared_data::operator<(xtop_election_awared_data const & other) const noexcept {
@@ -101,7 +102,7 @@ bool xtop_election_awared_data::operator==(xtop_election_awared_data const & oth
            m_public_key          == other.m_public_key          &&
            m_miner_type          == other.m_miner_type          &&
            m_genesis             == other.m_genesis             &&
-           m_raw_credit_scores   == other.m_raw_credit_scores;
+           m_raw_credit_score    == other.m_raw_credit_score;
 }
 
 bool xtop_election_awared_data::operator>(xtop_election_awared_data const & other) const noexcept {
@@ -136,17 +137,8 @@ common::xminer_type_t xtop_election_awared_data::miner_type() const noexcept {
     return m_miner_type;
 }
 
-std::map<common::xnode_type_t, uint64_t> const & xtop_election_awared_data::raw_credit_scores() const noexcept {
-    return m_raw_credit_scores;
-}
-
-uint64_t xtop_election_awared_data::raw_credit_score(common::xnode_type_t node_type) const {
-    auto const it = m_raw_credit_scores.find(node_type);
-    if (it != std::end(m_raw_credit_scores)) {
-        return top::get<uint64_t>(*it);
-    }
-
-    return 0;
+uint64_t xtop_election_awared_data::raw_credit_score() const noexcept {
+    return m_raw_credit_score;
 }
 
 xtop_elect_consensus_group_contract::xtop_elect_consensus_group_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
@@ -320,7 +312,7 @@ void xtop_elect_consensus_group_contract::handle_elected_out_data(std::vector<co
 
         auto elect_out_pos = std::find_if(
             std::begin(election_group_result), std::end(election_group_result), [&out](std::pair<common::xslot_id_t const, xelection_info_bundle_t> const & node_info) {
-                return top::get<common::xnode_id_t>(out) == top::get<xelection_info_bundle_t>(node_info).node_id();
+                return top::get<common::xnode_id_t>(out) == top::get<xelection_info_bundle_t>(node_info).account_address();
             });
 
         if (elect_out_pos != std::end(election_group_result)) {
@@ -354,7 +346,7 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
                node_id.value().c_str(),
                elect_in_pos->stake(),
                elect_in_pos->comprehensive_stake(),
-               elect_in_pos->raw_credit_score(node_type));
+               elect_in_pos->raw_credit_score());
 
         auto const find_result = election_group_result.find(node_id);
         if (top::get<bool>(find_result)) {
@@ -369,10 +361,10 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         new_election_info.consensus_public_key = elect_in_pos->public_key();
         new_election_info.miner_type = elect_in_pos->miner_type();
         new_election_info.genesis = elect_in_pos->genesis();
-        new_election_info.raw_credit_score = elect_in_pos->raw_credit_score(node_type);
+        new_election_info.raw_credit_score = elect_in_pos->raw_credit_score();
 
         xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.node_id(node_id);
+        election_info_bundle.account_address(node_id);
         election_info_bundle.election_info(std::move(new_election_info));
 
         election_group_result.insert(std::move(election_info_bundle));
@@ -413,7 +405,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
                                               top::get<xstandby_node_info_t>(standby_info).consensus_public_key,
                                               top::get<xstandby_node_info_t>(standby_info).miner_type,
                                               top::get<xstandby_node_info_t>(standby_info).genesis,
-                                              top::get<xstandby_node_info_t>(standby_info).raw_credit_scores);
+                                              top::get<xstandby_node_info_t>(standby_info).raw_credit_score(node_type));
     }
 
     normalize_stake(role_type, effective_standby_result);
@@ -470,7 +462,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
     for (auto & node_info : result_nodes) {
         auto & election_info_bundle = top::get<xelection_info_bundle_t>(node_info);
 
-        auto const & node_id = election_info_bundle.node_id();
+        auto const & node_id = election_info_bundle.account_address();
 
         auto const it = standby_result.find(node_id);
         if (it == std::end(standby_result)) {
@@ -588,15 +580,36 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
     handle_elected_in_data(chosen_in, effective_standby_result, zid, cid, gid, node_type, result_nodes);
 
     assert(!result_nodes.empty());
-#if defined DEBUG
-    // for (auto const & node_info : result_nodes) {
-    //     assert(!top::get<xelection_info_bundle_t>(node_info).empty());
-    // }
 
-    for (auto const & node_info : result_nodes) {
-        xdbg("%s election finished seeing %s", log_prefix.c_str(), top::get<xelection_info_bundle_t>(node_info).node_id().value().c_str());
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const current_time = result_nodes.timestamp();
+    common::xlogic_time_t const timepoint = current_time >= 720 ? current_time - 720 : current_time;
+    if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time) &&
+        !chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, timepoint)) {
+        for (auto & node_info : result_nodes) {
+            auto & election_info_bundle = top::get<data::election::xelection_info_bundle_t>(node_info);
+            auto const & account_address = election_info_bundle.account_address();
+
+            auto const elect_in_pos = std::find_if(std::begin(effective_standby_result),
+                                                   std::end(effective_standby_result),
+                                                   [&account_address](xelection_awared_data_t const & other) { return other.account() == account_address; });
+            assert(elect_in_pos != std::end(effective_standby_result));
+
+            xinfo("%s see elected in %s node %s with miner type %s genesis %s credit score %" PRIu64,
+                  log_prefix.c_str(),
+                  common::to_string(node_type).c_str(),
+                  account_address.c_str(),
+                  common::to_string(elect_in_pos->miner_type()).c_str(),
+                  elect_in_pos->genesis() ? "true" : "false",
+                  elect_in_pos->raw_credit_score());
+
+            auto & election_info = election_info_bundle.election_info();
+            election_info.miner_type = elect_in_pos->miner_type();
+            election_info.genesis = elect_in_pos->genesis();
+            election_info.raw_credit_score = elect_in_pos->raw_credit_score();
+        }
     }
-#endif
+
     current_group_nodes = result_nodes;
     return true;
 }
@@ -618,7 +631,7 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
     std::vector<common::xfts_merkle_tree_t<common::xnode_id_t>::value_type> fts_current_nodes;
     for (auto & node_info : result_nodes) {
         auto & election_info_bundle = top::get<xelection_info_bundle_t>(node_info);
-        auto const & node_id = election_info_bundle.node_id();
+        auto const & node_id = election_info_bundle.account_address();
         auto const it = standby_result.find(node_id);
         if (it == std::end(standby_result)) {
             // this node not found in the standby pool. should be elected out immediately.

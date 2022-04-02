@@ -57,7 +57,7 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
 
                     std::vector<wrouter::WrouterTableNodes> elect_data;
                     for (auto const & node_info : group_result) {
-                        auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+                        auto const & node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
                         auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
                         auto const & slot_id = top::get<const common::xslot_id_t>(node_info);
                         // here the slot_id is strict increasing. Start with 0.

@@ -869,7 +869,7 @@ static void parse_election_result_string(std::string const & str, json & j) {
                     auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
                     auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
                     for (auto const & node_info : election_group_result) {
-                        auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                        auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                         if (node_id.empty()) {
                             continue;
                         }

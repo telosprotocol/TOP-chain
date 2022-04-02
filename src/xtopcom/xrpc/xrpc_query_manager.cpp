@@ -1644,7 +1644,7 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
                             auto const & group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                             for (auto const & node_info : group_result) {
-                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                                 if (node_id.empty()) {
                                     continue;
                                 }

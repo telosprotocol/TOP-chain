@@ -87,7 +87,7 @@ bool xtop_test_election_data_manager_fixture::add_nodes_to_election_result(std::
         new_election_info.comprehensive_stake = index;
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(node_id);
+        election_info_bundle.account_address(node_id);
         election_info_bundle.election_info(new_election_info);
 
         if (!add_election_result(node_type, cid, gid, election_info_bundle)) {
