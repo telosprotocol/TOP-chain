@@ -63,7 +63,7 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
     base::xreceiptid_pair_t receiptid_pair;
     tablestate->find_receiptid_pair(peer_tableid, receiptid_pair);
 
-    bool alloc_rspid = true;
+    bool alloc_rspid = true;  // TODO(jimmy)
     if (data::xblocktool_t::alloc_transaction_receiptid(tx, alloc_rspid, receiptid_pair)) {
         tablestate->set_receiptid_pair(peer_tableid, receiptid_pair);  // save to modified pairs
         xinfo("xatomictx_executor_t::set_tx_table_state succ.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
