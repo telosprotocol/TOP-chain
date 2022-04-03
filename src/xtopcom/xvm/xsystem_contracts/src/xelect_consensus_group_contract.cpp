@@ -4,7 +4,6 @@
 
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xfts.h"
 #include "xconfig/xconfig_register.h"
@@ -410,6 +409,8 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
 
     normalize_stake(role_type, effective_standby_result);
 
+    auto const current_standby_result = effective_standby_result;
+
     // preparing the fts selection. rule:
     // when electing in, the higher the stake is, the higher the possibility is.
     // when electing out, the lower the stake is, the higher the possibility is.
@@ -581,33 +582,34 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
 
     assert(!result_nodes.empty());
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const current_time = result_nodes.timestamp();
-    common::xlogic_time_t const timepoint = current_time >= 720 ? current_time - 720 : current_time;
-    if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time) &&
-        !chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, timepoint)) {
-        for (auto & node_info : result_nodes) {
-            auto & election_info_bundle = top::get<data::election::xelection_info_bundle_t>(node_info);
-            auto const & account_address = election_info_bundle.account_address();
+    for (auto & node_info : result_nodes) {
+        auto & election_info_bundle = top::get<data::election::xelection_info_bundle_t>(node_info);
+        auto const & account_address = election_info_bundle.account_address();
 
-            auto const elect_in_pos = std::find_if(std::begin(effective_standby_result),
-                                                   std::end(effective_standby_result),
-                                                   [&account_address](xelection_awared_data_t const & other) { return other.account() == account_address; });
-            assert(elect_in_pos != std::end(effective_standby_result));
-
-            xinfo("%s see elected in %s node %s with miner type %s genesis %s credit score %" PRIu64,
-                  log_prefix.c_str(),
-                  common::to_string(node_type).c_str(),
-                  account_address.c_str(),
-                  common::to_string(elect_in_pos->miner_type()).c_str(),
-                  elect_in_pos->genesis() ? "true" : "false",
-                  elect_in_pos->raw_credit_score());
-
-            auto & election_info = election_info_bundle.election_info();
-            election_info.miner_type = elect_in_pos->miner_type();
-            election_info.genesis = elect_in_pos->genesis();
-            election_info.raw_credit_score = elect_in_pos->raw_credit_score();
+        auto const elect_in_pos = std::find_if(std::begin(current_standby_result),
+                                               std::end(current_standby_result),
+                                               [&account_address](xelection_awared_data_t const & other) {
+            return other.account() == account_address;
+        });
+        if (elect_in_pos == std::end(current_standby_result)) {
+            continue;
         }
+
+        xinfo("%s see elected in %s node %s with miner type %s genesis %s credit score %" PRIu64,
+              log_prefix.c_str(),
+              common::to_string(node_type).c_str(),
+              account_address.c_str(),
+              common::to_string(elect_in_pos->miner_type()).c_str(),
+              elect_in_pos->genesis() ? "true" : "false",
+              elect_in_pos->raw_credit_score());
+
+        auto & election_info = election_info_bundle.election_info();
+        election_info.stake = elect_in_pos->stake();
+        election_info.comprehensive_stake = elect_in_pos->comprehensive_stake();
+        election_info.consensus_public_key = elect_in_pos->public_key();
+        election_info.miner_type = elect_in_pos->miner_type();
+        election_info.genesis = elect_in_pos->genesis();
+        election_info.raw_credit_score = elect_in_pos->raw_credit_score();
     }
 
     current_group_nodes = result_nodes;

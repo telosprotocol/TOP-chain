@@ -159,7 +159,7 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
 
     for (auto const & node_datum : nodes) {
         if (version.value() >= (node_datum.election_info.joined_version.value() + default_leader_election_round)) {
-            if (common::has<common::xnode_type_t::consensus>(node_datum.address.type()) && node_datum.election_info.raw_credit_score != 0 &&
+            if (common::has<common::xnode_type_t::consensus>(node_datum.address.type()) && !node_datum.election_info.genesis &&
                 node_datum.election_info.raw_credit_score <= min_creditscore) {
                 candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
                 xdbg("account %s is moved to low priority leader election candidate pool. account credit score %" PRIu64 " min credit score %" PRIu64,
