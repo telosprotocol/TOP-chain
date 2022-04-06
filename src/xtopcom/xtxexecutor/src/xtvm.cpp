@@ -34,7 +34,7 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
         xaccount_vm_t accountvm(unitstate, unitstate->get_canvas());  // TODO(jimmy)
         int32_t ret = accountvm.execute(input, output);
         if (ret != xsuccess) {
-            xwarn("xtvm_t::execute fail-vm execute.tx=%s", tx->dump().c_str());
+            xwarn("xtvm_t::execute fail-vm execute.tx=%s,ret=%s", tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return enum_exec_error_vm_execute;
         }
         xdbg("xtvm_t::execute succ vm execute.tx=%s", tx->dump().c_str());

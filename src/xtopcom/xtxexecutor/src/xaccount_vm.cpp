@@ -53,6 +53,13 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
             tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
         return ret;
     }
+    if (false == account_context->get_blockchain()->is_state_dirty()) {
+        if (tx->is_send_or_self_tx()) {
+            // XTODO the send or self tx will not be packed if no property changed
+            xwarn("xaccount_vm_t::exec_tx input send tx no property change. %s", tx->dump().c_str());
+            return xunit_contract_exec_no_property_change;
+        }
+    }
     xinfo("xaccount_vm_t::exec_tx succ.tx=%s,state=%s",tx->dump().c_str(),tx->dump_execute_state().c_str());
 
     // copy create txs from account context
