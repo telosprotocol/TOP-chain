@@ -149,7 +149,7 @@ void xtop_zec_elect_eth_contract::on_timer(common::xlogic_time_t const current_t
         auto election_result_store = serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, property);
         auto & election_network_result = election_result_store.result_of(network_id());
         auto const & current_group_nodes =
-            election_network_result.result_of(common::xnode_type_t::evm).result_of(common::xdefault_cluster_id).result_of(common::xdefault_group_id);
+            election_network_result.result_of(common::xnode_type_t::evm_eth).result_of(common::xdefault_cluster_id).result_of(common::xdefault_group_id);
 
         auto start_time = current_time;
         if (!current_group_nodes.empty()) {

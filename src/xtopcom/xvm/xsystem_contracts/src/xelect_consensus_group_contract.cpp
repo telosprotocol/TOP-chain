@@ -234,8 +234,11 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
     }
 
     case common::xnode_type_t::evm: {
-        node_type = common::xnode_type_t::evm;
-        role_type = common::xminer_type_t::validator;
+        assert(cid == common::xdefault_cluster_id);
+        assert(gid == common::xdefault_group_id);
+        node_type = common::xnode_type_t::evm_eth;
+        role_type = common::xminer_type_t::advance;
+
         break;
     }
 
