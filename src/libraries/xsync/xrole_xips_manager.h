@@ -127,7 +127,9 @@ public:
     std::vector<common::xnode_address_t> get_all_neighbors(const common::xnode_address_t& self_addr);
 
     bool get_self_addr(common::xnode_type_t node_type, uint16_t table_id, common::xnode_address_t& self_addr) const;
-
+    void set_miner(common::xminer_type_t miner_type, bool genesis);
+    bool genesis() {return m_genesis;}
+    common::xminer_type_t miner_type() { return m_miner_type; }
 protected:
 
     xip_vector_ptr create_xip_vector_ptr(const std::vector<common::xnode_address_t>& list, const common::xnode_address_t& self_xip);
@@ -141,6 +143,8 @@ protected:
     std::unordered_map<common::xnode_address_t, xrole_xips_t> m_map;
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_vnetwork_driver;
     common::xnode_address_t m_self_xip;
+    common::xminer_type_t m_miner_type;
+    bool m_genesis{false};
 };
 
 NS_END2

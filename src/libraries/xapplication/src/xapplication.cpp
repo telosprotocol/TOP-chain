@@ -177,6 +177,11 @@ void xtop_application::start() {
     }
 
     m_logic_timer->update_time(last_logic_time, time::xlogic_timer_update_strategy_t::force);
+
+    if (store::enable_block_recycler(false))
+        xinfo("disable_block_recycler ok.");
+    else
+        xerror("disable_block_recycler fail");
 }
 
 void xtop_application::stop() {

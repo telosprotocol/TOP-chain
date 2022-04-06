@@ -220,7 +220,7 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
         return false;
     }
 
-    if (!(common::has<common::xnode_type_t::storage>(node_type) ||common::has<common::xnode_type_t::rec>(node_type))) {
+    if (!common::has<common::xnode_type_t::storage>(node_type)) {
         return true;
     }
     
@@ -263,13 +263,13 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    m_sync_obj->add_vnet(vnetwork_driver());
+    m_sync_obj->add_vnet(vnetwork_driver(), miner_type(), genesis());
 
     xinfo("vnode (%p) at address %s starts synchronizing", this, address().to_string().c_str());
 }
 
 void xtop_vnode::sync_remove_vnet() {
-    m_sync_obj->remove_vnet(vnetwork_driver());
+    m_sync_obj->remove_vnet(vnetwork_driver(), miner_type(), genesis());
 }
 
 //std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {

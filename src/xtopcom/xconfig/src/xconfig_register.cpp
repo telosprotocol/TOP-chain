@@ -120,6 +120,7 @@ void xconfig_register_t::init_static_config() {
 
     XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
     XADD_OFFCHAIN_PARAMETER(slash_table_split_num);
+    XADD_OFFCHAIN_PARAMETER(prune_reserve_number);
 
     m_param_lock.release_write();
 }

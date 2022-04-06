@@ -78,6 +78,7 @@ void xtop_rec_standby_pool_contract::setup() {
         }
         seed_node_info.program_version = "1.1.0"; 
         seed_node_info.genesis = false;
+        seed_node_info.miner_type = common::xminer_type_t::edge | common::xminer_type_t::validator | common::xminer_type_t::advance;
 
         standby_result_store.result_of(network_id()).insert({node_id, seed_node_info});
     }
