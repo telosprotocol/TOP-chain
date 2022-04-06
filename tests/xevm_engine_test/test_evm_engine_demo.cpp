@@ -1,3 +1,4 @@
+#include "evm_test_fixture/xmock_evm_statectx.h"
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_storage.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtop_action_generator.h"
@@ -48,15 +49,13 @@ TEST(test_demo, test_add_contract) {
         "4f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033");
 
     // param
-    top::evm_runtime::xevm_param_t param;
-    param.random_seed = "1234567890";
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
-    top::vm_statestore::xvm_statestore_helper_t statestore;
-    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
+    top::evm_runtime::xevm_state_t evm_state{{}, statestore};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
     auto observed_exectx = top::make_observer(exectx.get());
 
@@ -128,15 +127,13 @@ TEST(test_demo, erc20) {
         "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033");
 
     // param
-    top::evm_runtime::xevm_param_t param;
-    param.random_seed = "1234567890";
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
-    top::vm_statestore::xvm_statestore_helper_t statestore;
-    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
+    top::evm_runtime::xevm_state_t evm_state{{}, statestore};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
     auto observed_exectx = top::make_observer(exectx.get());
 
@@ -186,15 +183,13 @@ TEST(test_demo, balance) {
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033");
 
     // param
-    top::evm_runtime::xevm_param_t param;
-    param.random_seed = "1234567890";
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
-    top::vm_statestore::xvm_statestore_helper_t statestore;
-    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
+    top::evm_runtime::xevm_state_t evm_state{{}, statestore};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
     auto observed_exectx = top::make_observer(exectx.get());
 
