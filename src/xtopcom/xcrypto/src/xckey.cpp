@@ -247,6 +247,10 @@ namespace top
                 {
                     return true;
                 }
+                xwarn("xkeyaddress_t::verify_signature adress not feat,m_account_address:%s, verify_key.to_address(addr_type, net_id):%s",
+                     m_account_address.c_str(), verify_key.to_address(addr_type, net_id).c_str());
+            } else {
+                xwarn("xkeyaddress_t::verify_signature get_publickey_from_signature fail,m_account_address:%s", m_account_address.c_str());
             }
             return false;
         }
