@@ -198,6 +198,12 @@ public:
         }
 
 #undef XADD_ONCHAIN_GOVERNANCE_PARAMETER
+
+#if defined(DEBUG)
+        for (auto const & onchain_param : m_initial_values) {
+            xdbg("onchian param key:'%s' value:'%s'", onchain_param.first.c_str(), onchain_param.second.c_str());
+        }
+#endif
     }
 
     int32_t do_write(base::xstream_t & stream) const override {
