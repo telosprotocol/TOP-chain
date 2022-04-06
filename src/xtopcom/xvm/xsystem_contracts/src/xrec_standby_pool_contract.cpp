@@ -152,7 +152,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     bool const archive = data::system_contract::could_be<common::xnode_type_t::storage_archive>(miner_type);
     bool const exchange = data::system_contract::could_be<common::xnode_type_t::storage_exchange>(miner_type);
     bool const fullnode = data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
-    bool const eth = data::system_contract::could_be<common::xnode_type_t::evm>(miner_type);
+    bool const eth = data::system_contract::could_be<common::xnode_type_t::evm_eth>(miner_type);
 
     std::string const role_type_string = common::to_string(miner_type);
     assert(role_type_string == common::XMINER_TYPE_EDGE      ||
@@ -236,7 +236,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
         }
 
         if (eth) {
-            new_node_info.stake_container[common::xnode_type_t::evm] = stake;
+            new_node_info.stake_container[common::xnode_type_t::evm_eth] = stake;
             new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
         }
     }
@@ -355,7 +355,7 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
         }
 
         if (eth_enabled && eth) {
-            new_node_info.stake_container[common::xnode_type_t::evm] = eth_stake;
+            new_node_info.stake_container[common::xnode_type_t::evm_eth] = eth_stake;
         }
 
         if (!new_node) {
@@ -411,7 +411,7 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
         new_node_info.stake_container.insert({ common::xnode_type_t::storage_exchange, reg_node.exchange_stake() });
     }
     if (eth_enabled && reg_node.can_be_eth()) {
-        new_node_info.stake_container.insert({common::xnode_type_t::evm, reg_node.eth_stake()});
+        new_node_info.stake_container.insert({common::xnode_type_t::evm_eth, reg_node.eth_stake()});
     }
 
     new_node_info.consensus_public_key = reg_node.consensus_public_key;
