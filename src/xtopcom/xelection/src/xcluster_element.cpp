@@ -583,6 +583,21 @@ xgroup_update_result_t xtop_cluster_element::add_group_element_with_lock_hold_ou
 
     case common::xnode_type_t::evm: {
         assert(zone_id() == common::xevm_zone_id);
+        auto const evm_type = common::node_type_from(zone_id(), cluster_id(), group_id);
+        if (evm_type == common::xnode_type_t::invalid) {
+            assert(false);
+            ec = xdata_accessor_errc_t::group_type_mismatch;
+
+            xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't recgnize group %" PRIu16,
+                  ec.category().name(),
+                  static_cast<std::uint32_t>(network_id().value()),
+                  static_cast<std::uint16_t>(zone_id().value()),
+                  static_cast<std::uint16_t>(cluster_id().value()),
+                  static_cast<std::uint16_t>(group_id.value()));
+
+            return {};
+        }
+
         group_element = std::make_shared<xgroup_element_t>(election_round, group_id, sharding_size, associated_election_blk_height, shared_from_this());
         break;
     }
