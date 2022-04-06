@@ -10,6 +10,40 @@
 
 NS_BEG2(top, blockmaker)
 
+void xunitbuildber_txkeys_mgr_t::add_txkey(const std::string & address, const base::xvtxkey_t & txkey) {    
+    auto iter = m_account_txkeys.find(address);
+    if (iter == m_account_txkeys.end()) {
+        base::xvtxkey_vec_t txkeys;
+        txkeys.push_back(txkey);
+        m_account_txkeys[address] = txkeys;
+    } else {
+        iter->second.push_back(txkey);
+    }
+}
+
+void xunitbuildber_txkeys_mgr_t::add_pack_tx(const data::xcons_transaction_ptr_t & tx) {
+    {
+        const std::string & address = tx->get_account_addr();
+        base::xvtxkey_t txkey(tx->get_tx_hash(), tx->get_tx_subtype());
+        add_txkey(address, txkey);
+    }
+
+    if (tx->is_send_tx() && tx->get_inner_table_flag()) { // TODO(jimmy) add recvtx key to recvaddress
+        const std::string & address = tx->get_target_addr();
+        base::xvtxkey_t txkey(tx->get_tx_hash(), base::enum_transaction_subtype_recv);
+        add_txkey(address, txkey);
+    }
+}
+
+base::xvtxkey_vec_t xunitbuildber_txkeys_mgr_t::get_account_txkeys(const std::string & address) {
+    auto iter = m_account_txkeys.find(address);
+    if (iter != m_account_txkeys.end()) {
+        return iter->second;
+    } else {
+        return {};
+    }
+}
+
 bool xunitbuilder_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
     uint64_t current_height = prev_block->get_height() + 1;
     uint64_t current_fullunit_height = prev_block->get_block_class() == base::enum_xvblock_class_full ? prev_block->get_height() : prev_block->get_last_full_block_height();
@@ -22,7 +56,7 @@ bool xunitbuilder_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
     return false;
 }
 
-data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para){
+data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para){
     std::string binlog = unitstate->take_binlog();
     std::string snapshot = unitstate->take_snapshot();
     if (binlog.empty() || snapshot.empty()) {
@@ -32,6 +66,7 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     data::xunit_block_para_t bodypara;
     bodypara.set_binlog(binlog);
     bodypara.set_fullstate_bin(snapshot);
+    bodypara.set_txkeys(unitbuilder_para.get_txkeys());
 
     std::shared_ptr<base::xvblockmaker_t> vblockmaker;
     if (xunitbuilder_t::can_make_full_unit(prev_block)) {

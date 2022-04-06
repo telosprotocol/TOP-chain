@@ -47,6 +47,7 @@ class xunitheader_extra_t {
     static XINLINE_CONSTEXPR char const * KEY_HEADER_KEY_TXS              = "t";
  public:
     static std::string build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara);
+    static std::string build_extra_string(base::xvheader_t* _tableheader, const base::xvtxkey_vec_t & txkeys);
  public:
     int32_t serialize_to_string(std::string & str) const;
     int32_t do_write(base::xstream_t & stream) const;

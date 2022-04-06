@@ -178,6 +178,7 @@ void    xunitheader_extra_t::set_txkeys(const base::xvtxkey_vec_t & txkeys) {
     insert(KEY_HEADER_KEY_TXS, str);
 }
 
+// TODO(jimmy) delete old build_extra_string
 std::string xunitheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara) {
     if ( (_tableheader->get_height() == 0) // genesis block should not set extra
         || (_tableheader->get_block_class() == base::enum_xvblock_class_nil)// nil unit should not set extra
@@ -194,6 +195,21 @@ std::string xunitheader_extra_t::build_extra_string(base::xvheader_t* _tablehead
 
     xunitheader_extra_t he;
     he.set_txkeys(txs);
+    std::string he_str;
+    he.serialize_to_string(he_str);
+    return he_str;
+}
+
+std::string xunitheader_extra_t::build_extra_string(base::xvheader_t* _header, const base::xvtxkey_vec_t & txkeys) {
+    if ( (_header->get_height() == 0) // genesis block should not set extra
+        || (_header->get_block_class() == base::enum_xvblock_class_nil) ) {// nil unit should not set extra
+        return {};
+    }
+    if (txkeys.get_txkeys().empty()) {
+        return {};
+    }
+    xunitheader_extra_t he;
+    he.set_txkeys(txkeys);
     std::string he_str;
     he.serialize_to_string(he_str);
     return he_str;
@@ -275,9 +291,9 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xunit_
     build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                   para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
     init_header_qcert(build_para);
-    // std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);   new unit not include txhash
-    // set_header_extra(extra_data);
-    // #2 set output entitys and resources
+    std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara.get_txkeys());
+    xdbg("xlightunit_build_t %s,addr=%s,extra_data=%zu",para.dump().c_str(), prev_block->get_account().c_str(), extra_data.size());
+    set_header_extra(extra_data);
     build_block_body_v2(bodypara);
 }
 xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
@@ -406,8 +422,9 @@ xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xunit_bl
                                     para.get_drand_height(), para.get_parent_height(), para.get_justify_cert_hash());
     
     init_header_qcert(build_para);
-    // std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara);
-    // set_header_extra(extra_data);
+    std::string extra_data = xunitheader_extra_t::build_extra_string(get_header(), bodypara.get_txkeys());
+    xdbg("xlightunit_build_t %s,addr=%s,extra_data=%zu",para.dump().c_str(), prev_block->get_account().c_str(), extra_data.size());
+    set_header_extra(extra_data);
     build_block_body(bodypara);
 }
 

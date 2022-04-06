@@ -32,12 +32,15 @@ class xunit_block_para_t {
  public:
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_binlog(const std::string & binlog) {m_property_binlog = binlog;}
+    void    set_txkeys(const base::xvtxkey_vec_t & txkeys) {m_txkeys = txkeys;}
  public:
     const std::string &     get_property_binlog() const {return m_property_binlog;}
     const std::string &     get_fullstate_bin() const {return m_fullstate_bin;}
+    const base::xvtxkey_vec_t & get_txkeys() const {return m_txkeys;}
  private:
-    std::string     m_fullstate_bin;
-    std::string     m_property_binlog;
+    std::string         m_fullstate_bin;
+    std::string         m_property_binlog;
+    base::xvtxkey_vec_t m_txkeys;
 };
 
 class xlightunit_block_para_t : public xunit_block_para_t {
