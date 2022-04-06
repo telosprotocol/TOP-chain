@@ -126,6 +126,7 @@ namespace top
 
         //define some special address prefix
         XINLINE_CONSTEXPR char const * ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN            = "T80000";
+        XINLINE_CONSTEXPR char const * ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN            = "T60004";
 
         class xvaccount_t : virtual public xrefcount_t
         {
@@ -141,6 +142,7 @@ namespace top
             {
                 enum_vaccount_compact_type_no_compact       = 'T',  //complete TOP address
                 enum_vaccount_compact_type_eth_main_chain   = 'U',  //TOP eth address in main chain zone consensus
+                enum_vaccount_compact_type_evm_main_chain   = 'E',  //TOP eth address in main chain zone consensus
             };            
         public: //create account address of blockchain
             //account format as = T-[type|ledger_id]-public_key_address-subaddr_of_ledger(book# and table#,optional)
@@ -333,6 +335,12 @@ namespace top
             static std::string compact_address_to(const std::string & account_addr);
             static std::string compact_address_from(const std::string & data);
             static bool check_address(const std::string & account_addr, bool isTransaction = false);
+            static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_eth_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_table_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_contract_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_drand_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_timer_address_type(enum_vaccount_addr_type addr_type);
 
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)
@@ -443,6 +451,7 @@ namespace top
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
             bool                        is_unit_address() const;
+            bool                        is_eth_address() const;
             bool                        is_table_address() const;
             bool                        is_contract_address() const;
             bool                        is_drand_address() const;
