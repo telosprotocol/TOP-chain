@@ -857,22 +857,6 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
-/*            
-            if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) || common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
-                std::set<enum_height_type> types;
-                if (!common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
-                    types.insert(confirm_height);
-                    xsync_kinfo("xsync_handler remove_role_phase1 del validator %s", it.second.address.c_str());
-                }
-
-                xsync_prune_sigleton_t::instance().del(it.second.address, types);
-                if (xsync_prune_sigleton_t::instance().empty(it.second.address)){
-                    base::xvaccount_t _vaddr(it.second.address);
-                    xsync_kinfo("xsync_handler remove_role_phase1 unwatch %s", it.second.address.c_str());
-                    store::unwatch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
-                }
-            }
-            */
             if (common::has<common::xminer_type_t::advance>(miner_type) || common::has<common::xminer_type_t::validator>(miner_type)) {
                 std::set<enum_height_type> types;
                 if (common::has<common::xminer_type_t::validator>(miner_type)) {
@@ -914,40 +898,6 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
     bool genesis = bme->m_genesis;
 
     for (const auto & it : chains) {
-        /*
-              if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type()) ||
-           common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
-                std::set<enum_height_type> types;
-                    if (common::has<common::xnode_type_t::fullnode>(vnetwork_driver->type())) {
-                        types.insert(mutable_checkpoint_height); 
-                        base::xvaccount_t _vaddr(it.second.address); 
-                        if (!_vaddr.is_drand_address()) { 
-                            types.insert(latest_state_height);
-                        }
-                            xsync_kinfo("xsync_handler add_role_phase1 add fullnode %s", it.second.address.c_str());
-                        } else {
-                            types.insert(confirm_height);
-                            xsync_kinfo("xsync_handler add_role_phase1 add validator %s", it.second.address.c_str());
-                        }
-                        xsync_prune_sigleton_t::instance().add(it.second.address, types);
-                        base::xvaccount_t _vaddr(it.second.address);
-                        store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
-                        store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
-                    }
-
-                    if (common::has<common::xnode_type_t::consensus>(vnetwork_driver->type())) {
-                        base::xvaccount_t _vaddr(it.second.address);
-                        store::watch_block_recycler(top::chainbase::xmodule_type_xtxpool, _vaddr);
-                        store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xtxpool, _vaddr, 0);
-                    }
-                    if (common::has<common::xnode_type_t::frozen>(vnetwork_driver->type())) {
-                        base::xvaccount_t _vaddr(it.second.address);
-                        auto zone_id = _vaddr.get_zone_index();
-                        if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-                            store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
-                            store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
-                        }
-                    } */
         if (common::has<common::xminer_type_t::advance>(miner_type) || common::has<common::xminer_type_t::validator>(miner_type)) {
             std::set<enum_height_type> types;
             if (common::has<common::xminer_type_t::advance>(miner_type)) {
@@ -972,14 +922,6 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
             }
         } 
     }
-    //if (common::has<common::xminer_type_t::edge>(miner_type)) {
-/*        base::xvaccount_t _vaddr(it.second.address);
-        auto zone_id = _vaddr.get_zone_index();
-        if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-            store::watch_block_recycler(top::chainbase::xmodule_type_xsync, _vaddr);
-            store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, 0);
-            xsync_kinfo("xsync_handler add_role_phase1 add edge %s", it.second.address.c_str());
-        }*/
     for (uint32_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
         std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_zec_table_block_addr, uint16_t(i)).value();
         std::set<enum_height_type> types;
