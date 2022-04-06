@@ -14,8 +14,8 @@
 NS_BEG2(top, contract_runtime)
 
 xtop_action_runtime<data::xevm_consensus_action_t>::xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const evm_contract_manager,
-                                                                        observer_ptr<vm_statestore::xvm_statestore_helper_t> const statestore_helper) noexcept
-  : evm_contract_manager_{evm_contract_manager}, evm_statestore_helper_{statestore_helper} {
+                                                                        statectx::xstatectx_face_ptr_t const statectx) noexcept
+  : evm_contract_manager_{evm_contract_manager}, evm_statectx_{statectx} {
 }
 
 // todo this state? should be user's or contract's. User's account state
@@ -28,7 +28,7 @@ xtransaction_execution_result_t xtop_action_runtime<data::xevm_consensus_action_
 
     try {
         // mock:
-        auto storage = std::make_shared<evm::xevm_storage>(evm_statestore_helper_);
+        auto storage = std::make_shared<evm::xevm_storage>(evm_statectx_);
         // auto tx_type = tx_ctx->type();
         // 1. get action type: deploy/call/transfer
         // 2. if deploy, get code and src from action, set_evm_logic, call 'deploy_code()'
