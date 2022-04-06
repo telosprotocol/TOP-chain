@@ -36,8 +36,8 @@ bool check_pri_key(const std::string & str_pri) {
 }
 bool check_account_address(const std::string& account)
 {
-    return top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account ||
-        top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account;
+    top::base::xvaccount_t _vaccount(account);
+    return _vaccount.is_unit_address();
 }
 
 xJson::Value ApiMethod::get_response_from_daemon() {
@@ -82,7 +82,8 @@ string ApiMethod::get_account_from_daemon() {
     }
 }
 int ApiMethod::get_eth_file(std::string& account) {
-    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(account);
+    if (_vaccount.is_eth_address())
         std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
     std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
     for (int i = 0; i < (int)files.size(); i++)
@@ -104,7 +105,8 @@ string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
         auto account = token_response_json["account"].asString();
         string base64_pri;
         if (!hex_ed_key.empty()) {
-            if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            top::base::xvaccount_t _vaccount(account);
+            if (_vaccount.is_eth_address())
                 get_eth_file(account);
             std::string path = g_keystore_dir + '/' + account;
             base64_pri = decrypt_keystore_by_key(hex_ed_key, path);
@@ -122,7 +124,8 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
         daemon_host = safebox_endpoint;
     }
     std::string account_temp(account);
-    if (top::base::xvaccount_t::get_addrtype_from_account(account_temp) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(account);
+    if (_vaccount.is_eth_address())
         std::transform(account_temp.begin() + 1, account_temp.end(), account_temp.begin() + 1, ::tolower);
 
     HttpClient client(daemon_host);
@@ -378,7 +381,8 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
         std::string account = key_info["account_address"].asString();
         if (account.empty())
             account = key_info["account address"].asString();
-        if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        top::base::xvaccount_t _vaccount(account);
+        if (_vaccount.is_eth_address())
             std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
 
         if (std::find(av.begin(), av.end(), account) == av.end())
@@ -434,7 +438,8 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
 
 void ApiMethod::set_default_account(const std::string & account, const string & pw_path, std::ostringstream & out_str) {
     std::string account_file(account);
-    if (top::base::xvaccount_t::get_addrtype_from_account(account_file) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(account);
+    if (_vaccount.is_eth_address())
         get_eth_file(account_file);
     const std::string store_path = g_keystore_dir + "/" + account_file;
     std::fstream store_file;
@@ -626,7 +631,8 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
             }
             if (name == "account address" || name == "account_address") {
                 target_node_id = key_info_js[name].asString();
-                if (top::base::xvaccount_t::get_addrtype_from_account(target_node_id) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                top::base::xvaccount_t _vaccount(target_node_id);
+                if (_vaccount.is_eth_address())
                     std::transform(target_node_id.begin() + 1, target_node_id.end(), target_node_id.begin() + 1, ::tolower);
             }
         }  // end for (const auto & name...
@@ -741,7 +747,8 @@ void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string 
         return;
     }
     std::string from = g_userinfo.account;
-    if (top::base::xvaccount_t::get_addrtype_from_account(to) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(to);
+    if (_vaccount.is_eth_address())
         std::transform(to.begin() + 1, to.end(), to.begin() + 1, ::tolower);
 
     if (note.size() > 128) {
@@ -785,7 +792,8 @@ void ApiMethod::query_miner_info(std::string & account, std::ostringstream & out
     } else {
         g_userinfo.account = account;
     }
-    if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(g_userinfo.account);
+    if (_vaccount.is_eth_address())
         std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
     auto rtn = api_method_imp_.getStandbys(g_userinfo, g_userinfo.account);
     if (rtn) {
@@ -872,7 +880,8 @@ void ApiMethod::register_node(const std::string & mortgage_d,
                 std::string account = key_info["account_address"].asString();
                 if (account.empty())
                     account = key_info["account address"].asString();
-                if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                top::base::xvaccount_t _vaccount(account);
+                if (_vaccount.is_eth_address())
                     std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
                 if (account == g_userinfo.account) {
                     break;
@@ -1108,7 +1117,8 @@ void ApiMethod::query_account(std::string & target, std::ostringstream & out_str
         }
     } else {
         g_userinfo.account = target;
-        if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        top::base::xvaccount_t _vaccount(target);
+        if (_vaccount.is_eth_address())
             std::transform(g_userinfo.account.begin()+1, g_userinfo.account.end(), g_userinfo.account.begin()+1, ::tolower);
     }
     api_method_imp_.getAccount(g_userinfo, g_userinfo.account, out_str);
@@ -1325,7 +1335,8 @@ void ApiMethod::vote_miner(std::vector<std::pair<std::string, int64_t>> & vote_i
     std::map<std::string, int64_t> votes;
     for (auto p : vote_infos) {
         std::string account = p.first;
-        if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        top::base::xvaccount_t _vaccount(account);
+        if (_vaccount.is_eth_address())
             std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
         votes[account] = p.second;
         cout << account << " " << p.second << endl;
@@ -2442,7 +2453,8 @@ void ApiMethod::outAccountBalance(const std::string & account, std::ostringstrea
     auto tmp = g_userinfo.account;
     g_userinfo.account = account;
     std::string q_account(account);
-    if (top::base::xvaccount_t::get_addrtype_from_account(q_account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(q_account);
+    if (_vaccount.is_eth_address())
         std::transform(q_account.begin()+1, q_account.end(), q_account.begin()+1, ::tolower);
     api_method_imp_.getAccount(g_userinfo, q_account, as);
     g_userinfo.account = tmp;

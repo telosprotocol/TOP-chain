@@ -140,8 +140,8 @@ bool xtopcl::do_command(ParamList & param_list, std::string & res) {
         std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
         std::vector<std::string> accounts;
         for (auto file : files) {
-            if ( top::base::xvaccount_t::get_addrtype_from_account(file) == top::base::enum_vaccount_addr_type_secp256k1_user_account ||
-                top::base::xvaccount_t::get_addrtype_from_account(file) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            top::base::xvaccount_t _vaccount(file);
+            if (_vaccount.is_unit_address())
             {
                 accounts.push_back(file);
             }
